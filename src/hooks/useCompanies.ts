@@ -7,6 +7,9 @@ import { useCompanyCreate } from "./company/useCompanyCreate";
 import { useCompanyUpdate } from "./company/useCompanyUpdate";
 import { useCompanyDelete } from "./company/useCompanyDelete";
 import { useCompanyUserManagement } from "./company/useCompanyUserManagement";
+import { useCompanyCache } from "./company/useCompanyCache";
+import { useCompanyRetry } from "./company/useCompanyRetry";
+import { useCompanyEvents } from "./company/useCompanyEvents";
 
 export const useCompanies = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -16,9 +19,6 @@ export const useCompanies = () => {
   const [error, setError] = useState<Error | null>(null);
   const [fetchCount, setFetchCount] = useState(0);
   
-  // Maximum number of retries when fetch fails
-  const MAX_FETCH_RETRIES = 3;
-
   // Import functionality from individual hooks
   const { 
     fetchCompanies, 
@@ -63,21 +63,12 @@ export const useCompanies = () => {
     removeUserFromCompany 
   } = useCompanyUserManagement();
 
-  // Listen for company selection events
-  useEffect(() => {
-    const handleCompanySelected = (event: CustomEvent) => {
-      const { company } = event.detail;
-      if (company) {
-        setSelectedCompany(company);
-      }
-    };
+  const { executeWithRetry } = useCompanyRetry();
+  const { cacheUserCompanies, getCachedUserCompanies } = useCompanyCache();
+  const { dispatchCompanySelected } = useCompanyEvents(setSelectedCompany);
 
-    window.addEventListener('company-selected', handleCompanySelected as EventListener);
-    
-    return () => {
-      window.removeEventListener('company-selected', handleCompanySelected as EventListener);
-    };
-  }, []);
+  // Listen for company selection events
+  useCompanyEvents(setSelectedCompany);
 
   // Try to restore previously selected company on hook initialization
   useEffect(() => {
@@ -137,49 +128,25 @@ export const useCompanies = () => {
   // Wrap getUserCompanies with retry logic
   const getUserCompaniesWithRetry = async (userId: string): Promise<Company[]> => {
     setError(null);
-    let lastError = null;
+    setFetchCount(prev => prev + 1);
     
-    for (let attempt = 0; attempt <= MAX_FETCH_RETRIES; attempt++) {
-      try {
-        // Increment fetch counter to track retries
-        setFetchCount(prev => prev + 1);
-        
-        if (attempt > 0) {
-          console.log(`Retry attempt ${attempt} of ${MAX_FETCH_RETRIES} for getUserCompanies`);
-        }
-        
-        const result = await getUserCompanies(userId);
-        return result;
-      } catch (err) {
-        console.error(`Fetch attempt ${attempt + 1} failed:`, err);
-        lastError = err instanceof Error ? err : new Error('Unknown error');
-        
-        // If this is the last attempt, set the error state
-        if (attempt === MAX_FETCH_RETRIES) {
-          setError(lastError);
-          
-          // Try to load from cache as last resort
-          const cachedCompanies = localStorage.getItem('userCompanies');
-          if (cachedCompanies) {
-            try {
-              const parsed = JSON.parse(cachedCompanies) as Company[];
-              console.log("Using cached companies after all retries failed");
-              setUserCompanies(parsed);
-              return parsed;
-            } catch (e) {
-              console.error("Error parsing cached companies", e);
-            }
-          }
-          break;
-        }
-        
-        // Wait before retrying (exponential backoff)
-        const delay = Math.min(1000 * (2 ** attempt), 10000);
-        await new Promise(resolve => setTimeout(resolve, delay));
+    try {
+      const result = await executeWithRetry(() => getUserCompanies(userId));
+      return result;
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Unknown error');
+      setError(error);
+      
+      // Try to load from cache as last resort
+      const cachedData = getCachedUserCompanies();
+      if (cachedData && cachedData.length > 0) {
+        console.log("Using cached companies after all retries failed");
+        setUserCompanies(cachedData);
+        return cachedData;
       }
+      
+      return [];
     }
-    
-    return [];
   };
 
   return {
