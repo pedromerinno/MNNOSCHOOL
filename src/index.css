@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -38,13 +39,13 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 240 20% 3.9%; /* Darker background to match the image */
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    --card: 240 20% 7%; /* Slightly lighter than background for cards */
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 240 20% 3.9%;
     --popover-foreground: 210 40% 98%;
 
     --primary: 217.2 91.2% 59.8%;
@@ -54,7 +55,7 @@
     --secondary-foreground: 210 40% 98%;
 
     --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted-foreground: 215 20.2% 70%; /* Increased brightness for better visibility */
 
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;

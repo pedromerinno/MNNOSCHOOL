@@ -18,19 +18,19 @@ export const WelcomeSection = () => {
     <div className="mb-16 mt-8">
       <div className="flex justify-center">
         <p 
-          className="text-gray-600 mb-2 text-center bg-[#FFF1E0] py-2.5 px-4 rounded-full max-w-fit"
+          className="text-gray-600 dark:text-gray-300 mb-2 text-center bg-[#FFF1E0] dark:bg-amber-900/30 py-2.5 px-4 rounded-full max-w-fit"
         >
           Olá, {userName}
         </p>
       </div>
-      <h1 className="text-3xl md:text-4xl text-center my-5 font-medium">
+      <h1 className="text-3xl md:text-4xl text-center my-5 font-medium dark:text-white">
         Juntos, estamos desenhando<br />
         o futuro de grandes empresas
       </h1>
       <div className="flex justify-center mt-6">
         <Button 
           onClick={handleLearnMore}
-          className="bg-black hover:bg-black/90 text-white rounded-full px-6"
+          className="bg-black hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 text-white rounded-full px-6"
         >
           Clique para saber mais sobre a MNNO
         </Button>

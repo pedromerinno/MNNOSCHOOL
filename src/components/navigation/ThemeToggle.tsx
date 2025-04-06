@@ -34,7 +34,7 @@ export const ThemeToggle = () => {
       variant="ghost" 
       size="icon" 
       onClick={toggleTheme}
-      className="text-gray-500 hover:text-merinno-blue transition-colors"
+      className="text-gray-500 dark:text-gray-300 hover:text-merinno-blue dark:hover:text-merinno-blue transition-colors"
       aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
     >
       {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
