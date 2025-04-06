@@ -32,7 +32,7 @@ export const WelcomeSection = () => {
           onClick={handleLearnMore}
           className="bg-black hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 text-white rounded-full px-6"
         >
-          Clique para saber mais sobre a MNNO
+          Clique para saber mais sobre a MERINNO
         </Button>
       </div>
     </div>
