@@ -1,4 +1,3 @@
-
 import { Link, useNavigate } from "react-router-dom";
 import { Bell, Search, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -98,7 +97,7 @@ export const DashboardHeader = () => {
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 bg-white">
+            <DropdownMenuContent align="end" className="w-48">
               <div className="px-4 py-2 border-b border-gray-100">
                 <p className="text-sm font-medium text-gray-900 truncate">
                   {user?.email}

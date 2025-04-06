@@ -1,4 +1,3 @@
-
 import { Bell, Moon, Search, Sun, LogIn, UserPlus, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -142,7 +141,7 @@ export const MainNavigationMenu = () => {
                     <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 bg-white">
+                <DropdownMenuContent align="end" className="w-48">
                   <div className="px-4 py-2 border-b border-gray-100">
                     <p className="text-sm font-medium text-gray-900 truncate">
                       {user?.email}
