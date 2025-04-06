@@ -24,11 +24,10 @@ export const makeUserAdmin = async (targetEmail: string) => {
     if (profileError || !profileData) {
       console.log('User not found in profiles by email, trying auth.users...');
       
-      // Use a simple object type to avoid deep type instantiation
-      const { data, error } = await supabase.auth.admin.listUsers() as {
-        data: { users: SupabaseUser[] } | null;
-        error: any;
-      };
+      // Use an explicit type assertion with a simple interface to avoid deep type instantiation
+      const authResponse = await supabase.auth.admin.listUsers();
+      const data = authResponse.data as unknown as { users: SupabaseUser[] } | null;
+      const error = authResponse.error;
       
       if (error) {
         console.error('Error fetching users:', error);
