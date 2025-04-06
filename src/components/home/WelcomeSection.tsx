@@ -5,14 +5,14 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export const WelcomeSection = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
 
   const handleLearnMore = () => {
     navigate('/');
   };
 
-  // Extract the name from email if no specific name is available
-  const userName = user?.email?.split('@')[0] || 'Usuário';
+  // Use displayName from userProfile if available, otherwise extract from email
+  const userName = userProfile.displayName || user?.email?.split('@')[0] || 'Usuário';
 
   return (
     <div className="mb-8">

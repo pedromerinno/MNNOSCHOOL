@@ -19,7 +19,7 @@ interface UserNavigationProps {
 
 export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" }: UserNavigationProps) => {
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
-  const { user, signOut } = useAuth();
+  const { user, signOut, userProfile } = useAuth();
   
   const openProfileDialog = () => {
     setIsProfileDialogOpen(true);
@@ -29,6 +29,9 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
     // This would typically update the user profile in a database
     console.log("Profile update values:", values);
   };
+
+  // Use the avatar from userProfile if available, otherwise use the provided avatarUrl
+  const displayAvatar = userProfile.avatar || avatarUrl;
 
   return (
     <>
@@ -44,7 +47,7 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
             }}
           >
             <img 
-              src={avatarUrl} 
+              src={displayAvatar} 
               alt="User avatar" 
               className="h-8 w-8 rounded-full"
             />
@@ -54,7 +57,7 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
         <DropdownMenuContent align="end" className="w-48">
           <div className="px-4 py-2 border-b border-gray-100">
             <p className="text-sm font-medium text-gray-900 truncate">
-              {user?.email}
+              {userProfile.displayName || user?.email}
             </p>
           </div>
           <DropdownMenuItem 

@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,18 +43,25 @@ interface ProfileDialogProps {
 }
 
 export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialogProps) => {
-  const [avatarPreview, setAvatarPreview] = useState("https://i.pravatar.cc/150?img=68");
+  const { userProfile, updateUserProfile } = useAuth();
+  const [avatarPreview, setAvatarPreview] = useState(userProfile.avatar || "https://i.pravatar.cc/150?img=68");
   const { toast } = useToast();
 
   const form = useForm<UserProfileFormValues>({
     resolver: zodResolver(userProfileSchema),
     defaultValues: {
-      name: email?.split('@')[0] || "",
-      avatar: "https://i.pravatar.cc/150?img=68",
+      name: userProfile.displayName || email?.split('@')[0] || "",
+      avatar: userProfile.avatar || "https://i.pravatar.cc/150?img=68",
     },
   });
 
   const handleProfileUpdate = (values: UserProfileFormValues) => {
+    // Update the user profile in the AuthContext
+    updateUserProfile({
+      displayName: values.name,
+      avatar: values.avatar || null
+    });
+    
     // Call the parent handler
     onSave(values);
     

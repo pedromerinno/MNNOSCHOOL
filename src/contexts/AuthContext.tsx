@@ -1,14 +1,20 @@
-
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
+type UserProfile = {
+  displayName: string | null;
+  avatar: string | null;
+};
+
 type AuthContextType = {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  userProfile: UserProfile;
+  updateUserProfile: (profile: UserProfile) => void;
   signUp: (email: string, password: string) => Promise<{
     error: Error | null;
     data: any | null;
@@ -26,6 +32,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState<UserProfile>({
+    displayName: null,
+    avatar: null
+  });
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -46,6 +56,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             title: "Desconectado",
             description: "Você foi desconectado com sucesso.",
           });
+          // Reset user profile on sign out
+          setUserProfile({
+            displayName: null,
+            avatar: null
+          });
         }
       }
     );
@@ -59,6 +74,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     return () => subscription.unsubscribe();
   }, [toast]);
+
+  const updateUserProfile = (profile: UserProfile) => {
+    setUserProfile(profile);
+  };
 
   const signUp = async (email: string, password: string) => {
     try {
@@ -117,6 +136,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         user,
         session,
         loading,
+        userProfile,
+        updateUserProfile,
         signUp,
         signIn,
         signOut,
