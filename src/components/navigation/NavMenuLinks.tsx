@@ -131,7 +131,7 @@ export const NavMenuLinks = () => {
             )}
           >
             Ferramentas
-            <Badge variant="beta" className="ml-2 text-xs p-2">beta</Badge>
+            <Badge variant="beta" className="ml-2 text-xs px-2 py-1">beta</Badge>
           </Link>
         </li>
         {adminLinks}
