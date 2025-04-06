@@ -20,7 +20,7 @@ const Dashboard = () => {
     const fetchUserCompanies = async () => {
       if (user?.id) {
         try {
-          await getUserCompanies(user.id);
+          await getUserCompanies(user.id, false);
         } catch (error) {
           console.error('Error fetching companies:', error);
         }

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -35,7 +36,7 @@ export const WelcomeSection = () => {
       if (user?.id) {
         try {
           setFetchAttempted(true);
-          await getUserCompanies(user.id);
+          await getUserCompanies(user.id, false);
         } catch (error) {
           console.error('Erro na busca da empresa:', error);
           toast.error("Não foi possível carregar os dados da empresa. Usando dados em cache se disponíveis.");
