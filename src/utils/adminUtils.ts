@@ -23,22 +23,21 @@ export const makeUserAdmin = async (targetEmail: string) => {
     // If we couldn't find by email in profiles, try auth.users
     if (profileError || !profileData) {
       console.log('User not found in profiles by email, trying auth.users...');
-      // Explicitly type the return value to avoid deep type instantiation
-      const response = await supabase.auth.admin.listUsers();
-      const authData = response.data;
-      const authError = response.error;
       
-      if (authError) {
-        console.error('Error fetching users:', authError);
-        throw authError;
+      // Completely avoid type inference by using any and then casting
+      const response: any = await supabase.auth.admin.listUsers();
+      
+      if (response.error) {
+        console.error('Error fetching users:', response.error);
+        throw response.error;
       }
       
-      if (!authData || !Array.isArray(authData.users)) {
+      if (!response.data || !Array.isArray(response.data.users)) {
         console.error('Invalid response format from listUsers');
         throw new Error('Invalid response format from listUsers');
       }
       
-      const users = authData.users as SupabaseUser[];
+      const users = response.data.users as SupabaseUser[];
       const targetUser = users.find(u => u.email === targetEmail);
       
       if (!targetUser) {
