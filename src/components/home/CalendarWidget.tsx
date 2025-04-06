@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -109,7 +108,7 @@ export const CalendarWidget = () => {
             <Button 
               size="icon" 
               variant="ghost" 
-              className="text-white hover:bg-white/10 h-10 w-10 rounded-full border border-white/30"
+              className="text-white hover:bg-white/10 h-12 w-12 rounded-full border border-white/30"
               onClick={goToPreviousMonth}
             >
               <ChevronLeft className="h-5 w-5" />
@@ -117,7 +116,7 @@ export const CalendarWidget = () => {
             <Button 
               size="icon" 
               variant="ghost" 
-              className="text-white hover:bg-white/10 h-10 w-10 rounded-full border border-white/30"
+              className="text-white hover:bg-white/10 h-12 w-12 rounded-full border border-white/30"
               onClick={goToNextMonth}
             >
               <ChevronRight className="h-5 w-5" />
