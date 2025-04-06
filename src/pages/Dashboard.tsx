@@ -8,7 +8,7 @@ import { useCompanies } from "@/hooks/useCompanies";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Skeleton } from "@/components/ui/skeleton";
+import { CardSkeleton } from "@/components/ui/content-skeleton";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -35,11 +35,7 @@ const Dashboard = () => {
       <WelcomeBanner company={selectedCompany} />
       
       {isLoading ? (
-        <div className="mb-6 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
-          <Skeleton className="h-7 w-48 mb-4" />
-          <Skeleton className="h-4 w-full max-w-xl mb-4" />
-          <Skeleton className="h-9 w-28" />
-        </div>
+        <CardSkeleton className="mb-6" />
       ) : selectedCompany ? (
         <div className="mb-6 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
           <h2 className="text-lg font-semibold mb-2 dark:text-white">Sobre a {selectedCompany.nome}</h2>

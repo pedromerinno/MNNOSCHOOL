@@ -7,10 +7,11 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Company } from "@/types/company";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const WelcomeSection = () => {
   const { user, userProfile } = useAuth();
-  const { getUserCompanies, selectedCompany, userCompanies, selectCompany } = useCompanies();
+  const { getUserCompanies, selectedCompany, userCompanies, selectCompany, isLoading } = useCompanies();
   const navigate = useNavigate();
   const [displayCompany, setDisplayCompany] = useState<Company | null>(null);
 
@@ -48,6 +49,19 @@ export const WelcomeSection = () => {
     navigate('/manifesto');
   };
 
+  if (isLoading) {
+    return (
+      <div className="mb-16 mt-10">
+        <div className="flex flex-col items-center">
+          <Skeleton className="h-8 w-40 rounded-full mb-6" />
+          <Skeleton className="h-16 w-3/4 mb-2 rounded-md" />
+          <Skeleton className="h-16 w-2/3 mb-5 rounded-md" />
+          <Skeleton className="h-10 w-44 rounded-full" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mb-16 mt-10">
       <div className="flex flex-col items-center">
@@ -78,4 +92,3 @@ export const WelcomeSection = () => {
     </div>
   );
 };
-
