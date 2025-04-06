@@ -44,10 +44,6 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
             variant="ghost"
             size="icon"
             className="relative text-gray-500 hover:text-merinno-blue rounded-full overflow-hidden"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
           >
             <img 
               src={displayAvatar} 
