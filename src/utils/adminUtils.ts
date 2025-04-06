@@ -1,6 +1,12 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
+// Define a clear interface for Supabase users to avoid type issues
+interface SupabaseUser {
+  id: string;
+  email?: string | null;
+}
+
 export const makeUserAdmin = async (targetEmail: string) => {
   try {
     console.log(`Attempting to make ${targetEmail} an admin...`);
@@ -27,11 +33,6 @@ export const makeUserAdmin = async (targetEmail: string) => {
       if (!authData || !Array.isArray(authData.users)) {
         console.error('Invalid response format from listUsers');
         throw new Error('Invalid response format from listUsers');
-      }
-      
-      interface SupabaseUser {
-        id: string;
-        email?: string | null;
       }
       
       const users = authData.users as SupabaseUser[];

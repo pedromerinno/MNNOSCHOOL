@@ -7,6 +7,12 @@ import { useToast } from '@/hooks/use-toast';
 import { makeUserAdmin, setAdminStatusById } from '@/utils/adminUtils';
 import { supabase } from "@/integrations/supabase/client";
 
+// Interface for working with Supabase auth users
+interface AuthUser {
+  id: string;
+  email?: string | null;
+}
+
 export const UserManagement = () => {
   const { users, loading, fetchUsers, toggleAdminStatus } = useUsers();
   const { toast } = useToast();
@@ -53,7 +59,7 @@ export const UserManagement = () => {
           const { data: authData } = await supabase.auth.admin.listUsers();
           
           if (authData && Array.isArray(authData.users)) {
-            const targetUser = authData.users.find(u => u.email === 'pedro@merinno.com');
+            const targetUser = (authData.users as AuthUser[]).find(u => u.email === 'pedro@merinno.com');
             
             if (targetUser) {
               const { error: updateError } = await supabase
