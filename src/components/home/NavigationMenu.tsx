@@ -12,7 +12,7 @@ export const MainNavigationMenu = () => {
   const { user } = useAuth();
 
   return (
-    <header className="w-full border-b border-gray-200 bg-white">
+    <header className="w-full border-b border-gray-200">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center space-x-10">
           <Link to="/" className="text-xl font-bold text-merinno-dark">
@@ -39,3 +39,4 @@ export const MainNavigationMenu = () => {
     </header>
   );
 };
+
