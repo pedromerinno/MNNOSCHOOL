@@ -31,7 +31,7 @@ export const useCompanyFetch = ({
 
       if (error) {
         console.error("Error fetching companies:", error);
-        toast.error("Erro ao buscar empresas", {
+        toast("Erro ao buscar empresas", {
           description: error.message,
         });
         return;
@@ -40,7 +40,7 @@ export const useCompanyFetch = ({
       setCompanies(data as Company[]);
     } catch (error) {
       console.error("Unexpected error:", error);
-      toast.error("Erro inesperado", {
+      toast("Erro inesperado", {
         description: "Ocorreu um erro ao buscar as empresas",
       });
     } finally {
@@ -63,12 +63,9 @@ export const useCompanyFetch = ({
 
       if (relationsError) {
         console.error("Error fetching user company relations:", relationsError);
-        toast.error("Erro ao buscar empresas", {
-          description: "Falha na conexão com o servidor",
+        toast("Erro ao buscar empresas", {
+          description: relationsError.message,
         });
-        
-        // Set empty arrays to prevent undefined errors
-        setUserCompanies([]);
         return [];
       }
 
@@ -90,12 +87,9 @@ export const useCompanyFetch = ({
 
       if (companiesError) {
         console.error("Error fetching companies:", companiesError);
-        toast.error("Erro ao buscar detalhes das empresas", {
-          description: "Falha na conexão com o servidor",
+        toast("Erro ao buscar detalhes das empresas", {
+          description: companiesError.message,
         });
-        
-        // Set empty arrays to prevent undefined errors
-        setUserCompanies([]);
         return [];
       }
 
@@ -116,12 +110,9 @@ export const useCompanyFetch = ({
       return userCompaniesData;
     } catch (error) {
       console.error("Unexpected error:", error);
-      toast.error("Erro ao buscar empresas", {
-        description: "Falha na conexão com o servidor",
+      toast("Erro inesperado", {
+        description: "Ocorreu um erro ao buscar as empresas",
       });
-      
-      // Set empty arrays to prevent undefined errors
-      setUserCompanies([]);
       return [];
     } finally {
       setIsLoading(false);
@@ -142,8 +133,8 @@ export const useCompanyFetch = ({
 
       if (error) {
         console.error("Error fetching company:", error);
-        toast.error("Erro ao buscar empresa", {
-          description: "Falha na conexão com o servidor",
+        toast("Erro ao buscar empresa", {
+          description: error.message,
         });
         return null;
       }
@@ -151,8 +142,8 @@ export const useCompanyFetch = ({
       return data as Company;
     } catch (error) {
       console.error("Unexpected error:", error);
-      toast.error("Erro ao buscar empresa", {
-        description: "Falha na conexão com o servidor",
+      toast("Erro inesperado", {
+        description: "Ocorreu um erro ao buscar a empresa",
       });
       return null;
     } finally {
