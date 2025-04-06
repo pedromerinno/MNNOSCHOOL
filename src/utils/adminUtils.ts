@@ -1,58 +1,101 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 
 export const makeUserAdmin = async (targetEmail: string) => {
-  const toast = useToast();
-  
   try {
-    // Get the targetEmail user data
-    const { data, error } = await supabase.auth.admin.listUsers();
+    console.log(`Attempting to make ${targetEmail} an admin...`);
     
-    if (error) throw error;
+    // First try to get the user directly from profiles based on email
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, is_admin')
+      .eq('email', targetEmail)
+      .maybeSingle();
     
-    // Ensure the data object and users array exist
-    if (!data || !Array.isArray(data.users)) {
-      throw new Error('Invalid response format from listUsers');
+    let userId;
+    
+    // If we couldn't find by email in profiles, try auth.users
+    if (profileError || !profileData) {
+      console.log('User not found in profiles by email, trying auth.users...');
+      const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
+      
+      if (authError) {
+        console.error('Error fetching users:', authError);
+        throw authError;
+      }
+      
+      if (!authData || !Array.isArray(authData.users)) {
+        console.error('Invalid response format from listUsers');
+        throw new Error('Invalid response format from listUsers');
+      }
+      
+      interface SupabaseUser {
+        id: string;
+        email?: string | null;
+      }
+      
+      const users = authData.users as SupabaseUser[];
+      const targetUser = users.find(u => u.email === targetEmail);
+      
+      if (!targetUser) {
+        console.error(`User with email ${targetEmail} not found`);
+        throw new Error(`User with email ${targetEmail} not found`);
+      }
+      
+      userId = targetUser.id;
+    } else {
+      userId = profileData.id;
+      
+      // If user is already admin, just return
+      if (profileData.is_admin) {
+        console.log(`${targetEmail} is already an admin.`);
+        return true;
+      }
     }
     
-    // Define the type for Supabase user to avoid the 'never' type issue
-    interface SupabaseUser {
-      id: string;
-      email?: string | null;
-    }
+    console.log(`Found user ID: ${userId}, updating admin status...`);
     
-    const users = data.users as SupabaseUser[];
-    const targetUser = users.find(u => u.email === targetEmail);
-    
-    if (!targetUser) {
-      throw new Error(`User with email ${targetEmail} not found`);
-    }
-    
-    // Make the user an admin if they're not already
+    // Make the user an admin
     const { error: updateError } = await supabase
       .from('profiles')
       .update({ 
         is_admin: true,
         updated_at: new Date().toISOString()
       })
-      .eq('id', targetUser.id);
+      .eq('id', userId);
     
-    if (updateError) throw updateError;
+    if (updateError) {
+      console.error('Error updating admin status:', updateError);
+      throw updateError;
+    }
     
-    toast.toast({
-      title: 'Sucesso',
-      description: `${targetEmail} agora é um administrador.`
-    });
-    
+    console.log(`Successfully made ${targetEmail} an admin`);
     return true;
   } catch (error: any) {
-    console.error('Error making user admin:', error);
-    toast.toast({
-      title: 'Erro',
-      description: error.message,
-      variant: 'destructive',
-    });
-    return false;
+    console.error('Error in makeUserAdmin function:', error);
+    throw error;
+  }
+};
+
+// Function to directly set admin status by user ID
+export const setAdminStatusById = async (userId: string, isAdmin: boolean) => {
+  try {
+    console.log(`Setting admin status to ${isAdmin} for user ID: ${userId}`);
+    
+    const { error } = await supabase
+      .from('profiles')
+      .update({ 
+        is_admin: isAdmin,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId);
+    
+    if (error) throw error;
+    
+    console.log(`Successfully updated admin status for user ID: ${userId}`);
+    return true;
+  } catch (error: any) {
+    console.error('Error setting admin status:', error);
+    throw error;
   }
 };
