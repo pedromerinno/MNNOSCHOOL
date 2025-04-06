@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,17 @@ interface UserNavigationProps {
 export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" }: UserNavigationProps) => {
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const { user, signOut, userProfile } = useAuth();
+  const [displayName, setDisplayName] = useState<string>("");
+  const [displayAvatar, setDisplayAvatar] = useState<string>("");
   
+  // Use useEffect to update the display name and avatar whenever userProfile changes
+  useEffect(() => {
+    // Use the displayName from userProfile if available, otherwise use the email
+    setDisplayName(userProfile.displayName || user?.email?.split('@')[0] || "Usuário");
+    // Use the avatar from userProfile if available, otherwise use the provided avatarUrl
+    setDisplayAvatar(userProfile.avatar || avatarUrl);
+  }, [userProfile, user, avatarUrl]);
+
   const openProfileDialog = () => {
     setIsProfileDialogOpen(true);
   };
@@ -30,11 +40,6 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
     // via the updateUserProfile function in AuthContext
     console.log("Profile updated with values:", values);
   };
-
-  // Use the avatar from userProfile if available, otherwise use the provided avatarUrl
-  const displayAvatar = userProfile.avatar || avatarUrl;
-  // Use the displayName from userProfile if available, otherwise use the email
-  const displayName = userProfile.displayName || user?.email?.split('@')[0] || "Usuário";
 
   return (
     <>
