@@ -12,7 +12,7 @@ export const WelcomeBanner = ({ company }: WelcomeBannerProps) => {
   const { userProfile } = useAuth();
   const userName = userProfile?.displayName || 'Estudante';
 
-  // Função para garantir que a frase seja exibida, mesmo sem formatação especial
+  // Função para exibir apenas a frase institucional sem fallback
   const getCompanyPhrase = () => {
     console.log("WelcomeBanner - Empresa:", company);
     console.log("WelcomeBanner - Frase institucional:", company?.frase_institucional);
@@ -23,8 +23,10 @@ export const WelcomeBanner = ({ company }: WelcomeBannerProps) => {
       return company.frase_institucional;
     }
     
-    return `Continue sua jornada de aprendizado na ${company.nome}.`;
+    return null;
   };
+
+  const companyPhrase = getCompanyPhrase();
 
   return (
     <div className="bg-merinno-blue/10 rounded-lg p-6 mb-6">
@@ -33,15 +35,11 @@ export const WelcomeBanner = ({ company }: WelcomeBannerProps) => {
           <h1 className="text-2xl font-semibold text-gray-900 mb-2">
             Bem-vindo de volta, {userName}!
           </h1>
-          {company ? (
+          {companyPhrase ? (
             <p className="text-gray-600 max-w-xl">
-              {getCompanyPhrase()}
+              {companyPhrase}
             </p>
-          ) : (
-            <p className="text-gray-600 max-w-xl">
-              Continue sua jornada de aprendizado. Você tem cursos em andamento e sua próxima aula está agendada para hoje.
-            </p>
-          )}
+          ) : null}
         </div>
         <Button
           className="mt-4 md:mt-0 bg-merinno-blue hover:bg-merinno-blue/90 text-white flex items-center gap-2"

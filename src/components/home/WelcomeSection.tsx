@@ -1,14 +1,11 @@
 
 import { useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
 export const WelcomeSection = () => {
-  const navigate = useNavigate();
   const { user, userProfile } = useAuth();
   const { getUserCompanies, selectedCompany, isLoading } = useCompanies();
 
@@ -28,21 +25,19 @@ export const WelcomeSection = () => {
     fetchUserCompanies();
   }, [user, getUserCompanies]);
 
-  const handleLearnMore = () => {
-    navigate('/manifesto');
-  };
-
   // Use displayName from userProfile if available, otherwise extract from email
   const userName = userProfile?.displayName || user?.email?.split('@')[0] || 'Usuário';
 
-  // Função para garantir que a frase institucional seja exibida corretamente
+  // Função para exibir a frase institucional sem placeholder
   const getCompanyPhrase = () => {
     console.log("Frase institucional:", selectedCompany?.frase_institucional);
     if (selectedCompany?.frase_institucional) {
       return selectedCompany.frase_institucional;
     }
-    return "Juntos, estamos desenhando o futuro de grandes empresas";
+    return null;
   };
+
+  const companyPhrase = getCompanyPhrase();
 
   return (
     <div className="mb-16 mt-10">
@@ -58,22 +53,14 @@ export const WelcomeSection = () => {
         <div className="flex flex-col items-center">
           <Skeleton className="h-14 w-3/4 max-w-lg my-5" />
           <Skeleton className="h-14 w-1/2 max-w-md mb-10" />
-          <Skeleton className="h-12 w-80 rounded-full mt-8" />
         </div>
       ) : (
         <div className="flex flex-col items-center">
-          <h1 className="text-4xl md:text-5xl text-center mb-10 mt-6 font-medium dark:text-white leading-tight">
-            {getCompanyPhrase()}
-          </h1>
-          <Button 
-            onClick={handleLearnMore}
-            className="bg-black hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 text-white rounded-full py-6 px-8 text-base mt-8"
-          >
-            {selectedCompany ? 
-              `Conheça mais sobre a ${selectedCompany.nome}` : 
-              "Conheça mais sobre a MNNO"
-            }
-          </Button>
+          {companyPhrase && (
+            <h1 className="text-4xl md:text-5xl text-center mb-10 mt-6 font-medium dark:text-white leading-tight">
+              {companyPhrase}
+            </h1>
+          )}
         </div>
       )}
     </div>
