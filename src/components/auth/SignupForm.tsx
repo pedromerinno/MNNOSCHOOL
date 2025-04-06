@@ -39,7 +39,12 @@ export const SignupForm = () => {
     setIsRegistering(true);
     
     try {
-      await signUp(email, password);
+      const { error } = await signUp(email, password);
+      
+      if (!error) {
+        // Profile creation is automatic via database trigger
+        console.log("Usuario cadastrado com sucesso! Perfil será criado automaticamente.");
+      }
     } finally {
       setIsRegistering(false);
     }

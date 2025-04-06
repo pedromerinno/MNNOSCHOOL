@@ -52,6 +52,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (error) {
         console.error('Error fetching user profile:', error);
+        
+        // If profile doesn't exist, create one
+        if (error.code === 'PGRST116') {
+          console.log('Profile not found, creating a new one...');
+          await createUserProfile(userId);
+          return;
+        }
         return;
       }
 
@@ -63,6 +70,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
+    }
+  };
+
+  // Function to create a user profile if it doesn't exist
+  const createUserProfile = async (userId: string) => {
+    try {
+      const email = user?.email || '';
+      const displayName = email.split('@')[0];
+      
+      const { error } = await supabase
+        .from('profiles')
+        .insert({
+          id: userId,
+          display_name: displayName,
+          avatar: null,
+        });
+
+      if (error) {
+        console.error('Error creating profile:', error);
+        return;
+      }
+
+      // Update local state with the new profile
+      setUserProfile({
+        displayName,
+        avatar: null
+      });
+      
+      console.log('User profile created successfully');
+    } catch (error) {
+      console.error('Error in createUserProfile:', error);
     }
   };
 
