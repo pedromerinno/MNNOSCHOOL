@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { BookOpen } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   NavigationMenu,
@@ -65,13 +64,7 @@ export const NavMenuLinks = () => {
                     isCurrentPage('/courses') && "font-bold text-gray-700"
                   )}
                 >
-                  <div className="flex items-center space-x-2">
-                    <BookOpen size={18} className={cn(
-                      "text-[rgb(107_114_128)]",
-                      isCurrentPage('/courses') && "text-gray-700"
-                    )} />
-                    <span>Cursos</span>
-                  </div>
+                  <span>Cursos</span>
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-2 bg-white dark:bg-gray-800">
