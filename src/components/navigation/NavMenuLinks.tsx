@@ -7,7 +7,6 @@ import {
   NavigationMenu,
   NavigationMenuContent,
   NavigationMenuItem,
-  NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
@@ -23,9 +22,9 @@ export const NavMenuLinks = () => {
     <li>
       <Link 
         to="/admin" 
-        className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light"
+        className="flex items-center space-x-2 text-gray-500 dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light"
       >
-        <Settings size={20} />
+        <Settings size={20} className="text-gray-500" />
         <span>Admin</span>
       </Link>
     </li>
@@ -40,8 +39,8 @@ export const NavMenuLinks = () => {
           <Link 
             to="/" 
             className={cn(
-              "text-sm text-gray-700 dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light",
-              isCurrentPage('/') && "font-bold"
+              "text-sm text-[rgb(107_114_128)] dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light",
+              isCurrentPage('/') && "font-bold text-gray-700"
             )}
           >
             Home
@@ -53,12 +52,15 @@ export const NavMenuLinks = () => {
               <NavigationMenuItem>
                 <NavigationMenuTrigger 
                   className={cn(
-                    "bg-transparent hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent text-gray-700 dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light text-sm",
-                    isCurrentPage('/courses') && "font-bold"
+                    "bg-transparent hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent text-[rgb(107_114_128)] dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light text-sm",
+                    isCurrentPage('/courses') && "font-bold text-gray-700"
                   )}
                 >
                   <div className="flex items-center space-x-2">
-                    <BookOpen size={18} />
+                    <BookOpen size={18} className={cn(
+                      "text-[rgb(107_114_128)]",
+                      isCurrentPage('/courses') && "text-gray-700"
+                    )} />
                     <span>Cursos</span>
                   </div>
                 </NavigationMenuTrigger>
@@ -126,8 +128,8 @@ export const NavMenuLinks = () => {
           <Link 
             to="/tools" 
             className={cn(
-              "flex items-center space-x-2 text-sm text-gray-700 dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light",
-              isCurrentPage('/tools') && "font-bold"
+              "flex items-center space-x-2 text-sm text-[rgb(107_114_128)] dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light",
+              isCurrentPage('/tools') && "font-bold text-gray-700"
             )}
           >
             Ferramentas
