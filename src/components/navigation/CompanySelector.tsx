@@ -27,7 +27,7 @@ export const CompanySelector = () => {
     const fetchUserCompanies = async () => {
       if (user?.id && userCompanies.length === 0 && !isLoading) {
         console.log('CompanySelector: Iniciando busca de empresas do usuário');
-        await getUserCompanies(user.id);
+        await getUserCompanies(user.id, false);
       } else if (userCompanies.length > 0) {
         console.log('CompanySelector: Usando empresas já carregadas');
       }

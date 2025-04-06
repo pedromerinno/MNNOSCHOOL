@@ -134,7 +134,7 @@ export const useCompanies = () => {
   }, [userCompanies, selectedCompany, getCompanyById, getStoredCompanyId, getStoredCompany]);
 
   // Versão com controle de tempo entre requisições
-  const getUserCompanies = useCallback(async (userId: string): Promise<Company[]> => {
+  const getUserCompanies = useCallback(async (userId: string, forceRefresh: boolean = false): Promise<Company[]> => {
     const now = Date.now();
     
     // Verifica se já há uma requisição em andamento
@@ -145,7 +145,7 @@ export const useCompanies = () => {
     
     // Verifica se passou tempo suficiente desde a última requisição
     const timeSinceLastFetch = now - lastFetchTimeRef.current;
-    if (timeSinceLastFetch < MIN_REQUEST_INTERVAL && userCompanies.length > 0 && !force) {
+    if (timeSinceLastFetch < MIN_REQUEST_INTERVAL && userCompanies.length > 0 && !forceRefresh) {
       console.log(`Última requisição foi há ${Math.round(timeSinceLastFetch/1000)}s. Usando dados em cache.`);
       return userCompanies;
     }
@@ -194,7 +194,7 @@ export const useCompanies = () => {
     
     // Mesmo que esteja em andamento, vamos marcar para uma nova requisição
     isFetchingRef.current = false;
-    return getUserCompanies(userId);
+    return getUserCompanies(userId, true);
   }, [getUserCompanies]);
 
   return {

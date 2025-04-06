@@ -42,7 +42,7 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
     const fetchUserCompanies = async () => {
       if (user?.id && userCompanies.length === 0 && !isLoading) {
         console.log('UserNavigation: Iniciando busca de empresas do usuário');
-        await getUserCompanies(user.id);
+        await getUserCompanies(user.id, false);
       } else if (userCompanies.length > 0) {
         console.log('UserNavigation: Usando empresas já carregadas');
       }
