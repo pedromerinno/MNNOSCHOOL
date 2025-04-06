@@ -1,5 +1,4 @@
 
-import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,6 @@ const Documents = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <MainNavigationMenu />
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6 dark:text-white">Documentos</h1>
         

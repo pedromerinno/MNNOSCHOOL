@@ -1,5 +1,4 @@
 
-import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Play, Clock, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,7 +27,6 @@ const School = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <MainNavigationMenu />
       <main className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold dark:text-white">Escola</h1>

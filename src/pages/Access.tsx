@@ -1,5 +1,4 @@
 
-import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExternalLink } from "lucide-react";
 
@@ -13,7 +12,6 @@ const Access = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <MainNavigationMenu />
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6 dark:text-white">Acessos</h1>
         <p className="text-gray-700 dark:text-gray-300 mb-6">

@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from 'react-router-dom';
 import { FileText, Settings, Users, Globe, Lock } from 'lucide-react';
@@ -35,7 +34,6 @@ const AdminPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <MainNavigationMenu />
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6 dark:text-white">Painel Administrativo</h1>
         
