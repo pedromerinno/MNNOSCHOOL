@@ -1,9 +1,13 @@
 
+import { useCompanies } from "@/hooks/useCompanies";
+
 export const Footer = () => {
+  const { selectedCompany } = useCompanies();
+
   return (
-    <footer className="border-t border-gray-200 py-6 text-center text-sm text-gray-500">
+    <footer className="py-6 text-center text-sm text-gray-500">
       <div className="container mx-auto px-4">
-        <p className="text-gray-400">MNNO</p>
+        <p className="text-gray-400">{selectedCompany?.nome || "merinno"}</p>
       </div>
     </footer>
   );

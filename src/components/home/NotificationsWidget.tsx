@@ -37,7 +37,7 @@ export const NotificationsWidget = () => {
               <img 
                 src="https://i.pravatar.cc/150?img=44" 
                 alt="User avatar" 
-                className="h-10 w-10 rounded-full mr-4"
+                className="h-8 w-8 rounded-full mr-4"
               />
               <span className="text-base font-medium text-black dark:text-white mr-6">Jéssica</span>
               <span className="text-sm text-gray-500 dark:text-gray-400">5 min atrás</span>
