@@ -1,7 +1,5 @@
-
-import { Bell, Calendar, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 
@@ -11,62 +9,7 @@ export const UserHome = () => {
   const currentYear = new Date().getFullYear();
   
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center space-x-10">
-            <div className="text-xl font-bold text-merinno-dark">MERINNO</div>
-            
-            <nav className="hidden md:flex items-center space-x-8">
-              <a href="/" className="text-sm font-medium text-gray-900 hover:text-merinno-blue">
-                Home
-              </a>
-              <a href="/courses" className="text-sm font-medium text-gray-500 hover:text-merinno-blue">
-                Cursos
-              </a>
-              <a href="#" className="text-sm font-medium text-gray-500 hover:text-merinno-blue">
-                Ferramentas
-                <span className="ml-2 text-xs bg-blue-100 text-blue-800 rounded-full px-2 py-0.5">
-                  beta
-                </span>
-              </a>
-            </nav>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <div className="relative w-64">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Pesquisa..."
-                className="pl-8 h-9 focus-visible:ring-merinno-blue"
-              />
-            </div>
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative text-gray-500 hover:text-merinno-blue"
-            >
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative text-gray-500 hover:text-merinno-blue"
-            >
-              <img 
-                src="https://i.pravatar.cc/150?img=68" 
-                alt="User avatar" 
-                className="h-8 w-8 rounded-full"
-              />
-            </Button>
-          </div>
-        </div>
-      </header>
-
+    <div>
       <main className="container mx-auto px-4 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
