@@ -46,7 +46,10 @@ export const WelcomeSection = () => {
         {userCompany && !loading && userCompany.frase_institucional ? (
           userCompany.frase_institucional
         ) : (
-          "Juntos, estamos desenhando o futuro de grandes empresas"
+          <>
+            Juntos, estamos desenhando<br />
+            o futuro de grandes empresas
+          </>
         )}
       </h1>
       <div className="flex justify-center mt-6">
