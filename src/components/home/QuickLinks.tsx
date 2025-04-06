@@ -1,20 +1,31 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Link, FileText, Users, School, Globe, Settings } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export const QuickLinks = () => {
+  const navigate = useNavigate();
+  
   const links = [
-    { icon: Link, label: "Integração" },
-    { icon: Settings, label: "Acessos" },
-    { icon: FileText, label: "Documentos" },
-    { icon: School, label: "Escola", hasDropdown: true },
-    { icon: Globe, label: "Comunidade", hasDropdown: true }
+    { icon: Link, label: "Integração", path: "/integration" },
+    { icon: Settings, label: "Acessos", path: "/access" },
+    { icon: FileText, label: "Documentos", path: "/documents" },
+    { icon: School, label: "Escola", path: "/school", hasDropdown: true },
+    { icon: Globe, label: "Comunidade", path: "/community", hasDropdown: true }
   ];
+
+  const handleNavigate = (path: string) => {
+    navigate(path);
+  };
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-12">
       {links.map((link, index) => (
-        <Card key={index} className="border-0 shadow-none bg-white dark:bg-card rounded-[30px]">
+        <Card 
+          key={index} 
+          className="border-0 shadow-none bg-white dark:bg-card rounded-[30px] cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          onClick={() => handleNavigate(link.path)}
+        >
           <CardContent className="p-8 flex items-center justify-between">
             <div className="flex items-center">
               <span className="mr-3 bg-gray-100 dark:bg-gray-800 p-2 rounded-lg">

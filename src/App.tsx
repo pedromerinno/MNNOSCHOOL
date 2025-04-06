@@ -15,6 +15,11 @@ import Dashboard from "./pages/Dashboard";
 import Courses from "./pages/Courses";
 import CourseDetails from "./pages/CourseDetails";
 import NotFound from "./pages/NotFound";
+import Integration from "./pages/Integration";
+import Access from "./pages/Access";
+import Documents from "./pages/Documents";
+import School from "./pages/School";
+import Community from "./pages/Community";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +53,13 @@ const App = () => (
                 <MainNavigationMenu />
                 <CourseDetails />
               </>} />
+              
+              {/* Novas rotas */}
+              <Route path="/integration" element={<Integration />} />
+              <Route path="/access" element={<Access />} />
+              <Route path="/documents" element={<Documents />} />
+              <Route path="/school" element={<School />} />
+              <Route path="/community" element={<Community />} />
             </Route>
             
             {/* Catch-all route */}
