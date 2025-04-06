@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Settings, BookOpen, Wrench } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { BookOpen, Wrench, Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   NavigationMenu,
@@ -11,11 +11,12 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 export const NavMenuLinks = () => {
   const { user, userProfile } = useAuth();
-
+  const location = useLocation();
   const isAdmin = userProfile?.isAdmin === true;
 
   const adminLinks = isAdmin ? (
@@ -30,11 +31,19 @@ export const NavMenuLinks = () => {
     </li>
   ) : null;
 
+  const isCurrentPage = (path: string) => location.pathname === path;
+
   return (
     <nav>
       <ul className="flex items-center space-x-6">
         <li>
-          <Link to="/" className="text-gray-700 dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light">
+          <Link 
+            to="/" 
+            className={cn(
+              "text-sm text-gray-700 dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light",
+              isCurrentPage('/') && "font-bold"
+            )}
+          >
             Home
           </Link>
         </li>
@@ -42,10 +51,16 @@ export const NavMenuLinks = () => {
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="bg-transparent hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent text-gray-700 dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light">
-                  <div className="flex items-center">
-                    <BookOpen size={18} className="mr-1" />
+                <NavigationMenuTrigger 
+                  className={cn(
+                    "bg-transparent hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent text-gray-700 dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light text-sm",
+                    isCurrentPage('/courses') && "font-bold"
+                  )}
+                >
+                  <div className="flex items-center space-x-2">
+                    <BookOpen size={18} />
                     <span>Cursos</span>
+                    <Badge variant="secondary" className="ml-2 text-xs">beta</Badge>
                   </div>
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
@@ -111,7 +126,10 @@ export const NavMenuLinks = () => {
         <li>
           <Link 
             to="/tools" 
-            className="flex items-center space-x-1 text-gray-700 dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light"
+            className={cn(
+              "flex items-center space-x-1 text-sm text-gray-700 dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light",
+              isCurrentPage('/tools') && "font-bold"
+            )}
           >
             <Wrench size={18} className="mr-1" />
             <span>Ferramentas</span>
