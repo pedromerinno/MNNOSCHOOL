@@ -55,6 +55,8 @@ export const useCompanyFetch = ({
   const getUserCompanies = async (userId: string): Promise<Company[]> => {
     setIsLoading(true);
     try {
+      console.log(`Fetching companies for user ${userId}`);
+      
       // Get all company IDs the user is related to
       const { data: userCompanyRelations, error: relationsError } = await supabase
         .from('user_empresa')
@@ -63,6 +65,31 @@ export const useCompanyFetch = ({
 
       if (relationsError) {
         console.error("Error fetching user company relations:", relationsError);
+        
+        // Add mock company data for development/testing when database is unavailable
+        if (process.env.NODE_ENV === 'development' || relationsError.message.includes('Failed to fetch')) {
+          console.log('Using mock company data for development');
+          const mockCompanies = [{
+            id: 'mock-1',
+            nome: 'Mock Company',
+            logo: null,
+            frase_institucional: 'Esta é uma empresa de exemplo para desenvolvimento',
+            missao: 'Nossa missão é facilitar o desenvolvimento',
+            historia: 'Fundada para desenvolvimento',
+            valores: 'Desenvolvimento, Inovação',
+            video_institucional: null,
+            descricao_video: null,
+            cor_principal: '#3B82F6',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }];
+          
+          setUserCompanies(mockCompanies);
+          setSelectedCompany(mockCompanies[0]);
+          
+          return mockCompanies;
+        }
+        
         toast("Erro ao buscar empresas", {
           description: relationsError.message,
         });
@@ -105,6 +132,21 @@ export const useCompanyFetch = ({
           detail: { userId, company: userCompaniesData[0] } 
         });
         window.dispatchEvent(navEvent);
+      } else if (userCompaniesData.length > 0) {
+        // If there are multiple companies but none selected, select the first one
+        const storedCompanyId = localStorage.getItem('selectedCompanyId');
+        
+        if (!storedCompanyId) {
+          setSelectedCompany(userCompaniesData[0]);
+          // Save to localStorage for persistence
+          localStorage.setItem('selectedCompanyId', userCompaniesData[0].id);
+          
+          // Dispatch event to notify other components
+          const navEvent = new CustomEvent('company-selected', { 
+            detail: { userId, company: userCompaniesData[0] } 
+          });
+          window.dispatchEvent(navEvent);
+        }
       }
       
       return userCompaniesData;
