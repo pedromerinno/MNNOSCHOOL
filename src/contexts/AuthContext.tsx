@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +9,7 @@ import { Database } from "@/integrations/supabase/types";
 type UserProfile = {
   displayName: string | null;
   avatar: string | null;
+  isAdmin?: boolean; // Add isAdmin property
 };
 
 type AuthContextType = {
@@ -16,6 +18,7 @@ type AuthContextType = {
   loading: boolean;
   userProfile: UserProfile;
   updateUserProfile: (profile: UserProfile) => Promise<void>;
+  makeAdmin: () => Promise<void>; // Add function to make user admin
   signUp: (email: string, password: string) => Promise<{
     error: Error | null;
     data: any | null;
@@ -35,7 +38,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile>({
     displayName: null,
-    avatar: null
+    avatar: null,
+    isAdmin: false // Initialize as non-admin
   });
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -44,7 +48,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('display_name, avatar')
+        .select('display_name, avatar, is_admin')
         .eq('id', userId)
         .single();
 
@@ -62,7 +66,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (data) {
         setUserProfile({
           displayName: data.display_name,
-          avatar: data.avatar
+          avatar: data.avatar,
+          isAdmin: data.is_admin || false
         });
       }
     } catch (error) {
@@ -81,6 +86,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           id: userId,
           display_name: displayName,
           avatar: null,
+          is_admin: false
         });
 
       if (error) {
@@ -90,7 +96,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       setUserProfile({
         displayName,
-        avatar: null
+        avatar: null,
+        isAdmin: false
       });
       
       console.log('User profile created successfully');
@@ -108,6 +115,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .update({
           display_name: profile.displayName,
           avatar: profile.avatar,
+          is_admin: profile.isAdmin,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
@@ -131,6 +139,48 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
     } catch (error: any) {
       console.error('Exception updating profile in database:', error);
+      throw error;
+    }
+  };
+
+  // Function to make the current user an admin
+  const makeAdmin = async () => {
+    if (!user) return;
+    
+    try {
+      // Update local state
+      const updatedProfile = {
+        ...userProfile,
+        isAdmin: true
+      };
+      
+      // Update in the database
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          is_admin: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+      
+      if (error) {
+        console.error('Error making user admin:', error);
+        toast({
+          title: "Erro ao atualizar perfil",
+          description: error.message,
+          variant: "destructive",
+        });
+        throw error;
+      }
+      
+      setUserProfile(updatedProfile);
+      
+      toast({
+        title: "Perfil atualizado",
+        description: "Você agora é um administrador.",
+      });
+    } catch (error: any) {
+      console.error('Exception making user admin:', error);
       throw error;
     }
   };
@@ -237,6 +287,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         loading,
         userProfile,
         updateUserProfile,
+        makeAdmin,
         signUp,
         signIn,
         signOut,
