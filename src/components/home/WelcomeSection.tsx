@@ -64,10 +64,10 @@ export const WelcomeSection = () => {
         {displayCompany && (
           <Button 
             onClick={handleLearnMore} 
-            className="mt-6 flex items-center gap-2 text-white bg-black rounded-full"
+            className="mt-6 flex items-center gap-2 text-white bg-black rounded-full text-sm"
             variant="default"
           >
-            Clique para saber mais sobre {displayCompany.nome}
+            Saiba mais sobre {displayCompany.nome}
             <ArrowRight className="h-4 w-4" />
           </Button>
         )}
