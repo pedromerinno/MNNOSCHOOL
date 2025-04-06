@@ -18,12 +18,12 @@ export const WelcomeSection = () => {
     <div className="mb-16 mt-16">
       <div className="flex justify-center">
         <p 
-          className="text-gray-600 mb-2 text-center bg-[#FFF1E0] py-2.5 px-4 rounded-full max-w-fit"
+          className="text-gray-600 mb-2 text-center py-2.5 px-4 rounded-full max-w-fit"
         >
           Olá, {userName}
         </p>
       </div>
-      <h1 className="text-3xl md:text-4xl font-medium text-center my-5">
+      <h1 className="text-3xl md:text-4xl text-center my-5 font-medium">
         Juntos, estamos desenhando<br />
         o futuro de grandes empresas
       </h1>
