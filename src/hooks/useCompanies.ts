@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Company, UserCompanyDetails } from "@/types/company";
@@ -404,7 +405,19 @@ export const useCompanies = () => {
     try {
       console.log(`Updating user selected company: User ${userId}, Company ${companyId}`);
       
-      // We'll keep all existing company relations and create a new entry to make it the most recent
+      // First, let's ensure we're not creating too many duplicate entries
+      // by removing any existing relations with this exact company first
+      const { error: deleteError } = await supabase
+        .from('user_empresa')
+        .delete()
+        .match({ user_id: userId, company_id: companyId });
+      
+      if (deleteError) {
+        console.error("Error cleaning up existing company relation:", deleteError);
+        // Continue anyway as this is just a cleanup step
+      }
+      
+      // Now create a new entry to make it the most recent
       const { error: insertError } = await supabase
         .from('user_empresa')
         .insert([

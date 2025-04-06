@@ -28,6 +28,7 @@ export const CompanySelector = () => {
           // Get all companies the user is related to
           const companies = await getUserCompanies(user.id);
           setUserCompanies(companies);
+          console.log('CompanySelector: Fetched user companies:', companies.map(c => c.nome).join(', '));
           
           // If there are companies, get the current one
           if (companies.length > 0) {
