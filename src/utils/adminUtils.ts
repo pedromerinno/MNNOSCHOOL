@@ -23,7 +23,10 @@ export const makeUserAdmin = async (targetEmail: string) => {
     // If we couldn't find by email in profiles, try auth.users
     if (profileError || !profileData) {
       console.log('User not found in profiles by email, trying auth.users...');
-      const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
+      // Explicitly type the return value to avoid deep type instantiation
+      const response = await supabase.auth.admin.listUsers();
+      const authData = response.data;
+      const authError = response.error;
       
       if (authError) {
         console.error('Error fetching users:', authError);
