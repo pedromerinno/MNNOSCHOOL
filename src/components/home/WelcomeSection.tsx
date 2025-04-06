@@ -7,29 +7,25 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Company } from "@/types/company";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export const WelcomeSection = () => {
   const { user, userProfile } = useAuth();
-  const { getUserCompanies, selectedCompany, userCompanies, selectCompany, isLoading } = useCompanies();
+  const { getUserCompanies, selectedCompany, userCompanies, selectCompany } = useCompanies();
   const navigate = useNavigate();
   const [displayCompany, setDisplayCompany] = useState<Company | null>(null);
-  const [localLoading, setLocalLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch user companies when component mounts
   useEffect(() => {
     const fetchUserCompanies = async () => {
       if (user?.id) {
-        setLocalLoading(true);
+        setIsLoading(true);
         try {
-          console.log('WelcomeSection: Fetching user companies');
-          const companies = await getUserCompanies(user.id);
-          console.log('WelcomeSection: Fetched companies:', companies);
+          await getUserCompanies(user.id);
         } catch (error) {
-          console.error('Error fetching company data:', error);
+          console.error('Erro na busca da empresa:', error);
           toast.error("Não foi possível carregar os dados da empresa. Tente novamente mais tarde.");
         } finally {
-          setLocalLoading(false);
+          setIsLoading(false);
         }
       }
     };
@@ -37,16 +33,14 @@ export const WelcomeSection = () => {
     fetchUserCompanies();
   }, [user, getUserCompanies]);
 
-  // Set display company when selected company or userCompanies changes
   useEffect(() => {
     if (selectedCompany) {
       console.log('WelcomeSection: Using selected company:', selectedCompany.nome);
       setDisplayCompany(selectedCompany);
     } else if (userCompanies && userCompanies.length > 0) {
-      console.log('WelcomeSection: No company selected, using first company:', userCompanies[0].nome);
+      console.log('WelcomeSection: No company selected, displaying first company:', userCompanies[0].nome);
       setDisplayCompany(userCompanies[0]);
       
-      // Auto-select first company if no company is selected
       if (user?.id) {
         selectCompany(user.id, userCompanies[0]);
       }
@@ -59,18 +53,6 @@ export const WelcomeSection = () => {
     navigate('/manifesto');
   };
 
-  if (localLoading || isLoading) {
-    return (
-      <div className="mb-16 mt-10">
-        <div className="flex flex-col items-center">
-          <Skeleton className="h-8 w-32 mb-6 rounded-full" />
-          <Skeleton className="h-14 w-1/2 mb-5" />
-          <Skeleton className="h-10 w-40 rounded-full" />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="mb-16 mt-10">
       <div className="flex flex-col items-center">
@@ -79,11 +61,19 @@ export const WelcomeSection = () => {
         >
           Olá, {userName}
         </p>
-        <p 
-          className="text-[#000000] text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-5"
-        >
-          {displayCompany?.frase_institucional || "Desenhe o futuro com grandes empresas"}
-        </p>
+        {isLoading ? (
+          <p 
+            className="text-[#000000] text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-5"
+          >
+            Carregando...
+          </p>
+        ) : (
+          <p 
+            className="text-[#000000] text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-5"
+          >
+            {displayCompany?.frase_institucional || "Juntos, estamos desenhando o futuro de grandes empresas"}
+          </p>
+        )}
         {displayCompany && (
           <Button 
             onClick={handleLearnMore} 
