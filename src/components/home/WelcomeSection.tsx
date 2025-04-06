@@ -16,7 +16,11 @@ export const WelcomeSection = () => {
 
   return (
     <div className="mb-8">
-      <p className="text-gray-600 mb-2">Olá, {userName}</p>
+      <p 
+        className="text-gray-600 mb-2 text-center bg-[#FFF1E0] py-2.5 px-4 rounded-md"
+      >
+        Olá, {userName}
+      </p>
       <h1 className="text-3xl md:text-4xl font-bold text-center mb-4">
         Juntos, estamos desenhando<br />
         o futuro de grandes empresas
@@ -32,3 +36,4 @@ export const WelcomeSection = () => {
     </div>
   );
 };
+
