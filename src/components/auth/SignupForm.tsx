@@ -2,34 +2,54 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 
-export const LoginForm = () => {
+export const SignupForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const { signIn } = useAuth();
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [isRegistering, setIsRegistering] = useState(false);
+  const { signUp } = useAuth();
+
+  const validatePasswords = () => {
+    if (password !== confirmPassword) {
+      setPasswordError("As senhas não coincidem");
+      return false;
+    }
+    
+    if (password.length < 6) {
+      setPasswordError("A senha deve ter pelo menos 6 caracteres");
+      return false;
+    }
+    
+    setPasswordError("");
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoggingIn(true);
+    
+    if (!validatePasswords()) {
+      return;
+    }
+    
+    setIsRegistering(true);
     
     try {
-      await signIn(email, password);
+      await signUp(email, password);
     } finally {
-      setIsLoggingIn(false);
+      setIsRegistering(false);
     }
   };
 
   return (
     <div className="w-full max-w-md">
-      <h2 className="text-3xl font-medium mb-1">Bem-vindo(a)</h2>
+      <h2 className="text-3xl font-medium mb-1">Criar conta</h2>
       <p className="text-sm text-gray-500 mb-8">
-        Preencha os campos a baixo para entrar no universo que construímos cuidadosamente para você.
+        Preencha os campos a baixo para começar sua jornada conosco.
       </p>
       
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -61,47 +81,41 @@ export const LoginForm = () => {
           />
         </div>
         
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="remember"
-              checked={rememberMe}
-              onCheckedChange={(checked) => 
-                setRememberMe(checked === true ? true : false)
-              }
-              className="rounded-sm data-[state=checked]:bg-merinno-dark"
-            />
-            <label
-              htmlFor="remember"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              lembrar meu usuário
-            </label>
-          </div>
-          
-          <Link to="/forgot-password" className="text-sm text-gray-500 hover:text-merinno-dark">
-            esqueci minha senha
-          </Link>
+        <div className="space-y-2">
+          <label htmlFor="confirmPassword" className="text-sm text-gray-500">
+            Confirme sua senha
+          </label>
+          <Input
+            id="confirmPassword"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            className="bg-transparent border-b border-gray-300 rounded-none px-0 h-10 focus-visible:ring-0 focus-visible:border-merinno-dark"
+          />
+          {passwordError && (
+            <p className="text-sm text-red-500 mt-1">{passwordError}</p>
+          )}
         </div>
         
         <Button
           type="submit"
-          disabled={isLoggingIn}
+          disabled={isRegistering}
           className="w-32 h-12 rounded-full bg-merinno-dark hover:bg-black text-white"
         >
-          {isLoggingIn ? (
+          {isRegistering ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            "Acessar"
+            "Cadastrar"
           )}
         </Button>
       </form>
       
       <div className="mt-6 text-center">
         <p className="text-sm text-gray-500">
-          Não tem uma conta?{" "}
-          <Link to="/signup" className="text-merinno-dark hover:underline">
-            Cadastre-se
+          Já tem uma conta?{" "}
+          <Link to="/login" className="text-merinno-dark hover:underline">
+            Faça login
           </Link>
         </p>
       </div>

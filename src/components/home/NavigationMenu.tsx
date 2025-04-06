@@ -1,5 +1,5 @@
 
-import { Bell, Moon, Search, Sun } from "lucide-react";
+import { Bell, Moon, Search, Sun, LogIn, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
@@ -12,9 +12,11 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const MainNavigationMenu = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const { user, signOut } = useAuth();
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
@@ -116,17 +118,48 @@ export const MainNavigationMenu = () => {
             />
           </div>
           
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative text-gray-500 hover:text-merinno-blue"
-          >
-            <img 
-              src="https://i.pravatar.cc/150?img=68" 
-              alt="User avatar" 
-              className="h-8 w-8 rounded-full"
-            />
-          </Button>
+          {user ? (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative text-gray-500 hover:text-merinno-blue"
+              >
+                <Link to="/dashboard">
+                  <img 
+                    src="https://i.pravatar.cc/150?img=68" 
+                    alt="User avatar" 
+                    className="h-8 w-8 rounded-full"
+                  />
+                </Link>
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative text-gray-500 hover:text-merinno-blue"
+                onClick={() => signOut()}
+              >
+                <LogIn className="h-5 w-5" />
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button className="rounded-full bg-merinno-dark hover:bg-black text-white">
+                <Link to="/login" className="flex items-center">
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Login
+                </Link>
+              </Button>
+              
+              <Button variant="outline" className="rounded-full border-merinno-dark text-merinno-dark hover:bg-merinno-dark hover:text-white">
+                <Link to="/signup" className="flex items-center">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Cadastro
+                </Link>
+              </Button>
+            </>
+          )}
           
           <Button
             variant="ghost"
