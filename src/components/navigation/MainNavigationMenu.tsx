@@ -12,10 +12,10 @@ export const MainNavigationMenu = () => {
   const { user } = useAuth();
 
   return (
-    <header className="w-full border-b border-gray-200">
+    <header className="w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center space-x-10">
-          <Link to="/" className="text-xl font-bold text-merinno-dark">
+          <Link to="/" className="text-2xl font-bold text-gray-900 dark:text-white">
             merinno
           </Link>
           

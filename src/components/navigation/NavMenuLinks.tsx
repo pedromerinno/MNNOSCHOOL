@@ -20,9 +20,9 @@ export const NavMenuLinks = () => {
     <li>
       <Link 
         to="/admin" 
-        className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light"
+        className="flex items-center text-gray-700 dark:text-gray-300 hover:text-gray-900 hover:dark:text-white"
       >
-        <Settings size={20} />
+        <Settings size={20} className="mr-1" />
         <span>Admin</span>
       </Link>
     </li>
@@ -30,9 +30,9 @@ export const NavMenuLinks = () => {
 
   return (
     <nav>
-      <ul className="flex items-center space-x-6">
+      <ul className="flex items-center space-x-8">
         <li>
-          <Link to="/" className="text-gray-700 dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light">
+          <Link to="/" className="text-gray-700 dark:text-gray-300 hover:text-gray-900 hover:dark:text-white">
             Home
           </Link>
         </li>
@@ -40,7 +40,7 @@ export const NavMenuLinks = () => {
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="bg-transparent hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent text-gray-700 dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light">
+                <NavigationMenuTrigger className="bg-transparent hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent text-gray-700 dark:text-gray-300 hover:text-gray-900 hover:dark:text-white">
                   <div className="flex items-center">
                     <BookOpen size={18} className="mr-1" />
                     <span>Cursos</span>
@@ -109,7 +109,7 @@ export const NavMenuLinks = () => {
         <li>
           <Link 
             to="/tools" 
-            className="flex items-center space-x-1 text-gray-700 dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light"
+            className="flex items-center text-gray-700 dark:text-gray-300 hover:text-gray-900 hover:dark:text-white"
           >
             <Wrench size={18} className="mr-1" />
             <span>Ferramentas</span>
