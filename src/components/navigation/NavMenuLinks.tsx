@@ -60,7 +60,6 @@ export const NavMenuLinks = () => {
                   <div className="flex items-center space-x-2">
                     <BookOpen size={18} />
                     <span>Cursos</span>
-                    <Badge variant="beta" className="ml-2 text-xs">beta</Badge>
                   </div>
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
@@ -127,11 +126,12 @@ export const NavMenuLinks = () => {
           <Link 
             to="/tools" 
             className={cn(
-              "text-sm text-gray-700 dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light",
+              "flex items-center space-x-2 text-sm text-gray-700 dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light",
               isCurrentPage('/tools') && "font-bold"
             )}
           >
             Ferramentas
+            <Badge variant="beta" className="ml-2 text-xs p-2">beta</Badge>
           </Link>
         </li>
         {adminLinks}
