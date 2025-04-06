@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 export const WelcomeSection = () => {
   const { user, userProfile } = useAuth();
-  const { getUserCompanies, selectedCompany } = useCompanies();
+  const { getUserCompanies } = useCompanies();
 
   // Initial fetch of user companies on component mount
   useEffect(() => {
@@ -29,11 +29,15 @@ export const WelcomeSection = () => {
 
   return (
     <div className="mb-16 mt-10">
-      <div className="flex justify-center">
+      <div className="flex flex-col items-center">
         <p 
-          className="text-gray-700 dark:text-gray-200 mb-8 text-center bg-[#FFF5E4] dark:bg-amber-900/30 py-2.5 px-8 rounded-full max-w-fit text-lg"
+          className="text-gray-700 dark:text-gray-200 mb-4 text-center bg-[#FFF5E4] dark:bg-amber-900/30 py-2.5 px-8 rounded-full max-w-fit text-lg"
         >
           Olá, {userName}
+        </p>
+        <p className="text-gray-600 dark:text-gray-300 text-center text-base">
+          Juntos, estamos desenhando
+          o futuro de grandes empresas
         </p>
       </div>
     </div>
