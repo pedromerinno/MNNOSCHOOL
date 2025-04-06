@@ -1,16 +1,17 @@
-
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { toast } from "sonner";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { Company } from "@/types/company";
 
 export const WelcomeSection = () => {
   const { user, userProfile } = useAuth();
-  const { getUserCompanies, selectedCompany } = useCompanies();
+  const { getUserCompanies, selectedCompany, userCompanies, selectCompany } = useCompanies();
   const navigate = useNavigate();
+  const [displayCompany, setDisplayCompany] = useState<Company | null>(null);
 
   // Initial fetch of user companies on component mount
   useEffect(() => {
@@ -27,6 +28,24 @@ export const WelcomeSection = () => {
 
     fetchUserCompanies();
   }, [user, getUserCompanies]);
+
+  // Set display company when selectedCompany or userCompanies changes
+  useEffect(() => {
+    // If there's a selected company, use it
+    if (selectedCompany) {
+      setDisplayCompany(selectedCompany);
+    } 
+    // Otherwise, if user has companies but none selected, use the first one
+    else if (userCompanies && userCompanies.length > 0) {
+      console.log('No company selected, displaying first company:', userCompanies[0].nome);
+      setDisplayCompany(userCompanies[0]);
+      
+      // If user is logged in, also select this company
+      if (user?.id) {
+        selectCompany(user.id, userCompanies[0]);
+      }
+    }
+  }, [selectedCompany, userCompanies, user, selectCompany]);
 
   // Use displayName from userProfile if available, otherwise extract from email
   const userName = userProfile?.displayName || user?.email?.split('@')[0] || 'Usuário';
@@ -46,15 +65,15 @@ export const WelcomeSection = () => {
         <p 
           className="text-[#000000] text-center text-[40px] font-normal max-w-[50%] leading-[1.1]"
         >
-          {selectedCompany?.frase_institucional || "Juntos, estamos desenhando o futuro de grandes empresas"}
+          {displayCompany?.frase_institucional || "Juntos, estamos desenhando o futuro de grandes empresas"}
         </p>
-        {selectedCompany && (
+        {displayCompany && (
           <Button 
             onClick={handleLearnMore} 
             className="mt-4 flex items-center gap-2"
             variant="outline"
           >
-            Clique para saber mais sobre {selectedCompany.nome}
+            Clique para saber mais sobre {displayCompany.nome}
             <ArrowRight className="h-4 w-4" />
           </Button>
         )}
@@ -62,4 +81,3 @@ export const WelcomeSection = () => {
     </div>
   );
 };
-
