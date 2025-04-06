@@ -17,6 +17,22 @@ export const WelcomeSection = () => {
   const [isLoadingLocal, setIsLoadingLocal] = useState(true);
   const [fetchAttempted, setFetchAttempted] = useState(false);
   
+  // Carregar dados de cache imediatamente para exibição rápida
+  useEffect(() => {
+    // Tentar carregar empresa do cache logo ao iniciar
+    const cachedCompany = localStorage.getItem('selectedCompany');
+    if (cachedCompany) {
+      try {
+        const parsedCompany = JSON.parse(cachedCompany) as Company;
+        console.log('Using cached company for initial display:', parsedCompany.nome);
+        setDisplayCompany(parsedCompany);
+        setIsLoadingLocal(false);
+      } catch (e) {
+        console.error('Error parsing cached company', e);
+      }
+    }
+  }, []);
+  
   useEffect(() => {
     const fetchUserCompanies = async () => {
       if (user?.id) {
@@ -28,7 +44,7 @@ export const WelcomeSection = () => {
           toast.error("Não foi possível carregar os dados da empresa. Usando dados em cache se disponíveis.");
         } finally {
           // Definir um timeout mínimo para o carregamento para evitar flash de conteúdo
-          setTimeout(() => setIsLoadingLocal(false), 300);
+          setTimeout(() => setIsLoadingLocal(false), 100); // Reduzido de 300ms para 100ms
         }
       } else {
         setIsLoadingLocal(false);
@@ -53,7 +69,7 @@ export const WelcomeSection = () => {
       if (user?.id) {
         selectCompany(user.id, userCompanies[0]);
       }
-    } else {
+    } else if (!displayCompany) { // Só buscar no cache se ainda não temos displayCompany
       // Check if we have a cached company to display
       const cachedCompany = localStorage.getItem('selectedCompany');
       if (cachedCompany) {
@@ -66,7 +82,7 @@ export const WelcomeSection = () => {
         }
       }
     }
-  }, [selectedCompany, userCompanies, user, selectCompany]);
+  }, [selectedCompany, userCompanies, user, selectCompany, displayCompany]);
 
   const userName = userProfile?.displayName || user?.email?.split('@')[0] || 'Usuário';
 
@@ -86,7 +102,7 @@ export const WelcomeSection = () => {
           Olá, {userName}
         </p>
         
-        {isLoadingLocal ? (
+        {isLoadingLocal && !displayCompany ? (
           <div className="flex flex-col items-center space-y-4 w-full">
             <Skeleton className="h-[40px] w-[80%] max-w-[600px] rounded-lg mb-1" />
             <Skeleton className="h-[40px] w-[60%] max-w-[500px] rounded-lg mb-5" />
