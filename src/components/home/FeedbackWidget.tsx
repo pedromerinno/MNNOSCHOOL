@@ -6,7 +6,7 @@ export const FeedbackWidget = () => {
     <Card className="border-0 shadow-md overflow-hidden">
       <CardContent className="p-0">
         <div className="p-4 flex justify-between items-center">
-          <h3 className="font-medium">Feedbacks</h3>
+          <h3 className="text-2xl font-medium">Feedbacks</h3>
           <span className="text-2xl font-medium">4</span>
         </div>
         
