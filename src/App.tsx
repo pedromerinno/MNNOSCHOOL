@@ -23,6 +23,7 @@ import School from "./pages/School";
 import Community from "./pages/Community";
 import Admin from "./pages/Admin";
 import Tools from "./pages/Tools";
+import Manifesto from "./pages/Manifesto";
 
 const queryClient = new QueryClient();
 
@@ -78,6 +79,10 @@ const App = () => (
               <Route path="/tools" element={<>
                 <MainNavigationMenu />
                 <Tools />
+              </>} />
+              <Route path="/manifesto" element={<>
+                <MainNavigationMenu />
+                <Manifesto />
               </>} />
               
               <Route 

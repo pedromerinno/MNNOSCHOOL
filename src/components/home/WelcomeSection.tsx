@@ -8,7 +8,7 @@ export const WelcomeSection = () => {
   const { user, userProfile } = useAuth();
 
   const handleLearnMore = () => {
-    navigate('/');
+    navigate('/manifesto');
   };
 
   // Use displayName from userProfile if available, otherwise extract from email
