@@ -9,16 +9,24 @@ export const useCompanyUserManagement = () => {
    */
   const clearCompanyCaches = () => {
     console.log('Clearing company caches');
-    // Clear company-related caches
-    localStorage.removeItem('userCompanies');
-    localStorage.removeItem('userCompaniesTimestamp');
     
-    // Only clear selected company if it's stored separately
-    const selectedCompanyId = localStorage.getItem('selectedCompanyId');
-    if (selectedCompanyId) {
-      localStorage.removeItem('selectedCompanyId');
-      localStorage.removeItem('selectedCompany');
-    }
+    // Clear all localStorage items related to companies
+    const keysToRemove = [
+      'userCompanies',
+      'userCompaniesTimestamp',
+      'selectedCompanyId',
+      'selectedCompany'
+    ];
+    
+    keysToRemove.forEach(key => {
+      if (localStorage.getItem(key)) {
+        console.log(`Removing ${key} from localStorage`);
+        localStorage.removeItem(key);
+      }
+    });
+    
+    // Dispatch an event to notify components to refresh
+    window.dispatchEvent(new CustomEvent('company-relation-changed'));
   };
 
   /**
@@ -119,7 +127,7 @@ export const useCompanyUserManagement = () => {
         return false;
       }
 
-      // Clear caches to ensure UI is updated
+      // Clear caches to ensure UI is updated immediately
       clearCompanyCaches();
 
       toast("Usuário removido", {
@@ -193,6 +201,7 @@ export const useCompanyUserManagement = () => {
   return {
     assignUserToCompany,
     removeUserFromCompany,
-    getCompanyUsers
+    getCompanyUsers,
+    clearCompanyCaches
   };
 };

@@ -31,7 +31,7 @@ export const useCompanyFetching = ({
   } = useCompanyRequest();
   
   const { executeWithRetry } = useCompanyRetry();
-  const { getCachedUserCompanies, cacheUserCompanies } = useCompanyCache();
+  const { getCachedUserCompanies, cacheUserCompanies, clearCachedUserCompanies, isCacheExpired } = useCompanyCache();
   
   const companyFetchProps = {
     setIsLoading,
@@ -60,10 +60,12 @@ export const useCompanyFetching = ({
     incrementFetchCount();
     
     try {
-      // Use cached data for immediate UI update
-      const cachedData = getCachedUserCompanies();
-      if (cachedData && cachedData.length > 0) {
-        setUserCompanies(cachedData);
+      // Use cached data for immediate UI update only if not doing a forced refresh
+      if (!forceRefresh) {
+        const cachedData = getCachedUserCompanies();
+        if (cachedData && cachedData.length > 0) {
+          setUserCompanies(cachedData);
+        }
       }
       
       // Perform request to get updated data
@@ -104,12 +106,14 @@ export const useCompanyFetching = ({
   ]);
   
   /**
-   * Forces a fetch of user companies, ignoring timing checks
+   * Forces a fetch of user companies, ignoring timing checks and clearing cache first
    */
   const forceGetUserCompanies = useCallback(async (userId: string): Promise<Company[]> => {
-    console.log('Forcing user companies fetch');
+    console.log('Forcing user companies fetch and clearing cache first');
+    // Clear caches before fetching to ensure we get fresh data
+    clearCachedUserCompanies();
     return getUserCompanies(userId, true);
-  }, [getUserCompanies]);
+  }, [getUserCompanies, clearCachedUserCompanies]);
   
   return {
     getUserCompanies,

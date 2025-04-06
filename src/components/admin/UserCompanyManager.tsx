@@ -83,7 +83,7 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
         // Reset selection
         setSelectedUserId('');
         
-        // Force refresh of companies data to update UI
+        // Force refresh of companies data to update UI immediately
         if (user?.id) {
           await forceGetUserCompanies(user.id);
         }
@@ -103,10 +103,17 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
         // Refresh the list
         await fetchCompanyUsers();
         
-        // Force refresh of companies data to update UI
+        // Add a small delay to ensure the database transaction completes
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Force refresh of companies data to update UI immediately
         if (user?.id) {
+          console.log("Forcing refresh of user companies after removing user");
           await forceGetUserCompanies(user.id);
         }
+        
+        // Dispatch a custom event to notify components to refresh their company data
+        window.dispatchEvent(new CustomEvent('company-relation-changed'));
       }
     } catch (error: any) {
       console.error('Error removing user from company:', error);

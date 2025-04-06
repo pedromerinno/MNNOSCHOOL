@@ -19,22 +19,21 @@ export const CompanySelector = () => {
     getUserCompanies, 
     selectCompany,
     isLoading,
-    fetchCount 
+    fetchCount,
+    forceGetUserCompanies
   } = useCompanies();
 
-  // Fetch user companies on component mount - only if not already fetched
+  // Fetch user companies on component mount - with forced refresh to ensure latest data
   useEffect(() => {
     const fetchUserCompanies = async () => {
-      if (user?.id && userCompanies.length === 0 && !isLoading) {
-        console.log('CompanySelector: Iniciando busca de empresas do usuário');
-        await getUserCompanies(user.id, false);
-      } else if (userCompanies.length > 0) {
-        console.log('CompanySelector: Usando empresas já carregadas');
+      if (user?.id) {
+        console.log('CompanySelector: Iniciando busca forçada de empresas do usuário');
+        await forceGetUserCompanies(user.id);
       }
     };
 
     fetchUserCompanies();
-  }, [user, getUserCompanies, userCompanies.length, isLoading]);
+  }, [user, forceGetUserCompanies]);
 
   // Debug log to check selected company
   useEffect(() => {
