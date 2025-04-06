@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { BookOpen, Settings } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   NavigationMenu,
@@ -23,10 +23,12 @@ export const NavMenuLinks = () => {
     <li>
       <Link 
         to="/admin" 
-        className="flex items-center space-x-2 text-gray-500 dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light"
+        className={cn(
+          "text-sm text-[rgb(107_114_128)] dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light",
+          isCurrentPage('/admin') && "font-bold text-gray-700"
+        )}
       >
-        <Settings size={20} className="text-gray-500" />
-        <span>Admin</span>
+        Admin
       </Link>
     </li>
   ) : null;
