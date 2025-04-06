@@ -18,25 +18,28 @@ export const CompanySelector = () => {
     selectedCompany, 
     getUserCompanies, 
     selectCompany,
-    isLoading 
+    isLoading,
+    fetchCount 
   } = useCompanies();
 
-  // Fetch user companies on component mount
+  // Fetch user companies on component mount - only if not already fetched
   useEffect(() => {
     const fetchUserCompanies = async () => {
-      if (user?.id) {
-        console.log('CompanySelector: Fetching user companies');
+      if (user?.id && userCompanies.length === 0 && !isLoading) {
+        console.log('CompanySelector: Iniciando busca de empresas do usuário');
         await getUserCompanies(user.id);
+      } else if (userCompanies.length > 0) {
+        console.log('CompanySelector: Usando empresas já carregadas');
       }
     };
 
     fetchUserCompanies();
-  }, [user, getUserCompanies]);
+  }, [user, getUserCompanies, userCompanies.length, isLoading]);
 
   // Debug log to check selected company
   useEffect(() => {
     if (selectedCompany) {
-      console.log('CompanySelector: Selected company data:', {
+      console.log('CompanySelector: Empresa selecionada:', {
         nome: selectedCompany.nome,
         frase: selectedCompany.frase_institucional
       });
@@ -45,8 +48,7 @@ export const CompanySelector = () => {
 
   const handleCompanyChange = (company) => {
     if (company && user?.id) {
-      console.log('CompanySelector: Selecting company:', company.nome);
-      console.log('CompanySelector: Company phrase:', company.frase_institucional);
+      console.log('CompanySelector: Selecionando empresa:', company.nome);
       
       // Certifique-se de que a empresa está completa antes de selecioná-la
       if (!company.frase_institucional) {

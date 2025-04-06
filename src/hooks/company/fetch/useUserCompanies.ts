@@ -5,11 +5,38 @@ import { toast } from "sonner";
 import { retryOperation } from "../utils/retryUtils";
 import { UseCompanyFetchProps } from "../types/fetchTypes";
 
+// Tempo de expiração do cache em ms (30 minutos)
+const CACHE_EXPIRATION = 30 * 60 * 1000;
+
 export const useUserCompanies = ({
   setIsLoading,
   setUserCompanies,
   setSelectedCompany
 }: Pick<UseCompanyFetchProps, 'setIsLoading' | 'setUserCompanies' | 'setSelectedCompany'>) => {
+  
+  /**
+   * Verifica se o cache de empresas está válido
+   */
+  const isCacheValid = (): boolean => {
+    const cachedData = localStorage.getItem('userCompaniesTimestamp');
+    if (!cachedData) return false;
+    
+    try {
+      const timestamp = parseInt(cachedData, 10);
+      const now = Date.now();
+      return (now - timestamp) < CACHE_EXPIRATION;
+    } catch (e) {
+      return false;
+    }
+  };
+  
+  /**
+   * Atualiza o timestamp do cache de empresas
+   */
+  const updateCacheTimestamp = (): void => {
+    localStorage.setItem('userCompaniesTimestamp', Date.now().toString());
+  };
+
   /**
    * Fetches all companies a user is related to and automatically selects
    * the first one if there's only one company
@@ -40,6 +67,12 @@ export const useUserCompanies = ({
             });
             window.dispatchEvent(navEvent);
           }
+        }
+        
+        // Se o cache for válido e não estiver vazio, podemos retornar os dados do cache
+        if (isCacheValid() && cachedData.length > 0) {
+          console.log("Cache válido, pulando requisição ao servidor");
+          return cachedData;
         }
       } catch (e) {
         console.error("Erro ao parsear empresas em cache", e);
@@ -79,6 +112,7 @@ export const useUserCompanies = ({
         setUserCompanies([]);
         setSelectedCompany(null);
         localStorage.removeItem('userCompanies');
+        localStorage.removeItem('userCompaniesTimestamp');
         setIsLoading(false);
         return [];
       }
@@ -108,9 +142,10 @@ export const useUserCompanies = ({
       const userCompaniesData = companies as Company[];
       setUserCompanies(userCompaniesData);
       
-      // Cache the companies for offline fallback
+      // Cache the companies for offline fallback and update timestamp
       if (userCompaniesData.length > 0) {
         localStorage.setItem('userCompanies', JSON.stringify(userCompaniesData));
+        updateCacheTimestamp();
       }
       
       // If there's only one company, automatically select it

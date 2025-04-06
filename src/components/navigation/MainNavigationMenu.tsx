@@ -8,9 +8,19 @@ import { NotificationButton } from "@/components/navigation/NotificationButton";
 import { UserNavigation } from "@/components/navigation/UserNavigation";
 import { AuthButtons } from "@/components/navigation/AuthButtons";
 import { CompanySelector } from "@/components/navigation/CompanySelector";
+import { useEffect } from "react";
+import { useCompanies } from "@/hooks/useCompanies";
 
 export const MainNavigationMenu = () => {
   const { user } = useAuth();
+  const { userCompanies } = useCompanies();
+
+  // Log para debug do número de empresas carregadas
+  useEffect(() => {
+    if (userCompanies.length > 0) {
+      console.log(`MainNavigationMenu: ${userCompanies.length} empresas carregadas`);
+    }
+  }, [userCompanies.length]);
 
   return (
     <header className="w-full border-b border-gray-200">
