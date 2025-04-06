@@ -31,7 +31,7 @@ export const WelcomeSection = () => {
             toast.error("Não foi possível carregar os dados da empresa. Tente novamente mais tarde.");
           } else {
             setUserCompany(result.company);
-            console.log('WelcomeSection: Company fetched successfully', result.company);
+            console.log('WelcomeSection: Company fetched successfully', result.company?.nome);
           }
         } catch (error) {
           console.error('Erro na busca da empresa:', error);
@@ -57,8 +57,8 @@ export const WelcomeSection = () => {
         setLoading(true);
         try {
           const result = await getUserCompany(userId);
-          if (!result.error) {
-            console.log('WelcomeSection: Updated company after selection', result.company);
+          if (!result.error && result.company) {
+            console.log('WelcomeSection: Updated company after selection', result.company.nome);
             setUserCompany(result.company);
           } else {
             console.error('Erro ao buscar empresa após seleção:', result.error);

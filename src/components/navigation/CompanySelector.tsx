@@ -60,6 +60,27 @@ export const CompanySelector = () => {
     fetchUserCompanies();
   }, [user, getUserCompanies, getUserCompany, updateUserSelectedCompany]);
 
+  // Listen for company selection events from UserNavigation
+  useEffect(() => {
+    const handleCompanySelected = (event: CustomEvent) => {
+      const { userId, companyId } = event.detail;
+      
+      if (userId && companyId && user?.id === userId) {
+        const selectedComp = userCompanies.find(c => c.id === companyId);
+        if (selectedComp) {
+          console.log('CompanySelector: Company selection event received', selectedComp.nome);
+          setSelectedCompany(selectedComp);
+        }
+      }
+    };
+
+    window.addEventListener('company-selected', handleCompanySelected as EventListener);
+    
+    return () => {
+      window.removeEventListener('company-selected', handleCompanySelected as EventListener);
+    };
+  }, [userCompanies, user]);
+
   const handleCompanyChange = async (companyId: string) => {
     const company = userCompanies.find(c => c.id === companyId);
     if (company && user?.id) {
@@ -89,12 +110,10 @@ export const CompanySelector = () => {
     }
   };
 
-  // Get the default text to display (selected company name or first company name or "merinno")
+  // Get the default text to display (selected company name or "merinno")
   const getDefaultText = () => {
     if (selectedCompany?.nome) {
       return selectedCompany.nome;
-    } else if (userCompanies.length > 0 && userCompanies[0].nome) {
-      return userCompanies[0].nome;
     }
     return "merinno";
   };
