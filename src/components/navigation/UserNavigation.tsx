@@ -67,20 +67,26 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
           </div>
           <DropdownMenuItem 
             className="cursor-pointer flex items-center gap-2"
-            onClick={openProfileDialog}
+            onClick={(e) => {
+              e.stopPropagation();
+              openProfileDialog();
+            }}
           >
             <User className="h-4 w-4" />
             <span>Editar Perfil</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-            <Link to="/dashboard" className="flex items-center gap-2 cursor-pointer">
+            <Link to="/dashboard" className="flex items-center gap-2 w-full cursor-pointer">
               <span>Dashboard</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem 
             className="cursor-pointer flex items-center gap-2"
-            onClick={() => signOut()}
+            onClick={(e) => {
+              e.stopPropagation();
+              signOut();
+            }}
           >
             <LogOut className="h-4 w-4" />
             <span>Sair</span>
