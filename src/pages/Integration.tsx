@@ -1,6 +1,6 @@
 
 import { useCompanies } from "@/hooks/useCompanies";
-import { ContentSkeleton } from "@/components/ui/content-skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Integration = () => {
   const { selectedCompany, isLoading } = useCompanies();
@@ -12,11 +12,11 @@ const Integration = () => {
         <div className="bg-white dark:bg-card rounded-lg p-6 shadow-sm">
           {isLoading ? (
             <>
-              <ContentSkeleton lines={1} height={32} width="40%" className="mb-6" />
-              <ContentSkeleton lines={2} height={20} width="100%" />
+              <Skeleton className="h-8 w-64 mb-4" />
+              <Skeleton className="h-4 w-full mb-4" />
               <div className="grid md:grid-cols-2 gap-6 mt-8">
-                <ContentSkeleton lines={3} height={24} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg" />
-                <ContentSkeleton lines={3} height={24} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg" />
+                <Skeleton className="h-32" />
+                <Skeleton className="h-32" />
               </div>
             </>
           ) : (
