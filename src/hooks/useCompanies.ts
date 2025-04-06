@@ -7,11 +7,9 @@ import { useCompanyCreate } from "./company/useCompanyCreate";
 import { useCompanyUpdate } from "./company/useCompanyUpdate";
 import { useCompanyDelete } from "./company/useCompanyDelete";
 import { useCompanyUserManagement } from "./company/useCompanyUserManagement";
-import { toast } from "sonner";
 
 export const useCompanies = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [userCompanies, setUserCompanies] = useState<Company[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
@@ -86,7 +84,6 @@ export const useCompanies = () => {
           } else {
             // If not found, try to fetch it
             try {
-              setError(null);
               const company = await getCompanyById(storedCompanyId);
               if (company) {
                 setSelectedCompany(company);
@@ -94,7 +91,6 @@ export const useCompanies = () => {
               }
             } catch (error) {
               console.error('Failed to restore company from localStorage', error);
-              setError('Falha ao restaurar a empresa selecionada');
               localStorage.removeItem('selectedCompanyId');
             }
           }
@@ -107,7 +103,6 @@ export const useCompanies = () => {
 
   return {
     isLoading,
-    error,
     companies,
     userCompanies,
     selectedCompany,
