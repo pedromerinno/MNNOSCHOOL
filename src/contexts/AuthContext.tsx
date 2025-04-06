@@ -78,18 +78,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      // Check if data is a parser error or not before accessing properties
-      if (data && typeof data === 'object' && !('error' in data)) {
-        // Safely extract properties with fallbacks to avoid null access
-        const displayName = data ? data.display_name : null;
-        const avatar = data ? data.avatar : null;
-        // Use null coalescing to handle possible undefined value
-        const isAdmin = data && isAdminColumnExists ? data.is_admin === true : false;
+      // Properly check if data exists and is a valid object
+      if (data && typeof data === 'object') {
+        // Explicitly cast data to any to safely access properties
+        const profileData = data as any;
+        
+        // Extract properties with type safety
+        const displayName = profileData.display_name !== undefined ? profileData.display_name : null;
+        const avatar = profileData.avatar !== undefined ? profileData.avatar : null;
+        // For is_admin, check if the column exists and has a valid boolean value
+        const isAdmin = isAdminColumnExists && profileData.is_admin === true;
         
         setUserProfile({
           displayName,
           avatar,
-          isAdmin: isAdmin
+          isAdmin
         });
       } else {
         console.error('Invalid data format received from database:', data);
