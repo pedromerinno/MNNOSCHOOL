@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { Company } from "@/types/company";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 export const WelcomeSection = () => {
   const navigate = useNavigate();
@@ -13,15 +14,31 @@ export const WelcomeSection = () => {
   const { getUserCompany } = useCompanies();
   const [userCompany, setUserCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
 
   useEffect(() => {
     const fetchUserCompany = async () => {
       if (user?.id) {
         setLoading(true);
-        const result = await getUserCompany(user.id);
-        console.log('Resultado da busca da empresa:', result);
-        setUserCompany(result.company);
-        setLoading(false);
+        setFetchError(false);
+        try {
+          const result = await getUserCompany(user.id);
+          console.log('Resultado da busca da empresa:', result);
+          
+          if (result.error) {
+            setFetchError(true);
+            console.error('Erro ao buscar empresa:', result.error);
+            toast.error("Não foi possível carregar os dados da empresa. Tente novamente mais tarde.");
+          } else {
+            setUserCompany(result.company);
+          }
+        } catch (error) {
+          console.error('Erro na busca da empresa:', error);
+          setFetchError(true);
+          toast.error("Não foi possível carregar os dados da empresa. Tente novamente mais tarde.");
+        } finally {
+          setLoading(false);
+        }
       }
     };
 

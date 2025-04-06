@@ -18,6 +18,7 @@ import {
 import { ProfilePopover, UserProfileFormValues } from "@/components/profile/ProfilePopover";
 import { useCompanies } from "@/hooks/useCompanies";
 import { Company } from "@/types/company";
+import { toast } from "sonner";
 
 interface UserNavigationProps {
   avatarUrl?: string;
@@ -31,25 +32,31 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { getUserCompanies, getUserCompany } = useCompanies();
+  const { getUserCompanies, getUserCompany, updateUserSelectedCompany } = useCompanies();
   
   // Fetch user companies and selected company
   useEffect(() => {
     const fetchUserCompanies = async () => {
       if (user?.id) {
         setLoading(true);
-        
-        // Get all companies the user is related to
-        const companies = await getUserCompanies(user.id);
-        setUserCompanies(companies);
-        
-        // If there are companies, get the current one
-        if (companies.length > 0) {
-          const currentCompanyResult = await getUserCompany(user.id);
-          setSelectedCompany(currentCompanyResult.company);
+        try {
+          // Get all companies the user is related to
+          const companies = await getUserCompanies(user.id);
+          console.log('Empresas do usuário:', companies);
+          setUserCompanies(companies);
+          
+          // If there are companies, get the current one
+          if (companies.length > 0) {
+            const currentCompanyResult = await getUserCompany(user.id);
+            console.log('Empresa atual do usuário:', currentCompanyResult);
+            setSelectedCompany(currentCompanyResult.company);
+          }
+        } catch (error) {
+          console.error('Erro ao buscar empresas do usuário:', error);
+          toast.error("Não foi possível carregar as empresas. Tente novamente mais tarde.");
+        } finally {
+          setLoading(false);
         }
-        
-        setLoading(false);
       }
     };
 
@@ -78,11 +85,22 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
     navigate('/dashboard');
   };
 
-  const handleCompanySelect = (company: Company) => {
+  const handleCompanySelect = async (company: Company) => {
     setSelectedCompany(company);
-    // In a real implementation, you would update the selected company in your context/state
-    // and possibly redirect or refresh the page
-    window.location.reload(); // Simple reload to refresh the data with the new company
+    
+    if (user?.id) {
+      try {
+        // Atualizar a empresa selecionada no backend
+        await updateUserSelectedCompany(user.id, company.id);
+        toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
+        
+        // Recarregar a página para atualizar os dados com a nova empresa
+        window.location.reload();
+      } catch (error) {
+        console.error('Erro ao selecionar empresa:', error);
+        toast.error("Não foi possível selecionar a empresa. Tente novamente.");
+      }
+    }
   };
 
   const hasMultipleCompanies = userCompanies.length > 1;
