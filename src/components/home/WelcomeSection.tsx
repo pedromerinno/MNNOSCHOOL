@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -17,9 +16,7 @@ export const WelcomeSection = () => {
   const [isLoadingLocal, setIsLoadingLocal] = useState(true);
   const [fetchAttempted, setFetchAttempted] = useState(false);
   
-  // Carregar dados de cache imediatamente para exibição rápida
   useEffect(() => {
-    // Tentar carregar empresa do cache logo ao iniciar
     const cachedCompany = localStorage.getItem('selectedCompany');
     if (cachedCompany) {
       try {
@@ -43,8 +40,7 @@ export const WelcomeSection = () => {
           console.error('Erro na busca da empresa:', error);
           toast.error("Não foi possível carregar os dados da empresa. Usando dados em cache se disponíveis.");
         } finally {
-          // Definir um timeout mínimo para o carregamento para evitar flash de conteúdo
-          setTimeout(() => setIsLoadingLocal(false), 100); // Reduzido de 300ms para 100ms
+          setTimeout(() => setIsLoadingLocal(false), 100);
         }
       } else {
         setIsLoadingLocal(false);
@@ -54,7 +50,6 @@ export const WelcomeSection = () => {
     if (!fetchAttempted) {
       fetchUserCompanies();
     } else if (!isLoading) {
-      // Se já tentamos buscar e não estamos mais carregando
       setIsLoadingLocal(false);
     }
   }, [user, getUserCompanies, fetchAttempted, isLoading]);
@@ -69,8 +64,7 @@ export const WelcomeSection = () => {
       if (user?.id) {
         selectCompany(user.id, userCompanies[0]);
       }
-    } else if (!displayCompany) { // Só buscar no cache se ainda não temos displayCompany
-      // Check if we have a cached company to display
+    } else if (!displayCompany) {
       const cachedCompany = localStorage.getItem('selectedCompany');
       if (cachedCompany) {
         try {
@@ -90,7 +84,6 @@ export const WelcomeSection = () => {
     navigate('/manifesto');
   };
 
-  // Default institutional phrase if none is available
   const defaultPhrase = "Juntos, estamos desenhando o futuro de grandes empresas";
 
   return (
@@ -116,13 +109,13 @@ export const WelcomeSection = () => {
               {displayCompany?.frase_institucional || defaultPhrase}
             </p>
             
-            {displayCompany && (
+            {!isLoadingLocal && displayCompany && (
               <Button 
                 onClick={handleLearnMore} 
                 className="mt-1 flex items-center gap-2 text-white rounded-full text-sm"
                 variant="default"
                 style={{ 
-                  backgroundColor: displayCompany.cor_principal || '#000000' 
+                  backgroundColor: '#000000' 
                 }}
               >
                 Saiba mais
