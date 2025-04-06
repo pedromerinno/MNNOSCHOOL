@@ -57,7 +57,7 @@ export const WelcomeSection = () => {
           Olá, {userName}
         </p>
         <p 
-          className="text-[#000000] text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-8"
+          className="text-[#000000] text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-4"
         >
           {displayCompany?.frase_institucional || "Juntos, estamos desenhando o futuro de grandes empresas"}
         </p>
