@@ -14,7 +14,7 @@ export const MainNavigationMenu = () => {
   return (
     <header className="w-full border-b border-gray-200">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <div className="flex items-center space-x-10">
+        <div className="flex items-center space-x-16">
           <Link to="/" className="text-xl font-bold text-merinno-dark">
             merinno
           </Link>
