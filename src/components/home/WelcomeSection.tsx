@@ -52,19 +52,19 @@ export const WelcomeSection = () => {
     <div className="mb-16 mt-10">
       <div className="flex flex-col items-center">
         <p 
-          className="text-gray-700 dark:text-gray-200 mb-4 text-center bg-[#FFF5E4] dark:bg-amber-900/30 py-2.5 px-8 rounded-full max-w-fit text-lg"
+          className="text-gray-700 dark:text-gray-200 mb-6 text-center bg-[#FFF5E4] dark:bg-amber-900/30 py-2.5 px-8 rounded-full max-w-fit text-lg"
         >
           Olá, {userName}
         </p>
         <p 
-          className="text-[#000000] text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-4"
+          className="text-[#000000] text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-6"
         >
           {displayCompany?.frase_institucional || "Juntos, estamos desenhando o futuro de grandes empresas"}
         </p>
         {displayCompany && (
           <Button 
             onClick={handleLearnMore} 
-            className="mt-4 flex items-center gap-2 text-white bg-black rounded-full"
+            className="mt-6 flex items-center gap-2 text-white bg-black rounded-full"
             variant="default"
           >
             Clique para saber mais sobre {displayCompany.nome}
