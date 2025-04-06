@@ -66,3 +66,4 @@ export const WelcomeSection = () => {
     </div>
   );
 };
+
