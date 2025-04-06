@@ -14,7 +14,7 @@ import {
 
 export const CompanySelector = () => {
   const { user } = useAuth();
-  const { getUserCompanies, getUserCompany, updateUserSelectedCompany } = useCompanies();
+  const { getUserCompanies, getUserCompany } = useCompanies();
   const [userCompanies, setUserCompanies] = useState<Company[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,13 +39,12 @@ export const CompanySelector = () => {
               console.log('CompanySelector: Successfully loaded selected company:', currentCompanyResult.company.nome);
             } else if (companies.length > 0) {
               // If no selected company yet, use the first company as default
-              await updateUserSelectedCompany(user.id, companies[0].id);
               setSelectedCompany(companies[0]);
               console.log('CompanySelector: Set default company:', companies[0].nome);
               
               // Dispatch event to inform other components
               const navEvent = new CustomEvent('company-selected', { 
-                detail: { userId: user.id, companyId: companies[0].id } 
+                detail: { userId: user.id, companyId: companies[0].id, company: companies[0] } 
               });
               window.dispatchEvent(navEvent);
             }
@@ -60,18 +59,23 @@ export const CompanySelector = () => {
     };
 
     fetchUserCompanies();
-  }, [user, getUserCompanies, getUserCompany, updateUserSelectedCompany]);
+  }, [user, getUserCompanies, getUserCompany]);
 
   // Listen for company selection events from UserNavigation
   useEffect(() => {
     const handleCompanySelected = (event: CustomEvent) => {
-      const { userId, companyId } = event.detail;
+      const { userId, companyId, company } = event.detail;
       
       if (userId && companyId && user?.id === userId) {
-        const selectedComp = userCompanies.find(c => c.id === companyId);
-        if (selectedComp) {
-          console.log('CompanySelector: Company selection event received', selectedComp.nome);
-          setSelectedCompany(selectedComp);
+        if (company) {
+          console.log('CompanySelector: Setting selected company directly', company.nome);
+          setSelectedCompany(company);
+        } else {
+          const selectedComp = userCompanies.find(c => c.id === companyId);
+          if (selectedComp) {
+            console.log('CompanySelector: Company selection event received', selectedComp.nome);
+            setSelectedCompany(selectedComp);
+          }
         }
       }
     };
@@ -83,34 +87,21 @@ export const CompanySelector = () => {
     };
   }, [userCompanies, user]);
 
-  const handleCompanyChange = async (companyId: string) => {
+  const handleCompanyChange = (companyId: string) => {
     const company = userCompanies.find(c => c.id === companyId);
     if (company && user?.id) {
-      try {
-        // Don't update UI until we've successfully updated the backend
-        setLoading(true);
-        
-        console.log('CompanySelector: Selecting company:', company.nome);
-        
-        // Update the selected company in the database
-        await updateUserSelectedCompany(user.id, company.id);
-        
-        // Update the local state
-        setSelectedCompany(company);
-        
-        // Dispatch event to notify other components
-        const navEvent = new CustomEvent('company-selected', { 
-          detail: { userId: user.id, companyId: company.id } 
-        });
-        window.dispatchEvent(navEvent);
-        
-        toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
-      } catch (error) {
-        console.error('Erro ao selecionar empresa:', error);
-        toast.error("Não foi possível selecionar a empresa");
-      } finally {
-        setLoading(false);
-      }
+      console.log('CompanySelector: Selecting company:', company.nome);
+      
+      // Update the local state
+      setSelectedCompany(company);
+      
+      // Dispatch event to notify other components without updating the database
+      const navEvent = new CustomEvent('company-selected', { 
+        detail: { userId: user.id, companyId: company.id, company: company } 
+      });
+      window.dispatchEvent(navEvent);
+      
+      toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
     }
   };
 

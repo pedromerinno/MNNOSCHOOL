@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Company, UserCompanyDetails } from "@/types/company";
@@ -182,6 +181,7 @@ export const useCompanies = () => {
 
   /**
    * Fetches a user's company from the database
+   * Only reads data, doesn't modify relationships
    */
   const getUserCompany = async (userId: string): Promise<UserCompanyDetails> => {
     setIsLoading(true);
@@ -230,6 +230,7 @@ export const useCompanies = () => {
 
   /**
    * Fetches all companies a user is related to
+   * Only reads data, doesn't modify relationships
    */
   const getUserCompanies = async (userId: string): Promise<Company[]> => {
     setIsLoading(true);
@@ -397,9 +398,8 @@ export const useCompanies = () => {
     }
   };
 
-  /**
-   * Updates a user's selected company without removing existing company associations
-   */
+  // We're no longer using this function for UI company selection
+  // Only use it for actual database management purposes
   const updateUserSelectedCompany = async (userId: string, companyId: string): Promise<boolean> => {
     setIsLoading(true);
     try {

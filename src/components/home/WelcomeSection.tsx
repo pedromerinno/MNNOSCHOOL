@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -11,7 +10,7 @@ import { toast } from "sonner";
 export const WelcomeSection = () => {
   const navigate = useNavigate();
   const { user, userProfile } = useAuth();
-  const { getUserCompany } = useCompanies();
+  const { getUserCompany, getUserCompanies } = useCompanies();
   const [userCompany, setUserCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
@@ -28,7 +27,15 @@ export const WelcomeSection = () => {
           if (result.error) {
             setFetchError(true);
             console.error('Erro ao buscar empresa:', result.error);
-            toast.error("Não foi possível carregar os dados da empresa. Tente novamente mais tarde.");
+            
+            // Try to get any company the user belongs to
+            const companies = await getUserCompanies(user.id);
+            if (companies.length > 0) {
+              setUserCompany(companies[0]);
+              console.log('WelcomeSection: No selected company found, using first available', companies[0].nome);
+            } else {
+              toast.error("Não foi possível carregar os dados da empresa. Tente novamente mais tarde.");
+            }
           } else {
             setUserCompany(result.company);
             console.log('WelcomeSection: Company fetched successfully', result.company?.nome);
@@ -44,30 +51,18 @@ export const WelcomeSection = () => {
     };
 
     fetchUserCompany();
-  }, [user, getUserCompany]);
+  }, [user, getUserCompany, getUserCompanies]);
 
   // Listen for company selection events
   useEffect(() => {
-    const handleCompanySelected = async (event: CustomEvent) => {
-      const { userId, companyId } = event.detail;
+    const handleCompanySelected = (event: CustomEvent) => {
+      const { userId, company } = event.detail;
       
-      console.log('WelcomeSection: Company selection event received', { userId, companyId, currentUserId: user?.id });
+      console.log('WelcomeSection: Company selection event received', { userId, company, currentUserId: user?.id });
       
-      if (userId && companyId && user?.id === userId) {
-        setLoading(true);
-        try {
-          const result = await getUserCompany(userId);
-          if (!result.error && result.company) {
-            console.log('WelcomeSection: Updated company after selection', result.company.nome);
-            setUserCompany(result.company);
-          } else {
-            console.error('Erro ao buscar empresa após seleção:', result.error);
-          }
-        } catch (error) {
-          console.error('Erro ao atualizar empresa selecionada:', error);
-        } finally {
-          setLoading(false);
-        }
+      if (userId && company && user?.id === userId) {
+        console.log('WelcomeSection: Updated company after selection', company.nome);
+        setUserCompany(company);
       }
     };
 
@@ -76,7 +71,7 @@ export const WelcomeSection = () => {
     return () => {
       window.removeEventListener('company-selected', handleCompanySelected as EventListener);
     };
-  }, [user, getUserCompany]);
+  }, [user]);
 
   const handleLearnMore = () => {
     navigate('/manifesto');

@@ -9,19 +9,28 @@ import { Company } from "@/types/company";
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const { getUserCompany } = useCompanies();
+  const { getUserCompany, getUserCompanies } = useCompanies();
   const [userCompany, setUserCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch user's selected company
+  // Fetch user's companies and selected company
   useEffect(() => {
     const fetchUserCompany = async () => {
       if (user?.id) {
         try {
+          // First try to get the user's selected company
           const result = await getUserCompany(user.id);
+          
           if (!result.error && result.company) {
             setUserCompany(result.company);
             console.log('Dashboard: Company fetched successfully', result.company.nome);
+          } else {
+            // If no selected company, try to get any company the user belongs to
+            const companies = await getUserCompanies(user.id);
+            if (companies.length > 0) {
+              setUserCompany(companies[0]);
+              console.log('Dashboard: No selected company found, using first available', companies[0].nome);
+            }
           }
         } catch (error) {
           console.error('Error fetching company:', error);
@@ -32,23 +41,16 @@ const Dashboard = () => {
     };
 
     fetchUserCompany();
-  }, [user, getUserCompany]);
+  }, [user, getUserCompany, getUserCompanies]);
 
   // Listen for company selection events
   useEffect(() => {
-    const handleCompanySelected = async (event: CustomEvent) => {
-      const { userId, companyId } = event.detail;
+    const handleCompanySelected = (event: CustomEvent) => {
+      const { userId, company } = event.detail;
       
-      if (userId && companyId && user?.id === userId) {
-        try {
-          const result = await getUserCompany(userId);
-          if (!result.error && result.company) {
-            console.log('Dashboard: Updated company after selection', result.company.nome);
-            setUserCompany(result.company);
-          }
-        } catch (error) {
-          console.error('Error updating selected company:', error);
-        }
+      if (userId && company && user?.id === userId) {
+        console.log('Dashboard: Updated company after selection', company.nome);
+        setUserCompany(company);
       }
     };
 
@@ -57,7 +59,7 @@ const Dashboard = () => {
     return () => {
       window.removeEventListener('company-selected', handleCompanySelected as EventListener);
     };
-  }, [user, getUserCompany]);
+  }, [user]);
 
   return (
     <DashboardLayout>

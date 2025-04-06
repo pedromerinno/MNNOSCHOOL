@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, Video, Users, FileText } from "lucide-react";
@@ -10,7 +9,7 @@ import { toast } from "sonner";
 
 const Manifesto = () => {
   const { user } = useAuth();
-  const { getUserCompany } = useCompanies();
+  const { getUserCompany, getUserCompanies } = useCompanies();
   const [userCompany, setUserCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -27,7 +26,15 @@ const Manifesto = () => {
             setUserCompany(result.company);
           } else {
             console.error('Erro ao buscar empresa para o manifesto:', result.error);
-            toast.error("Não foi possível carregar os dados da empresa.");
+            
+            // Try to get any company the user belongs to
+            const companies = await getUserCompanies(user.id);
+            if (companies.length > 0) {
+              setUserCompany(companies[0]);
+              console.log('Manifesto: No selected company found, using first available', companies[0].nome);
+            } else {
+              toast.error("Não foi possível carregar os dados da empresa.");
+            }
           }
         } catch (error) {
           console.error('Erro ao buscar empresa para o manifesto:', error);
@@ -39,30 +46,18 @@ const Manifesto = () => {
     };
 
     fetchUserCompany();
-  }, [user, getUserCompany]);
+  }, [user, getUserCompany, getUserCompanies]);
 
   // Listen for company selection events
   useEffect(() => {
-    const handleCompanySelected = async (event: CustomEvent) => {
-      const { userId, companyId } = event.detail;
+    const handleCompanySelected = (event: CustomEvent) => {
+      const { userId, company } = event.detail;
       
-      console.log('Manifesto: Company selection event received', { userId, companyId, currentUserId: user?.id });
+      console.log('Manifesto: Company selection event received', { userId, company, currentUserId: user?.id });
       
-      if (userId && companyId && user?.id === userId) {
-        setLoading(true);
-        try {
-          const result = await getUserCompany(userId);
-          if (!result.error) {
-            console.log('Manifesto: Updated company after selection', result.company?.nome);
-            setUserCompany(result.company);
-          } else {
-            console.error('Erro ao buscar empresa após seleção:', result.error);
-          }
-        } catch (error) {
-          console.error('Erro ao atualizar empresa do manifesto:', error);
-        } finally {
-          setLoading(false);
-        }
+      if (userId && company && user?.id === userId) {
+        console.log('Manifesto: Updated company after selection', company.nome);
+        setUserCompany(company);
       }
     };
 
@@ -71,7 +66,7 @@ const Manifesto = () => {
     return () => {
       window.removeEventListener('company-selected', handleCompanySelected as EventListener);
     };
-  }, [user, getUserCompany]);
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-background">
