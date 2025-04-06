@@ -16,7 +16,14 @@ export const makeUserAdmin = async (targetEmail: string) => {
       throw new Error('Invalid response format from listUsers');
     }
     
-    const targetUser = data.users.find(u => u.email === targetEmail);
+    // Define the type for Supabase user to avoid the 'never' type issue
+    interface SupabaseUser {
+      id: string;
+      email?: string | null;
+    }
+    
+    const users = data.users as SupabaseUser[];
+    const targetUser = users.find(u => u.email === targetEmail);
     
     if (!targetUser) {
       throw new Error(`User with email ${targetEmail} not found`);
