@@ -19,6 +19,7 @@ export const WelcomeSection = () => {
       if (user?.id) {
         setLoading(true);
         const result = await getUserCompany(user.id);
+        console.log('Resultado da busca da empresa:', result);
         setUserCompany(result.company);
         setLoading(false);
       }
