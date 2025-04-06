@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -7,7 +6,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 51 25% 97%; /* Converted F8F7F4 to HSL */
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
@@ -80,7 +79,6 @@
     cursor: url('/lovable-uploads/custom-cursor.png') 25 25, auto;
   }
 
-  /* Se quisermos aplicar o cursor apenas dentro da aplicação, podemos usar essa classe */
   .custom-cursor-area {
     cursor: url('/lovable-uploads/custom-cursor.png') 25 25, auto !important;
   }
@@ -98,7 +96,6 @@
   animation-delay: 2s;
 }
 
-/* Adicionamos a animação de float que estava faltando */
 @keyframes float {
   0% {
     transform: translateY(0px);
