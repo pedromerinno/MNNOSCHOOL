@@ -77,6 +77,12 @@
   body {
     @apply bg-background text-foreground font-sans;
     font-family: 'Inter', sans-serif;
+    cursor: url('/lovable-uploads/7a103666-df05-495b-b13d-8b2021b41f29.png') 25 25, auto;
+  }
+
+  /* Se quisermos aplicar o cursor apenas dentro da aplicação, podemos usar essa classe */
+  .custom-cursor-area {
+    cursor: url('/lovable-uploads/7a103666-df05-495b-b13d-8b2021b41f29.png') 25 25, auto !important;
   }
 }
 
@@ -90,4 +96,17 @@
 
 .floating-bubble-delay-2 {
   animation-delay: 2s;
+}
+
+/* Adicionamos a animação de float que estava faltando */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
 }
