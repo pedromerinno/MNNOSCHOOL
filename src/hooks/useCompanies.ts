@@ -185,19 +185,20 @@ export const useCompanies = () => {
   const getUserCompany = async (userId: string): Promise<UserCompanyDetails> => {
     setIsLoading(true);
     try {
-      // First get the user's current selected company relation
+      // First get the user's most recent company relation
       const { data: userCompanyData, error: userCompanyError } = await supabase
         .from('user_empresa')
         .select('company_id')
         .eq('user_id', userId)
-        .single();
+        .order('created_at', { ascending: false })
+        .limit(1);
 
       if (userCompanyError) {
         console.error("Error fetching user company relation:", userCompanyError);
         return { company: null, loading: false, error: userCompanyError };
       }
 
-      if (!userCompanyData) {
+      if (!userCompanyData || userCompanyData.length === 0) {
         return { company: null, loading: false, error: null };
       }
 
@@ -205,7 +206,7 @@ export const useCompanies = () => {
       const { data: companyData, error: companyError } = await supabase
         .from('empresas')
         .select('*')
-        .eq('id', userCompanyData.company_id)
+        .eq('id', userCompanyData[0].company_id)
         .single();
 
       if (companyError) {
@@ -397,34 +398,19 @@ export const useCompanies = () => {
   const updateUserSelectedCompany = async (userId: string, companyId: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      // We'll keep all existing company relations and just ensure this is the most recent one
-      // First, we check if the relation already exists
-      const { data: existingRelation, error: checkError } = await supabase
+      // We'll keep all existing company relations and create a new entry to make it the most recent
+      const { error: insertError } = await supabase
         .from('user_empresa')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('company_id', companyId);
+        .insert([
+          { user_id: userId, company_id: companyId }
+        ]);
 
-      if (checkError) {
-        console.error("Error checking user-company relation:", checkError);
+      if (insertError) {
+        console.error("Error creating user-company relation:", insertError);
         return false;
       }
-
-      // If the relation doesn't exist yet, create it
-      if (!existingRelation || existingRelation.length === 0) {
-        const { error: insertError } = await supabase
-          .from('user_empresa')
-          .insert([
-            { user_id: userId, company_id: companyId }
-          ]);
-
-        if (insertError) {
-          console.error("Error creating user-company relation:", insertError);
-          return false;
-        }
-      }
       
-      // The most recent relation is now the selected one
+      // Success - the most recent relation is now the selected one
       return true;
     } catch (error) {
       console.error("Unexpected error:", error);
