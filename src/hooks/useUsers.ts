@@ -1,7 +1,8 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { setAdminStatusById } from '@/utils/adminUtils';
 
 export interface UserProfile {
   id: string;
@@ -15,7 +16,7 @@ export function useUsers() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -26,9 +27,13 @@ export function useUsers() {
         throw authError;
       }
       
-      // Ensure users array exists in the response
-      if (!authData || !authData.users) {
-        throw new Error('Failed to fetch users');
+      // Type assertion to avoid deep type issues
+      const authUsers = (authData as any)?.users || [];
+      
+      if (!authUsers.length) {
+        setUsers([]);
+        setLoading(false);
+        return;
       }
       
       // Now fetch profiles to get admin status
@@ -40,8 +45,8 @@ export function useUsers() {
         throw profilesError;
       }
       
-      // Merge the data - make sure we're accessing properties correctly
-      const mergedUsers = authData.users.map(user => {
+      // Merge the data
+      const mergedUsers = authUsers.map((user: any) => {
         const profile = profiles?.find(p => p.id === user.id);
         return {
           id: user.id,
@@ -62,32 +67,22 @@ export function useUsers() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const toggleAdminStatus = async (userId: string, currentStatus: boolean | null) => {
+  const toggleAdminStatus = useCallback(async (userId: string, currentStatus: boolean | null) => {
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ 
-          is_admin: !currentStatus,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', userId);
-      
-      if (error) {
-        throw error;
-      }
+      await setAdminStatusById(userId, !(currentStatus || false));
       
       // Update local state
       setUsers(users.map(user => 
         user.id === userId 
-          ? { ...user, is_admin: !currentStatus } 
+          ? { ...user, is_admin: !(currentStatus || false) } 
           : user
       ));
       
       toast({
         title: 'Sucesso',
-        description: `Usuário ${currentStatus ? 'removido da' : 'adicionado à'} lista de administradores.`,
+        description: `Status de administrador atualizado com sucesso.`,
       });
     } catch (error: any) {
       console.error('Error toggling admin status:', error);
@@ -97,12 +92,12 @@ export function useUsers() {
         variant: 'destructive',
       });
     }
-  };
+  }, [users, toast]);
 
   // Initial fetch
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
   return { users, loading, fetchUsers, toggleAdminStatus };
 }

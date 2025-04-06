@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-// Define a simplified interface for Supabase users
+// Simple interface for Supabase users to avoid deep type instantiation
 interface SupabaseUser {
   id: string;
   email?: string | null;
@@ -24,22 +24,22 @@ export const makeUserAdmin = async (targetEmail: string) => {
     if (profileError || !profileData) {
       console.log('User not found in profiles by email, trying auth.users...');
       
-      // Use an explicit type assertion with a simple interface to avoid deep type instantiation
-      const authResponse = await supabase.auth.admin.listUsers();
-      const data = authResponse.data as unknown as { users: SupabaseUser[] } | null;
-      const error = authResponse.error;
+      // Avoid deep type instantiation by using unknown type and then casting
+      const { data, error } = await supabase.auth.admin.listUsers();
       
       if (error) {
         console.error('Error fetching users:', error);
         throw error;
       }
       
-      if (!data || !data.users) {
+      // Using any here to avoid deep type instantiation issues
+      const users = (data as any).users as SupabaseUser[];
+      if (!users) {
         console.error('Invalid response format from listUsers');
         throw new Error('Invalid response format from listUsers');
       }
       
-      const targetUser = data.users.find(u => u.email === targetEmail);
+      const targetUser = users.find(u => u.email === targetEmail);
       
       if (!targetUser) {
         console.error(`User with email ${targetEmail} not found`);

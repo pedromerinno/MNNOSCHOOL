@@ -1,102 +1,59 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { UserTable } from './UserTable';
 import { useUsers } from '@/hooks/useUsers';
 import { useToast } from '@/hooks/use-toast';
-import { makeUserAdmin, setAdminStatusById } from '@/utils/adminUtils';
-import { supabase } from "@/integrations/supabase/client";
-
-// Interface for working with Supabase auth users
-interface AuthUser {
-  id: string;
-  email?: string | null;
-}
+import { makeUserAdmin } from '@/utils/adminUtils';
 
 export const UserManagement = () => {
   const { users, loading, fetchUsers, toggleAdminStatus } = useUsers();
   const { toast } = useToast();
+  const [initialSetupDone, setInitialSetupDone] = useState(false);
 
   // Make pedro@merinno.com an admin when the component mounts
   useEffect(() => {
     const setInitialAdmin = async () => {
+      if (initialSetupDone) return;
+      
       try {
-        console.log("Attempting to set Pedro as admin...");
+        console.log("Attempting to set initial admin...");
         const targetEmail = 'pedro@merinno.com';
         
-        // First, try to find the user directly in the users data
-        const existingUser = users.find(user => user.email === targetEmail);
+        // Try to find if user already exists and is admin
+        const existingAdmin = users.find(user => 
+          user.email === targetEmail && user.is_admin
+        );
         
-        if (existingUser) {
-          // If user is found in the current data, set admin directly
-          console.log("Found Pedro in users list, setting admin directly");
-          await setAdminStatusById(existingUser.id, true);
-          toast({
-            title: 'Sucesso',
-            description: `${targetEmail} agora é um administrador.`,
-          });
-          fetchUsers(); // Refresh the list
+        if (existingAdmin) {
+          console.log("Initial admin is already set up");
+          setInitialSetupDone(true);
           return;
         }
         
-        // If user wasn't found in current data, try the makeUserAdmin function
-        console.log("Pedro not found in current users list, using makeUserAdmin function");
-        const success = await makeUserAdmin(targetEmail);
-        
-        if (success) {
-          toast({
-            title: 'Sucesso',
-            description: `${targetEmail} agora é um administrador.`,
-          });
-          fetchUsers(); // Refresh the list
-        }
+        // Try to make the user an admin
+        await makeUserAdmin(targetEmail);
+        toast({
+          title: 'Sucesso',
+          description: `${targetEmail} agora é um administrador.`,
+        });
+        setInitialSetupDone(true);
+        fetchUsers(); // Refresh the list
       } catch (error: any) {
         console.error('Error in initial admin setup:', error);
-        
-        // Try a direct approach as a last resort
-        try {
-          console.log("Trying direct query to find and update Pedro's admin status");
-          const { data: authData } = await supabase.auth.admin.listUsers();
-          
-          if (authData && Array.isArray(authData.users)) {
-            const targetUser = (authData.users as AuthUser[]).find(u => u.email === 'pedro@merinno.com');
-            
-            if (targetUser) {
-              const { error: updateError } = await supabase
-                .from('profiles')
-                .update({ is_admin: true })
-                .eq('id', targetUser.id);
-              
-              if (!updateError) {
-                toast({
-                  title: 'Sucesso',
-                  description: 'Pedro agora é um administrador (método alternativo).',
-                });
-                fetchUsers();
-                return;
-              }
-            }
-          }
-          
-          // If we got here, all attempts failed
-          toast({
-            title: 'Erro',
-            description: error.message || 'Falha ao configurar administrador inicial',
-            variant: 'destructive',
-          });
-        } catch (fallbackError) {
-          console.error('Error in fallback admin setup:', fallbackError);
-          toast({
-            title: 'Erro',
-            description: 'Falha ao configurar administrador usando todos os métodos disponíveis',
-            variant: 'destructive',
-          });
-        }
+        toast({
+          title: 'Erro',
+          description: error.message || 'Falha ao configurar administrador inicial',
+          variant: 'destructive',
+        });
       }
     };
     
-    setInitialAdmin();
-  }, [users.length]); // Re-run when users list changes
+    // Only run setup if users are loaded and setup hasn't been done yet
+    if (users.length > 0 && !initialSetupDone) {
+      setInitialAdmin();
+    }
+  }, [users, initialSetupDone, toast, fetchUsers]);
 
   return (
     <div className="space-y-4">
