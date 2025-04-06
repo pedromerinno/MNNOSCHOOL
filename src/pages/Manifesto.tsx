@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, Video, Users, FileText } from "lucide-react";
@@ -9,7 +10,7 @@ import { toast } from "sonner";
 
 const Manifesto = () => {
   const { user } = useAuth();
-  const { getUserCompany, getUserCompanies } = useCompanies();
+  const { getUserCompanies } = useCompanies();
   const [userCompany, setUserCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -19,22 +20,15 @@ const Manifesto = () => {
       if (user?.id) {
         setLoading(true);
         try {
-          const result = await getUserCompany(user.id);
+          // Get all companies the user is related to
+          const companies = await getUserCompanies(user.id);
           
-          if (!result.error) {
-            console.log('Manifesto: Company fetched successfully', result.company?.nome);
-            setUserCompany(result.company);
+          if (companies.length > 0) {
+            console.log('Manifesto: Company fetched successfully', companies[0].nome);
+            setUserCompany(companies[0]);
           } else {
-            console.error('Erro ao buscar empresa para o manifesto:', result.error);
-            
-            // Try to get any company the user belongs to
-            const companies = await getUserCompanies(user.id);
-            if (companies.length > 0) {
-              setUserCompany(companies[0]);
-              console.log('Manifesto: No selected company found, using first available', companies[0].nome);
-            } else {
-              toast.error("Não foi possível carregar os dados da empresa.");
-            }
+            console.error('Manifesto: No companies found for user');
+            toast.error("Não foi possível carregar os dados da empresa.");
           }
         } catch (error) {
           console.error('Erro ao buscar empresa para o manifesto:', error);
@@ -46,7 +40,7 @@ const Manifesto = () => {
     };
 
     fetchUserCompany();
-  }, [user, getUserCompany, getUserCompanies]);
+  }, [user, getUserCompanies]);
 
   // Listen for company selection events
   useEffect(() => {
