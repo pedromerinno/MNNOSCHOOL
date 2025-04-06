@@ -1,7 +1,14 @@
 
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 export const WelcomeSection = () => {
+  const navigate = useNavigate();
+
+  const handleLearnMore = () => {
+    navigate('/');
+  };
+
   return (
     <div className="mb-8">
       <p className="text-gray-600 mb-2">Olá, Felipe</p>
@@ -10,7 +17,10 @@ export const WelcomeSection = () => {
         o futuro de grandes empresas
       </h1>
       <div className="flex justify-center mt-6">
-        <Button className="bg-black hover:bg-black/90 text-white rounded-full px-6">
+        <Button 
+          onClick={handleLearnMore}
+          className="bg-black hover:bg-black/90 text-white rounded-full px-6"
+        >
           Clique para saber mais sobre a MNNO
         </Button>
       </div>
