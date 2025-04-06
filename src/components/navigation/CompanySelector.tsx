@@ -14,7 +14,7 @@ import {
 
 export const CompanySelector = () => {
   const { user } = useAuth();
-  const { getUserCompanies, getUserCompany } = useCompanies();
+  const { getUserCompanies } = useCompanies();
   const [userCompanies, setUserCompanies] = useState<Company[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
@@ -30,24 +30,16 @@ export const CompanySelector = () => {
           setUserCompanies(companies);
           console.log('CompanySelector: Fetched user companies:', companies.map(c => c.nome).join(', '));
           
-          // If there are companies, get the current one
+          // If there are companies, use the first one as default
           if (companies.length > 0) {
-            const currentCompanyResult = await getUserCompany(user.id);
+            setSelectedCompany(companies[0]);
+            console.log('CompanySelector: Setting default company:', companies[0].nome);
             
-            if (currentCompanyResult.company) {
-              setSelectedCompany(currentCompanyResult.company);
-              console.log('CompanySelector: Successfully loaded selected company:', currentCompanyResult.company.nome);
-            } else if (companies.length > 0) {
-              // If no selected company yet, use the first company as default
-              setSelectedCompany(companies[0]);
-              console.log('CompanySelector: Set default company:', companies[0].nome);
-              
-              // Dispatch event to inform other components
-              const navEvent = new CustomEvent('company-selected', { 
-                detail: { userId: user.id, companyId: companies[0].id, company: companies[0] } 
-              });
-              window.dispatchEvent(navEvent);
-            }
+            // Dispatch event to inform other components
+            const navEvent = new CustomEvent('company-selected', { 
+              detail: { userId: user.id, company: companies[0] } 
+            });
+            window.dispatchEvent(navEvent);
           }
         } catch (error) {
           console.error('Erro ao buscar empresas do usuário:', error);
@@ -59,24 +51,16 @@ export const CompanySelector = () => {
     };
 
     fetchUserCompanies();
-  }, [user, getUserCompanies, getUserCompany]);
+  }, [user, getUserCompanies]);
 
   // Listen for company selection events from UserNavigation
   useEffect(() => {
     const handleCompanySelected = (event: CustomEvent) => {
-      const { userId, companyId, company } = event.detail;
+      const { userId, company } = event.detail;
       
-      if (userId && companyId && user?.id === userId) {
-        if (company) {
-          console.log('CompanySelector: Setting selected company directly', company.nome);
-          setSelectedCompany(company);
-        } else {
-          const selectedComp = userCompanies.find(c => c.id === companyId);
-          if (selectedComp) {
-            console.log('CompanySelector: Company selection event received', selectedComp.nome);
-            setSelectedCompany(selectedComp);
-          }
-        }
+      if (userId && company && user?.id === userId) {
+        console.log('CompanySelector: Setting selected company from event', company.nome);
+        setSelectedCompany(company);
       }
     };
 
@@ -85,10 +69,9 @@ export const CompanySelector = () => {
     return () => {
       window.removeEventListener('company-selected', handleCompanySelected as EventListener);
     };
-  }, [userCompanies, user]);
+  }, [user]);
 
-  const handleCompanyChange = (companyId: string) => {
-    const company = userCompanies.find(c => c.id === companyId);
+  const handleCompanyChange = (company: Company) => {
     if (company && user?.id) {
       console.log('CompanySelector: Selecting company:', company.nome);
       
@@ -97,7 +80,7 @@ export const CompanySelector = () => {
       
       // Dispatch event to notify other components without updating the database
       const navEvent = new CustomEvent('company-selected', { 
-        detail: { userId: user.id, companyId: company.id, company: company } 
+        detail: { userId: user.id, company: company } 
       });
       window.dispatchEvent(navEvent);
       
@@ -105,21 +88,21 @@ export const CompanySelector = () => {
     }
   };
 
-  // Get the default text to display (selected company name or "merinno")
-  const getDefaultText = () => {
-    return selectedCompany?.nome || "merinno";
-  };
-
   // If user has no companies or is not logged in, show default text
   if (!user || userCompanies.length === 0) {
     return <span className="text-xl font-bold text-merinno-dark">merinno</span>;
+  }
+
+  // If user has only one company, just show the name without dropdown
+  if (userCompanies.length === 1) {
+    return <span className="text-xl font-bold text-merinno-dark">{userCompanies[0].nome}</span>;
   }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center text-xl font-bold text-merinno-dark focus:outline-none">
-          {getDefaultText()}
+          {selectedCompany?.nome || "merinno"}
           <ChevronDown className="ml-1 h-4 w-4" />
         </button>
       </DropdownMenuTrigger>
@@ -127,7 +110,7 @@ export const CompanySelector = () => {
         {userCompanies.map((company) => (
           <DropdownMenuItem 
             key={company.id} 
-            onClick={() => handleCompanyChange(company.id)}
+            onClick={() => handleCompanyChange(company)}
             className="cursor-pointer"
           >
             <div className="flex items-center">

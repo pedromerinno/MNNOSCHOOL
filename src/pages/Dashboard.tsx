@@ -9,39 +9,34 @@ import { Company } from "@/types/company";
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const { getUserCompany, getUserCompanies } = useCompanies();
+  const { getUserCompanies } = useCompanies();
   const [userCompany, setUserCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch user's companies and selected company
+  // Fetch user's companies
   useEffect(() => {
-    const fetchUserCompany = async () => {
+    const fetchUserCompanies = async () => {
       if (user?.id) {
         try {
-          // First try to get the user's selected company
-          const result = await getUserCompany(user.id);
+          setLoading(true);
+          // Get all companies the user is related to
+          const companies = await getUserCompanies(user.id);
           
-          if (!result.error && result.company) {
-            setUserCompany(result.company);
-            console.log('Dashboard: Company fetched successfully', result.company.nome);
-          } else {
-            // If no selected company, try to get any company the user belongs to
-            const companies = await getUserCompanies(user.id);
-            if (companies.length > 0) {
-              setUserCompany(companies[0]);
-              console.log('Dashboard: No selected company found, using first available', companies[0].nome);
-            }
+          // If user has any companies, set the first one as default
+          if (companies.length > 0) {
+            setUserCompany(companies[0]);
+            console.log('Dashboard: Using first available company', companies[0].nome);
           }
         } catch (error) {
-          console.error('Error fetching company:', error);
+          console.error('Error fetching companies:', error);
         } finally {
           setLoading(false);
         }
       }
     };
 
-    fetchUserCompany();
-  }, [user, getUserCompany, getUserCompanies]);
+    fetchUserCompanies();
+  }, [user, getUserCompanies]);
 
   // Listen for company selection events
   useEffect(() => {

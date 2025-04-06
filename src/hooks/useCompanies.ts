@@ -180,55 +180,6 @@ export const useCompanies = () => {
   };
 
   /**
-   * Fetches a user's company from the database
-   * Only reads data, doesn't modify relationships
-   */
-  const getUserCompany = async (userId: string): Promise<UserCompanyDetails> => {
-    setIsLoading(true);
-    try {
-      // First get the user's most recent company relation
-      const { data: userCompanyData, error: userCompanyError } = await supabase
-        .from('user_empresa')
-        .select('company_id')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      if (userCompanyError) {
-        console.error("Error fetching user company relation:", userCompanyError);
-        return { company: null, loading: false, error: userCompanyError };
-      }
-
-      if (!userCompanyData || userCompanyData.length === 0) {
-        console.log("No company relation found for user:", userId);
-        return { company: null, loading: false, error: null };
-      }
-
-      console.log("Found user company relation:", userCompanyData[0].company_id);
-
-      // Then fetch the company details
-      const { data: companyData, error: companyError } = await supabase
-        .from('empresas')
-        .select('*')
-        .eq('id', userCompanyData[0].company_id)
-        .single();
-
-      if (companyError) {
-        console.error("Error fetching company:", companyError);
-        return { company: null, loading: false, error: companyError };
-      }
-
-      console.log("Successfully fetched company details:", companyData.nome);
-      return { company: companyData as Company, loading: false, error: null };
-    } catch (error) {
-      console.error("Unexpected error:", error);
-      return { company: null, loading: false, error: error as Error };
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  /**
    * Fetches all companies a user is related to
    * Only reads data, doesn't modify relationships
    */
@@ -283,6 +234,42 @@ export const useCompanies = () => {
         variant: "destructive",
       });
       return [];
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Gets a specific company by ID
+   */
+  const getCompanyById = async (companyId: string): Promise<Company | null> => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('empresas')
+        .select('*')
+        .eq('id', companyId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching company:", error);
+        toast({
+          title: "Erro ao buscar empresa",
+          description: error.message,
+          variant: "destructive",
+        });
+        return null;
+      }
+
+      return data as Company;
+    } catch (error) {
+      console.error("Unexpected error:", error);
+      toast({
+        title: "Erro inesperado",
+        description: "Ocorreu um erro ao buscar a empresa",
+        variant: "destructive",
+      });
+      return null;
     } finally {
       setIsLoading(false);
     }
@@ -398,59 +385,17 @@ export const useCompanies = () => {
     }
   };
 
-  // We're no longer using this function for UI company selection
-  // Only use it for actual database management purposes
-  const updateUserSelectedCompany = async (userId: string, companyId: string): Promise<boolean> => {
-    setIsLoading(true);
-    try {
-      console.log(`Updating user selected company: User ${userId}, Company ${companyId}`);
-      
-      // First, let's ensure we're not creating too many duplicate entries
-      // by removing any existing relations with this exact company first
-      const { error: deleteError } = await supabase
-        .from('user_empresa')
-        .delete()
-        .match({ user_id: userId, company_id: companyId });
-      
-      if (deleteError) {
-        console.error("Error cleaning up existing company relation:", deleteError);
-        // Continue anyway as this is just a cleanup step
-      }
-      
-      // Now create a new entry to make it the most recent
-      const { error: insertError } = await supabase
-        .from('user_empresa')
-        .insert([
-          { user_id: userId, company_id: companyId }
-        ]);
-
-      if (insertError) {
-        console.error("Error creating user-company relation:", insertError);
-        return false;
-      }
-      
-      console.log(`Successfully updated user selected company to ${companyId}`);
-      // Success - the most recent relation is now the selected one
-      return true;
-    } catch (error) {
-      console.error("Unexpected error in updateUserSelectedCompany:", error);
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return {
     isLoading,
     companies,
     fetchCompanies,
+    getUserCompanies,
+    getCompanyById,
+    // Include only the admin functions for database changes
     createCompany,
     updateCompany,
     deleteCompany,
-    getUserCompany,
-    getUserCompanies,
     assignUserToCompany,
-    removeUserFromCompany,
-    updateUserSelectedCompany,
+    removeUserFromCompany
   };
 };

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -10,39 +11,28 @@ import { toast } from "sonner";
 export const WelcomeSection = () => {
   const navigate = useNavigate();
   const { user, userProfile } = useAuth();
-  const { getUserCompany, getUserCompanies } = useCompanies();
+  const { getUserCompanies } = useCompanies();
   const [userCompany, setUserCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
-  const [fetchError, setFetchError] = useState(false);
 
-  // Initial fetch of user company on component mount
+  // Initial fetch of user companies on component mount
   useEffect(() => {
-    const fetchUserCompany = async () => {
+    const fetchUserCompanies = async () => {
       if (user?.id) {
         setLoading(true);
-        setFetchError(false);
         try {
-          const result = await getUserCompany(user.id);
+          // Get all companies the user is related to
+          const companies = await getUserCompanies(user.id);
           
-          if (result.error) {
-            setFetchError(true);
-            console.error('Erro ao buscar empresa:', result.error);
-            
-            // Try to get any company the user belongs to
-            const companies = await getUserCompanies(user.id);
-            if (companies.length > 0) {
-              setUserCompany(companies[0]);
-              console.log('WelcomeSection: No selected company found, using first available', companies[0].nome);
-            } else {
-              toast.error("Não foi possível carregar os dados da empresa. Tente novamente mais tarde.");
-            }
+          if (companies.length > 0) {
+            // If user has companies, use the first one as default
+            setUserCompany(companies[0]);
+            console.log('WelcomeSection: Using first available company', companies[0].nome);
           } else {
-            setUserCompany(result.company);
-            console.log('WelcomeSection: Company fetched successfully', result.company?.nome);
+            toast.error("Não foi possível carregar os dados da empresa. Tente novamente mais tarde.");
           }
         } catch (error) {
           console.error('Erro na busca da empresa:', error);
-          setFetchError(true);
           toast.error("Não foi possível carregar os dados da empresa. Tente novamente mais tarde.");
         } finally {
           setLoading(false);
@@ -50,8 +40,8 @@ export const WelcomeSection = () => {
       }
     };
 
-    fetchUserCompany();
-  }, [user, getUserCompany, getUserCompanies]);
+    fetchUserCompanies();
+  }, [user, getUserCompanies]);
 
   // Listen for company selection events
   useEffect(() => {

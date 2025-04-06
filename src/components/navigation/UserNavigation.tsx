@@ -31,9 +31,9 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { getUserCompanies, getUserCompany } = useCompanies();
+  const { getUserCompanies } = useCompanies();
   
-  // Fetch user companies and selected company
+  // Fetch user companies
   useEffect(() => {
     const fetchUserCompanies = async () => {
       if (user?.id) {
@@ -43,23 +43,17 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
           const companies = await getUserCompanies(user.id);
           setUserCompanies(companies);
           
-          // If there are companies, get the current one
-          if (companies.length > 0) {
-            const currentCompanyResult = await getUserCompany(user.id);
-            
-            // If no company is selected yet, use the first company
-            if (!currentCompanyResult.company && companies.length > 0) {
-              // Set the first company as selected
-              setSelectedCompany(companies[0]);
-              
-              // Dispatch event to inform other components
-              const navEvent = new CustomEvent('company-selected', { 
-                detail: { userId: user.id, companyId: companies[0].id, company: companies[0] } 
-              });
-              window.dispatchEvent(navEvent);
-            } else {
-              setSelectedCompany(currentCompanyResult.company);
-            }
+          // If there is only one company, select it automatically
+          if (companies.length === 1) {
+            setSelectedCompany(companies[0]);
+            // Dispatch event to inform other components
+            const navEvent = new CustomEvent('company-selected', { 
+              detail: { userId: user.id, company: companies[0] } 
+            });
+            window.dispatchEvent(navEvent);
+          } else if (companies.length > 1) {
+            // If multiple companies, select first one by default
+            setSelectedCompany(companies[0]);
           }
         } catch (error) {
           console.error('Erro ao buscar empresas do usuário:', error);
@@ -71,26 +65,18 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
     };
 
     fetchUserCompanies();
-  }, [user, getUserCompanies, getUserCompany]);
+  }, [user, getUserCompanies]);
 
   // Listen for company selection events from CompanySelector
   useEffect(() => {
     const handleCompanySelected = (event: CustomEvent) => {
-      const { userId, companyId, company } = event.detail;
+      const { userId, company } = event.detail;
       
-      console.log('UserNavigation: Company selection event received', { userId, companyId, currentUserId: user?.id });
+      console.log('UserNavigation: Company selection event received', { userId, company, currentUserId: user?.id });
       
-      if (userId && companyId && user?.id === userId) {
-        if (company) {
-          console.log('UserNavigation: Setting selected company directly', company);
-          setSelectedCompany(company);
-        } else {
-          const selectedComp = userCompanies.find(c => c.id === companyId);
-          if (selectedComp) {
-            console.log('UserNavigation: Setting selected company', selectedComp);
-            setSelectedCompany(selectedComp);
-          }
-        }
+      if (userId && company && user?.id === userId) {
+        console.log('UserNavigation: Setting selected company directly', company);
+        setSelectedCompany(company);
       }
     };
 
@@ -99,7 +85,7 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
     return () => {
       window.removeEventListener('company-selected', handleCompanySelected as EventListener);
     };
-  }, [userCompanies, user]);
+  }, [user]);
 
   // Update display name and avatar
   useEffect(() => {
@@ -123,7 +109,7 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
     navigate('/dashboard');
   };
 
-  const handleCompanySelect = (company: Company | null) => {
+  const handleCompanySelect = (company: Company) => {
     if (!company || !user?.id) return;
     
     // Update the local state without making database changes
@@ -135,11 +121,12 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
     
     // Dispatch the event for other components
     const navEvent = new CustomEvent('company-selected', { 
-      detail: { userId: user.id, companyId: company.id, company: company } 
+      detail: { userId: user.id, company: company } 
     });
     window.dispatchEvent(navEvent);
   };
 
+  // Only show company selection if user has multiple companies
   const hasMultipleCompanies = userCompanies.length > 1;
 
   return (
