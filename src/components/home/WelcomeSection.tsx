@@ -36,7 +36,7 @@ export const WelcomeSection = () => {
           Olá, {userName}
         </p>
         <p 
-          className="text-[#000000] text-center text-[40px] font-bold"
+          className="text-[#000000] text-center text-[40px] font-normal max-w-[50%]"
         >
           {selectedCompany?.frase_institucional || "Juntos, estamos desenhando o futuro de grandes empresas"}
         </p>
@@ -44,3 +44,4 @@ export const WelcomeSection = () => {
     </div>
   );
 };
+
