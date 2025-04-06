@@ -1,13 +1,16 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from 'react-router-dom';
-import { FileText, Settings, Users, Globe, Lock } from 'lucide-react';
+import { FileText, Settings, Users, Globe, Lock, Building } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserManagement } from '@/components/admin/UserManagement';
+import { CompanyManagement } from '@/components/admin/CompanyManagement';
 import { useAuth } from '@/contexts/AuthContext';
 
 const AdminPage = () => {
   const { userProfile } = useAuth();
+  const [activeTab, setActiveTab] = useState("users");
   
   const adminSections = [
     { 
@@ -41,13 +44,29 @@ const AdminPage = () => {
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6 dark:text-white">Painel Administrativo</h1>
         
-        {/* User Management Section */}
+        {/* Management Tabs */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Gerenciamento de Usuários</CardTitle>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="mb-2">
+                <TabsTrigger value="users">
+                  <Users className="h-4 w-4 mr-2" />
+                  Usuários
+                </TabsTrigger>
+                <TabsTrigger value="companies">
+                  <Building className="h-4 w-4 mr-2" />
+                  Empresas
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </CardHeader>
           <CardContent>
-            <UserManagement />
+            <TabsContent value="users" className="mt-0">
+              <UserManagement />
+            </TabsContent>
+            <TabsContent value="companies" className="mt-0">
+              <CompanyManagement />
+            </TabsContent>
           </CardContent>
         </Card>
         
