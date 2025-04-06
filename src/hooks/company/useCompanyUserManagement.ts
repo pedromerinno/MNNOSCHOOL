@@ -8,6 +8,31 @@ export const useCompanyUserManagement = () => {
    */
   const assignUserToCompany = async (userId: string, companyId: string): Promise<boolean> => {
     try {
+      console.log(`Assigning user ${userId} to company ${companyId}`);
+      
+      // Check if relationship already exists to avoid duplicates
+      const { data: existingRelation, error: checkError } = await supabase
+        .from('user_empresa')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('company_id', companyId)
+        .single();
+        
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error("Error checking existing relationship:", checkError);
+        throw checkError;
+      }
+      
+      // If relationship already exists, return success
+      if (existingRelation) {
+        console.log("Relationship already exists, skipping creation");
+        toast("Usuário já associado", {
+          description: "Este usuário já está associado à empresa",
+        });
+        return true;
+      }
+
+      // Create the new relationship
       const { error } = await supabase
         .from('user_empresa')
         .insert([{ user_id: userId, company_id: companyId }]);
@@ -45,6 +70,8 @@ export const useCompanyUserManagement = () => {
    */
   const removeUserFromCompany = async (userId: string, companyId: string): Promise<boolean> => {
     try {
+      console.log(`Removing user ${userId} from company ${companyId}`);
+      
       const { error } = await supabase
         .from('user_empresa')
         .delete()

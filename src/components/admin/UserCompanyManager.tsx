@@ -1,7 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { useUsers } from '@/hooks/useUsers';
-import { useCompanies } from '@/hooks/useCompanies';
 import { Company } from '@/types/company';
 import { UserProfile } from '@/hooks/useUsers';
 import { Button } from '@/components/ui/button';
@@ -14,8 +13,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UserPlus, X } from 'lucide-react';
+import { UserPlus, X, RefreshCw } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
+import { useCompanyUserManagement } from '@/hooks/company/useCompanyUserManagement';
+import { toast } from "sonner";
 
 interface UserCompanyManagerProps {
   company: Company;
@@ -24,10 +25,11 @@ interface UserCompanyManagerProps {
 
 export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company, onClose }) => {
   const { users, fetchUsers } = useUsers();
-  const { assignUserToCompany, removeUserFromCompany } = useCompanies();
+  const { assignUserToCompany, removeUserFromCompany } = useCompanyUserManagement();
   const [companyUsers, setCompanyUsers] = useState<UserProfile[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -37,21 +39,34 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
   const fetchCompanyUsers = async () => {
     setLoading(true);
     try {
-      // Fetch users who are associated with this company
+      console.log(`Fetching users for company: ${company.id}`);
+      
+      // Fetch users who are associated with this company from user_empresa table
       const { data, error } = await supabase
         .from('user_empresa')
         .select('user_id')
         .eq('company_id', company.id);
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching company user relationships:', error);
+        toast("Erro ao buscar usuários", {
+          description: error.message,
+        });
+        throw error;
+      }
+      
+      console.log('User-company relationships:', data);
       
       if (data && data.length > 0) {
         const userIds = data.map(relation => relation.user_id);
+        console.log('User IDs in this company:', userIds);
         
-        // Get the full user profiles for these IDs
+        // Get the full user profiles for these IDs from the users array
         const usersInCompany = users.filter(user => userIds.includes(user.id));
+        console.log('Filtered company users:', usersInCompany);
         setCompanyUsers(usersInCompany);
       } else {
+        console.log('No users found for this company');
         setCompanyUsers([]);
       }
     } catch (error) {
@@ -61,15 +76,24 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
     }
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchUsers();
+    await fetchCompanyUsers();
+    setRefreshing(false);
+  };
+
   const handleAddUser = async () => {
     if (!selectedUserId) return;
     
     try {
-      await assignUserToCompany(selectedUserId, company.id);
-      // Refresh the list
-      fetchCompanyUsers();
-      // Reset selection
-      setSelectedUserId('');
+      const success = await assignUserToCompany(selectedUserId, company.id);
+      if (success) {
+        // Refresh the list
+        await fetchCompanyUsers();
+        // Reset selection
+        setSelectedUserId('');
+      }
     } catch (error) {
       console.error('Error adding user to company:', error);
     }
@@ -77,9 +101,11 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
 
   const handleRemoveUser = async (userId: string) => {
     try {
-      await removeUserFromCompany(userId, company.id);
-      // Refresh the list
-      fetchCompanyUsers();
+      const success = await removeUserFromCompany(userId, company.id);
+      if (success) {
+        // Refresh the list
+        await fetchCompanyUsers();
+      }
     } catch (error) {
       console.error('Error removing user from company:', error);
     }
@@ -118,6 +144,13 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
         >
           <UserPlus className="mr-2 h-4 w-4" />
           Adicionar
+        </Button>
+        <Button 
+          variant="outline"
+          onClick={handleRefresh}
+          disabled={refreshing}
+        >
+          <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
         </Button>
       </div>
 
