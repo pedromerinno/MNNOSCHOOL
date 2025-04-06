@@ -1,8 +1,7 @@
-
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Company, UserCompanyRelation } from "@/types/company";
+import { Company, UserCompanyRelation, UserCompanyDetails } from "@/types/company";
 
 export function useCompanies() {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -21,7 +20,6 @@ export function useCompanies() {
         throw error;
       }
       
-      // Ensure all Company fields are properly typed
       const typedCompanies: Company[] = data?.map(item => ({
         id: item.id,
         nome: item.nome,
@@ -63,7 +61,6 @@ export function useCompanies() {
         throw error;
       }
       
-      // Ensure company data is properly typed
       const newCompany: Company = {
         id: data.id,
         nome: data.nome,
@@ -114,7 +111,6 @@ export function useCompanies() {
         throw error;
       }
       
-      // Ensure updated company data is properly typed
       const updatedCompany: Company = {
         id: data.id,
         nome: data.nome,
@@ -283,7 +279,6 @@ export function useCompanies() {
         throw companiesError;
       }
       
-      // Ensure fetched company data is properly typed
       const typedCompanies: Company[] = companiesData?.map(item => ({
         id: item.id,
         nome: item.nome,
@@ -312,6 +307,63 @@ export function useCompanies() {
     }
   }, [toast]);
 
+  const getUserCompany = useCallback(async (userId: string): Promise<UserCompanyDetails> => {
+    try {
+      const result: UserCompanyDetails = {
+        company: null,
+        loading: true,
+        error: null
+      };
+      
+      const { data: relationData, error: relationError } = await supabase
+        .from('user_empresa')
+        .select('company_id')
+        .eq('user_id', userId)
+        .maybeSingle();
+        
+      if (relationError) {
+        throw relationError;
+      }
+      
+      if (relationData?.company_id) {
+        const { data: companyData, error: companyError } = await supabase
+          .from('empresas')
+          .select('*')
+          .eq('id', relationData.company_id)
+          .maybeSingle();
+          
+        if (companyError) {
+          throw companyError;
+        }
+        
+        if (companyData) {
+          result.company = {
+            id: companyData.id,
+            nome: companyData.nome,
+            logo: companyData.logo,
+            frase_institucional: companyData.frase_institucional,
+            missao: companyData.missao,
+            historia: companyData.historia,
+            valores: companyData.valores,
+            video_institucional: companyData.video_institucional,
+            descricao_video: companyData.descricao_video,
+            created_at: companyData.created_at,
+            updated_at: companyData.updated_at
+          };
+        }
+      }
+      
+      return { ...result, loading: false };
+    } catch (error: any) {
+      console.error('Error fetching user company:', error);
+      return {
+        company: null,
+        loading: false,
+        error: error
+      };
+    }
+  }, []);
+
   return { 
     companies, 
     loading, 
@@ -321,6 +373,7 @@ export function useCompanies() {
     deleteCompany,
     assignUserToCompany,
     removeUserFromCompany,
-    fetchUserCompanies
+    fetchUserCompanies,
+    getUserCompany
   };
 }

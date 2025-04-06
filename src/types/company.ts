@@ -19,3 +19,10 @@ export interface UserCompanyRelation {
   company_id: string;
   created_at: string;
 }
+
+// Nova interface para o resultado da busca de empresa do usuário
+export interface UserCompanyDetails {
+  company: Company | null;
+  loading: boolean;
+  error: Error | null;
+}
