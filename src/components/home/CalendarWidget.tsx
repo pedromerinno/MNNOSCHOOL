@@ -109,15 +109,17 @@ export const CalendarWidget = () => {
   const calendarDays = generateCalendarDays();
   
   return (
-    <Card className="border-0 rounded-xl overflow-hidden bg-amber-700 text-white">
+    <Card className="border-0 rounded-[30px] overflow-hidden bg-amber-700 text-white">
       <CardContent className="p-0">
-        <div className="p-6 flex justify-between items-center">
-          <h3 className="text-lg font-medium capitalize">{getMonthName(currentDate)} {getYear(currentDate)}</h3>
-          <div className="flex space-x-2">
+        <div className="p-8 flex justify-between items-center">
+          <h3 className="text-xl font-medium capitalize">
+            {getMonthName(currentDate)} {getYear(currentDate)}
+          </h3>
+          <div className="flex space-x-4">
             <Button 
               size="icon" 
               variant="ghost" 
-              className="text-white hover:bg-white/10 h-8 w-8 rounded-full"
+              className="text-white hover:bg-white/10 h-10 w-10 rounded-full border border-white/30"
               onClick={goToPreviousMonth}
             >
               <ChevronLeft className="h-5 w-5" />
@@ -125,7 +127,7 @@ export const CalendarWidget = () => {
             <Button 
               size="icon" 
               variant="ghost" 
-              className="text-white hover:bg-white/10 h-8 w-8 rounded-full"
+              className="text-white hover:bg-white/10 h-10 w-10 rounded-full border border-white/30"
               onClick={goToNextMonth}
             >
               <ChevronRight className="h-5 w-5" />
@@ -133,8 +135,8 @@ export const CalendarWidget = () => {
           </div>
         </div>
         
-        <div className="px-6 pb-6">
-          <div className="grid grid-cols-7 text-center text-xs mb-3">
+        <div className="px-8 pb-10 pt-4">
+          <div className="grid grid-cols-7 text-center text-base mb-6">
             <div>Seg</div>
             <div>Ter</div>
             <div>Qua</div>
@@ -148,10 +150,10 @@ export const CalendarWidget = () => {
             {calendarDays.map((day, index) => (
               <div 
                 key={index} 
-                className={`h-9 w-9 flex items-center justify-center text-sm rounded-full
+                className={`h-12 w-12 flex items-center justify-center text-lg rounded-full mx-auto
                   ${!day.isCurrentMonth ? 'text-white/50' : ''}
-                  ${day.isToday ? 'bg-white/30' : ''}
-                  ${day.isCurrentMonth ? 'hover:bg-white/20 cursor-pointer' : ''}
+                  ${day.isToday ? 'bg-white text-amber-700 font-medium' : ''}
+                  ${day.isCurrentMonth && !day.isToday ? 'hover:bg-white/20 cursor-pointer' : ''}
                 `}
               >
                 {day.day}
