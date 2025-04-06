@@ -10,18 +10,13 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 const userProfileSchema = z.object({
   name: z.string().min(2, {
@@ -90,77 +85,70 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+    <>
+      <div onClick={() => setOpen(true)}>
         {children}
-      </PopoverTrigger>
-      <PopoverContent className="w-80 p-5" align="center">
-        <div className="space-y-4 flex flex-col items-center">
-          <h3 className="text-lg font-semibold">Editar Perfil</h3>
-          <p className="text-sm text-muted-foreground text-center">
-            Atualize suas informações de perfil aqui.
-          </p>
+      </div>
+      
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="w-full max-w-sm sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center">Editar Perfil</DialogTitle>
+            <DialogDescription className="text-center">
+              Atualize suas informações de perfil aqui.
+            </DialogDescription>
+          </DialogHeader>
           
-          <Form {...form}>
-            <form 
-              onSubmit={form.handleSubmit(handleProfileUpdate)} 
-              className="space-y-4 w-full"
-            >
-              <div className="flex flex-col items-center gap-4">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src={avatarPreview} alt="Avatar preview" />
-                  <AvatarFallback>{form.getValues().name?.charAt(0)?.toUpperCase() || "U"}</AvatarFallback>
-                </Avatar>
-                
-                <div className="flex items-center gap-2">
-                  <label htmlFor="avatar-upload" className="cursor-pointer">
-                    <div className="flex items-center gap-2 text-sm text-merinno-blue hover:underline">
-                      <Upload className="h-4 w-4" />
-                      <span>Alterar foto</span>
-                    </div>
-                    <input
-                      id="avatar-upload"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleAvatarChange}
-                    />
-                  </label>
-                </div>
-              </div>
+          <form onSubmit={form.handleSubmit(handleProfileUpdate)} className="space-y-6">
+            <div className="flex flex-col items-center gap-4">
+              <Avatar className="h-24 w-24">
+                <AvatarImage src={avatarPreview} alt="Avatar preview" />
+                <AvatarFallback>{form.getValues().name?.charAt(0)?.toUpperCase() || "U"}</AvatarFallback>
+              </Avatar>
               
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem className="text-center">
-                    <FormLabel>Nome</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Seu nome" 
-                        {...field} 
-                        className="text-center"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <div className="flex items-center gap-2">
+                <label htmlFor="avatar-upload" className="cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-merinno-blue hover:underline">
+                    <Upload className="h-4 w-4" />
+                    <span>Alterar foto</span>
+                  </div>
+                  <input
+                    id="avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarChange}
+                  />
+                </label>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <label htmlFor="name" className="block text-sm font-medium">Nome</label>
+              <Input
+                id="name"
+                placeholder="Seu nome"
+                {...form.register("name")}
+                className="w-full text-center"
               />
-              
-              <div className="flex justify-center gap-2 pt-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setOpen(false)}
-                >
-                  Cancelar
-                </Button>
-                <Button type="submit">Salvar</Button>
-              </div>
-            </form>
-          </Form>
-        </div>
-      </PopoverContent>
-    </Popover>
+              {form.formState.errors.name && (
+                <p className="text-sm font-medium text-destructive">{form.formState.errors.name.message}</p>
+              )}
+            </div>
+            
+            <DialogFooter className="flex justify-center sm:justify-center gap-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit">Salvar</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
