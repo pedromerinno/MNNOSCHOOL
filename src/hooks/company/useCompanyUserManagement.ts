@@ -14,8 +14,14 @@ export const useCompanyUserManagement = () => {
 
       if (error) {
         console.error("Error assigning user to company:", error);
+        
+        // Provide a user-friendly error message
+        const errorMessage = error.code === '42501' || error.message.includes('permission')
+          ? "Permissão negada. Seu usuário não tem acesso para realizar esta operação."
+          : error.message;
+          
         toast("Erro ao adicionar usuário à empresa", {
-          description: error.message,
+          description: errorMessage,
         });
         return false;
       }
@@ -47,8 +53,14 @@ export const useCompanyUserManagement = () => {
 
       if (error) {
         console.error("Error removing user from company:", error);
+        
+        // Provide a user-friendly error message
+        const errorMessage = error.code === '42501' || error.message.includes('permission')
+          ? "Permissão negada. Seu usuário não tem acesso para realizar esta operação."
+          : error.message;
+          
         toast("Erro ao remover usuário da empresa", {
-          description: error.message,
+          description: errorMessage,
         });
         return false;
       }

@@ -6,12 +6,14 @@ import { useUsers } from '@/hooks/useUsers';
 import { useToast } from '@/hooks/use-toast';
 import { makeUserAdmin } from '@/utils/adminUtils';
 import { Skeleton } from "@/components/ui/skeleton";
+import { AlertTriangle } from 'lucide-react';
 
 export const UserManagement = () => {
   const { users, loading, fetchUsers, toggleAdminStatus } = useUsers();
   const { toast } = useToast();
   const [initialSetupDone, setInitialSetupDone] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [permissionError, setPermissionError] = useState(false);
 
   // Make pedro@merinno.com an admin when the component mounts
   useEffect(() => {
@@ -43,6 +45,12 @@ export const UserManagement = () => {
         fetchUsers(); // Refresh the list
       } catch (error: any) {
         console.error('Error in initial admin setup:', error);
+        
+        // Check if this is a permission error
+        if (error.message?.includes('not allowed') || error.status === 403) {
+          setPermissionError(true);
+        }
+        
         toast({
           title: 'Erro',
           description: error.message || 'Falha ao configurar administrador inicial',
@@ -59,8 +67,16 @@ export const UserManagement = () => {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await fetchUsers();
-    setIsRefreshing(false);
+    try {
+      await fetchUsers();
+    } catch (error) {
+      // If we get an error, check if it's a permission error
+      if ((error as any)?.message?.includes('not allowed') || (error as any)?.status === 403) {
+        setPermissionError(true);
+      }
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   return (
@@ -80,6 +96,16 @@ export const UserManagement = () => {
           )}
         </Button>
       </div>
+      
+      {permissionError && (
+        <div className="bg-red-100 border border-red-200 text-red-700 px-4 py-3 rounded mb-4 flex items-start">
+          <AlertTriangle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="font-medium">Erro ao buscar usuários</p>
+            <p className="text-sm">User not allowed - Seu usuário não tem permissão para acessar lista de usuários. Esta funcionalidade requer privilégios de administrador no Supabase.</p>
+          </div>
+        </div>
+      )}
       
       {loading && users.length === 0 ? (
         <div className="space-y-2">
