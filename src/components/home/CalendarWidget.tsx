@@ -1,8 +1,8 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useCompanies } from "@/hooks/useCompanies";
 
 interface CalendarDay {
   day: number;
@@ -14,6 +14,9 @@ interface CalendarDay {
 
 export const CalendarWidget = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const { selectedCompany } = useCompanies();
+  
+  const companyColor = selectedCompany?.cor_principal || "#a16207"; // amber-700 default
   
   const getMonthName = (date: Date) => {
     return date.toLocaleDateString('pt-BR', { month: 'long' });
@@ -99,7 +102,10 @@ export const CalendarWidget = () => {
   const calendarDays = generateCalendarDays();
   
   return (
-    <Card className="border-0 rounded-[30px] overflow-hidden bg-amber-700 text-white">
+    <Card 
+      className="border-0 rounded-[30px] overflow-hidden text-white"
+      style={{ backgroundColor: companyColor }}
+    >
       <CardContent className="p-0">
         <div className="p-8 flex justify-between items-center">
           <h3 className="text-xl font-medium capitalize">
@@ -142,9 +148,10 @@ export const CalendarWidget = () => {
                 key={index} 
                 className={`h-10 w-10 flex items-center justify-center text-sm rounded-full mx-auto
                   ${!day.isCurrentMonth ? 'text-white/50' : ''}
-                  ${day.isToday ? 'bg-white text-amber-700 font-medium' : ''}
+                  ${day.isToday ? 'bg-white font-medium' : ''}
                   ${day.isCurrentMonth && !day.isToday ? 'hover:bg-white/20 cursor-pointer' : ''}
                 `}
+                style={day.isToday ? { color: companyColor } : {}}
               >
                 {day.day}
               </div>

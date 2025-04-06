@@ -1,9 +1,11 @@
+
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
+import { useCompanies } from "@/hooks/useCompanies";
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
@@ -13,10 +15,25 @@ function Calendar({
   showOutsideDays = true,
   ...props
 }: CalendarProps) {
+  const { selectedCompany } = useCompanies();
+  const companyColor = selectedCompany?.cor_principal || "#a16207"; // amber-700 default
+  
+  // Convert hex to RGB for CSS variables
+  const hexToRgb = (hex: string) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : { r: 161, g: 98, b: 7 }; // Default amber-700
+  };
+  
+  const rgb = hexToRgb(companyColor);
+  
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
-      className={cn("p-6", className)}
+      className={cn("p-6 pointer-events-auto", className)}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-6",
@@ -40,8 +57,7 @@ function Calendar({
           "h-12 w-12 p-0 font-normal aria-selected:opacity-100 rounded-full text-sm"
         ),
         day_range_end: "day-range-end",
-        day_selected:
-          "bg-white text-amber-700 hover:bg-white hover:text-amber-700 focus:bg-white focus:text-amber-700 font-medium",
+        day_selected: "bg-white hover:bg-white hover:text-inherit focus:bg-white focus:text-inherit font-medium",
         day_today: "bg-white/30 text-white",
         day_outside:
           "day-outside text-white/50 opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
@@ -55,6 +71,10 @@ function Calendar({
         IconLeft: ({ ..._props }) => <ChevronLeft className="h-5 w-5" />,
         IconRight: ({ ..._props }) => <ChevronRight className="h-5 w-5" />,
       }}
+      style={{
+        '--rdp-accent-color': `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`, 
+        color: 'white'
+      } as React.CSSProperties}
       {...props}
     />
   );
