@@ -54,22 +54,18 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
 
   const handleProfileUpdate = async (values: UserProfileFormValues) => {
     try {
-      // Update the user profile in Supabase via AuthContext
       await updateUserProfile({
         displayName: values.name,
         avatar: values.avatar || null
       });
       
-      // Call the parent handler
       onSave(values);
       
-      // Show success toast
       toast({
         title: "Perfil atualizado",
         description: "Suas alterações foram salvas com sucesso.",
       });
       
-      // Close the popover
       setOpen(false);
     } catch (error: any) {
       toast({
@@ -98,15 +94,18 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
       <PopoverTrigger asChild>
         {children}
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-5" align="end">
-        <div className="space-y-4">
+      <PopoverContent className="w-80 p-5" align="center">
+        <div className="space-y-4 flex flex-col items-center">
           <h3 className="text-lg font-semibold">Editar Perfil</h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground text-center">
             Atualize suas informações de perfil aqui.
           </p>
           
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleProfileUpdate)} className="space-y-4">
+            <form 
+              onSubmit={form.handleSubmit(handleProfileUpdate)} 
+              className="space-y-4 w-full"
+            >
               <div className="flex flex-col items-center gap-4">
                 <Avatar className="h-24 w-24">
                   <AvatarImage src={avatarPreview} alt="Avatar preview" />
@@ -134,17 +133,21 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
                 control={form.control}
                 name="name"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="text-center">
                     <FormLabel>Nome</FormLabel>
                     <FormControl>
-                      <Input placeholder="Seu nome" {...field} />
+                      <Input 
+                        placeholder="Seu nome" 
+                        {...field} 
+                        className="text-center"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex justify-center gap-2 pt-2">
                 <Button 
                   type="button" 
                   variant="outline" 
