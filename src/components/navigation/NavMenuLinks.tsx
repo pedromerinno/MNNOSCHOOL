@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 export const NavMenuLinks = () => {
   const { user, userProfile } = useAuth();
 
-  const isAdmin = user?.email === 'admin@merinno.com' || userProfile?.isAdmin === true;
+  const isAdmin = userProfile?.isAdmin === true;
 
   const adminLinks = isAdmin ? (
     <li>
