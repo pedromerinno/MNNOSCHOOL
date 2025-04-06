@@ -18,6 +18,7 @@ import {
 import { ProfilePopover, UserProfileFormValues } from "@/components/profile/ProfilePopover";
 import { useCompanies } from "@/hooks/useCompanies";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface UserNavigationProps {
   avatarUrl?: string;
@@ -27,13 +28,32 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
   const { user, signOut, userProfile } = useAuth();
   const [displayName, setDisplayName] = useState<string>("");
   const [displayAvatar, setDisplayAvatar] = useState<string>("");
+  const [companiesLoaded, setCompaniesLoaded] = useState(false);
   const navigate = useNavigate();
   const { 
     userCompanies, 
     selectedCompany, 
     selectCompany,
+    getUserCompanies,
     isLoading 
   } = useCompanies();
+  
+  // Fetch user companies when the component mounts
+  useEffect(() => {
+    const loadCompanies = async () => {
+      if (user?.id && !companiesLoaded) {
+        try {
+          console.log("UserNavigation: Loading companies for user", user.id);
+          await getUserCompanies(user.id);
+          setCompaniesLoaded(true);
+        } catch (error) {
+          console.error("UserNavigation: Error loading companies", error);
+        }
+      }
+    };
+    
+    loadCompanies();
+  }, [user?.id, getUserCompanies, companiesLoaded]);
   
   // Update display name and avatar
   useEffect(() => {
@@ -60,9 +80,14 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
   const handleCompanySelect = (company) => {
     if (!company || !user?.id) return;
     
-    console.log('UserNavigation: Company selected', company.nome);
-    selectCompany(user.id, company);
-    toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
+    try {
+      console.log('UserNavigation: Company selected', company.nome);
+      selectCompany(user.id, company);
+      toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
+    } catch (error) {
+      console.error("Error selecting company:", error);
+      toast.error("Erro ao selecionar empresa");
+    }
   };
 
   // Only show company selection if user has multiple companies
@@ -97,9 +122,13 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
             <DropdownMenuSub>
               <DropdownMenuSubTrigger className="cursor-pointer flex items-center gap-2">
                 <Building className="h-4 w-4" />
-                <span className="truncate">
-                  {isLoading ? 'Carregando...' : (selectedCompany?.nome || 'Selecionar Empresa')}
-                </span>
+                {isLoading ? (
+                  <Skeleton className="h-4 w-24" />
+                ) : (
+                  <span className="truncate">
+                    {selectedCompany?.nome || 'Selecionar Empresa'}
+                  </span>
+                )}
               </DropdownMenuSubTrigger>
               <DropdownMenuPortal>
                 <DropdownMenuSubContent className="w-48 bg-white dark:bg-gray-800 z-50">

@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const CompanySelector = () => {
   const { user } = useAuth();
@@ -20,24 +21,52 @@ export const CompanySelector = () => {
     selectCompany,
     isLoading 
   } = useCompanies();
+  const [hasError, setHasError] = useState(false);
+
+  // Fetch user companies on mount
+  useEffect(() => {
+    const loadUserCompanies = async () => {
+      if (user?.id) {
+        try {
+          setHasError(false);
+          await getUserCompanies(user.id);
+        } catch (err) {
+          console.error("Error loading companies in CompanySelector:", err);
+          setHasError(true);
+        }
+      }
+    };
+    
+    loadUserCompanies();
+  }, [user?.id, getUserCompanies]);
 
   const handleCompanyChange = (company) => {
     if (company && user?.id) {
       console.log('CompanySelector: Selecting company:', company.nome);
       
-      selectCompany(user.id, company);
-      toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
+      try {
+        selectCompany(user.id, company);
+        toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
+      } catch (err) {
+        console.error("Error selecting company:", err);
+        toast.error("Erro ao selecionar empresa");
+      }
     }
   };
 
+  // If loading, show skeleton
+  if (isLoading) {
+    return <Skeleton className="h-6 w-32" />;
+  }
+
   // If user has no companies or is not logged in, show default text
-  if (!user || (!isLoading && userCompanies.length === 0)) {
+  if (!user || hasError || (!isLoading && userCompanies.length === 0)) {
     return <span className="text-lg font-bold text-merinno-dark">merinno</span>;
   }
 
   // If user has only one company, just show the name without dropdown
   if (!isLoading && userCompanies.length === 1) {
-    return <span className="text-lg font-bold text-merinno-dark">{userCompanies[0].nome || "merinno"}</span>;
+    return <span className="text-lg font-bold text-merinno-dark">{userCompanies[0]?.nome || "merinno"}</span>;
   }
 
   return (

@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
-import { toast } from "sonner";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -14,8 +13,26 @@ export const WelcomeSection = () => {
   const { getUserCompanies, selectedCompany, userCompanies, selectCompany, isLoading } = useCompanies();
   const navigate = useNavigate();
   const [displayCompany, setDisplayCompany] = useState<Company | null>(null);
+  const [error, setError] = useState<boolean>(false);
+  
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      if (!user?.id) return;
+      
+      try {
+        setError(false);
+        await getUserCompanies(user.id);
+      } catch (err) {
+        console.error('Error fetching user companies in WelcomeSection:', err);
+        setError(true);
+      }
+    };
+    
+    fetchInitialData();
+  }, [user?.id, getUserCompanies]);
 
   useEffect(() => {
+    // Set display company based on what's available
     if (selectedCompany) {
       setDisplayCompany(selectedCompany);
     } else if (userCompanies && userCompanies.length > 0) {
@@ -23,8 +40,15 @@ export const WelcomeSection = () => {
       setDisplayCompany(userCompanies[0]);
       
       if (user?.id) {
-        selectCompany(user.id, userCompanies[0]);
+        try {
+          selectCompany(user.id, userCompanies[0]);
+        } catch (err) {
+          console.error('Error selecting first company:', err);
+          // Still display the company even if selection fails
+        }
       }
+    } else {
+      setDisplayCompany(null);
     }
   }, [selectedCompany, userCompanies, user, selectCompany]);
 
@@ -61,13 +85,13 @@ export const WelcomeSection = () => {
         >
           {displayCompany?.frase_institucional || defaultPhrase}
         </p>
-        {displayCompany && (
+        {(displayCompany || error) && (
           <Button 
             onClick={handleLearnMore} 
             className="mt-1 flex items-center gap-2 text-white rounded-full text-sm"
             variant="default"
             style={{ 
-              backgroundColor: displayCompany.cor_principal || '#000000' 
+              backgroundColor: displayCompany?.cor_principal || '#000000' 
             }}
           >
             Saiba mais
