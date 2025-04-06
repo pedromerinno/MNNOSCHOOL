@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export const FeedbackWidget = () => {
   return (
-    <Card className="border-0 shadow-md overflow-hidden rounded-[30px] bg-[#F1EDE4]">
+    <Card className="border-0 shadow-none overflow-hidden rounded-[30px] bg-[#FAFFF7]">
       <CardContent className="p-0">
         <div className="p-8 flex justify-between items-center">
           <h3 className="text-2xl font-medium">Feedbacks</h3>
