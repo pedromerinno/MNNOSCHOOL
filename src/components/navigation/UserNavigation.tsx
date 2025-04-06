@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, ChevronDown, Building } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -10,8 +10,14 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import { ProfilePopover, UserProfileFormValues } from "@/components/profile/ProfilePopover";
+import { useCompanies } from "@/hooks/useCompanies";
+import { Company } from "@/types/company";
 
 interface UserNavigationProps {
   avatarUrl?: string;
@@ -21,9 +27,36 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
   const { user, signOut, userProfile } = useAuth();
   const [displayName, setDisplayName] = useState<string>("");
   const [displayAvatar, setDisplayAvatar] = useState<string>("");
+  const [userCompanies, setUserCompanies] = useState<Company[]>([]);
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { getUserCompanies, getUserCompany } = useCompanies();
   
-  // Use useEffect to update the display name and avatar whenever userProfile changes
+  // Fetch user companies and selected company
+  useEffect(() => {
+    const fetchUserCompanies = async () => {
+      if (user?.id) {
+        setLoading(true);
+        
+        // Get all companies the user is related to
+        const companies = await getUserCompanies(user.id);
+        setUserCompanies(companies);
+        
+        // If there are companies, get the current one
+        if (companies.length > 0) {
+          const currentCompanyResult = await getUserCompany(user.id);
+          setSelectedCompany(currentCompanyResult.company);
+        }
+        
+        setLoading(false);
+      }
+    };
+
+    fetchUserCompanies();
+  }, [user, getUserCompanies, getUserCompany]);
+
+  // Update display name and avatar
   useEffect(() => {
     // Use the displayName from userProfile if available, otherwise use the email
     setDisplayName(userProfile.displayName || user?.email?.split('@')[0] || "Usuário");
@@ -44,6 +77,15 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
   const handleDashboardClick = () => {
     navigate('/dashboard');
   };
+
+  const handleCompanySelect = (company: Company) => {
+    setSelectedCompany(company);
+    // In a real implementation, you would update the selected company in your context/state
+    // and possibly redirect or refresh the page
+    window.location.reload(); // Simple reload to refresh the data with the new company
+  };
+
+  const hasMultipleCompanies = userCompanies.length > 1;
 
   return (
     <DropdownMenu>
@@ -68,6 +110,43 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
           </p>
           <p className="text-xs text-gray-500 truncate">{user?.email}</p>
         </div>
+        
+        {hasMultipleCompanies && (
+          <>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger className="cursor-pointer flex items-center gap-2">
+                <Building className="h-4 w-4" />
+                <span className="truncate">
+                  {loading ? 'Carregando...' : (selectedCompany?.nome || 'Selecionar Empresa')}
+                </span>
+                <ChevronDown className="h-3 w-3 ml-auto" />
+              </DropdownMenuSubTrigger>
+              <DropdownMenuPortal>
+                <DropdownMenuSubContent className="w-48">
+                  {userCompanies.map((company) => (
+                    <DropdownMenuItem
+                      key={company.id}
+                      className="cursor-pointer"
+                      onClick={() => handleCompanySelect(company)}
+                    >
+                      <div className="flex items-center w-full">
+                        {company.logo && (
+                          <img 
+                            src={company.logo} 
+                            alt={company.nome} 
+                            className="h-4 w-4 mr-2 object-contain"
+                          />
+                        )}
+                        <span className="truncate">{company.nome}</span>
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuPortal>
+            </DropdownMenuSub>
+            <DropdownMenuSeparator />
+          </>
+        )}
         
         <ProfilePopover 
           email={user?.email}

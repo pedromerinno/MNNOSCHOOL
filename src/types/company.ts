@@ -20,9 +20,17 @@ export interface UserCompanyRelation {
   created_at: string;
 }
 
-// Nova interface para o resultado da busca de empresa do usuário
+// Interface for the result of the user company search
 export interface UserCompanyDetails {
   company: Company | null;
   loading: boolean;
   error: Error | null;
+}
+
+// Selected company context interface
+export interface SelectedCompanyContext {
+  selectedCompany: Company | null;
+  userCompanies: Company[];
+  loading: boolean;
+  selectCompany: (company: Company) => void;
 }
