@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogOut, User, ChevronDown, Building } from "lucide-react";
@@ -106,12 +107,15 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
     setSelectedCompany(company);
     
     try {
-      // Atualizar a empresa selecionada no backend
+      // Update the selected company in backend without deleting existing relations
       await updateUserSelectedCompany(user.id, company.id);
       toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
       
-      // Recarregar a página para atualizar os dados com a nova empresa
-      window.location.reload();
+      // Dispatch the event for other components
+      const navEvent = new CustomEvent('company-selected', { 
+        detail: { userId: user.id, companyId: company.id } 
+      });
+      window.dispatchEvent(navEvent);
     } catch (error) {
       console.error('Erro ao selecionar empresa:', error);
       toast.error("Não foi possível selecionar a empresa. Tente novamente.");

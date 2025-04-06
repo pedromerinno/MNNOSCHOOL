@@ -51,11 +51,16 @@ export const CompanySelector = () => {
     if (company && user?.id) {
       try {
         // Update the selected company in UserNavigation.tsx
-        // This will trigger a page reload
+        // This will NOT delete existing company relations
         const navEvent = new CustomEvent('company-selected', { 
           detail: { userId: user.id, companyId: company.id } 
         });
         window.dispatchEvent(navEvent);
+        
+        // Update the local state
+        setSelectedCompany(company);
+        
+        toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
       } catch (error) {
         console.error('Erro ao selecionar empresa:', error);
         toast.error("Não foi possível selecionar a empresa");

@@ -185,7 +185,7 @@ export const useCompanies = () => {
   const getUserCompany = async (userId: string): Promise<UserCompanyDetails> => {
     setIsLoading(true);
     try {
-      // First get the user's company relation
+      // First get the user's current selected company relation
       const { data: userCompanyData, error: userCompanyError } = await supabase
         .from('user_empresa')
         .select('company_id')
@@ -392,34 +392,39 @@ export const useCompanies = () => {
   };
 
   /**
-   * Updates a user's selected company
+   * Updates a user's selected company without removing existing company associations
    */
   const updateUserSelectedCompany = async (userId: string, companyId: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      // First delete any existing relation
-      const { error: deleteError } = await supabase
+      // We'll keep all existing company relations and just ensure this is the most recent one
+      // First, we check if the relation already exists
+      const { data: existingRelation, error: checkError } = await supabase
         .from('user_empresa')
-        .delete()
-        .eq('user_id', userId);
+        .select('*')
+        .eq('user_id', userId)
+        .eq('company_id', companyId);
 
-      if (deleteError) {
-        console.error("Error removing previous user-company relation:", deleteError);
+      if (checkError) {
+        console.error("Error checking user-company relation:", checkError);
         return false;
       }
 
-      // Then create the new relation
-      const { error: insertError } = await supabase
-        .from('user_empresa')
-        .insert([
-          { user_id: userId, company_id: companyId }
-        ]);
+      // If the relation doesn't exist yet, create it
+      if (!existingRelation || existingRelation.length === 0) {
+        const { error: insertError } = await supabase
+          .from('user_empresa')
+          .insert([
+            { user_id: userId, company_id: companyId }
+          ]);
 
-      if (insertError) {
-        console.error("Error setting user's selected company:", insertError);
-        return false;
+        if (insertError) {
+          console.error("Error creating user-company relation:", insertError);
+          return false;
+        }
       }
       
+      // The most recent relation is now the selected one
       return true;
     } catch (error) {
       console.error("Unexpected error:", error);
