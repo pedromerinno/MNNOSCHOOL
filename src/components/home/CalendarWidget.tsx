@@ -4,6 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+// Define a type for calendar day objects
+interface CalendarDay {
+  day: number;
+  isCurrentMonth: boolean;
+  isToday?: boolean;
+  isPrevMonth?: boolean;
+  isNextMonth?: boolean;
+}
+
 export const CalendarWidget = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   
@@ -59,17 +68,18 @@ export const CalendarWidget = () => {
     const daysInPrevMonth = getDaysInMonth(prevMonth);
     
     // Generate previous month days
-    const prevMonthDays = Array.from({ length: daysFromPrevMonth }, (_, i) => ({
+    const prevMonthDays: CalendarDay[] = Array.from({ length: daysFromPrevMonth }, (_, i) => ({
       day: daysInPrevMonth - daysFromPrevMonth + i + 1,
       isCurrentMonth: false,
       isPrevMonth: true,
+      isToday: false
     }));
     
     // Generate current month days
-    const currentMonthDays = Array.from({ length: daysInMonth }, (_, i) => ({
+    const currentMonthDays: CalendarDay[] = Array.from({ length: daysInMonth }, (_, i) => ({
       day: i + 1,
       isCurrentMonth: true,
-      isToday: isToday(new Date(currentDate.getFullYear(), currentDate.getMonth(), i + 1)),
+      isToday: isToday(new Date(currentDate.getFullYear(), currentDate.getMonth(), i + 1))
     }));
     
     // Calculate how many days from next month are needed
@@ -77,10 +87,11 @@ export const CalendarWidget = () => {
     const daysFromNextMonth = totalCells - (prevMonthDays.length + currentMonthDays.length);
     
     // Generate next month days
-    const nextMonthDays = Array.from({ length: daysFromNextMonth }, (_, i) => ({
+    const nextMonthDays: CalendarDay[] = Array.from({ length: daysFromNextMonth }, (_, i) => ({
       day: i + 1,
       isCurrentMonth: false,
       isNextMonth: true,
+      isToday: false
     }));
     
     return [...prevMonthDays, ...currentMonthDays, ...nextMonthDays];
