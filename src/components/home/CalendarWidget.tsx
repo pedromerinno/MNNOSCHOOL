@@ -136,7 +136,7 @@ export const CalendarWidget = () => {
         </div>
         
         <div className="px-8 pb-10 pt-4">
-          <div className="grid grid-cols-7 text-center text-base mb-6">
+          <div className="grid grid-cols-7 text-center text-sm mb-6">
             <div>Seg</div>
             <div>Ter</div>
             <div>Qua</div>
@@ -150,7 +150,7 @@ export const CalendarWidget = () => {
             {calendarDays.map((day, index) => (
               <div 
                 key={index} 
-                className={`h-12 w-12 flex items-center justify-center text-lg rounded-full mx-auto
+                className={`h-12 w-12 flex items-center justify-center text-base rounded-full mx-auto
                   ${!day.isCurrentMonth ? 'text-white/50' : ''}
                   ${day.isToday ? 'bg-white text-amber-700 font-medium' : ''}
                   ${day.isCurrentMonth && !day.isToday ? 'hover:bg-white/20 cursor-pointer' : ''}

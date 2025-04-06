@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
@@ -33,12 +32,12 @@ function Calendar({
         table: "w-full border-collapse space-y-4",
         head_row: "flex",
         head_cell:
-          "text-muted-foreground rounded-md w-12 h-12 font-normal text-base",
+          "text-muted-foreground rounded-md w-12 h-12 font-normal text-sm",
         row: "flex w-full mt-2",
-        cell: "h-12 w-12 text-center text-lg p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+        cell: "h-12 w-12 text-center text-base p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
         day: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-12 w-12 p-0 font-normal aria-selected:opacity-100 rounded-full"
+          "h-12 w-12 p-0 font-normal aria-selected:opacity-100 rounded-full text-sm"
         ),
         day_range_end: "day-range-end",
         day_selected:
