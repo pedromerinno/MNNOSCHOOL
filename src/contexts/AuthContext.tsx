@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -80,11 +79,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       // Check if data is a parser error or not before accessing properties
       if (data && typeof data === 'object' && !('error' in data)) {
+        const displayName = data.display_name;
+        const avatar = data.avatar;
+        // Use null coalescing to handle possible undefined value
+        const isAdmin = isAdminColumnExists && data.is_admin === true;
+        
         setUserProfile({
-          displayName: data.display_name,
-          avatar: data.avatar,
-          // Only set isAdmin if the column exists and the value is true
-          isAdmin: isAdminColumnExists && data.is_admin === true ? true : false
+          displayName,
+          avatar,
+          isAdmin: isAdmin ? true : false
         });
       } else {
         console.error('Invalid data format received from database:', data);
