@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { Company } from "@/types/company";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const WelcomeSection = () => {
   const navigate = useNavigate();
@@ -42,28 +43,39 @@ export const WelcomeSection = () => {
           Olá, {userName}
         </p>
       </div>
-      <h1 className="text-3xl md:text-4xl text-center my-5 font-medium dark:text-white">
-        {userCompany && !loading && userCompany.frase_institucional ? (
-          userCompany.frase_institucional
-        ) : (
-          <>
-            Juntos, estamos desenhando<br />
-            o futuro de grandes empresas
-          </>
-        )}
-      </h1>
-      <div className="flex justify-center mt-6">
-        <Button 
-          onClick={handleLearnMore}
-          className="bg-black hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 text-white rounded-full px-6"
-        >
-          {userCompany && !loading ? (
-            `Clique aqui para saber mais sobre a ${userCompany.nome}`
-          ) : (
-            "Clique para saber mais sobre a MERINNO"
-          )}
-        </Button>
-      </div>
+      
+      {loading ? (
+        <div className="flex flex-col items-center">
+          <Skeleton className="h-12 w-3/4 max-w-lg my-5" />
+          <Skeleton className="h-12 w-1/2 max-w-md mb-5" />
+          <Skeleton className="h-10 w-56 rounded-full mt-6" />
+        </div>
+      ) : (
+        <>
+          <h1 className="text-3xl md:text-4xl text-center my-5 font-medium dark:text-white">
+            {userCompany && userCompany.frase_institucional ? (
+              userCompany.frase_institucional
+            ) : (
+              <>
+                Juntos, estamos desenhando<br />
+                o futuro de grandes empresas
+              </>
+            )}
+          </h1>
+          <div className="flex justify-center mt-6">
+            <Button 
+              onClick={handleLearnMore}
+              className="bg-black hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 text-white rounded-full px-6"
+            >
+              {userCompany ? (
+                `Clique aqui para saber mais sobre a ${userCompany.nome}`
+              ) : (
+                "Clique para saber mais sobre a MERINNO"
+              )}
+            </Button>
+          </div>
+        </>
+      )}
     </div>
   );
 };
