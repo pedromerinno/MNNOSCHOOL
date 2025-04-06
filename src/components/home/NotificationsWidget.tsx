@@ -1,11 +1,10 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export const NotificationsWidget = () => {
   return (
-    <Card className="border-0 shadow-md overflow-hidden bg-[#f8f7f4] rounded-[30px]">
+    <Card className="border-0 shadow-none overflow-hidden bg-[#F1EDE4] rounded-[30px]">
       <CardContent className="p-0">
         <div className="p-8 flex justify-between items-center">
           <h3 className="text-2xl font-medium text-black">Avisos</h3>
@@ -27,9 +26,9 @@ export const NotificationsWidget = () => {
           </div>
         </div>
         
-        <div className="px-8 pb-8">
+        <div className="px-12 pb-8">
           <div className="mb-8">
-            <span className="inline-block px-6 py-3 rounded-full bg-amber-100 text-black text-base font-medium mb-6">
+            <span className="inline-block px-8 py-3 rounded-full bg-amber-100 text-black text-base font-medium mb-6">
               Recesso
             </span>
             <h4 className="text-xl font-medium mb-6">No dia 25 teremos recesso devido ao feriado de...</h4>
@@ -54,4 +53,3 @@ export const NotificationsWidget = () => {
     </Card>
   );
 };
-
