@@ -78,12 +78,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      if (data) {
+      // Check if data is a parser error or not before accessing properties
+      if (data && typeof data === 'object' && !('error' in data)) {
         setUserProfile({
           displayName: data.display_name,
           avatar: data.avatar,
-          // Only set isAdmin if the column exists
-          isAdmin: isAdminColumnExists ? (data.is_admin || false) : false
+          // Only set isAdmin if the column exists and the value is true
+          isAdmin: isAdminColumnExists && data.is_admin === true ? true : false
+        });
+      } else {
+        console.error('Invalid data format received from database:', data);
+        // Set default values if data is invalid
+        setUserProfile({
+          displayName: null,
+          avatar: null,
+          isAdmin: false
         });
       }
     } catch (error) {
