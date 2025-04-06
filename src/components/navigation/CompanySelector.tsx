@@ -112,10 +112,7 @@ export const CompanySelector = () => {
 
   // Get the default text to display (selected company name or "merinno")
   const getDefaultText = () => {
-    if (selectedCompany?.nome) {
-      return selectedCompany.nome;
-    }
-    return "merinno";
+    return selectedCompany?.nome || "merinno";
   };
 
   // If user has no companies or is not logged in, show default text
@@ -154,3 +151,4 @@ export const CompanySelector = () => {
     </DropdownMenu>
   );
 };
+
