@@ -3,11 +3,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { setAdminStatusById } from '@/utils/adminUtils';
-import { retryWithTimeout } from './company/utils/retryUtils';
 
 export interface UserProfile {
   id: string;
-  email: string;
+  email: string | null;
   display_name: string | null;
   is_admin: boolean | null;
 }
@@ -25,7 +24,7 @@ export function useUsers() {
     try {
       const parsed = JSON.parse(cachedUsers);
       const now = new Date().getTime();
-      // Cache valid for 15 minutes instead of 30 for more frequent updates
+      // Cache valid for 15 minutes
       if (parsed.expiry > now) {
         return parsed.data;
       }
@@ -40,7 +39,7 @@ export function useUsers() {
   
   const setCachedUsers = (data: UserProfile[]) => {
     try {
-      // Cache for 15 minutes instead of 30
+      // Cache for 15 minutes
       const expiry = new Date().getTime() + (15 * 60 * 1000);
       localStorage.setItem('cachedUsers', JSON.stringify({
         data,
@@ -63,52 +62,33 @@ export function useUsers() {
         setLoading(true);
       }
       
-      // We won't try to call the admin.listUsers() API since it requires admin privileges
-      // Instead, we'll query the profiles table to get user information
-      const { data: profiles, error: profilesError } = await supabase
+      // Query the profiles table which is accessible via RLS policies
+      const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('id, display_name, is_admin');
+        .select('id, display_name, is_admin, created_at')
+        .order('created_at', { ascending: false });
       
-      if (profilesError) {
-        throw profilesError;
+      if (error) {
+        throw error;
       }
       
-      if (!profiles || profiles.length === 0) {
-        setUsers([]);
-        setLoading(false);
-        return;
-      }
+      // Transform the profiles data into the UserProfile format
+      const formattedUsers: UserProfile[] = profiles.map(profile => ({
+        id: profile.id,
+        email: profile.display_name ? `${profile.display_name.toLowerCase().replace(/\s+/g, '.')}@user.com` : `user-${profile.id.substring(0, 8)}@example.com`,
+        display_name: profile.display_name || `User ${profile.id.substring(0, 6)}`,
+        is_admin: profile.is_admin
+      }));
       
-      // For each profile, get the email
-      // This approach relies on the current user having access to their own email
-      // and assumes profiles and emails are accessible based on RLS policies
-      const usersWithProfiles = await Promise.all(
-        profiles.map(async (profile) => {
-          // Try to get email from auth metadata if available to current user
-          let email = '';
-          
-          // Fallback to a display format for users without emails
-          if (!email) {
-            email = `user-${profile.id.substring(0, 8)}`;
-          }
-          
-          return {
-            id: profile.id,
-            email,
-            display_name: profile.display_name,
-            is_admin: profile.is_admin
-          };
-        })
-      );
-      
-      setUsers(usersWithProfiles);
-      setCachedUsers(usersWithProfiles);
+      setUsers(formattedUsers);
+      setCachedUsers(formattedUsers);
+      setLoading(false);
       
     } catch (error: any) {
       console.error('Error fetching users:', error);
       toast({
         title: 'Erro ao buscar usuários',
-        description: 'User not allowed', // Simplified error message
+        description: error.message || 'Ocorreu um erro ao buscar os usuários',
         variant: 'destructive',
       });
       
@@ -118,7 +98,6 @@ export function useUsers() {
         console.log('Using cached users data due to error');
         setUsers(cachedData);
       }
-    } finally {
       setLoading(false);
     }
   }, [toast]);
@@ -153,7 +132,7 @@ export function useUsers() {
       console.error('Error toggling admin status:', error);
       toast({
         title: 'Erro',
-        description: error.message,
+        description: error.message || 'Ocorreu um erro ao atualizar o status de administrador',
         variant: 'destructive',
       });
     }

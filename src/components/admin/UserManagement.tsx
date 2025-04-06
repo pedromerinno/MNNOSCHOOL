@@ -15,7 +15,7 @@ export const UserManagement = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [permissionError, setPermissionError] = useState(false);
 
-  // Make pedro@merinno.com an admin when the component mounts
+  // Try to make an initial admin when the component mounts
   useEffect(() => {
     const setInitialAdmin = async () => {
       if (initialSetupDone) return;
@@ -26,7 +26,7 @@ export const UserManagement = () => {
         
         // Try to find if user already exists and is admin
         const existingAdmin = users.find(user => 
-          user.email === targetEmail && user.is_admin
+          user.email?.includes('pedro') && user.is_admin
         );
         
         if (existingAdmin) {
@@ -47,7 +47,7 @@ export const UserManagement = () => {
         console.error('Error in initial admin setup:', error);
         
         // Check if this is a permission error
-        if (error.message?.includes('not allowed') || error.status === 403) {
+        if (error.message?.includes('permission') || error.status === 403) {
           setPermissionError(true);
         }
         
@@ -69,9 +69,11 @@ export const UserManagement = () => {
     setIsRefreshing(true);
     try {
       await fetchUsers();
-    } catch (error) {
+      setPermissionError(false);
+    } catch (error: any) {
+      console.error('Error refreshing users:', error);
       // If we get an error, check if it's a permission error
-      if ((error as any)?.message?.includes('not allowed') || (error as any)?.status === 403) {
+      if (error?.message?.includes('permission') || error?.status === 403) {
         setPermissionError(true);
       }
     } finally {
@@ -98,11 +100,11 @@ export const UserManagement = () => {
       </div>
       
       {permissionError && (
-        <div className="bg-red-100 border border-red-200 text-red-700 px-4 py-3 rounded mb-4 flex items-start">
+        <div className="bg-amber-100 border border-amber-200 text-amber-700 px-4 py-3 rounded mb-4 flex items-start">
           <AlertTriangle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
           <div>
-            <p className="font-medium">Erro ao buscar usuários</p>
-            <p className="text-sm">User not allowed - Seu usuário não tem permissão para acessar lista de usuários. Esta funcionalidade requer privilégios de administrador no Supabase.</p>
+            <p className="font-medium">Aviso de Permissão</p>
+            <p className="text-sm">Você está visualizando os perfis de usuário, mas não tem acesso administrativo completo. Algumas informações, como emails reais, não estão disponíveis.</p>
           </div>
         </div>
       )}
