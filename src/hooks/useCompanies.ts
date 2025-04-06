@@ -26,7 +26,7 @@ export const useCompanies = () => {
     setSelectedCompany 
   });
 
-  const { selectCompany } = useCompanySelection({ setSelectedCompany });
+  const { selectCompany, getStoredCompanyId } = useCompanySelection({ setSelectedCompany });
 
   const { createCompany } = useCompanyCreate({ 
     setIsLoading, 
@@ -67,6 +67,39 @@ export const useCompanies = () => {
       window.removeEventListener('company-selected', handleCompanySelected as EventListener);
     };
   }, []);
+
+  // Try to restore previously selected company on hook initialization
+  useEffect(() => {
+    const restoreSelectedCompany = async () => {
+      if (!selectedCompany && userCompanies.length > 0) {
+        const storedCompanyId = getStoredCompanyId();
+        
+        if (storedCompanyId) {
+          // First try to find in already loaded userCompanies
+          const storedCompany = userCompanies.find(company => company.id === storedCompanyId);
+          
+          if (storedCompany) {
+            setSelectedCompany(storedCompany);
+            console.log('Restored selected company from localStorage:', storedCompany.nome);
+          } else {
+            // If not found, try to fetch it
+            try {
+              const company = await getCompanyById(storedCompanyId);
+              if (company) {
+                setSelectedCompany(company);
+                console.log('Restored selected company from database:', company.nome);
+              }
+            } catch (error) {
+              console.error('Failed to restore company from localStorage', error);
+              localStorage.removeItem('selectedCompanyId');
+            }
+          }
+        }
+      }
+    };
+
+    restoreSelectedCompany();
+  }, [userCompanies, selectedCompany, getCompanyById, getStoredCompanyId]);
 
   return {
     isLoading,
