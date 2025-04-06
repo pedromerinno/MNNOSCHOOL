@@ -35,7 +35,9 @@ export const WelcomeSection = () => {
         >
           Olá, {userName}
         </p>
-        <p className="text-gray-600 dark:text-gray-300 text-center text-base">
+        <p 
+          className="text-[#000000] text-center text-[40px] font-bold"
+        >
           {selectedCompany?.frase_institucional || "Juntos, estamos desenhando o futuro de grandes empresas"}
         </p>
       </div>
