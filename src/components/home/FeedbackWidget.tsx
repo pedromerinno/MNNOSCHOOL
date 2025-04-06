@@ -16,8 +16,8 @@ export const FeedbackWidget = () => {
               <span>Parabéns Felipe,</span><br />
               pelo projeto da Syngenta.
             </p>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
+            <div className="flex flex-col">
+              <div className="flex items-center mb-4">
                 <img 
                   src="https://i.pravatar.cc/150?img=44" 
                   alt="User avatar" 
@@ -26,7 +26,7 @@ export const FeedbackWidget = () => {
                 <span className="text-base font-medium text-black mr-6">Jéssica</span>
                 <span className="text-sm text-gray-500">5 min atrás</span>
               </div>
-              <button className="px-8 py-3 rounded-full bg-white/80 text-black hover:bg-white transition-colors">
+              <button className="self-start px-8 py-3 rounded-full bg-white/80 text-black hover:bg-white transition-colors">
                 retribuir
               </button>
             </div>
@@ -37,8 +37,8 @@ export const FeedbackWidget = () => {
               <span>Parabéns Felipe,</span><br />
               pelo projeto da Syngenta.
             </p>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
+            <div className="flex flex-col">
+              <div className="flex items-center mb-4">
                 <img 
                   src="https://i.pravatar.cc/150?img=44" 
                   alt="User avatar" 
@@ -47,7 +47,7 @@ export const FeedbackWidget = () => {
                 <span className="text-base font-medium text-black mr-6">Jéssica</span>
                 <span className="text-sm text-gray-500">5 min atrás</span>
               </div>
-              <button className="px-8 py-3 rounded-full bg-white/80 text-black hover:bg-white transition-colors">
+              <button className="self-start px-8 py-3 rounded-full bg-white/80 text-black hover:bg-white transition-colors">
                 retribuir
               </button>
             </div>
@@ -63,4 +63,3 @@ export const FeedbackWidget = () => {
     </Card>
   );
 };
-
