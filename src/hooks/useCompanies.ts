@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Company } from "@/types/company";
 import { toast } from "@/components/ui/use-toast";
@@ -7,6 +7,8 @@ import { toast } from "@/components/ui/use-toast";
 export const useCompanies = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [userCompanies, setUserCompanies] = useState<Company[]>([]);
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
 
   /**
    * Fetches all companies from the database
@@ -43,8 +45,8 @@ export const useCompanies = () => {
   };
 
   /**
-   * Fetches all companies a user is related to
-   * Only reads data, doesn't modify relationships
+   * Fetches all companies a user is related to and automatically selects
+   * the first one if there's only one company
    */
   const getUserCompanies = async (userId: string): Promise<Company[]> => {
     setIsLoading(true);
@@ -66,6 +68,8 @@ export const useCompanies = () => {
       }
 
       if (!userCompanyRelations || userCompanyRelations.length === 0) {
+        setUserCompanies([]);
+        setSelectedCompany(null);
         return [];
       }
 
@@ -76,7 +80,8 @@ export const useCompanies = () => {
       const { data: companies, error: companiesError } = await supabase
         .from('empresas')
         .select('*')
-        .in('id', companyIds);
+        .in('id', companyIds)
+        .order('nome');
 
       if (companiesError) {
         console.error("Error fetching companies:", companiesError);
@@ -88,7 +93,21 @@ export const useCompanies = () => {
         return [];
       }
 
-      return companies as Company[];
+      const userCompaniesData = companies as Company[];
+      setUserCompanies(userCompaniesData);
+      
+      // If there's only one company, automatically select it
+      if (userCompaniesData.length === 1) {
+        setSelectedCompany(userCompaniesData[0]);
+        
+        // Dispatch event to notify other components about this selection
+        const navEvent = new CustomEvent('company-selected', { 
+          detail: { userId, company: userCompaniesData[0] } 
+        });
+        window.dispatchEvent(navEvent);
+      }
+      
+      return userCompaniesData;
     } catch (error) {
       console.error("Unexpected error:", error);
       toast({
@@ -136,6 +155,21 @@ export const useCompanies = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  /**
+   * Selects a company for the current user session (UI only, no database changes)
+   */
+  const selectCompany = (userId: string, company: Company) => {
+    setSelectedCompany(company);
+    
+    // Dispatch event to notify other components
+    const navEvent = new CustomEvent('company-selected', { 
+      detail: { userId, company } 
+    });
+    window.dispatchEvent(navEvent);
+    
+    console.log('Company selected:', company.nome);
   };
 
   /**
@@ -210,6 +244,12 @@ export const useCompanies = () => {
         company.id === companyId ? { ...company, ...data } as Company : company
       ));
       
+      // If the selected company was updated, update it as well
+      if (selectedCompany && selectedCompany.id === companyId) {
+        const updatedCompany = { ...selectedCompany, ...data } as Company;
+        setSelectedCompany(updatedCompany);
+      }
+      
       toast({
         title: "Empresa atualizada",
         description: "A empresa foi atualizada com sucesso",
@@ -252,6 +292,11 @@ export const useCompanies = () => {
 
       // Update the local state
       setCompanies(prev => prev.filter(company => company.id !== companyId));
+      
+      // If the selected company was deleted, clear it
+      if (selectedCompany && selectedCompany.id === companyId) {
+        setSelectedCompany(null);
+      }
       
       toast({
         title: "Empresa excluída",
@@ -346,12 +391,31 @@ export const useCompanies = () => {
     }
   };
 
+  // Listener para seleção de empresas
+  useEffect(() => {
+    const handleCompanySelected = (event: CustomEvent) => {
+      const { company } = event.detail;
+      if (company) {
+        setSelectedCompany(company);
+      }
+    };
+
+    window.addEventListener('company-selected', handleCompanySelected as EventListener);
+    
+    return () => {
+      window.removeEventListener('company-selected', handleCompanySelected as EventListener);
+    };
+  }, []);
+
   return {
     isLoading,
     companies,
+    userCompanies,
+    selectedCompany,
     fetchCompanies,
     getUserCompanies,
     getCompanyById,
+    selectCompany,
     createCompany,
     updateCompany,
     deleteCompany,

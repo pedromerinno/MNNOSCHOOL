@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ProfilePopover, UserProfileFormValues } from "@/components/profile/ProfilePopover";
 import { useCompanies } from "@/hooks/useCompanies";
-import { Company } from "@/types/company";
 import { toast } from "sonner";
 
 interface UserNavigationProps {
@@ -28,71 +27,26 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
   const { user, signOut, userProfile } = useAuth();
   const [displayName, setDisplayName] = useState<string>("");
   const [displayAvatar, setDisplayAvatar] = useState<string>("");
-  const [userCompanies, setUserCompanies] = useState<Company[]>([]);
-  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { getUserCompanies } = useCompanies();
+  const { 
+    userCompanies, 
+    selectedCompany, 
+    getUserCompanies, 
+    selectCompany,
+    isLoading 
+  } = useCompanies();
   
-  // Fetch user companies
+  // Fetch user companies on component mount
   useEffect(() => {
     const fetchUserCompanies = async () => {
       if (user?.id) {
-        setLoading(true);
-        try {
-          // Get all companies the user is related to
-          const companies = await getUserCompanies(user.id);
-          setUserCompanies(companies);
-          
-          // If there is only one company, select it automatically
-          if (companies.length === 1) {
-            setSelectedCompany(companies[0]);
-            // Dispatch event to inform other components
-            const navEvent = new CustomEvent('company-selected', { 
-              detail: { userId: user.id, company: companies[0] } 
-            });
-            window.dispatchEvent(navEvent);
-          } else if (companies.length > 1) {
-            // If multiple companies, select first one by default
-            setSelectedCompany(companies[0]);
-            
-            // Dispatch event to inform other components
-            const navEvent = new CustomEvent('company-selected', { 
-              detail: { userId: user.id, company: companies[0] } 
-            });
-            window.dispatchEvent(navEvent);
-          }
-        } catch (error) {
-          console.error('Erro ao buscar empresas do usuário:', error);
-          toast.error("Não foi possível carregar as empresas. Tente novamente mais tarde.");
-        } finally {
-          setLoading(false);
-        }
+        console.log('UserNavigation: Fetching user companies');
+        await getUserCompanies(user.id);
       }
     };
 
     fetchUserCompanies();
   }, [user, getUserCompanies]);
-
-  // Listen for company selection events from CompanySelector
-  useEffect(() => {
-    const handleCompanySelected = (event: CustomEvent) => {
-      const { userId, company } = event.detail;
-      
-      console.log('UserNavigation: Company selection event received', { userId, company, currentUserId: user?.id });
-      
-      if (userId && company && user?.id === userId) {
-        console.log('UserNavigation: Setting selected company directly', company);
-        setSelectedCompany(company);
-      }
-    };
-
-    window.addEventListener('company-selected', handleCompanySelected as EventListener);
-    
-    return () => {
-      window.removeEventListener('company-selected', handleCompanySelected as EventListener);
-    };
-  }, [user]);
 
   // Update display name and avatar
   useEffect(() => {
@@ -116,21 +70,12 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
     navigate('/dashboard');
   };
 
-  const handleCompanySelect = (company: Company) => {
+  const handleCompanySelect = (company) => {
     if (!company || !user?.id) return;
     
-    // Update the local state without making database changes
-    setSelectedCompany(company);
-    
-    console.log('UserNavigation: Company selected', company);
-    
+    console.log('UserNavigation: Company selected', company.nome);
+    selectCompany(user.id, company);
     toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
-    
-    // Dispatch the event for other components
-    const navEvent = new CustomEvent('company-selected', { 
-      detail: { userId: user.id, company: company } 
-    });
-    window.dispatchEvent(navEvent);
   };
 
   // Only show company selection if user has multiple companies
@@ -166,7 +111,7 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
               <DropdownMenuSubTrigger className="cursor-pointer flex items-center gap-2">
                 <Building className="h-4 w-4" />
                 <span className="truncate">
-                  {loading ? 'Carregando...' : (selectedCompany?.nome || 'Selecionar Empresa')}
+                  {isLoading ? 'Carregando...' : (selectedCompany?.nome || 'Selecionar Empresa')}
                 </span>
                 <ChevronDown className="h-3 w-3 ml-auto" />
               </DropdownMenuSubTrigger>
