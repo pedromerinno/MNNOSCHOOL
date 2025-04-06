@@ -31,13 +31,14 @@ export const UserManagement = () => {
       setLoading(true);
       
       // First fetch auth users to get emails
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
       
       if (authError) {
         throw authError;
       }
       
-      if (!authUsers || !authUsers.users) {
+      // Ensure users array exists in the response
+      if (!authData || !authData.users) {
         throw new Error('Failed to fetch users');
       }
       
@@ -50,13 +51,13 @@ export const UserManagement = () => {
         throw profilesError;
       }
       
-      // Merge the data
-      const mergedUsers = authUsers.users.map(user => {
+      // Merge the data - make sure we're accessing properties correctly
+      const mergedUsers = authData.users.map(user => {
         const profile = profiles?.find(p => p.id === user.id);
         return {
           id: user.id,
           email: user.email || '',
-          display_name: profile?.display_name || user.email?.split('@')[0] || '',
+          display_name: profile?.display_name || (user.email ? user.email.split('@')[0] : ''),
           is_admin: profile?.is_admin || false
         };
       });
@@ -126,6 +127,11 @@ export const UserManagement = () => {
         const { data, error } = await supabase.auth.admin.listUsers();
         
         if (error) throw error;
+        
+        // Ensure the data object and users array exist
+        if (!data || !Array.isArray(data.users)) {
+          throw new Error('Invalid response format from listUsers');
+        }
         
         const targetUser = data.users.find(u => u.email === targetEmail);
         
