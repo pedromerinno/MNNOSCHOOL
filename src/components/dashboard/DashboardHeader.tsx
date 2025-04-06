@@ -7,10 +7,6 @@ export const DashboardHeader = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogoClick = () => {
-    navigate("/");
-  };
-
   return (
     <div className="px-4 py-6">
       <h1 className="text-2xl font-bold">Dashboard</h1>
