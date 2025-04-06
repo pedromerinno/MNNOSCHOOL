@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { BookOpen, Wrench, Settings } from 'lucide-react';
@@ -60,7 +59,7 @@ export const NavMenuLinks = () => {
                   <div className="flex items-center space-x-2">
                     <BookOpen size={18} />
                     <span>Cursos</span>
-                    <Badge variant="secondary" className="ml-2 text-xs">beta</Badge>
+                    <Badge variant="beta" className="ml-2 text-xs">beta</Badge>
                   </div>
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
