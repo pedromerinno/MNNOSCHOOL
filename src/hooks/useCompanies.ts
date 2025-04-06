@@ -1,6 +1,8 @@
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Company } from "@/types/company";
+import { useCompanyState } from "./company/useCompanyState";
+import { useCompanyFetching } from "./company/useCompanyFetching";
 import { useCompanyFetch } from "./company/useCompanyFetch";
 import { useCompanySelection } from "./company/useCompanySelection";
 import { useCompanyCreate } from "./company/useCompanyCreate";
@@ -8,37 +10,48 @@ import { useCompanyUpdate } from "./company/useCompanyUpdate";
 import { useCompanyDelete } from "./company/useCompanyDelete";
 import { useCompanyUserManagement } from "./company/useCompanyUserManagement";
 import { useCompanyCache } from "./company/useCompanyCache";
-import { useCompanyRetry } from "./company/useCompanyRetry";
 import { useCompanyEvents } from "./company/useCompanyEvents";
 
-// Tempo mínimo entre requisições (em ms)
-const MIN_REQUEST_INTERVAL = 10000; // 10 segundos
-
 export const useCompanies = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [userCompanies, setUserCompanies] = useState<Company[]>([]);
-  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
-  const [error, setError] = useState<Error | null>(null);
-  const [fetchCount, setFetchCount] = useState(0);
+  // Use specialized hooks for state management
+  const {
+    isLoading,
+    setIsLoading,
+    companies,
+    setCompanies,
+    userCompanies,
+    setUserCompanies,
+    selectedCompany,
+    setSelectedCompany,
+    error,
+    setError,
+    fetchCount,
+    incrementFetchCount,
+    resetError
+  } = useCompanyState();
   
-  // Timestamp da última requisição
-  const lastFetchTimeRef = useRef<number>(0);
-  // Flag para controle de requisição em andamento
-  const isFetchingRef = useRef<boolean>(false);
+  // Hook for company fetching operations
+  const {
+    getUserCompanies,
+    forceGetUserCompanies,
+    getCompanyById
+  } = useCompanyFetching({
+    userCompanies,
+    setUserCompanies,
+    setSelectedCompany,
+    setIsLoading,
+    setError,
+    incrementFetchCount
+  });
   
   // Import functionality from individual hooks
-  const { 
-    fetchCompanies, 
-    getUserCompanies: getCompanies, 
-    getCompanyById 
-  } = useCompanyFetch({ 
+  const { fetchCompanies } = useCompanyFetch({ 
     setIsLoading, 
     setCompanies, 
     setUserCompanies, 
     setSelectedCompany 
   });
-
+  
   const { 
     selectCompany, 
     getStoredCompanyId, 
@@ -46,38 +59,36 @@ export const useCompanies = () => {
   } = useCompanySelection({ 
     setSelectedCompany 
   });
-
+  
   const { createCompany } = useCompanyCreate({ 
     setIsLoading, 
     setCompanies 
   });
-
+  
   const { updateCompany } = useCompanyUpdate({ 
     setIsLoading, 
     setCompanies, 
     selectedCompany, 
     setSelectedCompany 
   });
-
+  
   const { deleteCompany } = useCompanyDelete({ 
     setIsLoading, 
     setCompanies, 
     selectedCompany, 
     setSelectedCompany 
   });
-
+  
   const { 
     assignUserToCompany, 
     removeUserFromCompany 
   } = useCompanyUserManagement();
-
-  const { executeWithRetry } = useCompanyRetry();
+  
   const { cacheUserCompanies, getCachedUserCompanies } = useCompanyCache();
-  const { dispatchCompanySelected } = useCompanyEvents(setSelectedCompany);
-
+  
   // Listen for company selection events
   useCompanyEvents(setSelectedCompany);
-
+  
   // Try to restore previously selected company on hook initialization
   useEffect(() => {
     const restoreSelectedCompany = async () => {
@@ -131,72 +142,8 @@ export const useCompanies = () => {
     };
 
     restoreSelectedCompany();
-  }, [userCompanies, selectedCompany, getCompanyById, getStoredCompanyId, getStoredCompany]);
-
-  // Versão com controle de tempo entre requisições
-  const getUserCompanies = useCallback(async (userId: string, forceRefresh: boolean = false): Promise<Company[]> => {
-    const now = Date.now();
-    
-    // Verifica se já há uma requisição em andamento
-    if (isFetchingRef.current) {
-      console.log('Uma requisição já está em andamento. Ignorando nova solicitação.');
-      return userCompanies;
-    }
-    
-    // Verifica se passou tempo suficiente desde a última requisição
-    const timeSinceLastFetch = now - lastFetchTimeRef.current;
-    if (timeSinceLastFetch < MIN_REQUEST_INTERVAL && userCompanies.length > 0 && !forceRefresh) {
-      console.log(`Última requisição foi há ${Math.round(timeSinceLastFetch/1000)}s. Usando dados em cache.`);
-      return userCompanies;
-    }
-    
-    // Marca início da requisição
-    isFetchingRef.current = true;
-    lastFetchTimeRef.current = now;
-    setError(null);
-    setFetchCount(prev => prev + 1);
-    
-    try {
-      // Usar dados em cache para atualização imediata da UI
-      const cachedData = getCachedUserCompanies();
-      if (cachedData && cachedData.length > 0) {
-        setUserCompanies(cachedData);
-      }
-      
-      // Realizar requisição para obter dados atualizados
-      const result = await executeWithRetry(() => getCompanies(userId));
-      
-      // Atualiza o timestamp da última requisição bem-sucedida
-      lastFetchTimeRef.current = Date.now();
-      return result;
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error('Unknown error');
-      setError(error);
-      
-      // Try to load from cache as last resort
-      const cachedData = getCachedUserCompanies();
-      if (cachedData && cachedData.length > 0) {
-        console.log("Using cached companies after all retries failed");
-        setUserCompanies(cachedData);
-        return cachedData;
-      }
-      
-      return [];
-    } finally {
-      // Marca fim da requisição
-      isFetchingRef.current = false;
-    }
-  }, [userCompanies, executeWithRetry, getCompanies, getCachedUserCompanies]);
-
-  // Versão forçada que ignora verificações de tempo
-  const forceGetUserCompanies = useCallback(async (userId: string): Promise<Company[]> => {
-    console.log('Forçando busca de empresas do usuário');
-    
-    // Mesmo que esteja em andamento, vamos marcar para uma nova requisição
-    isFetchingRef.current = false;
-    return getUserCompanies(userId, true);
-  }, [getUserCompanies]);
-
+  }, [userCompanies, selectedCompany, getCompanyById, getStoredCompanyId, getStoredCompany, setSelectedCompany]);
+  
   return {
     isLoading,
     companies,

@@ -16,7 +16,7 @@ const Manifesto = () => {
     const fetchUserCompany = async () => {
       if (user?.id) {
         try {
-          await getUserCompanies(user.id);
+          await getUserCompanies(user.id, false);
         } catch (error) {
           console.error('Erro ao buscar empresa para o manifesto:', error);
           toast.error("Não foi possível carregar os dados da empresa.");
