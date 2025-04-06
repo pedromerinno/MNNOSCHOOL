@@ -79,8 +79,15 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
   useEffect(() => {
     const handleCompanySelected = (event: CustomEvent) => {
       const { userId, companyId } = event.detail;
+      
+      console.log('UserNavigation: Company selection event received', { userId, companyId, currentUserId: user?.id });
+      
       if (userId && companyId && user?.id === userId) {
-        handleCompanySelect(userCompanies.find(c => c.id === companyId) || null);
+        const selectedComp = userCompanies.find(c => c.id === companyId);
+        if (selectedComp) {
+          console.log('UserNavigation: Setting selected company', selectedComp);
+          setSelectedCompany(selectedComp);
+        }
       }
     };
 
@@ -116,11 +123,17 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
   const handleCompanySelect = async (company: Company | null) => {
     if (!company || !user?.id) return;
     
-    setSelectedCompany(company);
+    setLoading(true);
     
     try {
       // Update the selected company in backend
       await updateUserSelectedCompany(user.id, company.id);
+      
+      // Update the local state
+      setSelectedCompany(company);
+      
+      console.log('UserNavigation: Company selected', company);
+      
       toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
       
       // Dispatch the event for other components
@@ -131,6 +144,8 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
     } catch (error) {
       console.error('Erro ao selecionar empresa:', error);
       toast.error("Não foi possível selecionar a empresa. Tente novamente.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -152,12 +167,12 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
           <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
-        <div className="px-4 py-2 border-b border-gray-100">
-          <p className="text-sm font-medium text-gray-900 truncate">
+      <DropdownMenuContent align="end" className="w-48 bg-white dark:bg-gray-800 z-50">
+        <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
             {displayName}
           </p>
-          <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
         </div>
         
         {hasMultipleCompanies && (
@@ -171,7 +186,7 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
                 <ChevronDown className="h-3 w-3 ml-auto" />
               </DropdownMenuSubTrigger>
               <DropdownMenuPortal>
-                <DropdownMenuSubContent className="w-48">
+                <DropdownMenuSubContent className="w-48 bg-white dark:bg-gray-800 z-50">
                   {userCompanies.map((company) => (
                     <DropdownMenuItem
                       key={company.id}

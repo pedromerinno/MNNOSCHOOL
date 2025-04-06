@@ -14,6 +14,7 @@ const Manifesto = () => {
   const [userCompany, setUserCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Initial fetch of user company
   useEffect(() => {
     const fetchUserCompany = async () => {
       if (user?.id) {
@@ -22,7 +23,11 @@ const Manifesto = () => {
           const result = await getUserCompany(user.id);
           
           if (!result.error) {
+            console.log('Manifesto: Company fetched successfully', result.company);
             setUserCompany(result.company);
+          } else {
+            console.error('Erro ao buscar empresa para o manifesto:', result.error);
+            toast.error("Não foi possível carregar os dados da empresa.");
           }
         } catch (error) {
           console.error('Erro ao buscar empresa para o manifesto:', error);
@@ -41,12 +46,17 @@ const Manifesto = () => {
     const handleCompanySelected = async (event: CustomEvent) => {
       const { userId, companyId } = event.detail;
       
+      console.log('Manifesto: Company selection event received', { userId, companyId, currentUserId: user?.id });
+      
       if (userId && companyId && user?.id === userId) {
         setLoading(true);
         try {
           const result = await getUserCompany(userId);
           if (!result.error) {
+            console.log('Manifesto: Updated company after selection', result.company);
             setUserCompany(result.company);
+          } else {
+            console.error('Erro ao buscar empresa após seleção:', result.error);
           }
         } catch (error) {
           console.error('Erro ao atualizar empresa do manifesto:', error);

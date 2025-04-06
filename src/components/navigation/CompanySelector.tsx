@@ -64,6 +64,9 @@ export const CompanySelector = () => {
     const company = userCompanies.find(c => c.id === companyId);
     if (company && user?.id) {
       try {
+        // Don't update UI until we've successfully updated the backend
+        setLoading(true);
+        
         // Update the selected company in the database
         await updateUserSelectedCompany(user.id, company.id);
         
@@ -80,6 +83,8 @@ export const CompanySelector = () => {
       } catch (error) {
         console.error('Erro ao selecionar empresa:', error);
         toast.error("Não foi possível selecionar a empresa");
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -107,7 +112,7 @@ export const CompanySelector = () => {
           <ChevronDown className="ml-1 h-4 w-4" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="bg-white">
+      <DropdownMenuContent align="start" className="bg-white dark:bg-gray-800 z-50">
         {userCompanies.map((company) => (
           <DropdownMenuItem 
             key={company.id} 

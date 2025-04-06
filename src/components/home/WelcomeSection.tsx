@@ -16,6 +16,7 @@ export const WelcomeSection = () => {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
 
+  // Initial fetch of user company on component mount
   useEffect(() => {
     const fetchUserCompany = async () => {
       if (user?.id) {
@@ -30,6 +31,7 @@ export const WelcomeSection = () => {
             toast.error("Não foi possível carregar os dados da empresa. Tente novamente mais tarde.");
           } else {
             setUserCompany(result.company);
+            console.log('WelcomeSection: Company fetched successfully', result.company);
           }
         } catch (error) {
           console.error('Erro na busca da empresa:', error);
@@ -44,17 +46,22 @@ export const WelcomeSection = () => {
     fetchUserCompany();
   }, [user, getUserCompany]);
 
-  // Listen for company selection events from CompanySelector or UserNavigation
+  // Listen for company selection events
   useEffect(() => {
     const handleCompanySelected = async (event: CustomEvent) => {
       const { userId, companyId } = event.detail;
+      
+      console.log('WelcomeSection: Company selection event received', { userId, companyId, currentUserId: user?.id });
       
       if (userId && companyId && user?.id === userId) {
         setLoading(true);
         try {
           const result = await getUserCompany(userId);
           if (!result.error) {
+            console.log('WelcomeSection: Updated company after selection', result.company);
             setUserCompany(result.company);
+          } else {
+            console.error('Erro ao buscar empresa após seleção:', result.error);
           }
         } catch (error) {
           console.error('Erro ao atualizar empresa selecionada:', error);
