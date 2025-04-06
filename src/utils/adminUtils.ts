@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-// Definir uma interface simplificada para usuários Supabase
+// Define a simplified interface for Supabase users
 interface SupabaseUser {
   id: string;
   email?: string | null;
@@ -11,7 +11,7 @@ export const makeUserAdmin = async (targetEmail: string) => {
   try {
     console.log(`Attempting to make ${targetEmail} an admin...`);
     
-    // Primeiro tenta obter o usuário diretamente de profiles com base no email
+    // First try to get the user directly from profiles based on email
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('id, is_admin')
@@ -20,25 +20,27 @@ export const makeUserAdmin = async (targetEmail: string) => {
     
     let userId;
     
-    // Se não encontrarmos pelo email em profiles, tentamos auth.users
+    // If we couldn't find by email in profiles, try auth.users
     if (profileError || !profileData) {
       console.log('User not found in profiles by email, trying auth.users...');
       
-      // Tratar a resposta como "any" para evitar problemas de inferência de tipos
-      const { data: authData, error: authError }: any = await supabase.auth.admin.listUsers();
+      // Use type assertion to avoid TypeScript's deep type instantiation
+      const authResponse = await supabase.auth.admin.listUsers() as {
+        data: { users: SupabaseUser[] } | null;
+        error: any;
+      };
       
-      if (authError) {
-        console.error('Error fetching users:', authError);
-        throw authError;
+      if (authResponse.error) {
+        console.error('Error fetching users:', authResponse.error);
+        throw authResponse.error;
       }
       
-      if (!authData || !Array.isArray(authData.users)) {
+      if (!authResponse.data || !Array.isArray(authResponse.data.users)) {
         console.error('Invalid response format from listUsers');
         throw new Error('Invalid response format from listUsers');
       }
       
-      // Converter explicitamente para nossa interface simples
-      const users = authData.users as SupabaseUser[];
+      const users = authResponse.data.users;
       const targetUser = users.find(u => u.email === targetEmail);
       
       if (!targetUser) {
@@ -50,7 +52,7 @@ export const makeUserAdmin = async (targetEmail: string) => {
     } else {
       userId = profileData.id;
       
-      // Se o usuário já for admin, apenas retornamos
+      // If user is already admin, just return
       if (profileData.is_admin) {
         console.log(`${targetEmail} is already an admin.`);
         return true;
@@ -59,7 +61,7 @@ export const makeUserAdmin = async (targetEmail: string) => {
     
     console.log(`Found user ID: ${userId}, updating admin status...`);
     
-    // Tornar o usuário um admin
+    // Make the user an admin
     const { error: updateError } = await supabase
       .from('profiles')
       .update({ 
@@ -81,7 +83,7 @@ export const makeUserAdmin = async (targetEmail: string) => {
   }
 };
 
-// Função para definir diretamente o status de admin pelo ID do usuário
+// Function to directly set admin status by user ID
 export const setAdminStatusById = async (userId: string, isAdmin: boolean) => {
   try {
     console.log(`Setting admin status to ${isAdmin} for user ID: ${userId}`);
@@ -103,3 +105,4 @@ export const setAdminStatusById = async (userId: string, isAdmin: boolean) => {
     throw error;
   }
 };
+
