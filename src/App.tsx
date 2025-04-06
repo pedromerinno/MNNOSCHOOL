@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -21,6 +22,7 @@ import Documents from "./pages/Documents";
 import School from "./pages/School";
 import Community from "./pages/Community";
 import Admin from "./pages/Admin";
+import Tools from "./pages/Tools";
 
 const queryClient = new QueryClient();
 
@@ -53,11 +55,30 @@ const App = () => (
                 <CourseDetails />
               </>} />
               
-              <Route path="/integration" element={<Integration />} />
-              <Route path="/access" element={<Access />} />
-              <Route path="/documents" element={<Documents />} />
-              <Route path="/school" element={<School />} />
-              <Route path="/community" element={<Community />} />
+              <Route path="/integration" element={<>
+                <MainNavigationMenu />
+                <Integration />
+              </>} />
+              <Route path="/access" element={<>
+                <MainNavigationMenu />
+                <Access />
+              </>} />
+              <Route path="/documents" element={<>
+                <MainNavigationMenu />
+                <Documents />
+              </>} />
+              <Route path="/school" element={<>
+                <MainNavigationMenu />
+                <School />
+              </>} />
+              <Route path="/community" element={<>
+                <MainNavigationMenu />
+                <Community />
+              </>} />
+              <Route path="/tools" element={<>
+                <MainNavigationMenu />
+                <Tools />
+              </>} />
               
               <Route 
                 path="/admin" 
