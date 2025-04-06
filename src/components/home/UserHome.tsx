@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -12,36 +12,22 @@ import { HelpButton } from "./HelpButton";
 export const UserHome = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { getUserCompanies, userCompanies, selectedCompany, selectCompany } = useCompanies();
-  const [isInitialized, setIsInitialized] = useState(false);
+  const { getUserCompanies, selectedCompany } = useCompanies();
   
   // Ensure user companies are loaded when navigating to home
   useEffect(() => {
     const fetchUserCompanies = async () => {
-      if (!user?.id) return;
-      
-      try {
-        console.log('UserHome: Fetching companies for user:', user.id);
-        const companies = await getUserCompanies(user.id);
-        console.log('UserHome: Fetched companies count:', companies?.length || 0);
-        
-        // If we have companies but no selected company, select the first one
-        if (companies?.length > 0 && !selectedCompany) {
-          console.log('UserHome: Auto-selecting first company:', companies[0].nome);
-          selectCompany(user.id, companies[0]);
+      if (user?.id) {
+        try {
+          await getUserCompanies(user.id);
+        } catch (error) {
+          console.error('Error fetching user companies on home page:', error);
         }
-        
-        setIsInitialized(true);
-      } catch (error) {
-        console.error('Error fetching user companies on home page:', error);
-        setIsInitialized(true);
       }
     };
 
-    if (!isInitialized) {
-      fetchUserCompanies();
-    }
-  }, [user, getUserCompanies, selectedCompany, userCompanies, selectCompany, isInitialized]);
+    fetchUserCompanies();
+  }, [user, getUserCompanies]);
   
   return (
     <div className="min-h-screen bg-background">
