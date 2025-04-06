@@ -14,6 +14,7 @@ export const WelcomeSection = () => {
   const { getUserCompanies, selectedCompany, userCompanies, selectCompany, isLoading } = useCompanies();
   const navigate = useNavigate();
   const [displayCompany, setDisplayCompany] = useState<Company | null>(null);
+  const [isLoadingLocal, setIsLoadingLocal] = useState(true);
   const [fetchAttempted, setFetchAttempted] = useState(false);
   
   useEffect(() => {
@@ -25,14 +26,22 @@ export const WelcomeSection = () => {
         } catch (error) {
           console.error('Erro na busca da empresa:', error);
           toast.error("Não foi possível carregar os dados da empresa. Usando dados em cache se disponíveis.");
+        } finally {
+          // Definir um timeout mínimo para o carregamento para evitar flash de conteúdo
+          setTimeout(() => setIsLoadingLocal(false), 300);
         }
+      } else {
+        setIsLoadingLocal(false);
       }
     };
 
     if (!fetchAttempted) {
       fetchUserCompanies();
+    } else if (!isLoading) {
+      // Se já tentamos buscar e não estamos mais carregando
+      setIsLoadingLocal(false);
     }
-  }, [user, getUserCompanies, fetchAttempted]);
+  }, [user, getUserCompanies, fetchAttempted, isLoading]);
 
   useEffect(() => {
     if (selectedCompany) {
@@ -77,31 +86,35 @@ export const WelcomeSection = () => {
           Olá, {userName}
         </p>
         
-        {isLoading ? (
-          <Skeleton className="h-[150px] w-[60%] rounded-lg mb-5" />
+        {isLoadingLocal ? (
+          <div className="flex flex-col items-center space-y-4 w-full">
+            <Skeleton className="h-[40px] w-[80%] max-w-[600px] rounded-lg mb-1" />
+            <Skeleton className="h-[40px] w-[60%] max-w-[500px] rounded-lg mb-5" />
+            <Skeleton className="h-10 w-40 rounded-full" />
+          </div>
         ) : (
-          <p 
-            className="text-[#000000] text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-5"
-          >
-            {displayCompany?.frase_institucional || defaultPhrase}
-          </p>
+          <>
+            <p 
+              className="text-[#000000] text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-5"
+            >
+              {displayCompany?.frase_institucional || defaultPhrase}
+            </p>
+            
+            {displayCompany && (
+              <Button 
+                onClick={handleLearnMore} 
+                className="mt-1 flex items-center gap-2 text-white rounded-full text-sm"
+                variant="default"
+                style={{ 
+                  backgroundColor: displayCompany.cor_principal || '#000000' 
+                }}
+              >
+                Saiba mais
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            )}
+          </>
         )}
-        
-        {isLoading ? (
-          <Skeleton className="h-10 w-40 rounded-full" />
-        ) : displayCompany ? (
-          <Button 
-            onClick={handleLearnMore} 
-            className="mt-1 flex items-center gap-2 text-white rounded-full text-sm"
-            variant="default"
-            style={{ 
-              backgroundColor: displayCompany.cor_principal || '#000000' 
-            }}
-          >
-            Saiba mais sobre {displayCompany.nome}
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-        ) : null}
       </div>
     </div>
   );

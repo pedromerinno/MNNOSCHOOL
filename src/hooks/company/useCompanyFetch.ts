@@ -12,7 +12,7 @@ interface UseCompanyFetchProps {
 }
 
 // Helper function to retry failed fetch operations
-const retryOperation = async (operation: () => Promise<any>, maxRetries = 3, delay = 1000) => {
+const retryOperation = async (operation: () => Promise<any>, maxRetries = 2, delay = 800) => {
   let lastError;
   
   for (let attempt = 0; attempt < maxRetries; attempt++) {
@@ -77,6 +77,26 @@ export const useCompanyFetch = ({
   const getUserCompanies = async (userId: string): Promise<Company[]> => {
     setIsLoading(true);
     try {
+      // Verificar primeiro se já temos dados em cache
+      const cachedCompanies = localStorage.getItem('userCompanies');
+      let cachedData: Company[] = [];
+      
+      if (cachedCompanies) {
+        try {
+          cachedData = JSON.parse(cachedCompanies) as Company[];
+          // Atualizar o estado com dados em cache imediatamente
+          setUserCompanies(cachedData);
+          console.log("Usando dados em cache enquanto busca atualização");
+          
+          // Se tivermos apenas uma empresa em cache, selecione-a automaticamente
+          if (cachedData.length === 1) {
+            setSelectedCompany(cachedData[0]);
+          }
+        } catch (e) {
+          console.error("Erro ao parsear empresas em cache", e);
+        }
+      }
+
       // Get all company IDs the user is related to with retry logic
       const { data: userCompanyRelations, error: relationsError } = await retryOperation(
         async () => await supabase.from('user_empresa').select('company_id').eq('user_id', userId)
@@ -88,19 +108,11 @@ export const useCompanyFetch = ({
           description: relationsError.message,
         });
         
-        // Return cached data if available to prevent UI disruption
-        const cachedCompanies = localStorage.getItem('userCompanies');
-        if (cachedCompanies) {
-          try {
-            const parsed = JSON.parse(cachedCompanies) as Company[];
-            console.log("Using cached companies due to fetch error");
-            setUserCompanies(parsed);
-            return parsed;
-          } catch (e) {
-            console.error("Error parsing cached companies", e);
-          }
+        // Return cached data if available
+        if (cachedData.length > 0) {
+          setIsLoading(false);
+          return cachedData;
         }
-        
         return [];
       }
 
@@ -109,6 +121,7 @@ export const useCompanyFetch = ({
         setUserCompanies([]);
         setSelectedCompany(null);
         localStorage.removeItem('userCompanies');
+        setIsLoading(false);
         return [];
       }
 
@@ -125,6 +138,12 @@ export const useCompanyFetch = ({
         toast("Erro ao buscar detalhes das empresas", {
           description: companiesError.message,
         });
+        
+        // Return cached data if available
+        if (cachedData.length > 0) {
+          setIsLoading(false);
+          return cachedData;
+        }
         return [];
       }
 
@@ -153,6 +172,18 @@ export const useCompanyFetch = ({
       toast("Erro inesperado", {
         description: "Ocorreu um erro ao buscar as empresas",
       });
+      
+      // Return cached data in case of error
+      const cachedCompanies = localStorage.getItem('userCompanies');
+      if (cachedCompanies) {
+        try {
+          const parsed = JSON.parse(cachedCompanies) as Company[];
+          console.log("Using cached companies due to error");
+          return parsed;
+        } catch (e) {
+          console.error("Error parsing cached companies", e);
+        }
+      }
       return [];
     } finally {
       setIsLoading(false);
