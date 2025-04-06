@@ -14,7 +14,7 @@ import {
 
 export const CompanySelector = () => {
   const { user } = useAuth();
-  const { getUserCompanies, getUserCompany } = useCompanies();
+  const { getUserCompanies, getUserCompany, updateUserSelectedCompany } = useCompanies();
   const [userCompanies, setUserCompanies] = useState<Company[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
@@ -32,7 +32,21 @@ export const CompanySelector = () => {
           // If there are companies, get the current one
           if (companies.length > 0) {
             const currentCompanyResult = await getUserCompany(user.id);
-            setSelectedCompany(currentCompanyResult.company);
+            
+            // If no selected company yet, use the first company as default
+            if (!currentCompanyResult.company && companies.length > 0) {
+              // Set the first company as selected
+              await updateUserSelectedCompany(user.id, companies[0].id);
+              setSelectedCompany(companies[0]);
+              
+              // Dispatch event to inform other components
+              const navEvent = new CustomEvent('company-selected', { 
+                detail: { userId: user.id, companyId: companies[0].id } 
+              });
+              window.dispatchEvent(navEvent);
+            } else {
+              setSelectedCompany(currentCompanyResult.company);
+            }
           }
         } catch (error) {
           console.error('Erro ao buscar empresas do usuário:', error);
@@ -44,21 +58,23 @@ export const CompanySelector = () => {
     };
 
     fetchUserCompanies();
-  }, [user, getUserCompanies, getUserCompany]);
+  }, [user, getUserCompanies, getUserCompany, updateUserSelectedCompany]);
 
   const handleCompanyChange = async (companyId: string) => {
     const company = userCompanies.find(c => c.id === companyId);
     if (company && user?.id) {
       try {
-        // Update the selected company in UserNavigation.tsx
-        // This will NOT delete existing company relations
+        // Update the selected company in the database
+        await updateUserSelectedCompany(user.id, company.id);
+        
+        // Update the local state
+        setSelectedCompany(company);
+        
+        // Dispatch event to notify other components
         const navEvent = new CustomEvent('company-selected', { 
           detail: { userId: user.id, companyId: company.id } 
         });
         window.dispatchEvent(navEvent);
-        
-        // Update the local state
-        setSelectedCompany(company);
         
         toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
       } catch (error) {
@@ -68,7 +84,7 @@ export const CompanySelector = () => {
     }
   };
 
-  // Get the default text to display (first company name or "merinno")
+  // Get the default text to display (selected company name or first company name or "merinno")
   const getDefaultText = () => {
     if (selectedCompany?.nome) {
       return selectedCompany.nome;

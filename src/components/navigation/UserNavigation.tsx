@@ -42,14 +42,26 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
         try {
           // Get all companies the user is related to
           const companies = await getUserCompanies(user.id);
-          console.log('Empresas do usuário:', companies);
           setUserCompanies(companies);
           
           // If there are companies, get the current one
           if (companies.length > 0) {
             const currentCompanyResult = await getUserCompany(user.id);
-            console.log('Empresa atual do usuário:', currentCompanyResult);
-            setSelectedCompany(currentCompanyResult.company);
+            
+            // If no company is selected yet, use the first company
+            if (!currentCompanyResult.company && companies.length > 0) {
+              // Set the first company as selected
+              await updateUserSelectedCompany(user.id, companies[0].id);
+              setSelectedCompany(companies[0]);
+              
+              // Dispatch event to inform other components
+              const navEvent = new CustomEvent('company-selected', { 
+                detail: { userId: user.id, companyId: companies[0].id } 
+              });
+              window.dispatchEvent(navEvent);
+            } else {
+              setSelectedCompany(currentCompanyResult.company);
+            }
           }
         } catch (error) {
           console.error('Erro ao buscar empresas do usuário:', error);
@@ -61,13 +73,13 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
     };
 
     fetchUserCompanies();
-  }, [user, getUserCompanies, getUserCompany]);
+  }, [user, getUserCompanies, getUserCompany, updateUserSelectedCompany]);
 
   // Listen for company selection events from CompanySelector
   useEffect(() => {
     const handleCompanySelected = (event: CustomEvent) => {
       const { userId, companyId } = event.detail;
-      if (userId && companyId) {
+      if (userId && companyId && user?.id === userId) {
         handleCompanySelect(userCompanies.find(c => c.id === companyId) || null);
       }
     };
@@ -77,7 +89,7 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
     return () => {
       window.removeEventListener('company-selected', handleCompanySelected as EventListener);
     };
-  }, [userCompanies]);
+  }, [userCompanies, user]);
 
   // Update display name and avatar
   useEffect(() => {
@@ -107,7 +119,7 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
     setSelectedCompany(company);
     
     try {
-      // Update the selected company in backend without deleting existing relations
+      // Update the selected company in backend
       await updateUserSelectedCompany(user.id, company.id);
       toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
       

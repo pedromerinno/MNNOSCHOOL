@@ -20,7 +20,6 @@ const Manifesto = () => {
         setLoading(true);
         try {
           const result = await getUserCompany(user.id);
-          console.log('Empresa do manifesto:', result);
           
           if (!result.error) {
             setUserCompany(result.company);

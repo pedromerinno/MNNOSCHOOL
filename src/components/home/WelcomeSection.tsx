@@ -23,7 +23,6 @@ export const WelcomeSection = () => {
         setFetchError(false);
         try {
           const result = await getUserCompany(user.id);
-          console.log('Resultado da busca da empresa:', result);
           
           if (result.error) {
             setFetchError(true);
