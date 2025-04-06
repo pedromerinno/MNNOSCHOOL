@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { UserPlus, X, RefreshCw } from 'lucide-react';
-import { supabase } from "@/integrations/supabase/client";
 import { useCompanyUserManagement } from '@/hooks/company/useCompanyUserManagement';
 import { toast } from "sonner";
 
@@ -25,7 +24,7 @@ interface UserCompanyManagerProps {
 
 export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company, onClose }) => {
   const { users, fetchUsers } = useUsers();
-  const { assignUserToCompany, removeUserFromCompany } = useCompanyUserManagement();
+  const { assignUserToCompany, removeUserFromCompany, getCompanyUsers } = useCompanyUserManagement();
   const [companyUsers, setCompanyUsers] = useState<UserProfile[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -41,36 +40,16 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
     try {
       console.log(`Fetching users for company: ${company.id}`);
       
-      // Fetch users who are associated with this company from user_empresa table
-      const { data, error } = await supabase
-        .from('user_empresa')
-        .select('user_id')
-        .eq('company_id', company.id);
-        
-      if (error) {
-        console.error('Error fetching company user relationships:', error);
-        toast("Erro ao buscar usuários", {
-          description: error.message,
-        });
-        throw error;
-      }
+      // Uso direto da função getCompanyUsers do hook useCompanyUserManagement
+      const usersInCompany = await getCompanyUsers(company.id);
+      console.log('Company users fetched:', usersInCompany);
+      setCompanyUsers(usersInCompany);
       
-      console.log('User-company relationships:', data);
-      
-      if (data && data.length > 0) {
-        const userIds = data.map(relation => relation.user_id);
-        console.log('User IDs in this company:', userIds);
-        
-        // Get the full user profiles for these IDs from the users array
-        const usersInCompany = users.filter(user => userIds.includes(user.id));
-        console.log('Filtered company users:', usersInCompany);
-        setCompanyUsers(usersInCompany);
-      } else {
-        console.log('No users found for this company');
-        setCompanyUsers([]);
-      }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching company users:', error);
+      toast("Erro ao buscar usuários", {
+        description: error.message || "Ocorreu um erro ao buscar os usuários da empresa",
+      });
     } finally {
       setLoading(false);
     }
@@ -94,8 +73,11 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
         // Reset selection
         setSelectedUserId('');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding user to company:', error);
+      toast("Erro ao adicionar usuário", {
+        description: error.message || "Ocorreu um erro ao adicionar o usuário à empresa",
+      });
     }
   };
 
@@ -106,8 +88,11 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
         // Refresh the list
         await fetchCompanyUsers();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error removing user from company:', error);
+      toast("Erro ao remover usuário", {
+        description: error.message || "Ocorreu um erro ao remover o usuário da empresa",
+      });
     }
   };
 
@@ -179,7 +164,7 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
                   companyUsers.map(user => (
                     <TableRow key={user.id}>
                       <TableCell>{user.display_name || '-'}</TableCell>
-                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{user.email || `user-${user.id.substring(0, 8)}@example.com`}</TableCell>
                       <TableCell className="text-right">
                         <Button 
                           variant="destructive" 
