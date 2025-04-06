@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -5,9 +6,9 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 export const NotificationsWidget = () => {
   return (
     <Card className="border-0 shadow-none overflow-hidden bg-[#F1EDE4] rounded-[30px]">
-      <CardContent className="p-0">
+      <CardContent className="p-0 flex flex-col h-full">
         <div className="p-8 flex justify-between items-center">
-          <h3 className="text-2xl font-medium text-black">Avisos</h3>
+          <h3 className="text-xl font-medium text-black">Avisos</h3>
           <div className="flex space-x-4">
             <Button 
               size="icon" 
@@ -26,7 +27,7 @@ export const NotificationsWidget = () => {
           </div>
         </div>
         
-        <div className="px-12 pb-8">
+        <div className="px-12 pb-8 flex-1">
           <div className="mb-8">
             <span className="inline-block px-8 py-3 rounded-full bg-amber-100 text-black text-base font-medium mb-6">
               Recesso
@@ -44,8 +45,8 @@ export const NotificationsWidget = () => {
           </div>
         </div>
         
-        <div className="border-t border-gray-100 py-6 text-center">
-          <button className="text-lg text-gray-500 hover:text-gray-700">
+        <div className="border-t border-gray-100 py-6 text-center mb-6">
+          <button className="text-base text-gray-500 hover:text-gray-700">
             ver todos
           </button>
         </div>
