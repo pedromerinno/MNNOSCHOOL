@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { Info } from "lucide-react";
 
 export const WelcomeSection = () => {
   const navigate = useNavigate();
@@ -63,17 +64,28 @@ export const WelcomeSection = () => {
               </>
             )}
           </h1>
-          <div className="flex justify-center mt-6">
+          <div className="flex justify-center mt-6 gap-4">
             <Button 
               onClick={handleLearnMore}
               className="bg-black hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 text-white rounded-full px-6"
             >
               {selectedCompany ? (
-                `Clique aqui para saber mais sobre a ${selectedCompany.nome}`
+                `Clique para saber mais sobre a ${selectedCompany.nome}`
               ) : (
                 "Clique para saber mais sobre a MERINNO"
               )}
             </Button>
+            
+            {selectedCompany && (
+              <Button
+                onClick={() => navigate('/manifesto')}
+                variant="outline" 
+                className="rounded-full border-black text-black hover:bg-black/5 dark:border-white dark:text-white dark:hover:bg-white/10 flex items-center gap-2"
+              >
+                <Info className="h-4 w-4" />
+                Conhecer
+              </Button>
+            )}
           </div>
         </>
       )}

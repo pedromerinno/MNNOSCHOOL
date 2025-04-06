@@ -1,7 +1,7 @@
 
 import { useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { BookOpen, Video, Users, FileText } from "lucide-react";
+import { BookOpen, Video, Users, FileText, Quote } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -33,6 +33,17 @@ const Manifesto = () => {
         <h1 className="text-3xl font-bold mb-6 dark:text-white">
           {selectedCompany ? `Sobre a ${selectedCompany.nome}` : 'Manifesto do Grupo'}
         </h1>
+        
+        {selectedCompany?.frase_institucional && (
+          <div className="bg-merinno-blue/10 rounded-lg p-6 mb-8">
+            <div className="flex gap-3">
+              <Quote className="h-8 w-8 text-merinno-blue flex-shrink-0" />
+              <blockquote className="text-xl italic font-medium text-gray-800 dark:text-white">
+                "{selectedCompany.frase_institucional}"
+              </blockquote>
+            </div>
+          </div>
+        )}
         
         {isLoading ? (
           <div className="grid md:grid-cols-2 gap-8 mb-8">
