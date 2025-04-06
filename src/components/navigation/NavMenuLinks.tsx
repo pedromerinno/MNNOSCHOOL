@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { BookOpen, Wrench, Settings } from 'lucide-react';
+import { BookOpen, Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   NavigationMenu,
@@ -126,12 +127,11 @@ export const NavMenuLinks = () => {
           <Link 
             to="/tools" 
             className={cn(
-              "flex items-center space-x-1 text-sm text-gray-700 dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light",
+              "text-sm text-gray-700 dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light",
               isCurrentPage('/tools') && "font-bold"
             )}
           >
-            <Wrench size={18} className="mr-1" />
-            <span>Ferramentas</span>
+            Ferramentas
           </Link>
         </li>
         {adminLinks}
