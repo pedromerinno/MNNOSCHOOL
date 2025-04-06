@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle } from "lucide-react";
 import { UserAdminToggle } from "./UserAdminToggle";
 import { UserProfile } from "@/hooks/useUsers";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface UserTableProps {
   users: UserProfile[];
@@ -40,28 +41,48 @@ export const UserTable: React.FC<UserTableProps> = ({ users, loading, onToggleAd
             </TableRow>
           ) : (
             users.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.display_name}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>
-                  {user.is_admin ? (
-                    <Badge variant="default" className="bg-green-500 hover:bg-green-600">
-                      <CheckCircle className="h-3.5 w-3.5 mr-1" />
-                      Admin
-                    </Badge>
+              <TableRow key={user.id} className={loading ? "opacity-60" : ""}>
+                <TableCell className="font-medium">
+                  {loading ? (
+                    <Skeleton className="h-5 w-24" />
                   ) : (
-                    <Badge variant="outline">
-                      <XCircle className="h-3.5 w-3.5 mr-1" />
-                      Usuário
-                    </Badge>
+                    user.display_name
+                  )}
+                </TableCell>
+                <TableCell>
+                  {loading ? (
+                    <Skeleton className="h-5 w-36" />
+                  ) : (
+                    user.email
+                  )}
+                </TableCell>
+                <TableCell>
+                  {loading ? (
+                    <Skeleton className="h-6 w-16" />
+                  ) : (
+                    user.is_admin ? (
+                      <Badge variant="default" className="bg-green-500 hover:bg-green-600">
+                        <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                        Admin
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline">
+                        <XCircle className="h-3.5 w-3.5 mr-1" />
+                        Usuário
+                      </Badge>
+                    )
                   )}
                 </TableCell>
                 <TableCell className="text-right">
-                  <UserAdminToggle 
-                    userId={user.id} 
-                    isAdmin={user.is_admin} 
-                    onToggle={onToggleAdmin} 
-                  />
+                  {loading ? (
+                    <Skeleton className="h-8 w-20 ml-auto" />
+                  ) : (
+                    <UserAdminToggle 
+                      userId={user.id} 
+                      isAdmin={user.is_admin} 
+                      onToggle={onToggleAdmin} 
+                    />
+                  )}
                 </TableCell>
               </TableRow>
             ))

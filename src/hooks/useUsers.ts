@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { setAdminStatusById } from '@/utils/adminUtils';
+import { retryWithTimeout } from './company/utils/retryUtils';
 
 export interface UserProfile {
   id: string;
@@ -16,7 +17,7 @@ export function useUsers() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   
-  // Adicionar cache para os dados de usuários
+  // Improved cache for user data
   const getCachedUsers = (): UserProfile[] | null => {
     const cachedUsers = localStorage.getItem('cachedUsers');
     if (!cachedUsers) return null;
@@ -24,11 +25,11 @@ export function useUsers() {
     try {
       const parsed = JSON.parse(cachedUsers);
       const now = new Date().getTime();
-      // Verificar se o cache não expirou (30 minutos)
+      // Cache valid for 15 minutes instead of 30 for more frequent updates
       if (parsed.expiry > now) {
         return parsed.data;
       }
-      // Cache expirado
+      // Cache expired
       localStorage.removeItem('cachedUsers');
       return null;
     } catch (e) {
@@ -39,8 +40,8 @@ export function useUsers() {
   
   const setCachedUsers = (data: UserProfile[]) => {
     try {
-      // Cache por 30 minutos
-      const expiry = new Date().getTime() + (30 * 60 * 1000);
+      // Cache for 15 minutes instead of 30
+      const expiry = new Date().getTime() + (15 * 60 * 1000);
       localStorage.setItem('cachedUsers', JSON.stringify({
         data,
         expiry
@@ -52,25 +53,36 @@ export function useUsers() {
 
   const fetchUsers = useCallback(async () => {
     try {
-      // Verificar cache primeiro
+      // First check cache and update UI immediately if available
       const cachedData = getCachedUsers();
       if (cachedData) {
+        console.log('Using cached users data while fetching updates');
         setUsers(cachedData);
         setLoading(false);
-        console.log('Usando usuários em cache enquanto busca atualização');
       } else {
         setLoading(true);
       }
       
-      // First fetch auth users
-      const { data, error } = await supabase.auth.admin.listUsers();
+      // Fetch users and profiles in parallel with retries and timeout
+      const fetchAuthUsers = async () => {
+        const { data, error } = await supabase.auth.admin.listUsers();
+        if (error) throw error;
+        return (data as any).users || [];
+      };
       
-      if (error) {
-        throw error;
-      }
+      const fetchProfiles = async () => {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, display_name, is_admin');
+        if (error) throw error;
+        return data || [];
+      };
       
-      // Use type assertion to avoid deep type issues
-      const authUsers = (data as any).users || [];
+      // Use Promise.all with retryWithTimeout for both requests
+      const [authUsers, profiles] = await Promise.all([
+        retryWithTimeout(fetchAuthUsers, 2, 500, 7000),
+        retryWithTimeout(fetchProfiles, 2, 500, 7000)
+      ]);
       
       if (!authUsers.length) {
         setUsers([]);
@@ -78,18 +90,14 @@ export function useUsers() {
         return;
       }
       
-      // Now fetch profiles to get admin status
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, display_name, is_admin');
-        
-      if (profilesError) {
-        throw profilesError;
-      }
+      // Merge the data more efficiently
+      const profileMap = new Map();
+      profiles?.forEach(profile => {
+        profileMap.set(profile.id, profile);
+      });
       
-      // Merge the data
       const mergedUsers = authUsers.map((user: any) => {
-        const profile = profiles?.find(p => p.id === user.id);
+        const profile = profileMap.get(user.id);
         return {
           id: user.id,
           email: user.email || '',
@@ -108,9 +116,10 @@ export function useUsers() {
         variant: 'destructive',
       });
       
-      // Se temos dados em cache, continue usando-os em caso de erro
+      // Use cached data in case of error
       const cachedData = getCachedUsers();
       if (cachedData) {
+        console.log('Using cached users data due to error');
         setUsers(cachedData);
       }
     } finally {
@@ -129,7 +138,7 @@ export function useUsers() {
           : user
       ));
       
-      // Atualizar também no cache
+      // Update cache too
       const cachedData = getCachedUsers();
       if (cachedData) {
         const updatedCache = cachedData.map(user => 
@@ -154,7 +163,7 @@ export function useUsers() {
     }
   }, [users, toast]);
 
-  // Initial fetch
+  // Initial fetch with useEffect
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
