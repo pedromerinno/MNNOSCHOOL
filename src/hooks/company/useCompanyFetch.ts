@@ -11,6 +11,29 @@ interface UseCompanyFetchProps {
   setSelectedCompany: Dispatch<SetStateAction<Company | null>>;
 }
 
+// Helper function to retry failed fetch operations
+const retryOperation = async (operation: () => Promise<any>, maxRetries = 3, delay = 1000) => {
+  let lastError;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      console.warn(`Fetch attempt ${attempt + 1} failed, retrying...`, error);
+      lastError = error;
+      
+      // Wait before retrying
+      await new Promise(resolve => setTimeout(resolve, delay));
+      
+      // Increase delay for next retry (exponential backoff)
+      delay *= 1.5;
+    }
+  }
+  
+  // If all retries fail, throw the last error
+  throw lastError;
+};
+
 export const useCompanyFetch = ({
   setIsLoading,
   setCompanies,
@@ -24,10 +47,9 @@ export const useCompanyFetch = ({
   const fetchCompanies = async (): Promise<void> => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('empresas')
-        .select('*')
-        .order('nome');
+      const { data, error } = await retryOperation(
+        () => supabase.from('empresas').select('*').order('nome')
+      );
 
       if (error) {
         console.error("Error fetching companies:", error);
@@ -55,23 +77,38 @@ export const useCompanyFetch = ({
   const getUserCompanies = async (userId: string): Promise<Company[]> => {
     setIsLoading(true);
     try {
-      // Get all company IDs the user is related to
-      const { data: userCompanyRelations, error: relationsError } = await supabase
-        .from('user_empresa')
-        .select('company_id')
-        .eq('user_id', userId);
+      // Get all company IDs the user is related to with retry logic
+      const { data: userCompanyRelations, error: relationsError } = await retryOperation(
+        () => supabase.from('user_empresa').select('company_id').eq('user_id', userId)
+      );
 
       if (relationsError) {
         console.error("Error fetching user company relations:", relationsError);
-        toast("Erro ao buscar empresas", {
+        toast("Erro ao buscar empresas do usuário", {
           description: relationsError.message,
         });
+        
+        // Return cached data if available to prevent UI disruption
+        const cachedCompanies = localStorage.getItem('userCompanies');
+        if (cachedCompanies) {
+          try {
+            const parsed = JSON.parse(cachedCompanies) as Company[];
+            console.log("Using cached companies due to fetch error");
+            setUserCompanies(parsed);
+            return parsed;
+          } catch (e) {
+            console.error("Error parsing cached companies", e);
+          }
+        }
+        
         return [];
       }
 
       if (!userCompanyRelations || userCompanyRelations.length === 0) {
+        console.log("No company relations found for user", userId);
         setUserCompanies([]);
         setSelectedCompany(null);
+        localStorage.removeItem('userCompanies');
         return [];
       }
 
@@ -79,11 +116,9 @@ export const useCompanyFetch = ({
       const companyIds = userCompanyRelations.map(relation => relation.company_id);
 
       // Fetch all companies with these IDs
-      const { data: companies, error: companiesError } = await supabase
-        .from('empresas')
-        .select('*')
-        .in('id', companyIds)
-        .order('nome');
+      const { data: companies, error: companiesError } = await retryOperation(
+        () => supabase.from('empresas').select('*').in('id', companyIds).order('nome')
+      );
 
       if (companiesError) {
         console.error("Error fetching companies:", companiesError);
@@ -95,6 +130,11 @@ export const useCompanyFetch = ({
 
       const userCompaniesData = companies as Company[];
       setUserCompanies(userCompaniesData);
+      
+      // Cache the companies for offline fallback
+      if (userCompaniesData.length > 0) {
+        localStorage.setItem('userCompanies', JSON.stringify(userCompaniesData));
+      }
       
       // If there's only one company, automatically select it
       if (userCompaniesData.length === 1) {
@@ -125,11 +165,9 @@ export const useCompanyFetch = ({
   const getCompanyById = async (companyId: string): Promise<Company | null> => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('empresas')
-        .select('*')
-        .eq('id', companyId)
-        .single();
+      const { data, error } = await retryOperation(
+        () => supabase.from('empresas').select('*').eq('id', companyId).single()
+      );
 
       if (error) {
         console.error("Error fetching company:", error);
