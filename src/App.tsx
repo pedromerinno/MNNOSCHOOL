@@ -1,4 +1,4 @@
-
+import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,6 +20,7 @@ import Access from "./pages/Access";
 import Documents from "./pages/Documents";
 import School from "./pages/School";
 import Community from "./pages/Community";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -31,11 +32,9 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            {/* Public routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             
-            {/* Protected routes with MainNavigationMenu */}
             <Route element={<ProtectedRoute />}>
               <Route path="/" element={<>
                 <MainNavigationMenu />
@@ -54,15 +53,21 @@ const App = () => (
                 <CourseDetails />
               </>} />
               
-              {/* Novas rotas */}
               <Route path="/integration" element={<Integration />} />
               <Route path="/access" element={<Access />} />
               <Route path="/documents" element={<Documents />} />
               <Route path="/school" element={<School />} />
               <Route path="/community" element={<Community />} />
+              
+              <Route 
+                path="/admin" 
+                element={<>
+                  <MainNavigationMenu />
+                  <Admin />
+                </>} 
+              />
             </Route>
             
-            {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

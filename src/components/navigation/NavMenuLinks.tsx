@@ -1,82 +1,38 @@
-
-import { Link } from "react-router-dom";
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Settings } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const NavMenuLinks = () => {
+  const { user } = useAuth();
+
+  const adminLinks = user?.email === 'admin@merinno.com' ? (
+    <li>
+      <Link 
+        to="/admin" 
+        className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light"
+      >
+        <Settings size={20} />
+        <span>Admin</span>
+      </Link>
+    </li>
+  ) : null;
+
   return (
-    <NavigationMenu>
-      <NavigationMenuList>
-        <NavigationMenuItem>
-          <Link to="/" className="text-sm font-medium text-gray-900 px-4 py-2 hover:text-merinno-blue">
+    <nav>
+      <ul className="flex items-center space-x-6">
+        <li>
+          <Link to="/" className="text-gray-700 dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light">
             Home
           </Link>
-        </NavigationMenuItem>
-        
-        <NavigationMenuItem>
-          <NavigationMenuTrigger className="text-sm font-medium text-gray-500 hover:text-merinno-blue">
+        </li>
+        <li>
+          <Link to="/courses" className="text-gray-700 dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light">
             Cursos
-          </NavigationMenuTrigger>
-          <NavigationMenuContent className="p-4 shadow-lg rounded-md min-w-[200px]">
-            <ul className="space-y-2">
-              <li>
-                <NavigationMenuLink asChild>
-                  <Link to="/courses" className="block px-4 py-2 text-sm hover:bg-gray-100 rounded-md">
-                    Todos os Cursos
-                  </Link>
-                </NavigationMenuLink>
-              </li>
-              <li>
-                <NavigationMenuLink asChild>
-                  <Link to="/courses?filter=inprogress" className="block px-4 py-2 text-sm hover:bg-gray-100 rounded-md">
-                    Em Progresso
-                  </Link>
-                </NavigationMenuLink>
-              </li>
-              <li>
-                <NavigationMenuLink asChild>
-                  <Link to="/courses?filter=completed" className="block px-4 py-2 text-sm hover:bg-gray-100 rounded-md">
-                    Concluídos
-                  </Link>
-                </NavigationMenuLink>
-              </li>
-            </ul>
-          </NavigationMenuContent>
-        </NavigationMenuItem>
-        
-        <NavigationMenuItem>
-          <NavigationMenuTrigger className="text-sm font-medium text-gray-500 hover:text-merinno-blue">
-            Ferramentas
-            <span className="ml-2 text-xs bg-blue-100 text-blue-800 rounded-full px-2 py-0.5">
-              beta
-            </span>
-          </NavigationMenuTrigger>
-          <NavigationMenuContent className="p-4 shadow-lg rounded-md min-w-[200px]">
-            <ul className="space-y-2">
-              <li>
-                <NavigationMenuLink asChild>
-                  <Link to="/tools/planner" className="block px-4 py-2 text-sm hover:bg-gray-100 rounded-md">
-                    Planejador
-                  </Link>
-                </NavigationMenuLink>
-              </li>
-              <li>
-                <NavigationMenuLink asChild>
-                  <Link to="/tools/calendar" className="block px-4 py-2 text-sm hover:bg-gray-100 rounded-md">
-                    Calendário
-                  </Link>
-                </NavigationMenuLink>
-              </li>
-            </ul>
-          </NavigationMenuContent>
-        </NavigationMenuItem>
-      </NavigationMenuList>
-    </NavigationMenu>
+          </Link>
+        </li>
+        {adminLinks}
+      </ul>
+    </nav>
   );
 };
