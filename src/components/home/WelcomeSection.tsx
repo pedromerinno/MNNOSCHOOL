@@ -35,6 +35,20 @@ export const WelcomeSection = () => {
   // Use displayName from userProfile if available, otherwise extract from email
   const userName = userProfile.displayName || user?.email?.split('@')[0] || 'Usuário';
 
+  const formatInstitutionalPhrase = (phrase) => {
+    if (!phrase) return null;
+    
+    const words = phrase.split(' ');
+    const midpoint = Math.ceil(words.length / 2);
+    
+    return (
+      <>
+        {words.slice(0, midpoint).join(' ')}<br />
+        {words.slice(midpoint).join(' ')}
+      </>
+    );
+  };
+
   return (
     <div className="mb-16 mt-10">
       <div className="flex justify-center">
@@ -54,33 +68,22 @@ export const WelcomeSection = () => {
       ) : (
         <div className="flex flex-col items-center">
           <h1 className="text-4xl md:text-5xl text-center mb-10 mt-6 font-medium dark:text-white leading-tight">
-            {selectedCompany && selectedCompany.frase_institucional ? (
-              <>
-                {selectedCompany.frase_institucional.split(' ').length > 8 ? (
-                  <>
-                    {selectedCompany.frase_institucional.split(' ').slice(0, 8).join(' ')}<br />
-                    {selectedCompany.frase_institucional.split(' ').slice(8).join(' ')}
-                  </>
-                ) : (
-                  selectedCompany.frase_institucional
-                )}
-              </>
-            ) : (
+            {selectedCompany?.frase_institucional ? 
+              formatInstitutionalPhrase(selectedCompany.frase_institucional) : 
               <>
                 Juntos, estamos desenhando<br />
                 o futuro de grandes empresas
               </>
-            )}
+            }
           </h1>
           <Button 
             onClick={handleLearnMore}
             className="bg-black hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 text-white rounded-full py-6 px-8 text-base mt-8"
           >
-            {selectedCompany ? (
-              `Clique para saber mais sobre a ${selectedCompany.nome}`
-            ) : (
-              "Clique para saber mais sobre a MNNO"
-            )}
+            {selectedCompany ? 
+              `Conheça mais sobre a ${selectedCompany.nome}` : 
+              "Conheça mais sobre a MNNO"
+            }
           </Button>
         </div>
       )}
