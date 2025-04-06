@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogOut, User, ChevronDown, Building } from "lucide-react";
@@ -54,6 +55,12 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
           } else if (companies.length > 1) {
             // If multiple companies, select first one by default
             setSelectedCompany(companies[0]);
+            
+            // Dispatch event to inform other components
+            const navEvent = new CustomEvent('company-selected', { 
+              detail: { userId: user.id, company: companies[0] } 
+            });
+            window.dispatchEvent(navEvent);
           }
         } catch (error) {
           console.error('Erro ao buscar empresas do usuário:', error);
