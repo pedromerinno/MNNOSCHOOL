@@ -18,7 +18,7 @@ import { UserCompanyManager } from './UserCompanyManager';
 export const CompanyManagement: React.FC = () => {
   const { 
     companies, 
-    loading, 
+    isLoading, 
     fetchCompanies, 
     createCompany, 
     updateCompany, 
@@ -84,7 +84,7 @@ export const CompanyManagement: React.FC = () => {
       
       <CompanyTable 
         companies={companies} 
-        loading={loading} 
+        loading={isLoading} 
         onEdit={handleEditCompany}
         onDelete={handleDeleteCompany}
         onManageUsers={handleManageUsers}

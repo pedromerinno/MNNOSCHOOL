@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { UserPlus, X } from 'lucide-react';
+import { supabase } from "@/integrations/supabase/client";
 
 interface UserCompanyManagerProps {
   company: Company;
@@ -173,5 +174,3 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
     </div>
   );
 };
-
-import { supabase } from "@/integrations/supabase/client";
