@@ -1,7 +1,7 @@
 
 import { useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { BookOpen, Video, Users, FileText, Quote } from "lucide-react";
+import { BookOpen, Video, Users, FileText, Quote, ArrowRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { Skeleton } from "@/components/ui/skeleton";

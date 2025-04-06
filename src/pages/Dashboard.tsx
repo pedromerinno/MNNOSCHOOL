@@ -6,7 +6,7 @@ import { CourseList } from "@/components/courses/CourseList";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { Button } from "@/components/ui/button";
-import { Info } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
@@ -44,8 +44,8 @@ const Dashboard = () => {
             variant="outline" 
             className="border-black text-black hover:bg-black/5 dark:border-white dark:text-white dark:hover:bg-white/10 flex items-center gap-2"
           >
-            <Info className="h-4 w-4" />
-            Conhecer mais
+            <ArrowRight className="h-4 w-4" />
+            Saiba mais
           </Button>
         </div>
       )}

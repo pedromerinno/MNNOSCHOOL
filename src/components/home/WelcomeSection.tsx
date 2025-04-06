@@ -1,12 +1,11 @@
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Info } from "lucide-react";
 
 export const WelcomeSection = () => {
   const navigate = useNavigate();
@@ -37,10 +36,10 @@ export const WelcomeSection = () => {
   const userName = userProfile.displayName || user?.email?.split('@')[0] || 'Usuário';
 
   return (
-    <div className="mb-16 mt-8">
+    <div className="mb-16 mt-10">
       <div className="flex justify-center">
         <p 
-          className="text-gray-600 dark:text-gray-300 mb-2 text-center bg-[#FFF1E0] dark:bg-amber-900/30 py-2.5 px-4 rounded-full max-w-fit"
+          className="text-gray-700 dark:text-gray-200 mb-8 text-center bg-[#FFF5E4] dark:bg-amber-900/30 py-2.5 px-8 rounded-full max-w-fit text-lg"
         >
           Olá, {userName}
         </p>
@@ -48,13 +47,13 @@ export const WelcomeSection = () => {
       
       {isLoading ? (
         <div className="flex flex-col items-center">
-          <Skeleton className="h-12 w-3/4 max-w-lg my-5" />
-          <Skeleton className="h-12 w-1/2 max-w-md mb-5" />
-          <Skeleton className="h-10 w-56 rounded-full mt-6" />
+          <Skeleton className="h-14 w-3/4 max-w-lg my-5" />
+          <Skeleton className="h-14 w-1/2 max-w-md mb-10" />
+          <Skeleton className="h-12 w-80 rounded-full mt-8" />
         </div>
       ) : (
         <>
-          <h1 className="text-3xl md:text-4xl text-center my-5 font-medium dark:text-white">
+          <h1 className="text-4xl md:text-5xl text-center mb-10 mt-6 font-medium dark:text-white leading-tight">
             {selectedCompany && selectedCompany.frase_institucional ? (
               selectedCompany.frase_institucional
             ) : (
@@ -64,28 +63,17 @@ export const WelcomeSection = () => {
               </>
             )}
           </h1>
-          <div className="flex justify-center mt-6 gap-4">
+          <div className="flex justify-center mt-8">
             <Button 
               onClick={handleLearnMore}
-              className="bg-black hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 text-white rounded-full px-6"
+              className="bg-black hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 text-white rounded-full py-6 px-8 text-base"
             >
               {selectedCompany ? (
-                `Conheça mais sobre a ${selectedCompany.nome}`
+                `Clique para saber mais sobre a ${selectedCompany.nome}`
               ) : (
-                "Conheça mais sobre a MERINNO"
+                "Clique para saber mais sobre a MNNO"
               )}
             </Button>
-            
-            {selectedCompany && (
-              <Button
-                onClick={() => navigate('/manifesto')}
-                variant="outline" 
-                className="rounded-full border-black text-black hover:bg-black/5 dark:border-white dark:text-white dark:hover:bg-white/10 flex items-center gap-2"
-              >
-                <Info className="h-4 w-4" />
-                Conhecer
-              </Button>
-            )}
           </div>
         </>
       )}
