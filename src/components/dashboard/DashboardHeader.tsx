@@ -1,5 +1,6 @@
-import { Link, useNavigate } from "react-router-dom";
-import { Bell, Search, User, LogOut } from "lucide-react";
+
+import { Link, useNavigate, useState } from "react-router-dom";
+import { Bell, Search, User, LogOut, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,13 +11,85 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { useToast } from "@/hooks/use-toast";
+
+const userProfileSchema = z.object({
+  name: z.string().min(2, {
+    message: "Nome precisa ter pelo menos 2 caracteres.",
+  }),
+  avatar: z.string().optional(),
+});
+
+type UserProfileFormValues = z.infer<typeof userProfileSchema>;
 
 export const DashboardHeader = () => {
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState("https://i.pravatar.cc/150?img=68");
+
+  const form = useForm<UserProfileFormValues>({
+    resolver: zodResolver(userProfileSchema),
+    defaultValues: {
+      name: user?.email?.split('@')[0] || "",
+      avatar: "https://i.pravatar.cc/150?img=68",
+    },
+  });
 
   const handleLogoClick = () => {
     navigate("/");
+  };
+
+  const handleProfileUpdate = (values: UserProfileFormValues) => {
+    // This would typically update the user profile in a database
+    console.log("Profile update values:", values);
+    
+    // Show success message
+    toast({
+      title: "Perfil atualizado",
+      description: "Suas informações foram atualizadas com sucesso.",
+    });
+    
+    // Close the dialog
+    setIsProfileDialogOpen(false);
+  };
+
+  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setAvatarPreview(result);
+        form.setValue("avatar", result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const openProfileDialog = () => {
+    setIsProfileDialogOpen(true);
   };
 
   return (
@@ -82,10 +155,14 @@ export const DashboardHeader = () => {
                 variant="ghost"
                 size="icon"
                 className="relative text-gray-500 hover:text-merinno-blue rounded-full overflow-hidden"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
               >
                 {user ? (
                   <img 
-                    src="https://i.pravatar.cc/150?img=68" 
+                    src={avatarPreview} 
                     alt="User avatar" 
                     className="h-8 w-8 rounded-full"
                   />
@@ -103,6 +180,13 @@ export const DashboardHeader = () => {
                   {user?.email}
                 </p>
               </div>
+              <DropdownMenuItem 
+                className="cursor-pointer flex items-center gap-2"
+                onClick={openProfileDialog}
+              >
+                <User className="h-4 w-4" />
+                <span>Editar Perfil</span>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 className="cursor-pointer flex items-center gap-2"
@@ -115,6 +199,69 @@ export const DashboardHeader = () => {
           </DropdownMenu>
         </div>
       </div>
+
+      <Dialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Editar Perfil</DialogTitle>
+            <DialogDescription>
+              Atualize suas informações de perfil aqui.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleProfileUpdate)} className="space-y-6 py-4">
+              <div className="flex flex-col items-center gap-4 mb-4">
+                <Avatar className="h-24 w-24">
+                  <AvatarImage src={avatarPreview} alt="Avatar preview" />
+                  <AvatarFallback>{form.getValues().name?.charAt(0)?.toUpperCase() || "U"}</AvatarFallback>
+                </Avatar>
+                
+                <div className="flex items-center gap-2">
+                  <label htmlFor="avatar-upload" className="cursor-pointer">
+                    <div className="flex items-center gap-2 text-sm text-merinno-blue hover:underline">
+                      <Upload className="h-4 w-4" />
+                      <span>Alterar foto</span>
+                    </div>
+                    <input
+                      id="avatar-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleAvatarChange}
+                    />
+                  </label>
+                </div>
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Seu nome" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <DialogFooter>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsProfileDialogOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit">Salvar alterações</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </header>
   );
 };
