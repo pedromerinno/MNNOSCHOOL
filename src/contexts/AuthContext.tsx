@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,7 +40,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Function to fetch user profile from Supabase
   const fetchUserProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -53,7 +51,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (error) {
         console.error('Error fetching user profile:', error);
         
-        // If profile doesn't exist, create one
         if (error.code === 'PGRST116') {
           console.log('Profile not found, creating a new one...');
           await createUserProfile(userId);
@@ -73,7 +70,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Function to create a user profile if it doesn't exist
   const createUserProfile = async (userId: string) => {
     try {
       const email = user?.email || '';
@@ -92,7 +88,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      // Update local state with the new profile
       setUserProfile({
         displayName,
         avatar: null
@@ -104,7 +99,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Update user profile in Supabase
   const updateUserProfile = async (profile: UserProfile) => {
     if (!user) return;
 
@@ -119,40 +113,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .eq('id', user.id);
 
       if (error) {
-        console.error('Error updating profile:', error);
+        console.error('Error updating profile in database:', error);
         toast({
           title: "Erro ao atualizar perfil",
           description: error.message,
           variant: "destructive",
         });
-        return;
+        throw error;
       }
 
-      // Update local state
       setUserProfile(profile);
       
+      console.log('Profile updated successfully in database');
       toast({
         title: "Perfil atualizado",
-        description: "Seu perfil foi atualizado com sucesso.",
+        description: "Seu perfil foi atualizado com sucesso na base de dados.",
       });
     } catch (error: any) {
-      console.error('Exception updating profile:', error);
-      toast({
-        title: "Erro ao atualizar perfil",
-        description: error.message,
-        variant: "destructive",
-      });
+      console.error('Exception updating profile in database:', error);
+      throw error;
     }
   };
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Fetch user profile when auth state changes and user exists
         if (session?.user) {
           fetchUserProfile(session.user.id);
         }
@@ -167,7 +155,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             title: "Desconectado",
             description: "Você foi desconectado com sucesso.",
           });
-          // Reset user profile on sign out
           setUserProfile({
             displayName: null,
             avatar: null
@@ -176,12 +163,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     );
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       
-      // Fetch user profile for existing session
       if (session?.user) {
         fetchUserProfile(session.user.id);
       }
@@ -226,7 +211,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (response.error) throw response.error;
       
-      navigate("/"); // Changed from "/dashboard" to "/" to redirect to home page
+      navigate("/");
+      
       return { data: response.data, error: null };
     } catch (error: any) {
       toast({

@@ -56,17 +56,31 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
   });
 
   const handleProfileUpdate = async (values: UserProfileFormValues) => {
-    // Update the user profile in Supabase via AuthContext
-    await updateUserProfile({
-      displayName: values.name,
-      avatar: values.avatar || null
-    });
-    
-    // Call the parent handler
-    onSave(values);
-    
-    // Close the dialog
-    setIsOpen(false);
+    try {
+      // Update the user profile in Supabase via AuthContext
+      await updateUserProfile({
+        displayName: values.name,
+        avatar: values.avatar || null
+      });
+      
+      // Call the parent handler
+      onSave(values);
+      
+      // Show success toast
+      toast({
+        title: "Perfil atualizado",
+        description: "Suas alterações foram salvas com sucesso.",
+      });
+      
+      // Close the dialog
+      setIsOpen(false);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao atualizar perfil",
+        description: error.message || "Não foi possível salvar as alterações",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {

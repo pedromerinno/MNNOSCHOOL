@@ -26,12 +26,15 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
   };
 
   const handleProfileUpdate = (values: UserProfileFormValues) => {
-    // Handled by the profile dialog through updateUserProfile
-    console.log("Profile update values:", values);
+    // Profile update is handled by the ProfileDialog component
+    // via the updateUserProfile function in AuthContext
+    console.log("Profile updated with values:", values);
   };
 
   // Use the avatar from userProfile if available, otherwise use the provided avatarUrl
   const displayAvatar = userProfile.avatar || avatarUrl;
+  // Use the displayName from userProfile if available, otherwise use the email
+  const displayName = userProfile.displayName || user?.email?.split('@')[0] || "Usuário";
 
   return (
     <>
@@ -49,7 +52,7 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
             <img 
               src={displayAvatar} 
               alt="User avatar" 
-              className="h-8 w-8 rounded-full"
+              className="h-8 w-8 rounded-full object-cover"
             />
             <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
           </Button>
@@ -57,8 +60,9 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
         <DropdownMenuContent align="end" className="w-48">
           <div className="px-4 py-2 border-b border-gray-100">
             <p className="text-sm font-medium text-gray-900 truncate">
-              {userProfile.displayName || user?.email}
+              {displayName}
             </p>
+            <p className="text-xs text-gray-500 truncate">{user?.email}</p>
           </div>
           <DropdownMenuItem 
             className="cursor-pointer flex items-center gap-2"
