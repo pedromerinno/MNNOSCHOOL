@@ -18,7 +18,6 @@ import {
 import { ProfilePopover, UserProfileFormValues } from "@/components/profile/ProfilePopover";
 import { useCompanies } from "@/hooks/useCompanies";
 import { toast } from "sonner";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface UserNavigationProps {
   avatarUrl?: string;
@@ -28,39 +27,33 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
   const { user, signOut, userProfile } = useAuth();
   const [displayName, setDisplayName] = useState<string>("");
   const [displayAvatar, setDisplayAvatar] = useState<string>("");
-  const [companiesLoaded, setCompaniesLoaded] = useState(false);
   const navigate = useNavigate();
   const { 
     userCompanies, 
     selectedCompany, 
+    getUserCompanies, 
     selectCompany,
-    getUserCompanies,
     isLoading 
   } = useCompanies();
   
-  // Fetch user companies when the component mounts
+  // Fetch user companies on component mount
   useEffect(() => {
-    const loadCompanies = async () => {
-      if (user?.id && !companiesLoaded) {
-        try {
-          console.log("UserNavigation: Loading companies for user", user.id);
-          await getUserCompanies(user.id);
-          setCompaniesLoaded(true);
-        } catch (error) {
-          console.error("UserNavigation: Error loading companies", error);
-        }
+    const fetchUserCompanies = async () => {
+      if (user?.id) {
+        console.log('UserNavigation: Fetching user companies');
+        await getUserCompanies(user.id);
       }
     };
-    
-    loadCompanies();
-  }, [user?.id, getUserCompanies, companiesLoaded]);
-  
+
+    fetchUserCompanies();
+  }, [user, getUserCompanies]);
+
   // Update display name and avatar
   useEffect(() => {
     // Use the displayName from userProfile if available, otherwise use the email
-    setDisplayName(userProfile?.displayName || user?.email?.split('@')[0] || "Usuário");
+    setDisplayName(userProfile.displayName || user?.email?.split('@')[0] || "Usuário");
     // Use the avatar from userProfile if available, otherwise use the provided avatarUrl
-    setDisplayAvatar(userProfile?.avatar || avatarUrl);
+    setDisplayAvatar(userProfile.avatar || avatarUrl);
   }, [userProfile, user, avatarUrl]);
 
   const handleProfileUpdate = (values: UserProfileFormValues) => {
@@ -80,14 +73,9 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
   const handleCompanySelect = (company) => {
     if (!company || !user?.id) return;
     
-    try {
-      console.log('UserNavigation: Company selected', company.nome);
-      selectCompany(user.id, company);
-      toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
-    } catch (error) {
-      console.error("Error selecting company:", error);
-      toast.error("Erro ao selecionar empresa");
-    }
+    console.log('UserNavigation: Company selected', company.nome);
+    selectCompany(user.id, company);
+    toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
   };
 
   // Only show company selection if user has multiple companies
@@ -122,40 +110,31 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
             <DropdownMenuSub>
               <DropdownMenuSubTrigger className="cursor-pointer flex items-center gap-2">
                 <Building className="h-4 w-4" />
-                {isLoading ? (
-                  <Skeleton className="h-4 w-24" />
-                ) : (
-                  <span className="truncate">
-                    {selectedCompany?.nome || 'Selecionar Empresa'}
-                  </span>
-                )}
+                <span className="truncate">
+                  {isLoading ? 'Carregando...' : (selectedCompany?.nome || 'Selecionar Empresa')}
+                </span>
+                <ChevronDown className="h-3 w-3 ml-auto" />
               </DropdownMenuSubTrigger>
               <DropdownMenuPortal>
                 <DropdownMenuSubContent className="w-48 bg-white dark:bg-gray-800 z-50">
-                  {isLoading ? (
-                    <DropdownMenuItem className="opacity-50 pointer-events-none">
-                      Carregando empresas...
+                  {userCompanies.map((company) => (
+                    <DropdownMenuItem
+                      key={company.id}
+                      className="cursor-pointer"
+                      onClick={() => handleCompanySelect(company)}
+                    >
+                      <div className="flex items-center w-full">
+                        {company.logo && (
+                          <img 
+                            src={company.logo} 
+                            alt={company.nome} 
+                            className="h-4 w-4 mr-2 object-contain"
+                          />
+                        )}
+                        <span className="truncate">{company.nome}</span>
+                      </div>
                     </DropdownMenuItem>
-                  ) : (
-                    userCompanies.map((company) => (
-                      <DropdownMenuItem
-                        key={company.id}
-                        className="cursor-pointer"
-                        onClick={() => handleCompanySelect(company)}
-                      >
-                        <div className="flex items-center w-full">
-                          {company.logo && (
-                            <img 
-                              src={company.logo} 
-                              alt={company.nome} 
-                              className="h-4 w-4 mr-2 object-contain"
-                            />
-                          )}
-                          <span className="truncate">{company.nome}</span>
-                        </div>
-                      </DropdownMenuItem>
-                    ))
-                  )}
+                  ))}
                 </DropdownMenuSubContent>
               </DropdownMenuPortal>
             </DropdownMenuSub>

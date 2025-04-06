@@ -2,37 +2,34 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
+import { toast } from "sonner";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Company } from "@/types/company";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export const WelcomeSection = () => {
   const { user, userProfile } = useAuth();
-  const { getUserCompanies, selectedCompany, userCompanies, selectCompany, isLoading } = useCompanies();
+  const { getUserCompanies, selectedCompany, userCompanies, selectCompany } = useCompanies();
   const navigate = useNavigate();
   const [displayCompany, setDisplayCompany] = useState<Company | null>(null);
-  const [error, setError] = useState<boolean>(false);
-  
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      if (!user?.id) return;
-      
-      try {
-        setError(false);
-        await getUserCompanies(user.id);
-      } catch (err) {
-        console.error('Error fetching user companies in WelcomeSection:', err);
-        setError(true);
-      }
-    };
-    
-    fetchInitialData();
-  }, [user?.id, getUserCompanies]);
 
   useEffect(() => {
-    // Set display company based on what's available
+    const fetchUserCompanies = async () => {
+      if (user?.id) {
+        try {
+          await getUserCompanies(user.id);
+        } catch (error) {
+          console.error('Erro na busca da empresa:', error);
+          toast.error("Não foi possível carregar os dados da empresa. Tente novamente mais tarde.");
+        }
+      }
+    };
+
+    fetchUserCompanies();
+  }, [user, getUserCompanies]);
+
+  useEffect(() => {
     if (selectedCompany) {
       setDisplayCompany(selectedCompany);
     } else if (userCompanies && userCompanies.length > 0) {
@@ -40,15 +37,8 @@ export const WelcomeSection = () => {
       setDisplayCompany(userCompanies[0]);
       
       if (user?.id) {
-        try {
-          selectCompany(user.id, userCompanies[0]);
-        } catch (err) {
-          console.error('Error selecting first company:', err);
-          // Still display the company even if selection fails
-        }
+        selectCompany(user.id, userCompanies[0]);
       }
-    } else {
-      setDisplayCompany(null);
     }
   }, [selectedCompany, userCompanies, user, selectCompany]);
 
@@ -57,20 +47,6 @@ export const WelcomeSection = () => {
   const handleLearnMore = () => {
     navigate('/manifesto');
   };
-
-  if (isLoading) {
-    return (
-      <div className="mb-16 mt-10">
-        <div className="flex flex-col items-center">
-          <Skeleton className="h-8 w-32 mb-6 rounded-full" />
-          <Skeleton className="h-20 w-[50%] mb-5" />
-          <Skeleton className="h-10 w-32 rounded-full" />
-        </div>
-      </div>
-    );
-  }
-
-  const defaultPhrase = "Juntos, estamos desenhando o futuro de grandes empresas";
 
   return (
     <div className="mb-16 mt-10">
@@ -83,18 +59,18 @@ export const WelcomeSection = () => {
         <p 
           className="text-[#000000] text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-5"
         >
-          {displayCompany?.frase_institucional || defaultPhrase}
+          {displayCompany?.frase_institucional || "Juntos, estamos desenhando o futuro de grandes empresas"}
         </p>
-        {(displayCompany || error) && (
+        {displayCompany && (
           <Button 
             onClick={handleLearnMore} 
             className="mt-1 flex items-center gap-2 text-white rounded-full text-sm"
             variant="default"
             style={{ 
-              backgroundColor: displayCompany?.cor_principal || '#000000' 
+              backgroundColor: displayCompany.cor_principal || '#000000' 
             }}
           >
-            Saiba mais
+            Saiba mais sobre {displayCompany.nome}
             <ArrowRight className="h-4 w-4" />
           </Button>
         )}
@@ -102,3 +78,4 @@ export const WelcomeSection = () => {
     </div>
   );
 };
+

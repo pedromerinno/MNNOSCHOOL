@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Company } from "@/types/company";
 import { useCompanyFetch } from "./company/useCompanyFetch";
 import { useCompanySelection } from "./company/useCompanySelection";
@@ -13,12 +13,11 @@ export const useCompanies = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [userCompanies, setUserCompanies] = useState<Company[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
-  const [error, setError] = useState<Error | null>(null);
 
   // Import functionality from individual hooks
   const { 
     fetchCompanies, 
-    getUserCompanies: fetchUserCompanies, 
+    getUserCompanies, 
     getCompanyById 
   } = useCompanyFetch({ 
     setIsLoading, 
@@ -52,23 +51,6 @@ export const useCompanies = () => {
     assignUserToCompany, 
     removeUserFromCompany 
   } = useCompanyUserManagement();
-
-  // Memoized function to get user companies
-  const getUserCompanies = useCallback(async (userId: string) => {
-    if (!userId) {
-      console.warn("getUserCompanies called without a user ID");
-      return [];
-    }
-    
-    try {
-      setError(null);
-      return await fetchUserCompanies(userId);
-    } catch (err) {
-      console.error("Error in getUserCompanies:", err);
-      setError(err instanceof Error ? err : new Error(String(err)));
-      return [];
-    }
-  }, [fetchUserCompanies]);
 
   // Listen for company selection events
   useEffect(() => {
@@ -109,20 +91,9 @@ export const useCompanies = () => {
               }
             } catch (error) {
               console.error('Failed to restore company from localStorage', error);
-              // Clear invalid company ID
               localStorage.removeItem('selectedCompanyId');
-              
-              // Fall back to first company
-              if (userCompanies.length > 0) {
-                setSelectedCompany(userCompanies[0]);
-                console.log('Falling back to first company:', userCompanies[0].nome);
-              }
             }
           }
-        } else if (userCompanies.length === 1) {
-          // Auto-select if there's only one company
-          setSelectedCompany(userCompanies[0]);
-          console.log('Auto-selecting single company:', userCompanies[0].nome);
         }
       }
     };
@@ -132,7 +103,6 @@ export const useCompanies = () => {
 
   return {
     isLoading,
-    error,
     companies,
     userCompanies,
     selectedCompany,
