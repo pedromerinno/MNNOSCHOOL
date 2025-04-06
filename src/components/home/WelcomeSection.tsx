@@ -13,7 +13,6 @@ export const WelcomeSection = () => {
   const navigate = useNavigate();
   const [displayCompany, setDisplayCompany] = useState<Company | null>(null);
 
-  // Initial fetch of user companies on component mount
   useEffect(() => {
     const fetchUserCompanies = async () => {
       if (user?.id) {
@@ -29,25 +28,19 @@ export const WelcomeSection = () => {
     fetchUserCompanies();
   }, [user, getUserCompanies]);
 
-  // Set display company when selectedCompany or userCompanies changes
   useEffect(() => {
-    // If there's a selected company, use it
     if (selectedCompany) {
       setDisplayCompany(selectedCompany);
-    } 
-    // Otherwise, if user has companies but none selected, use the first one
-    else if (userCompanies && userCompanies.length > 0) {
+    } else if (userCompanies && userCompanies.length > 0) {
       console.log('No company selected, displaying first company:', userCompanies[0].nome);
       setDisplayCompany(userCompanies[0]);
       
-      // If user is logged in, also select this company
       if (user?.id) {
         selectCompany(user.id, userCompanies[0]);
       }
     }
   }, [selectedCompany, userCompanies, user, selectCompany]);
 
-  // Use displayName from userProfile if available, otherwise extract from email
   const userName = userProfile?.displayName || user?.email?.split('@')[0] || 'Usuário';
 
   const handleLearnMore = () => {
@@ -70,8 +63,8 @@ export const WelcomeSection = () => {
         {displayCompany && (
           <Button 
             onClick={handleLearnMore} 
-            className="mt-4 flex items-center gap-2"
-            variant="outline"
+            className="mt-4 flex items-center gap-2 text-white bg-black rounded-full"
+            variant="default"
           >
             Clique para saber mais sobre {displayCompany.nome}
             <ArrowRight className="h-4 w-4" />
