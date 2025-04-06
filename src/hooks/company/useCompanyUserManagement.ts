@@ -1,0 +1,74 @@
+
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+export const useCompanyUserManagement = () => {
+  /**
+   * Assigns a user to a company
+   */
+  const assignUserToCompany = async (userId: string, companyId: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('user_empresa')
+        .insert([{ user_id: userId, company_id: companyId }]);
+
+      if (error) {
+        console.error("Error assigning user to company:", error);
+        toast("Erro ao adicionar usuário à empresa", {
+          description: error.message,
+        });
+        return false;
+      }
+
+      toast("Usuário adicionado", {
+        description: "O usuário foi adicionado à empresa com sucesso",
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Unexpected error:", error);
+      toast("Erro inesperado", {
+        description: "Ocorreu um erro ao adicionar o usuário à empresa",
+      });
+      return false;
+    }
+  };
+
+  /**
+   * Removes a user from a company
+   */
+  const removeUserFromCompany = async (userId: string, companyId: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('user_empresa')
+        .delete()
+        .eq('user_id', userId)
+        .eq('company_id', companyId);
+
+      if (error) {
+        console.error("Error removing user from company:", error);
+        toast("Erro ao remover usuário da empresa", {
+          description: error.message,
+        });
+        return false;
+      }
+
+      toast("Usuário removido", {
+        description: "O usuário foi removido da empresa com sucesso",
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Unexpected error:", error);
+      toast("Erro inesperado", {
+        description: "Ocorreu um erro ao remover o usuário da empresa",
+      });
+      return false;
+    }
+  };
+
+  return {
+    assignUserToCompany,
+    removeUserFromCompany
+  };
+};
