@@ -12,7 +12,7 @@ export const FeedbackWidget = () => {
         
         <div className="px-8 pb-8">
           <div className="bg-green-50 rounded-lg p-6 mb-6">
-            <p className="text-xl font-medium mb-6">
+            <p className="text-base mb-6">
               <span>Parabéns Felipe,</span><br />
               pelo projeto da Syngenta.
             </p>
@@ -33,7 +33,7 @@ export const FeedbackWidget = () => {
           </div>
           
           <div className="bg-green-50 rounded-lg p-6">
-            <p className="text-xl font-medium mb-6">
+            <p className="text-base mb-6">
               <span>Parabéns Felipe,</span><br />
               pelo projeto da Syngenta.
             </p>
@@ -63,3 +63,4 @@ export const FeedbackWidget = () => {
     </Card>
   );
 };
+
