@@ -13,19 +13,15 @@ export const WelcomeSection = () => {
   const { getUserCompanies, selectedCompany, userCompanies, selectCompany } = useCompanies();
   const navigate = useNavigate();
   const [displayCompany, setDisplayCompany] = useState<Company | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const fetchUserCompanies = async () => {
       if (user?.id) {
-        setIsLoading(true);
         try {
           await getUserCompanies(user.id);
         } catch (error) {
           console.error('Erro na busca da empresa:', error);
           toast.error("Não foi possível carregar os dados da empresa. Tente novamente mais tarde.");
-        } finally {
-          setIsLoading(false);
         }
       }
     };
@@ -35,10 +31,9 @@ export const WelcomeSection = () => {
 
   useEffect(() => {
     if (selectedCompany) {
-      console.log('WelcomeSection: Using selected company:', selectedCompany.nome);
       setDisplayCompany(selectedCompany);
     } else if (userCompanies && userCompanies.length > 0) {
-      console.log('WelcomeSection: No company selected, displaying first company:', userCompanies[0].nome);
+      console.log('No company selected, displaying first company:', userCompanies[0].nome);
       setDisplayCompany(userCompanies[0]);
       
       if (user?.id) {
@@ -61,19 +56,11 @@ export const WelcomeSection = () => {
         >
           Olá, {userName}
         </p>
-        {isLoading ? (
-          <p 
-            className="text-[#000000] text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-5"
-          >
-            Carregando...
-          </p>
-        ) : (
-          <p 
-            className="text-[#000000] text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-5"
-          >
-            {displayCompany?.frase_institucional || "Juntos, estamos desenhando o futuro de grandes empresas"}
-          </p>
-        )}
+        <p 
+          className="text-[#000000] text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-5"
+        >
+          {displayCompany?.frase_institucional || "Juntos, estamos desenhando o futuro de grandes empresas"}
+        </p>
         {displayCompany && (
           <Button 
             onClick={handleLearnMore} 
@@ -83,7 +70,7 @@ export const WelcomeSection = () => {
               backgroundColor: displayCompany.cor_principal || '#000000' 
             }}
           >
-            Saiba mais
+            Saiba mais sobre {displayCompany.nome}
             <ArrowRight className="h-4 w-4" />
           </Button>
         )}
@@ -91,3 +78,4 @@ export const WelcomeSection = () => {
     </div>
   );
 };
+

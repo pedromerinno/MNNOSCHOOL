@@ -13,7 +13,9 @@ export const QuickLinks = () => {
       icon: Link, 
       label: "Integração", 
       path: "/integration", 
-      description: "Processo de integração" 
+      description: selectedCompany ? 
+        `Processo de integração na ${selectedCompany.nome}` : 
+        "Processo de integração" 
     },
     { 
       icon: Settings, 
@@ -25,7 +27,9 @@ export const QuickLinks = () => {
       icon: FileText, 
       label: "Documentos", 
       path: "/documents",
-      description: "Seus documentos" 
+      description: selectedCompany ? 
+        `Documentos da ${selectedCompany.nome}` : 
+        "Seus documentos" 
     },
     { 
       icon: School, 
