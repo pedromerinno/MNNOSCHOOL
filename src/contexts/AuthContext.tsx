@@ -94,7 +94,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (response.error) throw response.error;
       
-      navigate("/dashboard");
+      navigate("/"); // Changed from "/dashboard" to "/" to redirect to home page
       return { data: response.data, error: null };
     } catch (error: any) {
       toast({

@@ -1,5 +1,5 @@
 
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Bell, Search, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,14 +14,22 @@ import {
 
 export const DashboardHeader = () => {
   const { signOut, user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogoClick = () => {
+    navigate("/");
+  };
 
   return (
     <header className="border-b border-gray-200 bg-white">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center space-x-10">
-          <Link to="/" className="text-xl font-bold text-merinno-dark">
+          <div 
+            onClick={handleLogoClick} 
+            className="text-xl font-bold text-merinno-dark cursor-pointer"
+          >
             MERINNO
-          </Link>
+          </div>
           
           <nav className="hidden md:flex items-center space-x-6">
             <Link
