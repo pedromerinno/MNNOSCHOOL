@@ -1,16 +1,16 @@
 
-import { useEffect } from "react";
-import { ChevronDown } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronDown, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { toast } from "sonner";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 export const CompanySelector = () => {
   const { user } = useAuth();
@@ -19,8 +19,10 @@ export const CompanySelector = () => {
     selectedCompany, 
     getUserCompanies, 
     selectCompany,
-    isLoading 
+    isLoading,
+    error 
   } = useCompanies();
+  const [fetchAttempted, setFetchAttempted] = useState(false);
 
   // Fetch user companies on component mount
   useEffect(() => {
@@ -28,6 +30,7 @@ export const CompanySelector = () => {
       if (user?.id) {
         console.log('CompanySelector: Fetching user companies');
         await getUserCompanies(user.id);
+        setFetchAttempted(true);
       }
     };
 
@@ -59,9 +62,36 @@ export const CompanySelector = () => {
     }
   };
 
-  // Show loading skeleton when loading
+  const handleRetry = async () => {
+    if (user?.id) {
+      toast.info("Tentando novamente...");
+      await getUserCompanies(user.id);
+    }
+  };
+
+  // Show loading state
   if (isLoading) {
-    return <Skeleton className="h-7 w-32 rounded-md" />;
+    return (
+      <div className="flex items-center gap-2">
+        <div className="h-3 w-16 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-full"></div>
+        <ChevronDown className="h-4 w-4 text-gray-400 animate-pulse" />
+      </div>
+    );
+  }
+
+  // Show error state with retry button
+  if (error && fetchAttempted) {
+    return (
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        onClick={handleRetry}
+        className="text-red-500 hover:text-red-600 flex items-center gap-1 py-1 px-2"
+      >
+        <AlertTriangle className="h-3.5 w-3.5" />
+        <span className="text-sm">Reconectar</span>
+      </Button>
+    );
   }
 
   // If user has no companies or is not logged in, show default text
