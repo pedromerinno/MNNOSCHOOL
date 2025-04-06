@@ -48,7 +48,7 @@ export const useCompanyFetch = ({
     setIsLoading(true);
     try {
       const { data, error } = await retryOperation(
-        () => supabase.from('empresas').select('*').order('nome')
+        async () => await supabase.from('empresas').select('*').order('nome')
       );
 
       if (error) {
@@ -79,7 +79,7 @@ export const useCompanyFetch = ({
     try {
       // Get all company IDs the user is related to with retry logic
       const { data: userCompanyRelations, error: relationsError } = await retryOperation(
-        () => supabase.from('user_empresa').select('company_id').eq('user_id', userId)
+        async () => await supabase.from('user_empresa').select('company_id').eq('user_id', userId)
       );
 
       if (relationsError) {
@@ -117,7 +117,7 @@ export const useCompanyFetch = ({
 
       // Fetch all companies with these IDs
       const { data: companies, error: companiesError } = await retryOperation(
-        () => supabase.from('empresas').select('*').in('id', companyIds).order('nome')
+        async () => await supabase.from('empresas').select('*').in('id', companyIds).order('nome')
       );
 
       if (companiesError) {
@@ -166,7 +166,7 @@ export const useCompanyFetch = ({
     setIsLoading(true);
     try {
       const { data, error } = await retryOperation(
-        () => supabase.from('empresas').select('*').eq('id', companyId).single()
+        async () => await supabase.from('empresas').select('*').eq('id', companyId).single()
       );
 
       if (error) {
