@@ -60,18 +60,18 @@ export const CompanySelector = () => {
 
   // If user has no companies or is not logged in, show default text
   if (!user || userCompanies.length === 0) {
-    return <span className="text-xl font-bold text-merinno-dark">merinno</span>;
+    return <span className="text-lg font-bold text-merinno-dark">merinno</span>;
   }
 
   // If user has only one company, just show the name without dropdown
   if (userCompanies.length === 1) {
-    return <span className="text-xl font-bold text-merinno-dark">{userCompanies[0].nome}</span>;
+    return <span className="text-lg font-bold text-merinno-dark">{userCompanies[0].nome}</span>;
   }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center text-xl font-bold text-merinno-dark focus:outline-none">
+        <button className="flex items-center text-lg font-bold text-merinno-dark focus:outline-none">
           {selectedCompany?.nome || userCompanies[0]?.nome || "merinno"}
           <ChevronDown className="ml-1 h-4 w-4" />
         </button>
