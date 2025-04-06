@@ -40,7 +40,7 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
     try {
       console.log(`Fetching users for company: ${company.id}`);
       
-      // Uso direto da função getCompanyUsers do hook useCompanyUserManagement
+      // Use the getCompanyUsers function which now returns data in UserProfile format
       const usersInCompany = await getCompanyUsers(company.id);
       console.log('Company users fetched:', usersInCompany);
       setCompanyUsers(usersInCompany);
@@ -164,7 +164,7 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
                   companyUsers.map(user => (
                     <TableRow key={user.id}>
                       <TableCell>{user.display_name || '-'}</TableCell>
-                      <TableCell>{user.email || `user-${user.id.substring(0, 8)}@example.com`}</TableCell>
+                      <TableCell>{user.email}</TableCell>
                       <TableCell className="text-right">
                         <Button 
                           variant="destructive" 

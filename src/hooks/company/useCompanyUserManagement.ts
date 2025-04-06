@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { UserProfile } from "@/hooks/useUsers";
 
 export const useCompanyUserManagement = () => {
   /**
@@ -115,7 +116,7 @@ export const useCompanyUserManagement = () => {
   /**
    * Fetches users associated with a company
    */
-  const getCompanyUsers = async (companyId: string) => {
+  const getCompanyUsers = async (companyId: string): Promise<UserProfile[]> => {
     try {
       console.log(`Fetching users for company: ${companyId}`);
       
@@ -148,7 +149,18 @@ export const useCompanyUserManagement = () => {
         throw profilesError;
       }
       
-      return profiles || [];
+      // Transform database profiles to UserProfile format, adding email field
+      // to match the UserProfile interface
+      const userProfiles: UserProfile[] = (profiles || []).map(profile => ({
+        id: profile.id,
+        email: profile.display_name 
+          ? `${profile.display_name.toLowerCase().replace(/\s+/g, '.')}@user.com` 
+          : `user-${profile.id.substring(0, 8)}@example.com`,
+        display_name: profile.display_name || `User ${profile.id.substring(0, 6)}`,
+        is_admin: profile.is_admin || false
+      }));
+      
+      return userProfiles;
     } catch (error) {
       console.error('Error in getCompanyUsers:', error);
       throw error;
