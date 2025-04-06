@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Building, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { Company } from "@/types/company";
@@ -64,6 +64,14 @@ export const CompanySelector = () => {
     }
   };
 
+  // Get the default text to display (first company name or "merinno")
+  const getDefaultText = () => {
+    if (userCompanies.length > 0 && userCompanies[0].nome) {
+      return userCompanies[0].nome;
+    }
+    return "merinno";
+  };
+
   // If user has no companies or is not logged in, show default text
   if (!user || userCompanies.length === 0) {
     return <span className="text-xl font-bold text-merinno-dark">merinno</span>;
@@ -80,9 +88,8 @@ export const CompanySelector = () => {
           className="border-none bg-transparent focus:ring-0 text-xl font-bold text-merinno-dark pl-0 min-w-[120px]"
         >
           <div className="flex items-center">
-            <Building className="h-5 w-5 mr-2" />
-            <SelectValue placeholder="Selecionar empresa">
-              {selectedCompany?.nome || "merinno"}
+            <SelectValue placeholder={getDefaultText()}>
+              {selectedCompany?.nome || getDefaultText()}
             </SelectValue>
           </div>
         </SelectTrigger>
