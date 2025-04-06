@@ -52,27 +52,37 @@ export const WelcomeSection = () => {
           <Skeleton className="h-12 w-80 rounded-full mt-8" />
         </div>
       ) : (
-        <>
+        <div className="flex flex-col items-center">
           <h1 className="text-4xl md:text-5xl text-center mb-10 mt-6 font-medium dark:text-white leading-tight">
             {selectedCompany && selectedCompany.frase_institucional ? (
-              selectedCompany.frase_institucional
+              <>
+                {selectedCompany.frase_institucional.split(' ').length > 8 ? (
+                  <>
+                    {selectedCompany.frase_institucional.split(' ').slice(0, 8).join(' ')}<br />
+                    {selectedCompany.frase_institucional.split(' ').slice(8).join(' ')}
+                  </>
+                ) : (
+                  selectedCompany.frase_institucional
+                )}
+              </>
             ) : (
-              "Juntos, estamos desenhando o futuro de grandes empresas"
+              <>
+                Juntos, estamos desenhando<br />
+                o futuro de grandes empresas
+              </>
             )}
           </h1>
-          <div className="flex justify-center mt-8">
-            <Button 
-              onClick={handleLearnMore}
-              className="bg-black hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 text-white rounded-full py-6 px-8 text-base"
-            >
-              {selectedCompany ? (
-                `Clique para saber mais sobre a ${selectedCompany.nome}`
-              ) : (
-                "Clique para saber mais sobre a MNNO"
-              )}
-            </Button>
-          </div>
-        </>
+          <Button 
+            onClick={handleLearnMore}
+            className="bg-black hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 text-white rounded-full py-6 px-8 text-base mt-8"
+          >
+            {selectedCompany ? (
+              `Clique para saber mais sobre a ${selectedCompany.nome}`
+            ) : (
+              "Clique para saber mais sobre a MNNO"
+            )}
+          </Button>
+        </div>
       )}
     </div>
   );

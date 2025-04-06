@@ -3,7 +3,7 @@ import { UserHome } from "@/components/home/UserHome";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background custom-cursor-area">
+    <div className="min-h-screen bg-background">
       <UserHome />
     </div>
   );
