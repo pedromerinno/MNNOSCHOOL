@@ -24,26 +24,30 @@ export const makeUserAdmin = async (targetEmail: string) => {
     if (profileError || !profileData) {
       console.log('User not found in profiles by email, trying auth.users...');
       
-      // Using a more explicit type annotation to avoid deep instantiation
-      const { data, error } = await supabase.auth.admin.listUsers();
+      // Using any to avoid the deep instantiation error
+      const result: any = await supabase.auth.admin.listUsers();
       
-      if (error) {
-        console.error('Error fetching users:', error);
-        throw error;
+      if (result.error) {
+        console.error('Error fetching users:', result.error);
+        throw result.error;
       }
       
-      if (!data || !Array.isArray(data.users)) {
+      if (!result.data || !result.data.users) {
         console.error('Invalid response format from listUsers');
         throw new Error('Invalid response format from listUsers');
       }
       
       // Create a simplified array with just what we need
-      const simplifiedUsers: SupabaseUser[] = data.users.map(user => ({
-        id: user.id,
-        email: user.email
-      }));
+      const users: SupabaseUser[] = [];
       
-      const targetUser = simplifiedUsers.find(u => u.email === targetEmail);
+      for (const user of result.data.users) {
+        users.push({
+          id: user.id,
+          email: user.email
+        });
+      }
+      
+      const targetUser = users.find(u => u.email === targetEmail);
       
       if (!targetUser) {
         console.error(`User with email ${targetEmail} not found`);
@@ -85,7 +89,7 @@ export const makeUserAdmin = async (targetEmail: string) => {
   }
 };
 
-// Function to directly set admin status by user ID
+// Function for toggling admin status directly by ID
 export const setAdminStatusById = async (userId: string, isAdmin: boolean) => {
   try {
     console.log(`Setting admin status to ${isAdmin} for user ID: ${userId}`);
