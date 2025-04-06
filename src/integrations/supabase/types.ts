@@ -12,6 +12,7 @@ export type Database = {
       empresas: {
         Row: {
           created_at: string
+          descricao_video: string | null
           frase_institucional: string | null
           historia: string | null
           id: string
@@ -20,9 +21,11 @@ export type Database = {
           nome: string
           updated_at: string
           valores: string | null
+          video_institucional: string | null
         }
         Insert: {
           created_at?: string
+          descricao_video?: string | null
           frase_institucional?: string | null
           historia?: string | null
           id?: string
@@ -31,9 +34,11 @@ export type Database = {
           nome: string
           updated_at?: string
           valores?: string | null
+          video_institucional?: string | null
         }
         Update: {
           created_at?: string
+          descricao_video?: string | null
           frase_institucional?: string | null
           historia?: string | null
           id?: string
@@ -42,6 +47,7 @@ export type Database = {
           nome?: string
           updated_at?: string
           valores?: string | null
+          video_institucional?: string | null
         }
         Relationships: []
       }

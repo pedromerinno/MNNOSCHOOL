@@ -7,6 +7,8 @@ export interface Company {
   missao: string | null;
   historia: string | null;
   valores: string | null;
+  video_institucional: string | null;
+  descricao_video: string | null;
   created_at: string;
   updated_at: string;
 }

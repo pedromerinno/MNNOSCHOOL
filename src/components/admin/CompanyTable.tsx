@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, Users } from "lucide-react";
+import { Pencil, Trash2, Users, Video } from "lucide-react";
 import { Company } from "@/types/company";
 
 interface CompanyTableProps {
@@ -34,6 +34,7 @@ export const CompanyTable: React.FC<CompanyTableProps> = ({
           <TableRow>
             <TableHead>Nome</TableHead>
             <TableHead>Frase Institucional</TableHead>
+            <TableHead>Vídeo</TableHead>
             <TableHead>Data de Criação</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
@@ -41,7 +42,7 @@ export const CompanyTable: React.FC<CompanyTableProps> = ({
         <TableBody>
           {companies.length === 0 && !loading ? (
             <TableRow>
-              <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
+              <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
                 Nenhuma empresa encontrada
               </TableCell>
             </TableRow>
@@ -50,6 +51,16 @@ export const CompanyTable: React.FC<CompanyTableProps> = ({
               <TableRow key={company.id}>
                 <TableCell className="font-medium">{company.nome}</TableCell>
                 <TableCell>{company.frase_institucional || '-'}</TableCell>
+                <TableCell>
+                  {company.video_institucional ? (
+                    <span className="flex items-center text-green-600">
+                      <Video className="h-4 w-4 mr-1" />
+                      Sim
+                    </span>
+                  ) : (
+                    <span className="text-gray-400">Não</span>
+                  )}
+                </TableCell>
                 <TableCell>{new Date(company.created_at).toLocaleDateString('pt-BR')}</TableCell>
                 <TableCell className="text-right space-x-2">
                   <Button 

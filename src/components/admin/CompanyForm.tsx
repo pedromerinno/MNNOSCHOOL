@@ -23,6 +23,8 @@ const companySchema = z.object({
   missao: z.string().optional().nullable(),
   historia: z.string().optional().nullable(),
   valores: z.string().optional().nullable(),
+  video_institucional: z.string().optional().nullable(),
+  descricao_video: z.string().optional().nullable(),
 });
 
 type CompanyFormValues = z.infer<typeof companySchema>;
@@ -49,6 +51,8 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
       missao: initialData?.missao || "",
       historia: initialData?.historia || "",
       valores: initialData?.valores || "",
+      video_institucional: initialData?.video_institucional || "",
+      descricao_video: initialData?.descricao_video || "",
     },
   });
 
@@ -91,6 +95,43 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
               <FormLabel>Frase Institucional</FormLabel>
               <FormControl>
                 <Input placeholder="Frase institucional" {...field} value={field.value || ""} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="video_institucional"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Vídeo Institucional</FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder="URL do vídeo institucional" 
+                  {...field} 
+                  value={field.value || ""} 
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="descricao_video"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Descrição do Vídeo</FormLabel>
+              <FormControl>
+                <Textarea 
+                  placeholder="Descrição do vídeo institucional" 
+                  {...field} 
+                  value={field.value || ""}
+                  rows={2}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
