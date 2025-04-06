@@ -8,3 +8,21 @@ export interface UseCompanyFetchProps {
   setUserCompanies: Dispatch<SetStateAction<Company[]>>;
   setSelectedCompany: Dispatch<SetStateAction<Company | null>>;
 }
+
+export interface FetchError extends Error {
+  context?: string;
+  originalError?: unknown;
+  retryCount?: number;
+}
+
+export interface RetryOptions {
+  maxRetries: number;
+  initialDelay: number;
+  backoffFactor: number;
+  shouldRetry?: (error: unknown) => boolean;
+}
+
+export interface CacheOptions {
+  cacheKey: string;
+  expirationMs?: number;
+}
