@@ -23,7 +23,7 @@ export const WelcomeSection = () => {
           Olá, {userName}
         </p>
       </div>
-      <h1 className="text-3xl md:text-4xl font-medium text-center mb-6">
+      <h1 className="text-3xl md:text-4xl font-medium text-center my-5">
         Juntos, estamos desenhando<br />
         o futuro de grandes empresas
       </h1>
