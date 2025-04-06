@@ -55,21 +55,15 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
     },
   });
 
-  const handleProfileUpdate = (values: UserProfileFormValues) => {
-    // Update the user profile in the AuthContext
-    updateUserProfile({
+  const handleProfileUpdate = async (values: UserProfileFormValues) => {
+    // Update the user profile in Supabase via AuthContext
+    await updateUserProfile({
       displayName: values.name,
       avatar: values.avatar || null
     });
     
     // Call the parent handler
     onSave(values);
-    
-    // Show success message
-    toast({
-      title: "Perfil atualizado",
-      description: "Suas informações foram atualizadas com sucesso.",
-    });
     
     // Close the dialog
     setIsOpen(false);

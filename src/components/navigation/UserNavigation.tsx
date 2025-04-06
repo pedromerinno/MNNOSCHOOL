@@ -26,7 +26,7 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
   };
 
   const handleProfileUpdate = (values: UserProfileFormValues) => {
-    // This would typically update the user profile in a database
+    // Handled by the profile dialog through updateUserProfile
     console.log("Profile update values:", values);
   };
 

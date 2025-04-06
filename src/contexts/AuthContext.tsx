@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +15,7 @@ type AuthContextType = {
   session: Session | null;
   loading: boolean;
   userProfile: UserProfile;
-  updateUserProfile: (profile: UserProfile) => void;
+  updateUserProfile: (profile: UserProfile) => Promise<void>;
   signUp: (email: string, password: string) => Promise<{
     error: Error | null;
     data: any | null;
@@ -39,12 +40,83 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Function to fetch user profile from Supabase
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('display_name, avatar')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return;
+      }
+
+      if (data) {
+        setUserProfile({
+          displayName: data.display_name,
+          avatar: data.avatar
+        });
+      }
+    } catch (error) {
+      console.error('Error in fetchUserProfile:', error);
+    }
+  };
+
+  // Update user profile in Supabase
+  const updateUserProfile = async (profile: UserProfile) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          display_name: profile.displayName,
+          avatar: profile.avatar,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        console.error('Error updating profile:', error);
+        toast({
+          title: "Erro ao atualizar perfil",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Update local state
+      setUserProfile(profile);
+      
+      toast({
+        title: "Perfil atualizado",
+        description: "Seu perfil foi atualizado com sucesso.",
+      });
+    } catch (error: any) {
+      console.error('Exception updating profile:', error);
+      toast({
+        title: "Erro ao atualizar perfil",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // Fetch user profile when auth state changes and user exists
+        if (session?.user) {
+          fetchUserProfile(session.user.id);
+        }
         
         if (event === 'SIGNED_IN') {
           toast({
@@ -69,15 +141,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      
+      // Fetch user profile for existing session
+      if (session?.user) {
+        fetchUserProfile(session.user.id);
+      }
+      
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, [toast]);
-
-  const updateUserProfile = (profile: UserProfile) => {
-    setUserProfile(profile);
-  };
 
   const signUp = async (email: string, password: string) => {
     try {
