@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,6 +22,7 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
   const { user, signOut, userProfile } = useAuth();
   const [displayName, setDisplayName] = useState<string>("");
   const [displayAvatar, setDisplayAvatar] = useState<string>("");
+  const navigate = useNavigate();
   
   // Use useEffect to update the display name and avatar whenever userProfile changes
   useEffect(() => {
@@ -41,10 +42,12 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
     console.log("Profile updated with values:", values);
   };
 
-  const handleSignOut = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleSignOut = () => {
     signOut();
+  };
+
+  const handleDashboardClick = () => {
+    navigate('/dashboard');
   };
 
   return (
@@ -72,25 +75,18 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
             <p className="text-xs text-gray-500 truncate">{user?.email}</p>
           </div>
           <DropdownMenuItem 
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              openProfileDialog();
-            }}
+            onClick={openProfileDialog}
             className="cursor-pointer flex items-center gap-2"
           >
             <User className="h-4 w-4" />
             <span>Editar Perfil</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>
-            <Link 
-              to="/dashboard" 
-              className="flex items-center gap-2 w-full h-full cursor-pointer"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <span>Dashboard</span>
-            </Link>
+          <DropdownMenuItem 
+            onClick={handleDashboardClick}
+            className="cursor-pointer flex items-center gap-2"
+          >
+            <span>Dashboard</span>
           </DropdownMenuItem>
           <DropdownMenuItem 
             onClick={handleSignOut}
