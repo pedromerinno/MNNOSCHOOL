@@ -24,21 +24,21 @@ export const makeUserAdmin = async (targetEmail: string) => {
     if (profileError || !profileData) {
       console.log('User not found in profiles by email, trying auth.users...');
       
-      // Get users list with explicit typing to avoid deep type instantiation
-      const authResponse = await supabase.auth.admin.listUsers();
+      // Avoid type inference completely by using any for the response
+      const authResponse: any = await supabase.auth.admin.listUsers();
       
       if (authResponse.error) {
         console.error('Error fetching users:', authResponse.error);
         throw authResponse.error;
       }
       
-      // Safely handle data to avoid type issues
+      // Safely handle data
       if (!authResponse.data || !Array.isArray(authResponse.data.users)) {
         console.error('Invalid response format from listUsers');
         throw new Error('Invalid response format from listUsers');
       }
       
-      // Explicitly type the users array to avoid type inference issues
+      // Explicitly cast the users array to our simple interface
       const users = authResponse.data.users as SupabaseUser[];
       const targetUser = users.find(u => u.email === targetEmail);
       
