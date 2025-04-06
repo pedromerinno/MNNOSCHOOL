@@ -52,7 +52,7 @@ export const WelcomeSection = () => {
     <div className="mb-16 mt-10">
       <div className="flex flex-col items-center">
         <p 
-          className="text-gray-700 dark:text-gray-200 mb-6 text-center bg-[#FFF5E4] dark:bg-amber-900/30 py-2.5 px-8 rounded-full max-w-fit text-lg"
+          className="text-gray-700 dark:text-gray-200 mb-6 text-center bg-[#FFF5E4] dark:bg-amber-900/30 py-1.5 px-6 rounded-full max-w-fit text-sm font-semibold"
         >
           Olá, {userName}
         </p>
@@ -78,3 +78,4 @@ export const WelcomeSection = () => {
     </div>
   );
 };
+
