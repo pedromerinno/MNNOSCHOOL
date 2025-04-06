@@ -4,6 +4,13 @@ import { Bell, Search, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const DashboardHeader = () => {
   const { signOut, user } = useAuth();
@@ -12,7 +19,7 @@ export const DashboardHeader = () => {
     <header className="border-b border-gray-200 bg-white">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center space-x-10">
-          <Link to="/dashboard" className="text-xl font-bold text-merinno-dark">
+          <Link to="/" className="text-xl font-bold text-merinno-dark">
             MERINNO
           </Link>
           
@@ -62,33 +69,43 @@ export const DashboardHeader = () => {
             <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
           </Button>
           
-          <div className="relative group">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative text-gray-500 hover:text-merinno-blue"
-            >
-              <User className="h-5 w-5" />
-              {user && (
-                <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
-              )}
-            </Button>
-            
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 hidden group-hover:block">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative text-gray-500 hover:text-merinno-blue rounded-full overflow-hidden"
+              >
+                {user ? (
+                  <img 
+                    src="https://i.pravatar.cc/150?img=68" 
+                    alt="User avatar" 
+                    className="h-8 w-8 rounded-full"
+                  />
+                ) : (
+                  <User className="h-5 w-5" />
+                )}
+                {user && (
+                  <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 bg-white">
               <div className="px-4 py-2 border-b border-gray-100">
                 <p className="text-sm font-medium text-gray-900 truncate">
                   {user?.email}
                 </p>
               </div>
-              <button
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                className="cursor-pointer flex items-center gap-2"
                 onClick={() => signOut()}
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
               >
-                <LogOut className="h-4 w-4 mr-2" />
-                Sair
-              </button>
-            </div>
-          </div>
+                <LogOut className="h-4 w-4" />
+                <span>Sair</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>

@@ -1,5 +1,5 @@
 
-import { Bell, Moon, Search, Sun, LogIn, UserPlus } from "lucide-react";
+import { Bell, Moon, Search, Sun, LogIn, UserPlus, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
@@ -11,6 +11,13 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -120,28 +127,42 @@ export const MainNavigationMenu = () => {
           
           {user ? (
             <>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative text-gray-500 hover:text-merinno-blue"
-              >
-                <Link to="/dashboard">
-                  <img 
-                    src="https://i.pravatar.cc/150?img=68" 
-                    alt="User avatar" 
-                    className="h-8 w-8 rounded-full"
-                  />
-                </Link>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative text-gray-500 hover:text-merinno-blue"
-                onClick={() => signOut()}
-              >
-                <LogIn className="h-5 w-5" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="relative text-gray-500 hover:text-merinno-blue rounded-full overflow-hidden"
+                  >
+                    <img 
+                      src="https://i.pravatar.cc/150?img=68" 
+                      alt="User avatar" 
+                      className="h-8 w-8 rounded-full"
+                    />
+                    <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 bg-white">
+                  <div className="px-4 py-2 border-b border-gray-100">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {user?.email}
+                    </p>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard" className="flex items-center gap-2 cursor-pointer">
+                      <span>Dashboard</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="cursor-pointer flex items-center gap-2"
+                    onClick={() => signOut()}
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Sair</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           ) : (
             <>
