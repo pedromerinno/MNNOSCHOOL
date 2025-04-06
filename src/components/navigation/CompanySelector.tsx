@@ -4,6 +4,7 @@ import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,6 +58,11 @@ export const CompanySelector = () => {
       toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
     }
   };
+
+  // Show loading skeleton when loading
+  if (isLoading) {
+    return <Skeleton className="h-7 w-32 rounded-md" />;
+  }
 
   // If user has no companies or is not logged in, show default text
   if (!user || userCompanies.length === 0) {

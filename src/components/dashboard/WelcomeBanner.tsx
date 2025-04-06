@@ -3,6 +3,8 @@ import { CalendarCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Company } from "@/types/company";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCompanies } from "@/hooks/useCompanies";
+import { ContentSkeleton } from "@/components/ui/content-skeleton";
 
 interface WelcomeBannerProps {
   company: Company | null;
@@ -10,7 +12,24 @@ interface WelcomeBannerProps {
 
 export const WelcomeBanner = ({ company }: WelcomeBannerProps) => {
   const { userProfile } = useAuth();
+  const { isLoading } = useCompanies();
   const userName = userProfile?.displayName || 'Estudante';
+
+  if (isLoading) {
+    return (
+      <div className="bg-merinno-blue/10 rounded-lg p-6 mb-6">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
+          <div className="w-full md:w-2/3">
+            <ContentSkeleton lines={1} height={28} width="70%" className="mb-4" />
+            <ContentSkeleton lines={1} height={16} width="90%" />
+          </div>
+          <div className="mt-4 md:mt-0">
+            <ContentSkeleton height={42} width={150} className="rounded-md" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-merinno-blue/10 rounded-lg p-6 mb-6">
