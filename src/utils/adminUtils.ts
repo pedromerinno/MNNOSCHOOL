@@ -7,6 +7,11 @@ interface SupabaseUser {
   email?: string | null;
 }
 
+// Define a simple response type to avoid deep type instantiation
+interface AdminListUsersResponse {
+  users: SupabaseUser[];
+}
+
 export const makeUserAdmin = async (targetEmail: string) => {
   try {
     console.log(`Attempting to make ${targetEmail} an admin...`);
@@ -24,8 +29,10 @@ export const makeUserAdmin = async (targetEmail: string) => {
     if (profileError || !profileData) {
       console.log('User not found in profiles by email, trying auth.users...');
       
-      // Use any to avoid TypeScript issues with nested types
-      const { data: authData, error: authError }: { data: any, error: any } = await supabase.auth.admin.listUsers();
+      // Explicitly cast response to avoid deep type instantiation
+      const response = await supabase.auth.admin.listUsers();
+      const authData = response.data as AdminListUsersResponse;
+      const authError = response.error;
       
       if (authError) {
         console.error('Error fetching users:', authError);
@@ -37,9 +44,7 @@ export const makeUserAdmin = async (targetEmail: string) => {
         throw new Error('Invalid response format from listUsers');
       }
       
-      // Cast to our simple interface
-      const users = authData.users as SupabaseUser[];
-      const targetUser = users.find(u => u.email === targetEmail);
+      const targetUser = authData.users.find(u => u.email === targetEmail);
       
       if (!targetUser) {
         console.error(`User with email ${targetEmail} not found`);
