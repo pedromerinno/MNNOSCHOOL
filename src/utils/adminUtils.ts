@@ -24,7 +24,7 @@ export const makeUserAdmin = async (targetEmail: string) => {
     if (profileError || !profileData) {
       console.log('User not found in profiles by email, trying auth.users...');
       
-      // Avoid type inference completely by using any for the response
+      // Use explicit any typing to bypass TypeScript inference issues
       const authResponse: any = await supabase.auth.admin.listUsers();
       
       if (authResponse.error) {
