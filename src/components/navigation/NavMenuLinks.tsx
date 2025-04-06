@@ -20,7 +20,12 @@ export const NavMenuLinks = () => {
   const isAdmin = userProfile?.isAdmin === true;
 
   // Define the function before using it
-  const isCurrentPage = (path: string) => location.pathname === path;
+  const isCurrentPage = (path: string) => {
+    if (path === '/') {
+      return location.pathname === '/' || location.pathname === '/home';
+    }
+    return location.pathname === path;
+  };
 
   const adminLinks = isAdmin ? (
     <li>
