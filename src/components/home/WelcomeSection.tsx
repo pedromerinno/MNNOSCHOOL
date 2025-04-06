@@ -16,15 +16,17 @@ export const WelcomeSection = () => {
   const [displayCompany, setDisplayCompany] = useState<Company | null>(null);
   const [localLoading, setLocalLoading] = useState(true);
 
+  // Fetch user companies when component mounts
   useEffect(() => {
     const fetchUserCompanies = async () => {
       if (user?.id) {
         setLocalLoading(true);
         try {
+          console.log('WelcomeSection: Fetching user companies');
           const companies = await getUserCompanies(user.id);
-          console.log('WelcomeSection: Companies fetched:', companies?.length || 0);
+          console.log('WelcomeSection: Fetched companies:', companies);
         } catch (error) {
-          console.error('Erro na busca das empresas:', error);
+          console.error('Error fetching company data:', error);
           toast.error("Não foi possível carregar os dados da empresa. Tente novamente mais tarde.");
         } finally {
           setLocalLoading(false);
@@ -35,6 +37,7 @@ export const WelcomeSection = () => {
     fetchUserCompanies();
   }, [user, getUserCompanies]);
 
+  // Set display company when selected company or userCompanies changes
   useEffect(() => {
     if (selectedCompany) {
       console.log('WelcomeSection: Using selected company:', selectedCompany.nome);
@@ -43,26 +46,10 @@ export const WelcomeSection = () => {
       console.log('WelcomeSection: No company selected, using first company:', userCompanies[0].nome);
       setDisplayCompany(userCompanies[0]);
       
+      // Auto-select first company if no company is selected
       if (user?.id) {
         selectCompany(user.id, userCompanies[0]);
       }
-    } else {
-      // Fallback default company information
-      console.log('WelcomeSection: No companies available, using default');
-      setDisplayCompany({
-        id: 'default',
-        nome: 'merinno',
-        frase_institucional: 'Juntos, estamos desenhando o futuro de grandes empresas',
-        cor_principal: '#000000',
-        created_at: '',
-        updated_at: '',
-        logo: null,
-        missao: null,
-        historia: null,
-        valores: null,
-        video_institucional: null,
-        descricao_video: null
-      });
     }
   }, [selectedCompany, userCompanies, user, selectCompany]);
 
@@ -76,10 +63,8 @@ export const WelcomeSection = () => {
     return (
       <div className="mb-16 mt-10">
         <div className="flex flex-col items-center">
-          <p className="text-gray-700 dark:text-gray-200 mb-6 text-center bg-[#FFF5E4] dark:bg-amber-900/30 py-1.5 px-6 rounded-full max-w-fit text-sm font-semibold">
-            Olá, {userName}
-          </p>
-          <Skeleton className="h-[88px] w-[50%] mb-5" />
+          <Skeleton className="h-8 w-32 mb-6 rounded-full" />
+          <Skeleton className="h-14 w-1/2 mb-5" />
           <Skeleton className="h-10 w-40 rounded-full" />
         </div>
       </div>
@@ -97,7 +82,7 @@ export const WelcomeSection = () => {
         <p 
           className="text-[#000000] text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-5"
         >
-          {displayCompany?.frase_institucional || "Juntos, estamos desenhando o futuro de grandes empresas"}
+          {displayCompany?.frase_institucional || "Desenhe o futuro com grandes empresas"}
         </p>
         {displayCompany && (
           <Button 
@@ -108,7 +93,7 @@ export const WelcomeSection = () => {
               backgroundColor: displayCompany.cor_principal || '#000000' 
             }}
           >
-            Saiba mais sobre {displayCompany.nome}
+            Saiba mais
             <ArrowRight className="h-4 w-4" />
           </Button>
         )}
