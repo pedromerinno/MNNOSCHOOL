@@ -41,6 +41,12 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
     console.log("Profile updated with values:", values);
   };
 
+  const handleSignOut = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    signOut();
+  };
+
   return (
     <>
       <DropdownMenu>
@@ -66,27 +72,29 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
             <p className="text-xs text-gray-500 truncate">{user?.email}</p>
           </div>
           <DropdownMenuItem 
-            className="cursor-pointer flex items-center gap-2"
             onClick={(e) => {
+              e.preventDefault();
               e.stopPropagation();
               openProfileDialog();
             }}
+            className="cursor-pointer flex items-center gap-2"
           >
             <User className="h-4 w-4" />
             <span>Editar Perfil</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Link to="/dashboard" className="flex items-center gap-2 w-full cursor-pointer">
+          <DropdownMenuItem>
+            <Link 
+              to="/dashboard" 
+              className="flex items-center gap-2 w-full h-full cursor-pointer"
+              onClick={(e) => e.stopPropagation()}
+            >
               <span>Dashboard</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem 
+            onClick={handleSignOut}
             className="cursor-pointer flex items-center gap-2"
-            onClick={(e) => {
-              e.stopPropagation();
-              signOut();
-            }}
           >
             <LogOut className="h-4 w-4" />
             <span>Sair</span>
