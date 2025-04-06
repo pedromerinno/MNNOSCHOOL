@@ -1,88 +1,49 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-// Simple interface for Supabase users to avoid deep type instantiation
-interface SupabaseUser {
+// Simple interface to avoid deep type instantiation
+type AdminUserProfile = {
   id: string;
-  email?: string | null;
-}
+  email: string | null;
+  is_admin: boolean | null;
+};
 
-export const makeUserAdmin = async (targetEmail: string) => {
+/**
+ * Make a user admin by email address
+ */
+export const makeUserAdmin = async (targetEmail: string): Promise<boolean> => {
   try {
     console.log(`Attempting to make ${targetEmail} an admin...`);
     
-    // First try to get the user directly from profiles based on email
-    const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
-      .select('id, is_admin')
-      .eq('email', targetEmail)
-      .maybeSingle();
+    // First get the user's id from auth
+    const { data, error } = await supabase.auth.admin.listUsers();
     
-    let userId;
-    
-    // If we couldn't find by email in profiles, try auth.users
-    if (profileError || !profileData) {
-      console.log('User not found in profiles by email, trying auth.users...');
-      
-      // Avoid deep type instantiation by using unknown type and then casting
-      const { data, error } = await supabase.auth.admin.listUsers();
-      
-      if (error) {
-        console.error('Error fetching users:', error);
-        throw error;
-      }
-      
-      // Using any here to avoid deep type instantiation issues
-      const users = (data as any).users as SupabaseUser[];
-      if (!users) {
-        console.error('Invalid response format from listUsers');
-        throw new Error('Invalid response format from listUsers');
-      }
-      
-      const targetUser = users.find(u => u.email === targetEmail);
-      
-      if (!targetUser) {
-        console.error(`User with email ${targetEmail} not found`);
-        throw new Error(`User with email ${targetEmail} not found`);
-      }
-      
-      userId = targetUser.id;
-    } else {
-      userId = profileData.id;
-      
-      // If user is already admin, just return
-      if (profileData.is_admin) {
-        console.log(`${targetEmail} is already an admin.`);
-        return true;
-      }
+    if (error) {
+      console.error('Error fetching users:', error);
+      throw error;
     }
     
-    console.log(`Found user ID: ${userId}, updating admin status...`);
+    // Using 'any' to avoid deep type issues
+    const users = data.users as any[];
     
-    // Make the user an admin
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ 
-        is_admin: true,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', userId);
+    const targetUser = users.find(u => u.email === targetEmail);
     
-    if (updateError) {
-      console.error('Error updating admin status:', updateError);
-      throw updateError;
+    if (!targetUser) {
+      console.error(`User with email ${targetEmail} not found`);
+      throw new Error(`User with email ${targetEmail} not found`);
     }
     
-    console.log(`Successfully made ${targetEmail} an admin`);
-    return true;
+    return await setAdminStatusById(targetUser.id, true);
   } catch (error: any) {
     console.error('Error in makeUserAdmin function:', error);
     throw error;
   }
 };
 
-// Function for toggling admin status directly by ID
-export const setAdminStatusById = async (userId: string, isAdmin: boolean) => {
+/**
+ * Set admin status for a user by ID
+ */
+export const setAdminStatusById = async (userId: string, isAdmin: boolean): Promise<boolean> => {
   try {
     console.log(`Setting admin status to ${isAdmin} for user ID: ${userId}`);
     

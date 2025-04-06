@@ -20,15 +20,15 @@ export function useUsers() {
     try {
       setLoading(true);
       
-      // First fetch auth users to get emails
-      const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
+      // First fetch auth users
+      const { data, error } = await supabase.auth.admin.listUsers();
       
-      if (authError) {
-        throw authError;
+      if (error) {
+        throw error;
       }
       
-      // Type assertion to avoid deep type issues
-      const authUsers = (authData as any)?.users || [];
+      // Use type assertion to avoid deep type issues
+      const authUsers = (data as any).users || [];
       
       if (!authUsers.length) {
         setUsers([]);
