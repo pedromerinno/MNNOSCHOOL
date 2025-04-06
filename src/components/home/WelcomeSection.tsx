@@ -35,6 +35,15 @@ export const WelcomeSection = () => {
   // Use displayName from userProfile if available, otherwise extract from email
   const userName = userProfile?.displayName || user?.email?.split('@')[0] || 'Usuário';
 
+  // Função para garantir que a frase institucional seja exibida corretamente
+  const getCompanyPhrase = () => {
+    console.log("Frase institucional:", selectedCompany?.frase_institucional);
+    if (selectedCompany?.frase_institucional) {
+      return selectedCompany.frase_institucional;
+    }
+    return "Juntos, estamos desenhando o futuro de grandes empresas";
+  };
+
   return (
     <div className="mb-16 mt-10">
       <div className="flex justify-center">
@@ -54,8 +63,7 @@ export const WelcomeSection = () => {
       ) : (
         <div className="flex flex-col items-center">
           <h1 className="text-4xl md:text-5xl text-center mb-10 mt-6 font-medium dark:text-white leading-tight">
-            {selectedCompany?.frase_institucional || 
-             "Juntos, estamos desenhando o futuro de grandes empresas"}
+            {getCompanyPhrase()}
           </h1>
           <Button 
             onClick={handleLearnMore}

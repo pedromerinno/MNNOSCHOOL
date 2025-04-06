@@ -47,6 +47,12 @@ export const CompanySelector = () => {
     if (company && user?.id) {
       console.log('CompanySelector: Selecting company:', company.nome);
       console.log('CompanySelector: Company phrase:', company.frase_institucional);
+      
+      // Certifique-se de que a empresa está completa antes de selecioná-la
+      if (!company.frase_institucional) {
+        console.log('CompanySelector: Frase institucional não encontrada na empresa selecionada');
+      }
+      
       selectCompany(user.id, company);
       toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
     }

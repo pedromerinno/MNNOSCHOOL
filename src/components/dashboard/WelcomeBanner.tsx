@@ -14,9 +14,16 @@ export const WelcomeBanner = ({ company }: WelcomeBannerProps) => {
 
   // Função para garantir que a frase seja exibida, mesmo sem formatação especial
   const getCompanyPhrase = () => {
+    console.log("WelcomeBanner - Empresa:", company);
+    console.log("WelcomeBanner - Frase institucional:", company?.frase_institucional);
+    
     if (!company) return null;
-    return company.frase_institucional || 
-           `Continue sua jornada de aprendizado na ${company.nome}.`;
+    
+    if (company.frase_institucional) {
+      return company.frase_institucional;
+    }
+    
+    return `Continue sua jornada de aprendizado na ${company.nome}.`;
   };
 
   return (

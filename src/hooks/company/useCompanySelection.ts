@@ -15,6 +15,9 @@ export const useCompanySelection = ({
    */
   const selectCompany = (userId: string, company: Company) => {
     console.log('Setting selected company:', company);
+    console.log('Frase institucional da empresa:', company.frase_institucional);
+    
+    // Ensure we're storing the complete company object
     setSelectedCompany(company);
     
     // Store selected company in local storage for persistence
