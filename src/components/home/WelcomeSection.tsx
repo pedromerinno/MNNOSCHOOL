@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 export const WelcomeSection = () => {
   const { user, userProfile } = useAuth();
-  const { getUserCompanies } = useCompanies();
+  const { getUserCompanies, selectedCompany } = useCompanies();
 
   // Initial fetch of user companies on component mount
   useEffect(() => {
@@ -36,8 +36,7 @@ export const WelcomeSection = () => {
           Olá, {userName}
         </p>
         <p className="text-gray-600 dark:text-gray-300 text-center text-base">
-          Juntos, estamos desenhando
-          o futuro de grandes empresas
+          {selectedCompany?.frase_institucional || "Juntos, estamos desenhando o futuro de grandes empresas"}
         </p>
       </div>
     </div>

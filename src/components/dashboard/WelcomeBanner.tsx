@@ -19,6 +19,11 @@ export const WelcomeBanner = ({ company }: WelcomeBannerProps) => {
           <h1 className="text-2xl font-semibold text-gray-900 mb-2">
             Bem-vindo de volta, {userName}!
           </h1>
+          {company?.frase_institucional && (
+            <p className="text-gray-600 dark:text-gray-400 text-sm">
+              {company.frase_institucional}
+            </p>
+          )}
         </div>
         <Button
           className="mt-4 md:mt-0 bg-merinno-blue hover:bg-merinno-blue/90 text-white flex items-center gap-2"
