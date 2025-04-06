@@ -31,29 +31,16 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
   const { 
     userCompanies, 
     selectedCompany, 
-    getUserCompanies, 
     selectCompany,
     isLoading 
   } = useCompanies();
   
-  // Fetch user companies on component mount
-  useEffect(() => {
-    const fetchUserCompanies = async () => {
-      if (user?.id) {
-        console.log('UserNavigation: Fetching user companies');
-        await getUserCompanies(user.id);
-      }
-    };
-
-    fetchUserCompanies();
-  }, [user, getUserCompanies]);
-
   // Update display name and avatar
   useEffect(() => {
     // Use the displayName from userProfile if available, otherwise use the email
-    setDisplayName(userProfile.displayName || user?.email?.split('@')[0] || "Usuário");
+    setDisplayName(userProfile?.displayName || user?.email?.split('@')[0] || "Usuário");
     // Use the avatar from userProfile if available, otherwise use the provided avatarUrl
-    setDisplayAvatar(userProfile.avatar || avatarUrl);
+    setDisplayAvatar(userProfile?.avatar || avatarUrl);
   }, [userProfile, user, avatarUrl]);
 
   const handleProfileUpdate = (values: UserProfileFormValues) => {
@@ -113,28 +100,33 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
                 <span className="truncate">
                   {isLoading ? 'Carregando...' : (selectedCompany?.nome || 'Selecionar Empresa')}
                 </span>
-                <ChevronDown className="h-3 w-3 ml-auto" />
               </DropdownMenuSubTrigger>
               <DropdownMenuPortal>
                 <DropdownMenuSubContent className="w-48 bg-white dark:bg-gray-800 z-50">
-                  {userCompanies.map((company) => (
-                    <DropdownMenuItem
-                      key={company.id}
-                      className="cursor-pointer"
-                      onClick={() => handleCompanySelect(company)}
-                    >
-                      <div className="flex items-center w-full">
-                        {company.logo && (
-                          <img 
-                            src={company.logo} 
-                            alt={company.nome} 
-                            className="h-4 w-4 mr-2 object-contain"
-                          />
-                        )}
-                        <span className="truncate">{company.nome}</span>
-                      </div>
+                  {isLoading ? (
+                    <DropdownMenuItem className="opacity-50 pointer-events-none">
+                      Carregando empresas...
                     </DropdownMenuItem>
-                  ))}
+                  ) : (
+                    userCompanies.map((company) => (
+                      <DropdownMenuItem
+                        key={company.id}
+                        className="cursor-pointer"
+                        onClick={() => handleCompanySelect(company)}
+                      >
+                        <div className="flex items-center w-full">
+                          {company.logo && (
+                            <img 
+                              src={company.logo} 
+                              alt={company.nome} 
+                              className="h-4 w-4 mr-2 object-contain"
+                            />
+                          )}
+                          <span className="truncate">{company.nome}</span>
+                        </div>
+                      </DropdownMenuItem>
+                    ))
+                  )}
                 </DropdownMenuSubContent>
               </DropdownMenuPortal>
             </DropdownMenuSub>

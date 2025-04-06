@@ -21,37 +21,9 @@ export const CompanySelector = () => {
     isLoading 
   } = useCompanies();
 
-  // Fetch user companies on component mount
-  useEffect(() => {
-    const fetchUserCompanies = async () => {
-      if (user?.id) {
-        console.log('CompanySelector: Fetching user companies');
-        await getUserCompanies(user.id);
-      }
-    };
-
-    fetchUserCompanies();
-  }, [user, getUserCompanies]);
-
-  // Debug log to check selected company
-  useEffect(() => {
-    if (selectedCompany) {
-      console.log('CompanySelector: Selected company data:', {
-        nome: selectedCompany.nome,
-        frase: selectedCompany.frase_institucional
-      });
-    }
-  }, [selectedCompany]);
-
   const handleCompanyChange = (company) => {
     if (company && user?.id) {
       console.log('CompanySelector: Selecting company:', company.nome);
-      console.log('CompanySelector: Company phrase:', company.frase_institucional);
-      
-      // Certifique-se de que a empresa está completa antes de selecioná-la
-      if (!company.frase_institucional) {
-        console.log('CompanySelector: Frase institucional não encontrada na empresa selecionada');
-      }
       
       selectCompany(user.id, company);
       toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
@@ -59,42 +31,48 @@ export const CompanySelector = () => {
   };
 
   // If user has no companies or is not logged in, show default text
-  if (!user || userCompanies.length === 0) {
+  if (!user || (!isLoading && userCompanies.length === 0)) {
     return <span className="text-lg font-bold text-merinno-dark">merinno</span>;
   }
 
   // If user has only one company, just show the name without dropdown
-  if (userCompanies.length === 1) {
-    return <span className="text-lg font-bold text-merinno-dark">{userCompanies[0].nome}</span>;
+  if (!isLoading && userCompanies.length === 1) {
+    return <span className="text-lg font-bold text-merinno-dark">{userCompanies[0].nome || "merinno"}</span>;
   }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center text-lg font-bold text-merinno-dark focus:outline-none">
-          {selectedCompany?.nome || userCompanies[0]?.nome || "merinno"}
+          {isLoading ? "Carregando..." : (selectedCompany?.nome || userCompanies[0]?.nome || "merinno")}
           <ChevronDown className="ml-1 h-4 w-4" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="bg-white dark:bg-gray-800 z-50">
-        {userCompanies.map((company) => (
-          <DropdownMenuItem 
-            key={company.id} 
-            onClick={() => handleCompanyChange(company)}
-            className="cursor-pointer"
-          >
-            <div className="flex items-center">
-              {company.logo && (
-                <img
-                  src={company.logo}
-                  alt={company.nome}
-                  className="h-4 w-4 mr-2 object-contain"
-                />
-              )}
-              <span>{company.nome}</span>
-            </div>
+        {isLoading ? (
+          <DropdownMenuItem className="opacity-50 pointer-events-none">
+            Carregando empresas...
           </DropdownMenuItem>
-        ))}
+        ) : (
+          userCompanies.map((company) => (
+            <DropdownMenuItem 
+              key={company.id} 
+              onClick={() => handleCompanyChange(company)}
+              className="cursor-pointer"
+            >
+              <div className="flex items-center">
+                {company.logo && (
+                  <img
+                    src={company.logo}
+                    alt={company.nome}
+                    className="h-4 w-4 mr-2 object-contain"
+                  />
+                )}
+                <span>{company.nome}</span>
+              </div>
+            </DropdownMenuItem>
+          ))
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

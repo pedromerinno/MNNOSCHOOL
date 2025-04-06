@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Company } from "@/types/company";
 import { useCompanyFetch } from "./company/useCompanyFetch";
 import { useCompanySelection } from "./company/useCompanySelection";
@@ -17,7 +17,7 @@ export const useCompanies = () => {
   // Import functionality from individual hooks
   const { 
     fetchCompanies, 
-    getUserCompanies, 
+    getUserCompanies: fetchUserCompanies, 
     getCompanyById 
   } = useCompanyFetch({ 
     setIsLoading, 
@@ -51,6 +51,12 @@ export const useCompanies = () => {
     assignUserToCompany, 
     removeUserFromCompany 
   } = useCompanyUserManagement();
+
+  // Memoized function to get user companies
+  const getUserCompanies = useCallback(async (userId: string) => {
+    if (!userId) return [];
+    return await fetchUserCompanies(userId);
+  }, [fetchUserCompanies]);
 
   // Listen for company selection events
   useEffect(() => {
@@ -94,6 +100,9 @@ export const useCompanies = () => {
               localStorage.removeItem('selectedCompanyId');
             }
           }
+        } else if (userCompanies.length === 1) {
+          // Auto-select if there's only one company
+          setSelectedCompany(userCompanies[0]);
         }
       }
     };
