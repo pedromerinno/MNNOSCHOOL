@@ -45,6 +45,33 @@ export const WelcomeSection = () => {
     fetchUserCompany();
   }, [user, getUserCompany]);
 
+  // Listen for company selection events from CompanySelector or UserNavigation
+  useEffect(() => {
+    const handleCompanySelected = async (event: CustomEvent) => {
+      const { userId, companyId } = event.detail;
+      
+      if (userId && companyId && user?.id === userId) {
+        setLoading(true);
+        try {
+          const result = await getUserCompany(userId);
+          if (!result.error) {
+            setUserCompany(result.company);
+          }
+        } catch (error) {
+          console.error('Erro ao atualizar empresa selecionada:', error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    window.addEventListener('company-selected', handleCompanySelected as EventListener);
+    
+    return () => {
+      window.removeEventListener('company-selected', handleCompanySelected as EventListener);
+    };
+  }, [user, getUserCompany]);
+
   const handleLearnMore = () => {
     navigate('/manifesto');
   };
