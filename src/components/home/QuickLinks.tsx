@@ -13,8 +13,8 @@ export const QuickLinks = () => {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-12">
       {links.map((link, index) => (
-        <Card key={index} className="border-0 shadow-none bg-transparent rounded-xl">
-          <CardContent className="p-6 flex items-center justify-between">
+        <Card key={index} className="border-0 shadow-none bg-white rounded-[30px]">
+          <CardContent className="p-8 flex items-center justify-between">
             <div className="flex items-center">
               <span className="mr-3 bg-gray-100 p-2 rounded-lg">
                 {link.icon === "checkmark" && (
