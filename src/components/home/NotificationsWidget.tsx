@@ -32,15 +32,15 @@ export const NotificationsWidget = () => {
             <span className="inline-block px-6 py-3 rounded-full bg-amber-100 text-black text-base font-medium mb-6">
               Recesso
             </span>
-            <h4 className="text-3xl font-medium mb-6">No dia 25 teremos recesso devido ao feriado de...</h4>
+            <h4 className="text-xl font-medium mb-6">No dia 25 teremos recesso devido ao feriado de...</h4>
             <div className="flex items-center text-gray-500">
               <img 
                 src="https://i.pravatar.cc/150?img=44" 
                 alt="User avatar" 
                 className="h-10 w-10 rounded-full mr-4"
               />
-              <span className="text-xl font-medium text-black mr-6">Jéssica</span>
-              <span className="text-gray-500 text-lg">5 min atrás</span>
+              <span className="text-base font-medium text-black mr-6">Jéssica</span>
+              <span className="text-sm text-gray-500">5 min atrás</span>
             </div>
           </div>
         </div>
@@ -54,3 +54,4 @@ export const NotificationsWidget = () => {
     </Card>
   );
 };
+
