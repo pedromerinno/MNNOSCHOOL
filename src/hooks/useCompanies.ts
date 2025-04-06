@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Company, UserCompanyDetails } from "@/types/company";
@@ -392,6 +391,44 @@ export const useCompanies = () => {
     }
   };
 
+  /**
+   * Updates a user's selected company
+   */
+  const updateUserSelectedCompany = async (userId: string, companyId: string): Promise<boolean> => {
+    setIsLoading(true);
+    try {
+      // First delete any existing relation
+      const { error: deleteError } = await supabase
+        .from('user_empresa')
+        .delete()
+        .eq('user_id', userId);
+
+      if (deleteError) {
+        console.error("Error removing previous user-company relation:", deleteError);
+        return false;
+      }
+
+      // Then create the new relation
+      const { error: insertError } = await supabase
+        .from('user_empresa')
+        .insert([
+          { user_id: userId, company_id: companyId }
+        ]);
+
+      if (insertError) {
+        console.error("Error setting user's selected company:", insertError);
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Unexpected error:", error);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     isLoading,
     companies,
@@ -403,5 +440,6 @@ export const useCompanies = () => {
     getUserCompanies,
     assignUserToCompany,
     removeUserFromCompany,
+    updateUserSelectedCompany,
   };
 };

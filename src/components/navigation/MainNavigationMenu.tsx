@@ -7,6 +7,7 @@ import { ThemeToggle } from "@/components/navigation/ThemeToggle";
 import { NotificationButton } from "@/components/navigation/NotificationButton";
 import { UserNavigation } from "@/components/navigation/UserNavigation";
 import { AuthButtons } from "@/components/navigation/AuthButtons";
+import { CompanySelector } from "@/components/navigation/CompanySelector";
 
 export const MainNavigationMenu = () => {
   const { user } = useAuth();
@@ -15,8 +16,8 @@ export const MainNavigationMenu = () => {
     <header className="w-full border-b border-gray-200">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center space-x-16">
-          <Link to="/" className="text-xl font-bold text-merinno-dark">
-            merinno
+          <Link to="/" className="flex items-center">
+            <CompanySelector />
           </Link>
           
           <NavMenuLinks />

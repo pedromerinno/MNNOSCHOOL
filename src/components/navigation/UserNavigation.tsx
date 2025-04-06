@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogOut, User, ChevronDown, Building } from "lucide-react";
@@ -63,6 +62,22 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
     fetchUserCompanies();
   }, [user, getUserCompanies, getUserCompany]);
 
+  // Listen for company selection events from CompanySelector
+  useEffect(() => {
+    const handleCompanySelected = (event: CustomEvent) => {
+      const { userId, companyId } = event.detail;
+      if (userId && companyId) {
+        handleCompanySelect(userCompanies.find(c => c.id === companyId) || null);
+      }
+    };
+
+    window.addEventListener('company-selected', handleCompanySelected as EventListener);
+    
+    return () => {
+      window.removeEventListener('company-selected', handleCompanySelected as EventListener);
+    };
+  }, [userCompanies]);
+
   // Update display name and avatar
   useEffect(() => {
     // Use the displayName from userProfile if available, otherwise use the email
@@ -85,21 +100,21 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
     navigate('/dashboard');
   };
 
-  const handleCompanySelect = async (company: Company) => {
+  const handleCompanySelect = async (company: Company | null) => {
+    if (!company || !user?.id) return;
+    
     setSelectedCompany(company);
     
-    if (user?.id) {
-      try {
-        // Atualizar a empresa selecionada no backend
-        await updateUserSelectedCompany(user.id, company.id);
-        toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
-        
-        // Recarregar a página para atualizar os dados com a nova empresa
-        window.location.reload();
-      } catch (error) {
-        console.error('Erro ao selecionar empresa:', error);
-        toast.error("Não foi possível selecionar a empresa. Tente novamente.");
-      }
+    try {
+      // Atualizar a empresa selecionada no backend
+      await updateUserSelectedCompany(user.id, company.id);
+      toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
+      
+      // Recarregar a página para atualizar os dados com a nova empresa
+      window.location.reload();
+    } catch (error) {
+      console.error('Erro ao selecionar empresa:', error);
+      toast.error("Não foi possível selecionar a empresa. Tente novamente.");
     }
   };
 
