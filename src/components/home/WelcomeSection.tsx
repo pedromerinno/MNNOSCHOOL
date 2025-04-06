@@ -70,9 +70,9 @@ export const WelcomeSection = () => {
               className="bg-black hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 text-white rounded-full px-6"
             >
               {selectedCompany ? (
-                `Clique para saber mais sobre a ${selectedCompany.nome}`
+                `Conheça mais sobre a ${selectedCompany.nome}`
               ) : (
-                "Clique para saber mais sobre a MERINNO"
+                "Conheça mais sobre a MERINNO"
               )}
             </Button>
             
