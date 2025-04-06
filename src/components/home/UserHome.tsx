@@ -18,17 +18,14 @@ export const UserHome = () => {
   useEffect(() => {
     const fetchUserCompanies = async () => {
       if (user?.id) {
+        setIsLoading(true);
         try {
-          console.log('UserHome: Fetching user companies');
-          setIsLoading(true);
           const companies = await getUserCompanies(user.id);
-          console.log('UserHome: Fetched companies count:', companies.length);
-          setIsLoading(false);
+          console.log('UserHome: Companies fetched successfully:', companies?.length || 0);
         } catch (error) {
           console.error('Error fetching user companies on home page:', error);
-          toast.error("Erro ao carregar empresas", { 
-            description: "Não foi possível carregar as empresas associadas ao seu perfil."
-          });
+          // Don't show error toast on first load, as it's already handled in WelcomeSection
+        } finally {
           setIsLoading(false);
         }
       } else {
