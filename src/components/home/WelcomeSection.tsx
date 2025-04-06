@@ -33,21 +33,7 @@ export const WelcomeSection = () => {
   };
 
   // Use displayName from userProfile if available, otherwise extract from email
-  const userName = userProfile.displayName || user?.email?.split('@')[0] || 'Usuário';
-
-  const formatInstitutionalPhrase = (phrase) => {
-    if (!phrase) return null;
-    
-    const words = phrase.split(' ');
-    const midpoint = Math.ceil(words.length / 2);
-    
-    return (
-      <>
-        {words.slice(0, midpoint).join(' ')}<br />
-        {words.slice(midpoint).join(' ')}
-      </>
-    );
-  };
+  const userName = userProfile?.displayName || user?.email?.split('@')[0] || 'Usuário';
 
   return (
     <div className="mb-16 mt-10">
@@ -68,13 +54,8 @@ export const WelcomeSection = () => {
       ) : (
         <div className="flex flex-col items-center">
           <h1 className="text-4xl md:text-5xl text-center mb-10 mt-6 font-medium dark:text-white leading-tight">
-            {selectedCompany?.frase_institucional ? 
-              formatInstitutionalPhrase(selectedCompany.frase_institucional) : 
-              <>
-                Juntos, estamos desenhando<br />
-                o futuro de grandes empresas
-              </>
-            }
+            {selectedCompany?.frase_institucional || 
+             "Juntos, estamos desenhando o futuro de grandes empresas"}
           </h1>
           <Button 
             onClick={handleLearnMore}

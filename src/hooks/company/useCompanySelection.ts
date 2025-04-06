@@ -14,6 +14,7 @@ export const useCompanySelection = ({
    * Also broadcasts a custom event so other components can react to the selection
    */
   const selectCompany = (userId: string, company: Company) => {
+    console.log('Setting selected company:', company);
     setSelectedCompany(company);
     
     // Store selected company in local storage for persistence
@@ -25,7 +26,7 @@ export const useCompanySelection = ({
     });
     window.dispatchEvent(navEvent);
     
-    console.log('Company selected:', company.nome);
+    console.log('Company selected:', company.nome, 'Phrase:', company.frase_institucional);
   };
 
   /**

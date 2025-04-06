@@ -33,9 +33,20 @@ export const CompanySelector = () => {
     fetchUserCompanies();
   }, [user, getUserCompanies]);
 
+  // Debug log to check selected company
+  useEffect(() => {
+    if (selectedCompany) {
+      console.log('CompanySelector: Selected company data:', {
+        nome: selectedCompany.nome,
+        frase: selectedCompany.frase_institucional
+      });
+    }
+  }, [selectedCompany]);
+
   const handleCompanyChange = (company) => {
     if (company && user?.id) {
       console.log('CompanySelector: Selecting company:', company.nome);
+      console.log('CompanySelector: Company phrase:', company.frase_institucional);
       selectCompany(user.id, company);
       toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
     }

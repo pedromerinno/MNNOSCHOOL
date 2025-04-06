@@ -12,6 +12,13 @@ export const WelcomeBanner = ({ company }: WelcomeBannerProps) => {
   const { userProfile } = useAuth();
   const userName = userProfile?.displayName || 'Estudante';
 
+  // Função para garantir que a frase seja exibida, mesmo sem formatação especial
+  const getCompanyPhrase = () => {
+    if (!company) return null;
+    return company.frase_institucional || 
+           `Continue sua jornada de aprendizado na ${company.nome}.`;
+  };
+
   return (
     <div className="bg-merinno-blue/10 rounded-lg p-6 mb-6">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
@@ -21,8 +28,7 @@ export const WelcomeBanner = ({ company }: WelcomeBannerProps) => {
           </h1>
           {company ? (
             <p className="text-gray-600 max-w-xl">
-              {company.frase_institucional || 
-               `Continue sua jornada de aprendizado na ${company.nome}.`}
+              {getCompanyPhrase()}
             </p>
           ) : (
             <p className="text-gray-600 max-w-xl">
