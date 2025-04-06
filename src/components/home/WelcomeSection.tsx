@@ -57,14 +57,14 @@ export const WelcomeSection = () => {
           Olá, {userName}
         </p>
         <p 
-          className="text-[#000000] text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-6"
+          className="text-[#000000] text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-4"
         >
           {displayCompany?.frase_institucional || "Juntos, estamos desenhando o futuro de grandes empresas"}
         </p>
         {displayCompany && (
           <Button 
             onClick={handleLearnMore} 
-            className="mt-6 flex items-center gap-2 text-white bg-black rounded-full text-sm"
+            className="flex items-center gap-2 text-white bg-black rounded-full text-sm"
             variant="default"
           >
             Saiba mais sobre {displayCompany.nome}
