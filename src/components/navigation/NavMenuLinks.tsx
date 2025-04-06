@@ -19,6 +19,9 @@ export const NavMenuLinks = () => {
   const location = useLocation();
   const isAdmin = userProfile?.isAdmin === true;
 
+  // Define the function before using it
+  const isCurrentPage = (path: string) => location.pathname === path;
+
   const adminLinks = isAdmin ? (
     <li>
       <Link 
@@ -32,8 +35,6 @@ export const NavMenuLinks = () => {
       </Link>
     </li>
   ) : null;
-
-  const isCurrentPage = (path: string) => location.pathname === path;
 
   return (
     <nav>
