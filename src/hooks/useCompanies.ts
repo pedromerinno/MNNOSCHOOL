@@ -21,7 +21,22 @@ export function useCompanies() {
         throw error;
       }
       
-      setCompanies(data || []);
+      // Ensure all Company fields are properly typed
+      const typedCompanies: Company[] = data?.map(item => ({
+        id: item.id,
+        nome: item.nome,
+        logo: item.logo,
+        frase_institucional: item.frase_institucional,
+        missao: item.missao,
+        historia: item.historia,
+        valores: item.valores,
+        video_institucional: item.video_institucional,
+        descricao_video: item.descricao_video,
+        created_at: item.created_at,
+        updated_at: item.updated_at
+      })) || [];
+      
+      setCompanies(typedCompanies);
     } catch (error: any) {
       console.error('Error fetching companies:', error);
       toast({
@@ -48,14 +63,29 @@ export function useCompanies() {
         throw error;
       }
       
-      setCompanies(prev => [...prev, data]);
+      // Ensure company data is properly typed
+      const newCompany: Company = {
+        id: data.id,
+        nome: data.nome,
+        logo: data.logo,
+        frase_institucional: data.frase_institucional,
+        missao: data.missao,
+        historia: data.historia,
+        valores: data.valores,
+        video_institucional: data.video_institucional,
+        descricao_video: data.descricao_video,
+        created_at: data.created_at,
+        updated_at: data.updated_at
+      };
+      
+      setCompanies(prev => [...prev, newCompany]);
       
       toast({
         title: 'Sucesso',
         description: 'Empresa criada com sucesso',
       });
       
-      return data;
+      return newCompany;
     } catch (error: any) {
       console.error('Error creating company:', error);
       toast({
@@ -84,8 +114,23 @@ export function useCompanies() {
         throw error;
       }
       
+      // Ensure updated company data is properly typed
+      const updatedCompany: Company = {
+        id: data.id,
+        nome: data.nome,
+        logo: data.logo,
+        frase_institucional: data.frase_institucional,
+        missao: data.missao,
+        historia: data.historia,
+        valores: data.valores,
+        video_institucional: data.video_institucional,
+        descricao_video: data.descricao_video,
+        created_at: data.created_at,
+        updated_at: data.updated_at
+      };
+      
       setCompanies(prev => prev.map(company => 
-        company.id === id ? data : company
+        company.id === id ? updatedCompany : company
       ));
       
       toast({
@@ -93,7 +138,7 @@ export function useCompanies() {
         description: 'Empresa atualizada com sucesso',
       });
       
-      return data;
+      return updatedCompany;
     } catch (error: any) {
       console.error('Error updating company:', error);
       toast({
@@ -229,7 +274,7 @@ export function useCompanies() {
       
       const companyIds = data.map(relation => relation.company_id);
       
-      const { data: companies, error: companiesError } = await supabase
+      const { data: companiesData, error: companiesError } = await supabase
         .from('empresas')
         .select('*')
         .in('id', companyIds);
@@ -238,7 +283,22 @@ export function useCompanies() {
         throw companiesError;
       }
       
-      return companies || [];
+      // Ensure fetched company data is properly typed
+      const typedCompanies: Company[] = companiesData?.map(item => ({
+        id: item.id,
+        nome: item.nome,
+        logo: item.logo,
+        frase_institucional: item.frase_institucional,
+        missao: item.missao,
+        historia: item.historia,
+        valores: item.valores,
+        video_institucional: item.video_institucional,
+        descricao_video: item.descricao_video,
+        created_at: item.created_at,
+        updated_at: item.updated_at
+      })) || [];
+      
+      return typedCompanies;
     } catch (error: any) {
       console.error('Error fetching user companies:', error);
       toast({
