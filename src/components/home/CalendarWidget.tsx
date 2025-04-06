@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -100,7 +101,7 @@ export const CalendarWidget = () => {
   return (
     <Card className="border-0 rounded-[30px] overflow-hidden bg-amber-700 text-white">
       <CardContent className="p-0">
-        <div className="p-6 flex justify-between items-center">
+        <div className="p-8 flex justify-between items-center">
           <h3 className="text-2xl font-medium capitalize">
             {getMonthName(currentDate)} {getYear(currentDate)}
           </h3>
@@ -124,7 +125,7 @@ export const CalendarWidget = () => {
           </div>
         </div>
         
-        <div className="px-6 pb-6 pt-2">
+        <div className="px-8 pb-8 pt-2">
           <div className="grid grid-cols-7 text-center text-[11px] mb-3">
             <div>Seg</div>
             <div>Ter</div>
