@@ -15,7 +15,7 @@ export const WelcomeSection = () => {
   const userName = userProfile.displayName || user?.email?.split('@')[0] || 'Usuário';
 
   return (
-    <div className="mb-8">
+    <div className="mb-16 mt-16">
       <div className="flex justify-center">
         <p 
           className="text-gray-600 mb-2 text-center bg-[#FFF1E0] py-2.5 px-4 rounded-full max-w-fit"
@@ -23,7 +23,7 @@ export const WelcomeSection = () => {
           Olá, {userName}
         </p>
       </div>
-      <h1 className="text-3xl md:text-4xl font-bold text-center mb-4">
+      <h1 className="text-3xl md:text-4xl font-medium text-center mb-6">
         Juntos, estamos desenhando<br />
         o futuro de grandes empresas
       </h1>
@@ -38,3 +38,4 @@ export const WelcomeSection = () => {
     </div>
   );
 };
+
