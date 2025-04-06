@@ -5,6 +5,23 @@ import { UserProfile } from "@/hooks/useUsers";
 
 export const useCompanyUserManagement = () => {
   /**
+   * Clears all relevant caches related to companies and user selections
+   */
+  const clearCompanyCaches = () => {
+    console.log('Clearing company caches');
+    // Clear company-related caches
+    localStorage.removeItem('userCompanies');
+    localStorage.removeItem('userCompaniesTimestamp');
+    
+    // Only clear selected company if it's stored separately
+    const selectedCompanyId = localStorage.getItem('selectedCompanyId');
+    if (selectedCompanyId) {
+      localStorage.removeItem('selectedCompanyId');
+      localStorage.removeItem('selectedCompany');
+    }
+  };
+
+  /**
    * Assigns a user to a company
    */
   const assignUserToCompany = async (userId: string, companyId: string): Promise<boolean> => {
@@ -58,6 +75,9 @@ export const useCompanyUserManagement = () => {
         return false;
       }
 
+      // Clear caches to ensure UI is updated
+      clearCompanyCaches();
+
       toast("Usuário adicionado", {
         description: "O usuário foi adicionado à empresa com sucesso",
       });
@@ -98,6 +118,9 @@ export const useCompanyUserManagement = () => {
         });
         return false;
       }
+
+      // Clear caches to ensure UI is updated
+      clearCompanyCaches();
 
       toast("Usuário removido", {
         description: "O usuário foi removido da empresa com sucesso",

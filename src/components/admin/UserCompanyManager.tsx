@@ -15,7 +15,9 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { UserPlus, X, RefreshCw } from 'lucide-react';
 import { useCompanyUserManagement } from '@/hooks/company/useCompanyUserManagement';
+import { useCompanies } from '@/hooks/useCompanies';
 import { toast } from "sonner";
+import { useAuth } from '@/contexts/AuthContext';
 
 interface UserCompanyManagerProps {
   company: Company;
@@ -25,6 +27,8 @@ interface UserCompanyManagerProps {
 export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company, onClose }) => {
   const { users, fetchUsers } = useUsers();
   const { assignUserToCompany, removeUserFromCompany, getCompanyUsers } = useCompanyUserManagement();
+  const { user } = useAuth();
+  const { forceGetUserCompanies } = useCompanies();
   const [companyUsers, setCompanyUsers] = useState<UserProfile[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -59,6 +63,12 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
     setRefreshing(true);
     await fetchUsers();
     await fetchCompanyUsers();
+    
+    // Force refresh of companies data to update UI
+    if (user?.id) {
+      await forceGetUserCompanies(user.id);
+    }
+    
     setRefreshing(false);
   };
 
@@ -72,6 +82,11 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
         await fetchCompanyUsers();
         // Reset selection
         setSelectedUserId('');
+        
+        // Force refresh of companies data to update UI
+        if (user?.id) {
+          await forceGetUserCompanies(user.id);
+        }
       }
     } catch (error: any) {
       console.error('Error adding user to company:', error);
@@ -87,6 +102,11 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
       if (success) {
         // Refresh the list
         await fetchCompanyUsers();
+        
+        // Force refresh of companies data to update UI
+        if (user?.id) {
+          await forceGetUserCompanies(user.id);
+        }
       }
     } catch (error: any) {
       console.error('Error removing user from company:', error);

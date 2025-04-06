@@ -35,11 +35,33 @@ export const useCompanyCache = () => {
    */
   const clearCachedUserCompanies = () => {
     localStorage.removeItem('userCompanies');
+    localStorage.removeItem('userCompaniesTimestamp');
+    
+    // Also clear selected company if present
+    if (localStorage.getItem('selectedCompanyId')) {
+      localStorage.removeItem('selectedCompanyId');
+      localStorage.removeItem('selectedCompany');
+    }
+  };
+
+  /**
+   * Check if we need to refresh cached data
+   */
+  const isCacheExpired = (): boolean => {
+    const timestamp = localStorage.getItem('userCompaniesTimestamp');
+    if (!timestamp) return true;
+    
+    const lastUpdate = parseInt(timestamp, 10);
+    const now = Date.now();
+    
+    // Cache expires after 5 minutes (300000 ms)
+    return (now - lastUpdate) > 300000;
   };
 
   return {
     cacheUserCompanies,
     getCachedUserCompanies,
-    clearCachedUserCompanies
+    clearCachedUserCompanies,
+    isCacheExpired
   };
 };
