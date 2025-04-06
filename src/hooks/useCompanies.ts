@@ -199,8 +199,11 @@ export const useCompanies = () => {
       }
 
       if (!userCompanyData || userCompanyData.length === 0) {
+        console.log("No company relation found for user:", userId);
         return { company: null, loading: false, error: null };
       }
+
+      console.log("Found user company relation:", userCompanyData[0].company_id);
 
       // Then fetch the company details
       const { data: companyData, error: companyError } = await supabase
@@ -214,6 +217,7 @@ export const useCompanies = () => {
         return { company: null, loading: false, error: companyError };
       }
 
+      console.log("Successfully fetched company details:", companyData.nome);
       return { company: companyData as Company, loading: false, error: null };
     } catch (error) {
       console.error("Unexpected error:", error);
@@ -398,6 +402,8 @@ export const useCompanies = () => {
   const updateUserSelectedCompany = async (userId: string, companyId: string): Promise<boolean> => {
     setIsLoading(true);
     try {
+      console.log(`Updating user selected company: User ${userId}, Company ${companyId}`);
+      
       // We'll keep all existing company relations and create a new entry to make it the most recent
       const { error: insertError } = await supabase
         .from('user_empresa')
@@ -410,10 +416,11 @@ export const useCompanies = () => {
         return false;
       }
       
+      console.log(`Successfully updated user selected company to ${companyId}`);
       // Success - the most recent relation is now the selected one
       return true;
     } catch (error) {
-      console.error("Unexpected error:", error);
+      console.error("Unexpected error in updateUserSelectedCompany:", error);
       return false;
     } finally {
       setIsLoading(false);

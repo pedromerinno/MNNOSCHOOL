@@ -23,7 +23,7 @@ const Manifesto = () => {
           const result = await getUserCompany(user.id);
           
           if (!result.error) {
-            console.log('Manifesto: Company fetched successfully', result.company);
+            console.log('Manifesto: Company fetched successfully', result.company?.nome);
             setUserCompany(result.company);
           } else {
             console.error('Erro ao buscar empresa para o manifesto:', result.error);
@@ -53,7 +53,7 @@ const Manifesto = () => {
         try {
           const result = await getUserCompany(userId);
           if (!result.error) {
-            console.log('Manifesto: Updated company after selection', result.company);
+            console.log('Manifesto: Updated company after selection', result.company?.nome);
             setUserCompany(result.company);
           } else {
             console.error('Erro ao buscar empresa após seleção:', result.error);

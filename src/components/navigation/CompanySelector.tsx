@@ -33,19 +33,20 @@ export const CompanySelector = () => {
           if (companies.length > 0) {
             const currentCompanyResult = await getUserCompany(user.id);
             
-            // If no selected company yet, use the first company as default
-            if (!currentCompanyResult.company && companies.length > 0) {
-              // Set the first company as selected
+            if (currentCompanyResult.company) {
+              setSelectedCompany(currentCompanyResult.company);
+              console.log('CompanySelector: Successfully loaded selected company:', currentCompanyResult.company.nome);
+            } else if (companies.length > 0) {
+              // If no selected company yet, use the first company as default
               await updateUserSelectedCompany(user.id, companies[0].id);
               setSelectedCompany(companies[0]);
+              console.log('CompanySelector: Set default company:', companies[0].nome);
               
               // Dispatch event to inform other components
               const navEvent = new CustomEvent('company-selected', { 
                 detail: { userId: user.id, companyId: companies[0].id } 
               });
               window.dispatchEvent(navEvent);
-            } else {
-              setSelectedCompany(currentCompanyResult.company);
             }
           }
         } catch (error) {
@@ -87,6 +88,8 @@ export const CompanySelector = () => {
       try {
         // Don't update UI until we've successfully updated the backend
         setLoading(true);
+        
+        console.log('CompanySelector: Selecting company:', company.nome);
         
         // Update the selected company in the database
         await updateUserSelectedCompany(user.id, company.id);
@@ -151,4 +154,3 @@ export const CompanySelector = () => {
     </DropdownMenu>
   );
 };
-
