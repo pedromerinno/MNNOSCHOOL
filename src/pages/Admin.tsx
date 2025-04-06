@@ -46,8 +46,8 @@ const AdminPage = () => {
         
         {/* Management Tabs */}
         <Card className="mb-8">
-          <CardHeader>
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <CardHeader>
               <TabsList className="mb-2">
                 <TabsTrigger value="users">
                   <Users className="h-4 w-4 mr-2" />
@@ -58,16 +58,16 @@ const AdminPage = () => {
                   Empresas
                 </TabsTrigger>
               </TabsList>
-            </Tabs>
-          </CardHeader>
-          <CardContent>
-            <TabsContent value="users" className="mt-0">
-              <UserManagement />
-            </TabsContent>
-            <TabsContent value="companies" className="mt-0">
-              <CompanyManagement />
-            </TabsContent>
-          </CardContent>
+            </CardHeader>
+            <CardContent>
+              <TabsContent value="users" className="mt-0">
+                <UserManagement />
+              </TabsContent>
+              <TabsContent value="companies" className="mt-0">
+                <CompanyManagement />
+              </TabsContent>
+            </CardContent>
+          </Tabs>
         </Card>
         
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
