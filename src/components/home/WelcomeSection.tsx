@@ -64,8 +64,11 @@ export const WelcomeSection = () => {
         {displayCompany && (
           <Button 
             onClick={handleLearnMore} 
-            className="mt-1 flex items-center gap-2 text-white bg-black rounded-full text-sm"
+            className="mt-1 flex items-center gap-2 text-white rounded-full text-sm"
             variant="default"
+            style={{ 
+              backgroundColor: displayCompany.cor_principal || '#000000' 
+            }}
           >
             Saiba mais sobre {displayCompany.nome}
             <ArrowRight className="h-4 w-4" />

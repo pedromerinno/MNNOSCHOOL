@@ -11,6 +11,7 @@ export type Database = {
     Tables: {
       empresas: {
         Row: {
+          cor_principal: string | null
           created_at: string
           descricao_video: string | null
           frase_institucional: string | null
@@ -24,6 +25,7 @@ export type Database = {
           video_institucional: string | null
         }
         Insert: {
+          cor_principal?: string | null
           created_at?: string
           descricao_video?: string | null
           frase_institucional?: string | null
@@ -37,6 +39,7 @@ export type Database = {
           video_institucional?: string | null
         }
         Update: {
+          cor_principal?: string | null
           created_at?: string
           descricao_video?: string | null
           frase_institucional?: string | null
