@@ -76,10 +76,10 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
       setSubmitting(true);
       setConnectionError(false);
       
-      // Correctly call getUser with null as the second argument
-      const { data: { user } = {} } = await supabase.auth.getUser(null);
+      // Correctly call getUser with optional parameters
+      const { data, error } = await supabase.auth.getUser();
       
-      if (!user) {
+      if (error || !data?.user) {
         throw new Error('Usuário não autenticado');
       }
 
@@ -87,7 +87,7 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
       const newCommentObj: Comment = {
         id: Date.now().toString(),
         lesson_id: lessonId,
-        user_id: user.id,
+        user_id: data.user.id,
         content: newComment,
         created_at: new Date().toISOString(),
         profile: {
