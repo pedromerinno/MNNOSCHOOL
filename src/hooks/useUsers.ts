@@ -60,7 +60,7 @@ export function useUsers() {
       // First, get the profiles with basic information
       const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('id, display_name, is_admin, created_at')
+        .select('id, display_name, is_admin, email, created_at')
         .order('created_at', { ascending: false });
       
       if (error) {
@@ -68,52 +68,12 @@ export function useUsers() {
       }
       
       // Map the profiles to our UserProfile interface
-      let formattedUsers: UserProfile[] = profiles.map(profile => ({
+      const formattedUsers: UserProfile[] = profiles.map(profile => ({
         id: profile.id,
-        email: null, // Will try to populate this in the next step
+        email: profile.email || null,
         display_name: profile.display_name || `User ${profile.id.substring(0, 6)}`,
         is_admin: profile.is_admin
       }));
-      
-      // Attempt to get emails from the auth.users table
-      // This is a workaround as direct joins might have permission issues
-      try {
-        // Get the current session
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session) {
-          // Use the REST API to directly fetch the relationship between profiles and user emails
-          const response = await fetch(
-            'https://gswvicwtswokyfbgoxps.supabase.co/rest/v1/profiles?select=id,email:auth.users(email)',
-            {
-              headers: {
-                'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdzd3ZpY3d0c3dva3lmYmdveHBzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM5MDQ4MTksImV4cCI6MjA1OTQ4MDgxOX0.kyN2Qq3v9H_ENVzSH4QfGwUJLCVEXIo44-MQImFQ_Z0',
-                'Authorization': `Bearer ${session.access_token}`,
-                'Content-Type': 'application/json'
-              }
-            }
-          );
-          
-          if (response.ok) {
-            const userData = await response.json();
-            
-            // Update our formatted users with email data if available
-            formattedUsers = formattedUsers.map(user => {
-              const matchingUserData = userData.find((item: any) => item.id === user.id);
-              if (matchingUserData && 
-                  matchingUserData.email && 
-                  Array.isArray(matchingUserData.email) && 
-                  matchingUserData.email.length > 0 && 
-                  matchingUserData.email[0].email) {
-                return { ...user, email: matchingUserData.email[0].email };
-              }
-              return user;
-            });
-          }
-        }
-      } catch (emailError) {
-        console.warn('Unable to fetch user emails, using display names only:', emailError);
-      }
       
       setUsers(formattedUsers);
       setCachedUsers(formattedUsers);
