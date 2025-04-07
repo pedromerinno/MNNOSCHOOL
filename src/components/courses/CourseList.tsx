@@ -58,11 +58,11 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
         let filteredCourses = allCourses || [];
         
         if (selectedCompany) {
-          // Get company courses - specify the table name explicitly to avoid ambiguity
+          // Get company courses - Fix the ambiguous column reference by using table aliases
           const { data: companyCourses, error: companyCoursesError } = await supabase
             .from('company_courses')
             .select('id, course_id')
-            .eq('company_id', selectedCompany.id);
+            .eq('company_courses.company_id', selectedCompany.id);
             
           if (companyCoursesError) {
             console.error('Error fetching company courses:', companyCoursesError);
