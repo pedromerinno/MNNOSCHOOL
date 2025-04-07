@@ -57,10 +57,9 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
           console.log("Selected company:", selectedCompany.nome);
           
           try {
-            // Try to find all course IDs accessible to this company
-            // We use type assertion because the company_course_access table isn't in TS types yet
+            // Fetch course IDs accessible to this company
             const { data: companyAccess, error: accessError } = await supabase
-              .from('company_course_access')
+              .from('company_courses')
               .select('course_id')
               .eq('company_id', selectedCompany.id);
             
@@ -69,8 +68,7 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
               console.log("Using fallback: showing all courses");
             } else if (companyAccess && companyAccess.length > 0) {
               // Filter the courses based on company access
-              // Use type assertion to handle the missing TypeScript types
-              const accessibleCourseIds = companyAccess.map(access => (access as any).course_id);
+              const accessibleCourseIds = companyAccess.map(access => access.course_id);
               availableCourses = allCourses?.filter(course => 
                 accessibleCourseIds.includes(course.id)
               ) || [];

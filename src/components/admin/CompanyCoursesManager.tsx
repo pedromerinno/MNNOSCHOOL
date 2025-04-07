@@ -39,22 +39,21 @@ export const CompanyCoursesManager: React.FC<CompanyCoursesManagerProps> = ({
 
         // Try to fetch company access relationships
         try {
-          // We need to use 'from' with type assertion since the company_course_access 
-          // table isn't in the generated types yet
+          // We need to use type assertion for the table query since it's not in the generated types
           const { data: courseCompaniesData, error: courseCompaniesError } = await supabase
-            .from('company_course_access')
+            .from('company_courses')
             .select('company_id')
             .eq('course_id', course.id);
 
           if (courseCompaniesError) {
-            console.error("Error fetching from company_course_access:", courseCompaniesError);
+            console.error("Error fetching company course relationships:", courseCompaniesError);
             setSelectedCompanies([]);
           } else if (courseCompaniesData && courseCompaniesData.length > 0) {
-            // TypeScript doesn't know the shape of the data due to missing types
-            // We'll use a type assertion to tell TypeScript what the structure is
-            const companyIds = courseCompaniesData.map(item => (item as any).company_id);
+            const companyIds = courseCompaniesData.map(item => item.company_id);
             setSelectedCompanies(companyIds);
+            console.log("Found companies with access:", companyIds.length);
           } else {
+            console.log("No companies have access to this course yet");
             setSelectedCompanies([]);
           }
         } catch (error) {
@@ -96,9 +95,8 @@ export const CompanyCoursesManager: React.FC<CompanyCoursesManagerProps> = ({
       
       try {
         // First, delete all existing relationships using the course_id
-        // Use type assertion to tell TypeScript this table exists
         const { error: deleteError } = await supabase
-          .from('company_course_access')
+          .from('company_courses')
           .delete()
           .eq('course_id', course.id);
 
@@ -114,9 +112,8 @@ export const CompanyCoursesManager: React.FC<CompanyCoursesManagerProps> = ({
             company_id: companyId
           }));
 
-          // Use type assertion to tell TypeScript this table exists
           const { error: insertError } = await supabase
-            .from('company_course_access')
+            .from('company_courses')
             .insert(newRelationships);
 
           if (insertError) {
