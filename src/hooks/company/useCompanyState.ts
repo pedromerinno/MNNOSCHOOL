@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Company } from "@/types/company";
 
 export const useCompanyState = () => {
+  // Estados básicos para gerenciamento de empresas
   const [isLoading, setIsLoading] = useState(false);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [userCompanies, setUserCompanies] = useState<Company[]>([]);
@@ -10,13 +11,11 @@ export const useCompanyState = () => {
   const [error, setError] = useState<Error | null>(null);
   const [fetchCount, setFetchCount] = useState(0);
   
-  const incrementFetchCount = () => {
-    setFetchCount(prev => prev + 1);
-  };
+  // Função para incrementar o contador de requisições
+  const incrementFetchCount = () => setFetchCount(prevCount => prevCount + 1);
   
-  const resetError = () => {
-    setError(null);
-  };
+  // Função para resetar o erro
+  const resetError = () => setError(null);
   
   return {
     isLoading,

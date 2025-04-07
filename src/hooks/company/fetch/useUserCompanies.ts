@@ -87,7 +87,7 @@ export const useUserCompanies = ({
     try {
       // Buscar ids das empresas e empresas em paralelo para reduzir tempo de carregamento
       const fetchRelationsPromise = retryOperation(
-        async () => await supabase.from('user_empresa').select('company_id').eq('user_id', userId)
+        async () => await supabase.from('user_empresa').select('empresa_id').eq('user_id', userId)
       );
 
       // Se já tivermos dados em cache, não bloqueamos a UI enquanto buscamos atualizações
@@ -118,7 +118,7 @@ export const useUserCompanies = ({
       }
 
       // Extract company IDs
-      const companyIds = userCompanyRelations.data.map(relation => relation.company_id);
+      const companyIds = userCompanyRelations.data.map(relation => relation.empresa_id);
 
       // Fetch all companies with these IDs
       const { data: companies, error: companiesError } = await retryOperation(
