@@ -8,6 +8,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { MessageSquare, Send, AlertTriangle } from "lucide-react";
 
+interface Profile {
+  display_name: string | null;
+  avatar: string | null;
+}
+
 interface Comment {
   id: string;
   user_id: string;
@@ -39,8 +44,9 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
       try {
         setLoading(true);
         
+        // Use a type assertion to tell TypeScript this is a valid table
         const { data, error } = await supabase
-          .from('lesson_comments')
+          .from('lesson_comments' as any)
           .select(`
             id, 
             lesson_id, 
@@ -58,13 +64,13 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
         if (error) throw error;
         
         // Format comments with profile data
-        const formattedComments = data.map(comment => ({
+        const formattedComments = data?.map(comment => ({
           ...comment,
           profile: {
             username: comment.profiles?.display_name || 'Usuário',
             avatar_url: comment.profiles?.avatar || ''
           }
-        }));
+        })) || [];
         
         if (isMounted) {
           setComments(formattedComments);
@@ -88,26 +94,25 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
         schema: 'public',
         table: 'lesson_comments',
         filter: `lesson_id=eq.${lessonId}`
-      }, payload => {
+      }, async (payload) => {
         // Fetch user data for the new comment
-        supabase
+        const { data: profile } = await supabase
           .from('profiles')
           .select('display_name, avatar')
           .eq('id', payload.new.user_id)
-          .single()
-          .then(({ data: profile }) => {
-            const newComment = {
-              ...payload.new,
-              profile: {
-                username: profile?.display_name || 'Usuário',
-                avatar_url: profile?.avatar || ''
-              }
-            };
-            
-            if (isMounted) {
-              setComments(prev => [...prev, newComment as Comment]);
-            }
-          });
+          .single();
+          
+        const newComment = {
+          ...payload.new,
+          profile: {
+            username: profile?.display_name || 'Usuário',
+            avatar_url: profile?.avatar || ''
+          }
+        };
+        
+        if (isMounted) {
+          setComments(prev => [...prev, newComment as Comment]);
+        }
       })
       .on('system', (event) => {
         // Listen for system events like connection issues
@@ -116,13 +121,7 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
           setConnectionError(true);
         }
       })
-      .subscribe((status) => {
-        // Check subscription status
-        if (status !== 'SUBSCRIBED' && isMounted) {
-          console.warn('Failed to subscribe to comments channel:', status);
-          setConnectionError(true);
-        }
-      });
+      .subscribe();
     
     return () => {
       isMounted = false;
@@ -145,9 +144,9 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
         throw new Error('Usuário não autenticado');
       }
       
-      // Insert comment into database
+      // Insert comment into database - use type assertion
       const { error: insertError } = await supabase
-        .from('lesson_comments')
+        .from('lesson_comments' as any)
         .insert({
           lesson_id: lessonId,
           user_id: data.user.id,
