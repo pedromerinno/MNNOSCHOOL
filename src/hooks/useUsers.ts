@@ -62,10 +62,16 @@ export function useUsers() {
         setLoading(true);
       }
       
-      // Query the profiles table which is accessible via RLS policies
+      // Query the profiles table and join with auth.users to get real email
       const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('id, display_name, is_admin, created_at')
+        .select(`
+          id, 
+          display_name, 
+          is_admin, 
+          created_at,
+          auth_users:id (email)
+        `)
         .order('created_at', { ascending: false });
       
       if (error) {
@@ -75,7 +81,7 @@ export function useUsers() {
       // Transform the profiles data into the UserProfile format
       const formattedUsers: UserProfile[] = profiles.map(profile => ({
         id: profile.id,
-        email: profile.display_name ? `${profile.display_name.toLowerCase().replace(/\s+/g, '.')}@user.com` : `user-${profile.id.substring(0, 8)}@example.com`,
+        email: profile.auth_users?.email || null,
         display_name: profile.display_name || `User ${profile.id.substring(0, 6)}`,
         is_admin: profile.is_admin
       }));
