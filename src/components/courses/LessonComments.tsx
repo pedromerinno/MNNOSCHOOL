@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { MessageSquare, Send } from "lucide-react";
+import { MessageSquare, Send, AlertTriangle } from "lucide-react";
 
 interface Comment {
   id: string;
@@ -29,17 +29,44 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [connectionError, setConnectionError] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
+    let isMounted = true;
+    
     // Simulate loading comments
     const timer = setTimeout(() => {
-      setLoading(false);
-      // No comments by default
-      setComments([]);
+      if (isMounted) {
+        setLoading(false);
+        // No comments by default
+        setComments([]);
+      }
     }, 1000);
+
+    // Add error handling for WebSocket connection
+    const channel = supabase.channel('lesson_comments')
+      .on('system', (event) => {
+        // Listen for system events like connection issues
+        if (event.event === 'disconnect' && isMounted) {
+          console.warn('WebSocket disconnected:', event);
+          setConnectionError(true);
+        }
+      })
+      .subscribe((status) => {
+        // Check subscription status
+        if (status !== 'SUBSCRIBED' && isMounted) {
+          console.warn('Failed to subscribe to comments channel:', status);
+          setConnectionError(true);
+        }
+      });
     
-    return () => clearTimeout(timer);
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+      // Clean up channel subscription to prevent memory leaks
+      supabase.removeChannel(channel);
+    };
   }, [lessonId]);
 
   const handleSubmitComment = async () => {
@@ -47,6 +74,7 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
 
     try {
       setSubmitting(true);
+      setConnectionError(false);
       const user = (await supabase.auth.getUser()).data.user;
       
       if (!user) {
@@ -109,6 +137,13 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {connectionError && (
+          <div className="mb-4 p-2 border border-amber-200 bg-amber-50 text-amber-700 rounded-md flex items-center gap-2 dark:bg-amber-900/20 dark:border-amber-800/50 dark:text-amber-500">
+            <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+            <span className="text-sm">Problema de conexão detectado. Alguns recursos podem estar limitados.</span>
+          </div>
+        )}
+        
         <div className="space-y-6 mb-6">
           {loading ? (
             <p className="text-center text-muted-foreground py-4">Carregando comentários...</p>
