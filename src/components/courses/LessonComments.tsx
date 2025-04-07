@@ -13,16 +13,27 @@ interface Profile {
   avatar: string | null;
 }
 
+interface CommentProfile {
+  username: string;
+  avatar_url: string;
+}
+
 interface Comment {
   id: string;
   user_id: string;
   lesson_id: string;
   content: string;
   created_at: string;
-  profile?: {
-    username: string;
-    avatar_url: string;
-  };
+  profile?: CommentProfile;
+}
+
+interface CommentResponse {
+  id: string;
+  user_id: string;
+  lesson_id: string;
+  content: string;
+  created_at: string;
+  profiles?: Profile;
 }
 
 interface LessonCommentsProps {
@@ -64,13 +75,17 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
         if (error) throw error;
         
         // Format comments with profile data
-        const formattedComments = data?.map(comment => ({
-          ...comment,
+        const formattedComments = (data as CommentResponse[] || []).map(comment => ({
+          id: comment.id,
+          user_id: comment.user_id,
+          lesson_id: comment.lesson_id,
+          content: comment.content,
+          created_at: comment.created_at,
           profile: {
             username: comment.profiles?.display_name || 'Usuário',
             avatar_url: comment.profiles?.avatar || ''
           }
-        })) || [];
+        }));
         
         if (isMounted) {
           setComments(formattedComments);
@@ -102,8 +117,12 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
           .eq('id', payload.new.user_id)
           .single();
           
-        const newComment = {
-          ...payload.new,
+        const newComment: Comment = {
+          id: payload.new.id,
+          user_id: payload.new.user_id,
+          lesson_id: payload.new.lesson_id,
+          content: payload.new.content,
+          created_at: payload.new.created_at,
           profile: {
             username: profile?.display_name || 'Usuário',
             avatar_url: profile?.avatar || ''
@@ -111,7 +130,7 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
         };
         
         if (isMounted) {
-          setComments(prev => [...prev, newComment as Comment]);
+          setComments(prev => [...prev, newComment]);
         }
       })
       .on('system', (event) => {
