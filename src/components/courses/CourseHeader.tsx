@@ -16,15 +16,15 @@ export const CourseHeader: React.FC<CourseHeaderProps> = ({
   const navigate = useNavigate();
   
   return (
-    <div className="mb-6">
-      <Button variant="ghost" className="mb-6" onClick={() => navigate('/courses')}>
+    <div className="mb-8">
+      <Button variant="ghost" size="sm" className="mb-4 -ml-2 text-muted-foreground hover:text-foreground" onClick={() => navigate('/courses')}>
         <ArrowLeft className="h-4 w-4 mr-2" />
         Voltar para Cursos
       </Button>
       
       <h1 className="text-3xl font-bold mb-2">{title}</h1>
       {instructor && (
-        <p className="text-gray-600 dark:text-gray-400 mb-6">
+        <p className="text-muted-foreground">
           Instrutor: {instructor}
         </p>
       )}

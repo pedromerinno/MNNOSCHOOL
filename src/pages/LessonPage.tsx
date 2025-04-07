@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Clock } from 'lucide-react';
+import { ArrowLeft, Clock, CheckCircle, FileText, Play } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useLessonData } from '@/hooks/useLessonData';
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
@@ -15,11 +15,11 @@ const LessonPage = () => {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="container mx-auto px-4 py-8">
+        <div className="container max-w-4xl mx-auto px-4 py-8">
           <div className="flex items-center mb-6">
             <Skeleton className="h-8 w-32" />
           </div>
-          <div className="grid grid-cols-1 gap-8">
+          <div className="space-y-6">
             <Skeleton className="h-12 w-3/4" />
             <Skeleton className="h-[400px] w-full" />
             <Skeleton className="h-24 w-full" />
@@ -32,10 +32,10 @@ const LessonPage = () => {
   if (!lesson) {
     return (
       <DashboardLayout>
-        <div className="container mx-auto px-4 py-8">
+        <div className="container max-w-4xl mx-auto px-4 py-8">
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-4">Aula não encontrada</h2>
-            <p className="mb-6">A aula que você está procurando não existe ou foi removida.</p>
+            <p className="mb-6 text-muted-foreground">A aula que você está procurando não existe ou foi removida.</p>
             <Button asChild>
               <Link to={`/courses/${courseId}`}>Voltar para o curso</Link>
             </Button>
@@ -49,7 +49,7 @@ const LessonPage = () => {
     switch (lesson.type.toLowerCase()) {
       case 'video':
         return (
-          <div className="aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
+          <div className="aspect-video bg-muted rounded-lg overflow-hidden">
             {lesson.content ? (
               // Se for um URL do YouTube, incorporamos o vídeo
               lesson.content.includes('youtube.com') || lesson.content.includes('youtu.be') ? (
@@ -69,7 +69,7 @@ const LessonPage = () => {
               )
             ) : (
               <div className="flex items-center justify-center h-full">
-                <p className="text-gray-500">Conteúdo do vídeo não disponível</p>
+                <p className="text-muted-foreground">Conteúdo do vídeo não disponível</p>
               </div>
             )}
           </div>
@@ -82,36 +82,51 @@ const LessonPage = () => {
         );
       case 'quiz':
         return (
-          <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div className="p-6 bg-muted rounded-lg">
             <h3 className="text-xl font-semibold mb-4">Quiz: {lesson.title}</h3>
-            <p className="mb-4">{lesson.content || 'Este quiz será implementado em breve'}</p>
+            <p className="mb-4 text-muted-foreground">{lesson.content || 'Este quiz será implementado em breve'}</p>
           </div>
         );
       default:
         return (
-          <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <p>Conteúdo não disponível</p>
+          <div className="p-6 bg-muted rounded-lg">
+            <p className="text-muted-foreground">Conteúdo não disponível</p>
           </div>
         );
     }
   };
 
+  const getLessonTypeIcon = () => {
+    switch (lesson.type.toLowerCase()) {
+      case 'video':
+        return <Play className="h-4 w-4 mr-1" />;
+      case 'text':
+        return <FileText className="h-4 w-4 mr-1" />;
+      case 'quiz':
+        return <Play className="h-4 w-4 mr-1" />;
+      default:
+        return <Play className="h-4 w-4 mr-1" />;
+    }
+  };
+
   return (
     <DashboardLayout>
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center mb-6">
-          <Button variant="ghost" size="sm" asChild className="mr-4">
-            <Link to={`/courses/${courseId}`}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar para o curso
-            </Link>
-          </Button>
-        </div>
+      <div className="container max-w-4xl mx-auto px-4 py-8">
+        <Button variant="ghost" size="sm" asChild className="mb-6 -ml-2 text-muted-foreground hover:text-foreground">
+          <Link to={`/courses/${courseId}`}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar para o curso
+          </Link>
+        </Button>
         
         <h1 className="text-3xl font-bold mb-4">{lesson.title}</h1>
         
-        <div className="flex items-center text-sm text-gray-500 mb-6">
-          <span className="capitalize mr-4">{lesson.type}</span>
+        <div className="flex items-center text-sm text-muted-foreground mb-6">
+          <div className="flex items-center mr-4">
+            {getLessonTypeIcon()}
+            <span className="capitalize">{lesson.type}</span>
+          </div>
+          
           {lesson.duration && (
             <div className="flex items-center">
               <Clock className="h-4 w-4 mr-1" />
@@ -120,7 +135,7 @@ const LessonPage = () => {
           )}
         </div>
         
-        <Card className="mb-8 p-6">
+        <Card className="mb-8 p-6 border border-border">
           {renderLessonContent()}
         </Card>
         
@@ -129,7 +144,11 @@ const LessonPage = () => {
             <Link to={`/courses/${courseId}`}>Voltar para o curso</Link>
           </Button>
           
-          <Button onClick={() => markLessonCompleted()}>
+          <Button 
+            onClick={() => markLessonCompleted()}
+            className="flex items-center gap-2"
+          >
+            <CheckCircle className="h-4 w-4" />
             Marcar como concluído
           </Button>
         </div>

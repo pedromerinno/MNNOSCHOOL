@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import { useCourseData } from '@/hooks/useCourseData';
 import { useLessonNavigation } from './useLessonNavigation';
 import { CourseHeader } from './CourseHeader';
-import { CourseImage } from './CourseImage';
+import { CourseHero } from './CourseHero';
 import { CourseDescription } from './CourseDescription';
 import { CourseProgress } from './CourseProgress';
 import { CourseLessonList } from './CourseLessonList';
@@ -25,19 +25,21 @@ export const CourseView: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container max-w-6xl mx-auto px-4 py-8">
       <CourseHeader 
         title={course.title} 
         instructor={course.instructor} 
       />
       
+      <div className="mb-8">
+        <CourseHero 
+          imageUrl={course.image_url} 
+          title={course.title} 
+        />
+      </div>
+      
       <div className="grid md:grid-cols-3 gap-8">
-        <div className="md:col-span-2">
-          <CourseImage 
-            imageUrl={course.image_url} 
-            title={course.title} 
-          />
-          
+        <div className="md:col-span-2 space-y-8">
           <CourseDescription description={course.description} />
           
           {course.progress > 0 && (
