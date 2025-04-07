@@ -8,6 +8,7 @@ import { CourseForm } from '../CourseForm';
 import { CompanyCoursesManager } from '../CompanyCoursesManager';
 import { useCourses } from './useCourses';
 import { Course } from './types';
+import { LessonManager } from './LessonManager';
 
 interface CourseListProps {
   courses: Course[];
@@ -128,14 +129,11 @@ export const CourseList: React.FC<CourseListProps> = ({
             </DialogDescription>
           </DialogHeader>
           {selectedCourse && (
-            <div className="py-4">
-              <p className="text-center text-gray-500 mb-4">
-                Esta funcionalidade permitirá gerenciar aulas para o curso "{selectedCourse.title}".
-              </p>
-              <div className="flex justify-end">
-                <Button onClick={() => setIsLessonsDialogOpen(false)}>Fechar</Button>
-              </div>
-            </div>
+            <LessonManager
+              courseId={selectedCourse.id}
+              courseTitle={selectedCourse.title}
+              onClose={() => setIsLessonsDialogOpen(false)}
+            />
           )}
         </DialogContent>
       </Dialog>
