@@ -52,32 +52,34 @@ const AdminPage = () => {
         {/* Management Tabs */}
         <Card className="mb-8">
           <CardHeader className="pb-0">
-            <TabsList className="w-full max-w-md mx-auto">
-              <TabsTrigger 
-                value="users" 
-                onClick={() => setActiveTab("users")}
-                className={`flex items-center ${activeTab === "users" ? "bg-primary text-primary-foreground" : ""}`}
-              >
-                <Users className="h-4 w-4 mr-2" />
-                Usuários
-              </TabsTrigger>
-              <TabsTrigger 
-                value="companies" 
-                onClick={() => setActiveTab("companies")}
-                className={`flex items-center ${activeTab === "companies" ? "" : ""}`}
-              >
-                <Building className="h-4 w-4 mr-2" />
-                Empresas
-              </TabsTrigger>
-            </TabsList>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="w-full max-w-md mx-auto">
+                <TabsTrigger 
+                  value="users" 
+                  className="flex items-center"
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Usuários
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="companies" 
+                  className="flex items-center"
+                >
+                  <Building className="h-4 w-4 mr-2" />
+                  Empresas
+                </TabsTrigger>
+              </TabsList>
+            
+              <CardContent className="pt-6">
+                <TabsContent value="users">
+                  <UserManagement />
+                </TabsContent>
+                <TabsContent value="companies">
+                  <CompanyManagement />
+                </TabsContent>
+              </CardContent>
+            </Tabs>
           </CardHeader>
-          <CardContent className="pt-6">
-            {activeTab === "users" ? (
-              <UserManagement />
-            ) : (
-              <CompanyManagement />
-            )}
-          </CardContent>
         </Card>
         
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
