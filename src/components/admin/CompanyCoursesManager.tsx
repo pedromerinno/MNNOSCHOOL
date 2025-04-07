@@ -48,7 +48,9 @@ export const CompanyCoursesManager: React.FC<CompanyCoursesManagerProps> = ({
             console.error("Error fetching company course relationships:", courseCompaniesError);
             setSelectedCompanies([]);
           } else if (courseCompaniesData && courseCompaniesData.length > 0) {
-            const companyIds = courseCompaniesData.map(item => item.empresa_id);
+            // Use a type assertion to tell TypeScript the data structure is correct
+            const typedData = courseCompaniesData as { empresa_id: string }[];
+            const companyIds = typedData.map(item => item.empresa_id);
             setSelectedCompanies(companyIds);
             console.log("Found companies with access:", companyIds.length);
           } else {
@@ -106,14 +108,16 @@ export const CompanyCoursesManager: React.FC<CompanyCoursesManagerProps> = ({
 
         // Then, insert the new relationships if any companies are selected
         if (selectedCompanies.length > 0) {
+          // Create objects with the correct field names matching the database
           const newRelationships = selectedCompanies.map(companyId => ({
             course_id: course.id,
             empresa_id: companyId
           }));
 
+          // Use a more generic approach that won't be affected by type issues
           const { error: insertError } = await supabase
             .from('company_courses')
-            .insert(newRelationships);
+            .insert(newRelationships as any);
 
           if (insertError) {
             console.error("Error inserting new access:", insertError);
