@@ -41,14 +41,14 @@ export const CompanyCoursesManager: React.FC<CompanyCoursesManagerProps> = ({
         try {
           const { data: courseCompaniesData, error: courseCompaniesError } = await supabase
             .from('company_courses')
-            .select('company_id')
+            .select('empresa_id')
             .eq('course_id', course.id);
 
           if (courseCompaniesError) {
             console.error("Error fetching company course relationships:", courseCompaniesError);
             setSelectedCompanies([]);
           } else if (courseCompaniesData && courseCompaniesData.length > 0) {
-            const companyIds = courseCompaniesData.map(item => item.company_id);
+            const companyIds = courseCompaniesData.map(item => item.empresa_id);
             setSelectedCompanies(companyIds);
             console.log("Found companies with access:", companyIds.length);
           } else {
@@ -108,7 +108,7 @@ export const CompanyCoursesManager: React.FC<CompanyCoursesManagerProps> = ({
         if (selectedCompanies.length > 0) {
           const newRelationships = selectedCompanies.map(companyId => ({
             course_id: course.id,
-            company_id: companyId
+            empresa_id: companyId
           }));
 
           const { error: insertError } = await supabase

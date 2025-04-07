@@ -11,36 +11,36 @@ export type Database = {
     Tables: {
       company_courses: {
         Row: {
-          company_id: string
           course_id: string
           created_at: string
+          empresa_id: string
           id: string
         }
         Insert: {
-          company_id: string
           course_id: string
           created_at?: string
+          empresa_id: string
           id?: string
         }
         Update: {
-          company_id?: string
           course_id?: string
           created_at?: string
+          empresa_id?: string
           id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "company_courses_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "empresas"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "company_courses_course_id_fkey"
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_courses_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
             referencedColumns: ["id"]
           },
         ]

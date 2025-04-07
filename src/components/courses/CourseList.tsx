@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { CourseCard } from './CourseCard';
 import { supabase } from "@/integrations/supabase/client";
@@ -61,7 +60,7 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
             const { data: companyAccess, error: accessError } = await supabase
               .from('company_courses')
               .select('course_id')
-              .eq('company_id', selectedCompany.id);
+              .eq('empresa_id', selectedCompany.id);
             
             if (accessError) {
               console.error("Error getting company course access:", accessError);
