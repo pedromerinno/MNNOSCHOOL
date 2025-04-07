@@ -125,31 +125,31 @@ export const useLessons = (courseId: string) => {
   };
 
   const handleDeleteLesson = async (lessonId: string) => {
-    if (confirm('Tem certeza que deseja excluir esta aula? Esta ação não pode ser desfeita.')) {
-      try {
-        const { error } = await supabase
-          .from('lessons')
-          .delete()
-          .eq('id', lessonId);
+    try {
+      const { error } = await supabase
+        .from('lessons')
+        .delete()
+        .eq('id', lessonId);
 
-        if (error) {
-          throw error;
-        }
-
-        toast({
-          title: 'Aula excluída',
-          description: 'A aula foi excluída com sucesso',
-        });
-
-        // Atualizar a lista de aulas
-        fetchLessons();
-      } catch (error: any) {
-        toast({
-          title: 'Erro ao excluir aula',
-          description: error.message,
-          variant: 'destructive',
-        });
+      if (error) {
+        throw error;
       }
+
+      toast({
+        title: 'Aula excluída',
+        description: 'A aula foi excluída com sucesso',
+      });
+
+      // Atualizar a lista de aulas
+      fetchLessons();
+      return true;
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao excluir aula',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return false;
     }
   };
 

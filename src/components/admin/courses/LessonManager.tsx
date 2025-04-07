@@ -36,6 +36,7 @@ export const LessonManager: React.FC<LessonManagerProps> = ({
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (courseId && open) {
@@ -69,7 +70,9 @@ export const LessonManager: React.FC<LessonManagerProps> = ({
 
   const executeDeleteLesson = async () => {
     if (selectedLesson) {
+      setIsDeleting(true);
       await handleDeleteLesson(selectedLesson.id);
+      setIsDeleting(false);
       setIsDeleteDialogOpen(false);
     }
   };
@@ -134,6 +137,7 @@ export const LessonManager: React.FC<LessonManagerProps> = ({
         lessonTitle={selectedLesson?.title || ''}
         onClose={handleCloseDeleteDialog}
         onConfirm={executeDeleteLesson}
+        isDeleting={isDeleting}
       />
     </>
   );
