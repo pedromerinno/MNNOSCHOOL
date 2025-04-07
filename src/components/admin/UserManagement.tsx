@@ -6,7 +6,7 @@ import { useUsers } from '@/hooks/useUsers';
 import { useToast } from '@/hooks/use-toast';
 import { makeUserAdmin } from '@/utils/adminUtils';
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 export const UserManagement = () => {
   const { users, loading, fetchUsers, toggleAdminStatus } = useUsers();
@@ -93,20 +93,17 @@ export const UserManagement = () => {
         <Button 
           onClick={handleRefresh} 
           disabled={loading || isRefreshing}
-          variant="default"
-          className="relative"
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-2"
         >
+          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           {(loading || isRefreshing) ? "Atualizando..." : "Atualizar"}
-          {isRefreshing && (
-            <span className="absolute inset-0 flex items-center justify-center">
-              <span className="animate-spin h-4 w-4 border-2 border-t-transparent border-white rounded-full"></span>
-            </span>
-          )}
         </Button>
       </div>
       
       {permissionError && (
-        <div className="bg-amber-100 border border-amber-200 text-amber-700 px-4 py-3 rounded mb-4 flex items-start">
+        <div className="bg-amber-50 border border-amber-200 text-amber-700 px-4 py-3 rounded mb-4 flex items-start dark:bg-amber-900/30 dark:border-amber-800 dark:text-amber-400">
           <AlertTriangle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
           <div>
             <p className="font-medium">Aviso de Permissão</p>

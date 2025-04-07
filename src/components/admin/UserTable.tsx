@@ -22,14 +22,14 @@ interface UserTableProps {
 
 export const UserTable: React.FC<UserTableProps> = ({ users, loading, onToggleAdmin }) => {
   return (
-    <div className="rounded-md border overflow-hidden">
+    <div className="rounded-md border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-gray-800">
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
+          <TableRow className="bg-gray-50 dark:bg-gray-900">
+            <TableHead className="font-medium text-gray-600 dark:text-gray-300">Nome</TableHead>
+            <TableHead className="font-medium text-gray-600 dark:text-gray-300">Email</TableHead>
+            <TableHead className="font-medium text-gray-600 dark:text-gray-300">Status</TableHead>
+            <TableHead className="text-right font-medium text-gray-600 dark:text-gray-300">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -41,15 +41,15 @@ export const UserTable: React.FC<UserTableProps> = ({ users, loading, onToggleAd
             </TableRow>
           ) : (
             users.map((user) => (
-              <TableRow key={user.id} className={loading ? "opacity-60" : ""}>
-                <TableCell className="font-medium">
+              <TableRow key={user.id} className={`${loading ? "opacity-60" : ""} hover:bg-gray-50 dark:hover:bg-gray-700/50`}>
+                <TableCell className="font-medium text-gray-900 dark:text-gray-100">
                   {loading ? (
                     <Skeleton className="h-5 w-24" />
                   ) : (
                     user.display_name
                   )}
                 </TableCell>
-                <TableCell>
+                <TableCell className="text-gray-600 dark:text-gray-300">
                   {loading ? (
                     <Skeleton className="h-5 w-36" />
                   ) : (
@@ -61,12 +61,12 @@ export const UserTable: React.FC<UserTableProps> = ({ users, loading, onToggleAd
                     <Skeleton className="h-6 w-16" />
                   ) : (
                     user.is_admin ? (
-                      <Badge variant="default" className="bg-green-500 hover:bg-green-600">
+                      <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white">
                         <CheckCircle className="h-3.5 w-3.5 mr-1" />
                         Admin
                       </Badge>
                     ) : (
-                      <Badge variant="outline">
+                      <Badge variant="outline" className="text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700">
                         <XCircle className="h-3.5 w-3.5 mr-1" />
                         Usuário
                       </Badge>
