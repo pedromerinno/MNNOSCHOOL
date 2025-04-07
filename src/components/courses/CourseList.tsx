@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCompanies } from '@/hooks/useCompanies';
 import { useToast } from '@/hooks/use-toast';
+import { AlertCircle } from 'lucide-react';
 
 export type Course = {
   id: string;
@@ -141,8 +142,10 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
   }, [selectedCompany, filter, toast]);
 
   return (
-    <div>
-      <h2 className="text-xl font-medium mb-4">{title}</h2>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{title}</h2>
+      </div>
       
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -157,8 +160,14 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
           ))}
         </div>
       ) : (
-        <div className="text-center py-8 text-gray-500">
-          <p>Nenhum curso encontrado com os filtros aplicados.</p>
+        <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <AlertCircle className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            Nenhum curso encontrado
+          </h3>
+          <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+            Não foram encontrados cursos que correspondam aos filtros selecionados.
+          </p>
         </div>
       )}
     </div>
