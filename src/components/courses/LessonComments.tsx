@@ -57,7 +57,7 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
           
         if (error) throw error;
         
-        // Formatar os comentários com dados do perfil
+        // Format comments with profile data
         const formattedComments = data.map(comment => ({
           ...comment,
           profile: {
@@ -81,15 +81,15 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
     
     fetchComments();
 
-    // Configurar inscrição em tempo real para novos comentários
-    const channel = supabase.channel('lesson_comments')
+    // Set up realtime subscription for new comments
+    const channel = supabase.channel('public:lesson_comments')
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
         table: 'lesson_comments',
         filter: `lesson_id=eq.${lessonId}`
       }, payload => {
-        // Buscar dados do usuário para o novo comentário
+        // Fetch user data for the new comment
         supabase
           .from('profiles')
           .select('display_name, avatar')
@@ -138,14 +138,14 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
       setSubmitting(true);
       setConnectionError(false);
       
-      // Corretamente chama getUser sem parâmetros extras
+      // Get current user data
       const { data, error } = await supabase.auth.getUser();
       
       if (error || !data?.user) {
         throw new Error('Usuário não autenticado');
       }
       
-      // Inserir comentário no banco de dados
+      // Insert comment into database
       const { error: insertError } = await supabase
         .from('lesson_comments')
         .insert({
