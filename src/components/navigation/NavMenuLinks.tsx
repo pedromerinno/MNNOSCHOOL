@@ -16,8 +16,7 @@ import { cn } from "@/lib/utils";
 export const NavMenuLinks = () => {
   const { user, userProfile } = useAuth();
   const location = useLocation();
-  const isAdmin = userProfile?.isAdmin === true;
-
+  
   // Define the function before using it
   const isCurrentPage = (path: string) => {
     if (path === '/') {
@@ -25,6 +24,9 @@ export const NavMenuLinks = () => {
     }
     return location.pathname === path;
   };
+
+  // Determine if the current path is a course-related page
+  const isCourseRelatedPage = location.pathname.includes('/courses');
 
   return (
     <nav>
@@ -124,7 +126,7 @@ export const NavMenuLinks = () => {
             <Badge variant="beta" className="ml-2 text-xs px-2 py-1">beta</Badge>
           </Link>
         </li>
-        {isAdmin && (
+        {userProfile?.isAdmin === true && !isCourseRelatedPage && (
           <li>
             <Link 
               to="/admin" 
