@@ -2,9 +2,14 @@
 import { useState, useEffect } from "react";
 import { UserHome } from "@/components/home/UserHome";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCompanies } from "@/hooks/useCompanies";
+import { useAuth } from "@/contexts/AuthContext";
+import { NoCompaniesAvailable } from "@/components/home/NoCompaniesAvailable";
 
 const Index = () => {
   const [isPageLoading, setIsPageLoading] = useState(true);
+  const { userCompanies, isLoading } = useCompanies();
+  const { user } = useAuth();
 
   // Simular um carregamento mínimo para garantir que a UI não pisque
   useEffect(() => {
@@ -15,7 +20,7 @@ const Index = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  if (isPageLoading) {
+  if (isPageLoading || (user && isLoading)) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-3xl space-y-8">
@@ -37,6 +42,11 @@ const Index = () => {
         </div>
       </div>
     );
+  }
+
+  // Check if user is logged in and has no companies
+  if (user && userCompanies.length === 0) {
+    return <NoCompaniesAvailable />;
   }
 
   return (

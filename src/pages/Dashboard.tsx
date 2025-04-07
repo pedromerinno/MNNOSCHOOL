@@ -9,10 +9,11 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
+import { NoCompaniesAvailable } from "@/components/home/NoCompaniesAvailable";
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const { getUserCompanies, selectedCompany, isLoading } = useCompanies();
+  const { getUserCompanies, selectedCompany, isLoading, userCompanies } = useCompanies();
   const navigate = useNavigate();
 
   // Fetch user's companies
@@ -29,6 +30,11 @@ const Dashboard = () => {
 
     fetchUserCompanies();
   }, [user, getUserCompanies]);
+
+  // If user has no companies, show no companies screen
+  if (!isLoading && user && userCompanies.length === 0) {
+    return <NoCompaniesAvailable />;
+  }
 
   return (
     <DashboardLayout>

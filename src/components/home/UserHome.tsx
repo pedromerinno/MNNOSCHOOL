@@ -8,11 +8,12 @@ import { QuickLinks } from "./QuickLinks";
 import { DashboardWidgets } from "./DashboardWidgets";
 import { Footer } from "./Footer";
 import { HelpButton } from "./HelpButton";
+import { NoCompaniesAvailable } from "./NoCompaniesAvailable";
 
 export const UserHome = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { getUserCompanies, selectedCompany } = useCompanies();
+  const { getUserCompanies, selectedCompany, userCompanies } = useCompanies();
   
   // Ensure user companies are loaded when navigating to home
   useEffect(() => {
@@ -28,6 +29,12 @@ export const UserHome = () => {
 
     fetchUserCompanies();
   }, [user, getUserCompanies]);
+  
+  // The no companies check is already handled at the Index.tsx level,
+  // but we'll add it here as a fallback just in case
+  if (user && userCompanies.length === 0) {
+    return <NoCompaniesAvailable />;
+  }
   
   return (
     <div className="min-h-screen bg-background">
