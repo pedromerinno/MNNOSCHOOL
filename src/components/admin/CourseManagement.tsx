@@ -45,8 +45,10 @@ export const CourseManagement: React.FC = () => {
         throw error;
       }
 
+      console.log("Cursos carregados com sucesso:", data?.length || 0);
       setCourses(data || []);
     } catch (error: any) {
+      console.error("Erro ao carregar cursos:", error);
       toast({
         title: 'Erro ao carregar cursos',
         description: error.message,
