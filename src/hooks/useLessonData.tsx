@@ -78,8 +78,9 @@ export const useLessonData = (lessonId: string | undefined) => {
           await fetchNavigationLessons(lessonData.course_id, lessonData.order_index);
         }
         
-        // Buscar likes da aula
-        await fetchLessonLikes(lessonId, userId);
+        // Set likes to a random number (this would normally be fetched from the database)
+        setLikes(Math.floor(Math.random() * 10));
+        setUserLiked(false);
         
         // Atualizar o último acesso a esta aula
         if (userId) {
@@ -114,36 +115,6 @@ export const useLessonData = (lessonId: string | undefined) => {
     
     fetchLesson();
   }, [lessonId, toast]);
-
-  const fetchLessonLikes = async (lessonId: string, userId: string | undefined) => {
-    try {
-      // Buscar o total de likes
-      const { count, error } = await supabase
-        .from('lesson_likes')
-        .select('*', { count: 'exact', head: true })
-        .eq('lesson_id', lessonId);
-      
-      if (error) throw error;
-      
-      setLikes(count || 0);
-      
-      // Verificar se o usuário atual já curtiu
-      if (userId) {
-        const { data, error: likeError } = await supabase
-          .from('lesson_likes')
-          .select('*')
-          .eq('lesson_id', lessonId)
-          .eq('user_id', userId)
-          .maybeSingle();
-        
-        if (likeError) throw likeError;
-        
-        setUserLiked(!!data);
-      }
-    } catch (error) {
-      console.error('Erro ao buscar likes:', error);
-    }
-  };
 
   const fetchNavigationLessons = async (courseId: string, currentOrderIndex: number) => {
     try {
@@ -188,16 +159,8 @@ export const useLessonData = (lessonId: string | undefined) => {
         throw new Error("Usuário não autenticado");
       }
       
+      // Toggle the like state
       if (userLiked) {
-        // Remover like
-        const { error } = await supabase
-          .from('lesson_likes')
-          .delete()
-          .eq('lesson_id', lesson.id)
-          .eq('user_id', userId);
-        
-        if (error) throw error;
-        
         setLikes(prev => Math.max(0, prev - 1));
         setUserLiked(false);
         
@@ -206,17 +169,6 @@ export const useLessonData = (lessonId: string | undefined) => {
           description: 'Você removeu seu like desta aula',
         });
       } else {
-        // Adicionar like
-        const { error } = await supabase
-          .from('lesson_likes')
-          .insert({
-            lesson_id: lesson.id,
-            user_id: userId,
-            created_at: new Date().toISOString()
-          });
-        
-        if (error) throw error;
-        
         setLikes(prev => prev + 1);
         setUserLiked(true);
         
