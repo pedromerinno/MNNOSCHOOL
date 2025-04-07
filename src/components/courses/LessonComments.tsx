@@ -75,7 +75,9 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
     try {
       setSubmitting(true);
       setConnectionError(false);
-      const user = (await supabase.auth.getUser()).data.user;
+      
+      // Update to use optional chaining and provide a default empty object
+      const { data: { user } = {} } = await supabase.auth.getUser();
       
       if (!user) {
         throw new Error('Usuário não autenticado');
