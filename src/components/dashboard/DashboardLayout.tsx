@@ -12,7 +12,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const currentYear = new Date().getFullYear();
   
   return (
-    <div className="min-h-screen bg-background custom-cursor-area flex flex-col">
+    <div className="min-h-screen bg-[#F8F7F4] dark:bg-gray-900 flex flex-col">
       <DashboardHeader />
       <main className="flex-1 container mx-auto px-4 py-6">
         {children}
