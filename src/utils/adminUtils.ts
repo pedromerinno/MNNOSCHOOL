@@ -33,21 +33,7 @@ export const makeUserAdmin = async (targetEmail: string): Promise<boolean> => {
   try {
     console.log(`Attempting to make ${targetEmail} an admin...`);
     
-    // Try different approaches to find the user
-    
-    // 1. Try to find the user via auth API (will need admin privileges)
-    const { data: authUsers, error: authError } = await supabase
-      .from('auth')
-      .select('id')
-      .ilike('email', targetEmail)
-      .limit(1);
-    
-    if (!authError && authUsers && authUsers.length > 0) {
-      console.log(`Found user by email in auth: ${authUsers[0].id}`);
-      return await setAdminStatusById(authUsers[0].id, true);
-    }
-    
-    // 2. Try to find by profile with email as display_name (exact match)
+    // First try to find by email-like display_name (exact match)
     const { data: exactProfiles, error: exactError } = await supabase
       .from('profiles')
       .select('id')
@@ -59,7 +45,7 @@ export const makeUserAdmin = async (targetEmail: string): Promise<boolean> => {
       return await setAdminStatusById(exactProfiles[0].id, true);
     }
     
-    // 3. Try to find by display_name that might match the email username part
+    // Try to find by display_name that might match the email username part
     const displayName = targetEmail.split('@')[0];
     
     const { data: profiles, error } = await supabase
@@ -74,7 +60,7 @@ export const makeUserAdmin = async (targetEmail: string): Promise<boolean> => {
     }
     
     if (!profiles || profiles.length === 0) {
-      // 4. As a last resort, try to find any profile that contains part of the email
+      // As a last resort, try to find any profile that contains part of the email
       const { data: anyProfiles, error: anyError } = await supabase
         .from('profiles')
         .select('id, display_name')
