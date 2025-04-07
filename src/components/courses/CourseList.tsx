@@ -32,23 +32,19 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
       try {
         setLoading(true);
         
-        // Fetch all courses first
-        let { data: allCourses, error: coursesError } = await supabase
+        // Get all courses first
+        const { data: allCourses, error: coursesError } = await supabase
           .from('courses')
-          .select(`
-            id, 
-            title, 
-            description, 
-            image_url, 
-            instructor
-          `);
+          .select('id, title, description, image_url, instructor');
         
         if (coursesError) {
           throw coursesError;
         }
 
-        // Get course progress for the user
+        // Get user ID
         const userId = (await supabase.auth.getUser()).data.user?.id || '';
+        
+        // Get user's course progress
         const { data: progressData, error: progressError } = await supabase
           .from('user_course_progress')
           .select('course_id, progress, completed')
@@ -58,9 +54,11 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
           console.error('Error fetching progress:', progressError);
         }
         
-        // If a company is selected, filter courses by that company
-        if (selectedCompany && allCourses) {
-          // Query the company_courses table separately to avoid ambiguous column references
+        // Get filtered courses if a company is selected
+        let filteredCourses = allCourses || [];
+        
+        if (selectedCompany) {
+          // Get company courses without ambiguous reference
           const { data: companyCourses, error: companyCoursesError } = await supabase
             .from('company_courses')
             .select('course_id')
@@ -69,50 +67,44 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
           if (companyCoursesError) {
             console.error('Error fetching company courses:', companyCoursesError);
           } else if (companyCourses) {
-            // Extract the course IDs that this company has access to
+            // Create an array of course IDs for this company
             const companyCourseIds = companyCourses.map(cc => cc.course_id);
-            // Filter the courses by those IDs
-            allCourses = allCourses.filter(course => companyCourseIds.includes(course.id));
-          }
-        }
-        
-        // Transform the data to add progress information
-        let formattedCourses: Course[] = [];
-        
-        if (allCourses) {
-          formattedCourses = allCourses.map(course => {
-            const userProgress = progressData?.find(p => p.course_id === course.id);
-            const progress = userProgress?.progress || 0;
-            const completed = userProgress?.completed || false;
             
-            return {
-              id: course.id,
-              title: course.title,
-              description: course.description,
-              image_url: course.image_url,
-              instructor: course.instructor,
-              progress,
-              completed
-            };
-          });
-          
-          // Apply filtering if specified
-          if (filter === 'in-progress') {
-            formattedCourses = formattedCourses.filter(course => 
-              (course.progress || 0) > 0 && !(course.completed || false)
-            );
-          } else if (filter === 'completed') {
-            formattedCourses = formattedCourses.filter(course => 
-              course.completed || false
-            );
-          } else if (filter === 'not-started') {
-            formattedCourses = formattedCourses.filter(course => 
-              (course.progress || 0) === 0
-            );
+            // Filter out courses that don't belong to this company
+            filteredCourses = allCourses?.filter(course => 
+              companyCourseIds.includes(course.id)
+            ) || [];
           }
         }
         
-        setCourses(formattedCourses);
+        // Add progress information to the courses
+        const formattedCourses = filteredCourses.map(course => {
+          const userProgress = progressData?.find(progress => progress.course_id === course.id);
+          return {
+            ...course,
+            progress: userProgress?.progress || 0,
+            completed: userProgress?.completed || false
+          };
+        });
+        
+        // Apply the filter if specified
+        let finalCourses = formattedCourses;
+        
+        if (filter === 'in-progress') {
+          finalCourses = formattedCourses.filter(course => 
+            (course.progress || 0) > 0 && !(course.completed || false)
+          );
+        } else if (filter === 'completed') {
+          finalCourses = formattedCourses.filter(course => 
+            course.completed || false
+          );
+        } else if (filter === 'not-started') {
+          finalCourses = formattedCourses.filter(course => 
+            (course.progress || 0) === 0
+          );
+        }
+        
+        setCourses(finalCourses);
       } catch (error: any) {
         console.error('Error fetching courses:', error);
         toast({
