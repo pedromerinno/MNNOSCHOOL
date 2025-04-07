@@ -1,14 +1,9 @@
 
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
 import { Search } from "lucide-react";
 
 export const DashboardHeader = () => {
-  const { user, userProfile } = useAuth();
-
   return (
-    <div className="container mx-auto px-4 py-4 border-b border-gray-100 dark:border-gray-800">
+    <div className="container mx-auto px-4 py-4 border-b border-gray-100 dark:border-gray-800 bg-background">
       <div className="flex items-center justify-between">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />

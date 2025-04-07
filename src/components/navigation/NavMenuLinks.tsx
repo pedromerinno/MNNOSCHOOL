@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,16 +16,14 @@ export const NavMenuLinks = () => {
   const { user, userProfile } = useAuth();
   const location = useLocation();
   
-  // Define the function before using it
+  const isAdmin = userProfile?.isAdmin === true;
+
   const isCurrentPage = (path: string) => {
     if (path === '/') {
       return location.pathname === '/' || location.pathname === '/home';
     }
     return location.pathname === path;
   };
-
-  // Determine if the current path is a course-related page
-  const isCourseRelatedPage = location.pathname.includes('/courses');
 
   return (
     <nav>
@@ -126,7 +123,7 @@ export const NavMenuLinks = () => {
             <Badge variant="beta" className="ml-2 text-xs px-2 py-1">beta</Badge>
           </Link>
         </li>
-        {userProfile?.isAdmin === true && !isCourseRelatedPage && (
+        {isAdmin && (
           <li>
             <Link 
               to="/admin" 

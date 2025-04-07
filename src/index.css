@@ -7,7 +7,7 @@
 
 @layer base {
   :root {
-    --background: 51 25% 97%; /* Converted F8F7F4 to HSL */
+    --background: 51 25% 97%; /* F8F7F4 in HSL */
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;

@@ -5,9 +5,10 @@ import { useCompanies } from "@/hooks/useCompanies";
 
 interface DashboardLayoutProps {
   children: ReactNode;
+  fullWidth?: boolean;
 }
 
-export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
+export const DashboardLayout = ({ children, fullWidth = false }: DashboardLayoutProps) => {
   const { selectedCompany } = useCompanies();
   const currentYear = new Date().getFullYear();
   
@@ -15,7 +16,9 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col">
       <DashboardHeader />
       <main className="flex-1">
-        {children}
+        <div className={fullWidth ? "w-full" : "container mx-auto px-4 lg:px-8"}>
+          {children}
+        </div>
       </main>
       <footer className="py-4 text-center text-sm text-gray-500">
         <div className="container mx-auto px-4">
