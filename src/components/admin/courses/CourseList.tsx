@@ -118,25 +118,14 @@ export const CourseList: React.FC<CourseListProps> = ({
       </Dialog>
 
       {/* Lessons Manager Dialog */}
-      <Dialog open={isLessonsDialogOpen} onOpenChange={setIsLessonsDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              Gerenciar Aulas para {selectedCourse?.title}
-            </DialogTitle>
-            <DialogDescription>
-              Adicione, edite ou remova aulas para este curso.
-            </DialogDescription>
-          </DialogHeader>
-          {selectedCourse && (
-            <LessonManager
-              courseId={selectedCourse.id}
-              courseTitle={selectedCourse.title}
-              onClose={() => setIsLessonsDialogOpen(false)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      {selectedCourse && (
+        <LessonManager
+          courseId={selectedCourse.id}
+          courseTitle={selectedCourse.title}
+          onClose={() => setIsLessonsDialogOpen(false)}
+          open={isLessonsDialogOpen}
+        />
+      )}
     </div>
   );
 };
