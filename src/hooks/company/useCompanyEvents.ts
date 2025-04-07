@@ -1,37 +1,23 @@
 
-import { useEffect } from "react";
+import { Dispatch, SetStateAction, useEffect } from "react";
 import { Company } from "@/types/company";
 
+/**
+ * Hook that listens for global company events and updates the selected company
+ */
 export const useCompanyEvents = (
-  setSelectedCompany: React.Dispatch<React.SetStateAction<Company | null>>
+  setSelectedCompany: Dispatch<SetStateAction<Company | null>>
 ) => {
-  /**
-   * Set up a listener for company selection events
-   */
   useEffect(() => {
-    const handleCompanySelected = (event: CustomEvent) => {
-      const { company } = event.detail;
-      if (company) {
-        setSelectedCompany(company);
-      }
+    const handleCompanySelection = (e: CustomEvent<{ userId: string; company: Company }>) => {
+      console.log('Company selection event received', e.detail.company.nome);
+      setSelectedCompany(e.detail.company);
     };
 
-    window.addEventListener('company-selected', handleCompanySelected as EventListener);
+    window.addEventListener('company-selected', handleCompanySelection as EventListener);
     
     return () => {
-      window.removeEventListener('company-selected', handleCompanySelected as EventListener);
+      window.removeEventListener('company-selected', handleCompanySelection as EventListener);
     };
   }, [setSelectedCompany]);
-
-  /**
-   * Dispatch an event when a company is selected
-   */
-  const dispatchCompanySelected = (userId: string, company: Company) => {
-    const navEvent = new CustomEvent('company-selected', { 
-      detail: { userId, company } 
-    });
-    window.dispatchEvent(navEvent);
-  };
-
-  return { dispatchCompanySelected };
 };
