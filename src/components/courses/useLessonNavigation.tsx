@@ -16,10 +16,10 @@ export const useLessonNavigation = (courseId: string | undefined) => {
       setProcessingLesson(true);
       const userId = (await supabase.auth.getUser()).data.user?.id;
       if (!userId) {
-        throw new Error("User not authenticated");
+        throw new Error("Usuário não autenticado");
       }
       
-      // Mark the lesson as started
+      // Marcar a aula como iniciada
       const { error } = await supabase
         .from('user_lesson_progress')
         .upsert({
@@ -27,15 +27,17 @@ export const useLessonNavigation = (courseId: string | undefined) => {
           lesson_id: lessonId,
           completed: false,
           last_accessed: new Date().toISOString()
+        }, {
+          onConflict: 'user_id,lesson_id'
         });
       
       if (error) throw error;
       
-      // Navigate to the lesson
+      // Navegar para a aula
       navigate(`/courses/${courseId}/lessons/${lessonId}`);
       
     } catch (error: any) {
-      console.error('Error starting lesson:', error);
+      console.error('Erro ao iniciar aula:', error);
       toast({
         title: 'Erro ao iniciar aula',
         description: error.message || 'Ocorreu um erro ao iniciar a aula',
