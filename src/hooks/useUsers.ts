@@ -57,6 +57,7 @@ export function useUsers() {
         setLoading(true);
       }
       
+      // First, get the profiles with basic information
       const { data: profiles, error } = await supabase
         .from('profiles')
         .select('id, display_name, is_admin, created_at')
@@ -66,41 +67,52 @@ export function useUsers() {
         throw error;
       }
       
+      // Map the profiles to our UserProfile interface
       let formattedUsers: UserProfile[] = profiles.map(profile => ({
         id: profile.id,
-        email: null,
+        email: null, // Will try to populate this in the next step
         display_name: profile.display_name || `User ${profile.id.substring(0, 6)}`,
         is_admin: profile.is_admin
       }));
       
-      // Attempt to fetch emails via direct REST API call to work around permission issues
+      // Attempt to get emails from the auth.users table
+      // This is a workaround as direct joins might have permission issues
       try {
-        // Use the REST API to fetch email information
-        const { data: session } = await supabase.auth.getSession();
-        const accessToken = session?.session?.access_token;
+        // Get the current session
+        const { data: { session } } = await supabase.auth.getSession();
         
-        const adminResponse = await fetch('https://gswvicwtswokyfbgoxps.supabase.co/rest/v1/profiles?select=id,email:auth.users!inner(email)', {
-          method: 'GET',
-          headers: {
-            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdzd3ZpY3d0c3dva3lmYmdveHBzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM5MDQ4MTksImV4cCI6MjA1OTQ4MDgxOX0.kyN2Qq3v9H_ENVzSH4QfGwUJLCVEXIo44-MQImFQ_Z0',
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (adminResponse.ok) {
-          const adminData = await adminResponse.json();
-          
-          formattedUsers = formattedUsers.map(user => {
-            const matchedUser = adminData.find((item: any) => item.id === user.id);
-            if (matchedUser && matchedUser.email && matchedUser.email[0]) {
-              return { ...user, email: matchedUser.email[0].email };
+        if (session) {
+          // Use the REST API to directly fetch the relationship between profiles and user emails
+          const response = await fetch(
+            'https://gswvicwtswokyfbgoxps.supabase.co/rest/v1/profiles?select=id,email:auth.users(email)',
+            {
+              headers: {
+                'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdzd3ZpY3d0c3dva3lmYmdveHBzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM5MDQ4MTksImV4cCI6MjA1OTQ4MDgxOX0.kyN2Qq3v9H_ENVzSH4QfGwUJLCVEXIo44-MQImFQ_Z0',
+                'Authorization': `Bearer ${session.access_token}`,
+                'Content-Type': 'application/json'
+              }
             }
-            return user;
-          });
+          );
+          
+          if (response.ok) {
+            const userData = await response.json();
+            
+            // Update our formatted users with email data if available
+            formattedUsers = formattedUsers.map(user => {
+              const matchingUserData = userData.find((item: any) => item.id === user.id);
+              if (matchingUserData && 
+                  matchingUserData.email && 
+                  Array.isArray(matchingUserData.email) && 
+                  matchingUserData.email.length > 0 && 
+                  matchingUserData.email[0].email) {
+                return { ...user, email: matchingUserData.email[0].email };
+              }
+              return user;
+            });
+          }
         }
-      } catch (adminError) {
-        console.warn('Unable to fetch user emails, using display names only:', adminError);
+      } catch (emailError) {
+        console.warn('Unable to fetch user emails, using display names only:', emailError);
       }
       
       setUsers(formattedUsers);
