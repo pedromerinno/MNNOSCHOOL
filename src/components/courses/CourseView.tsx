@@ -1,248 +1,321 @@
 
-import { useState } from "react";
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
-import { CheckCircle, Clock, FileText, Play, Users } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowLeft, Play, CheckCircle, Clock, Book } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
-interface Lesson {
+type Lesson = {
   id: string;
   title: string;
-  duration: string;
+  description: string | null;
+  duration: string | null;
+  type: string;
+  order_index: number;
   completed: boolean;
-  type: "video" | "text" | "quiz";
-}
+};
 
-interface Module {
+type Course = {
   id: string;
   title: string;
+  description: string | null;
+  image_url: string | null;
+  instructor: string | null;
   lessons: Lesson[];
-}
-
-interface CourseViewProps {
-  id: string;
-  title: string;
-  instructor: string;
-  description: string;
-  image: string;
   progress: number;
-  modules: Module[];
-}
+  completed: boolean;
+};
 
-export const CourseView = ({
-  id,
-  title,
-  instructor,
-  description,
-  image,
-  progress,
-  modules,
-}: CourseViewProps) => {
-  const [currentModule, setCurrentModule] = useState(modules[0]);
-  const [currentLesson, setCurrentLesson] = useState(modules[0].lessons[0]);
+export const CourseView: React.FC = () => {
+  const { courseId } = useParams<{ courseId: string }>();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [course, setCourse] = useState<Course | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const totalLessons = modules.reduce(
-    (count, module) => count + module.lessons.length,
-    0
-  );
-  
-  const completedLessons = modules.reduce(
-    (count, module) =>
-      count + module.lessons.filter((lesson) => lesson.completed).length,
-    0
-  );
+  useEffect(() => {
+    const fetchCourse = async () => {
+      if (!courseId) return;
 
-  return (
-    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-      <div className="aspect-video relative">
-        <img
-          src={image}
-          alt={title}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-          <Button
-            className="w-16 h-16 rounded-full bg-merinno-blue hover:bg-merinno-blue/90"
-            size="icon"
-          >
-            <Play className="h-6 w-6" fill="white" />
-          </Button>
+      try {
+        setLoading(true);
+        
+        // Fetch the course
+        const { data: courseData, error: courseError } = await supabase
+          .from('courses')
+          .select(`
+            id, 
+            title, 
+            description, 
+            image_url, 
+            instructor
+          `)
+          .eq('id', courseId)
+          .single();
+        
+        if (courseError) {
+          throw courseError;
+        }
+        
+        // Fetch the lessons
+        const { data: lessonsData, error: lessonsError } = await supabase
+          .from('lessons')
+          .select(`
+            id, 
+            title, 
+            description, 
+            duration, 
+            type, 
+            order_index,
+            user_lesson_progress (completed)
+          `)
+          .eq('course_id', courseId)
+          .order('order_index', { ascending: true });
+        
+        if (lessonsError) {
+          throw lessonsError;
+        }
+        
+        // Fetch user progress for this course
+        const { data: progressData, error: progressError } = await supabase
+          .from('user_course_progress')
+          .select('progress, completed')
+          .eq('course_id', courseId)
+          .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+          .maybeSingle();
+        
+        if (progressError) {
+          console.error('Error fetching progress:', progressError);
+        }
+        
+        // Format the lessons
+        const formattedLessons = lessonsData.map(lesson => ({
+          id: lesson.id,
+          title: lesson.title,
+          description: lesson.description,
+          duration: lesson.duration,
+          type: lesson.type,
+          order_index: lesson.order_index,
+          completed: lesson.user_lesson_progress?.[0]?.completed || false
+        }));
+        
+        // Calculate progress if not available
+        let progress = 0;
+        let completed = false;
+        
+        if (progressData) {
+          progress = progressData.progress;
+          completed = progressData.completed;
+        } else {
+          // Calculate progress based on completed lessons
+          const completedLessons = formattedLessons.filter(lesson => lesson.completed).length;
+          if (formattedLessons.length > 0) {
+            progress = Math.round((completedLessons / formattedLessons.length) * 100);
+          }
+          completed = progress === 100;
+        }
+        
+        setCourse({
+          ...courseData,
+          lessons: formattedLessons,
+          progress,
+          completed
+        });
+        
+      } catch (error: any) {
+        console.error('Error fetching course:', error);
+        toast({
+          title: 'Erro ao carregar curso',
+          description: error.message || 'Ocorreu um erro ao buscar os dados do curso',
+          variant: 'destructive',
+        });
+        navigate('/courses'); // Redirect back to courses page on error
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchCourse();
+  }, [courseId, navigate, toast]);
+
+  const startLesson = async (lessonId: string) => {
+    try {
+      // Mark the lesson as started
+      const { error } = await supabase
+        .from('user_lesson_progress')
+        .upsert({
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+          lesson_id: lessonId,
+          completed: false,
+          last_accessed: new Date().toISOString()
+        });
+      
+      if (error) throw error;
+      
+      // Navigate to the lesson
+      navigate(`/courses/${courseId}/lessons/${lessonId}`);
+      
+    } catch (error: any) {
+      console.error('Error starting lesson:', error);
+      toast({
+        title: 'Erro ao iniciar aula',
+        description: error.message || 'Ocorreu um erro ao iniciar a aula',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Button variant="ghost" className="mb-6" onClick={() => navigate('/courses')}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Voltar para Cursos
+        </Button>
+        
+        <Skeleton className="h-8 w-2/3 mb-4" />
+        <Skeleton className="h-4 w-1/2 mb-8" />
+        
+        <div className="grid md:grid-cols-3 gap-6">
+          <div className="md:col-span-2">
+            <Skeleton className="h-64 w-full mb-6" />
+            <Skeleton className="h-4 w-full mb-2" />
+            <Skeleton className="h-4 w-full mb-2" />
+            <Skeleton className="h-4 w-2/3" />
+          </div>
+          
+          <div>
+            <Skeleton className="h-10 w-full mb-4" />
+            <Skeleton className="h-16 w-full mb-2" />
+            <Skeleton className="h-16 w-full mb-2" />
+            <Skeleton className="h-16 w-full" />
+          </div>
         </div>
       </div>
+    );
+  }
+
+  if (!course) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <Button variant="ghost" className="mb-6" onClick={() => navigate('/courses')}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Voltar para Cursos
+        </Button>
+        
+        <h1 className="text-2xl font-semibold mb-4">Curso não encontrado</h1>
+        <p className="mb-8">O curso que você está procurando não existe ou não está disponível para você.</p>
+        
+        <Button onClick={() => navigate('/courses')}>
+          Ver todos os cursos
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <Button variant="ghost" className="mb-6" onClick={() => navigate('/courses')}>
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Voltar para Cursos
+      </Button>
       
-      <div className="p-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">{title}</h1>
-          <p className="text-gray-500 mb-4">{instructor}</p>
-          
-          <div className="mb-4">
-            <div className="flex justify-between text-sm text-gray-500 mb-1">
-              <span>
-                {completedLessons} de {totalLessons} aulas completas ({progress}%)
-              </span>
+      <h1 className="text-3xl font-bold mb-2">{course.title}</h1>
+      {course.instructor && (
+        <p className="text-gray-600 dark:text-gray-400 mb-6">
+          Instrutor: {course.instructor}
+        </p>
+      )}
+      
+      <div className="grid md:grid-cols-3 gap-8">
+        <div className="md:col-span-2">
+          {course.image_url ? (
+            <img 
+              src={course.image_url} 
+              alt={course.title} 
+              className="w-full h-64 object-cover rounded-md mb-6" 
+            />
+          ) : (
+            <div className="w-full h-64 flex items-center justify-center bg-gray-200 dark:bg-gray-800 rounded-md mb-6">
+              <Book className="h-16 w-16 text-gray-400" />
             </div>
-            <Progress value={progress} className="h-2" />
+          )}
+          
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold mb-3">Sobre o Curso</h2>
+            <p className="text-gray-600 dark:text-gray-400">
+              {course.description || 'Nenhuma descrição disponível.'}
+            </p>
           </div>
           
-          <div className="flex space-x-4 text-sm text-gray-500">
-            <div className="flex items-center">
-              <Clock className="h-4 w-4 mr-1" />
-              <span>10h 30m total</span>
+          {course.progress > 0 && (
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold mb-3">Seu Progresso</h2>
+              <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mb-2">
+                <div 
+                  className="bg-blue-600 h-2.5 rounded-full" 
+                  style={{ width: `${course.progress}%` }}
+                ></div>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {course.progress}% completo
+              </p>
             </div>
-            <div className="flex items-center">
-              <FileText className="h-4 w-4 mr-1" />
-              <span>{totalLessons} aulas</span>
-            </div>
-            <div className="flex items-center">
-              <Users className="h-4 w-4 mr-1" />
-              <span>158 alunos</span>
-            </div>
-          </div>
+          )}
         </div>
         
-        <Tabs defaultValue="content" className="w-full">
-          <TabsList>
-            <TabsTrigger value="content">Conteúdo</TabsTrigger>
-            <TabsTrigger value="about">Sobre</TabsTrigger>
-            <TabsTrigger value="resources">Recursos</TabsTrigger>
-            <TabsTrigger value="discussion">Discussões</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="content">
-            <div className="mt-4">
-              {modules.map((module) => (
-                <div
-                  key={module.id}
-                  className="mb-4 border border-gray-200 rounded-lg overflow-hidden"
-                >
-                  <div
-                    className={`p-4 flex justify-between items-center cursor-pointer ${
-                      currentModule.id === module.id
-                        ? "bg-merinno-blue/10"
-                        : "bg-gray-50"
+        <div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Conteúdo do Curso</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {course.lessons.map(lesson => (
+                  <div 
+                    key={lesson.id}
+                    className={`p-3 rounded-md border flex items-start ${
+                      lesson.completed ? 'bg-green-50 border-green-100 dark:bg-green-900/20 dark:border-green-800' : 'border-gray-200 dark:border-gray-700'
                     }`}
-                    onClick={() => setCurrentModule(module)}
                   >
-                    <h3 className="font-medium">{module.title}</h3>
-                    <span className="text-sm text-gray-500">
-                      {module.lessons.filter((l) => l.completed).length}/
-                      {module.lessons.length} aulas
-                    </span>
-                  </div>
-                  
-                  {currentModule.id === module.id && (
-                    <div className="border-t border-gray-200">
-                      {module.lessons.map((lesson) => (
-                        <div
-                          key={lesson.id}
-                          className={`p-4 flex justify-between items-center border-b border-gray-200 last:border-b-0 cursor-pointer hover:bg-gray-50 ${
-                            currentLesson.id === lesson.id
-                              ? "bg-merinno-blue/5"
-                              : ""
-                          }`}
-                          onClick={() => setCurrentLesson(lesson)}
-                        >
-                          <div className="flex items-center">
-                            {lesson.completed ? (
-                              <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
-                            ) : (
-                              <div className="h-5 w-5 border border-gray-300 rounded-full mr-3" />
-                            )}
-                            <div>
-                              <h4 className="font-medium text-sm">
-                                {lesson.title}
-                              </h4>
-                              <span className="text-xs text-gray-500">
-                                {lesson.duration}
-                              </span>
-                            </div>
-                          </div>
-                          
-                          <div>
-                            {lesson.type === "video" && (
-                              <Play className="h-4 w-4 text-gray-500" />
-                            )}
-                            {lesson.type === "text" && (
-                              <FileText className="h-4 w-4 text-gray-500" />
-                            )}
-                            {lesson.type === "quiz" && (
-                              <div className="text-xs font-medium bg-merinno-blue/10 text-merinno-blue px-2 py-1 rounded">
-                                Quiz
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
+                    <div className="mr-3 mt-1">
+                      {lesson.completed ? (
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                      ) : (
+                        <Play className="h-5 w-5 text-gray-400" />
+                      )}
                     </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="about">
-            <div className="mt-4 prose max-w-none">
-              <p>{description}</p>
-              <h3>O que você vai aprender</h3>
-              <ul>
-                <li>Entender os conceitos fundamentais de marketing digital</li>
-                <li>Criar e gerenciar campanhas em redes sociais</li>
-                <li>Analisar métricas e otimizar resultados</li>
-                <li>Implementar estratégias de SEO e conteúdo</li>
-              </ul>
-              <h3>Requisitos</h3>
-              <ul>
-                <li>Não é necessário experiência prévia</li>
-                <li>Computador com acesso à internet</li>
-                <li>Vontade de aprender e praticar</li>
-              </ul>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="resources">
-            <div className="mt-4">
-              <p className="text-gray-500 mb-4">
-                Materiais complementares para o curso
-              </p>
-              <div className="space-y-2">
-                <a
-                  href="#"
-                  className="block p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
-                >
-                  <div className="flex items-center text-gray-900">
-                    <FileText className="h-5 w-5 mr-3 text-merinno-blue" />
-                    <span>Guia completo de Marketing Digital.pdf</span>
+                    <div className="flex-1">
+                      <h3 className="font-medium">{lesson.title}</h3>
+                      
+                      <div className="flex items-center text-sm text-gray-500 mt-1">
+                        <span className="capitalize mr-2">{lesson.type}</span>
+                        {lesson.duration && (
+                          <>
+                            <Clock className="h-3 w-3 mr-1" />
+                            <span>{lesson.duration}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <Button
+                      variant={lesson.completed ? "outline" : "default"}
+                      size="sm"
+                      onClick={() => startLesson(lesson.id)}
+                      className="ml-2 flex-shrink-0"
+                    >
+                      {lesson.completed ? "Revisar" : "Iniciar"}
+                    </Button>
                   </div>
-                </a>
-                <a
-                  href="#"
-                  className="block p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
-                >
-                  <div className="flex items-center text-gray-900">
-                    <FileText className="h-5 w-5 mr-3 text-merinno-blue" />
-                    <span>Planilha de métricas.xlsx</span>
-                  </div>
-                </a>
+                ))}
               </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="discussion">
-            <div className="mt-4">
-              <p className="text-gray-500 mb-4">
-                Participe da discussão com outros alunos
-              </p>
-              <div className="border border-gray-200 rounded-lg p-6 text-center">
-                <p className="text-gray-500">
-                  Nenhuma discussão iniciada. Seja o primeiro a perguntar!
-                </p>
-                <Button className="mt-4 bg-merinno-blue hover:bg-merinno-blue/90">
-                  Nova discussão
-                </Button>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

@@ -9,6 +9,72 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      company_courses: {
+        Row: {
+          company_id: string
+          course_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          company_id: string
+          course_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          company_id?: string
+          course_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_courses_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_courses_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      courses: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          instructor: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          instructor?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          instructor?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       empresas: {
         Row: {
           cor_principal: string | null
@@ -54,6 +120,56 @@ export type Database = {
         }
         Relationships: []
       }
+      lessons: {
+        Row: {
+          completed: boolean | null
+          content: string | null
+          course_id: string
+          created_at: string
+          description: string | null
+          duration: string | null
+          id: string
+          order_index: number
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          completed?: boolean | null
+          content?: string | null
+          course_id: string
+          created_at?: string
+          description?: string | null
+          duration?: string | null
+          id?: string
+          order_index: number
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          completed?: boolean | null
+          content?: string | null
+          course_id?: string
+          created_at?: string
+          description?: string | null
+          duration?: string | null
+          id?: string
+          order_index?: number
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lessons_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar: string | null
@@ -80,6 +196,47 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      user_course_progress: {
+        Row: {
+          completed: boolean
+          course_id: string
+          created_at: string
+          id: string
+          last_accessed: string
+          progress: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          course_id: string
+          created_at?: string
+          id?: string
+          last_accessed?: string
+          progress?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          course_id?: string
+          created_at?: string
+          id?: string
+          last_accessed?: string
+          progress?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_course_progress_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_empresa: {
         Row: {
@@ -117,12 +274,61 @@ export type Database = {
           },
         ]
       }
+      user_lesson_progress: {
+        Row: {
+          completed: boolean
+          created_at: string
+          id: string
+          last_accessed: string
+          lesson_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          last_accessed?: string
+          lesson_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          last_accessed?: string
+          lesson_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_lesson_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      user_belongs_to_company: {
+        Args: {
+          company_id: string
+        }
+        Returns: boolean
+      }
+      user_can_access_course: {
+        Args: {
+          course_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

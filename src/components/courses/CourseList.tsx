@@ -1,81 +1,130 @@
 
-import { CourseCard } from "./CourseCard";
+import React, { useEffect, useState } from 'react';
+import { CourseCard } from './CourseCard';
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useCompanies } from '@/hooks/useCompanies';
+import { useToast } from '@/hooks/use-toast';
 
-// Example course data
-const courses = [
-  {
-    id: "1",
-    title: "Introdução ao Marketing Digital",
-    instructor: "Maria Silva",
-    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-    progress: 75,
-    duration: "10h 30m",
-    lessonsCount: 12,
-  },
-  {
-    id: "2",
-    title: "Fundamentos de UX/UI Design",
-    instructor: "Carlos Oliveira",
-    image: "https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-    progress: 35,
-    duration: "8h 45m",
-    lessonsCount: 10,
-  },
-  {
-    id: "3",
-    title: "Programação Web para Iniciantes",
-    instructor: "Lucas Mendes",
-    image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-    progress: 10,
-    duration: "15h 20m",
-    lessonsCount: 18,
-  },
-  {
-    id: "4",
-    title: "Gestão de Projetos Ágeis",
-    instructor: "Ana Ferreira",
-    image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-    progress: 0,
-    duration: "12h 15m",
-    lessonsCount: 14,
-  },
-];
-
-interface CourseListProps {
+export type Course = {
+  id: string;
   title: string;
-  filter?: "all" | "in-progress" | "completed" | "not-started";
-}
+  description: string | null;
+  image_url: string | null;
+  instructor: string | null;
+  progress?: number;
+  completed?: boolean;
+};
 
-export const CourseList = ({ title, filter = "all" }: CourseListProps) => {
-  // Filter courses based on the filter prop
-  const filteredCourses = courses.filter((course) => {
-    if (filter === "all") return true;
-    if (filter === "in-progress") return course.progress > 0 && course.progress < 100;
-    if (filter === "completed") return course.progress === 100;
-    if (filter === "not-started") return course.progress === 0;
-    return true;
-  });
+type CourseListProps = {
+  title: string;
+  filter?: 'all' | 'in-progress' | 'completed' | 'not-started';
+};
+
+export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' }) => {
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { selectedCompany } = useCompanies();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch courses based on the selected company or all courses if admin
+        let query = supabase.from('courses').select(`
+          id, 
+          title, 
+          description, 
+          image_url, 
+          instructor,
+          user_course_progress (progress, completed)
+        `);
+        
+        // If a company is selected, filter courses for that company
+        if (selectedCompany) {
+          query = query.eq('company_courses.company_id', selectedCompany.id)
+            .eq('user_course_progress.user_id', supabase.auth.getUser())
+            .limit(10);
+        }
+        
+        const { data, error } = await query;
+        
+        if (error) {
+          throw error;
+        }
+        
+        // Transform the data to match our Course type
+        let formattedCourses: Course[] = [];
+        
+        if (data) {
+          formattedCourses = data.map(course => {
+            const progress = course.user_course_progress?.[0]?.progress || 0;
+            const completed = course.user_course_progress?.[0]?.completed || false;
+            
+            return {
+              id: course.id,
+              title: course.title,
+              description: course.description,
+              image_url: course.image_url,
+              instructor: course.instructor,
+              progress,
+              completed
+            };
+          });
+          
+          // Apply filtering if specified
+          if (filter === 'in-progress') {
+            formattedCourses = formattedCourses.filter(course => 
+              (course.progress || 0) > 0 && !(course.completed || false)
+            );
+          } else if (filter === 'completed') {
+            formattedCourses = formattedCourses.filter(course => 
+              course.completed || false
+            );
+          } else if (filter === 'not-started') {
+            formattedCourses = formattedCourses.filter(course => 
+              (course.progress || 0) === 0
+            );
+          }
+        }
+        
+        setCourses(formattedCourses);
+      } catch (error: any) {
+        console.error('Error fetching courses:', error);
+        toast({
+          title: 'Erro ao carregar cursos',
+          description: error.message || 'Ocorreu um erro ao buscar os cursos',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchCourses();
+  }, [selectedCompany, filter, toast]);
 
   return (
-    <div className="mb-10">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
-        {filteredCourses.length > 4 && (
-          <a href="#" className="text-sm text-merinno-blue hover:underline">
-            Ver todos
-          </a>
-        )}
-      </div>
+    <div>
+      <h2 className="text-xl font-medium mb-4">{title}</h2>
       
-      {filteredCourses.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {filteredCourses.map((course) => (
-            <CourseCard key={course.id} {...course} />
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(3)].map((_, i) => (
+            <Skeleton key={i} className="h-64 w-full rounded-md" />
+          ))}
+        </div>
+      ) : courses.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {courses.map(course => (
+            <CourseCard key={course.id} course={course} />
           ))}
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-lg p-6 text-center">
-          <p className="text-gray-500">Nenhum curso encontrado</p>
+        <div className="text-center py-8 text-gray-500">
+          <p>Nenhum curso encontrado com os filtros aplicados.</p>
         </div>
       )}
     </div>

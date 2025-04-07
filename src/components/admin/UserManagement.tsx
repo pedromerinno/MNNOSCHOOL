@@ -93,7 +93,7 @@ export const UserManagement = () => {
         <Button 
           onClick={handleRefresh} 
           disabled={loading || isRefreshing}
-          variant="primary"
+          variant="default"
           className="relative"
         >
           {(loading || isRefreshing) ? "Atualizando..." : "Atualizar"}
