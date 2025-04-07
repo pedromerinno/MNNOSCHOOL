@@ -4,11 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from '@/hooks/use-toast';
 import { Lesson } from '@/components/courses/CourseLessonList';
 
+// Extend the Lesson type to include the content field
+interface ExtendedLesson extends Lesson {
+  content?: string | null;
+}
+
 export const useLessons = (courseId: string) => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedLesson, setSelectedLesson] = useState<Lesson | undefined>(undefined);
+  const [selectedLesson, setSelectedLesson] = useState<ExtendedLesson | undefined>(undefined);
   const { toast } = useToast();
 
   const fetchLessons = async () => {
@@ -40,7 +45,7 @@ export const useLessons = (courseId: string) => {
     }
   };
 
-  const handleCreateLesson = async (lessonData: Omit<Lesson, 'id' | 'completed'>) => {
+  const handleCreateLesson = async (lessonData: Omit<ExtendedLesson, 'id' | 'completed'>) => {
     if (!courseId) return;
     
     setIsSubmitting(true);
@@ -79,7 +84,7 @@ export const useLessons = (courseId: string) => {
     }
   };
 
-  const handleUpdateLesson = async (lessonId: string, lessonData: Partial<Lesson>) => {
+  const handleUpdateLesson = async (lessonId: string, lessonData: Partial<ExtendedLesson>) => {
     setIsSubmitting(true);
     try {
       // Create an update object only with properties that exist in lessonData
