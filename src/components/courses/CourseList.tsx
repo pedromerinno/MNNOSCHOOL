@@ -32,27 +32,44 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
       try {
         setLoading(true);
         
-        // Fetch courses based on the selected company or all courses if admin
-        let query = supabase.from('courses').select(`
-          id, 
-          title, 
-          description, 
-          image_url, 
-          instructor,
-          user_course_progress (progress, completed)
-        `);
-        
-        // If a company is selected, filter courses for that company
-        if (selectedCompany) {
-          query = query.eq('company_courses.company_id', selectedCompany.id)
-            .eq('user_course_progress.user_id', supabase.auth.getUser())
-            .limit(10);
-        }
-        
-        const { data, error } = await query;
+        // Fetch all courses
+        let { data, error } = await supabase
+          .from('courses')
+          .select(`
+            id, 
+            title, 
+            description, 
+            image_url, 
+            instructor
+          `);
         
         if (error) {
           throw error;
+        }
+
+        // Get course progress for the user
+        const { data: progressData, error: progressError } = await supabase
+          .from('user_course_progress')
+          .select('course_id, progress, completed')
+          .eq('user_id', (await supabase.auth.getUser()).data.user?.id || '');
+          
+        if (progressError) {
+          console.error('Error fetching progress:', progressError);
+        }
+        
+        // If a company is selected, filter courses for that company
+        if (selectedCompany && data) {
+          const { data: companyCourses, error: companyCoursesError } = await supabase
+            .from('company_courses')
+            .select('course_id')
+            .eq('company_id', selectedCompany.id);
+            
+          if (companyCoursesError) {
+            console.error('Error fetching company courses:', companyCoursesError);
+          } else if (companyCourses) {
+            const companyCoursesIds = companyCourses.map(cc => cc.course_id);
+            data = data.filter(course => companyCoursesIds.includes(course.id));
+          }
         }
         
         // Transform the data to match our Course type
@@ -60,8 +77,9 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
         
         if (data) {
           formattedCourses = data.map(course => {
-            const progress = course.user_course_progress?.[0]?.progress || 0;
-            const completed = course.user_course_progress?.[0]?.completed || false;
+            const userProgress = progressData?.find(p => p.course_id === course.id);
+            const progress = userProgress?.progress || 0;
+            const completed = userProgress?.completed || false;
             
             return {
               id: course.id,

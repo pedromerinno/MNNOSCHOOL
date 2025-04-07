@@ -69,8 +69,7 @@ export const CourseView: React.FC = () => {
             description, 
             duration, 
             type, 
-            order_index,
-            user_lesson_progress (completed)
+            order_index
           `)
           .eq('course_id', courseId)
           .order('order_index', { ascending: true });
@@ -79,12 +78,23 @@ export const CourseView: React.FC = () => {
           throw lessonsError;
         }
         
+        // Fetch user progress for lessons
+        const userId = (await supabase.auth.getUser()).data.user?.id;
+        const { data: lessonProgressData, error: lessonProgressError } = await supabase
+          .from('user_lesson_progress')
+          .select('lesson_id, completed')
+          .eq('user_id', userId || '');
+        
+        if (lessonProgressError) {
+          console.error('Error fetching lesson progress:', lessonProgressError);
+        }
+        
         // Fetch user progress for this course
         const { data: progressData, error: progressError } = await supabase
           .from('user_course_progress')
           .select('progress, completed')
           .eq('course_id', courseId)
-          .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+          .eq('user_id', userId || '')
           .maybeSingle();
         
         if (progressError) {
@@ -92,14 +102,16 @@ export const CourseView: React.FC = () => {
         }
         
         // Format the lessons
-        const formattedLessons = lessonsData.map(lesson => ({
+        const formattedLessons: Lesson[] = lessonsData.map(lesson => ({
           id: lesson.id,
           title: lesson.title,
           description: lesson.description,
           duration: lesson.duration,
           type: lesson.type,
           order_index: lesson.order_index,
-          completed: lesson.user_lesson_progress?.[0]?.completed || false
+          completed: lessonProgressData?.some(progress => 
+            progress.lesson_id === lesson.id && progress.completed
+          ) || false
         }));
         
         // Calculate progress if not available
@@ -143,11 +155,16 @@ export const CourseView: React.FC = () => {
 
   const startLesson = async (lessonId: string) => {
     try {
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      if (!userId) {
+        throw new Error("User not authenticated");
+      }
+      
       // Mark the lesson as started
       const { error } = await supabase
         .from('user_lesson_progress')
         .upsert({
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          user_id: userId,
           lesson_id: lessonId,
           completed: false,
           last_accessed: new Date().toISOString()
