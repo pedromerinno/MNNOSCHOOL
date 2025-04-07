@@ -34,9 +34,7 @@ export const useCompanyUserManagement = () => {
       // Create a new relation
       const { error } = await supabase
         .from('user_empresa')
-        .insert([
-          { user_id: userId, empresa_id: companyId }
-        ]);
+        .insert({ user_id: userId, empresa_id: companyId });
       
       if (error) {
         throw new Error(`Error assigning user to company: ${error.message}`);
