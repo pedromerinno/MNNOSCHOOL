@@ -35,17 +35,80 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
   useEffect(() => {
     let isMounted = true;
     
-    // Simulate loading comments
-    const timer = setTimeout(() => {
-      if (isMounted) {
-        setLoading(false);
-        // No comments by default
-        setComments([]);
+    const fetchComments = async () => {
+      try {
+        setLoading(true);
+        
+        const { data, error } = await supabase
+          .from('lesson_comments')
+          .select(`
+            id, 
+            lesson_id, 
+            user_id, 
+            content, 
+            created_at,
+            profiles:user_id (
+              display_name,
+              avatar
+            )
+          `)
+          .eq('lesson_id', lessonId)
+          .order('created_at', { ascending: true });
+          
+        if (error) throw error;
+        
+        // Formatar os comentários com dados do perfil
+        const formattedComments = data.map(comment => ({
+          ...comment,
+          profile: {
+            username: comment.profiles?.display_name || 'Usuário',
+            avatar_url: comment.profiles?.avatar || ''
+          }
+        }));
+        
+        if (isMounted) {
+          setComments(formattedComments);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar comentários:', error);
+        if (isMounted) {
+          setLoading(false);
+          setConnectionError(true);
+        }
       }
-    }, 1000);
+    };
+    
+    fetchComments();
 
-    // Add error handling for WebSocket connection
+    // Configurar inscrição em tempo real para novos comentários
     const channel = supabase.channel('lesson_comments')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'lesson_comments',
+        filter: `lesson_id=eq.${lessonId}`
+      }, payload => {
+        // Buscar dados do usuário para o novo comentário
+        supabase
+          .from('profiles')
+          .select('display_name, avatar')
+          .eq('id', payload.new.user_id)
+          .single()
+          .then(({ data: profile }) => {
+            const newComment = {
+              ...payload.new,
+              profile: {
+                username: profile?.display_name || 'Usuário',
+                avatar_url: profile?.avatar || ''
+              }
+            };
+            
+            if (isMounted) {
+              setComments(prev => [...prev, newComment]);
+            }
+          });
+      })
       .on('system', (event) => {
         // Listen for system events like connection issues
         if (event.event === 'disconnect' && isMounted) {
@@ -63,7 +126,6 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
     
     return () => {
       isMounted = false;
-      clearTimeout(timer);
       // Clean up channel subscription to prevent memory leaks
       supabase.removeChannel(channel);
     };
@@ -76,27 +138,24 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
       setSubmitting(true);
       setConnectionError(false);
       
-      // Correctly call getUser with optional parameters
+      // Corretamente chama getUser sem parâmetros extras
       const { data, error } = await supabase.auth.getUser();
       
       if (error || !data?.user) {
         throw new Error('Usuário não autenticado');
       }
-
-      // Create a new comment in local state
-      const newCommentObj: Comment = {
-        id: Date.now().toString(),
-        lesson_id: lessonId,
-        user_id: data.user.id,
-        content: newComment,
-        created_at: new Date().toISOString(),
-        profile: {
-          username: 'Você',
-          avatar_url: ''
-        }
-      };
-
-      setComments(prev => [...prev, newCommentObj]);
+      
+      // Inserir comentário no banco de dados
+      const { error: insertError } = await supabase
+        .from('lesson_comments')
+        .insert({
+          lesson_id: lessonId,
+          user_id: data.user.id,
+          content: newComment
+        });
+        
+      if (insertError) throw insertError;
+      
       setNewComment('');
       
       toast({
@@ -126,8 +185,8 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
     });
   };
 
-  const getInitials = (userId: string) => {
-    return userId.substring(0, 2).toUpperCase();
+  const getInitials = (username: string) => {
+    return username.substring(0, 2).toUpperCase();
   };
 
   return (
@@ -156,7 +215,7 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
               <div key={comment.id} className="flex gap-3">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={comment.profile?.avatar_url || ''} />
-                  <AvatarFallback>{getInitials(comment.user_id)}</AvatarFallback>
+                  <AvatarFallback>{getInitials(comment.profile?.username || 'User')}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center justify-between">
