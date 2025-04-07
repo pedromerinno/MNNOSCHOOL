@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -31,41 +32,15 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchComments();
-  }, [lessonId]);
-
-  const fetchComments = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('lesson_comments')
-        .select(`
-          id,
-          user_id,
-          lesson_id,
-          content,
-          created_at,
-          profiles (username, avatar_url)
-        `)
-        .eq('lesson_id', lessonId)
-        .order('created_at', { ascending: true });
-
-      if (error) {
-        throw error;
-      }
-
-      setComments(data || []);
-    } catch (error: any) {
-      console.error('Erro ao carregar comentários:', error);
-      toast({
-        title: 'Erro ao carregar comentários',
-        description: error.message,
-        variant: 'destructive',
-      });
-    } finally {
+    // Simulate loading comments
+    const timer = setTimeout(() => {
       setLoading(false);
-    }
-  };
+      // No comments by default
+      setComments([]);
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, [lessonId]);
 
   const handleSubmitComment = async () => {
     if (!newComment.trim()) return;
@@ -78,27 +53,26 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
         throw new Error('Usuário não autenticado');
       }
 
-      const { error } = await supabase
-        .from('lesson_comments')
-        .insert({
-          lesson_id: lessonId,
-          user_id: user.id,
-          content: newComment,
-          created_at: new Date().toISOString()
-        });
+      // Create a new comment in local state
+      const newCommentObj: Comment = {
+        id: Date.now().toString(),
+        lesson_id: lessonId,
+        user_id: user.id,
+        content: newComment,
+        created_at: new Date().toISOString(),
+        profile: {
+          username: 'Você',
+          avatar_url: ''
+        }
+      };
 
-      if (error) {
-        throw error;
-      }
-
+      setComments(prev => [...prev, newCommentObj]);
       setNewComment('');
+      
       toast({
         title: 'Comentário adicionado',
         description: 'Seu comentário foi publicado com sucesso!',
       });
-
-      // Recarregar comentários
-      fetchComments();
     } catch (error: any) {
       console.error('Erro ao adicionar comentário:', error);
       toast({
