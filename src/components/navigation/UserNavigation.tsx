@@ -31,20 +31,15 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
   const { 
     userCompanies, 
     selectedCompany, 
-    getUserCompanies, 
     selectCompany,
     isLoading,
-    fetchCount,
-    forceGetUserCompanies
   } = useCompanies();
   
   // Listen for company relation changes and refresh data
   useEffect(() => {
     const handleCompanyRelationChange = async () => {
-      if (user?.id) {
-        console.log('UserNavigation: Detected company relation change, refreshing companies');
-        await forceGetUserCompanies(user.id);
-      }
+      // The data will be automatically refreshed by useCompanies hook
+      console.log('UserNavigation: Detected company relation change');
     };
     
     window.addEventListener('company-relation-changed', handleCompanyRelationChange);
@@ -52,19 +47,7 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
     return () => {
       window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
     };
-  }, [user, forceGetUserCompanies]);
-  
-  // Fetch user companies on component mount - force refresh to ensure latest data
-  useEffect(() => {
-    const fetchUserCompanies = async () => {
-      if (user?.id) {
-        console.log('UserNavigation: Iniciando busca forçada de empresas do usuário');
-        await forceGetUserCompanies(user.id);
-      }
-    };
-
-    fetchUserCompanies();
-  }, [user, forceGetUserCompanies]);
+  }, []);
 
   // Update display name and avatar
   useEffect(() => {

@@ -1,42 +1,64 @@
 
+import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { UserProfile } from "@/hooks/useUsers";
+import { toast } from "sonner";
+import { useCompanyCache } from "@/hooks/company/useCompanyCache";
 
 export const useCompanyUserManagement = () => {
+  const { clearCachedUserCompanies } = useCompanyCache();
+  
   /**
-   * Clears all relevant caches related to companies and user selections
+   * Fetches all users associated with a company
    */
-  const clearCompanyCaches = () => {
-    console.log('Clearing company caches');
-    
-    // Clear all localStorage items related to companies
-    const keysToRemove = [
-      'userCompanies',
-      'userCompaniesTimestamp',
-      'selectedCompanyId',
-      'selectedCompany'
-    ];
-    
-    keysToRemove.forEach(key => {
-      if (localStorage.getItem(key)) {
-        console.log(`Removing ${key} from localStorage`);
-        localStorage.removeItem(key);
+  const getCompanyUsers = useCallback(async (companyId: string): Promise<UserProfile[]> => {
+    try {
+      // Get user_empresa entries for this company
+      const { data: userRelations, error: relationsError } = await supabase
+        .from('user_empresa')
+        .select('user_id')
+        .eq('company_id', companyId);
+        
+      if (relationsError) {
+        throw new Error(`Error fetching user relations: ${relationsError.message}`);
       }
-    });
-    
-    // Dispatch an event to notify components to refresh
-    window.dispatchEvent(new CustomEvent('company-relation-changed'));
-  };
-
+      
+      if (!userRelations || userRelations.length === 0) {
+        return [];
+      }
+      
+      // Extract user IDs
+      const userIds = userRelations.map(relation => relation.user_id);
+      
+      // Get user details
+      const { data: users, error: usersError } = await supabase
+        .from('users')
+        .select('id, email, display_name, avatar, is_admin')
+        .in('id', userIds);
+        
+      if (usersError) {
+        throw new Error(`Error fetching users: ${usersError.message}`);
+      }
+      
+      return users.map(user => ({
+        id: user.id,
+        email: user.email || '', // Ensure email is never null
+        display_name: user.display_name || '',
+        avatar: user.avatar || '',
+        is_admin: user.is_admin || false
+      }));
+    } catch (error) {
+      console.error("Error getting company users:", error);
+      throw error;
+    }
+  }, []);
+  
   /**
    * Assigns a user to a company
    */
-  const assignUserToCompany = async (userId: string, companyId: string): Promise<boolean> => {
+  const assignUserToCompany = useCallback(async (userId: string, companyId: string): Promise<boolean> => {
     try {
-      console.log(`Assigning user ${userId} to company ${companyId}`);
-      
-      // Check if relationship already exists to avoid duplicates
+      // Check if relation already exists
       const { data: existingRelation, error: checkError } = await supabase
         .from('user_empresa')
         .select('*')
@@ -45,163 +67,69 @@ export const useCompanyUserManagement = () => {
         .maybeSingle();
         
       if (checkError) {
-        console.error("Error checking existing relationship:", checkError);
-        toast("Erro ao verificar relação", {
-          description: checkError.message,
-        });
-        return false;
+        throw new Error(`Error checking user-company relation: ${checkError.message}`);
       }
       
-      // If relationship already exists, return success
+      // If relation already exists, do nothing
       if (existingRelation) {
-        console.log("Relationship already exists, skipping creation");
-        toast("Usuário já associado", {
-          description: "Este usuário já está associado à empresa",
-        });
+        toast.info("O usuário já está associado a esta empresa");
         return true;
       }
-
-      // Create the new relationship
+      
+      // Add relation
       const { error } = await supabase
         .from('user_empresa')
-        .insert([{ 
-          user_id: userId, 
-          company_id: companyId 
-        }]);
-
-      if (error) {
-        console.error("Error assigning user to company:", error);
+        .insert({ user_id: userId, company_id: companyId });
         
-        // Provide a user-friendly error message
-        const errorMessage = error.code === '42501' || error.message.includes('permission')
-          ? "Permissão negada. Seu usuário não tem acesso para realizar esta operação."
-          : error.message;
-          
-        toast("Erro ao adicionar usuário à empresa", {
-          description: errorMessage,
-        });
-        return false;
+      if (error) {
+        throw new Error(`Error assigning user to company: ${error.message}`);
       }
-
-      // Clear caches to ensure UI is updated
-      clearCompanyCaches();
-
-      toast("Usuário adicionado", {
-        description: "O usuário foi adicionado à empresa com sucesso",
-      });
       
+      // Clear cache to force fresh data on next load
+      clearCachedUserCompanies();
+      
+      // Notify user
+      toast.success("Usuário associado à empresa com sucesso");
       return true;
-    } catch (error: any) {
-      console.error("Unexpected error:", error);
-      toast("Erro inesperado", {
-        description: "Ocorreu um erro ao adicionar o usuário à empresa",
-      });
+    } catch (error) {
+      console.error("Error assigning user to company:", error);
+      toast.error("Erro ao associar usuário à empresa");
       return false;
     }
-  };
-
+  }, [clearCachedUserCompanies]);
+  
   /**
    * Removes a user from a company
    */
-  const removeUserFromCompany = async (userId: string, companyId: string): Promise<boolean> => {
+  const removeUserFromCompany = useCallback(async (userId: string, companyId: string): Promise<boolean> => {
     try {
-      console.log(`Removing user ${userId} from company ${companyId}`);
-      
+      // Remove relation
       const { error } = await supabase
         .from('user_empresa')
         .delete()
         .eq('user_id', userId)
         .eq('company_id', companyId);
-
-      if (error) {
-        console.error("Error removing user from company:", error);
         
-        // Provide a user-friendly error message
-        const errorMessage = error.code === '42501' || error.message.includes('permission')
-          ? "Permissão negada. Seu usuário não tem acesso para realizar esta operação."
-          : error.message;
-          
-        toast("Erro ao remover usuário da empresa", {
-          description: errorMessage,
-        });
-        return false;
+      if (error) {
+        throw new Error(`Error removing user from company: ${error.message}`);
       }
-
-      // Clear caches to ensure UI is updated immediately
-      clearCompanyCaches();
-
-      toast("Usuário removido", {
-        description: "O usuário foi removido da empresa com sucesso",
-      });
       
+      // Clear cache to force fresh data on next load
+      clearCachedUserCompanies();
+      
+      // Notify user
+      toast.success("Usuário removido da empresa com sucesso");
       return true;
-    } catch (error: any) {
-      console.error("Unexpected error:", error);
-      toast("Erro inesperado", {
-        description: "Ocorreu um erro ao remover o usuário da empresa",
-      });
+    } catch (error) {
+      console.error("Error removing user from company:", error);
+      toast.error("Erro ao remover usuário da empresa");
       return false;
     }
-  };
-
-  /**
-   * Fetches users associated with a company
-   */
-  const getCompanyUsers = async (companyId: string): Promise<UserProfile[]> => {
-    try {
-      console.log(`Fetching users for company: ${companyId}`);
-      
-      // Fetch the user-company relationships
-      const { data: relationships, error: relError } = await supabase
-        .from('user_empresa')
-        .select('user_id')
-        .eq('company_id', companyId);
-        
-      if (relError) {
-        console.error('Error fetching company user relationships:', relError);
-        throw relError;
-      }
-      
-      if (!relationships || relationships.length === 0) {
-        return [];
-      }
-      
-      // Extract the user IDs
-      const userIds = relationships.map(rel => rel.user_id);
-      
-      // Get the full user profiles
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, display_name, avatar, is_admin')
-        .in('id', userIds);
-      
-      if (profilesError) {
-        console.error('Error fetching user profiles:', profilesError);
-        throw profilesError;
-      }
-      
-      // Transform database profiles to UserProfile format, adding email field
-      // to match the UserProfile interface
-      const userProfiles: UserProfile[] = (profiles || []).map(profile => ({
-        id: profile.id,
-        email: profile.display_name 
-          ? `${profile.display_name.toLowerCase().replace(/\s+/g, '.')}@user.com` 
-          : `user-${profile.id.substring(0, 8)}@example.com`,
-        display_name: profile.display_name || `User ${profile.id.substring(0, 6)}`,
-        is_admin: profile.is_admin || false
-      }));
-      
-      return userProfiles;
-    } catch (error) {
-      console.error('Error in getCompanyUsers:', error);
-      throw error;
-    }
-  };
-
+  }, [clearCachedUserCompanies]);
+  
   return {
-    assignUserToCompany,
-    removeUserFromCompany,
     getCompanyUsers,
-    clearCompanyCaches
+    assignUserToCompany,
+    removeUserFromCompany
   };
 };

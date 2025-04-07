@@ -11,8 +11,12 @@ import { useCompanyDelete } from "./company/useCompanyDelete";
 import { useCompanyUserManagement } from "./company/useCompanyUserManagement";
 import { useCompanyCache } from "./company/useCompanyCache";
 import { useCompanyEvents } from "./company/useCompanyEvents";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const useCompanies = () => {
+  // Get auth context for global access
+  const { user } = useAuth();
+  
   // Use specialized hooks for state management
   const {
     isLoading,
@@ -88,6 +92,40 @@ export const useCompanies = () => {
   
   // Listen for company selection events
   useCompanyEvents(setSelectedCompany);
+  
+  // Global data loading - load user companies only when user is logged in
+  useEffect(() => {
+    const loadInitialData = async () => {
+      if (user?.id && userCompanies.length === 0 && !isLoading) {
+        try {
+          await getUserCompanies(user.id);
+        } catch (error) {
+          console.error('Error loading initial company data:', error);
+        }
+      }
+    };
+    
+    loadInitialData();
+  }, [user?.id]);
+  
+  // Listen for company-relation-changed events to refresh data
+  useEffect(() => {
+    const handleCompanyRelationChange = async () => {
+      if (user?.id) {
+        try {
+          await forceGetUserCompanies(user.id);
+        } catch (error) {
+          console.error('Error refreshing companies after relation change:', error);
+        }
+      }
+    };
+    
+    window.addEventListener('company-relation-changed', handleCompanyRelationChange);
+    
+    return () => {
+      window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
+    };
+  }, [user?.id, forceGetUserCompanies]);
   
   // Try to restore previously selected company on hook initialization
   useEffect(() => {

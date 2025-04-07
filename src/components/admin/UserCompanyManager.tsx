@@ -35,18 +35,20 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    fetchUsers();
-    fetchCompanyUsers();
-  }, []);
+    if (company.id) {
+      fetchUsers();
+      fetchCompanyUsers();
+    }
+  }, [company.id]);
 
   const fetchCompanyUsers = async () => {
+    if (!company.id) return;
+    
     setLoading(true);
     try {
       console.log(`Fetching users for company: ${company.id}`);
       
-      // Use the getCompanyUsers function which now returns data in UserProfile format
       const usersInCompany = await getCompanyUsers(company.id);
-      console.log('Company users fetched:', usersInCompany);
       setCompanyUsers(usersInCompany);
       
     } catch (error: any) {
@@ -60,20 +62,29 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
   };
 
   const handleRefresh = async () => {
+    if (!company.id) return;
+    
     setRefreshing(true);
-    await fetchUsers();
-    await fetchCompanyUsers();
-    
-    // Force refresh of companies data to update UI
-    if (user?.id) {
-      await forceGetUserCompanies(user.id);
+    try {
+      await fetchUsers();
+      await fetchCompanyUsers();
+      
+      // Force refresh of companies data to update UI
+      if (user?.id) {
+        await forceGetUserCompanies(user.id);
+      }
+      
+      toast.success("Dados atualizados com sucesso");
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+      toast.error("Erro ao atualizar dados");
+    } finally {
+      setRefreshing(false);
     }
-    
-    setRefreshing(false);
   };
 
   const handleAddUser = async () => {
-    if (!selectedUserId) return;
+    if (!selectedUserId || !company.id) return;
     
     try {
       const success = await assignUserToCompany(selectedUserId, company.id);
@@ -83,41 +94,36 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
         // Reset selection
         setSelectedUserId('');
         
-        // Force refresh of companies data to update UI immediately
-        if (user?.id) {
-          await forceGetUserCompanies(user.id);
-        }
+        // Dispatch event to notify components to refresh their company data
+        window.dispatchEvent(new CustomEvent('company-relation-changed'));
+        
+        toast.success("Usuário adicionado com sucesso");
       }
     } catch (error: any) {
       console.error('Error adding user to company:', error);
-      toast("Erro ao adicionar usuário", {
+      toast.error("Erro ao adicionar usuário", {
         description: error.message || "Ocorreu um erro ao adicionar o usuário à empresa",
       });
     }
   };
 
   const handleRemoveUser = async (userId: string) => {
+    if (!company.id) return;
+    
     try {
       const success = await removeUserFromCompany(userId, company.id);
       if (success) {
         // Refresh the list
         await fetchCompanyUsers();
         
-        // Add a small delay to ensure the database transaction completes
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Force refresh of companies data to update UI immediately
-        if (user?.id) {
-          console.log("Forcing refresh of user companies after removing user");
-          await forceGetUserCompanies(user.id);
-        }
-        
         // Dispatch a custom event to notify components to refresh their company data
         window.dispatchEvent(new CustomEvent('company-relation-changed'));
+        
+        toast.success("Usuário removido com sucesso");
       }
     } catch (error: any) {
       console.error('Error removing user from company:', error);
-      toast("Erro ao remover usuário", {
+      toast.error("Erro ao remover usuário", {
         description: error.message || "Ocorreu um erro ao remover o usuário da empresa",
       });
     }

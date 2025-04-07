@@ -27,11 +27,18 @@ export const useCompanyFetching = ({
     shouldMakeRequest,
     startRequest,
     completeRequest,
-    resetRequestState
+    resetRequestState,
+    pendingRequestsRef
   } = useCompanyRequest();
   
   const { executeWithRetry } = useCompanyRetry();
-  const { getCachedUserCompanies, cacheUserCompanies, clearCachedUserCompanies, isCacheExpired } = useCompanyCache();
+  const { 
+    getCachedUserCompanies, 
+    cacheUserCompanies, 
+    clearCachedUserCompanies,
+    removeCachedCompany,
+    isCacheExpired 
+  } = useCompanyCache();
   
   const companyFetchProps = {
     setIsLoading,
@@ -49,6 +56,9 @@ export const useCompanyFetching = ({
     userId: string, 
     forceRefresh: boolean = false
   ): Promise<Company[]> => {
+    // Check pending requests and log current state
+    console.log(`Active requests: ${pendingRequestsRef.current}`);
+    
     // If we shouldn't make a request, return cached data
     if (!shouldMakeRequest(forceRefresh, userCompanies.length > 0)) {
       return userCompanies;
@@ -102,7 +112,8 @@ export const useCompanyFetching = ({
     getCachedUserCompanies,
     executeWithRetry,
     getCompanies,
-    setUserCompanies
+    setUserCompanies,
+    pendingRequestsRef
   ]);
   
   /**
@@ -118,6 +129,7 @@ export const useCompanyFetching = ({
   return {
     getUserCompanies,
     forceGetUserCompanies,
-    getCompanyById
+    getCompanyById,
+    removeCachedCompany
   };
 };
