@@ -207,6 +207,7 @@ export type Database = {
           avatar: string | null
           created_at: string
           display_name: string | null
+          email: string | null
           id: string
           is_admin: boolean | null
           updated_at: string
@@ -215,6 +216,7 @@ export type Database = {
           avatar?: string | null
           created_at?: string
           display_name?: string | null
+          email?: string | null
           id: string
           is_admin?: boolean | null
           updated_at?: string
@@ -223,6 +225,7 @@ export type Database = {
           avatar?: string | null
           created_at?: string
           display_name?: string | null
+          email?: string | null
           id?: string
           is_admin?: boolean | null
           updated_at?: string
