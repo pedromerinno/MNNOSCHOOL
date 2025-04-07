@@ -23,6 +23,21 @@ export const useCompanyDelete = ({
   const deleteCompany = async (companyId: string): Promise<boolean> => {
     setIsLoading(true);
     try {
+      // First, remove all user-company associations for this company
+      const { error: relationshipError } = await supabase
+        .from('user_empresa')
+        .delete()
+        .eq('empresa_id', companyId);
+
+      if (relationshipError) {
+        console.error("Error removing user-company relationships:", relationshipError);
+        toast("Erro ao remover associações de usuários", {
+          description: relationshipError.message,
+        });
+        return false;
+      }
+
+      // Then, delete the company
       const { error } = await supabase
         .from('empresas')
         .delete()
