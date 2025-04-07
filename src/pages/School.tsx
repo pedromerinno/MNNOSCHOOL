@@ -135,10 +135,10 @@ const School = () => {
   };
 
   return (
-    <DashboardLayout>
+    <div className="bg-white">
       <div className="flex">
         {/* Main Content */}
-        <div className="flex-1">
+        <div className="flex-1 p-6">
           {/* Featured Course */}
           <div className="mb-12">
             <div className="relative rounded-xl overflow-hidden">
@@ -350,7 +350,7 @@ const School = () => {
         </div>
 
         {/* Sidebar */}
-        <div className="w-72 border-l border-gray-100">
+        <div className="w-72 p-6 border-l border-gray-100">
           {/* Stats */}
           <div className="mb-8">
             <div className="bg-amber-50 rounded-lg p-4 mb-4">
@@ -416,7 +416,7 @@ const School = () => {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </div>
   );
 };
 
