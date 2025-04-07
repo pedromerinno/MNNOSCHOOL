@@ -26,20 +26,6 @@ export const NavMenuLinks = () => {
     return location.pathname === path;
   };
 
-  const adminLinks = isAdmin ? (
-    <li>
-      <Link 
-        to="/admin" 
-        className={cn(
-          "text-sm text-[rgb(107_114_128)] dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light",
-          isCurrentPage('/admin') && "font-bold text-gray-700"
-        )}
-      >
-        Admin
-      </Link>
-    </li>
-  ) : null;
-
   return (
     <nav>
       <ul className="flex items-center space-x-6">
@@ -138,7 +124,19 @@ export const NavMenuLinks = () => {
             <Badge variant="beta" className="ml-2 text-xs px-2 py-1">beta</Badge>
           </Link>
         </li>
-        {adminLinks}
+        {isAdmin && (
+          <li>
+            <Link 
+              to="/admin" 
+              className={cn(
+                "text-sm text-[rgb(107_114_128)] dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light",
+                isCurrentPage('/admin') && "font-bold text-gray-700"
+              )}
+            >
+              Admin
+            </Link>
+          </li>
+        )}
       </ul>
     </nav>
   );
