@@ -68,9 +68,11 @@ export const LessonForm: React.FC<LessonFormProps> = ({
     onSubmit(values);
   };
 
+  const selectedType = form.watch("type");
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
         <FormField
           control={form.control}
           name="title"
@@ -85,25 +87,7 @@ export const LessonForm: React.FC<LessonFormProps> = ({
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Descrição</FormLabel>
-              <FormControl>
-                <Textarea 
-                  placeholder="Descreva o conteúdo desta aula" 
-                  {...field} 
-                  value={field.value || ""}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <FormField
             control={form.control}
             name="type"
@@ -143,16 +127,35 @@ export const LessonForm: React.FC<LessonFormProps> = ({
               </FormItem>
             )}
           />
+          
+          <FormField
+            control={form.control}
+            name="order_index"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Ordem</FormLabel>
+                <FormControl>
+                  <Input type="number" min="0" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
-        
+
         <FormField
           control={form.control}
-          name="order_index"
+          name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Ordem</FormLabel>
+              <FormLabel>Descrição</FormLabel>
               <FormControl>
-                <Input type="number" min="0" {...field} />
+                <Textarea 
+                  placeholder="Descreva o conteúdo desta aula" 
+                  {...field} 
+                  value={field.value || ""}
+                  className="min-h-[80px]"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -164,10 +167,22 @@ export const LessonForm: React.FC<LessonFormProps> = ({
           name="content"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Conteúdo</FormLabel>
+              <FormLabel>
+                {selectedType === "video" 
+                  ? "URL do Vídeo" 
+                  : selectedType === "text" 
+                    ? "Conteúdo da Aula" 
+                    : "Perguntas e Respostas do Quiz"}
+              </FormLabel>
               <FormControl>
                 <Textarea 
-                  placeholder={form.watch("type") === "video" ? "URL do vídeo" : "Conteúdo da aula"}
+                  placeholder={
+                    selectedType === "video" 
+                      ? "https://www.youtube.com/watch?v=..." 
+                      : selectedType === "text" 
+                        ? "Conteúdo detalhado da aula em texto..." 
+                        : "Formato JSON com perguntas e respostas..."
+                  }
                   className="min-h-[150px]"
                   {...field}
                   value={field.value || ""}

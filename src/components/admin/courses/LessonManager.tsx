@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Pencil, Plus, Trash2, FileText } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { 
   Table,
   TableBody,
@@ -21,12 +21,14 @@ interface LessonManagerProps {
   courseId: string;
   courseTitle: string;
   onClose: () => void;
+  open: boolean;
 }
 
 export const LessonManager: React.FC<LessonManagerProps> = ({ 
   courseId, 
   courseTitle,
-  onClose 
+  onClose,
+  open
 }) => {
   const { 
     lessons, 
@@ -44,10 +46,10 @@ export const LessonManager: React.FC<LessonManagerProps> = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
-    if (courseId) {
+    if (courseId && open) {
       fetchLessons();
     }
-  }, [courseId]);
+  }, [courseId, open]);
 
   const handleAddLesson = () => {
     setSelectedLesson(undefined);
@@ -81,121 +83,143 @@ export const LessonManager: React.FC<LessonManagerProps> = ({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">
-          Aulas do curso: {courseTitle}
-        </h3>
-        <Button onClick={handleAddLesson}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nova Aula
-        </Button>
-      </div>
+    <>
+      <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+        <SheetContent side="right" className="w-full sm:max-w-3xl p-0 overflow-y-auto">
+          <div className="flex flex-col h-full">
+            <SheetHeader className="px-6 py-4 border-b">
+              <SheetTitle className="text-lg font-semibold">
+                Aulas do curso: {courseTitle}
+              </SheetTitle>
+              <SheetDescription>
+                Adicione, edite ou remova aulas para este curso.
+              </SheetDescription>
+            </SheetHeader>
+            
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium">Lista de Aulas</h3>
+                <Button onClick={handleAddLesson}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nova Aula
+                </Button>
+              </div>
 
-      {isLoading ? (
-        <div className="space-y-2">
-          {[...Array(3)].map((_, index) => (
-            <Skeleton key={index} className="h-12 w-full" />
-          ))}
-        </div>
-      ) : lessons.length === 0 ? (
-        <div className="text-center py-8 border rounded-md bg-muted/30">
-          <FileText className="mx-auto h-10 w-10 text-muted-foreground mb-2" />
-          <h3 className="text-lg font-medium">Nenhuma aula cadastrada</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Comece adicionando a primeira aula para este curso.
-          </p>
-          <Button onClick={handleAddLesson}>
-            <Plus className="h-4 w-4 mr-2" />
-            Adicionar Aula
-          </Button>
-        </div>
-      ) : (
-        <div className="border rounded-md overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12">Ordem</TableHead>
-                <TableHead>Título</TableHead>
-                <TableHead>Descrição</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Duração</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {lessons.map((lesson) => (
-                <TableRow key={lesson.id}>
-                  <TableCell>{lesson.order_index}</TableCell>
-                  <TableCell className="font-medium">{lesson.title}</TableCell>
-                  <TableCell>
-                    {lesson.description 
-                      ? lesson.description.length > 50 
-                        ? `${lesson.description.substring(0, 50)}...` 
-                        : lesson.description 
-                      : '-'
-                    }
-                  </TableCell>
-                  <TableCell>
-                    {lesson.type === 'video' && 'Vídeo'}
-                    {lesson.type === 'text' && 'Texto'}
-                    {lesson.type === 'quiz' && 'Quiz'}
-                  </TableCell>
-                  <TableCell>{lesson.duration || '-'}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => handleEditLesson(lesson)}
-                      >
-                        <Pencil className="h-4 w-4 mr-1" />
-                        Editar
-                      </Button>
-                      <Button 
-                        variant="destructive" 
-                        size="sm"
-                        onClick={() => confirmDeleteLesson(lesson)}
-                      >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Excluir
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-
-      <div className="flex justify-end mt-4">
-        <Button onClick={onClose}>
-          Fechar
-        </Button>
-      </div>
+              {isLoading ? (
+                <div className="space-y-2">
+                  {[...Array(3)].map((_, index) => (
+                    <Skeleton key={index} className="h-12 w-full" />
+                  ))}
+                </div>
+              ) : lessons.length === 0 ? (
+                <div className="text-center py-8 border rounded-md bg-muted/30">
+                  <FileText className="mx-auto h-10 w-10 text-muted-foreground mb-2" />
+                  <h3 className="text-lg font-medium">Nenhuma aula cadastrada</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Comece adicionando a primeira aula para este curso.
+                  </p>
+                  <Button onClick={handleAddLesson}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Adicionar Aula
+                  </Button>
+                </div>
+              ) : (
+                <div className="border rounded-md overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[60px]">Ordem</TableHead>
+                          <TableHead>Título</TableHead>
+                          <TableHead className="hidden md:table-cell">Tipo</TableHead>
+                          <TableHead className="hidden md:table-cell">Duração</TableHead>
+                          <TableHead className="text-right">Ações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {lessons.map((lesson) => (
+                          <TableRow key={lesson.id} className="h-16">
+                            <TableCell className="font-medium">{lesson.order_index}</TableCell>
+                            <TableCell>
+                              <div>
+                                <div className="font-medium">{lesson.title}</div>
+                                <div className="text-xs text-muted-foreground hidden md:block">
+                                  {lesson.description 
+                                    ? lesson.description.length > 50 
+                                      ? `${lesson.description.substring(0, 50)}...` 
+                                      : lesson.description 
+                                    : '-'
+                                  }
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell">
+                              {lesson.type === 'video' && 'Vídeo'}
+                              {lesson.type === 'text' && 'Texto'}
+                              {lesson.type === 'quiz' && 'Quiz'}
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell">{lesson.duration || '-'}</TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end space-x-2">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={() => handleEditLesson(lesson)}
+                                >
+                                  <Pencil className="h-4 w-4 mr-1" />
+                                  <span className="hidden sm:inline">Editar</span>
+                                </Button>
+                                <Button 
+                                  variant="destructive" 
+                                  size="sm"
+                                  onClick={() => confirmDeleteLesson(lesson)}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-1" />
+                                  <span className="hidden sm:inline">Excluir</span>
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div className="border-t p-4 flex justify-end">
+              <Button onClick={onClose}>
+                Fechar
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Form dialog for adding/editing lessons */}
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
+      <Sheet open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
+          <SheetHeader className="pb-4">
+            <SheetTitle>
               {selectedLesson ? 'Editar Aula' : 'Criar Nova Aula'}
-            </DialogTitle>
-            <DialogDescription>
+            </SheetTitle>
+            <SheetDescription>
               {selectedLesson 
                 ? 'Atualize os detalhes da aula abaixo.' 
                 : 'Preencha o formulário para criar uma nova aula.'}
-            </DialogDescription>
-          </DialogHeader>
-          <LessonForm 
-            initialData={selectedLesson}
-            onSubmit={handleLessonFormSubmit}
-            isSubmitting={isSubmitting}
-            onCancel={() => setIsFormOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-4">
+            <LessonForm 
+              initialData={selectedLesson}
+              onSubmit={handleLessonFormSubmit}
+              isSubmitting={isSubmitting}
+              onCancel={() => setIsFormOpen(false)}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
@@ -212,6 +236,6 @@ export const LessonManager: React.FC<LessonManagerProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 };
