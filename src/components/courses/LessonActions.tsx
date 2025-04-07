@@ -1,7 +1,8 @@
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
-import { CheckCircle, ThumbsUp } from "lucide-react";
+import { useLessonActions } from '@/hooks/useLessonActions';
+import { LikeButton } from './LikeButton';
+import { CompleteButton } from './CompleteButton';
 
 interface LessonActionsProps {
   completed: boolean;
@@ -18,27 +19,32 @@ export const LessonActions: React.FC<LessonActionsProps> = ({
   userLiked,
   onToggleLike
 }) => {
+  const { 
+    completed: isCompleted,
+    likes: likeCount,
+    userLiked: hasUserLiked,
+    handleMarkCompleted,
+    handleToggleLike
+  } = useLessonActions({
+    initialCompleted: completed,
+    initialLikes: likes,
+    initialUserLiked: userLiked,
+    onMarkCompleted,
+    onToggleLike
+  });
+
   return (
     <div className="flex justify-between items-center my-6">
-      <Button 
-        variant={userLiked ? "default" : "outline"}
-        size="sm"
-        onClick={onToggleLike}
-        className="flex items-center gap-2"
-      >
-        <ThumbsUp className={`h-4 w-4 ${userLiked ? "fill-current" : ""}`} />
-        <span>{likes || 0} {likes === 1 ? 'curtida' : 'curtidas'}</span>
-      </Button>
+      <LikeButton 
+        likes={likeCount} 
+        userLiked={hasUserLiked} 
+        onToggleLike={handleToggleLike} 
+      />
       
-      <Button 
-        onClick={onMarkCompleted}
-        disabled={completed}
-        variant={completed ? "outline" : "default"}
-        className="flex items-center gap-2"
-      >
-        <CheckCircle className={`h-4 w-4 ${completed ? "text-green-500" : ""}`} />
-        {completed ? "Aula concluída" : "Marcar como concluído"}
-      </Button>
+      <CompleteButton 
+        completed={isCompleted} 
+        onMarkCompleted={handleMarkCompleted} 
+      />
     </div>
   );
 };
