@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,9 +16,9 @@ import { cn } from "@/lib/utils";
 export const NavMenuLinks = () => {
   const { user, userProfile } = useAuth();
   const location = useLocation();
-  
   const isAdmin = userProfile?.isAdmin === true;
 
+  // Define the function before using it
   const isCurrentPage = (path: string) => {
     if (path === '/') {
       return location.pathname === '/' || location.pathname === '/home';
