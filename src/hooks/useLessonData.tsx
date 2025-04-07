@@ -16,10 +16,20 @@ type Lesson = {
   completed: boolean;
 };
 
+type LessonNavigation = {
+  id: string;
+  title: string;
+  type: string;
+};
+
 export const useLessonData = (lessonId: string | undefined) => {
   const [lesson, setLesson] = useState<Lesson | null>(null);
+  const [previousLesson, setPreviousLesson] = useState<LessonNavigation | null>(null);
+  const [nextLesson, setNextLesson] = useState<LessonNavigation | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [likes, setLikes] = useState(0);
+  const [userLiked, setUserLiked] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -63,6 +73,14 @@ export const useLessonData = (lessonId: string | undefined) => {
           completed: progressData?.completed || false
         });
         
+        // Buscar aulas anterior e próxima
+        if (lessonData) {
+          await fetchNavigationLessons(lessonData.course_id, lessonData.order_index);
+        }
+        
+        // Buscar likes da aula
+        await fetchLessonLikes(lessonId, userId);
+        
         // Atualizar o último acesso a esta aula
         if (userId) {
           const { error: updateError } = await supabase
@@ -97,6 +115,126 @@ export const useLessonData = (lessonId: string | undefined) => {
     fetchLesson();
   }, [lessonId, toast]);
 
+  const fetchLessonLikes = async (lessonId: string, userId: string | undefined) => {
+    try {
+      // Buscar o total de likes
+      const { count, error } = await supabase
+        .from('lesson_likes')
+        .select('*', { count: 'exact', head: true })
+        .eq('lesson_id', lessonId);
+      
+      if (error) throw error;
+      
+      setLikes(count || 0);
+      
+      // Verificar se o usuário atual já curtiu
+      if (userId) {
+        const { data, error: likeError } = await supabase
+          .from('lesson_likes')
+          .select('*')
+          .eq('lesson_id', lessonId)
+          .eq('user_id', userId)
+          .maybeSingle();
+        
+        if (likeError) throw likeError;
+        
+        setUserLiked(!!data);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar likes:', error);
+    }
+  };
+
+  const fetchNavigationLessons = async (courseId: string, currentOrderIndex: number) => {
+    try {
+      // Buscar aula anterior
+      const { data: prevData, error: prevError } = await supabase
+        .from('lessons')
+        .select('id, title, type')
+        .eq('course_id', courseId)
+        .lt('order_index', currentOrderIndex)
+        .order('order_index', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (prevError) throw prevError;
+      
+      setPreviousLesson(prevData || null);
+      
+      // Buscar próxima aula
+      const { data: nextData, error: nextError } = await supabase
+        .from('lessons')
+        .select('id, title, type')
+        .eq('course_id', courseId)
+        .gt('order_index', currentOrderIndex)
+        .order('order_index', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      
+      if (nextError) throw nextError;
+      
+      setNextLesson(nextData || null);
+    } catch (error) {
+      console.error('Erro ao buscar aulas para navegação:', error);
+    }
+  };
+
+  const toggleLikeLesson = async () => {
+    if (!lesson) return;
+    
+    try {
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      if (!userId) {
+        throw new Error("Usuário não autenticado");
+      }
+      
+      if (userLiked) {
+        // Remover like
+        const { error } = await supabase
+          .from('lesson_likes')
+          .delete()
+          .eq('lesson_id', lesson.id)
+          .eq('user_id', userId);
+        
+        if (error) throw error;
+        
+        setLikes(prev => Math.max(0, prev - 1));
+        setUserLiked(false);
+        
+        toast({
+          title: 'Like removido',
+          description: 'Você removeu seu like desta aula',
+        });
+      } else {
+        // Adicionar like
+        const { error } = await supabase
+          .from('lesson_likes')
+          .insert({
+            lesson_id: lesson.id,
+            user_id: userId,
+            created_at: new Date().toISOString()
+          });
+        
+        if (error) throw error;
+        
+        setLikes(prev => prev + 1);
+        setUserLiked(true);
+        
+        toast({
+          title: 'Aula curtida!',
+          description: 'Obrigado pelo seu feedback',
+        });
+      }
+    } catch (error: any) {
+      console.error('Erro ao curtir/descurtir aula:', error);
+      toast({
+        title: 'Erro ao processar sua ação',
+        description: error.message || 'Ocorreu um erro ao curtir/descurtir a aula',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const markLessonCompleted = async () => {
     if (!lesson) return;
     
@@ -130,6 +268,14 @@ export const useLessonData = (lessonId: string | undefined) => {
         title: 'Aula concluída',
         description: 'Seu progresso foi salvo com sucesso',
       });
+      
+      // Se houver próxima aula, perguntar se quer continuar
+      if (nextLesson) {
+        toast({
+          title: 'Continuar para a próxima aula?',
+          description: 'Clique no botão "Próxima aula" para continuar seu aprendizado',
+        });
+      }
       
     } catch (error: any) {
       console.error('Erro ao marcar aula como concluída:', error);
@@ -189,5 +335,21 @@ export const useLessonData = (lessonId: string | undefined) => {
     }
   };
 
-  return { lesson, loading, error, markLessonCompleted };
+  const navigateToLesson = (lessonId: string) => {
+    if (!lesson) return;
+    navigate(`/courses/${lesson.course_id}/lessons/${lessonId}`);
+  };
+
+  return { 
+    lesson, 
+    loading, 
+    error, 
+    markLessonCompleted,
+    previousLesson,
+    nextLesson,
+    navigateToLesson,
+    likes,
+    userLiked,
+    toggleLikeLesson
+  };
 };

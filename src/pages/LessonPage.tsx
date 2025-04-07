@@ -1,16 +1,34 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Clock, CheckCircle, FileText, Play } from 'lucide-react';
+import { ArrowLeft, Clock, CheckCircle, FileText, Play, ThumbsUp } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useLessonData } from '@/hooks/useLessonData';
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LessonComments } from '@/components/courses/LessonComments';
+import { LessonNavigation } from '@/components/courses/LessonNavigation';
+import { LessonActions } from '@/components/courses/LessonActions';
 
 const LessonPage = () => {
   const { courseId, lessonId } = useParams<{ courseId: string, lessonId: string }>();
-  const { lesson, loading, markLessonCompleted } = useLessonData(lessonId);
+  const { 
+    lesson, 
+    loading, 
+    markLessonCompleted, 
+    previousLesson, 
+    nextLesson, 
+    navigateToLesson,
+    likes,
+    userLiked,
+    toggleLikeLesson
+  } = useLessonData(lessonId);
+
+  useEffect(() => {
+    // Rolar para o topo quando mudar de aula
+    window.scrollTo(0, 0);
+  }, [lessonId]);
 
   if (loading) {
     return (
@@ -133,24 +151,35 @@ const LessonPage = () => {
               <span>{lesson.duration}</span>
             </div>
           )}
+          
+          {lesson.completed && (
+            <div className="flex items-center ml-4 text-green-500">
+              <CheckCircle className="h-4 w-4 mr-1" />
+              <span>Concluído</span>
+            </div>
+          )}
         </div>
         
         <Card className="mb-8 p-6 border border-border">
           {renderLessonContent()}
         </Card>
         
-        <div className="flex justify-between">
-          <Button variant="outline" asChild>
-            <Link to={`/courses/${courseId}`}>Voltar para o curso</Link>
-          </Button>
-          
-          <Button 
-            onClick={() => markLessonCompleted()}
-            className="flex items-center gap-2"
-          >
-            <CheckCircle className="h-4 w-4" />
-            Marcar como concluído
-          </Button>
+        <LessonActions
+          completed={lesson.completed}
+          onMarkCompleted={markLessonCompleted}
+          likes={likes}
+          userLiked={userLiked}
+          onToggleLike={toggleLikeLesson}
+        />
+        
+        <LessonNavigation
+          previousLesson={previousLesson}
+          nextLesson={nextLesson}
+          onNavigate={navigateToLesson}
+        />
+        
+        <div className="mt-8">
+          <LessonComments lessonId={lesson.id} />
         </div>
       </div>
     </DashboardLayout>

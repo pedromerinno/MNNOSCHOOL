@@ -1,0 +1,181 @@
+
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { MessageSquare, Send } from "lucide-react";
+
+interface Comment {
+  id: string;
+  user_id: string;
+  lesson_id: string;
+  content: string;
+  created_at: string;
+  profile?: {
+    username: string;
+    avatar_url: string;
+  };
+}
+
+interface LessonCommentsProps {
+  lessonId: string;
+}
+
+export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [newComment, setNewComment] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchComments();
+  }, [lessonId]);
+
+  const fetchComments = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('lesson_comments')
+        .select(`
+          id,
+          user_id,
+          lesson_id,
+          content,
+          created_at,
+          profiles (username, avatar_url)
+        `)
+        .eq('lesson_id', lessonId)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      setComments(data || []);
+    } catch (error: any) {
+      console.error('Erro ao carregar comentários:', error);
+      toast({
+        title: 'Erro ao carregar comentários',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmitComment = async () => {
+    if (!newComment.trim()) return;
+
+    try {
+      setSubmitting(true);
+      const user = (await supabase.auth.getUser()).data.user;
+      
+      if (!user) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      const { error } = await supabase
+        .from('lesson_comments')
+        .insert({
+          lesson_id: lessonId,
+          user_id: user.id,
+          content: newComment,
+          created_at: new Date().toISOString()
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      setNewComment('');
+      toast({
+        title: 'Comentário adicionado',
+        description: 'Seu comentário foi publicado com sucesso!',
+      });
+
+      // Recarregar comentários
+      fetchComments();
+    } catch (error: any) {
+      console.error('Erro ao adicionar comentário:', error);
+      toast({
+        title: 'Erro ao adicionar comentário',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR', { 
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric', 
+      hour: '2-digit', 
+      minute: '2-digit'
+    });
+  };
+
+  const getInitials = (userId: string) => {
+    return userId.substring(0, 2).toUpperCase();
+  };
+
+  return (
+    <Card className="border border-border">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2">
+          <MessageSquare className="h-5 w-5" />
+          Comentários
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6 mb-6">
+          {loading ? (
+            <p className="text-center text-muted-foreground py-4">Carregando comentários...</p>
+          ) : comments.length === 0 ? (
+            <p className="text-center text-muted-foreground py-4">Seja o primeiro a comentar nesta aula!</p>
+          ) : (
+            comments.map((comment) => (
+              <div key={comment.id} className="flex gap-3">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={comment.profile?.avatar_url || ''} />
+                  <AvatarFallback>{getInitials(comment.user_id)}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium">{comment.profile?.username || 'Usuário'}</p>
+                    <span className="text-xs text-muted-foreground">{formatDate(comment.created_at)}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{comment.content}</p>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="flex gap-3">
+          <Textarea 
+            placeholder="Adicione um comentário..." 
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            className="min-h-[80px] resize-none"
+          />
+          <Button 
+            onClick={handleSubmitComment} 
+            disabled={!newComment.trim() || submitting}
+            className="self-end"
+          >
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
