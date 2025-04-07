@@ -18,6 +18,7 @@ export const CompanySelector = () => {
     selectedCompany, 
     selectCompany,
     isLoading,
+    forceGetUserCompanies
   } = useCompanies();
 
   // Debug log to check selected company
@@ -29,6 +30,22 @@ export const CompanySelector = () => {
       });
     }
   }, [selectedCompany]);
+
+  // Listen for company-relation-changed events
+  useEffect(() => {
+    const handleCompanyRelationChange = async () => {
+      if (user?.id) {
+        console.log('CompanySelector: Detected company relation change, refreshing data');
+        await forceGetUserCompanies(user.id);
+      }
+    };
+    
+    window.addEventListener('company-relation-changed', handleCompanyRelationChange);
+    
+    return () => {
+      window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
+    };
+  }, [user, forceGetUserCompanies]);
 
   const handleCompanyChange = (company) => {
     if (company && user?.id) {

@@ -30,22 +30,26 @@ export const useCompanyUserManagement = () => {
       // Extract user IDs
       const userIds = userRelations.map(relation => relation.user_id);
       
-      // Get user details
-      const { data: users, error: usersError } = await supabase
-        .from('users')
-        .select('id, email, display_name, avatar, is_admin')
+      // Get user details from profiles table
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar, is_admin')
         .in('id', userIds);
         
-      if (usersError) {
-        throw new Error(`Error fetching users: ${usersError.message}`);
+      if (profilesError) {
+        throw new Error(`Error fetching user profiles: ${profilesError.message}`);
       }
       
-      return users.map(user => ({
-        id: user.id,
-        email: user.email || '', // Ensure email is never null
-        display_name: user.display_name || '',
-        avatar: user.avatar || '',
-        is_admin: user.is_admin || false
+      // Map the profile data to UserProfile format
+      return profiles.map(profile => ({
+        id: profile.id,
+        // Generate email from display_name or use fallback with id
+        email: profile.display_name 
+          ? `${profile.display_name.toLowerCase().replace(/\s+/g, '.')}@user.com` 
+          : `user-${profile.id.substring(0, 8)}@example.com`,
+        display_name: profile.display_name || '',
+        avatar: profile.avatar || '',
+        is_admin: profile.is_admin || false
       }));
     } catch (error) {
       console.error("Error getting company users:", error);
