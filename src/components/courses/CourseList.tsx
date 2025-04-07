@@ -32,8 +32,8 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
       try {
         setLoading(true);
         
-        // Fetch all courses
-        let { data, error } = await supabase
+        // Fetch all courses first
+        let { data: allCourses, error: coursesError } = await supabase
           .from('courses')
           .select(`
             id, 
@@ -43,22 +43,24 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
             instructor
           `);
         
-        if (error) {
-          throw error;
+        if (coursesError) {
+          throw coursesError;
         }
 
         // Get course progress for the user
+        const userId = (await supabase.auth.getUser()).data.user?.id || '';
         const { data: progressData, error: progressError } = await supabase
           .from('user_course_progress')
           .select('course_id, progress, completed')
-          .eq('user_id', (await supabase.auth.getUser()).data.user?.id || '');
+          .eq('user_id', userId);
           
         if (progressError) {
           console.error('Error fetching progress:', progressError);
         }
         
-        // If a company is selected, filter courses for that company
-        if (selectedCompany && data) {
+        // If a company is selected, filter courses by that company
+        if (selectedCompany && allCourses) {
+          // Query the company_courses table separately to avoid ambiguous column references
           const { data: companyCourses, error: companyCoursesError } = await supabase
             .from('company_courses')
             .select('course_id')
@@ -67,16 +69,18 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
           if (companyCoursesError) {
             console.error('Error fetching company courses:', companyCoursesError);
           } else if (companyCourses) {
-            const companyCoursesIds = companyCourses.map(cc => cc.course_id);
-            data = data.filter(course => companyCoursesIds.includes(course.id));
+            // Extract the course IDs that this company has access to
+            const companyCourseIds = companyCourses.map(cc => cc.course_id);
+            // Filter the courses by those IDs
+            allCourses = allCourses.filter(course => companyCourseIds.includes(course.id));
           }
         }
         
-        // Transform the data to match our Course type
+        // Transform the data to add progress information
         let formattedCourses: Course[] = [];
         
-        if (data) {
-          formattedCourses = data.map(course => {
+        if (allCourses) {
+          formattedCourses = allCourses.map(course => {
             const userProgress = progressData?.find(p => p.course_id === course.id);
             const progress = userProgress?.progress || 0;
             const completed = userProgress?.completed || false;
