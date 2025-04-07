@@ -6,7 +6,17 @@ import { useUsers } from '@/hooks/useUsers';
 import { useToast } from '@/hooks/use-toast';
 import { makeUserAdmin } from '@/utils/adminUtils';
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { AlertTriangle, RefreshCw, UserPlus } from 'lucide-react';
+import { Input } from "@/components/ui/input";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription,
+  DialogFooter,
+  DialogClose
+} from "@/components/ui/dialog";
 
 export const UserManagement = () => {
   const { users, loading, fetchUsers, toggleAdminStatus } = useUsers();
@@ -14,6 +24,9 @@ export const UserManagement = () => {
   const [initialSetupDone, setInitialSetupDone] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [permissionError, setPermissionError] = useState(false);
+  const [isAddingAdmin, setIsAddingAdmin] = useState(false);
+  const [adminEmail, setAdminEmail] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Initial fetch of users
   useEffect(() => {
@@ -31,7 +44,7 @@ export const UserManagement = () => {
         
         // Try to find if user already exists and is admin
         const existingAdmin = users.find(user => 
-          user.email?.includes('pedro') && user.is_admin
+          user.is_admin
         );
         
         if (existingAdmin) {
@@ -57,9 +70,9 @@ export const UserManagement = () => {
         }
         
         toast({
-          title: 'Erro',
-          description: error.message || 'Falha ao configurar administrador inicial',
-          variant: 'destructive',
+          title: 'Aviso',
+          description: `Configuração de administrador inicial não concluída. Você pode adicionar um administrador manualmente.`,
+          variant: 'default',
         });
       }
     };
@@ -86,20 +99,63 @@ export const UserManagement = () => {
     }
   };
 
+  const handleAddAdmin = async () => {
+    if (!adminEmail.trim()) {
+      toast({
+        title: 'Erro',
+        description: 'Por favor, informe um email válido',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsAddingAdmin(true);
+    try {
+      await makeUserAdmin(adminEmail);
+      toast({
+        title: 'Sucesso',
+        description: `${adminEmail} agora é um administrador.`,
+      });
+      setAdminEmail('');
+      setIsDialogOpen(false);
+      fetchUsers(); // Refresh the list
+    } catch (error: any) {
+      console.error('Error making user admin:', error);
+      toast({
+        title: 'Erro',
+        description: error.message || 'Ocorreu um erro ao configurar o administrador',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsAddingAdmin(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Gerenciamento de Usuários</h2>
-        <Button 
-          onClick={handleRefresh} 
-          disabled={loading || isRefreshing}
-          variant="outline"
-          size="sm"
-          className="flex items-center gap-2"
-        >
-          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          {(loading || isRefreshing) ? "Atualizando..." : "Atualizar"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            onClick={() => setIsDialogOpen(true)} 
+            variant="default"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <UserPlus className="h-4 w-4" />
+            Adicionar Admin
+          </Button>
+          <Button 
+            onClick={handleRefresh} 
+            disabled={loading || isRefreshing}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {(loading || isRefreshing) ? "Atualizando..." : "Atualizar"}
+          </Button>
+        </div>
       </div>
       
       {permissionError && (
@@ -125,6 +181,49 @@ export const UserManagement = () => {
           onToggleAdmin={toggleAdminStatus} 
         />
       )}
+
+      {/* Dialog para adicionar administrador */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Adicionar Administrador</DialogTitle>
+            <DialogDescription>
+              Digite o email ou nome de usuário da pessoa que você deseja tornar administrador.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <Input
+              placeholder="Email ou nome de usuário"
+              value={adminEmail}
+              onChange={(e) => setAdminEmail(e.target.value)}
+            />
+          </div>
+          
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancelar</Button>
+            </DialogClose>
+            <Button 
+              onClick={handleAddAdmin} 
+              disabled={isAddingAdmin || !adminEmail.trim()}
+              className="gap-2"
+            >
+              {isAddingAdmin ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  Processando...
+                </>
+              ) : (
+                <>
+                  <UserPlus className="h-4 w-4" />
+                  Adicionar Administrador
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
