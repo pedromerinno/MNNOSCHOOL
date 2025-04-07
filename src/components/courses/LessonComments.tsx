@@ -105,7 +105,7 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
             };
             
             if (isMounted) {
-              setComments(prev => [...prev, newComment]);
+              setComments(prev => [...prev, newComment as Comment]);
             }
           });
       })
