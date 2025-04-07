@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -39,7 +38,6 @@ export const CompanyCoursesManager: React.FC<CompanyCoursesManagerProps> = ({
 
         // Try to fetch company access relationships
         try {
-          // We need to use type assertion for the table query since it's not in the generated types
           const { data: courseCompaniesData, error: courseCompaniesError } = await supabase
             .from('company_courses')
             .select('company_id')
