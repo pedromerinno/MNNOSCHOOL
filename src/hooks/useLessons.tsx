@@ -82,16 +82,18 @@ export const useLessons = (courseId: string) => {
   const handleUpdateLesson = async (lessonId: string, lessonData: Partial<Lesson>) => {
     setIsSubmitting(true);
     try {
+      // Create an update object only with properties that exist in lessonData
+      const updateData: any = {};
+      if (lessonData.title !== undefined) updateData.title = lessonData.title;
+      if (lessonData.description !== undefined) updateData.description = lessonData.description;
+      if (lessonData.content !== undefined) updateData.content = lessonData.content;
+      if (lessonData.duration !== undefined) updateData.duration = lessonData.duration;
+      if (lessonData.type !== undefined) updateData.type = lessonData.type;
+      if (lessonData.order_index !== undefined) updateData.order_index = lessonData.order_index;
+
       const { error } = await supabase
         .from('lessons')
-        .update({
-          title: lessonData.title,
-          description: lessonData.description,
-          content: lessonData.content,
-          duration: lessonData.duration,
-          type: lessonData.type,
-          order_index: lessonData.order_index,
-        })
+        .update(updateData)
         .eq('id', lessonId);
 
       if (error) {

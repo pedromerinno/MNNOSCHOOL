@@ -23,6 +23,11 @@ import {
 } from "@/components/ui/select";
 import { Lesson } from "@/components/courses/CourseLessonList";
 
+// Extend the Lesson type to ensure it includes all fields we need
+interface ExtendedLesson extends Lesson {
+  content?: string | null;
+}
+
 const lessonSchema = z.object({
   title: z.string().min(3, { message: "O título precisa ter pelo menos 3 caracteres" }),
   description: z.string().optional(),
@@ -35,7 +40,7 @@ const lessonSchema = z.object({
 type LessonFormValues = z.infer<typeof lessonSchema>;
 
 interface LessonFormProps {
-  initialData?: Partial<Lesson>;
+  initialData?: Partial<ExtendedLesson>;
   onSubmit: (data: LessonFormValues) => void;
   isSubmitting: boolean;
   onCancel: () => void;
