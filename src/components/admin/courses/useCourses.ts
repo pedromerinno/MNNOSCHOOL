@@ -16,7 +16,7 @@ export const useCourses = () => {
   const fetchCourses = async () => {
     setIsLoading(true);
     try {
-      // Using a simpler query to avoid ambiguous column references
+      // Usando uma consulta simples para evitar referências ambíguas de colunas
       const { data, error } = await supabase
         .from('courses')
         .select('*')
