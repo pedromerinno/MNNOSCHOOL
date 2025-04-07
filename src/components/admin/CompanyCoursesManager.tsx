@@ -27,6 +27,8 @@ export const CompanyCoursesManager: React.FC<CompanyCoursesManagerProps> = ({
     const fetchData = async () => {
       setIsLoading(true);
       try {
+        console.log("Fetching companies for course:", course.title);
+        
         // Fetch all companies
         const { data: companiesData, error: companiesError } = await supabase
           .from('empresas')
@@ -35,17 +37,23 @@ export const CompanyCoursesManager: React.FC<CompanyCoursesManagerProps> = ({
 
         if (companiesError) throw companiesError;
 
-        // Fetch companies that have access to this course
-        const { data: courseCompaniesData, error: courseCompaniesError } = await supabase
-          .from('company_courses')
+        // Try to fetch from company_course_access first
+        let { data: courseCompaniesData, error: courseCompaniesError } = await supabase
+          .from('company_course_access')
           .select('company_id')
           .eq('course_id', course.id);
 
-        if (courseCompaniesError) throw courseCompaniesError;
+        if (courseCompaniesError) {
+          console.error("Error fetching from company_course_access:", courseCompaniesError);
+          courseCompaniesData = [];
+        }
 
         setCompanies(companiesData || []);
         setSelectedCompanies(courseCompaniesData?.map(cc => cc.company_id) || []);
+        
+        console.log(`Found ${companiesData?.length || 0} companies and ${courseCompaniesData?.length || 0} are selected`);
       } catch (error: any) {
+        console.error("Error fetching data:", error);
         toast({
           title: 'Erro ao carregar dados',
           description: error.message,
@@ -70,15 +78,21 @@ export const CompanyCoursesManager: React.FC<CompanyCoursesManagerProps> = ({
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // First, delete all existing relationships
+      console.log("Saving course access for:", course.title);
+      console.log("Selected companies:", selectedCompanies.length);
+      
+      // First, delete all existing relationships using the course_id
       const { error: deleteError } = await supabase
-        .from('company_courses')
+        .from('company_course_access')
         .delete()
         .eq('course_id', course.id);
 
-      if (deleteError) throw deleteError;
+      if (deleteError) {
+        console.error("Error deleting existing access:", deleteError);
+        throw deleteError;
+      }
 
-      // Then, insert the new relationships
+      // Then, insert the new relationships if any companies are selected
       if (selectedCompanies.length > 0) {
         const newRelationships = selectedCompanies.map(companyId => ({
           course_id: course.id,
@@ -86,10 +100,13 @@ export const CompanyCoursesManager: React.FC<CompanyCoursesManagerProps> = ({
         }));
 
         const { error: insertError } = await supabase
-          .from('company_courses')
+          .from('company_course_access')
           .insert(newRelationships);
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error("Error inserting new access:", insertError);
+          throw insertError;
+        }
       }
 
       toast({
@@ -99,6 +116,7 @@ export const CompanyCoursesManager: React.FC<CompanyCoursesManagerProps> = ({
 
       onClose();
     } catch (error: any) {
+      console.error("Save error:", error);
       toast({
         title: 'Erro ao salvar alterações',
         description: error.message,

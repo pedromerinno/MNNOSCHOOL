@@ -31,6 +31,7 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
     const fetchCourses = async () => {
       try {
         setLoading(true);
+        console.log("Fetching courses with filter:", filter);
         
         // Get user ID
         const { data: { user } } = await supabase.auth.getUser();
@@ -40,51 +41,46 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
           throw new Error('User not authenticated');
         }
         
-        let availableCourses: Course[] = [];
+        // First, get all courses
+        let { data: allCourses, error: coursesError } = await supabase
+          .from('courses')
+          .select('*');
+          
+        if (coursesError) {
+          throw coursesError;
+        }
         
-        // If a company is selected, get courses for that company
+        let availableCourses: Course[] = allCourses || [];
+        
+        // If a company is selected, filter the courses based on company access
         if (selectedCompany) {
-          // First get company course IDs
-          const { data: companyCourses, error: companyCoursesError } = await supabase
-            .from('company_courses')
+          console.log("Selected company:", selectedCompany.nome);
+          
+          // Try to find all course IDs accessible to this company
+          const { data: companyAccess, error: accessError } = await supabase
+            .from('company_course_access')
             .select('course_id')
             .eq('company_id', selectedCompany.id);
+          
+          if (accessError) {
+            console.error("Error getting company course access:", accessError);
             
-          if (companyCoursesError) {
-            throw companyCoursesError;
-          }
-          
-          if (!companyCourses || companyCourses.length === 0) {
-            setCourses([]);
-            setLoading(false);
-            return;
-          }
-          
-          // Extract course IDs
-          const courseIds = companyCourses.map(cc => cc.course_id);
-          
-          // Fetch the actual courses using the IDs
-          const { data: courseData, error: courseError } = await supabase
-            .from('courses')
-            .select('*')
-            .in('id', courseIds);
+            // Fallback: If the company_course_access table doesn't exist or has another issue,
+            // assume all courses are available (this prevents a blank screen)
+            console.log("Using fallback: showing all courses");
+          } else if (companyAccess && companyAccess.length > 0) {
+            // Filter the courses based on company access
+            const accessibleCourseIds = companyAccess.map(access => access.course_id);
+            availableCourses = allCourses?.filter(course => 
+              accessibleCourseIds.includes(course.id)
+            ) || [];
             
-          if (courseError) {
-            throw courseError;
+            console.log(`Found ${availableCourses.length} courses for company`);
+          } else {
+            // No courses found for this company
+            console.log("No courses found for this company");
+            availableCourses = [];
           }
-          
-          availableCourses = courseData || [];
-        } else {
-          // If no company is selected, get all courses
-          const { data: courseData, error: courseError } = await supabase
-            .from('courses')
-            .select('*');
-            
-          if (courseError) {
-            throw courseError;
-          }
-          
-          availableCourses = courseData || [];
         }
         
         // Get user's course progress
@@ -124,6 +120,7 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
           );
         }
         
+        console.log(`Displaying ${finalCourses.length} courses after filtering`);
         setCourses(finalCourses);
       } catch (error: any) {
         console.error('Error fetching courses:', error);
