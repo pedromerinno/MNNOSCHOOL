@@ -138,10 +138,5 @@ export function useUsers() {
     }
   }, [users, toast]);
 
-  // Initial fetch with useEffect
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
-
   return { users, loading, fetchUsers, toggleAdminStatus };
 }

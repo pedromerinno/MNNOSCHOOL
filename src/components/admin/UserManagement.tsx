@@ -15,6 +15,11 @@ export const UserManagement = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [permissionError, setPermissionError] = useState(false);
 
+  // Initial fetch of users
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
   // Try to make an initial admin when the component mounts
   useEffect(() => {
     const setInitialAdmin = async () => {
@@ -83,11 +88,12 @@ export const UserManagement = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Gerenciamento de Usuários</h2>
         <Button 
           onClick={handleRefresh} 
           disabled={loading || isRefreshing}
+          variant="primary"
           className="relative"
         >
           {(loading || isRefreshing) ? "Atualizando..." : "Atualizar"}

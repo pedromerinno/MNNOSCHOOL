@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { FileText, Settings, Users, Globe, Lock, Building } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserManagement } from '@/components/admin/UserManagement';
@@ -11,6 +11,11 @@ import { useAuth } from '@/contexts/AuthContext';
 const AdminPage = () => {
   const { userProfile } = useAuth();
   const [activeTab, setActiveTab] = useState("users");
+  
+  // Redirect non-admin users away from this page
+  if (userProfile?.isAdmin !== true) {
+    return <Navigate to="/dashboard" replace />;
+  }
   
   const adminSections = [
     { 
@@ -46,28 +51,33 @@ const AdminPage = () => {
         
         {/* Management Tabs */}
         <Card className="mb-8">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <CardHeader>
-              <TabsList className="mb-2">
-                <TabsTrigger value="users">
-                  <Users className="h-4 w-4 mr-2" />
-                  Usuários
-                </TabsTrigger>
-                <TabsTrigger value="companies">
-                  <Building className="h-4 w-4 mr-2" />
-                  Empresas
-                </TabsTrigger>
-              </TabsList>
-            </CardHeader>
-            <CardContent>
-              <TabsContent value="users" className="mt-0">
-                <UserManagement />
-              </TabsContent>
-              <TabsContent value="companies" className="mt-0">
-                <CompanyManagement />
-              </TabsContent>
-            </CardContent>
-          </Tabs>
+          <CardHeader className="pb-0">
+            <TabsList className="w-full max-w-md mx-auto">
+              <TabsTrigger 
+                value="users" 
+                onClick={() => setActiveTab("users")}
+                className={`flex items-center ${activeTab === "users" ? "bg-primary text-primary-foreground" : ""}`}
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Usuários
+              </TabsTrigger>
+              <TabsTrigger 
+                value="companies" 
+                onClick={() => setActiveTab("companies")}
+                className={`flex items-center ${activeTab === "companies" ? "" : ""}`}
+              >
+                <Building className="h-4 w-4 mr-2" />
+                Empresas
+              </TabsTrigger>
+            </TabsList>
+          </CardHeader>
+          <CardContent className="pt-6">
+            {activeTab === "users" ? (
+              <UserManagement />
+            ) : (
+              <CompanyManagement />
+            )}
+          </CardContent>
         </Card>
         
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
