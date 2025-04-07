@@ -33,6 +33,7 @@ export const CourseList: React.FC<CourseListProps> = ({
   isSubmitting
 }) => {
   const { handleDeleteCourse, handleFormSubmit } = useCourses();
+  const [isLessonsDialogOpen, setIsLessonsDialogOpen] = React.useState(false);
 
   const handleCreateCourse = () => {
     setSelectedCourse(undefined);
@@ -47,6 +48,11 @@ export const CourseList: React.FC<CourseListProps> = ({
   const handleManageCompanies = (course: Course) => {
     setSelectedCourse(course);
     setIsCompanyManagerOpen(true);
+  };
+  
+  const handleViewLessons = (course: Course) => {
+    setSelectedCourse(course);
+    setIsLessonsDialogOpen(true);
   };
 
   return (
@@ -65,6 +71,7 @@ export const CourseList: React.FC<CourseListProps> = ({
         onEdit={handleEditCourse}
         onDelete={handleDeleteCourse}
         onManageCompanies={handleManageCompanies}
+        onViewLessons={handleViewLessons}
       />
 
       {/* Course Form Dialog */}
@@ -105,6 +112,30 @@ export const CourseList: React.FC<CourseListProps> = ({
               course={selectedCourse}
               onClose={() => setIsCompanyManagerOpen(false)}
             />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Lessons Manager Dialog */}
+      <Dialog open={isLessonsDialogOpen} onOpenChange={setIsLessonsDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              Gerenciar Aulas para {selectedCourse?.title}
+            </DialogTitle>
+            <DialogDescription>
+              Adicione, edite ou remova aulas para este curso.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedCourse && (
+            <div className="py-4">
+              <p className="text-center text-gray-500 mb-4">
+                Esta funcionalidade permitirá gerenciar aulas para o curso "{selectedCourse.title}".
+              </p>
+              <div className="flex justify-end">
+                <Button onClick={() => setIsLessonsDialogOpen(false)}>Fechar</Button>
+              </div>
+            </div>
           )}
         </DialogContent>
       </Dialog>
