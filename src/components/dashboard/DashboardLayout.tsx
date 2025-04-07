@@ -13,7 +13,7 @@ export const DashboardLayout = ({ children, fullWidth = false }: DashboardLayout
   const currentYear = new Date().getFullYear();
   
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col">
+    <div className="min-h-screen bg-[#F8F7F4] dark:bg-gray-900 flex flex-col">
       <DashboardHeader />
       <main className="flex-1">
         <div className={fullWidth ? "w-full" : "container mx-auto px-4 lg:px-8"}>
