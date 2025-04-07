@@ -57,20 +57,19 @@ export function useUsers() {
         setLoading(true);
       }
       
-      // First, get the profiles with basic information
+      // Get the profiles with basic information
       const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('id, display_name, is_admin, email, created_at')
-        .order('created_at', { ascending: false });
+        .select('id, display_name, is_admin, created_at');
       
       if (error) {
         throw error;
       }
-      
+
       // Map the profiles to our UserProfile interface
       const formattedUsers: UserProfile[] = profiles.map(profile => ({
         id: profile.id,
-        email: profile.email || null,
+        email: profile.id.toLowerCase() + '@example.com', // Temporary fallback email
         display_name: profile.display_name || `User ${profile.id.substring(0, 6)}`,
         is_admin: profile.is_admin
       }));
@@ -78,6 +77,8 @@ export function useUsers() {
       setUsers(formattedUsers);
       setCachedUsers(formattedUsers);
       setLoading(false);
+      
+      console.log('Users fetched successfully:', formattedUsers.length);
       
     } catch (error: any) {
       console.error('Error fetching users:', error);
