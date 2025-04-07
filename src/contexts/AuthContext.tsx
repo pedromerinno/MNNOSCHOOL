@@ -32,6 +32,17 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/**
+ * Helper function to clear all company-related cache when logging in or out
+ */
+const clearCompanyCache = () => {
+  localStorage.removeItem('userCompanies');
+  localStorage.removeItem('userCompaniesTimestamp');
+  localStorage.removeItem('selectedCompanyId');
+  localStorage.removeItem('selectedCompany');
+  console.log('All company cache cleared during auth state change');
+};
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -283,11 +294,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
         
         if (event === 'SIGNED_IN') {
+          // Clear cache on sign in to ensure fresh data is loaded
+          clearCompanyCache();
           toast({
             title: "Login bem-sucedido",
             description: "Você foi conectado com sucesso.",
           });
         } else if (event === 'SIGNED_OUT') {
+          // Clear cache on sign out
+          clearCompanyCache();
           toast({
             title: "Desconectado",
             description: "Você foi desconectado com sucesso.",
@@ -348,6 +363,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (response.error) throw response.error;
       
+      // Clear cache and fetch fresh data on sign in
+      clearCompanyCache();
       navigate("/");
       
       return { data: response.data, error: null };
@@ -362,6 +379,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = async () => {
+    // Clear cache before signing out
+    clearCompanyCache();
     await supabase.auth.signOut();
     navigate("/login");
   };
