@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -16,7 +15,6 @@ export function useUsers() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   
-  // Improved cache for user data
   const getCachedUsers = (): UserProfile[] | null => {
     const cachedUsers = localStorage.getItem('cachedUsers');
     if (!cachedUsers) return null;
@@ -24,11 +22,9 @@ export function useUsers() {
     try {
       const parsed = JSON.parse(cachedUsers);
       const now = new Date().getTime();
-      // Cache valid for 15 minutes
       if (parsed.expiry > now) {
         return parsed.data;
       }
-      // Cache expired
       localStorage.removeItem('cachedUsers');
       return null;
     } catch (e) {
@@ -39,7 +35,6 @@ export function useUsers() {
   
   const setCachedUsers = (data: UserProfile[]) => {
     try {
-      // Cache for 15 minutes
       const expiry = new Date().getTime() + (15 * 60 * 1000);
       localStorage.setItem('cachedUsers', JSON.stringify({
         data,
@@ -52,7 +47,6 @@ export function useUsers() {
 
   const fetchUsers = useCallback(async () => {
     try {
-      // First check cache and update UI immediately if available
       const cachedData = getCachedUsers();
       if (cachedData) {
         console.log('Using cached users data while fetching updates');
@@ -62,29 +56,46 @@ export function useUsers() {
         setLoading(true);
       }
       
-      // Query the profiles table and join with auth.users to get real email
       const { data: profiles, error } = await supabase
         .from('profiles')
-        .select(`
-          id, 
-          display_name, 
-          is_admin, 
-          created_at,
-          auth_users:id (email)
-        `)
+        .select('id, display_name, is_admin, created_at')
         .order('created_at', { ascending: false });
       
       if (error) {
         throw error;
       }
       
-      // Transform the profiles data into the UserProfile format
-      const formattedUsers: UserProfile[] = profiles.map(profile => ({
+      let formattedUsers: UserProfile[] = profiles.map(profile => ({
         id: profile.id,
-        email: profile.auth_users?.email || null,
+        email: null,
         display_name: profile.display_name || `User ${profile.id.substring(0, 6)}`,
         is_admin: profile.is_admin
       }));
+      
+      try {
+        const adminResponse = await fetch('https://gswvicwtswokyfbgoxps.supabase.co/rest/v1/profiles?select=id,auth.users!inner(email)', {
+          method: 'GET',
+          headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdzd3ZpY3d0c3dva3lmYmdveHBzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM5MDQ4MTksImV4cCI6MjA1OTQ4MDgxOX0.kyN2Qq3v9H_ENVzSH4QfGwUJLCVEXIo44-MQImFQ_Z0',
+            'Authorization': `Bearer ${supabase.auth.getSession().then(({ data }) => data.session?.access_token)}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (adminResponse.ok) {
+          const adminData = await adminResponse.json();
+          
+          formattedUsers = formattedUsers.map(user => {
+            const matchedUser = adminData.find((item: any) => item.id === user.id);
+            if (matchedUser && matchedUser.auth?.users?.email) {
+              return { ...user, email: matchedUser.auth.users.email };
+            }
+            return user;
+          });
+        }
+      } catch (adminError) {
+        console.warn('Unable to fetch user emails, using display names only:', adminError);
+      }
       
       setUsers(formattedUsers);
       setCachedUsers(formattedUsers);
@@ -98,7 +109,6 @@ export function useUsers() {
         variant: 'destructive',
       });
       
-      // Use cached data in case of error
       const cachedData = getCachedUsers();
       if (cachedData) {
         console.log('Using cached users data due to error');
@@ -112,14 +122,12 @@ export function useUsers() {
     try {
       await setAdminStatusById(userId, !(currentStatus || false));
       
-      // Update local state
       setUsers(users.map(user => 
         user.id === userId 
           ? { ...user, is_admin: !(currentStatus || false) } 
           : user
       ));
       
-      // Update cache too
       const cachedData = getCachedUsers();
       if (cachedData) {
         const updatedCache = cachedData.map(user => 
