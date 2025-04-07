@@ -32,17 +32,60 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
       try {
         setLoading(true);
         
-        // Get all courses first
-        const { data: allCourses, error: coursesError } = await supabase
-          .from('courses')
-          .select('id, title, description, image_url, instructor');
-        
-        if (coursesError) {
-          throw coursesError;
-        }
-
         // Get user ID
-        const userId = (await supabase.auth.getUser()).data.user?.id || '';
+        const { data: { user } } = await supabase.auth.getUser();
+        const userId = user?.id || '';
+        
+        if (!userId) {
+          throw new Error('User not authenticated');
+        }
+        
+        let availableCourses: Course[] = [];
+        
+        // If a company is selected, get courses for that company
+        if (selectedCompany) {
+          // First get company course IDs
+          const { data: companyCourses, error: companyCoursesError } = await supabase
+            .from('company_courses')
+            .select('course_id')
+            .eq('company_id', selectedCompany.id);
+            
+          if (companyCoursesError) {
+            throw companyCoursesError;
+          }
+          
+          if (!companyCourses || companyCourses.length === 0) {
+            setCourses([]);
+            setLoading(false);
+            return;
+          }
+          
+          // Extract course IDs
+          const courseIds = companyCourses.map(cc => cc.course_id);
+          
+          // Fetch the actual courses using the IDs
+          const { data: courseData, error: courseError } = await supabase
+            .from('courses')
+            .select('*')
+            .in('id', courseIds);
+            
+          if (courseError) {
+            throw courseError;
+          }
+          
+          availableCourses = courseData || [];
+        } else {
+          // If no company is selected, get all courses
+          const { data: courseData, error: courseError } = await supabase
+            .from('courses')
+            .select('*');
+            
+          if (courseError) {
+            throw courseError;
+          }
+          
+          availableCourses = courseData || [];
+        }
         
         // Get user's course progress
         const { data: progressData, error: progressError } = await supabase
@@ -54,31 +97,8 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
           console.error('Error fetching progress:', progressError);
         }
         
-        // Get filtered courses if a company is selected
-        let filteredCourses = allCourses || [];
-        
-        if (selectedCompany) {
-          // Get company courses - Fix the ambiguous column reference by using table aliases
-          const { data: companyCourses, error: companyCoursesError } = await supabase
-            .from('company_courses')
-            .select('id, course_id')
-            .eq('company_courses.company_id', selectedCompany.id);
-            
-          if (companyCoursesError) {
-            console.error('Error fetching company courses:', companyCoursesError);
-          } else if (companyCourses) {
-            // Create an array of course IDs for this company
-            const companyCourseIds = companyCourses.map(cc => cc.course_id);
-            
-            // Filter out courses that don't belong to this company
-            filteredCourses = allCourses?.filter(course => 
-              companyCourseIds.includes(course.id)
-            ) || [];
-          }
-        }
-        
         // Add progress information to the courses
-        const formattedCourses = filteredCourses.map(course => {
+        const coursesWithProgress = availableCourses.map(course => {
           const userProgress = progressData?.find(progress => progress.course_id === course.id);
           return {
             ...course,
@@ -88,18 +108,18 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
         });
         
         // Apply the filter if specified
-        let finalCourses = formattedCourses;
+        let finalCourses = coursesWithProgress;
         
         if (filter === 'in-progress') {
-          finalCourses = formattedCourses.filter(course => 
+          finalCourses = coursesWithProgress.filter(course => 
             (course.progress || 0) > 0 && !(course.completed || false)
           );
         } else if (filter === 'completed') {
-          finalCourses = formattedCourses.filter(course => 
+          finalCourses = coursesWithProgress.filter(course => 
             course.completed || false
           );
         } else if (filter === 'not-started') {
-          finalCourses = formattedCourses.filter(course => 
+          finalCourses = coursesWithProgress.filter(course => 
             (course.progress || 0) === 0
           );
         }
