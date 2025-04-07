@@ -23,7 +23,7 @@ export const MainNavigationMenu = () => {
   }, [userCompanies.length]);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b shadow-sm">
+    <header className="sticky top-0 z-40 w-full border-b shadow-sm bg-[#F8F7F4] dark:bg-gray-950">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center space-x-8">
           <div className="flex items-center">
