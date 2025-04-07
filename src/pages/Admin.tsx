@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link, Navigate } from 'react-router-dom';
-import { FileText, Settings, Users, Globe, Lock, Building } from 'lucide-react';
+import { FileText, Settings, Users, Globe, Lock, Building, Book } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserManagement } from '@/components/admin/UserManagement';
 import { CompanyManagement } from '@/components/admin/CompanyManagement';
+import { CourseManagement } from '@/components/admin/CourseManagement';
 import { useAuth } from '@/contexts/AuthContext';
 
 const AdminPage = () => {
@@ -68,6 +69,13 @@ const AdminPage = () => {
                   <Building className="h-4 w-4 mr-2" />
                   Empresas
                 </TabsTrigger>
+                <TabsTrigger 
+                  value="courses" 
+                  className="flex items-center"
+                >
+                  <Book className="h-4 w-4 mr-2" />
+                  Cursos
+                </TabsTrigger>
               </TabsList>
             
               <CardContent className="pt-6">
@@ -76,6 +84,9 @@ const AdminPage = () => {
                 </TabsContent>
                 <TabsContent value="companies">
                   <CompanyManagement />
+                </TabsContent>
+                <TabsContent value="courses">
+                  <CourseManagement />
                 </TabsContent>
               </CardContent>
             </Tabs>
