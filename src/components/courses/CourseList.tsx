@@ -56,30 +56,33 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
         if (selectedCompany) {
           console.log("Selected company:", selectedCompany.nome);
           
-          // Try to find all course IDs accessible to this company
-          const { data: companyAccess, error: accessError } = await supabase
-            .from('company_course_access')
-            .select('course_id')
-            .eq('company_id', selectedCompany.id);
-          
-          if (accessError) {
-            console.error("Error getting company course access:", accessError);
+          try {
+            // Try to find all course IDs accessible to this company
+            const { data: companyAccess, error: accessError } = await supabase
+              .from('company_course_access')
+              .select('course_id')
+              .eq('company_id', selectedCompany.id);
             
-            // Fallback: If the company_course_access table doesn't exist or has another issue,
-            // assume all courses are available (this prevents a blank screen)
-            console.log("Using fallback: showing all courses");
-          } else if (companyAccess && companyAccess.length > 0) {
-            // Filter the courses based on company access
-            const accessibleCourseIds = companyAccess.map(access => access.course_id);
-            availableCourses = allCourses?.filter(course => 
-              accessibleCourseIds.includes(course.id)
-            ) || [];
-            
-            console.log(`Found ${availableCourses.length} courses for company`);
-          } else {
-            // No courses found for this company
-            console.log("No courses found for this company");
-            availableCourses = [];
+            if (accessError) {
+              console.error("Error getting company course access:", accessError);
+              console.log("Using fallback: showing all courses");
+            } else if (companyAccess && companyAccess.length > 0) {
+              // Filter the courses based on company access
+              const accessibleCourseIds = companyAccess.map(access => access.course_id);
+              availableCourses = allCourses?.filter(course => 
+                accessibleCourseIds.includes(course.id)
+              ) || [];
+              
+              console.log(`Found ${availableCourses.length} courses for company`);
+            } else {
+              // No courses found for this company
+              console.log("No courses found for this company");
+              availableCourses = [];
+            }
+          } catch (error) {
+            console.error("Error processing company access:", error);
+            // Fallback to showing all courses
+            console.log("Error with company access, using fallback: showing all courses");
           }
         }
         

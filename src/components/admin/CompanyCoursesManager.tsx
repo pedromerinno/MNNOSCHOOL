@@ -37,21 +37,28 @@ export const CompanyCoursesManager: React.FC<CompanyCoursesManagerProps> = ({
 
         if (companiesError) throw companiesError;
 
-        // Try to fetch from company_course_access first
-        let { data: courseCompaniesData, error: courseCompaniesError } = await supabase
-          .from('company_course_access')
-          .select('company_id')
-          .eq('course_id', course.id);
+        // Try to fetch from company_course_access
+        try {
+          const { data: courseCompaniesData, error: courseCompaniesError } = await supabase
+            .from('company_course_access')
+            .select('company_id')
+            .eq('course_id', course.id);
 
-        if (courseCompaniesError) {
-          console.error("Error fetching from company_course_access:", courseCompaniesError);
-          courseCompaniesData = [];
+          if (courseCompaniesError) {
+            console.error("Error fetching from company_course_access:", courseCompaniesError);
+            // If there's an error, we'll start with no selected companies
+            setSelectedCompanies([]);
+          } else {
+            setSelectedCompanies((courseCompaniesData || []).map(cc => cc.company_id));
+          }
+        } catch (error) {
+          console.error("Error processing company access:", error);
+          setSelectedCompanies([]);
         }
 
         setCompanies(companiesData || []);
-        setSelectedCompanies(courseCompaniesData?.map(cc => cc.company_id) || []);
         
-        console.log(`Found ${companiesData?.length || 0} companies and ${courseCompaniesData?.length || 0} are selected`);
+        console.log(`Found ${companiesData?.length || 0} companies`);
       } catch (error: any) {
         console.error("Error fetching data:", error);
         toast({
@@ -81,32 +88,37 @@ export const CompanyCoursesManager: React.FC<CompanyCoursesManagerProps> = ({
       console.log("Saving course access for:", course.title);
       console.log("Selected companies:", selectedCompanies.length);
       
-      // First, delete all existing relationships using the course_id
-      const { error: deleteError } = await supabase
-        .from('company_course_access')
-        .delete()
-        .eq('course_id', course.id);
-
-      if (deleteError) {
-        console.error("Error deleting existing access:", deleteError);
-        throw deleteError;
-      }
-
-      // Then, insert the new relationships if any companies are selected
-      if (selectedCompanies.length > 0) {
-        const newRelationships = selectedCompanies.map(companyId => ({
-          course_id: course.id,
-          company_id: companyId
-        }));
-
-        const { error: insertError } = await supabase
+      try {
+        // First, delete all existing relationships using the course_id
+        const { error: deleteError } = await supabase
           .from('company_course_access')
-          .insert(newRelationships);
+          .delete()
+          .eq('course_id', course.id);
 
-        if (insertError) {
-          console.error("Error inserting new access:", insertError);
-          throw insertError;
+        if (deleteError) {
+          console.error("Error deleting existing access:", deleteError);
+          throw deleteError;
         }
+
+        // Then, insert the new relationships if any companies are selected
+        if (selectedCompanies.length > 0) {
+          const newRelationships = selectedCompanies.map(companyId => ({
+            course_id: course.id,
+            company_id: companyId
+          }));
+
+          const { error: insertError } = await supabase
+            .from('company_course_access')
+            .insert(newRelationships);
+
+          if (insertError) {
+            console.error("Error inserting new access:", insertError);
+            throw insertError;
+          }
+        }
+      } catch (error) {
+        console.error("Error updating company access:", error);
+        throw error;
       }
 
       toast({
