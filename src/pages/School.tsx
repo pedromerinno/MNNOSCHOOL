@@ -15,7 +15,7 @@ const School = () => {
   const featuredCourse = {
     id: "1",
     title: "Como construir um bom fluxograma",
-    image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=600&fit=crop",
+    image: "https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?w=800&h=600&fit=crop",
     instructor: "Pedro",
     tags: ["IA", "Ilustração", "Conceitos"]
   };
@@ -136,14 +136,14 @@ const School = () => {
 
   return (
     <DashboardLayout>
-      <div className="bg-white py-6">
+      <div className="bg-background py-6">
         <div className="flex">
           {/* Main Content */}
           <div className="flex-1 pr-6">
-            {/* Featured Course */}
+            {/* Featured Course - Increased height from h-72 to h-96 */}
             <div className="mb-12">
               <div className="relative rounded-xl overflow-hidden">
-                <div className="h-72 bg-gradient-to-r from-gray-800 to-gray-900 relative">
+                <div className="h-96 bg-gradient-to-r from-gray-800 to-gray-900 relative">
                   <img 
                     src={featuredCourse.image}
                     alt={featuredCourse.title}
@@ -151,7 +151,7 @@ const School = () => {
                   />
                   <div className="absolute inset-0 p-8 flex flex-col justify-between">
                     <div>
-                      <h1 className="text-3xl font-bold text-white mb-2">{featuredCourse.title}</h1>
+                      <h1 className="text-4xl font-bold text-white mb-2">{featuredCourse.title}</h1>
                       <div className="flex gap-2 mt-4">
                         {featuredCourse.tags.map((tag, index) => (
                           <span 
@@ -273,7 +273,7 @@ const School = () => {
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                {forumTopics.map((topic) => (
+                {forumTopics.map((topic, index) => (
                   <Card key={topic.id} className="overflow-hidden border shadow-sm">
                     <CardContent className="p-4">
                       <div className="flex gap-2 mb-2">
@@ -289,9 +289,16 @@ const School = () => {
                       <h3 className="font-medium text-sm">{topic.title}</h3>
                       <div className="flex items-center gap-1 mt-4">
                         <div className="flex -space-x-2">
-                          <div className="w-6 h-6 bg-gray-300 rounded-full"></div>
-                          <div className="w-6 h-6 bg-gray-400 rounded-full"></div>
-                          <div className="w-6 h-6 bg-gray-500 rounded-full"></div>
+                          {/* Add avatar images */}
+                          <div className="w-6 h-6 bg-gray-300 rounded-full overflow-hidden border border-white">
+                            <img src={`https://i.pravatar.cc/100?img=${index * 3 + 1}`} alt="User avatar" className="w-full h-full object-cover" />
+                          </div>
+                          <div className="w-6 h-6 bg-gray-400 rounded-full overflow-hidden border border-white">
+                            <img src={`https://i.pravatar.cc/100?img=${index * 3 + 2}`} alt="User avatar" className="w-full h-full object-cover" />
+                          </div>
+                          <div className="w-6 h-6 bg-gray-500 rounded-full overflow-hidden border border-white">
+                            <img src={`https://i.pravatar.cc/100?img=${index * 3 + 3}`} alt="User avatar" className="w-full h-full object-cover" />
+                          </div>
                         </div>
                         <span className="text-xs text-gray-500">+5</span>
                       </div>
@@ -330,7 +337,7 @@ const School = () => {
                       >
                         <Heart className="h-4 w-4" />
                       </Button>
-                      <div className="absolute bottom-0 left-0 right-0 p-3">
+                      <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/70 to-transparent">
                         <div className="flex gap-2 mb-2">
                           {course.tags.map((tag, index) => (
                             <span 
@@ -400,7 +407,7 @@ const School = () => {
             <div>
               <h3 className="text-sm font-medium mb-4">Temas Sugeridos</h3>
               <div className="space-y-2">
-                {suggestedTopics.map((topic) => (
+                {suggestedTopics.map((topic, index) => (
                   <Card key={topic.id} className="overflow-hidden border shadow-sm">
                     <CardContent className="p-3 flex items-center justify-between">
                       <div className="flex items-center">
