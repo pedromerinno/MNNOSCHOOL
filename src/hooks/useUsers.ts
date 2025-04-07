@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -72,12 +73,17 @@ export function useUsers() {
         is_admin: profile.is_admin
       }));
       
+      // Attempt to fetch emails via direct REST API call to work around permission issues
       try {
-        const adminResponse = await fetch('https://gswvicwtswokyfbgoxps.supabase.co/rest/v1/profiles?select=id,auth.users!inner(email)', {
+        // Use the REST API to fetch email information
+        const { data: session } = await supabase.auth.getSession();
+        const accessToken = session?.session?.access_token;
+        
+        const adminResponse = await fetch('https://gswvicwtswokyfbgoxps.supabase.co/rest/v1/profiles?select=id,email:auth.users!inner(email)', {
           method: 'GET',
           headers: {
             'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdzd3ZpY3d0c3dva3lmYmdveHBzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM5MDQ4MTksImV4cCI6MjA1OTQ4MDgxOX0.kyN2Qq3v9H_ENVzSH4QfGwUJLCVEXIo44-MQImFQ_Z0',
-            'Authorization': `Bearer ${supabase.auth.getSession().then(({ data }) => data.session?.access_token)}`,
+            'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json'
           }
         });
@@ -87,8 +93,8 @@ export function useUsers() {
           
           formattedUsers = formattedUsers.map(user => {
             const matchedUser = adminData.find((item: any) => item.id === user.id);
-            if (matchedUser && matchedUser.auth?.users?.email) {
-              return { ...user, email: matchedUser.auth.users.email };
+            if (matchedUser && matchedUser.email && matchedUser.email[0]) {
+              return { ...user, email: matchedUser.email[0].email };
             }
             return user;
           });
