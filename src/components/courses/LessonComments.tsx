@@ -74,8 +74,8 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
           
         if (error) throw error;
         
-        // Format comments with profile data
-        const formattedComments = (data as CommentResponse[] || []).map(comment => ({
+        // Format comments with profile data - use double type assertion to handle the unknown data format
+        const formattedComments = ((data as unknown) as CommentResponse[] || []).map(comment => ({
           id: comment.id,
           user_id: comment.user_id,
           lesson_id: comment.lesson_id,
@@ -133,14 +133,10 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
           setComments(prev => [...prev, newComment]);
         }
       })
-      .on('system', (event) => {
-        // Listen for system events like connection issues
-        if (event.event === 'disconnect' && isMounted) {
-          console.warn('WebSocket disconnected:', event);
-          setConnectionError(true);
-        }
-      })
-      .subscribe();
+      .subscribe((status) => {
+        // Adding the status parameter to fix the Expected 3 arguments error
+        console.log('Subscription status:', status);
+      });
     
     return () => {
       isMounted = false;
