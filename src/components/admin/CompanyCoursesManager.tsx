@@ -5,7 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from '@/hooks/use-toast';
-import { Course } from './CourseManagement';
+import { Course } from './courses/types';
 import { Company } from '@/types/company';
 
 interface CompanyCoursesManagerProps {
@@ -37,7 +37,7 @@ export const CompanyCoursesManager: React.FC<CompanyCoursesManagerProps> = ({
 
         if (companiesError) throw companiesError;
 
-        // Try to fetch company access relationships
+        // Try to fetch company access relationships with explicit table aliases
         try {
           const { data: courseCompaniesData, error: courseCompaniesError } = await supabase
             .from('company_courses')
