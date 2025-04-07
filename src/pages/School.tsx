@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -136,7 +135,7 @@ const School = () => {
 
   return (
     <DashboardLayout>
-      <div className="bg-white py-6">
+      <div className="bg-[#F8F7F4] py-6">
         <div className="flex">
           {/* Main Content */}
           <div className="flex-1 pr-6">
