@@ -136,14 +136,14 @@ const School = () => {
 
   return (
     <DashboardLayout>
-      <div className="bg-background py-6">
-        <div className="flex">
+      <div className="bg-[#F8F7F4] py-6">
+        <div className="container mx-auto px-4 lg:px-8 flex">
           {/* Main Content */}
           <div className="flex-1 pr-6">
-            {/* Featured Course - Increased height from h-72 to h-96 */}
+            {/* Featured Course - Reduced height from h-96 to h-80 */}
             <div className="mb-12">
               <div className="relative rounded-xl overflow-hidden">
-                <div className="h-96 bg-gradient-to-r from-gray-800 to-gray-900 relative">
+                <div className="h-80 bg-gradient-to-r from-gray-800 to-gray-900 relative">
                   <img 
                     src={featuredCourse.image}
                     alt={featuredCourse.title}
@@ -151,7 +151,7 @@ const School = () => {
                   />
                   <div className="absolute inset-0 p-8 flex flex-col justify-between">
                     <div>
-                      <h1 className="text-4xl font-bold text-white mb-2">{featuredCourse.title}</h1>
+                      <h1 className="text-3xl font-bold text-white mb-2">{featuredCourse.title}</h1>
                       <div className="flex gap-2 mt-4">
                         {featuredCourse.tags.map((tag, index) => (
                           <span 
