@@ -33,6 +33,7 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
       try {
         setLoading(true);
         console.log("Fetching courses with filter:", filter);
+        console.log("Selected company:", selectedCompany?.nome || "None");
         
         // Get user ID
         const { data: { user } } = await supabase.auth.getUser();
@@ -42,50 +43,49 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
           throw new Error('User not authenticated');
         }
         
-        // First, get all courses
-        let { data: allCourses, error: coursesError } = await supabase
+        // Se não há empresa selecionada, não carregamos nenhum curso
+        if (!selectedCompany) {
+          console.log("No company selected, not loading any courses");
+          setCourses([]);
+          setLoading(false);
+          return;
+        }
+        
+        console.log("Fetching courses for company:", selectedCompany.id);
+        
+        // Buscar IDs dos cursos da empresa selecionada
+        const { data: companyAccess, error: accessError } = await supabase
+          .from('company_courses')
+          .select('course_id')
+          .eq('empresa_id', selectedCompany.id);
+        
+        if (accessError) {
+          throw accessError;
+        }
+        
+        // Se não há cursos para esta empresa
+        if (!companyAccess || companyAccess.length === 0) {
+          console.log("No courses found for this company");
+          setCourses([]);
+          setLoading(false);
+          return;
+        }
+        
+        const accessibleCourseIds = companyAccess.map(access => access.course_id);
+        console.log(`Found ${accessibleCourseIds.length} course IDs for company`);
+        
+        // Buscar os cursos com base nos IDs
+        const { data: coursesData, error: coursesError } = await supabase
           .from('courses')
-          .select('*');
+          .select('*')
+          .in('id', accessibleCourseIds);
           
         if (coursesError) {
           throw coursesError;
         }
         
-        let availableCourses: Course[] = allCourses || [];
-        
-        // If a company is selected, filter the courses based on company access
-        if (selectedCompany) {
-          console.log("Selected company:", selectedCompany.nome);
-          
-          try {
-            // Fetch course IDs accessible to this company
-            const { data: companyAccess, error: accessError } = await supabase
-              .from('company_courses')
-              .select('course_id')
-              .eq('empresa_id', selectedCompany.id);
-            
-            if (accessError) {
-              console.error("Error getting company course access:", accessError);
-              console.log("Using fallback: showing all courses");
-            } else if (companyAccess && companyAccess.length > 0) {
-              // Filter the courses based on company access
-              const accessibleCourseIds = companyAccess.map(access => access.course_id);
-              availableCourses = allCourses?.filter(course => 
-                accessibleCourseIds.includes(course.id)
-              ) || [];
-              
-              console.log(`Found ${availableCourses.length} courses for company`);
-            } else {
-              // No courses found for this company
-              console.log("No courses found for this company");
-              availableCourses = [];
-            }
-          } catch (error) {
-            console.error("Error processing company access:", error);
-            // Fallback to showing all courses
-            console.log("Error with company access, using fallback: showing all courses");
-          }
-        }
+        let availableCourses = coursesData || [];
+        console.log(`Loaded ${availableCourses.length} courses`);
         
         // Get user's course progress
         const { data: progressData, error: progressError } = await supabase
@@ -166,7 +166,9 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
             Nenhum curso encontrado
           </h3>
           <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
-            Não foram encontrados cursos que correspondam aos filtros selecionados.
+            {selectedCompany 
+              ? `Não foram encontrados cursos para a empresa ${selectedCompany.nome} que correspondam aos filtros selecionados.`
+              : 'Por favor, selecione uma empresa para ver os cursos disponíveis.'}
           </p>
         </div>
       )}
