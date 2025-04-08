@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   Tabs, 
   TabsContent, 
@@ -19,7 +19,6 @@ import { Course } from './courses/types';
 export type { Course };
 
 export const CourseManagement: React.FC = () => {
-  const [activeTab] = useState("courses");
   const { 
     courses, 
     isLoading, 
@@ -34,37 +33,22 @@ export const CourseManagement: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <Card className="mb-8">
-        <CardHeader className="pb-0">
-          <Tabs value={activeTab}>
-            <TabsList className="w-full max-w-md mx-auto">
-              <TabsTrigger 
-                value="courses" 
-                className="flex items-center"
-              >
-                <Book className="h-4 w-4 mr-2" />
-                Cursos
-              </TabsTrigger>
-            </TabsList>
-          
-            <CardContent className="pt-6">
-              <TabsContent value="courses">
-                <CourseList 
-                  courses={courses}
-                  isLoading={isLoading}
-                  selectedCourse={selectedCourse}
-                  setSelectedCourse={setSelectedCourse}
-                  isFormOpen={isFormOpen}
-                  setIsFormOpen={setIsFormOpen}
-                  isCompanyManagerOpen={isCompanyManagerOpen}
-                  setIsCompanyManagerOpen={setIsCompanyManagerOpen}
-                  isSubmitting={isSubmitting}
-                />
-              </TabsContent>
-            </CardContent>
-          </Tabs>
-        </CardHeader>
+      <Card>
+        <CardContent>
+          <CourseList 
+            courses={courses}
+            isLoading={isLoading}
+            selectedCourse={selectedCourse}
+            setSelectedCourse={setSelectedCourse}
+            isFormOpen={isFormOpen}
+            setIsFormOpen={setIsFormOpen}
+            isCompanyManagerOpen={isCompanyManagerOpen}
+            setIsCompanyManagerOpen={setIsCompanyManagerOpen}
+            isSubmitting={isSubmitting}
+          />
+        </CardContent>
       </Card>
     </div>
   );
 };
+
