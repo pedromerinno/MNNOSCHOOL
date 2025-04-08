@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -59,7 +58,6 @@ export const CourseList: React.FC<CourseListProps> = ({
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Gerenciamento de Cursos</h2>
         <Button onClick={handleCreateCourse}>
           <Plus className="h-4 w-4 mr-2" />
           Novo Curso
