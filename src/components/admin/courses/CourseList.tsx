@@ -138,8 +138,8 @@ export const CourseList: React.FC<CourseListProps> = ({
             <SheetTitle>{selectedCourse ? "Editar Curso" : "Novo Curso"}</SheetTitle>
           </SheetHeader>
           <CourseForm 
-            course={selectedCourse}
             onClose={() => setIsFormOpen(false)}
+            initialData={selectedCourse}
           />
         </SheetContent>
       </Sheet>

@@ -1,21 +1,21 @@
 
 import React from 'react';
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Control } from "react-hook-form";
+import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 
-interface TextInputFieldProps {
+export interface TextInputFieldProps {
   control: Control<any>;
   name: string;
   label: string;
-  placeholder: string;
+  placeholder?: string;
 }
 
-export const TextInputField: React.FC<TextInputFieldProps> = ({ 
-  control, 
-  name, 
-  label, 
-  placeholder 
+export const TextInputField: React.FC<TextInputFieldProps> = ({
+  control,
+  name,
+  label,
+  placeholder
 }) => {
   return (
     <FormField
@@ -25,9 +25,11 @@ export const TextInputField: React.FC<TextInputFieldProps> = ({
         <FormItem>
           <FormLabel>{label}</FormLabel>
           <FormControl>
-            <Input placeholder={placeholder} {...field} value={field.value || ""} />
+            <Input 
+              {...field} 
+              placeholder={placeholder}
+            />
           </FormControl>
-          <FormMessage />
         </FormItem>
       )}
     />

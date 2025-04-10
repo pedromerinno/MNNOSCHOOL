@@ -49,18 +49,19 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
   const [showRoleDialog, setShowRoleDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [userRoles, setUserRoles] = useState<Record<string, string>>({});
+  const [reloadTrigger, setReloadTrigger] = useState(0);
   
-  // Função para buscar usuários da empresa
+  // Function to fetch company users
   const fetchCompanyUsers = async () => {
     if (!company || !company.id) {
-      console.log("Empresa não definida ou sem ID");
+      console.log("No company selected or company has no ID");
       setIsLoading(false);
       return;
     }
     
     setIsLoading(true);
     try {
-      console.log("Buscando colaboradores para empresa:", company.nome, company.id);
+      console.log("Fetching collaborators for company:", company.nome, company.id);
       
       const { data, error } = await supabase
         .from('user_empresa')
@@ -70,31 +71,31 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
       if (error) throw error;
       
       if (data && data.length > 0) {
-        console.log(`Encontrados ${data.length} colaboradores`);
+        console.log(`Found ${data.length} collaborators`);
         setCompanyUsers(data.map(item => item.user_id));
         
-        // Buscar cargos dos usuários
+        // Fetch user roles
         await fetchUserRoles(data.map(item => item.user_id));
       } else {
-        console.log("Nenhum colaborador encontrado para esta empresa");
+        console.log("No collaborators found for this company");
         setCompanyUsers([]);
         setUserRoles({});
       }
       
     } catch (error: any) {
       console.error("Error fetching company users:", error);
-      toast.error(`Erro ao carregar colaboradores: ${error.message}`);
+      toast.error(`Error loading collaborators: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
   };
   
-  // Buscar cargos dos usuários
+  // Fetch user roles
   const fetchUserRoles = async (userIds: string[]) => {
     if (userIds.length === 0) return;
     
     try {
-      // Primeiro, buscar as informações de cargo_id dos perfis
+      // First, fetch cargo_id info from profiles
       const { data, error } = await supabase
         .from('profiles')
         .select('id, cargo_id')
@@ -104,24 +105,24 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
       
       if (!data || data.length === 0) return;
       
-      // Filtrar usuários com cargo atribuído e obter ids
+      // Filter users with assigned roles
       const usersWithRoles = data.filter(u => u.cargo_id);
       
       if (usersWithRoles.length === 0) {
-        console.log("Nenhum usuário com cargo atribuído");
+        console.log("No users with assigned roles");
         return;
       }
       
-      // Extrair IDs de cargos para busca
+      // Extract role IDs for search
       const cargoIds = usersWithRoles
         .map(u => u.cargo_id)
         .filter(Boolean) as string[];
       
       if (cargoIds.length === 0) return;
       
-      console.log(`Buscando ${cargoIds.length} cargos`);
+      console.log(`Fetching ${cargoIds.length} roles`);
       
-      // Buscar detalhes dos cargos
+      // Fetch role details
       const { data: rolesData, error: rolesError } = await supabase
         .from('job_roles')
         .select('id, title')
@@ -131,17 +132,16 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
       
       if (!rolesData || rolesData.length === 0) return;
       
-      console.log(`Encontrados ${rolesData.length} cargos`);
+      console.log(`Found ${rolesData.length} roles`);
       
-      // Criar mapa de nomes de cargos por ID
-      const roleMap: Record<string, string> = {};
-      
-      // Mapear usuários para seus nomes de cargo
+      // Create role name map
       const roleNameMap: Record<string, string> = {};
       rolesData.forEach((role: JobRole) => {
         roleNameMap[role.id] = role.title;
       });
       
+      // Map users to their role names
+      const roleMap: Record<string, string> = {};
       usersWithRoles.forEach(user => {
         if (user.cargo_id && roleNameMap[user.cargo_id]) {
           roleMap[user.id] = roleNameMap[user.cargo_id];
@@ -152,27 +152,27 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
       
     } catch (error: any) {
       console.error("Error fetching user roles:", error);
-      toast.error(`Erro ao carregar cargos dos usuários: ${error.message}`);
+      toast.error(`Error loading user roles: ${error.message}`);
     }
   };
   
-  // Carregar dados quando a empresa mudar
+  // Load data when company changes
   useEffect(() => {
     if (company && company.id) {
-      console.log("Empresa mudou, carregando colaboradores:", company.nome);
+      console.log("Company changed, loading collaborators:", company.nome);
       fetchCompanyUsers();
     }
-  }, [company]);
+  }, [company, reloadTrigger]);
   
-  // Garantir que os usuários sejam carregados
+  // Ensure users are loaded
   useEffect(() => {
     if (allUsers.length === 0 && !loadingUsers) {
-      console.log("Carregando usuários");
+      console.log("Loading users");
       fetchUsers();
     }
   }, [allUsers, loadingUsers, fetchUsers]);
   
-  // Filtra os usuários com base no termo de busca
+  // Filter users based on search term
   const filteredUsers = allUsers.filter(user => {
     const searchLower = searchTerm.toLowerCase();
     const displayName = (user.display_name || '').toLowerCase();
@@ -181,14 +181,14 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
     return displayName.includes(searchLower) || email.includes(searchLower);
   });
   
-  // Separa usuários que já estão na empresa
+  // Separate users who are already in the company
   const availableUsers = filteredUsers.filter(user => !companyUsers.includes(user.id));
   const filteredCompanyUsers = filteredUsers.filter(user => companyUsers.includes(user.id));
   
-  // Função para adicionar usuário à empresa
+  // Add user to company
   const addUserToCompany = async (userId: string) => {
     if (!company || !company.id) {
-      toast.error("Nenhuma empresa selecionada");
+      toast.error("No company selected");
       return;
     }
     
@@ -202,27 +202,27 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
         
       if (error) throw error;
       
-      // Atualizar lista de usuários da empresa
+      // Update company users list
       setCompanyUsers(prev => [...prev, userId]);
-      toast.success("Usuário adicionado com sucesso");
+      toast.success("User added successfully");
       
     } catch (error: any) {
       console.error("Error adding user to company:", error);
-      toast.error(`Erro ao adicionar usuário: ${error.message}`);
+      toast.error(`Error adding user: ${error.message}`);
     }
   };
   
-  // Função para remover usuário da empresa
+  // Remove user from company
   const removeUserFromCompany = async (userId: string) => {
-    if (!confirm("Tem certeza que deseja remover este usuário da empresa?")) return;
+    if (!confirm("Are you sure you want to remove this user from the company?")) return;
     
     if (!company || !company.id) {
-      toast.error("Nenhuma empresa selecionada");
+      toast.error("No company selected");
       return;
     }
     
     try {
-      // Primeiro, remover cargo do usuário se tiver um cargo desta empresa
+      // First, remove user's role if they have one from this company
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ cargo_id: null })
@@ -230,7 +230,7 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
       
       if (updateError) throw updateError;
       
-      // Depois remover relação com a empresa
+      // Then remove relation with company
       const { error } = await supabase
         .from('user_empresa')
         .delete()
@@ -239,7 +239,7 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
         
       if (error) throw error;
       
-      // Atualizar lista de usuários da empresa
+      // Update company users list
       setCompanyUsers(prev => prev.filter(id => id !== userId));
       setUserRoles(prev => {
         const updated = { ...prev };
@@ -247,23 +247,23 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
         return updated;
       });
       
-      toast.success("Usuário removido com sucesso");
+      toast.success("User removed successfully");
       
     } catch (error: any) {
       console.error("Error removing user from company:", error);
-      toast.error(`Erro ao remover usuário: ${error.message}`);
+      toast.error(`Error removing user: ${error.message}`);
     }
   };
   
-  // Abrir diálogo para gerenciar cargo do usuário
+  // Open dialog to manage user's role
   const openRoleDialog = (user: any) => {
     setSelectedUser(user);
     setShowRoleDialog(true);
   };
   
-  // Quando o cargo de um usuário é atualizado com sucesso
+  // Handle role update success
   const handleRoleUpdateSuccess = () => {
-    fetchCompanyUsers();
+    setReloadTrigger(prev => prev + 1);
   };
   
   return (
@@ -386,7 +386,7 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
         </Card>
       )}
       
-      {/* Diálogo para adicionar usuários */}
+      {/* Dialog to add users */}
       <Dialog open={showAddUsersDialog} onOpenChange={setShowAddUsersDialog}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
@@ -471,7 +471,7 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
         </DialogContent>
       </Dialog>
       
-      {/* Diálogo para gerenciar cargo do usuário */}
+      {/* Dialog to manage user role */}
       <Dialog open={showRoleDialog} onOpenChange={setShowRoleDialog}>
         <DialogContent>
           <DialogHeader>

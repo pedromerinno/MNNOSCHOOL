@@ -5,6 +5,8 @@ import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import { Company } from "@/types/company";
 import { TextareaField } from "./form/TextareaField";
+import { TextInputField } from "./form/TextInputField";
+import { LogoUrlField } from "./form/LogoUrlField";
 import { ColorPickerField } from "./form/ColorPickerField";
 import { SubmitButton } from "./form/SubmitButton";
 import { integrationFormSchema, IntegrationFormValues } from "./form/IntegrationFormSchema";
@@ -23,6 +25,8 @@ export const CompanyIntegrationForm: React.FC<CompanyIntegrationFormProps> = ({
   const form = useForm<IntegrationFormValues>({
     resolver: zodResolver(integrationFormSchema),
     defaultValues: {
+      nome: company.nome || "",
+      logo: company.logo || "",
       historia: company.historia || "",
       missao: company.missao || "",
       valores: company.valores || "",
@@ -39,6 +43,26 @@ export const CompanyIntegrationForm: React.FC<CompanyIntegrationFormProps> = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <TextInputField
+          control={form.control}
+          name="nome"
+          label="Nome da Empresa"
+          placeholder="Nome oficial da empresa..."
+        />
+        
+        <LogoUrlField
+          control={form.control}
+          name="logo"
+          label="URL do Logo"
+        />
+        
+        <TextareaField
+          control={form.control}
+          name="frase_institucional"
+          label="Frase Institucional"
+          placeholder="Uma frase que representa a essência da empresa..."
+        />
+        
         <TextareaField
           control={form.control}
           name="historia"
@@ -58,13 +82,6 @@ export const CompanyIntegrationForm: React.FC<CompanyIntegrationFormProps> = ({
           name="valores"
           label="Valores"
           placeholder="Liste os valores da empresa..."
-        />
-        
-        <TextareaField
-          control={form.control}
-          name="frase_institucional"
-          label="Frase Institucional"
-          placeholder="Uma frase que representa a essência da empresa..."
         />
         
         <ColorPickerField 
