@@ -44,18 +44,18 @@ export const useCollaboratorManagement = (company: Company | null): Collaborator
     useFilterUsers(allUsers, companyUsers, searchTerm);
 
   // Wrapper functions to include company
-  const addUserToCompany = useCallback((userId: string) => {
+  const addUserToCompany = useCallback((userId: string): Promise<boolean | void> => {
     if (!company) {
       console.error('Cannot add user - no company selected');
-      return Promise.resolve(false);
+      return Promise.resolve();
     }
     return addUser(userId, company);
   }, [addUser, company]);
 
-  const removeUserFromCompany = useCallback((userId: string) => {
+  const removeUserFromCompany = useCallback((userId: string): Promise<boolean | void> => {
     if (!company) {
       console.error('Cannot remove user - no company selected');
-      return Promise.resolve(false);
+      return Promise.resolve();
     }
     return removeUser(userId, company);
   }, [removeUser, company]);

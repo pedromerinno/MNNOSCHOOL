@@ -9,15 +9,15 @@ export const useCompanyUserRelationship = (
   setReloadTrigger: (value: React.SetStateAction<number>) => void
 ) => {
   // Add user to company
-  const addUserToCompany = async (userId: string, company: Company | null) => {
+  const addUserToCompany = async (userId: string, company: Company | null): Promise<boolean | void> => {
     if (!company || !company.id) {
       toast.error("No company selected");
-      return;
+      return false;
     }
     
     if (!userId) {
       toast.error("No user selected");
-      return;
+      return false;
     }
     
     try {
@@ -35,7 +35,7 @@ export const useCompanyUserRelationship = (
       
       if (existingRelation) {
         toast.info("User is already part of this company");
-        return;
+        return false;
       }
       
       const { error } = await supabase
@@ -57,24 +57,26 @@ export const useCompanyUserRelationship = (
       // Force a reload to refresh the data
       setReloadTrigger(prev => prev + 1);
       
+      return true;
     } catch (error: any) {
       console.error("Error adding user to company:", error);
       toast.error(`Error adding user: ${error.message}`);
+      return false;
     }
   };
   
   // Remove user from company
-  const removeUserFromCompany = async (userId: string, company: Company | null) => {
-    if (!confirm("Are you sure you want to remove this user from the company?")) return;
+  const removeUserFromCompany = async (userId: string, company: Company | null): Promise<boolean | void> => {
+    if (!confirm("Are you sure you want to remove this user from the company?")) return false;
     
     if (!company || !company.id) {
       toast.error("No company selected");
-      return;
+      return false;
     }
     
     if (!userId) {
       toast.error("Invalid user");
-      return;
+      return false;
     }
     
     try {
@@ -113,9 +115,11 @@ export const useCompanyUserRelationship = (
       // Force a reload to refresh the data
       setReloadTrigger(prev => prev + 1);
       
+      return true;
     } catch (error: any) {
       console.error("Error removing user from company:", error);
       toast.error(`Error removing user: ${error.message}`);
+      return false;
     }
   };
 

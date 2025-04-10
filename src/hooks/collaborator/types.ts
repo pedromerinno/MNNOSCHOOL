@@ -18,8 +18,8 @@ export interface CollaboratorState {
 export interface CollaboratorActions {
   setSearchTerm: (term: string) => void;
   setReloadTrigger: (value: React.SetStateAction<number>) => void;
-  addUserToCompany: (userId: string) => Promise<void>;
-  removeUserFromCompany: (userId: string) => Promise<void>;
+  addUserToCompany: (userId: string) => Promise<boolean | void>;
+  removeUserFromCompany: (userId: string) => Promise<boolean | void>;
 }
 
 export interface CollaboratorData extends CollaboratorState, CollaboratorActions {

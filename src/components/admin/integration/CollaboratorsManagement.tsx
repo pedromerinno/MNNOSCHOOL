@@ -111,6 +111,34 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
     }
   }, [isLoading, error]);
   
+  // Handle adding a user with proper error handling
+  const handleAddUser = async (userId: string) => {
+    try {
+      const result = await addUserToCompany(userId);
+      if (result === false) {
+        console.log("User could not be added to company");
+      }
+      return result;
+    } catch (error) {
+      console.error("Error in handleAddUser:", error);
+      return false;
+    }
+  };
+
+  // Handle removing a user with proper error handling
+  const handleRemoveUser = async (userId: string) => {
+    try {
+      const result = await removeUserFromCompany(userId);
+      if (result === false) {
+        console.log("User could not be removed from company");
+      }
+      return result;
+    } catch (error) {
+      console.error("Error in handleRemoveUser:", error);
+      return false;
+    }
+  };
+  
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -185,7 +213,7 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
           userRoles={userRoles}
           onManageRole={openRoleDialog}
           onManageDocuments={openDocumentsDialog}
-          onRemoveUser={removeUserFromCompany}
+          onRemoveUser={handleRemoveUser}
         />
       )}
       
@@ -197,7 +225,7 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
         onSearchChange={setSearchTerm}
         availableUsers={availableUsers}
         loadingUsers={loadingUsers}
-        onAddUser={addUserToCompany}
+        onAddUser={handleAddUser}
       />
       
       {/* Dialog to manage user role */}
