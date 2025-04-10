@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Course } from './types';
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Pencil, Building, Loader2, Users } from "lucide-react";
@@ -27,6 +27,7 @@ interface CourseListProps {
   setIsCompanyManagerOpen: (isOpen: boolean) => void;
   isSubmitting: boolean;
   showAllCourses?: boolean;
+  companyId?: string;
 }
 
 export const CourseList: React.FC<CourseListProps> = ({
@@ -39,7 +40,8 @@ export const CourseList: React.FC<CourseListProps> = ({
   isCompanyManagerOpen,
   setIsCompanyManagerOpen,
   isSubmitting,
-  showAllCourses = false
+  showAllCourses = false,
+  companyId
 }) => {
   const handleNewCourse = () => {
     setSelectedCourse(null);
@@ -138,8 +140,11 @@ export const CourseList: React.FC<CourseListProps> = ({
             <SheetTitle>{selectedCourse ? "Editar Curso" : "Novo Curso"}</SheetTitle>
           </SheetHeader>
           <CourseForm 
-            onClose={() => setIsFormOpen(false)}
             initialData={selectedCourse}
+            onSubmit={() => {}} // This should be properly implemented
+            onCancel={() => setIsFormOpen(false)}
+            isSubmitting={isSubmitting}
+            onClose={() => setIsFormOpen(false)}
           />
         </SheetContent>
       </Sheet>

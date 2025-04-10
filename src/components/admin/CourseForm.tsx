@@ -28,18 +28,20 @@ const courseSchema = z.object({
 
 type CourseFormValues = z.infer<typeof courseSchema>;
 
-interface CourseFormProps {
-  initialData?: Course;
+export interface CourseFormProps {
+  initialData?: Course | null;
   onSubmit: (data: CourseFormValues) => void;
   onCancel: () => void;
   isSubmitting: boolean;
+  onClose?: () => void; // Add this line to fix the error
 }
 
 export const CourseForm: React.FC<CourseFormProps> = ({ 
   initialData, 
   onSubmit, 
   onCancel, 
-  isSubmitting 
+  isSubmitting,
+  onClose // Add this parameter
 }) => {
   const form = useForm<CourseFormValues>({
     resolver: zodResolver(courseSchema),
@@ -192,7 +194,7 @@ export const CourseForm: React.FC<CourseFormProps> = ({
           <Button 
             type="button" 
             variant="outline" 
-            onClick={onCancel}
+            onClick={onClose || onCancel}
             disabled={isSubmitting}
           >
             Cancelar
