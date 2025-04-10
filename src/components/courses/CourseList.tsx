@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { CourseCard } from './CourseCard';
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +16,7 @@ export type Course = {
   progress?: number;
   completed?: boolean;
   tags?: string[];
+  favorite?: boolean;
 };
 
 type CourseListProps = {
@@ -90,7 +92,7 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
         // Get user's course progress
         const { data: progressData, error: progressError } = await supabase
           .from('user_course_progress')
-          .select('course_id, progress, completed')
+          .select('course_id, progress, completed, favorite')
           .eq('user_id', userId);
           
         if (progressError) {
@@ -103,7 +105,8 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
           return {
             ...course,
             progress: userProgress?.progress || 0,
-            completed: userProgress?.completed || false
+            completed: userProgress?.completed || false,
+            favorite: userProgress?.favorite || false
           };
         });
         

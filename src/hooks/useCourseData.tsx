@@ -13,6 +13,7 @@ type Course = {
   lessons: Lesson[];
   progress: number;
   completed: boolean;
+  favorite: boolean;
 };
 
 export const useCourseData = (courseId: string | undefined) => {
@@ -81,7 +82,7 @@ export const useCourseData = (courseId: string | undefined) => {
         // Fetch user progress for this course
         const { data: progressData, error: progressError } = await supabase
           .from('user_course_progress')
-          .select('progress, completed')
+          .select('progress, completed, favorite')
           .eq('course_id', courseId)
           .eq('user_id', userId || '')
           .maybeSingle();
@@ -106,10 +107,12 @@ export const useCourseData = (courseId: string | undefined) => {
         // Calculate progress if not available
         let progress = 0;
         let completed = false;
+        let favorite = false;
         
         if (progressData) {
           progress = progressData.progress;
           completed = progressData.completed;
+          favorite = progressData.favorite || false;
         } else {
           // Calculate progress based on completed lessons
           const completedLessons = formattedLessons.filter(lesson => lesson.completed).length;
@@ -123,7 +126,8 @@ export const useCourseData = (courseId: string | undefined) => {
           ...courseData,
           lessons: formattedLessons,
           progress,
-          completed
+          completed,
+          favorite
         });
         
       } catch (error: any) {

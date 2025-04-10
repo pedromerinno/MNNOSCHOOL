@@ -77,7 +77,34 @@ const MyCourses = () => {
             description: progressError.message,
             variant: "destructive",
           });
-          // Continue with empty progress data
+          // Continue with empty progress data instead of throwing an error
+          const emptyProgress: any[] = [];
+          
+          // Process with empty progress data
+          const { data: coursesData, error: coursesError } = await supabase
+            .from('courses')
+            .select('*')
+            .in('id', courseIds);
+          
+          if (coursesError) throw coursesError;
+          
+          const coursesWithProgress = coursesData?.map(course => {
+            return {
+              ...course,
+              progress: 0,
+              completed: false,
+              last_accessed: null,
+              favorite: false
+            };
+          }) || [];
+          
+          setAllCourses(coursesWithProgress);
+          setFilteredCourses(coursesWithProgress);
+          setRecentCourses([]);
+          setStats({favorites: 0, inProgress: 0, completed: 0, videosCompleted: 0});
+          setHoursWatched(0);
+          setLoading(false);
+          return;
         }
         
         // Fetch all courses

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from "@/components/ui/card";
 import { CompanyThemedBadge } from "@/components/ui/badge";
@@ -9,13 +9,91 @@ import { Heart, ChevronRight, UserRound } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/utils/stringUtils";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface CourseCardProps {
   course: Course;
 }
 
 export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
-  const { id, title, description, image_url, instructor, progress = 0, completed = false, tags = [] } = course;
+  const { id, title, description, image_url, instructor, progress = 0, completed = false, tags = [], favorite = false } = course;
+  const [isFavorite, setIsFavorite] = useState<boolean>(favorite);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const { toast } = useToast();
+
+  const handleToggleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevents the Link from being activated
+    
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Get user ID
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Erro",
+          description: "Você precisa estar logado para favoritar um curso",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Check if there's an existing progress record
+      const { data: existingProgress } = await supabase
+        .from('user_course_progress')
+        .select()
+        .eq('user_id', user.id)
+        .eq('course_id', id)
+        .maybeSingle();
+      
+      if (existingProgress) {
+        // Update existing record
+        const { error } = await supabase
+          .from('user_course_progress')
+          .update({ favorite: !isFavorite, last_accessed: new Date().toISOString() })
+          .eq('user_id', user.id)
+          .eq('course_id', id);
+        
+        if (error) throw error;
+      } else {
+        // Create new progress record
+        const { error } = await supabase
+          .from('user_course_progress')
+          .insert({
+            user_id: user.id,
+            course_id: id,
+            favorite: true,
+            progress: 0,
+            completed: false,
+            last_accessed: new Date().toISOString()
+          });
+        
+        if (error) throw error;
+      }
+      
+      // Update local state
+      setIsFavorite(!isFavorite);
+      
+      // Show success toast
+      toast({
+        title: !isFavorite ? "Curso favoritado" : "Curso removido dos favoritos",
+        description: !isFavorite ? "O curso foi adicionado aos seus favoritos" : "O curso foi removido dos seus favoritos",
+      });
+      
+    } catch (error: any) {
+      console.error('Error toggling favorite:', error);
+      toast({
+        title: "Erro ao favoritar curso",
+        description: error.message || "Ocorreu um erro ao processar sua solicitação",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   
   return (
     <Card className="group h-full overflow-hidden rounded-[20px] border border-gray-200 dark:border-gray-700">
@@ -39,13 +117,23 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
             <Button 
               size="icon" 
               variant="ghost" 
-              className="absolute top-2 right-2 rounded-full h-8 w-8 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800"
-              onClick={(e) => {
-                e.preventDefault(); // Prevents the Link from being activated
-                // Like functionality could be added here
-              }}
+              className={cn(
+                "absolute top-2 right-2 rounded-full h-8 w-8 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm transition-colors",
+                isFavorite 
+                  ? "hover:bg-red-100 dark:hover:bg-red-950/30" 
+                  : "hover:bg-white dark:hover:bg-gray-800"
+              )}
+              onClick={handleToggleFavorite}
+              disabled={isSubmitting}
             >
-              <Heart className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+              <Heart 
+                className={cn(
+                  "h-4 w-4 transition-colors", 
+                  isFavorite 
+                    ? "fill-red-500 text-red-500" 
+                    : "text-gray-600 dark:text-gray-400"
+                )} 
+              />
             </Button>
             
             {/* Progress Bar */}
