@@ -1,7 +1,5 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import { useNotes } from '@/hooks/useNotes';
 import { NoteCard } from '@/components/notes/NoteCard';
 import { NoteFormDialog } from '@/components/notes/NoteFormDialog';
@@ -91,9 +89,8 @@ const Notes = () => {
         <Button
           onClick={handleAddNote}
           variant="default"
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center mt-4 md:mt-0"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md mt-4 md:mt-0"
         >
-          <Plus className="h-5 w-5 mr-2" />
           Nova Nota
         </Button>
       </div>
