@@ -73,7 +73,7 @@ export const useFetchCompanyUsers = (
       return roleMap;
     } catch (error: any) {
       console.error("Error fetching user roles:", error);
-      toast.error(`Error loading user roles: ${error.message}`);
+      // Don't show toast here, just log error and return empty object
       return {};
     }
   };
@@ -98,7 +98,7 @@ export const useFetchCompanyUsers = (
       return data as UserProfile[];
     } catch (error: any) {
       console.error("Error fetching user profiles:", error);
-      toast.error(`Error loading user profiles: ${error.message}`);
+      // Don't show toast here, just log error and return empty array
       return [];
     }
   };
@@ -128,7 +128,7 @@ export const useFetchCompanyUsers = (
         
       if (error) {
         console.error("Error fetching user_empresa relations:", error);
-        setError("Failed to load collaborators. Database error.");
+        setError("Falha ao carregar colaboradores. Erro de banco de dados.");
         throw error;
       }
       
@@ -145,35 +145,44 @@ export const useFetchCompanyUsers = (
       const userIds = data.map(item => item.user_id);
       setCompanyUsers(userIds);
       
-      try {
-        // Fetch user roles
-        const roleMap = await fetchUserRoles(userIds);
-        setUserRoles(roleMap);
-      } catch (roleError) {
-        console.error("Error fetching roles, continuing with empty roles:", roleError);
+      // Execute role fetching and profile fetching in parallel
+      const [roleMap, profiles] = await Promise.allSettled([
+        fetchUserRoles(userIds),
+        fetchFullUserProfiles(userIds)
+      ]);
+      
+      // Handle role map results
+      if (roleMap.status === 'fulfilled') {
+        setUserRoles(roleMap.value);
+      } else {
+        console.error("Error fetching roles:", roleMap.reason);
         setUserRoles({});
       }
       
-      // Fetch full user profiles
-      let profiles: UserProfile[] = [];
-      try {
-        profiles = await fetchFullUserProfiles(userIds);
-      } catch (profileError) {
-        console.error("Error fetching profiles:", profileError);
-        setError("Failed to load user profiles");
+      // Handle profiles results  
+      let profileResults: UserProfile[] = [];
+      if (profiles.status === 'fulfilled') {
+        profileResults = profiles.value;
+      } else {
+        console.error("Error fetching profiles:", profiles.reason);
+        setError("Falha ao carregar perfis de usuários");
       }
       
       setIsLoading(false);
       initialFetchDone.current = true;
-      return profiles;
+      return profileResults;
     } catch (error: any) {
       console.error("Error fetching company users:", error);
-      toast.error(`Error loading collaborators: ${error.message}`);
       setIsLoading(false);
       initialFetchDone.current = true;
       setCompanyUsers([]);
       setUserRoles({});
-      setError(`Failed to load collaborators: ${error.message}`);
+      setError(`Falha ao carregar colaboradores: ${error.message}`);
+      
+      // Only show toast for network errors, not permission errors
+      if (!error.message.includes("permission denied")) {
+        toast.error(`Erro ao carregar colaboradores: ${error.message}`);
+      }
       return [];
     }
   }, [setCompanyUsers, setIsLoading, setUserRoles, initialFetchDone, setError]);

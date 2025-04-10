@@ -1,8 +1,8 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Download, Trash2, Upload } from "lucide-react";
+import { FileText, Download, Trash2, Upload, AlertCircle } from "lucide-react";
 import { UserDocument, DOCUMENT_TYPE_LABELS } from "@/types/document";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -21,7 +21,14 @@ export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
   onDelete,
   onUploadClick
 }) => {
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
   const handleDownload = async (document: UserDocument) => {
+    setDownloadingId(document.id);
+    setError(null);
+    
     try {
       const { data, error } = await supabase.storage
         .from('documents')
@@ -39,13 +46,24 @@ export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
       
     } catch (error: any) {
       console.error('Error downloading document:', error);
+      setError(`Falha ao baixar o documento: ${error.message}`);
       toast.error(`Erro ao baixar documento: ${error.message}`);
+    } finally {
+      setDownloadingId(null);
     }
   };
 
   const confirmDelete = async (document: UserDocument) => {
-    if (confirm(`Tem certeza que deseja excluir o documento "${document.name}"?`)) {
-      await onDelete(document.id);
+    if (window.confirm(`Tem certeza que deseja excluir o documento "${document.name}"?`)) {
+      setDeletingId(document.id);
+      setError(null);
+      try {
+        await onDelete(document.id);
+      } catch (error: any) {
+        setError(`Falha ao excluir o documento: ${error.message}`);
+      } finally {
+        setDeletingId(null);
+      }
     }
   };
 
@@ -60,6 +78,26 @@ export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
           </Card>
         ))}
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="border border-red-200 shadow-sm">
+        <CardContent className="p-4 text-center">
+          <AlertCircle className="mx-auto h-10 w-10 text-red-500 mb-2" />
+          <p className="font-medium text-red-700">Erro</p>
+          <p className="text-sm text-red-600 mt-1">{error}</p>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mt-3"
+            onClick={() => setError(null)}
+          >
+            Fechar
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -93,26 +131,28 @@ export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
         <Card key={document.id} className="hover:shadow-sm transition-shadow">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="bg-gray-100 dark:bg-gray-800 p-2 rounded-full mr-3">
+              <div className="flex items-center max-w-[70%]">
+                <div className="bg-gray-100 dark:bg-gray-800 p-2 rounded-full mr-3 flex-shrink-0">
                   <FileText className="h-5 w-5 text-blue-500" />
                 </div>
-                <div>
-                  <p className="font-medium">{document.name}</p>
+                <div className="overflow-hidden">
+                  <p className="font-medium truncate" title={document.name}>{document.name}</p>
                   <div className="flex text-sm text-gray-500 space-x-2">
-                    <span>{DOCUMENT_TYPE_LABELS[document.document_type] || document.document_type}</span>
+                    <span className="truncate">{DOCUMENT_TYPE_LABELS[document.document_type] || document.document_type}</span>
                     <span>•</span>
                     <span>{format(new Date(document.uploaded_at), 'dd/MM/yyyy')}</span>
                   </div>
                 </div>
               </div>
               
-              <div className="flex space-x-2">
+              <div className="flex space-x-2 flex-shrink-0">
                 <Button 
                   variant="outline" 
                   size="icon" 
                   onClick={() => handleDownload(document)}
                   title="Baixar documento"
+                  disabled={!!downloadingId}
+                  className={downloadingId === document.id ? "animate-pulse" : ""}
                 >
                   <Download className="h-4 w-4" />
                 </Button>
@@ -121,7 +161,8 @@ export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
                   size="icon" 
                   onClick={() => confirmDelete(document)}
                   title="Excluir documento"
-                  className="text-red-500 hover:bg-red-50 hover:text-red-600"
+                  disabled={!!deletingId}
+                  className={`${deletingId === document.id ? "animate-pulse" : ""} text-red-500 hover:bg-red-50 hover:text-red-600`}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>

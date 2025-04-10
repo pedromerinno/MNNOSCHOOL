@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -30,6 +30,39 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
   const [documentType, setDocumentType] = useState<DocumentType>("confidentiality_agreement");
   const [description, setDescription] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [bucketsReady, setBucketsReady] = useState(false);
+
+  // Check if documents bucket exists and create it if needed
+  useEffect(() => {
+    if (!open) return;
+
+    const checkAndCreateBucket = async () => {
+      try {
+        const { data: buckets, error } = await supabase.storage.listBuckets();
+        
+        if (error) {
+          console.error("Error checking buckets:", error);
+          return;
+        }
+        
+        const documentsBucket = buckets.find(b => b.name === 'documents');
+        
+        if (!documentsBucket) {
+          console.log("Creating documents bucket");
+          await supabase.storage.createBucket('documents', {
+            public: true
+          });
+        }
+        
+        setBucketsReady(true);
+      } catch (error: any) {
+        console.error("Error creating buckets:", error);
+        toast.error("Erro ao inicializar armazenamento. Tente novamente mais tarde.");
+      }
+    };
+
+    checkAndCreateBucket();
+  }, [open]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -49,6 +82,11 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
       return;
     }
 
+    if (!bucketsReady) {
+      toast.error("Sistema de armazenamento não está pronto. Aguarde um momento.");
+      return;
+    }
+
     setIsUploading(true);
     try {
       // 1. Upload file to storage
@@ -62,7 +100,7 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
 
       if (uploadError) throw uploadError;
 
-      // 2. Create database record using any type for insert since we know the fields we need
+      // 2. Create database record
       const { error } = await supabase
         .from('user_documents')
         .insert({
@@ -74,7 +112,7 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
           document_type: documentType,
           description: description || null,
           uploaded_by: (await supabase.auth.getUser()).data.user?.id || userId
-        } as any);
+        });
 
       if (error) throw error;
 
@@ -88,7 +126,11 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
       setDocumentType("confidentiality_agreement");
     } catch (error: any) {
       console.error('Error uploading document:', error);
-      toast.error(`Erro no upload: ${error.message}`);
+      if (error.message.includes("already exists")) {
+        toast.error("Um arquivo com este nome já existe. Tente novamente com outro arquivo.");
+      } else {
+        toast.error(`Erro no upload: ${error.message}`);
+      }
     } finally {
       setIsUploading(false);
     }
@@ -152,11 +194,19 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
             <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={!file || isUploading}>
+            <Button 
+              type="submit" 
+              disabled={!file || isUploading || !bucketsReady}
+            >
               {isUploading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Enviando...
+                </>
+              ) : !bucketsReady ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Preparando...
                 </>
               ) : (
                 <>

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Control } from "react-hook-form";
 import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,43 @@ export const LogoUrlField: React.FC<LogoUrlFieldProps> = ({
   companyId
 }) => {
   const [isUploading, setIsUploading] = useState(false);
+  const [bucketsCreated, setBucketsCreated] = useState(false);
+
+  // Check if buckets exist
+  useEffect(() => {
+    const checkAndCreateBuckets = async () => {
+      try {
+        // Check if company-assets bucket exists
+        const { data: buckets, error } = await supabase.storage.listBuckets();
+        
+        if (error) {
+          console.error("Error checking buckets:", error);
+          return;
+        }
+        
+        const companyAssetsBucket = buckets.find(b => b.name === 'company-assets');
+        const documentsBucket = buckets.find(b => b.name === 'documents');
+        
+        if (!companyAssetsBucket) {
+          console.log("Creating company-assets bucket");
+          await supabase.storage.createBucket('company-assets', { public: true });
+        }
+        
+        if (!documentsBucket) {
+          console.log("Creating documents bucket");
+          await supabase.storage.createBucket('documents', { public: true });
+        }
+        
+        setBucketsCreated(true);
+      } catch (error: any) {
+        console.error("Error creating buckets:", error);
+      }
+    };
+
+    if (!bucketsCreated) {
+      checkAndCreateBuckets();
+    }
+  }, [bucketsCreated]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, onChange: (value: string) => void) => {
     const files = e.target.files;
@@ -94,12 +131,12 @@ export const LogoUrlField: React.FC<LogoUrlFieldProps> = ({
                 <Button 
                   type="button" 
                   variant="outline"
-                  disabled={isUploading}
+                  disabled={isUploading || !bucketsCreated}
                   className="relative"
                   onClick={() => document.getElementById(`logo-upload-${name}`)?.click()}
                 >
                   <Upload className="h-4 w-4 mr-2" />
-                  {isUploading ? 'Carregando...' : 'Upload'}
+                  {isUploading ? 'Carregando...' : !bucketsCreated ? 'Inicializando...' : 'Upload'}
                 </Button>
                 <input 
                   id={`logo-upload-${name}`}
