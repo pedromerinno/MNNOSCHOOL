@@ -26,89 +26,102 @@ import Admin from "./pages/Admin";
 import Notes from "./pages/Notes";
 import Manifesto from "./pages/Manifesto";
 
-const queryClient = new QueryClient();
+// Crie um cliente de consulta com configurações padrão
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false, // Reduzir solicitações de rede
+    },
+  },
+});
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            
-            <Route element={<ProtectedRoute />}>
-              <Route path="/" element={<>
-                <MainNavigationMenu />
-                <Index />
-              </>} />
+const App = () => {
+  // Registre quando o App é carregado para depuração
+  console.log("App component rendering");
+  
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
               
-              {/* Redirect /dashboard to / */}
-              <Route path="/dashboard" element={<Navigate to="/" replace />} />
-              
-              <Route path="/courses" element={<>
-                <MainNavigationMenu />
-                <Courses />
-              </>} />
-              <Route path="/my-courses" element={<>
-                <MainNavigationMenu />
-                <MyCourses />
-              </>} />
-              <Route path="/courses/:courseId" element={<>
-                <MainNavigationMenu />
-                <CourseDetails />
-              </>} />
-              <Route path="/courses/:courseId/lessons/:lessonId" element={<>
-                <MainNavigationMenu />
-                <LessonPage />
-              </>} />
-              
-              <Route path="/integration" element={<>
-                <MainNavigationMenu />
-                <Integration />
-              </>} />
-              <Route path="/access" element={<>
-                <MainNavigationMenu />
-                <Access />
-              </>} />
-              <Route path="/documents" element={<>
-                <MainNavigationMenu />
-                <Documents />
-              </>} />
-              <Route path="/school" element={<>
-                <MainNavigationMenu />
-                <School />
-              </>} />
-              <Route path="/community" element={<>
-                <MainNavigationMenu />
-                <Community />
-              </>} />
-              <Route path="/notes" element={<>
-                <MainNavigationMenu />
-                <Notes />
-              </>} />
-              <Route path="/manifesto" element={<>
-                <MainNavigationMenu />
-                <Manifesto />
-              </>} />
-              
-              <Route 
-                path="/admin" 
-                element={<>
+              <Route element={<ProtectedRoute />}>
+                <Route path="/" element={<>
                   <MainNavigationMenu />
-                  <Admin />
-                </>} 
-              />
-            </Route>
-            
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+                  <Index />
+                </>} />
+                
+                {/* Redirect /dashboard to / */}
+                <Route path="/dashboard" element={<Navigate to="/" replace />} />
+                
+                <Route path="/courses" element={<>
+                  <MainNavigationMenu />
+                  <Courses />
+                </>} />
+                <Route path="/my-courses" element={<>
+                  <MainNavigationMenu />
+                  <MyCourses />
+                </>} />
+                <Route path="/courses/:courseId" element={<>
+                  <MainNavigationMenu />
+                  <CourseDetails />
+                </>} />
+                <Route path="/courses/:courseId/lessons/:lessonId" element={<>
+                  <MainNavigationMenu />
+                  <LessonPage />
+                </>} />
+                
+                <Route path="/integration" element={<>
+                  <MainNavigationMenu />
+                  <Integration />
+                </>} />
+                <Route path="/access" element={<>
+                  <MainNavigationMenu />
+                  <Access />
+                </>} />
+                <Route path="/documents" element={<>
+                  <MainNavigationMenu />
+                  <Documents />
+                </>} />
+                <Route path="/school" element={<>
+                  <MainNavigationMenu />
+                  <School />
+                </>} />
+                <Route path="/community" element={<>
+                  <MainNavigationMenu />
+                  <Community />
+                </>} />
+                <Route path="/notes" element={<>
+                  <MainNavigationMenu />
+                  <Notes />
+                </>} />
+                <Route path="/manifesto" element={<>
+                  <MainNavigationMenu />
+                  <Manifesto />
+                </>} />
+                
+                <Route 
+                  path="/admin" 
+                  element={<>
+                    <MainNavigationMenu />
+                    <Admin />
+                  </>} 
+                />
+              </Route>
+              
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
