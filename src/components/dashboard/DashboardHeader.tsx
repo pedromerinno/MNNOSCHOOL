@@ -17,7 +17,7 @@ export const DashboardHeader = () => {
       }}
     >
       <div className="flex items-center justify-end">
-        {/* Search bar removed */}
+        {/* Empty container for potential future elements */}
       </div>
     </div>
   );
