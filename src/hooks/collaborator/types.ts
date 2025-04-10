@@ -1,6 +1,5 @@
 
 import { UserProfile } from "@/hooks/useUsers";
-import { Company } from "@/types/company";
 
 export interface UserRole {
   userId: string;
@@ -9,7 +8,7 @@ export interface UserRole {
 
 export interface CollaboratorState {
   isLoading: boolean;
-  companyUsers: string[];
+  companyUsers: UserProfile[];
   searchTerm: string;
   userRoles: Record<string, string>;
   reloadTrigger: number;

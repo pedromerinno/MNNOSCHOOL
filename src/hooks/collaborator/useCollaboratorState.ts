@@ -1,10 +1,11 @@
 
 import { useState, useRef } from 'react';
 import { CollaboratorState } from './types';
+import { UserProfile } from '@/hooks/useUsers';
 
 export const useCollaboratorState = (): CollaboratorState & {
   setIsLoading: (value: boolean) => void;
-  setCompanyUsers: (users: string[]) => void;
+  setCompanyUsers: (users: UserProfile[]) => void;
   setUserRoles: (roles: Record<string, string>) => void;
   setSearchTerm: (term: string) => void;
   setReloadTrigger: (value: React.SetStateAction<number>) => void;
@@ -12,7 +13,7 @@ export const useCollaboratorState = (): CollaboratorState & {
   initialFetchDone: React.MutableRefObject<boolean>;
 } => {
   const [isLoading, setIsLoading] = useState(true);
-  const [companyUsers, setCompanyUsers] = useState<string[]>([]);
+  const [companyUsers, setCompanyUsers] = useState<UserProfile[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [userRoles, setUserRoles] = useState<Record<string, string>>({});
   const [reloadTrigger, setReloadTrigger] = useState(0);

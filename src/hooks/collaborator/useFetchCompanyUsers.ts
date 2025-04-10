@@ -6,7 +6,7 @@ import { Company } from "@/types/company";
 import { UserProfile } from "@/hooks/useUsers";
 
 export const useFetchCompanyUsers = (
-  setCompanyUsers: (users: string[]) => void,
+  setCompanyUsers: (users: UserProfile[]) => void,
   setIsLoading: (loading: boolean) => void,
   setUserRoles: (roles: Record<string, string>) => void,
   initialFetchDone: React.MutableRefObject<boolean>,
@@ -143,34 +143,22 @@ export const useFetchCompanyUsers = (
       
       console.log(`Found ${data.length} collaborators`);
       const userIds = data.map(item => item.user_id);
-      setCompanyUsers(userIds);
       
       // Execute role fetching and profile fetching in parallel
-      const [roleMap, profiles] = await Promise.allSettled([
+      const [roleMap, profiles] = await Promise.all([
         fetchUserRoles(userIds),
         fetchFullUserProfiles(userIds)
       ]);
       
-      // Handle role map results
-      if (roleMap.status === 'fulfilled') {
-        setUserRoles(roleMap.value);
-      } else {
-        console.error("Error fetching roles:", roleMap.reason);
-        setUserRoles({});
-      }
+      // Set user roles
+      setUserRoles(roleMap);
       
-      // Handle profiles results  
-      let profileResults: UserProfile[] = [];
-      if (profiles.status === 'fulfilled') {
-        profileResults = profiles.value;
-      } else {
-        console.error("Error fetching profiles:", profiles.reason);
-        setError("Falha ao carregar perfis de usuários");
-      }
+      // Set complete user profiles instead of just IDs
+      setCompanyUsers(profiles);
       
       setIsLoading(false);
       initialFetchDone.current = true;
-      return profileResults;
+      return profiles;
     } catch (error: any) {
       console.error("Error fetching company users:", error);
       setIsLoading(false);
