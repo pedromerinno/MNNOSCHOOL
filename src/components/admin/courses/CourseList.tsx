@@ -28,6 +28,7 @@ interface CourseListProps {
   isSubmitting: boolean;
   showAllCourses?: boolean;
   companyId?: string;
+  handleFormSubmit: (data: any) => Promise<void>;
 }
 
 export const CourseList: React.FC<CourseListProps> = ({
@@ -41,7 +42,8 @@ export const CourseList: React.FC<CourseListProps> = ({
   setIsCompanyManagerOpen,
   isSubmitting,
   showAllCourses = false,
-  companyId
+  companyId,
+  handleFormSubmit
 }) => {
   const handleNewCourse = () => {
     setSelectedCourse(null);

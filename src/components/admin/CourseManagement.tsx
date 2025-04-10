@@ -46,6 +46,7 @@ export const CourseManagement: React.FC = () => {
             setIsCompanyManagerOpen={setIsCompanyManagerOpen}
             isSubmitting={isSubmitting}
             showAllCourses={true}
+            handleFormSubmit={handleFormSubmit}
           />
         </CardContent>
       </Card>
