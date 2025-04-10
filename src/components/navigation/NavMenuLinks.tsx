@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,6 +12,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { Book, BookOpen } from "lucide-react";
 
 export const NavMenuLinks = () => {
   const { user, userProfile } = useAuth();
@@ -46,7 +48,7 @@ export const NavMenuLinks = () => {
                 <NavigationMenuTrigger 
                   className={cn(
                     "bg-transparent hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent text-[rgb(107_114_128)] dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light text-sm",
-                    isCurrentPage('/courses') && "font-bold text-gray-700"
+                    (isCurrentPage('/courses') || isCurrentPage('/my-courses')) && "font-bold text-gray-700"
                   )}
                 >
                   <span>Cursos</span>
@@ -59,9 +61,12 @@ export const NavMenuLinks = () => {
                           to="/courses"
                           className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
                         >
-                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Todos os Cursos</div>
+                          <div className="flex items-center">
+                            <Book className="h-4 w-4 mr-2" />
+                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Todos os Cursos</span>
+                          </div>
                           <p className="line-clamp-2 text-sm leading-snug text-gray-500 dark:text-gray-400">
-                            Visualize nosso catálogo completo de cursos disponíveis
+                            Visualize todos os cursos disponíveis da sua empresa
                           </p>
                         </Link>
                       </NavigationMenuLink>
@@ -69,38 +74,15 @@ export const NavMenuLinks = () => {
                     <li>
                       <NavigationMenuLink asChild>
                         <Link
-                          to="/courses?filter=in-progress"
+                          to="/my-courses"
                           className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
                         >
-                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Cursos em Andamento</div>
+                          <div className="flex items-center">
+                            <BookOpen className="h-4 w-4 mr-2" />
+                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Meus Cursos</span>
+                          </div>
                           <p className="line-clamp-2 text-sm leading-snug text-gray-500 dark:text-gray-400">
-                            Continue de onde parou nos seus cursos em andamento
-                          </p>
-                        </Link>
-                      </NavigationMenuLink>
-                    </li>
-                    <li>
-                      <NavigationMenuLink asChild>
-                        <Link
-                          to="/courses?filter=completed"
-                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-                        >
-                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Cursos Concluídos</div>
-                          <p className="line-clamp-2 text-sm leading-snug text-gray-500 dark:text-gray-400">
-                            Revise cursos que você já completou
-                          </p>
-                        </Link>
-                      </NavigationMenuLink>
-                    </li>
-                    <li>
-                      <NavigationMenuLink asChild>
-                        <Link
-                          to="/courses?filter=recommended"
-                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-                        >
-                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Recomendados</div>
-                          <p className="line-clamp-2 text-sm leading-snug text-gray-500 dark:text-gray-400">
-                            Cursos recomendados com base no seu perfil
+                            Cursos favoritados e cursos em andamento
                           </p>
                         </Link>
                       </NavigationMenuLink>

@@ -14,6 +14,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import Courses from "./pages/Courses";
+import MyCourses from "./pages/MyCourses";
 import CourseDetails from "./pages/CourseDetails";
 import LessonPage from "./pages/LessonPage";
 import NotFound from "./pages/NotFound";
@@ -51,6 +52,10 @@ const App = () => (
               <Route path="/courses" element={<>
                 <MainNavigationMenu />
                 <Courses />
+              </>} />
+              <Route path="/my-courses" element={<>
+                <MainNavigationMenu />
+                <MyCourses />
               </>} />
               <Route path="/courses/:courseId" element={<>
                 <MainNavigationMenu />
