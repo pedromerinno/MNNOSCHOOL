@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 interface EmptyNotesListProps {
   onAddNote: () => void;
@@ -14,9 +15,9 @@ export const EmptyNotesList: React.FC<EmptyNotesListProps> = ({ onAddNote }) => 
         Você ainda não criou nenhuma nota. Crie sua primeira nota para começar a organizar suas ideias e informações.
       </p>
       <Button onClick={onAddNote}>
+        <Plus className="h-4 w-4 mr-2" />
         Nova nota
       </Button>
     </div>
   );
 };
-
