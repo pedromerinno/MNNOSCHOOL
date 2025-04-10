@@ -1,7 +1,7 @@
 
 import React from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
-import { useMyCourses } from "@/hooks/useMyCourses";
+import { useMyCourses } from "@/hooks/my-courses";
 import { CourseFilters } from "@/components/courses/CourseFilters";
 import { RecentCourses } from "@/components/courses/RecentCourses";
 import { FilteredCoursesList } from "@/components/courses/FilteredCoursesList";
