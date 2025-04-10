@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogOut, User, ChevronDown, Building } from "lucide-react";
@@ -129,7 +128,7 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
                           <img 
                             src={company.logo} 
                             alt={company.nome} 
-                            className="h-4 w-4 mr-2 object-contain"
+                            className="h-4 w-4 mr-2 object-contain rounded-lg"  // Added rounded-lg for 8px border-radius
                           />
                         )}
                         <span className="truncate">{company.nome}</span>

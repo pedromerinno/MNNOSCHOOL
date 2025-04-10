@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,7 +21,6 @@ export const IntegrationManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState("info");
   const hasLoadedCompanies = useRef(false);
 
-  // Fetch companies only once on mount
   useEffect(() => {
     const loadCompanies = async () => {
       if (!hasLoadedCompanies.current && !isLoading) {
@@ -34,7 +32,6 @@ export const IntegrationManagement: React.FC = () => {
     loadCompanies();
   }, [fetchCompanies, isLoading]);
 
-  // Set the first company as selected if none is selected yet
   useEffect(() => {
     if (companies.length > 0 && !selectedCompany) {
       console.log("Setting initial selected company:", companies[0].nome);
@@ -68,7 +65,6 @@ export const IntegrationManagement: React.FC = () => {
         
       if (error) throw error;
       
-      // Atualizar o objeto da empresa selecionada localmente
       setSelectedCompany({
         ...selectedCompany,
         ...formData
@@ -76,7 +72,6 @@ export const IntegrationManagement: React.FC = () => {
       
       toast.success("Informações de integração atualizadas com sucesso");
       
-      // Disparar evento para atualizar dados da empresa em outros componentes
       window.dispatchEvent(new Event('company-relation-changed'));
       
     } catch (error: any) {
@@ -117,7 +112,21 @@ export const IntegrationManagement: React.FC = () => {
             <SelectContent>
               {companies.map(company => (
                 <SelectItem key={company.id} value={company.id}>
-                  {company.nome}
+                  <div className="flex items-center">
+                    {company.logo && (
+                      <img
+                        src={company.logo}
+                        alt={company.nome}
+                        className="h-4 w-4 mr-2 object-contain rounded-lg"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "/placeholder.svg";
+                          target.onerror = null;
+                        }}
+                      />
+                    )}
+                    {company.nome}
+                  </div>
                 </SelectItem>
               ))}
             </SelectContent>

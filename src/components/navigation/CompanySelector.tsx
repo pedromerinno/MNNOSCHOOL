@@ -91,7 +91,7 @@ export const CompanySelector = () => {
                 <img
                   src={company.logo}
                   alt={company.nome}
-                  className="h-4 w-4 mr-2 object-contain"
+                  className="h-4 w-4 mr-2 object-contain rounded-lg"  // Added rounded-lg for 8px border-radius
                 />
               )}
               <span>{company.nome}</span>
