@@ -24,39 +24,31 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [bucketReady, setBucketReady] = useState(false);
 
-  // Check if course-assets bucket exists and create it if needed
+  // Verifica se o bucket course-assets existe
   useEffect(() => {
-    const checkAndCreateBucket = async () => {
+    const checkBucket = async () => {
       try {
         const { data: buckets, error } = await supabase.storage.listBuckets();
         
         if (error) {
-          console.warn("Could not check storage buckets:", error);
+          console.warn("Erro ao verificar buckets:", error);
           return;
         }
         
         const courseAssetsBucket = buckets?.find(b => b.name === 'course-assets');
         
         if (!courseAssetsBucket) {
-          console.log("Creating course-assets bucket");
-          const { error: createError } = await supabase.storage.createBucket('course-assets', {
-            public: true,
-            fileSizeLimit: 10485760, // 10MB
-          });
-          
-          if (createError) {
-            console.error("Could not create course-assets bucket:", createError);
-            return;
-          }
+          console.warn("Bucket 'course-assets' não encontrado. Verifique se ele foi criado no Supabase.");
+          return;
         }
         
         setBucketReady(true);
       } catch (err) {
-        console.error("Error checking/creating storage bucket:", err);
+        console.error("Erro ao verificar storage bucket:", err);
       }
     };
     
-    checkAndCreateBucket();
+    checkBucket();
   }, []);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, onChange: (value: string) => void) => {
@@ -72,20 +64,12 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
     setIsUploading(true);
     
     try {
-      // First, ensure course-assets bucket exists
       if (!bucketReady) {
         const { data: buckets } = await supabase.storage.listBuckets();
         const courseAssetsBucket = buckets?.find(b => b.name === 'course-assets');
         
         if (!courseAssetsBucket) {
-          const { error: createError } = await supabase.storage.createBucket('course-assets', {
-            public: true,
-            fileSizeLimit: 10485760, // 10MB
-          });
-          
-          if (createError) {
-            throw new Error("Erro ao criar bucket de armazenamento: " + createError.message);
-          }
+          throw new Error("Bucket 'course-assets' não encontrado. Contate o administrador.");
         }
       }
       

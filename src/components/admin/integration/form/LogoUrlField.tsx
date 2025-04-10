@@ -22,43 +22,34 @@ export const LogoUrlField: React.FC<LogoUrlFieldProps> = ({
   companyId
 }) => {
   const [isUploading, setIsUploading] = useState(false);
-  const [bucketsCreated, setBucketsCreated] = useState(false);
+  const [bucketReady, setBucketReady] = useState(false);
 
-  // Check if buckets exist
+  // Verifica se o bucket company-assets existe
   useEffect(() => {
-    const checkAndCreateBuckets = async () => {
+    const checkBucket = async () => {
       try {
-        // Check if company-assets bucket exists
         const { data: buckets, error } = await supabase.storage.listBuckets();
         
         if (error) {
-          console.error("Error checking buckets:", error);
+          console.error("Erro ao verificar buckets:", error);
           return;
         }
         
         const companyAssetsBucket = buckets.find(b => b.name === 'company-assets');
-        const documentsBucket = buckets.find(b => b.name === 'documents');
         
         if (!companyAssetsBucket) {
-          console.log("Creating company-assets bucket");
-          await supabase.storage.createBucket('company-assets', { public: true });
+          console.error("Bucket 'company-assets' não encontrado. Verifique se ele foi criado no Supabase.");
+          return;
         }
         
-        if (!documentsBucket) {
-          console.log("Creating documents bucket");
-          await supabase.storage.createBucket('documents', { public: true });
-        }
-        
-        setBucketsCreated(true);
+        setBucketReady(true);
       } catch (error: any) {
-        console.error("Error creating buckets:", error);
+        console.error("Erro ao verificar buckets:", error);
       }
     };
 
-    if (!bucketsCreated) {
-      checkAndCreateBuckets();
-    }
-  }, [bucketsCreated]);
+    checkBucket();
+  }, []);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, onChange: (value: string) => void) => {
     const files = e.target.files;
@@ -73,6 +64,15 @@ export const LogoUrlField: React.FC<LogoUrlFieldProps> = ({
     setIsUploading(true);
     
     try {
+      if (!bucketReady) {
+        const { data: buckets } = await supabase.storage.listBuckets();
+        const companyAssetsBucket = buckets.find(b => b.name === 'company-assets');
+        
+        if (!companyAssetsBucket) {
+          throw new Error("Bucket 'company-assets' não encontrado. Contate o administrador.");
+        }
+      }
+      
       // Create a unique file name using the company ID and timestamp
       const fileExt = file.name.split('.').pop();
       const fileName = `${companyId || 'company'}-${Date.now()}.${fileExt}`;
@@ -131,12 +131,12 @@ export const LogoUrlField: React.FC<LogoUrlFieldProps> = ({
                 <Button 
                   type="button" 
                   variant="outline"
-                  disabled={isUploading || !bucketsCreated}
+                  disabled={isUploading || !bucketReady}
                   className="relative"
                   onClick={() => document.getElementById(`logo-upload-${name}`)?.click()}
                 >
                   <Upload className="h-4 w-4 mr-2" />
-                  {isUploading ? 'Carregando...' : !bucketsCreated ? 'Inicializando...' : 'Upload'}
+                  {isUploading ? 'Carregando...' : !bucketReady ? 'Inicializando...' : 'Upload'}
                 </Button>
                 <input 
                   id={`logo-upload-${name}`}

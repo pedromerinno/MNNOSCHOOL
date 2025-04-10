@@ -33,54 +33,42 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
   const [bucketsReady, setBucketsReady] = useState(false);
   const [bucketError, setBucketError] = useState<string | null>(null);
 
-  // Check if documents bucket exists and create it if needed
+  // Verificar se o bucket documents existe
   useEffect(() => {
     if (!open) return;
 
-    const checkAndCreateBucket = async () => {
+    const checkBucket = async () => {
       try {
         setBucketError(null);
-        console.log("Checking for storage buckets...");
+        console.log("Verificando bucket de documentos...");
         
         const { data: buckets, error } = await supabase.storage.listBuckets();
         
         if (error) {
-          console.error("Error checking buckets:", error);
-          setBucketError(`Error checking buckets: ${error.message}`);
+          console.error("Erro ao verificar buckets:", error);
+          setBucketError(`Erro ao verificar buckets: ${error.message}`);
           return;
         }
         
-        // Check for documents bucket
+        // Verificar se o bucket documents existe
         const documentsBucket = buckets?.find(b => b.name === 'documents');
         
         if (!documentsBucket) {
-          console.log("Creating documents bucket");
-          const { error: createError } = await supabase.storage.createBucket('documents', {
-            public: false,
-            fileSizeLimit: 10485760, // 10MB
-          });
-          
-          if (createError) {
-            console.error("Error creating documents bucket:", createError);
-            setBucketError(`Error creating documents bucket: ${createError.message}`);
-            return;
-          }
-          
-          // We'll skip the policy creation as it's causing TypeScript errors
-          // Instead, we'll assume policies will be managed through the Supabase dashboard
-          // or through SQL migrations directly
-          console.log("Documents bucket created successfully. Default permissions applied.");
+          console.error("Bucket 'documents' não encontrado. Verifique se ele foi criado no Supabase.");
+          setBucketError(`Bucket 'documents' não encontrado. Contate o administrador.`);
+          return;
         }
         
+        console.log("Bucket de documentos encontrado e pronto para uso.");
         setBucketsReady(true);
       } catch (error: any) {
-        console.error("Error creating/checking buckets:", error);
-        setBucketError(`Error initializing storage: ${error.message}`);
-        toast.error("Erro ao inicializar armazenamento. Tente novamente mais tarde.");
+        console.error("Erro ao verificar buckets:", error);
+        setBucketError(`Erro ao verificar armazenamento: ${error.message}`);
+        toast.error("Erro ao verificar armazenamento. Tente novamente mais tarde.");
       }
     };
 
-    checkAndCreateBucket();
+    checkBucket();
   }, [open]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

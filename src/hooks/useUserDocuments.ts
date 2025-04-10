@@ -10,34 +10,26 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Ensure the storage bucket exists
-  const ensureStorageBucketExists = useCallback(async () => {
+  // Verifica se o bucket documents existe
+  const checkBucketExists = useCallback(async () => {
     try {
       const { data: buckets, error } = await supabase.storage.listBuckets();
       
       if (error) {
-        console.warn("Could not check storage buckets:", error);
+        console.warn("Erro ao verificar buckets:", error);
         return false;
       }
       
       const documentsBucket = buckets?.find(b => b.name === 'documents');
       
       if (!documentsBucket) {
-        console.log("Creating documents bucket");
-        const { error: createError } = await supabase.storage.createBucket('documents', {
-          public: false,
-          fileSizeLimit: 10485760, // 10MB
-        });
-        
-        if (createError) {
-          console.error("Could not create documents bucket:", createError);
-          return false;
-        }
+        console.warn("Bucket 'documents' não encontrado. Verifique se ele foi criado no Supabase.");
+        return false;
       }
       
       return true;
     } catch (err) {
-      console.error("Error checking/creating storage bucket:", err);
+      console.error("Erro ao verificar storage bucket:", err);
       return false;
     }
   }, []);
@@ -54,8 +46,12 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
     setError(null);
     
     try {
-      // Ensure bucket exists
-      await ensureStorageBucketExists();
+      // Check if bucket exists
+      const bucketExists = await checkBucketExists();
+      
+      if (!bucketExists) {
+        console.warn("Storage bucket não disponível, continuando mesmo assim");
+      }
       
       const { data, error } = await supabase
         .from('user_documents')
@@ -74,7 +70,7 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
     } finally {
       setIsLoading(false);
     }
-  }, [userId, companyId, ensureStorageBucketExists]);
+  }, [userId, companyId, checkBucketExists]);
 
   // Upload a document for a user
   const uploadDocument = useCallback(async (
@@ -89,11 +85,11 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
 
     setIsUploading(true);
     try {
-      // Ensure bucket exists
-      const bucketReady = await ensureStorageBucketExists();
+      // Check if bucket exists
+      const bucketExists = await checkBucketExists();
       
-      if (!bucketReady) {
-        toast.error("Sistema de armazenamento não está disponível");
+      if (!bucketExists) {
+        toast.error("Sistema de armazenamento não está disponível. Contate o administrador.");
         return null;
       }
       
@@ -150,11 +146,19 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
     } finally {
       setIsUploading(false);
     }
-  }, [userId, companyId, ensureStorageBucketExists]);
+  }, [userId, companyId, checkBucketExists]);
 
   // Delete a document
   const deleteDocument = useCallback(async (documentId: string): Promise<boolean> => {
     try {
+      // Check if bucket exists first
+      const bucketExists = await checkBucketExists();
+      
+      if (!bucketExists) {
+        toast.error("Sistema de armazenamento não está disponível. Contate o administrador.");
+        return false;
+      }
+      
       // 1. Get document details to find the file path
       const { data: document, error: fetchError } = await supabase
         .from('user_documents')
@@ -172,7 +176,7 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
           .remove([filePath]);
 
         if (storageError) {
-          console.warn("Error removing file from storage (continuing anyway):", storageError);
+          console.warn("Erro ao remover arquivo do storage (continuando mesmo assim):", storageError);
           // Continue despite storage error - we still want to remove the database record
         }
       }
@@ -194,7 +198,7 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
       toast.error(`Erro ao excluir documento: ${error.message}`);
       return false;
     }
-  }, []);
+  }, [checkBucketExists]);
 
   return {
     documents,
