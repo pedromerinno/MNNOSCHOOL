@@ -1,99 +1,119 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-export const useLessonProgress = (lessonId: string | undefined, courseId: string | undefined, initialCompleted: boolean = false) => {
-  const [completed, setCompleted] = useState(initialCompleted);
+export const useLessonProgress = (
+  lessonId: string | undefined, 
+  courseId: string | undefined, 
+  initialCompleted?: boolean
+) => {
+  const [completed, setCompleted] = useState<boolean>(initialCompleted || false);
   const { toast } = useToast();
 
-  const updateCourseProgress = async (courseId: string, userId: string) => {
-    try {
-      // Buscar todas as aulas do curso
-      const { data: courseLessons, error: lessonsError } = await supabase
-        .from('lessons')
-        .select('id')
-        .eq('course_id', courseId);
-      
-      if (lessonsError) throw lessonsError;
-      
-      // Buscar todas as aulas concluídas deste curso
-      const { data: completedLessons, error: completedError } = await supabase
-        .from('user_lesson_progress')
-        .select('lesson_id')
-        .eq('user_id', userId)
-        .eq('completed', true);
-      
-      if (completedError) throw completedError;
-      
-      // Calcular o progresso
-      const totalLessons = courseLessons.length;
-      const completedCount = completedLessons.filter(progress => 
-        courseLessons.some(lesson => lesson.id === progress.lesson_id)
-      ).length;
-      
-      const progress = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
-      const isCompleted = progress === 100;
-      
-      // Atualizar o progresso do curso
-      const { error: updateError } = await supabase
-        .from('user_course_progress')
-        .upsert({
-          user_id: userId,
-          course_id: courseId,
-          progress,
-          completed: isCompleted,
-          last_accessed: new Date().toISOString()
-        }, {
-          onConflict: 'user_id,course_id'
-        });
-      
-      if (updateError) throw updateError;
-      
-    } catch (error) {
-      console.error('Erro ao atualizar progresso do curso:', error);
+  // Update state when initialCompleted prop changes
+  useEffect(() => {
+    if (initialCompleted !== undefined) {
+      setCompleted(initialCompleted);
     }
-  };
+  }, [initialCompleted]);
 
   const markLessonCompleted = async () => {
     if (!lessonId || !courseId) return;
     
     try {
+      // Get current user ID
       const userId = (await supabase.auth.getUser()).data.user?.id;
       if (!userId) {
-        throw new Error("Usuário não autenticado");
+        throw new Error("User not authenticated");
       }
       
-      // Marcar a aula como concluída
-      const { error } = await supabase
+      // Toggle completed status
+      const newStatus = !completed;
+      setCompleted(newStatus);
+      
+      // Update lesson progress in database
+      const { error: lessonError } = await supabase
         .from('user_lesson_progress')
         .upsert({
           user_id: userId,
           lesson_id: lessonId,
-          completed: true,
+          completed: newStatus,
           last_accessed: new Date().toISOString()
         }, {
           onConflict: 'user_id,lesson_id'
         });
       
-      if (error) throw error;
+      if (lessonError) {
+        throw lessonError;
+      }
       
-      // Atualizar o estado local
-      setCompleted(true);
+      // If marked as completed, get all lessons for this course and calculate progress
+      if (newStatus) {
+        // Get all lessons for this course
+        const { data: courseLessons, error: courseLessonsError } = await supabase
+          .from('lessons')
+          .select('id')
+          .eq('course_id', courseId);
+        
+        if (courseLessonsError) {
+          throw courseLessonsError;
+        }
+        
+        // Get completed lessons
+        const { data: completedLessons, error: completedLessonsError } = await supabase
+          .from('user_lesson_progress')
+          .select('lesson_id')
+          .eq('user_id', userId)
+          .eq('completed', true);
+        
+        if (completedLessonsError) {
+          throw completedLessonsError;
+        }
+        
+        // Calculate progress percentage
+        const totalLessons = courseLessons.length;
+        const completedCount = completedLessons
+          .filter(progress => 
+            courseLessons.some(lesson => lesson.id === progress.lesson_id)
+          ).length;
+        
+        const progressPercentage = Math.round((completedCount / totalLessons) * 100);
+        
+        // Update course progress
+        const { error: courseProgressError } = await supabase
+          .from('user_course_progress')
+          .upsert({
+            user_id: userId,
+            course_id: courseId,
+            progress: progressPercentage,
+            completed: progressPercentage === 100,
+            last_accessed: new Date().toISOString()
+          }, {
+            onConflict: 'user_id,course_id'
+          });
+        
+        if (courseProgressError) {
+          throw courseProgressError;
+        }
+      }
       
-      // Atualizar o progresso do curso
-      await updateCourseProgress(courseId, userId);
-      
+      // Show success message
       toast({
-        title: 'Aula concluída',
-        description: 'Seu progresso foi salvo com sucesso',
+        title: newStatus ? 'Aula concluída' : 'Aula marcada como não concluída',
+        description: newStatus 
+          ? 'Seu progresso foi atualizado com sucesso' 
+          : 'A aula foi marcada como não concluída',
       });
       
     } catch (error: any) {
-      console.error('Erro ao marcar aula como concluída:', error);
+      console.error('Erro ao atualizar progresso:', error);
+      // Revert state change on error
+      setCompleted(!completed);
+      
       toast({
-        title: 'Erro ao salvar progresso',
-        description: error.message || 'Ocorreu um erro ao marcar a aula como concluída',
+        title: 'Erro ao atualizar progresso',
+        description: error.message || 'Não foi possível atualizar seu progresso',
         variant: 'destructive',
       });
     }

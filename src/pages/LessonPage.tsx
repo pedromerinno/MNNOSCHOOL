@@ -116,6 +116,8 @@ const LessonPage = () => {
   };
 
   const renderLessonContent = () => {
+    if (!lesson) return null;
+    
     switch (lesson.type.toLowerCase()) {
       case 'video':
         const videoUrl = lesson.content;

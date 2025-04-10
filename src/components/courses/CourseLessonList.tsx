@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +12,8 @@ export type Lesson = {
   type: string;
   order_index: number;
   completed: boolean;
+  content?: string | null;
+  course_id?: string;
 };
 
 interface CourseLessonListProps {
@@ -168,4 +169,3 @@ export const CourseLessonList: React.FC<CourseLessonListProps> = ({
     </Card>
   );
 };
-
