@@ -4,14 +4,21 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import { Course } from './CourseManagement';
-import { courseSchema, CourseFormValues, CourseFormProps } from './courses/form/CourseFormTypes';
+import { courseSchema, CourseFormValues } from './courses/form/CourseFormTypes';
 import { CourseFormFields } from './courses/form/CourseFormFields';
 import { TagsField } from './courses/form/TagsField';
 import { CompanySelectorField } from './courses/form/CompanySelectorField';
 import { FormActions } from './courses/form/FormActions';
 
-// Use export type to fix the TypeScript error
-export type { CourseFormProps };
+// Define the CourseFormProps type directly in this file
+export interface CourseFormProps {
+  initialData?: Course | null;
+  onSubmit: (data: CourseFormValues) => void;
+  onCancel: () => void;
+  isSubmitting: boolean;
+  onClose?: () => void;
+  preselectedCompanyId?: string;
+}
 
 export const CourseForm: React.FC<CourseFormProps> = ({ 
   initialData, 
@@ -70,3 +77,4 @@ export const CourseForm: React.FC<CourseFormProps> = ({
     </Form>
   );
 };
+
