@@ -5,10 +5,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { UserManagement } from '@/components/admin/UserManagement';
 import { CompanyManagement } from '@/components/admin/CompanyManagement';
-import { CourseManagement } from '@/components/admin/CourseManagement';
-import { IntegrationManagement } from '@/components/admin/integration/IntegrationManagement';
+import { SettingsManagement } from '@/components/admin/integration/SettingsManagement';
 import { useAuth } from '@/contexts/AuthContext';
-import { Users, Building, Book, Video } from 'lucide-react';
+import { Users, Building, Settings } from 'lucide-react';
 
 const AdminPage = () => {
   const { userProfile } = useAuth();
@@ -43,18 +42,11 @@ const AdminPage = () => {
                     Empresas
                   </TabsTrigger>
                   <TabsTrigger 
-                    value="courses" 
+                    value="settings" 
                     className="flex items-center py-3 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 text-gray-600 dark:text-gray-300 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400"
                   >
-                    <Book className="h-4 w-4 mr-2" />
-                    Cursos
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="integration" 
-                    className="flex items-center py-3 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 text-gray-600 dark:text-gray-300 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400"
-                  >
-                    <Video className="h-4 w-4 mr-2" />
-                    Integração
+                    <Settings className="h-4 w-4 mr-2" />
+                    Settings
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -66,11 +58,8 @@ const AdminPage = () => {
                 <TabsContent value="companies" className="m-0">
                   <CompanyManagement />
                 </TabsContent>
-                <TabsContent value="courses" className="m-0">
-                  <CourseManagement />
-                </TabsContent>
-                <TabsContent value="integration" className="m-0">
-                  <IntegrationManagement />
+                <TabsContent value="settings" className="m-0">
+                  <SettingsManagement />
                 </TabsContent>
               </div>
             </Tabs>
