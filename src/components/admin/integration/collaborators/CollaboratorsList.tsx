@@ -10,12 +10,13 @@ import {
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BadgeCheck, BadgeX, Briefcase, UserX } from "lucide-react";
+import { BadgeCheck, BadgeX, Briefcase, UserX, FileText } from "lucide-react";
 
 interface CollaboratorsListProps {
   users: any[];
   userRoles: Record<string, string>;
   onManageRole: (user: any) => void;
+  onManageDocuments: (user: any) => void;
   onRemoveUser: (userId: string) => void;
 }
 
@@ -23,6 +24,7 @@ export const CollaboratorsList: React.FC<CollaboratorsListProps> = ({
   users,
   userRoles,
   onManageRole,
+  onManageDocuments,
   onRemoveUser
 }) => {
   return (
@@ -65,6 +67,14 @@ export const CollaboratorsList: React.FC<CollaboratorsListProps> = ({
                   >
                     <Briefcase className="h-4 w-4 mr-2" />
                     Gerenciar Cargo
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onManageDocuments(user)}
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Documentos
                   </Button>
                   <Button
                     variant="outline"
