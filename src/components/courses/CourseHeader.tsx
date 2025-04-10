@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Home, ChevronRight } from 'lucide-react';
 
 interface CourseHeaderProps {
   title: string;
@@ -17,17 +17,33 @@ export const CourseHeader: React.FC<CourseHeaderProps> = ({
   
   return (
     <div className="mb-8">
-      <Button variant="ghost" size="sm" className="mb-4 -ml-2 text-muted-foreground hover:text-foreground" onClick={() => navigate('/courses')}>
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Voltar para Cursos
-      </Button>
-      
-      <h1 className="text-3xl font-bold mb-2">{title}</h1>
-      {instructor && (
-        <p className="text-muted-foreground">
-          Instrutor: {instructor}
-        </p>
-      )}
+      {/* Breadcrumb navigation */}
+      <div className="flex items-center text-sm text-muted-foreground mb-4">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="p-0 h-auto hover:bg-transparent hover:text-foreground"
+          onClick={() => navigate('/')}
+        >
+          <Home className="h-3.5 w-3.5 mr-1" />
+          <span>Home</span>
+        </Button>
+        
+        <ChevronRight className="h-3 w-3 mx-2" />
+        
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="p-0 h-auto hover:bg-transparent hover:text-foreground"
+          onClick={() => navigate('/courses')}
+        >
+          <span>Courses</span>
+        </Button>
+        
+        <ChevronRight className="h-3 w-3 mx-2" />
+        
+        <span className="text-foreground truncate max-w-[200px]">{title}</span>
+      </div>
     </div>
   );
 };

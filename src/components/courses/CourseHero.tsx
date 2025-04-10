@@ -1,39 +1,67 @@
 
 import React from 'react';
-import { Heart } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { Share } from 'lucide-react';
+import { FavoriteButton } from './FavoriteButton';
 
 interface CourseHeroProps {
   imageUrl: string | null;
   title: string;
+  instructor: string;
+  favorite: boolean;
+  courseId: string;
 }
 
 export const CourseHero: React.FC<CourseHeroProps> = ({ 
   imageUrl, 
-  title 
+  title,
+  instructor,
+  favorite,
+  courseId
 }) => {
   return (
-    <div className="relative rounded-xl overflow-hidden">
-      <div className="aspect-[21/9] w-full overflow-hidden">
-        {imageUrl ? (
+    <div className="relative rounded-xl overflow-hidden bg-gradient-to-r from-purple-900 to-purple-700 text-white">
+      <div className="absolute inset-0 z-0 opacity-20">
+        {imageUrl && (
           <img 
             src={imageUrl} 
             alt={title} 
             className="w-full h-full object-cover" 
           />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700" />
         )}
       </div>
       
-      {/* Like button */}
-      <Button 
-        size="icon" 
-        variant="ghost" 
-        className="absolute top-4 right-4 rounded-full h-10 w-10 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800"
-      >
-        <Heart className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-      </Button>
+      <div className="relative z-10 p-8 md:p-12">
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            <h1 className="text-3xl md:text-4xl font-bold mb-4">{title}</h1>
+            {instructor && (
+              <p className="text-white/80 mb-6">
+                By {instructor}
+              </p>
+            )}
+          </div>
+          
+          <div className="flex gap-2">
+            <FavoriteButton 
+              courseId={courseId} 
+              initialFavorite={favorite} 
+              iconOnly={false} 
+              className="bg-white/20 hover:bg-white/30 text-white border-0"
+            />
+            
+            <Button variant="outline" size="icon" className="bg-white/20 hover:bg-white/30 text-white border-0">
+              <Share className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+        
+        <div className="flex gap-2 mt-4">
+          <Button variant="default" className="bg-orange-500 hover:bg-orange-600">
+            Start Learning
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };

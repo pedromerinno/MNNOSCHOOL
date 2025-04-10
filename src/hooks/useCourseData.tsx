@@ -14,6 +14,7 @@ type Course = {
   progress: number;
   completed: boolean;
   favorite: boolean;
+  tags?: string[];
 };
 
 export const useCourseData = (courseId: string | undefined) => {
@@ -41,7 +42,8 @@ export const useCourseData = (courseId: string | undefined) => {
             title, 
             description, 
             image_url, 
-            instructor
+            instructor,
+            tags
           `)
           .eq('id', courseId)
           .single();

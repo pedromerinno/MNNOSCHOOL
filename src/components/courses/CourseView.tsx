@@ -1,20 +1,23 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCourseData } from '@/hooks/useCourseData';
 import { useLessonNavigation } from './useLessonNavigation';
 import { CourseHeader } from './CourseHeader';
 import { CourseHero } from './CourseHero';
-import { CourseDescription } from './CourseDescription';
-import { CourseProgress } from './CourseProgress';
 import { CourseLessonList } from './CourseLessonList';
 import { CourseViewSkeleton } from './CourseViewSkeleton';
 import { CourseNotFound } from './CourseNotFound';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CourseDescription } from './CourseDescription';
+import { Badge } from '@/components/ui/badge';
+import { Clock, BookOpen, Star } from 'lucide-react';
 
 export const CourseView: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const { course, loading } = useCourseData(courseId);
   const { startLesson } = useLessonNavigation(courseId);
+  const [activeTab, setActiveTab] = useState<string>("description");
 
   if (loading) {
     return <CourseViewSkeleton />;
@@ -23,6 +26,24 @@ export const CourseView: React.FC = () => {
   if (!course) {
     return <CourseNotFound />;
   }
+
+  // Calculate total duration of the course
+  const totalDuration = course.lessons && course.lessons.length > 0 
+    ? course.lessons.reduce((total, lesson) => {
+        // Extract minutes from duration string (e.g., "15 min" -> 15)
+        const minutes = lesson.duration 
+          ? parseInt(lesson.duration.replace(/[^0-9]/g, '')) 
+          : 0;
+        return total + minutes;
+      }, 0)
+    : 0;
+  
+  // Format total duration as hours and minutes
+  const hours = Math.floor(totalDuration / 60);
+  const minutes = totalDuration % 60;
+  const formattedDuration = hours > 0 
+    ? `${hours}hr ${minutes > 0 ? `${minutes} min` : ''}` 
+    : `${minutes} min`;
 
   return (
     <div className="container max-w-6xl mx-auto px-4 py-8">
@@ -34,20 +55,72 @@ export const CourseView: React.FC = () => {
       <div className="mb-8">
         <CourseHero 
           imageUrl={course.image_url} 
-          title={course.title} 
+          title={course.title}
+          instructor={course.instructor || ""}
+          favorite={course.favorite || false}
+          courseId={course.id}
         />
       </div>
       
-      <div className="grid md:grid-cols-3 gap-8">
-        <div className="md:col-span-2 space-y-8">
-          <CourseDescription description={course.description} />
+      <div className="flex flex-col md:flex-row items-start gap-8">
+        <div className="w-full md:w-8/12 space-y-8">
+          {/* Course stats */}
+          <div className="flex items-center gap-6 text-sm">
+            <div className="flex items-center gap-1">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <span>{formattedDuration}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <BookOpen className="h-4 w-4 text-muted-foreground" />
+              <span>{course.lessons?.length || 0} lessons</span>
+            </div>
+            {course.tags && course.tags.length > 0 && (
+              <div className="flex items-center gap-2">
+                {course.tags.map((tag, index) => (
+                  <Badge key={index} variant="outline">{tag}</Badge>
+                ))}
+              </div>
+            )}
+          </div>
           
+          {/* Course progress if started */}
           {course.progress > 0 && (
-            <CourseProgress progress={course.progress} />
+            <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-sm font-medium">Your progress</h3>
+                <span className="text-sm">{course.progress}% complete</span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div 
+                  className="bg-primary h-2 rounded-full" 
+                  style={{ width: `${course.progress}%` }}
+                ></div>
+              </div>
+            </div>
           )}
+          
+          {/* Tabs for content */}
+          <Tabs defaultValue="description" value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="description">Description</TabsTrigger>
+              <TabsTrigger value="reviews">Reviews</TabsTrigger>
+            </TabsList>
+            <TabsContent value="description" className="mt-6">
+              <CourseDescription description={course.description} />
+            </TabsContent>
+            <TabsContent value="reviews" className="mt-6">
+              <div className="text-center py-8">
+                <Star className="h-8 w-8 text-yellow-400 mx-auto mb-2" />
+                <h3 className="text-lg font-medium mb-1">No reviews yet</h3>
+                <p className="text-muted-foreground">
+                  Be the first to review this course
+                </p>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
         
-        <div>
+        <div className="w-full md:w-4/12 mt-8 md:mt-0">
           <CourseLessonList 
             lessons={course.lessons} 
             onStartLesson={startLesson} 
