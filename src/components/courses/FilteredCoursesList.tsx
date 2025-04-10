@@ -4,6 +4,7 @@ import { Course, FilterOption } from '@/hooks/my-courses';
 import { CourseCard } from './CourseCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle } from 'lucide-react';
+import { Course as CourseListCourse } from './CourseList';
 
 interface FilteredCoursesListProps {
   courses: Course[];
@@ -33,6 +34,14 @@ export const FilteredCoursesList = ({
     }
   };
   
+  // Convert to CourseList.Course type by ensuring description is present
+  const convertToCourseListType = (course: Course): CourseListCourse => {
+    return {
+      ...course,
+      description: course.description || '', // Ensure description is not null
+    };
+  };
+  
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-100 dark:border-gray-700">
       <h2 className="text-xl font-semibold mb-6" style={{ color: companyColor }}>
@@ -48,7 +57,7 @@ export const FilteredCoursesList = ({
       ) : courses.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {courses.map(course => (
-            <CourseCard key={course.id} course={course} />
+            <CourseCard key={course.id} course={convertToCourseListType(course)} />
           ))}
         </div>
       ) : (
