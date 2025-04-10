@@ -53,7 +53,8 @@ export const CompanyIntegrationForm: React.FC<CompanyIntegrationFormProps> = ({
         <LogoUrlField
           control={form.control}
           name="logo"
-          label="URL do Logo"
+          label="Logo da Empresa"
+          companyId={company.id}
         />
         
         <TextareaField

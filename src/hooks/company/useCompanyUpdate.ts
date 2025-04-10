@@ -47,6 +47,11 @@ export const useCompanyUpdate = ({
       if (selectedCompany && selectedCompany.id === companyId) {
         const updatedCompany = { ...selectedCompany, ...data } as Company;
         setSelectedCompany(updatedCompany);
+        
+        // Dispatch event to notify other components about the company update
+        window.dispatchEvent(new CustomEvent('company-updated', { 
+          detail: { company: updatedCompany } 
+        }));
       }
       
       toast("Empresa atualizada", {

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useCompanies } from "@/hooks/useCompanies";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,6 +12,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Company } from "@/types/company";
 
 // Mock data for job roles - in a real app this would come from the database
 const mockJobRoles = [
@@ -33,11 +33,40 @@ const mockJobRoles = [
 ];
 
 const Integration = () => {
-  const { selectedCompany, isLoading } = useCompanies();
+  const { selectedCompany, isLoading, forceGetUserCompanies, user } = useCompanies();
   const [jobRoles, setJobRoles] = useState(mockJobRoles);
+  const [localCompany, setLocalCompany] = useState<Company | null>(selectedCompany);
+  
+  // Update local company state when selectedCompany changes
+  useEffect(() => {
+    if (selectedCompany) {
+      setLocalCompany(selectedCompany);
+    }
+  }, [selectedCompany]);
+  
+  // Listen for company updates from settings
+  useEffect(() => {
+    const handleCompanyUpdated = (event: CustomEvent<{company: Company}>) => {
+      const updatedCompany = event.detail.company;
+      console.log("Company updated in Integration page:", updatedCompany.nome);
+      setLocalCompany(updatedCompany);
+    };
+    
+    window.addEventListener('company-updated', handleCompanyUpdated as EventListener);
+    window.addEventListener('company-relation-changed', () => {
+      if (user?.id) {
+        forceGetUserCompanies(user.id);
+      }
+    });
+    
+    return () => {
+      window.removeEventListener('company-updated', handleCompanyUpdated as EventListener);
+      window.removeEventListener('company-relation-changed', () => {});
+    };
+  }, [forceGetUserCompanies, user?.id]);
   
   // Definir cor da empresa ou usar padrão se não disponível
-  const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
+  const companyColor = localCompany?.cor_principal || "#1EAEDB";
   
   // Estilo dinâmico com a cor da empresa
   const companyColorStyle = {
@@ -75,18 +104,18 @@ const Integration = () => {
             <>
               <div className="flex items-center mb-4">
                 <h2 className="text-xl font-semibold mr-3 dark:text-white">
-                  {selectedCompany 
-                    ? `Bem-vindo ao processo de integração da ${selectedCompany.nome}` 
+                  {localCompany 
+                    ? `Bem-vindo ao processo de integração da ${localCompany.nome}` 
                     : "Bem-vindo ao processo de integração"}
                 </h2>
-                {selectedCompany && (
+                {localCompany && (
                   <CompanyThemedBadge variant="beta">Empresa</CompanyThemedBadge>
                 )}
               </div>
               
               <p className="text-gray-700 dark:text-gray-300 mb-4">
-                {selectedCompany 
-                  ? `Aqui você encontrará todas as informações sobre a ${selectedCompany.nome}, expectativas, 
+                {localCompany 
+                  ? `Aqui você encontrará todas as informações sobre a ${localCompany.nome}, expectativas, 
                     descrição do cargo e tudo relacionado à sua contratação.`
                   : "Aqui você encontrará todas as informações sobre nossa empresa, expectativas, descrição do cargo e tudo relacionado à sua contratação."}
               </p>
@@ -131,47 +160,47 @@ const Integration = () => {
                 <TabsContent value="sobre" className="mt-0">
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg" style={{borderLeft: `4px solid ${companyColor}`}}>
-                      <h3 className="font-medium mb-2 dark:text-white" style={companyColorStyle}>
-                        {selectedCompany 
-                          ? `Sobre a ${selectedCompany.nome}` 
+                      <h3 className="font-medium mb-2 dark:text-white" style={{color: companyColor}}>
+                        {localCompany 
+                          ? `Sobre a ${localCompany.nome}` 
                           : "Sobre a empresa"}
                       </h3>
                       <p className="text-gray-600 dark:text-gray-400">
-                        {selectedCompany?.historia 
-                          ? selectedCompany.historia
+                        {localCompany?.historia 
+                          ? localCompany.historia
                           : "Conheça nossa história, valores e visão."}
                       </p>
                     </div>
                     
                     <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg" style={{borderLeft: `4px solid ${companyColor}`}}>
-                      <h3 className="font-medium mb-2 dark:text-white" style={companyColorStyle}>
+                      <h3 className="font-medium mb-2 dark:text-white" style={{color: companyColor}}>
                         Missão
                       </h3>
                       <p className="text-gray-600 dark:text-gray-400">
-                        {selectedCompany?.missao 
-                          ? selectedCompany.missao
+                        {localCompany?.missao 
+                          ? localCompany.missao
                           : "Nossa missão e propósito."}
                       </p>
                     </div>
                     
                     <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg" style={{borderLeft: `4px solid ${companyColor}`}}>
-                      <h3 className="font-medium mb-2 dark:text-white" style={companyColorStyle}>
+                      <h3 className="font-medium mb-2 dark:text-white" style={{color: companyColor}}>
                         Valores
                       </h3>
                       <p className="text-gray-600 dark:text-gray-400 whitespace-pre-line">
-                        {selectedCompany?.valores 
-                          ? selectedCompany.valores
+                        {localCompany?.valores 
+                          ? localCompany.valores
                           : "Os valores que orientam nossas ações."}
                       </p>
                     </div>
                     
                     <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg" style={{borderLeft: `4px solid ${companyColor}`}}>
-                      <h3 className="font-medium mb-2 dark:text-white" style={companyColorStyle}>
+                      <h3 className="font-medium mb-2 dark:text-white" style={{color: companyColor}}>
                         Frase Institucional
                       </h3>
                       <p className="text-gray-600 dark:text-gray-400">
-                        {selectedCompany?.frase_institucional 
-                          ? `"${selectedCompany.frase_institucional}"`
+                        {localCompany?.frase_institucional 
+                          ? `"${localCompany.frase_institucional}"`
                           : "Nossa frase que resume nossa essência."}
                       </p>
                     </div>
@@ -181,9 +210,9 @@ const Integration = () => {
                 <TabsContent value="videos" className="mt-0">
                   <div className="mt-2">
                     <VideoPlaylist 
-                      companyId={selectedCompany?.id} 
-                      mainVideo={selectedCompany?.video_institucional || ""}
-                      mainVideoDescription={selectedCompany?.descricao_video || ""}
+                      companyId={localCompany?.id} 
+                      mainVideo={localCompany?.video_institucional || ""}
+                      mainVideoDescription={localCompany?.descricao_video || ""}
                     />
                   </div>
                 </TabsContent>
@@ -245,11 +274,11 @@ const Integration = () => {
                       ))
                     ) : (
                       <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg" style={{borderLeft: `4px solid ${companyColor}`}}>
-                        <h3 className="text-xl font-medium mb-4 dark:text-white" style={companyColorStyle}>
+                        <h3 className="text-xl font-medium mb-4 dark:text-white" style={{color: companyColor}}>
                           Descrição de Cargos
                         </h3>
                         <p className="text-gray-600 dark:text-gray-400 mb-4">
-                          Ainda não há informações sobre cargos disponíveis para {selectedCompany?.nome || "esta empresa"}.
+                          Ainda não há informações sobre cargos disponíveis para {localCompany?.nome || "esta empresa"}.
                         </p>
                       </div>
                     )}
