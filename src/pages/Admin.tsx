@@ -1,8 +1,8 @@
+
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { FileText, Settings, Users, Globe, Building, Book, RefreshCw, VideoIcon } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { UserManagement } from '@/components/admin/UserManagement';
 import { CompanyManagement } from '@/components/admin/CompanyManagement';
@@ -22,26 +22,22 @@ const AdminPage = () => {
     { 
       title: 'Integração', 
       description: 'Gerencie informações de contratação', 
-      icon: FileText, 
-      path: '/admin/integration' 
+      icon: FileText 
     },
     { 
       title: 'Acessos', 
       description: 'Configurar ferramentas e acessos', 
-      icon: Settings, 
-      path: '/admin/access' 
+      icon: Settings 
     },
     { 
       title: 'Documentos', 
       description: 'Gerenciar documentos e contratos', 
-      icon: Users, 
-      path: '/admin/documents' 
+      icon: Users 
     },
     { 
       title: 'Comunidade', 
       description: 'Configurações de comunicação', 
-      icon: Globe, 
-      path: '/community' 
+      icon: Globe 
     },
   ];
 
@@ -120,13 +116,6 @@ const AdminPage = () => {
                 <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm">
                   {section.description}
                 </p>
-                <Button 
-                  variant="outline" 
-                  className="w-full mt-2 border-blue-100 dark:border-blue-900 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30"
-                  asChild
-                >
-                  <a href={section.path}>Gerenciar</a>
-                </Button>
               </CardContent>
             </Card>
           ))}
