@@ -15,16 +15,16 @@ export const ProtectedRoute = () => {
     );
   }
   
-  // If not logged in, redirect to login
+  // Se não estiver logado, redirecionar para login
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
   
-  // If logged in but needs to complete onboarding
-  if (!userProfile.displayName && location.pathname !== "/onboarding") {
+  // Se estiver logado mas precisa completar onboarding
+  if (!userProfile?.displayName && location.pathname !== "/onboarding") {
     return <Navigate to="/onboarding" replace />;
   }
   
-  // User is logged in and has completed onboarding
+  // Usuário está logado e completou onboarding
   return <Outlet />;
 };
