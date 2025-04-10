@@ -5,14 +5,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { VideoPlaylist } from "@/components/integration/VideoPlaylist";
 import { CompanyThemedBadge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Video, Building, Info, BriefcaseBusiness } from "lucide-react";
+import { FileText, Video, Building, BriefcaseBusiness, ChevronRight, Info, ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
 import { Company } from "@/types/company";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -21,6 +22,7 @@ const Integration = () => {
   const [localCompany, setLocalCompany] = useState<Company | null>(selectedCompany);
   const [jobRoles, setJobRoles] = useState<any[]>([]);
   const [isLoadingRoles, setIsLoadingRoles] = useState(false);
+  const [activeTab, setActiveTab] = useState("sobre");
   
   // Update local company state when selectedCompany changes
   useEffect(() => {
@@ -87,10 +89,25 @@ const Integration = () => {
     borderColor: companyColor
   };
 
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6 dark:text-white">Integração</h1>
+        <div className="flex items-center mb-6 gap-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="p-0 hover:bg-transparent" 
+            onClick={() => window.history.back()}
+          >
+            <ArrowLeft className="h-5 w-5 text-gray-500" />
+          </Button>
+          <h1 className="text-3xl font-bold dark:text-white">Integração</h1>
+        </div>
+        
         <div className="bg-white dark:bg-card rounded-lg p-6 shadow-sm">
           {isLoading ? (
             <>
@@ -103,31 +120,40 @@ const Integration = () => {
             </>
           ) : (
             <>
-              <div className="flex items-center mb-4">
+              <div className="flex items-center mb-6">
                 <h2 className="text-xl font-semibold mr-3 dark:text-white">
                   {localCompany 
                     ? `Bem-vindo ao processo de integração da ${localCompany.nome}` 
                     : "Bem-vindo ao processo de integração"}
                 </h2>
                 {localCompany && (
-                  <CompanyThemedBadge variant="beta">Empresa</CompanyThemedBadge>
+                  <CompanyThemedBadge 
+                    variant="beta"
+                    style={{
+                      backgroundColor: `${companyColor}20`, 
+                      color: companyColor,
+                      borderColor: `${companyColor}40`
+                    }}
+                  >
+                    Empresa
+                  </CompanyThemedBadge>
                 )}
               </div>
               
-              <p className="text-gray-700 dark:text-gray-300 mb-4">
+              <p className="text-gray-700 dark:text-gray-300 mb-6">
                 {localCompany 
                   ? `Aqui você encontrará todas as informações sobre a ${localCompany.nome}, expectativas, 
                     descrição do cargo e tudo relacionado à sua contratação.`
                   : "Aqui você encontrará todas as informações sobre nossa empresa, expectativas, descrição do cargo e tudo relacionado à sua contratação."}
               </p>
 
-              <Tabs defaultValue="sobre" className="mt-6">
-                <TabsList className="bg-gray-100 dark:bg-gray-800 p-1 mb-6" style={{ '--tab-accent': companyColor } as React.CSSProperties}>
+              <Tabs value={activeTab} onValueChange={handleTabChange} className="mt-6">
+                <TabsList className="bg-gray-100 dark:bg-gray-800 p-1.5 mb-6 rounded-xl" style={{ '--tab-accent': companyColor } as React.CSSProperties}>
                   <TabsTrigger 
                     value="sobre" 
-                    className="data-[state=active]:text-white data-[state=active]:shadow-sm"
+                    className="data-[state=active]:text-white data-[state=active]:shadow-sm rounded-lg transition-all duration-200 py-2.5"
                     style={{ 
-                      backgroundColor: 'transparent',
+                      backgroundColor: activeTab === "sobre" ? companyColor : 'transparent',
                       '--tw-data-[state=active]:bg-color': companyColor
                     } as React.CSSProperties}
                   >
@@ -136,9 +162,9 @@ const Integration = () => {
                   </TabsTrigger>
                   <TabsTrigger 
                     value="videos" 
-                    className="data-[state=active]:text-white data-[state=active]:shadow-sm"
+                    className="data-[state=active]:text-white data-[state=active]:shadow-sm rounded-lg transition-all duration-200 py-2.5"
                     style={{ 
-                      backgroundColor: 'transparent',
+                      backgroundColor: activeTab === "videos" ? companyColor : 'transparent',
                       '--tw-data-[state=active]:bg-color': companyColor
                     } as React.CSSProperties}
                   >
@@ -147,9 +173,9 @@ const Integration = () => {
                   </TabsTrigger>
                   <TabsTrigger 
                     value="cargo" 
-                    className="data-[state=active]:text-white data-[state=active]:shadow-sm"
+                    className="data-[state=active]:text-white data-[state=active]:shadow-sm rounded-lg transition-all duration-200 py-2.5"
                     style={{ 
-                      backgroundColor: 'transparent',
+                      backgroundColor: activeTab === "cargo" ? companyColor : 'transparent',
                       '--tw-data-[state=active]:bg-color': companyColor
                     } as React.CSSProperties}
                   >
@@ -160,7 +186,7 @@ const Integration = () => {
                 
                 <TabsContent value="sobre" className="mt-0">
                   <div className="grid md:grid-cols-2 gap-6">
-                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg" style={{borderLeft: `4px solid ${companyColor}`}}>
+                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg shadow-sm" style={{borderLeft: `4px solid ${companyColor}`}}>
                       <h3 className="font-medium mb-2 dark:text-white" style={{color: companyColor}}>
                         {localCompany 
                           ? `Sobre a ${localCompany.nome}` 
@@ -173,7 +199,7 @@ const Integration = () => {
                       </p>
                     </div>
                     
-                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg" style={{borderLeft: `4px solid ${companyColor}`}}>
+                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg shadow-sm" style={{borderLeft: `4px solid ${companyColor}`}}>
                       <h3 className="font-medium mb-2 dark:text-white" style={{color: companyColor}}>
                         Missão
                       </h3>
@@ -184,7 +210,7 @@ const Integration = () => {
                       </p>
                     </div>
                     
-                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg" style={{borderLeft: `4px solid ${companyColor}`}}>
+                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg shadow-sm" style={{borderLeft: `4px solid ${companyColor}`}}>
                       <h3 className="font-medium mb-2 dark:text-white" style={{color: companyColor}}>
                         Valores
                       </h3>
@@ -195,7 +221,7 @@ const Integration = () => {
                       </p>
                     </div>
                     
-                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg" style={{borderLeft: `4px solid ${companyColor}`}}>
+                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg shadow-sm" style={{borderLeft: `4px solid ${companyColor}`}}>
                       <h3 className="font-medium mb-2 dark:text-white" style={{color: companyColor}}>
                         Frase Institucional
                       </h3>
@@ -228,7 +254,7 @@ const Integration = () => {
                       </div>
                     ) : jobRoles.length > 0 ? (
                       jobRoles.map((role, index) => (
-                        <Card key={role.id} className="overflow-hidden border-l-4" style={{ borderLeftColor: companyColor }}>
+                        <Card key={role.id} className="overflow-hidden border-l-4 shadow-sm hover:shadow transition-all duration-200" style={{ borderLeftColor: companyColor }}>
                           <CardHeader className="py-4 px-6 bg-gray-50 dark:bg-gray-800">
                             <div className="flex items-center gap-2">
                               <BriefcaseBusiness className="h-5 w-5" style={{ color: companyColor }} />
@@ -245,10 +271,13 @@ const Integration = () => {
                             <Accordion type="single" collapsible className="w-full">
                               {role.responsibilities && (
                                 <AccordionItem value="responsibilities" className="border-b">
-                                  <AccordionTrigger className="py-4 text-base font-medium">
-                                    Responsabilidades
+                                  <AccordionTrigger className="py-4 text-base font-medium hover:text-primary hover:no-underline">
+                                    <span className="flex items-center gap-2">
+                                      <Info className="h-4 w-4" style={{ color: companyColor }} />
+                                      Responsabilidades
+                                    </span>
                                   </AccordionTrigger>
-                                  <AccordionContent className="text-gray-600 dark:text-gray-300 whitespace-pre-line">
+                                  <AccordionContent className="text-gray-600 dark:text-gray-300 whitespace-pre-line pl-6">
                                     {role.responsibilities}
                                   </AccordionContent>
                                 </AccordionItem>
@@ -256,10 +285,13 @@ const Integration = () => {
                               
                               {role.requirements && (
                                 <AccordionItem value="requirements" className="border-b">
-                                  <AccordionTrigger className="py-4 text-base font-medium">
-                                    Requisitos
+                                  <AccordionTrigger className="py-4 text-base font-medium hover:text-primary hover:no-underline">
+                                    <span className="flex items-center gap-2">
+                                      <Info className="h-4 w-4" style={{ color: companyColor }} />
+                                      Requisitos
+                                    </span>
                                   </AccordionTrigger>
-                                  <AccordionContent className="text-gray-600 dark:text-gray-300 whitespace-pre-line">
+                                  <AccordionContent className="text-gray-600 dark:text-gray-300 whitespace-pre-line pl-6">
                                     {role.requirements}
                                   </AccordionContent>
                                 </AccordionItem>
@@ -267,26 +299,53 @@ const Integration = () => {
                               
                               {role.expectations && (
                                 <AccordionItem value="expectations" className="border-b">
-                                  <AccordionTrigger className="py-4 text-base font-medium">
-                                    Expectativas
+                                  <AccordionTrigger className="py-4 text-base font-medium hover:text-primary hover:no-underline">
+                                    <span className="flex items-center gap-2">
+                                      <Info className="h-4 w-4" style={{ color: companyColor }} />
+                                      Expectativas
+                                    </span>
                                   </AccordionTrigger>
-                                  <AccordionContent className="text-gray-600 dark:text-gray-300 whitespace-pre-line">
+                                  <AccordionContent className="text-gray-600 dark:text-gray-300 whitespace-pre-line pl-6">
                                     {role.expectations}
                                   </AccordionContent>
                                 </AccordionItem>
                               )}
                             </Accordion>
                           </CardContent>
+                          <CardFooter className="py-3 px-6 bg-gray-50 dark:bg-gray-800 border-t">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="ml-auto text-xs group"
+                              style={{ 
+                                borderColor: companyColor,
+                                color: companyColor
+                              }}
+                            >
+                              Ver Detalhes
+                              <ChevronRight className="h-4 w-4 ml-1 transition-transform group-hover:translate-x-1" />
+                            </Button>
+                          </CardFooter>
                         </Card>
                       ))
                     ) : (
-                      <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg" style={{borderLeft: `4px solid ${companyColor}`}}>
+                      <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg shadow-sm" style={{borderLeft: `4px solid ${companyColor}`}}>
                         <h3 className="text-xl font-medium mb-4 dark:text-white" style={{color: companyColor}}>
                           Descrição de Cargos
                         </h3>
                         <p className="text-gray-600 dark:text-gray-400 mb-4">
                           Ainda não há informações sobre cargos disponíveis para {localCompany?.nome || "esta empresa"}.
                         </p>
+                        <Button 
+                          variant="outline" 
+                          style={{ 
+                            borderColor: companyColor,
+                            color: companyColor
+                          }}
+                        >
+                          Saiba Mais
+                          <ChevronRight className="h-4 w-4 ml-1" />
+                        </Button>
                       </div>
                     )}
                   </div>
