@@ -13,7 +13,9 @@ export const useCompanyList = ({
    * Fetches all companies from the database
    */
   const fetchCompanies = async (): Promise<void> => {
+    // Se já estivermos carregando, não iniciar nova requisição
     setIsLoading(true);
+    
     try {
       const { data, error } = await retryOperation(
         async () => await supabase.from('empresas').select('*').order('nome')
@@ -27,7 +29,10 @@ export const useCompanyList = ({
         return;
       }
 
-      setCompanies(data as Company[]);
+      if (data) {
+        console.log(`Fetched ${data.length} companies successfully`);
+        setCompanies(data as Company[]);
+      }
     } catch (error) {
       console.error("Unexpected error:", error);
       toast("Erro inesperado", {

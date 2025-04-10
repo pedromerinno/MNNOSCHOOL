@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,15 +17,19 @@ export const IntegrationManagement: React.FC = () => {
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("info");
+  const hasLoadedCompanies = useRef(false);
 
-  // Fetch companies on mount
+  // Fetch companies only once on mount
   useEffect(() => {
     const loadCompanies = async () => {
-      console.log("Loading companies in IntegrationManagement");
-      await fetchCompanies();
+      if (!hasLoadedCompanies.current && !isLoading) {
+        console.log("Loading companies in IntegrationManagement - Initial Load");
+        hasLoadedCompanies.current = true;
+        await fetchCompanies();
+      }
     };
     loadCompanies();
-  }, [fetchCompanies]);
+  }, [fetchCompanies, isLoading]);
 
   // Set the first company as selected if none is selected yet
   useEffect(() => {
@@ -53,7 +57,6 @@ export const IntegrationManagement: React.FC = () => {
     
     try {
       console.log("Saving integration info for company:", selectedCompany.nome);
-      console.log("Form data:", formData);
       
       const { error } = await supabase
         .from('empresas')
@@ -81,7 +84,7 @@ export const IntegrationManagement: React.FC = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading && companies.length === 0) {
     return (
       <div className="flex justify-center items-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
