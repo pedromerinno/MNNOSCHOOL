@@ -42,7 +42,7 @@ export const CourseView: React.FC = () => {
   const hours = Math.floor(totalDuration / 60);
   const minutes = totalDuration % 60;
   const formattedDuration = hours > 0 
-    ? `${hours}hr ${minutes > 0 ? `${minutes} min` : ''}` 
+    ? `${hours}h ${minutes > 0 ? `${minutes} min` : ''}` 
     : `${minutes} min`;
 
   return (
@@ -72,7 +72,7 @@ export const CourseView: React.FC = () => {
             </div>
             <div className="flex items-center gap-1">
               <BookOpen className="h-4 w-4 text-muted-foreground" />
-              <span>{course.lessons?.length || 0} lessons</span>
+              <span>{course.lessons?.length || 0} lições</span>
             </div>
             {course.tags && course.tags.length > 0 && (
               <div className="flex items-center gap-2">
@@ -87,8 +87,8 @@ export const CourseView: React.FC = () => {
           {course.progress > 0 && (
             <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
               <div className="flex justify-between items-center mb-2">
-                <h3 className="text-sm font-medium">Your progress</h3>
-                <span className="text-sm">{course.progress}% complete</span>
+                <h3 className="text-sm font-medium">Seu progresso</h3>
+                <span className="text-sm">{course.progress}% concluído</span>
               </div>
               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                 <div 
@@ -102,8 +102,8 @@ export const CourseView: React.FC = () => {
           {/* Tabs for content */}
           <Tabs defaultValue="description" value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="description">Description</TabsTrigger>
-              <TabsTrigger value="reviews">Reviews</TabsTrigger>
+              <TabsTrigger value="description">Descrição</TabsTrigger>
+              <TabsTrigger value="reviews">Avaliações</TabsTrigger>
             </TabsList>
             <TabsContent value="description" className="mt-6">
               <CourseDescription description={course.description} />
@@ -111,9 +111,9 @@ export const CourseView: React.FC = () => {
             <TabsContent value="reviews" className="mt-6">
               <div className="text-center py-8">
                 <Star className="h-8 w-8 text-yellow-400 mx-auto mb-2" />
-                <h3 className="text-lg font-medium mb-1">No reviews yet</h3>
+                <h3 className="text-lg font-medium mb-1">Sem avaliações ainda</h3>
                 <p className="text-muted-foreground">
-                  Be the first to review this course
+                  Seja o primeiro a avaliar este curso
                 </p>
               </div>
             </TabsContent>
@@ -130,3 +130,4 @@ export const CourseView: React.FC = () => {
     </div>
   );
 };
+

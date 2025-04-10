@@ -148,7 +148,7 @@ export const CourseLessonList: React.FC<CourseLessonListProps> = ({
                         }}
                         className="ml-2 flex-shrink-0"
                       >
-                        {lesson.completed ? "Review" : "Start"}
+                        {lesson.completed ? "Revisar" : "Iniciar"}
                       </Button>
                     </div>
                   </div>
@@ -161,10 +161,11 @@ export const CourseLessonList: React.FC<CourseLessonListProps> = ({
         {/* If there are no lessons */}
         {lessons.length === 0 && (
           <div className="p-6 text-center">
-            <p className="text-muted-foreground">No lessons available for this course yet.</p>
+            <p className="text-muted-foreground">Nenhuma lição disponível para este curso ainda.</p>
           </div>
         )}
       </CardContent>
     </Card>
   );
 };
+

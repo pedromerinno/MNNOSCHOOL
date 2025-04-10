@@ -20,7 +20,7 @@ export const CourseHero: React.FC<CourseHeroProps> = ({
   courseId
 }) => {
   return (
-    <div className="relative rounded-xl overflow-hidden bg-gradient-to-r from-purple-900 to-purple-700 text-white">
+    <div className="relative rounded-xl overflow-hidden bg-gradient-to-r from-[#6E59A5] to-[#9b87f5] text-white">
       <div className="absolute inset-0 z-0 opacity-20">
         {imageUrl && (
           <img 
@@ -37,7 +37,7 @@ export const CourseHero: React.FC<CourseHeroProps> = ({
             <h1 className="text-3xl md:text-4xl font-bold mb-4">{title}</h1>
             {instructor && (
               <p className="text-white/80 mb-6">
-                By {instructor}
+                Por {instructor}
               </p>
             )}
           </div>
@@ -57,11 +57,12 @@ export const CourseHero: React.FC<CourseHeroProps> = ({
         </div>
         
         <div className="flex gap-2 mt-4">
-          <Button variant="default" className="bg-orange-500 hover:bg-orange-600">
-            Start Learning
+          <Button variant="default" className="bg-[#1EAEDB] hover:bg-[#0FA0CE]">
+            Começar a Aprender
           </Button>
         </div>
       </div>
     </div>
   );
 };
+
