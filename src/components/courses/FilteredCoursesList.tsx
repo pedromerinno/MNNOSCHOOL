@@ -34,11 +34,13 @@ export const FilteredCoursesList = ({
     }
   };
   
-  // Convert to CourseList.Course type by ensuring description is present
+  // Convert to CourseList.Course type by ensuring required properties are present
   const convertToCourseListType = (course: Course): CourseListCourse => {
     return {
       ...course,
       description: course.description || '', // Ensure description is not null
+      image_url: course.image_url || '/placeholder.svg', // Ensure image_url is not null
+      instructor: course.instructor || '', // Ensure instructor is not null
     };
   };
   
