@@ -10,7 +10,6 @@ import { CollaboratorData } from './types';
 
 export const useCollaboratorManagement = (company: Company | null): CollaboratorData => {
   const { users: allUsers, loading: loadingUsers, fetchUsers } = useUsers();
-  const [userProfiles, setUserProfiles] = useState([]);
   
   // Get state management and actions
   const {
@@ -24,15 +23,18 @@ export const useCollaboratorManagement = (company: Company | null): Collaborator
     setUserRoles,
     setSearchTerm,
     setReloadTrigger,
-    initialFetchDone
+    initialFetchDone,
+    error,
+    setError
   } = useCollaboratorState();
 
   // Get company users fetching functionality
-  const { fetchCompanyUsers, fetchFullUserProfiles } = useFetchCompanyUsers(
+  const { fetchCompanyUsers } = useFetchCompanyUsers(
     setCompanyUsers,
     setIsLoading,
     setUserRoles,
-    initialFetchDone
+    initialFetchDone,
+    setError
   );
 
   // Get user-company relationship management
@@ -44,18 +46,18 @@ export const useCollaboratorManagement = (company: Company | null): Collaborator
     useFilterUsers(allUsers, companyUsers, searchTerm);
 
   // Wrapper functions to include company
-  const addUserToCompany = useCallback((userId: string): Promise<boolean | void> => {
+  const addUserToCompany = useCallback(async (userId: string): Promise<boolean | void> => {
     if (!company) {
       console.error('Cannot add user - no company selected');
-      return Promise.resolve();
+      return Promise.resolve(false);
     }
     return addUser(userId, company);
   }, [addUser, company]);
 
-  const removeUserFromCompany = useCallback((userId: string): Promise<boolean | void> => {
+  const removeUserFromCompany = useCallback(async (userId: string): Promise<boolean | void> => {
     if (!company) {
       console.error('Cannot remove user - no company selected');
-      return Promise.resolve();
+      return Promise.resolve(false);
     }
     return removeUser(userId, company);
   }, [removeUser, company]);
@@ -63,26 +65,30 @@ export const useCollaboratorManagement = (company: Company | null): Collaborator
   // Load data when component mounts and when company or reload trigger changes
   useEffect(() => {
     const loadCompanyUsers = async () => {
-      if (company && company.id) {
-        console.log(`Loading company users for ${company.nome} (${reloadTrigger})`);
-        try {
-          const profiles = await fetchCompanyUsers(company);
-          console.log(`Retrieved ${profiles?.length || 0} user profiles`);
-          setUserProfiles(profiles || []);
-          // Set loading to false even if there are no profiles
-          setIsLoading(false);
-        } catch (error) {
-          console.error('Error loading company users:', error);
-          setIsLoading(false); // Make sure to set loading to false on error
-        }
-      } else {
-        // No company selected, ensure loading state is reset
+      if (!company || !company.id) {
+        console.log("No company selected, resetting loading state");
+        setIsLoading(false);
+        setError(null);
+        setCompanyUsers([]);
+        initialFetchDone.current = true;
+        return;
+      }
+      
+      console.log(`Loading company users for ${company.nome} (${reloadTrigger})`);
+      try {
+        setIsLoading(true);
+        setError(null);
+        await fetchCompanyUsers(company);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error loading company users:', error);
+        setError("Failed to load collaborators. Please try again.");
         setIsLoading(false);
       }
     };
     
     loadCompanyUsers();
-  }, [company, reloadTrigger, fetchCompanyUsers, setIsLoading]);
+  }, [company, reloadTrigger, fetchCompanyUsers, setIsLoading, setCompanyUsers, setError, initialFetchDone]);
   
   // Ensure all users are loaded
   useEffect(() => {
@@ -99,32 +105,12 @@ export const useCollaboratorManagement = (company: Company | null): Collaborator
       setReloadTrigger(prev => prev + 1);
     };
     
-    const handleSettingsCompanyChanged = (event: CustomEvent<{company: Company}>) => {
-      console.log("Settings company changed event detected:", event.detail.company.nome);
-      setReloadTrigger(prev => prev + 1);
-    };
-    
-    window.addEventListener('settings-company-changed', handleSettingsCompanyChanged as EventListener);
     window.addEventListener('company-relation-changed', handleCompanyChange);
     
     return () => {
-      window.removeEventListener('settings-company-changed', handleSettingsCompanyChanged as EventListener);
       window.removeEventListener('company-relation-changed', handleCompanyChange);
     };
   }, [setReloadTrigger]);
-
-  // Debug output for troubleshooting
-  useEffect(() => {
-    console.log({
-      isLoading,
-      loadingUsers,
-      companyUsersCount: companyUsers.length,
-      filteredCompanyUsersCount: filteredCompanyUsers.length,
-      allUsersCount: allUsers.length,
-      initialFetchDone: initialFetchDone.current,
-      hasCompany: !!company
-    });
-  }, [isLoading, loadingUsers, companyUsers.length, filteredCompanyUsers.length, allUsers.length, initialFetchDone, company]);
 
   return {
     isLoading,
@@ -139,6 +125,7 @@ export const useCollaboratorManagement = (company: Company | null): Collaborator
     setSearchTerm,
     addUserToCompany,
     removeUserFromCompany,
-    setReloadTrigger
+    setReloadTrigger,
+    error
   };
 };

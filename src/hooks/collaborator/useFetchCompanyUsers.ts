@@ -9,7 +9,8 @@ export const useFetchCompanyUsers = (
   setCompanyUsers: (users: string[]) => void,
   setIsLoading: (loading: boolean) => void,
   setUserRoles: (roles: Record<string, string>) => void,
-  initialFetchDone: React.MutableRefObject<boolean>
+  initialFetchDone: React.MutableRefObject<boolean>,
+  setError: (error: string | null) => void
 ) => {
   // Function to fetch user roles
   const fetchUserRoles = async (userIds: string[]) => {
@@ -108,11 +109,14 @@ export const useFetchCompanyUsers = (
       console.log("No company selected or company has no ID");
       setIsLoading(false);
       setCompanyUsers([]);
+      setError(null);
       initialFetchDone.current = true;
       return [];
     }
     
     setIsLoading(true);
+    setError(null);
+    
     try {
       console.log("Fetching collaborators for company:", company.nome, company.id);
       
@@ -124,6 +128,7 @@ export const useFetchCompanyUsers = (
         
       if (error) {
         console.error("Error fetching user_empresa relations:", error);
+        setError("Failed to load collaborators. Database error.");
         throw error;
       }
       
@@ -155,6 +160,7 @@ export const useFetchCompanyUsers = (
         profiles = await fetchFullUserProfiles(userIds);
       } catch (profileError) {
         console.error("Error fetching profiles:", profileError);
+        setError("Failed to load user profiles");
       }
       
       setIsLoading(false);
@@ -167,9 +173,10 @@ export const useFetchCompanyUsers = (
       initialFetchDone.current = true;
       setCompanyUsers([]);
       setUserRoles({});
+      setError(`Failed to load collaborators: ${error.message}`);
       return [];
     }
-  }, [setCompanyUsers, setIsLoading, setUserRoles, initialFetchDone]);
+  }, [setCompanyUsers, setIsLoading, setUserRoles, initialFetchDone, setError]);
 
   return { fetchCompanyUsers, fetchFullUserProfiles };
 };

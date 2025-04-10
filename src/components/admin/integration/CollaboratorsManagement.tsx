@@ -33,7 +33,8 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
     setSearchTerm,
     addUserToCompany,
     removeUserFromCompany,
-    setReloadTrigger
+    setReloadTrigger,
+    error
   } = useCollaboratorManagement(company);
 
   const [showAddUsersDialog, setShowAddUsersDialog] = useState(false);
@@ -43,13 +44,11 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<string>("users");
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   
   // Force a reload when component mounts or company changes
   useEffect(() => {
     console.log("CollaboratorsManagement: Company changed to", company.nome);
     setReloadTrigger(prev => prev + 1);
-    setError(null); // Reset error state on company change
   }, [company.id, setReloadTrigger]);
   
   // User documents management
@@ -91,7 +90,6 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
   // Handle manual refresh
   const handleRefresh = () => {
     setRefreshing(true);
-    setError(null);
     setReloadTrigger(prev => prev + 1);
     
     // Set a timeout to ensure the refreshing state doesn't get stuck
@@ -103,22 +101,12 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
       }
     }, 5000);
   };
-
-  // Clear the error state if loading is completed
-  useEffect(() => {
-    if (!isLoading && error) {
-      setError(null);
-    }
-  }, [isLoading, error]);
   
   // Handle adding a user with proper error handling
   const handleAddUser = async (userId: string) => {
     try {
       const result = await addUserToCompany(userId);
-      if (result === false) {
-        console.log("User could not be added to company");
-      }
-      return result;
+      return result !== false;
     } catch (error) {
       console.error("Error in handleAddUser:", error);
       return false;
@@ -129,10 +117,7 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
   const handleRemoveUser = async (userId: string) => {
     try {
       const result = await removeUserFromCompany(userId);
-      if (result === false) {
-        console.log("User could not be removed from company");
-      }
-      return result;
+      return result !== false;
     } catch (error) {
       console.error("Error in handleRemoveUser:", error);
       return false;
@@ -170,7 +155,7 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
         </div>
       </div>
       
-      {error && (
+      {error && !isLoading && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
@@ -200,7 +185,10 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
       </div>
       
       {isLoading || loadingUsers ? (
-        <LoadingCollaborators />
+        <LoadingCollaborators 
+          error={error} 
+          onRetry={handleRefresh}
+        />
       ) : filteredCompanyUsers.length === 0 ? (
         <EmptyCollaboratorsList 
           searchTerm={searchTerm} 

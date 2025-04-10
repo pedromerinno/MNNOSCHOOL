@@ -8,6 +8,7 @@ export const useCollaboratorState = (): CollaboratorState & {
   setUserRoles: (roles: Record<string, string>) => void;
   setSearchTerm: (term: string) => void;
   setReloadTrigger: (value: React.SetStateAction<number>) => void;
+  setError: (error: string | null) => void;
   initialFetchDone: React.MutableRefObject<boolean>;
 } => {
   const [isLoading, setIsLoading] = useState(true);
@@ -15,6 +16,7 @@ export const useCollaboratorState = (): CollaboratorState & {
   const [searchTerm, setSearchTerm] = useState("");
   const [userRoles, setUserRoles] = useState<Record<string, string>>({});
   const [reloadTrigger, setReloadTrigger] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   const initialFetchDone = useRef(false);
 
   return {
@@ -23,11 +25,13 @@ export const useCollaboratorState = (): CollaboratorState & {
     searchTerm,
     userRoles,
     reloadTrigger,
+    error,
     setIsLoading,
     setCompanyUsers,
     setUserRoles,
     setSearchTerm,
     setReloadTrigger,
+    setError,
     initialFetchDone
   };
 };

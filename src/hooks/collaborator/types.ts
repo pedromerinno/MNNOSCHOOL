@@ -13,6 +13,7 @@ export interface CollaboratorState {
   searchTerm: string;
   userRoles: Record<string, string>;
   reloadTrigger: number;
+  error: string | null;
 }
 
 export interface CollaboratorActions {
