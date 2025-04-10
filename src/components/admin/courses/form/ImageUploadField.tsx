@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Control } from "react-hook-form";
 import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,42 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
   objectPrefix = 'courses'
 }) => {
   const [isUploading, setIsUploading] = useState(false);
+  const [bucketReady, setBucketReady] = useState(false);
+
+  // Check if course-assets bucket exists and create it if needed
+  useEffect(() => {
+    const checkAndCreateBucket = async () => {
+      try {
+        const { data: buckets, error } = await supabase.storage.listBuckets();
+        
+        if (error) {
+          console.warn("Could not check storage buckets:", error);
+          return;
+        }
+        
+        const courseAssetsBucket = buckets?.find(b => b.name === 'course-assets');
+        
+        if (!courseAssetsBucket) {
+          console.log("Creating course-assets bucket");
+          const { error: createError } = await supabase.storage.createBucket('course-assets', {
+            public: true,
+            fileSizeLimit: 10485760, // 10MB
+          });
+          
+          if (createError) {
+            console.error("Could not create course-assets bucket:", createError);
+            return;
+          }
+        }
+        
+        setBucketReady(true);
+      } catch (err) {
+        console.error("Error checking/creating storage bucket:", err);
+      }
+    };
+    
+    checkAndCreateBucket();
+  }, []);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, onChange: (value: string) => void) => {
     const files = e.target.files;
@@ -36,15 +72,31 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
     setIsUploading(true);
     
     try {
+      // First, ensure course-assets bucket exists
+      if (!bucketReady) {
+        const { data: buckets } = await supabase.storage.listBuckets();
+        const courseAssetsBucket = buckets?.find(b => b.name === 'course-assets');
+        
+        if (!courseAssetsBucket) {
+          const { error: createError } = await supabase.storage.createBucket('course-assets', {
+            public: true,
+            fileSizeLimit: 10485760, // 10MB
+          });
+          
+          if (createError) {
+            throw new Error("Erro ao criar bucket de armazenamento: " + createError.message);
+          }
+        }
+      }
+      
       // Create a unique file name using timestamp
       const fileExt = file.name.split('.').pop();
-      const fileName = `${objectPrefix}-${Date.now()}.${fileExt}`;
-      const filePath = `covers/${fileName}`;
+      const fileName = `covers/${objectPrefix}-${Date.now()}.${fileExt}`;
       
       // Upload the file to Supabase Storage
       const { data, error } = await supabase.storage
         .from('course-assets')
-        .upload(filePath, file, {
+        .upload(fileName, file, {
           cacheControl: '3600',
           upsert: true
         });
@@ -54,14 +106,19 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
       // Get the public URL
       const { data: { publicUrl } } = supabase.storage
         .from('course-assets')
-        .getPublicUrl(filePath);
+        .getPublicUrl(fileName);
       
       // Update the form field with the new URL
       onChange(publicUrl);
       toast.success("Imagem carregada com sucesso");
     } catch (error: any) {
       console.error("Error uploading image:", error);
-      toast.error(`Erro ao carregar imagem: ${error.message}`);
+      
+      if (error.message.includes("storage/bucket-not-found")) {
+        toast.error("Armazenamento não configurado. Contate o administrador.");
+      } else {
+        toast.error(`Erro ao carregar imagem: ${error.message}`);
+      }
     } finally {
       setIsUploading(false);
       // Clear the input value so the same file can be selected again

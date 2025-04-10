@@ -8,13 +8,55 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
   const [documents, setDocuments] = useState<UserDocument[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Ensure the storage bucket exists
+  const ensureStorageBucketExists = useCallback(async () => {
+    try {
+      const { data: buckets, error } = await supabase.storage.listBuckets();
+      
+      if (error) {
+        console.warn("Could not check storage buckets:", error);
+        return false;
+      }
+      
+      const documentsBucket = buckets?.find(b => b.name === 'documents');
+      
+      if (!documentsBucket) {
+        console.log("Creating documents bucket");
+        const { error: createError } = await supabase.storage.createBucket('documents', {
+          public: false,
+          fileSizeLimit: 10485760, // 10MB
+        });
+        
+        if (createError) {
+          console.error("Could not create documents bucket:", createError);
+          return false;
+        }
+      }
+      
+      return true;
+    } catch (err) {
+      console.error("Error checking/creating storage bucket:", err);
+      return false;
+    }
+  }, []);
 
   // Fetch user documents
   const fetchDocuments = useCallback(async () => {
-    if (!userId || !companyId) return;
+    if (!userId || !companyId) {
+      setDocuments([]);
+      setError(null);
+      return;
+    }
 
     setIsLoading(true);
+    setError(null);
+    
     try {
+      // Ensure bucket exists
+      await ensureStorageBucketExists();
+      
       const { data, error } = await supabase
         .from('user_documents')
         .select('*')
@@ -27,11 +69,12 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
       setDocuments(data as unknown as UserDocument[]);
     } catch (error: any) {
       console.error('Error fetching user documents:', error);
+      setError(`Erro ao buscar documentos: ${error.message}`);
       toast.error(`Erro ao buscar documentos: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
-  }, [userId, companyId]);
+  }, [userId, companyId, ensureStorageBucketExists]);
 
   // Upload a document for a user
   const uploadDocument = useCallback(async (
@@ -46,14 +89,26 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
 
     setIsUploading(true);
     try {
+      // Ensure bucket exists
+      const bucketReady = await ensureStorageBucketExists();
+      
+      if (!bucketReady) {
+        toast.error("Sistema de armazenamento não está disponível");
+        return null;
+      }
+      
       // 1. Upload file to storage
+      const userDir = `user-documents/${userId}`;
       const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}/${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `user-documents/${fileName}`;
+      const fileName = `${userDir}/${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = fileName;
 
       const { error: uploadError } = await supabase.storage
         .from('documents')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
 
       if (uploadError) throw uploadError;
 
@@ -82,12 +137,20 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
       return newDoc;
     } catch (error: any) {
       console.error('Error uploading document:', error);
-      toast.error(`Erro no upload: ${error.message}`);
+      
+      if (error.message.includes("storage/bucket-not-found")) {
+        toast.error("Armazenamento não configurado. Contate o administrador.");
+      } else if (error.message.includes("already exists")) {
+        toast.error("Um arquivo com este nome já existe. Tente novamente.");
+      } else {
+        toast.error(`Erro no upload: ${error.message}`);
+      }
+      
       return null;
     } finally {
       setIsUploading(false);
     }
-  }, [userId, companyId]);
+  }, [userId, companyId, ensureStorageBucketExists]);
 
   // Delete a document
   const deleteDocument = useCallback(async (documentId: string): Promise<boolean> => {
@@ -108,7 +171,10 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
           .from('documents')
           .remove([filePath]);
 
-        if (storageError) throw storageError;
+        if (storageError) {
+          console.warn("Error removing file from storage (continuing anyway):", storageError);
+          // Continue despite storage error - we still want to remove the database record
+        }
       }
 
       // 3. Delete the database record
@@ -134,6 +200,7 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
     documents,
     isLoading,
     isUploading,
+    error,
     uploadDocument,
     deleteDocument,
     refreshDocuments: fetchDocuments

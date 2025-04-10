@@ -31,6 +31,7 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
   const [description, setDescription] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [bucketsReady, setBucketsReady] = useState(false);
+  const [bucketError, setBucketError] = useState<string | null>(null);
 
   // Check if documents bucket exists and create it if needed
   useEffect(() => {
@@ -38,25 +39,53 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
 
     const checkAndCreateBucket = async () => {
       try {
+        setBucketError(null);
+        console.log("Checking for storage buckets...");
+        
         const { data: buckets, error } = await supabase.storage.listBuckets();
         
         if (error) {
           console.error("Error checking buckets:", error);
+          setBucketError(`Error checking buckets: ${error.message}`);
           return;
         }
         
-        const documentsBucket = buckets.find(b => b.name === 'documents');
+        // Check for documents bucket
+        const documentsBucket = buckets?.find(b => b.name === 'documents');
         
         if (!documentsBucket) {
           console.log("Creating documents bucket");
-          await supabase.storage.createBucket('documents', {
-            public: true
+          const { error: createError } = await supabase.storage.createBucket('documents', {
+            public: false,
+            fileSizeLimit: 10485760, // 10MB
           });
+          
+          if (createError) {
+            console.error("Error creating documents bucket:", createError);
+            setBucketError(`Error creating documents bucket: ${createError.message}`);
+            return;
+          }
+          
+          // Add a simple RLS policy to allow authenticated users to access their own files
+          const { error: policyError } = await supabase.rpc('create_storage_policy', {
+            bucket_name: 'documents',
+            policy_name: 'authenticated_access',
+            definition: "((bucket_id = 'documents'::text) AND (auth.role() = 'authenticated'::text))",
+          }).catch((err) => {
+            console.warn("RPC for policy creation not available, falling back to default permissions:", err);
+            return { error: null }; // Return a mock successful response
+          });
+          
+          if (policyError) {
+            console.warn("Error setting bucket policy:", policyError);
+            // Continue despite policy error - this is non-fatal
+          }
         }
         
         setBucketsReady(true);
       } catch (error: any) {
-        console.error("Error creating buckets:", error);
+        console.error("Error creating/checking buckets:", error);
+        setBucketError(`Error initializing storage: ${error.message}`);
         toast.error("Erro ao inicializar armazenamento. Tente novamente mais tarde.");
       }
     };
@@ -89,16 +118,25 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
 
     setIsUploading(true);
     try {
+      // Ensure the user-specific directory exists in the documents bucket
+      const userDir = `user-documents/${userId}`;
+      
       // 1. Upload file to storage
       const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}/${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `user-documents/${fileName}`;
+      const fileName = `${userDir}/${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = fileName;
 
       const { error: uploadError } = await supabase.storage
         .from('documents')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw uploadError;
+      }
 
       // 2. Create database record
       const { error } = await supabase
@@ -128,6 +166,10 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
       console.error('Error uploading document:', error);
       if (error.message.includes("already exists")) {
         toast.error("Um arquivo com este nome já existe. Tente novamente com outro arquivo.");
+      } else if (error.message.includes("storage/bucket-not-found")) {
+        toast.error("Armazenamento não configurado. Por favor, entre em contato com o administrador.");
+        setBucketsReady(false);
+        setBucketError("Bucket 'documents' não encontrado");
       } else {
         toast.error(`Erro no upload: ${error.message}`);
       }
@@ -145,6 +187,13 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
             Faça upload de documentos para o colaborador
           </DialogDescription>
         </DialogHeader>
+        
+        {bucketError && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+            <p className="text-sm font-medium">Erro no sistema de armazenamento</p>
+            <p className="text-xs mt-1">{bucketError}</p>
+          </div>
+        )}
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

@@ -46,8 +46,13 @@ export const LoadingCollaborators: React.FC<LoadingCollaboratorsProps> = ({
 
   // Auto-retry on specific errors if retry count is low
   useEffect(() => {
-    if (error && error.includes("Failed to fetch") && retryCount < 3 && !autoRetrying) {
+    if (error && (
+      error.includes("Failed to fetch") ||
+      error.includes("storage/bucket-not-found") ||
+      error.includes("net::ERR_")
+    ) && retryCount < 3 && !autoRetrying) {
       const timeoutId = setTimeout(() => {
+        console.log(`Auto-retrying after error (attempt ${retryCount + 1})`);
         handleRetry();
       }, 3000);
       
