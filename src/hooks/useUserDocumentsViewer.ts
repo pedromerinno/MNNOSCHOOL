@@ -13,7 +13,7 @@ export const useUserDocumentsViewer = () => {
   const [isLoading, setIsLoading] = useState(true);
   
   const fetchUserDocuments = useCallback(async () => {
-    if (!userProfile?.id || !selectedCompany?.id) {
+    if (!userProfile || !selectedCompany?.id) {
       setDocuments([]);
       setIsLoading(false);
       return;
@@ -29,14 +29,14 @@ export const useUserDocumentsViewer = () => {
         
       if (error) throw error;
       
-      setDocuments(data as UserDocument[]);
+      setDocuments(data as unknown as UserDocument[]);
     } catch (error: any) {
       console.error('Error fetching user documents:', error);
       toast.error(`Erro ao carregar documentos: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
-  }, [userProfile?.id, selectedCompany?.id]);
+  }, [userProfile, selectedCompany]);
   
   const downloadDocument = useCallback(async (document: UserDocument) => {
     try {

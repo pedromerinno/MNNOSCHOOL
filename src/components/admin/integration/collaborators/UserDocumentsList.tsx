@@ -14,8 +14,6 @@ interface UserDocumentsListProps {
   onUploadClick: () => void;
 }
 
-const createElement = document.createElement.bind(document);
-
 export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
   documents,
   isLoading,
@@ -31,7 +29,7 @@ export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
       if (error) throw error;
       
       const url = URL.createObjectURL(data);
-      const a = createElement('a');
+      const a = document.createElement('a');
       a.href = url;
       a.download = document.name;
       a.click();

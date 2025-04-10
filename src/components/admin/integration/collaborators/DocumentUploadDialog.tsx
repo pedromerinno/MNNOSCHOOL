@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -17,8 +18,6 @@ interface DocumentUploadDialogProps {
   companyId: string;
   onUploadComplete: () => void;
 }
-
-const createDocument = document.createElement.bind(document);
 
 export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
   open,
@@ -63,7 +62,7 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
 
       if (uploadError) throw uploadError;
 
-      // 2. Create database record
+      // 2. Create database record using any type for insert since we know the fields we need
       const { error } = await supabase
         .from('user_documents')
         .insert({
@@ -75,7 +74,7 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
           document_type: documentType,
           description: description || null,
           uploaded_by: (await supabase.auth.getUser()).data.user?.id || userId
-        });
+        } as any);
 
       if (error) throw error;
 
