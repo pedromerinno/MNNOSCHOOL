@@ -11,12 +11,13 @@ import {
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BadgeCheck, BadgeX, Briefcase, UserX, FileText } from "lucide-react";
+import { UserProfile } from "@/hooks/useUsers";
 
 interface CollaboratorsListProps {
-  users: any[];
+  users: UserProfile[];
   userRoles: Record<string, string>;
-  onManageRole: (user: any) => void;
-  onManageDocuments: (user: any) => void;
+  onManageRole: (user: UserProfile) => void;
+  onManageDocuments: (user: UserProfile) => void;
   onRemoveUser: (userId: string) => void;
 }
 

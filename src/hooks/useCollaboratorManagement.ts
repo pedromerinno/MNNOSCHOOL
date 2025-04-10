@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Company } from "@/types/company";
 import { useUsers } from "@/hooks/useUsers";
+import { UserProfile } from "@/hooks/useUsers";
 
 export const useCollaboratorManagement = (company: Company | null) => {
   const { users: allUsers, loading: loadingUsers, fetchUsers } = useUsers();
@@ -139,6 +140,9 @@ export const useCollaboratorManagement = (company: Company | null) => {
       setCompanyUsers(prev => [...prev, userId]);
       toast.success("User added successfully");
       
+      // Trigger company relation change to refresh data
+      window.dispatchEvent(new Event('company-relation-changed'));
+      
     } catch (error: any) {
       console.error("Error adding user to company:", error);
       toast.error(`Error adding user: ${error.message}`);
@@ -181,6 +185,9 @@ export const useCollaboratorManagement = (company: Company | null) => {
       });
       
       toast.success("User removed successfully");
+      
+      // Trigger company relation change event
+      window.dispatchEvent(new Event('company-relation-changed'));
       
     } catch (error: any) {
       console.error("Error removing user from company:", error);
@@ -237,8 +244,8 @@ export const useCollaboratorManagement = (company: Company | null) => {
   });
   
   // Separate users who are already in the company
-  const availableUsers = filteredUsers.filter(user => !companyUsers.includes(user.id));
-  const filteredCompanyUsers = filteredUsers.filter(user => companyUsers.includes(user.id));
+  const availableUsers = filteredUsers.filter(user => !companyUsers.includes(user.id || ''));
+  const filteredCompanyUsers = filteredUsers.filter(user => user.id && companyUsers.includes(user.id));
 
   return {
     isLoading,
