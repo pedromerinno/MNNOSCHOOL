@@ -53,7 +53,6 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({ company }) =
     setIsLoading(true);
     
     try {
-      // Fixed: Using type assertion to handle the type issue
       const { data, error } = await supabase
         .from('company_access')
         .select('*')
@@ -62,7 +61,6 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({ company }) =
       
       if (error) throw error;
       
-      // Cast the data to the proper type
       setAccessItems(data as AccessItem[] || []);
     } catch (error: any) {
       console.error('Error fetching access items:', error);
@@ -89,7 +87,7 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({ company }) =
       }
       
       if (currentAccess) {
-        // Update existing access - Using type assertion to handle the type
+        // Update existing access
         const { error } = await supabase
           .from('company_access')
           .update({
@@ -98,13 +96,13 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({ company }) =
             password: formData.password,
             url: formData.url || null,
             notes: formData.notes || null
-          } as any)
+          })
           .eq('id', currentAccess.id);
           
         if (error) throw error;
         toast.success('Acesso atualizado com sucesso');
       } else {
-        // Create new access - Using type assertion to handle the type
+        // Create new access
         const { error } = await supabase
           .from('company_access')
           .insert({
@@ -114,7 +112,7 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({ company }) =
             password: formData.password,
             url: formData.url || null,
             notes: formData.notes || null
-          } as any);
+          });
           
         if (error) throw error;
         toast.success('Acesso criado com sucesso');
@@ -146,7 +144,6 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({ company }) =
     if (!window.confirm('Tem certeza que deseja excluir este acesso?')) return;
     
     try {
-      // Using type assertion to handle the type
       const { error } = await supabase
         .from('company_access')
         .delete()

@@ -1,77 +1,40 @@
 
 import React from 'react';
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Palette } from "lucide-react";
 import { Control } from "react-hook-form";
+import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 
-interface ColorPickerFieldProps {
+export interface ColorPickerFieldProps {
   control: Control<any>;
-  defaultValue?: string;
+  name: string;
+  label: string;
 }
 
-export const ColorPickerField: React.FC<ColorPickerFieldProps> = ({ 
-  control, 
-  defaultValue = "#1EAEDB" 
+export const ColorPickerField: React.FC<ColorPickerFieldProps> = ({
+  control,
+  name,
+  label
 }) => {
-  const handleColorInputChange = (e: React.ChangeEvent<HTMLInputElement>, onChange: (value: string) => void) => {
-    try {
-      const value = e.target.value;
-      // Validar se é uma cor HEX válida
-      if (/^#([0-9A-F]{3}){1,2}$/i.test(value)) {
-        onChange(value);
-      }
-    } catch (error) {
-      console.error("Erro ao processar cor:", error);
-    }
-  };
-
   return (
     <FormField
       control={control}
-      name="cor_principal"
+      name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel className="flex items-center">
-            <Palette className="h-4 w-4 mr-2" />
-            Cor Principal
-          </FormLabel>
-          <div className="flex space-x-2">
-            <div className="flex-1 flex space-x-2">
-              <FormControl>
-                <Input 
-                  placeholder="#1EAEDB" 
-                  {...field} 
-                  value={field.value || defaultValue} 
-                  onChange={(e) => {
-                    field.onChange(e);
-                    handleColorInputChange(e, field.onChange);
-                  }}
-                />
-              </FormControl>
-              <div className="flex items-center">
-                <input
-                  type="color"
-                  value={field.value || defaultValue}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    field.onChange(value);
-                  }}
-                  className="h-9 w-12 border rounded cursor-pointer"
-                  aria-label="Selecionar cor"
-                />
-              </div>
-            </div>
+          <FormLabel>{label}</FormLabel>
+          <div className="flex items-center gap-2">
             <div 
-              className="w-10 h-10 rounded border flex-shrink-0" 
-              style={{ backgroundColor: field.value || defaultValue }}
-              aria-hidden="true"
+              className="w-8 h-8 rounded border" 
+              style={{ backgroundColor: field.value || "#1EAEDB" }}
             />
+            <FormControl>
+              <Input 
+                type="text" 
+                {...field} 
+                placeholder="#RRGGBB"
+              />
+            </FormControl>
           </div>
-          <p className="text-xs text-gray-500 mt-1">
-            Esta cor será usada para destacar elementos na interface de integração.
-          </p>
-          <FormMessage />
         </FormItem>
       )}
     />

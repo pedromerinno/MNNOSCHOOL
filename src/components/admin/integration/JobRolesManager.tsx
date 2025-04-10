@@ -1,18 +1,9 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Company } from "@/types/company";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { SubmitButton } from "./form/SubmitButton";
+import { Card, CardContent } from "@/components/ui/card";
 import { Briefcase, Plus } from "lucide-react";
+import { Company } from "@/types/company";
 
 // Placeholder component for Job Roles Management
 // This would be implemented with actual database interactions in a real scenario

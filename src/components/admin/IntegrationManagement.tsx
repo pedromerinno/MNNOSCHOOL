@@ -207,4 +207,3 @@ export const IntegrationManagement: React.FC = () => {
     </div>
   );
 };
-

@@ -2,158 +2,122 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Company } from "@/types/company";
-import { supabase } from "@/integrations/supabase/client";
+import { Video } from "lucide-react";
 import { toast } from "sonner";
-import { Loader2, Video } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Company } from "@/types/company";
 import { SubmitButton } from "./form/SubmitButton";
-
-// Schema for video form
-const videoFormSchema = z.object({
-  video_institucional: z.string().url("URL inválida").or(z.string().length(0)),
-  descricao_video: z.string().optional(),
-});
-
-type VideoFormValues = z.infer<typeof videoFormSchema>;
 
 interface IntegrationVideosManagerProps {
   company: Company;
 }
 
 export const IntegrationVideosManager: React.FC<IntegrationVideosManagerProps> = ({ company }) => {
+  const [videoUrl, setVideoUrl] = useState(company.video_institucional || "");
+  const [videoDescription, setVideoDescription] = useState(company.descricao_video || "");
   const [isSaving, setIsSaving] = useState(false);
   
-  const form = useForm<VideoFormValues>({
-    resolver: zodResolver(videoFormSchema),
-    defaultValues: {
-      video_institucional: company.video_institucional || "",
-      descricao_video: company.descricao_video || "",
-    }
-  });
-  
-  const onSubmit = async (data: VideoFormValues) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsSaving(true);
     
     try {
-      console.log("Saving video info for company:", company.nome);
-      
       const { error } = await supabase
         .from('empresas')
         .update({
-          video_institucional: data.video_institucional || null,
-          descricao_video: data.descricao_video || null,
+          video_institucional: videoUrl,
+          descricao_video: videoDescription
         })
         .eq('id', company.id);
         
       if (error) throw error;
       
-      toast.success("Informações de vídeo atualizadas com sucesso");
+      toast.success("Vídeo institucional atualizado com sucesso");
       
       // Disparar evento para atualizar dados da empresa em outros componentes
       window.dispatchEvent(new Event('company-relation-changed'));
       
     } catch (error: any) {
-      console.error("Erro ao salvar vídeo:", error);
+      console.error("Erro ao salvar vídeo institucional:", error);
       toast.error(`Erro ao salvar: ${error.message}`);
     } finally {
       setIsSaving(false);
     }
   };
-
-  const getVideoPreview = () => {
-    const videoUrl = form.watch("video_institucional");
+  
+  // Extract YouTube video ID from URL
+  const getYoutubeVideoId = (url: string) => {
+    if (!url) return null;
     
-    if (!videoUrl) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
     
-    // Extract YouTube video ID
-    let videoId = "";
-    if (videoUrl.includes("youtube.com/watch?v=")) {
-      videoId = new URL(videoUrl).searchParams.get("v") || "";
-    } else if (videoUrl.includes("youtu.be/")) {
-      videoId = videoUrl.split("youtu.be/")[1]?.split("?")[0] || "";
-    }
-    
-    if (!videoId) return null;
-    
-    return (
-      <div className="aspect-video w-full mt-4">
-        <iframe
-          width="100%"
-          height="100%"
-          src={`https://www.youtube.com/embed/${videoId}`}
-          title="Video Institucional"
-          frameBorder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        ></iframe>
-      </div>
-    );
+    return (match && match[2].length === 11) ? match[2] : null;
   };
+  
+  const videoId = getYoutubeVideoId(videoUrl);
 
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium mb-2">Vídeos Institucionais</h3>
+        <h3 className="text-lg font-medium mb-2">Vídeo Institucional</h3>
         <p className="text-gray-500 dark:text-gray-400 mb-4">
-          Adicione vídeos para exibir durante o processo de integração
+          Adicione um vídeo de apresentação da empresa que será exibido na página de integração
         </p>
       </div>
       
-      <Card>
-        <CardContent className="p-6">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="video_institucional"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>URL do Vídeo Institucional</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="https://www.youtube.com/watch?v=..." 
-                        {...field} 
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              {getVideoPreview()}
-              
-              <FormField
-                control={form.control}
-                name="descricao_video"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Descrição do Vídeo</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Descreva o vídeo institucional..." 
-                        {...field} 
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <div className="flex justify-end">
-                <SubmitButton isSaving={isSaving} />
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-2">
+          <Label htmlFor="videoUrl">URL do Vídeo (YouTube)</Label>
+          <Input
+            id="videoUrl"
+            value={videoUrl}
+            onChange={(e) => setVideoUrl(e.target.value)}
+            placeholder="https://www.youtube.com/watch?v=..."
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="videoDescription">Descrição do Vídeo</Label>
+          <Textarea
+            id="videoDescription"
+            value={videoDescription}
+            onChange={(e) => setVideoDescription(e.target.value)}
+            placeholder="Descreva brevemente o conteúdo do vídeo..."
+            rows={3}
+          />
+        </div>
+        
+        {videoId ? (
+          <div className="aspect-w-16 aspect-h-9">
+            <iframe
+              src={`https://www.youtube.com/embed/${videoId}`}
+              className="w-full rounded-lg"
+              style={{ aspectRatio: '16/9' }}
+              allowFullScreen
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              title="Video Institucional"
+            />
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="p-6 text-center">
+              <Video className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+              <p className="text-gray-500 dark:text-gray-400">
+                Adicione uma URL do YouTube válida para visualizar o vídeo
+              </p>
+            </CardContent>
+          </Card>
+        )}
+        
+        <div className="flex justify-end">
+          <SubmitButton isSaving={isSaving} />
+        </div>
+      </form>
     </div>
   );
 };
