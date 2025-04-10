@@ -6,4 +6,5 @@ export type Course = {
   image_url: string | null;
   instructor: string | null;
   created_at: string;
+  tags?: string[]; // Add tags property to Course type
 };

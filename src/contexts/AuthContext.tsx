@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +8,8 @@ import { Database } from "@/integrations/supabase/types";
 type UserProfile = {
   displayName: string | null;
   avatar: string | null;
-  isAdmin?: boolean; // Add isAdmin property
+  isAdmin?: boolean;
+  cargo?: string | null;
 };
 
 type AuthContextType = {
@@ -18,7 +18,7 @@ type AuthContextType = {
   loading: boolean;
   userProfile: UserProfile;
   updateUserProfile: (profile: UserProfile) => Promise<void>;
-  makeAdmin: () => Promise<void>; // Add function to make user admin
+  makeAdmin: () => Promise<void>;
   signUp: (email: string, password: string) => Promise<{
     error: Error | null;
     data: any | null;
@@ -50,27 +50,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [userProfile, setUserProfile] = useState<UserProfile>({
     displayName: null,
     avatar: null,
-    isAdmin: false // Initialize as non-admin
+    isAdmin: false,
+    cargo: null
   });
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      // First, check if the is_admin column exists
       const { data: columnExists, error: columnCheckError } = await supabase
         .from('profiles')
         .select('is_admin')
         .limit(1)
         .maybeSingle();
       
-      // If there's an error specifically about is_admin column not existing
       const isAdminColumnExists = !columnCheckError || !columnCheckError.message.includes("column 'is_admin' does not exist");
       
-      // Select only columns that are guaranteed to exist
       const columnsToSelect = isAdminColumnExists 
-        ? 'display_name, avatar, is_admin' 
-        : 'display_name, avatar';
+        ? 'display_name, avatar, is_admin, cargo' 
+        : 'display_name, avatar, cargo';
       
       const { data, error } = await supabase
         .from('profiles')
@@ -89,29 +87,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      // Properly check if data exists and is a valid object
       if (data && typeof data === 'object') {
-        // Explicitly cast data to any to safely access properties
         const profileData = data as any;
         
-        // Extract properties with type safety
         const displayName = profileData.display_name !== undefined ? profileData.display_name : null;
         const avatar = profileData.avatar !== undefined ? profileData.avatar : null;
-        // For is_admin, check if the column exists and has a valid boolean value
+        const cargo = profileData.cargo !== undefined ? profileData.cargo : null;
         const isAdmin = isAdminColumnExists && profileData.is_admin === true;
         
         setUserProfile({
           displayName,
           avatar,
-          isAdmin
+          isAdmin,
+          cargo
         });
       } else {
         console.error('Invalid data format received from database:', data);
-        // Set default values if data is invalid
         setUserProfile({
           displayName: null,
           avatar: null,
-          isAdmin: false
+          isAdmin: false,
+          cargo: null
         });
       }
     } catch (error) {
@@ -124,24 +120,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const email = user?.email || '';
       const displayName = email.split('@')[0];
       
-      // Check if is_admin column exists before trying to insert it
       const { data: columnExists, error: columnCheckError } = await supabase
         .from('profiles')
         .select('is_admin')
         .limit(1)
         .maybeSingle();
       
-      // If there's an error specifically about is_admin column not existing
       const isAdminColumnExists = !columnCheckError || !columnCheckError.message.includes("column 'is_admin' does not exist");
       
-      // Create the insert object with only the columns that exist
       const insertData: any = {
         id: userId,
         display_name: displayName,
-        avatar: null
+        avatar: null,
+        cargo: null
       };
       
-      // Only add is_admin if the column exists
       if (isAdminColumnExists) {
         insertData.is_admin = false;
       }
@@ -158,7 +151,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUserProfile({
         displayName,
         avatar: null,
-        isAdmin: false
+        isAdmin: false,
+        cargo: null
       });
       
       console.log('User profile created successfully');
@@ -171,24 +165,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (!user) return;
 
     try {
-      // Check if is_admin column exists before trying to update it
       const { data: columnExists, error: columnCheckError } = await supabase
         .from('profiles')
         .select('is_admin')
         .limit(1)
         .maybeSingle();
       
-      // If there's an error specifically about is_admin column not existing
       const isAdminColumnExists = !columnCheckError || !columnCheckError.message.includes("column 'is_admin' does not exist");
       
-      // Create update object with only the columns that exist
       const updateData: any = {
         display_name: profile.displayName,
         avatar: profile.avatar,
         updated_at: new Date().toISOString()
       };
       
-      // Only add is_admin if the column exists
       if (isAdminColumnExists && profile.isAdmin !== undefined) {
         updateData.is_admin = profile.isAdmin;
       }
@@ -221,23 +211,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Function to make the current user an admin
   const makeAdmin = async () => {
     if (!user) return;
     
     try {
-      // Check if is_admin column exists before trying to update it
       const { data: columnExists, error: columnCheckError } = await supabase
         .from('profiles')
         .select('is_admin')
         .limit(1)
         .maybeSingle();
       
-      // If there's an error specifically about is_admin column not existing
       const isAdminColumnExists = !columnCheckError || !columnCheckError.message.includes("column 'is_admin' does not exist");
       
       if (!isAdminColumnExists) {
-        // If column doesn't exist, notify the user
         toast({
           title: "Funcionalidade não disponível",
           description: "A funcionalidade de administrador ainda não está disponível. Por favor, configure o banco de dados primeiro.",
@@ -246,13 +232,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
       
-      // Update local state
       const updatedProfile = {
         ...userProfile,
         isAdmin: true
       };
       
-      // Update in the database
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -294,14 +278,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
         
         if (event === 'SIGNED_IN') {
-          // Clear cache on sign in to ensure fresh data is loaded
           clearCompanyCache();
           toast({
             title: "Login bem-sucedido",
             description: "Você foi conectado com sucesso.",
           });
         } else if (event === 'SIGNED_OUT') {
-          // Clear cache on sign out
           clearCompanyCache();
           toast({
             title: "Desconectado",
@@ -309,7 +291,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           });
           setUserProfile({
             displayName: null,
-            avatar: null
+            avatar: null,
+            cargo: null
           });
         }
       }
@@ -363,7 +346,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (response.error) throw response.error;
       
-      // Clear cache and fetch fresh data on sign in
       clearCompanyCache();
       navigate("/");
       
@@ -379,7 +361,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = async () => {
-    // Clear cache before signing out
     clearCompanyCache();
     await supabase.auth.signOut();
     navigate("/login");
