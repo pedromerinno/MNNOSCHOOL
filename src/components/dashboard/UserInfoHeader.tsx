@@ -6,6 +6,8 @@ import { useCompanies } from "@/hooks/useCompanies";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getInitials } from "@/utils/stringUtils";
+import { Badge } from "@/components/ui/badge";
+import { Briefcase } from "lucide-react";
 
 interface UserStatsType {
   completedCourses: number;
@@ -98,6 +100,15 @@ export const UserInfoHeader = () => {
               {userProfile?.displayName || user?.email?.split('@')[0] || "Usuário"}
             </h2>
             <p className="text-gray-500 dark:text-gray-400">{user?.email}</p>
+            
+            {userProfile?.cargo && (
+              <div className="flex items-center mt-1">
+                <Badge variant="outline" className="flex items-center gap-1 text-xs font-normal">
+                  <Briefcase className="h-3 w-3" />
+                  {userProfile.cargo}
+                </Badge>
+              </div>
+            )}
           </div>
         </div>
         

@@ -52,6 +52,7 @@ export type Database = {
           id: string
           image_url: string | null
           instructor: string | null
+          tags: string[] | null
           title: string
           updated_at: string
         }
@@ -61,6 +62,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           instructor?: string | null
+          tags?: string[] | null
           title: string
           updated_at?: string
         }
@@ -70,6 +72,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           instructor?: string | null
+          tags?: string[] | null
           title?: string
           updated_at?: string
         }
@@ -205,6 +208,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar: string | null
+          cargo: string | null
           created_at: string
           display_name: string | null
           email: string | null
@@ -214,6 +218,7 @@ export type Database = {
         }
         Insert: {
           avatar?: string | null
+          cargo?: string | null
           created_at?: string
           display_name?: string | null
           email?: string | null
@@ -223,6 +228,7 @@ export type Database = {
         }
         Update: {
           avatar?: string | null
+          cargo?: string | null
           created_at?: string
           display_name?: string | null
           email?: string | null
