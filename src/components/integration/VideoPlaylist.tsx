@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Info, List, Video } from "lucide-react";
 import { useCompanies } from "@/hooks/useCompanies";
 
@@ -99,12 +98,6 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
   };
 
   const embedUrl = getEmbedUrl(currentVideo);
-
-  // Estilo dinâmico com a cor da empresa
-  const companyColorStyle = {
-    borderColor: companyColor,
-    '--company-color': companyColor
-  } as React.CSSProperties;
 
   return (
     <div className="space-y-4">

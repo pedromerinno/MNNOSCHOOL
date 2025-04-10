@@ -1,13 +1,14 @@
 
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { FileText, Settings, Users, Globe, Building, Book, RefreshCw } from 'lucide-react';
+import { FileText, Settings, Users, Globe, Building, Book, RefreshCw, VideoIcon } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { UserManagement } from '@/components/admin/UserManagement';
 import { CompanyManagement } from '@/components/admin/CompanyManagement';
 import { CourseManagement } from '@/components/admin/CourseManagement';
+import { IntegrationManagement } from '@/components/admin/IntegrationManagement';
 import { useAuth } from '@/contexts/AuthContext';
 
 const AdminPage = () => {
@@ -79,6 +80,13 @@ const AdminPage = () => {
                     <Book className="h-4 w-4 mr-2" />
                     Cursos
                   </TabsTrigger>
+                  <TabsTrigger 
+                    value="integration" 
+                    className="flex items-center py-3 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 text-gray-600 dark:text-gray-300 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400"
+                  >
+                    <VideoIcon className="h-4 w-4 mr-2" />
+                    Integração
+                  </TabsTrigger>
                 </TabsList>
               </div>
               
@@ -91,6 +99,9 @@ const AdminPage = () => {
                 </TabsContent>
                 <TabsContent value="courses" className="m-0">
                   <CourseManagement />
+                </TabsContent>
+                <TabsContent value="integration" className="m-0">
+                  <IntegrationManagement />
                 </TabsContent>
               </div>
             </Tabs>
