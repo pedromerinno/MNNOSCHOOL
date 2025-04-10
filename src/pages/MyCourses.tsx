@@ -27,6 +27,8 @@ const MyCourses = () => {
     videosCompleted: 0
   });
   const [recentCourses, setRecentCourses] = useState<any[]>([]);
+  const [filteredCourses, setFilteredCourses] = useState<any[]>([]);
+  const [allCourses, setAllCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [hoursWatched, setHoursWatched] = useState(0);
 
@@ -49,6 +51,8 @@ const MyCourses = () => {
         if (!companyAccess || companyAccess.length === 0) {
           setStats({ favorites: 0, inProgress: 0, completed: 0, videosCompleted: 0 });
           setRecentCourses([]);
+          setFilteredCourses([]);
+          setAllCourses([]);
           setLoading(false);
           return;
         }
@@ -58,7 +62,7 @@ const MyCourses = () => {
         // Get user progress for these courses
         const { data: progressData } = await supabase
           .from('user_course_progress')
-          .select('course_id, progress, completed, last_accessed')
+          .select('course_id, progress, completed, last_accessed, favorite')
           .eq('user_id', user.id)
           .in('course_id', courseIds);
         
@@ -81,9 +85,10 @@ const MyCourses = () => {
         // Here we estimate 15 minutes per completed lesson
         const estimatedHoursWatched = Math.round((completedLessonsCount * 15) / 60 * 10) / 10;
         
-        const inProgress = progressData ? progressData.filter(p => p.progress > 0 && !p.completed).length : 0;
-        const completed = progressData ? progressData.filter(p => p.completed).length : 0;
-        const favorites = Math.min(3, courseIds.length); // Mock data: assume 3 favorites or less if fewer courses
+        const progressMap = progressData || [];
+        const inProgress = progressMap.filter(p => p.progress > 0 && !p.completed).length;
+        const completed = progressMap.filter(p => p.completed).length;
+        const favorites = progressMap.filter(p => p.favorite).length || 0;
         
         setStats({
           favorites,
@@ -94,16 +99,19 @@ const MyCourses = () => {
         
         setHoursWatched(estimatedHoursWatched);
         
-        // Get courses in progress
+        // Process courses with progress info
         const coursesWithProgress = coursesData?.map(course => {
-          const progress = progressData?.find(p => p.course_id === course.id);
+          const progress = progressMap.find(p => p.course_id === course.id);
           return {
             ...course,
             progress: progress?.progress || 0,
             completed: progress?.completed || false,
-            last_accessed: progress?.last_accessed || null
+            last_accessed: progress?.last_accessed || null,
+            favorite: progress?.favorite || false
           };
         }) || [];
+        
+        setAllCourses(coursesWithProgress);
         
         // Get courses in progress (not completed and with progress > 0)
         const inProgressCourses = coursesWithProgress
@@ -118,6 +126,9 @@ const MyCourses = () => {
           });
         
         setRecentCourses(inProgressCourses.slice(0, 3));
+        
+        // Initially set filtered courses based on active filter
+        filterCourses(coursesWithProgress, activeFilter);
       } catch (error) {
         console.error('Error fetching course stats:', error);
       } finally {
@@ -128,11 +139,33 @@ const MyCourses = () => {
     fetchStats();
   }, [selectedCompany]);
 
+  // Filter courses based on selected tab
+  const filterCourses = (courses: any[], filter: FilterOption) => {
+    switch (filter) {
+      case 'favorites':
+        setFilteredCourses(courses.filter(course => course.favorite));
+        break;
+      case 'completed':
+        setFilteredCourses(courses.filter(course => course.completed));
+        break;
+      case 'in-progress':
+        setFilteredCourses(courses.filter(course => course.progress > 0 && !course.completed));
+        break;
+      case 'all':
+      default:
+        setFilteredCourses(courses);
+        break;
+    }
+  };
+
+  // Handle filter change
+  const handleFilterChange = (newFilter: FilterOption) => {
+    setActiveFilter(newFilter);
+    filterCourses(allCourses, newFilter);
+  };
+
   // Get company color for styling
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
-  
-  // Mock data for chart
-  const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
   return (
     <DashboardLayout>
@@ -142,25 +175,25 @@ const MyCourses = () => {
           <div className="flex overflow-x-auto pb-2 gap-3">
             <Button variant="outline" 
                 className={`rounded-full px-4 py-2 ${activeFilter === 'all' ? 'bg-black text-white' : 'bg-gray-100 text-gray-700'} border-none hover:bg-gray-800 hover:text-white`}
-                onClick={() => setActiveFilter('all')}>
+                onClick={() => handleFilterChange('all')}>
               <ListCheck className="mr-2 h-4 w-4" />
               Todos
             </Button>
             <Button variant="outline" 
                 className={`rounded-full px-4 py-2 ${activeFilter === 'favorites' ? 'bg-orange-400 text-white' : 'bg-gray-100 text-gray-700'} border-none hover:bg-orange-500 hover:text-white`}
-                onClick={() => setActiveFilter('favorites')}>
+                onClick={() => handleFilterChange('favorites')}>
               <Star className="mr-2 h-4 w-4" />
               Favoritados
             </Button>
             <Button variant="outline" 
                 className={`rounded-full px-4 py-2 ${activeFilter === 'completed' ? 'bg-green-400 text-white' : 'bg-gray-100 text-gray-700'} border-none hover:bg-green-500 hover:text-white`}
-                onClick={() => setActiveFilter('completed')}>
+                onClick={() => handleFilterChange('completed')}>
               <CheckCircle className="mr-2 h-4 w-4" />
               Concluídos
             </Button>
             <Button variant="outline" 
                 className={`rounded-full px-4 py-2 ${activeFilter === 'in-progress' ? 'bg-blue-400 text-white' : 'bg-gray-100 text-gray-700'} border-none hover:bg-blue-500 hover:text-white`}
-                onClick={() => setActiveFilter('in-progress')}>
+                onClick={() => handleFilterChange('in-progress')}>
               <Play className="mr-2 h-4 w-4" />
               Iniciados
             </Button>
@@ -192,8 +225,15 @@ const MyCourses = () => {
                       </div>
                       <CardContent className="p-4">
                         <div className="flex gap-2 mb-2">
-                          <Badge variant="outline" className="bg-gray-100 text-gray-700 text-xs px-2">IA</Badge>
-                          <Badge variant="outline" className="bg-gray-100 text-gray-700 text-xs px-2">Ilustração</Badge>
+                          {course.tags && course.tags.length > 0 ? (
+                            course.tags.slice(0, 2).map((tag: string, i: number) => (
+                              <Badge key={i} variant="outline" className="bg-gray-100 text-gray-700 text-xs px-2">{tag}</Badge>
+                            ))
+                          ) : (
+                            <>
+                              <Badge variant="outline" className="bg-gray-100 text-gray-700 text-xs px-2">Curso</Badge>
+                            </>
+                          )}
                         </div>
                         
                         <h3 className="font-medium mb-2 line-clamp-2">
@@ -235,6 +275,86 @@ const MyCourses = () => {
                   ))
                 ) : (
                   <p className="text-gray-500 col-span-3">Nenhum curso em progresso encontrado.</p>
+                )}
+              </div>
+            </div>
+            
+            {/* Filtered Courses List */}
+            <div className="mt-8">
+              <h2 className="text-xl font-semibold mb-4">
+                {activeFilter === 'all' ? 'Todos os cursos' : 
+                 activeFilter === 'favorites' ? 'Cursos favoritos' :
+                 activeFilter === 'completed' ? 'Cursos concluídos' : 'Cursos iniciados'}
+              </h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {loading ? (
+                  Array(3).fill(0).map((_, i) => (
+                    <Skeleton key={i} className="h-64 w-full rounded-xl" />
+                  ))
+                ) : filteredCourses.length > 0 ? (
+                  filteredCourses.map((course) => (
+                    <Card key={course.id} className="overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
+                        onClick={() => navigate(`/courses/${course.id}`)}>
+                      <div className="relative h-40">
+                        <img 
+                          src={course.image_url || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&h=450&fit=crop"} 
+                          alt={course.title} 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <CardContent className="p-4">
+                        <div className="flex gap-2 mb-2">
+                          {course.tags && course.tags.length > 0 ? (
+                            course.tags.slice(0, 2).map((tag: string, i: number) => (
+                              <Badge key={i} variant="outline" className="bg-gray-100 text-gray-700 text-xs px-2">{tag}</Badge>
+                            ))
+                          ) : (
+                            <>
+                              <Badge variant="outline" className="bg-gray-100 text-gray-700 text-xs px-2">Curso</Badge>
+                            </>
+                          )}
+                        </div>
+                        
+                        <h3 className="font-medium mb-2 line-clamp-2">
+                          {course.title}
+                        </h3>
+                        
+                        {/* Progress bar */}
+                        <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2 mb-1">
+                          <div 
+                            className="h-1.5 rounded-full" 
+                            style={{ 
+                              width: `${course.progress}%`,
+                              backgroundColor: companyColor
+                            }}
+                          ></div>
+                        </div>
+                        
+                        <div className="flex items-center mt-4">
+                          <div className="flex -space-x-2">
+                            {[1, 2, 3].map((i) => (
+                              <div key={i} className="h-6 w-6 rounded-full bg-gray-200 border-2 border-white overflow-hidden">
+                                <img 
+                                  src={`https://i.pravatar.cc/100?img=${i + 10}`} 
+                                  alt="User" 
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                          <span className="text-xs text-gray-500 ml-2">+8</span>
+                          <Button variant="ghost" size="sm" className="ml-auto p-0 h-auto">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <p className="text-gray-500 col-span-3">Nenhum curso encontrado para este filtro.</p>
                 )}
               </div>
             </div>
@@ -286,7 +406,7 @@ const MyCourses = () => {
                   
                   {/* Chart */}
                   <div className="h-32 flex items-end gap-1">
-                    {months.map((month, idx) => {
+                    {["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"].map((month, idx) => {
                       // Random heights for bars between 10% and 100%
                       const height = 20 + Math.floor(Math.random() * 80);
                       return (
