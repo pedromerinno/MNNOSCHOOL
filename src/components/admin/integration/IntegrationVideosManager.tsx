@@ -95,10 +95,10 @@ export const IntegrationVideosManager: React.FC<IntegrationVideosManagerProps> =
             </p>
           </div>
           
-          <Alert variant="info" className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Dica para adicionar vídeos do YouTube</AlertTitle>
-            <AlertDescription>
+          <Alert variant="default" className="mb-4 border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950">
+            <AlertCircle className="h-4 w-4 text-blue-500" />
+            <AlertTitle className="text-blue-700 dark:text-blue-400">Dica para adicionar vídeos do YouTube</AlertTitle>
+            <AlertDescription className="text-blue-600 dark:text-blue-300">
               Use URLs no formato <code>https://www.youtube.com/watch?v=XXXX</code> ou <code>https://youtu.be/XXXX</code>. 
               O sistema automaticamente converterá para o formato de incorporação adequado.
             </AlertDescription>
