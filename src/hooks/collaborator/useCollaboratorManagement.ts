@@ -101,6 +101,7 @@ export const useCollaboratorManagement = (company: Company | null): Collaborator
     availableUsers,
     userRoles,
     searchTerm,
+    reloadTrigger, // Add the missing reloadTrigger property here
     setSearchTerm,
     addUserToCompany,
     removeUserFromCompany,
