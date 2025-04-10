@@ -2,352 +2,445 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger,
-  DialogFooter
-} from "@/components/ui/dialog";
+  Users, 
+  UserPlus, 
+  Search, 
+  X, 
+  UserX,
+  BadgeCheck,
+  BadgeX,
+  Briefcase
+} from "lucide-react";
 import { toast } from "sonner";
-import { Loader2, UserPlus, UsersIcon, X, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Company } from "@/types/company";
-import { useUsers, UserProfile } from "@/hooks/useUsers";
-import { useCompanyUserManagement } from "@/hooks/company/useCompanyUserManagement";
+import { useUsers } from "@/hooks/useUsers";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { UserRoleAssignment } from './UserRoleAssignment';
 
 interface CollaboratorsManagementProps {
   company: Company;
 }
 
 export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = ({ company }) => {
-  const { users, loading: loadingUsers, fetchUsers } = useUsers();
-  const { 
-    loading: managementLoading, 
-    assignUserToCompany, 
-    removeUserFromCompany,
-    getCompanyUsers 
-  } = useCompanyUserManagement();
+  const { users: allUsers, loading: loadingUsers, fetchUsers } = useUsers();
+  const [isLoading, setIsLoading] = useState(true);
+  const [companyUsers, setCompanyUsers] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showAddUsersDialog, setShowAddUsersDialog] = useState(false);
+  const [showRoleDialog, setShowRoleDialog] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [userRoles, setUserRoles] = useState<Record<string, string>>({});
   
-  const [companyUsers, setCompanyUsers] = useState<UserProfile[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  // Função para buscar usuários da empresa
+  const fetchCompanyUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_empresa')
+        .select('user_id')
+        .eq('empresa_id', company.id);
+        
+      if (error) throw error;
+      
+      setCompanyUsers(data.map(item => item.user_id));
+      
+      // Buscar cargos dos usuários
+      await fetchUserRoles(data.map(item => item.user_id));
+      
+    } catch (error: any) {
+      console.error("Error fetching company users:", error);
+      toast.error(`Erro ao carregar colaboradores: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
-  // Fetch company users when the component mounts or the company changes
+  // Buscar cargos dos usuários
+  const fetchUserRoles = async (userIds: string[]) => {
+    if (userIds.length === 0) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, cargo_id')
+        .in('id', userIds)
+        .not('cargo_id', 'is', null);
+        
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        // Buscar nomes dos cargos
+        const cargoIds = data.map(u => u.cargo_id).filter(Boolean);
+        
+        if (cargoIds.length > 0) {
+          const { data: rolesData, error: rolesError } = await supabase
+            .from('job_roles')
+            .select('id, title')
+            .in('id', cargoIds);
+            
+          if (rolesError) throw rolesError;
+          
+          const roleMap: Record<string, string> = {};
+          
+          // Criar mapa de nomes de cargos por ID
+          if (rolesData) {
+            const roleNameMap: Record<string, string> = {};
+            rolesData.forEach(role => {
+              roleNameMap[role.id] = role.title;
+            });
+            
+            // Mapear usuários para seus nomes de cargo
+            data.forEach(user => {
+              if (user.cargo_id && roleNameMap[user.cargo_id]) {
+                roleMap[user.id] = roleNameMap[user.cargo_id];
+              }
+            });
+          }
+          
+          setUserRoles(roleMap);
+        }
+      }
+    } catch (error: any) {
+      console.error("Error fetching user roles:", error);
+      toast.error(`Erro ao carregar cargos dos usuários: ${error.message}`);
+    }
+  };
+  
+  // Carregar dados iniciais
   useEffect(() => {
     if (company) {
       fetchCompanyUsers();
     }
-  }, [company.id]);
+  }, [company]);
   
-  // Make sure we have all users loaded
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  // Filtra os usuários com base no termo de busca
+  const filteredUsers = allUsers.filter(user => {
+    const searchLower = searchTerm.toLowerCase();
+    const displayName = (user.display_name || '').toLowerCase();
+    const email = (user.email || '').toLowerCase();
+    
+    return displayName.includes(searchLower) || email.includes(searchLower);
+  });
   
-  const fetchCompanyUsers = async () => {
-    setLoading(true);
+  // Separa usuários que já estão na empresa
+  const availableUsers = filteredUsers.filter(user => !companyUsers.includes(user.id));
+  const filteredCompanyUsers = filteredUsers.filter(user => companyUsers.includes(user.id));
+  
+  // Função para adicionar usuário à empresa
+  const addUserToCompany = async (userId: string) => {
     try {
-      const users = await getCompanyUsers(company.id);
-      setCompanyUsers(users);
-    } catch (error) {
-      console.error('Error fetching company users:', error);
-      toast.error('Erro ao carregar usuários da empresa');
-    } finally {
-      setLoading(false);
+      const { error } = await supabase
+        .from('user_empresa')
+        .insert({
+          user_id: userId,
+          empresa_id: company.id
+        });
+        
+      if (error) throw error;
+      
+      // Atualizar lista de usuários da empresa
+      setCompanyUsers(prev => [...prev, userId]);
+      toast.success("Usuário adicionado com sucesso");
+      
+    } catch (error: any) {
+      console.error("Error adding user to company:", error);
+      toast.error(`Erro ao adicionar usuário: ${error.message}`);
     }
   };
   
-  // Filter users that are not already assigned to the company
-  const availableUsers = users.filter(user => 
-    !companyUsers.some(companyUser => companyUser.id === user.id)
-  );
-  
-  const filteredAvailableUsers = searchTerm.trim() === '' 
-    ? availableUsers 
-    : availableUsers.filter(user => {
-        const searchValue = searchTerm.toLowerCase();
-        return (
-          (user.display_name && user.display_name.toLowerCase().includes(searchValue)) ||
-          (user.email && user.email.toLowerCase().includes(searchValue))
-        );
+  // Função para remover usuário da empresa
+  const removeUserFromCompany = async (userId: string) => {
+    if (!confirm("Tem certeza que deseja remover este usuário da empresa?")) return;
+    
+    try {
+      // Primeiro, remover cargo do usuário se tiver um cargo desta empresa
+      await supabase
+        .from('profiles')
+        .update({ cargo_id: null })
+        .eq('id', userId);
+      
+      // Depois remover relação com a empresa
+      const { error } = await supabase
+        .from('user_empresa')
+        .delete()
+        .eq('user_id', userId)
+        .eq('empresa_id', company.id);
+        
+      if (error) throw error;
+      
+      // Atualizar lista de usuários da empresa
+      setCompanyUsers(prev => prev.filter(id => id !== userId));
+      setUserRoles(prev => {
+        const updated = { ...prev };
+        delete updated[userId];
+        return updated;
       });
-  
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-  
-  const toggleUserSelection = (userId: string) => {
-    setSelectedUsers(prevSelected => {
-      if (prevSelected.includes(userId)) {
-        return prevSelected.filter(id => id !== userId);
-      } else {
-        return [...prevSelected, userId];
-      }
-    });
-  };
-  
-  const handleAddUsers = async () => {
-    if (selectedUsers.length === 0) {
-      toast.warning('Selecione pelo menos um usuário');
-      return;
-    }
-    
-    setLoading(true);
-    
-    try {
-      // Add each selected user to the company
-      const results = await Promise.all(
-        selectedUsers.map(userId => assignUserToCompany(userId, company.id))
-      );
       
-      const successCount = results.filter(result => result).length;
+      toast.success("Usuário removido com sucesso");
       
-      if (successCount > 0) {
-        toast.success(`${successCount} usuário(s) adicionado(s) com sucesso`);
-        fetchCompanyUsers();
-        setSelectedUsers([]);
-        setIsDialogOpen(false);
-      } else {
-        toast.error('Não foi possível adicionar os usuários selecionados');
-      }
-    } catch (error) {
-      console.error('Error adding users to company:', error);
-      toast.error('Erro ao adicionar usuários à empresa');
-    } finally {
-      setLoading(false);
+    } catch (error: any) {
+      console.error("Error removing user from company:", error);
+      toast.error(`Erro ao remover usuário: ${error.message}`);
     }
   };
   
-  const handleRemoveUser = async (userId: string) => {
-    if (!window.confirm('Tem certeza que deseja remover este usuário da empresa?')) {
-      return;
-    }
-    
-    setLoading(true);
-    
-    try {
-      const success = await removeUserFromCompany(userId, company.id);
-      
-      if (success) {
-        toast.success('Usuário removido com sucesso');
-        fetchCompanyUsers();
-      } else {
-        toast.error('Não foi possível remover o usuário');
-      }
-    } catch (error) {
-      console.error('Error removing user from company:', error);
-      toast.error('Erro ao remover usuário da empresa');
-    } finally {
-      setLoading(false);
-    }
+  // Abrir diálogo para gerenciar cargo do usuário
+  const openRoleDialog = (user: any) => {
+    setSelectedUser(user);
+    setShowRoleDialog(true);
   };
   
-  const getInitials = (name: string | null) => {
-    if (!name) return '?';
-    
-    const parts = name.trim().split(' ');
-    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  // Quando o cargo de um usuário é atualizado com sucesso
+  const handleRoleUpdateSuccess = () => {
+    fetchCompanyUsers();
   };
-
+  
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-lg font-medium">Gerenciar Colaboradores</h3>
-          <p className="text-sm text-muted-foreground">
-            Controle quais usuários têm acesso a esta empresa
+          <h3 className="text-lg font-medium mb-1">Colaboradores</h3>
+          <p className="text-gray-500 dark:text-gray-400">
+            Gerencie os colaboradores da empresa e seus cargos
           </p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <UserPlus className="mr-2 h-4 w-4" />
-              Adicionar Colaboradores
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Adicionar Colaboradores</DialogTitle>
-            </DialogHeader>
-            
-            <div className="py-4">
-              <div className="mb-4">
-                <div className="relative">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar por nome ou email"
-                    className="pl-8"
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                  />
-                </div>
-              </div>
-              
-              <div className="border rounded-md max-h-60 overflow-y-auto">
-                {loadingUsers ? (
-                  <div className="py-8 flex justify-center">
-                    <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-                  </div>
-                ) : filteredAvailableUsers.length === 0 ? (
-                  <div className="py-8 text-center text-muted-foreground">
-                    {searchTerm.trim() !== '' 
-                      ? 'Nenhum usuário encontrado' 
-                      : 'Não há usuários disponíveis para adicionar'}
-                  </div>
-                ) : (
-                  <Table>
-                    <TableBody>
-                      {filteredAvailableUsers.map(user => (
-                        <TableRow 
-                          key={user.id}
-                          className={`cursor-pointer ${selectedUsers.includes(user.id) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
-                          onClick={() => toggleUserSelection(user.id)}
-                        >
-                          <TableCell className="py-2">
-                            <div className="flex items-center space-x-3">
-                              <Avatar className="h-8 w-8">
-                                <AvatarFallback>
-                                  {getInitials(user.display_name)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <p className="text-sm font-medium">{user.display_name}</p>
-                                <p className="text-xs text-muted-foreground">{user.email}</p>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="w-10">
-                            <div className={`w-5 h-5 border rounded-sm flex items-center justify-center ${
-                              selectedUsers.includes(user.id) 
-                                ? 'bg-blue-500 border-blue-500 text-white' 
-                                : 'border-gray-300'
-                            }`}>
-                              {selectedUsers.includes(user.id) && (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                </svg>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </div>
-            </div>
-            
-            <DialogFooter className="sm:justify-end">
-              <Button 
-                variant="outline" 
-                onClick={() => setIsDialogOpen(false)}
-              >
-                Cancelar
-              </Button>
-              <Button 
-                onClick={handleAddUsers}
-                disabled={selectedUsers.length === 0 || loading}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Adicionando...
-                  </>
-                ) : (
-                  <>
-                    Adicionar {selectedUsers.length > 0 ? `(${selectedUsers.length})` : ''}
-                  </>
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => setShowAddUsersDialog(true)}>
+          <UserPlus className="h-4 w-4 mr-2" />
+          Adicionar Colaboradores
+        </Button>
       </div>
-
-      {loading ? (
-        <div className="flex justify-center p-6">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-        </div>
-      ) : companyUsers.length === 0 ? (
+      
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        <Input
+          placeholder="Buscar colaboradores..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          className="pl-10"
+        />
+        {searchTerm && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6"
+            onClick={() => setSearchTerm("")}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+      
+      {isLoading || loadingUsers ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center p-6">
-            <UsersIcon className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-center text-muted-foreground">
-              Não há colaboradores associados a esta empresa ainda.
+          <CardContent className="p-6 text-center">
+            <div className="animate-spin h-8 w-8 border-t-2 border-blue-500 border-r-2 rounded-full mx-auto"></div>
+            <p className="mt-2 text-gray-500">Carregando colaboradores...</p>
+          </CardContent>
+        </Card>
+      ) : filteredCompanyUsers.length === 0 ? (
+        <Card>
+          <CardContent className="p-6 text-center">
+            <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium mb-2">Nenhum colaborador encontrado</h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
+              {searchTerm 
+                ? "Nenhum colaborador corresponde à sua busca" 
+                : "Adicione colaboradores à empresa"}
             </p>
-            <Button 
-              onClick={() => setIsDialogOpen(true)}
-              variant="outline" 
-              className="mt-4"
-            >
-              Adicionar primeiros colaboradores
-            </Button>
+            {!searchTerm && (
+              <Button onClick={() => setShowAddUsersDialog(true)}>
+                <UserPlus className="h-4 w-4 mr-2" />
+                Adicionar Colaboradores
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : (
         <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Colaborador</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Permissão</TableHead>
-                  <TableHead className="w-16">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {companyUsers.map(user => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback>
-                            {getInitials(user.display_name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium">{user.display_name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      {user.is_admin ? (
-                        <span className="inline-block px-2 py-1 text-xs font-medium text-blue-800 bg-blue-100 rounded-full">
-                          Administrador
-                        </span>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Cargo</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredCompanyUsers.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell>{user.display_name || "Sem nome"}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {userRoles[user.id] ? (
+                        <>
+                          <BadgeCheck className="h-4 w-4 text-green-500" />
+                          <span>{userRoles[user.id]}</span>
+                        </>
                       ) : (
-                        <span className="inline-block px-2 py-1 text-xs font-medium text-gray-800 bg-gray-100 rounded-full">
-                          Colaborador
-                        </span>
+                        <>
+                          <BadgeX className="h-4 w-4 text-gray-400" />
+                          <span className="text-gray-400">Sem cargo</span>
+                        </>
                       )}
-                    </TableCell>
-                    <TableCell>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleRemoveUser(user.id)}
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                        title="Remover colaborador"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openRoleDialog(user)}
                       >
-                        <X className="h-4 w-4" />
+                        <Briefcase className="h-4 w-4 mr-2" />
+                        Gerenciar Cargo
                       </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => removeUserFromCompany(user.id)}
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <UserX className="h-4 w-4 mr-2" />
+                        Remover
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </Card>
       )}
+      
+      {/* Diálogo para adicionar usuários */}
+      <Dialog open={showAddUsersDialog} onOpenChange={setShowAddUsersDialog}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Adicionar Colaboradores</DialogTitle>
+            <DialogDescription>
+              Selecione usuários para adicionar à empresa
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="relative my-4">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Buscar usuários..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+            {searchTerm && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6"
+                onClick={() => setSearchTerm("")}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+          
+          {loadingUsers ? (
+            <div className="h-72 flex items-center justify-center">
+              <div className="animate-spin h-8 w-8 border-t-2 border-blue-500 border-r-2 rounded-full"></div>
+            </div>
+          ) : availableUsers.length === 0 ? (
+            <div className="h-72 flex flex-col items-center justify-center">
+              <Users className="h-12 w-12 text-gray-400 mb-4" />
+              <p className="text-gray-500">
+                {searchTerm 
+                  ? "Nenhum usuário corresponde à sua busca" 
+                  : "Não há mais usuários disponíveis para adicionar"}
+              </p>
+            </div>
+          ) : (
+            <div className="max-h-72 overflow-y-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead className="text-right">Ação</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {availableUsers.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>{user.display_name || "Sem nome"}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            addUserToCompany(user.id);
+                          }}
+                        >
+                          <UserPlus className="h-4 w-4 mr-2" />
+                          Adicionar
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+          
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={() => setShowAddUsersDialog(false)}>
+              Fechar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Diálogo para gerenciar cargo do usuário */}
+      <Dialog open={showRoleDialog} onOpenChange={setShowRoleDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Gerenciar Cargo</DialogTitle>
+            <DialogDescription>
+              Atribua um cargo ao colaborador
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedUser && (
+            <UserRoleAssignment 
+              user={selectedUser}
+              companyId={company.id}
+              onSuccess={handleRoleUpdateSuccess}
+            />
+          )}
+          
+          <div className="flex justify-end mt-4">
+            <Button variant="outline" onClick={() => setShowRoleDialog(false)}>
+              Fechar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

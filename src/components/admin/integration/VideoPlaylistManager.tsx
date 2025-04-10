@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -194,7 +193,6 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
     }
   };
   
-  // Helper function to extract thumbnail from YouTube URL
   const getYouTubeThumbnail = (url: string) => {
     const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
     const match = url.match(youtubeRegex);
@@ -228,9 +226,9 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="title">Título do Vídeo*</Label>
+              <Label htmlFor={isNew ? "new-title" : `edit-title-${video.id}`}>Título do Vídeo*</Label>
               <Input 
-                id="title" 
+                id={isNew ? "new-title" : `edit-title-${video.id}`}
                 value={video.title || ''} 
                 onChange={e => isNew 
                   ? setNewVideo({...newVideo!, title: e.target.value})
@@ -241,9 +239,9 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
             </div>
             
             <div>
-              <Label htmlFor="duration">Duração</Label>
+              <Label htmlFor={isNew ? "new-duration" : `edit-duration-${video.id}`}>Duração</Label>
               <Input 
-                id="duration" 
+                id={isNew ? "new-duration" : `edit-duration-${video.id}`}
                 value={video.duration || ''} 
                 onChange={e => isNew
                   ? setNewVideo({...newVideo!, duration: e.target.value})
@@ -255,10 +253,10 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
           </div>
           
           <div>
-            <Label htmlFor="video_url">URL do Vídeo (YouTube)*</Label>
+            <Label htmlFor={isNew ? "new-video-url" : `edit-video-url-${video.id}`}>URL do Vídeo (YouTube)*</Label>
             <div className="flex gap-2">
               <Input 
-                id="video_url" 
+                id={isNew ? "new-video-url" : `edit-video-url-${video.id}`}
                 value={video.video_url || ''} 
                 onChange={e => isNew
                   ? setNewVideo({...newVideo!, video_url: e.target.value})
@@ -279,9 +277,9 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
           </div>
           
           <div>
-            <Label htmlFor="thumbnail_url">URL da Miniatura</Label>
+            <Label htmlFor={isNew ? "new-thumbnail-url" : `edit-thumbnail-url-${video.id}`}>URL da Miniatura</Label>
             <Input 
-              id="thumbnail_url" 
+              id={isNew ? "new-thumbnail-url" : `edit-thumbnail-url-${video.id}`}
               value={video.thumbnail_url || ''} 
               onChange={e => isNew
                 ? setNewVideo({...newVideo!, thumbnail_url: e.target.value})
@@ -301,9 +299,9 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
           </div>
           
           <div>
-            <Label htmlFor="description">Descrição</Label>
+            <Label htmlFor={isNew ? "new-description" : `edit-description-${video.id}`}>Descrição</Label>
             <Textarea 
-              id="description" 
+              id={isNew ? "new-description" : `edit-description-${video.id}`}
               value={video.description || ''} 
               onChange={e => isNew
                 ? setNewVideo({...newVideo!, description: e.target.value})

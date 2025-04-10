@@ -211,6 +211,53 @@ export type Database = {
         }
         Relationships: []
       }
+      job_roles: {
+        Row: {
+          company_id: string
+          created_at: string
+          description: string | null
+          expectations: string | null
+          id: string
+          order_index: number
+          requirements: string | null
+          responsibilities: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          description?: string | null
+          expectations?: string | null
+          id?: string
+          order_index?: number
+          requirements?: string | null
+          responsibilities?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          expectations?: string | null
+          id?: string
+          order_index?: number
+          requirements?: string | null
+          responsibilities?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_roles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lesson_comments: {
         Row: {
           content: string
@@ -297,6 +344,7 @@ export type Database = {
         Row: {
           avatar: string | null
           cargo: string | null
+          cargo_id: string | null
           created_at: string
           display_name: string | null
           email: string | null
@@ -307,6 +355,7 @@ export type Database = {
         Insert: {
           avatar?: string | null
           cargo?: string | null
+          cargo_id?: string | null
           created_at?: string
           display_name?: string | null
           email?: string | null
@@ -317,6 +366,7 @@ export type Database = {
         Update: {
           avatar?: string | null
           cargo?: string | null
+          cargo_id?: string | null
           created_at?: string
           display_name?: string | null
           email?: string | null
@@ -324,7 +374,15 @@ export type Database = {
           is_admin?: boolean | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_cargo_id_fkey"
+            columns: ["cargo_id"]
+            isOneToOne: false
+            referencedRelation: "job_roles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_course_progress: {
         Row: {
