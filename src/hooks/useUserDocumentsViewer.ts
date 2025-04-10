@@ -19,12 +19,21 @@ export const useUserDocumentsViewer = () => {
       return;
     }
     
+    // Check if userProfile.id exists
+    const userId = userProfile?.id;
+    if (!userId) {
+      console.error('User ID is undefined');
+      setDocuments([]);
+      setIsLoading(false);
+      return;
+    }
+    
     setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from('user_documents')
         .select('*')
-        .eq('user_id', userProfile.id || '') // Add fallback empty string
+        .eq('user_id', userId)
         .eq('company_id', selectedCompany.id);
         
       if (error) throw error;
@@ -47,7 +56,8 @@ export const useUserDocumentsViewer = () => {
       if (error) throw error;
       
       const url = URL.createObjectURL(data);
-      const a = document.createElement('a'); // Use window.document, not the parameter named 'document'
+      // Use window.document instead of 'document' parameter
+      const a = window.document.createElement('a');
       a.href = url;
       a.download = document.name;
       a.click();

@@ -30,9 +30,10 @@ export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
       if (error) throw error;
       
       const url = URL.createObjectURL(data);
-      const a = document.createElement('a');
+      // Use window.document instead of the parameter named 'document'
+      const a = window.document.createElement('a');
       a.href = url;
-      a.download = document.name; // Here the error was using document when we wanted 'document' parameter
+      a.download = document.name;
       a.click();
       URL.revokeObjectURL(url);
       
