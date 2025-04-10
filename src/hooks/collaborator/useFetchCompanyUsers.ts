@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Company } from "@/types/company";
+import { UserProfile } from "@/hooks/useUsers";
 
 export const useFetchCompanyUsers = (
   setCompanyUsers: (users: string[]) => void,
@@ -76,6 +77,31 @@ export const useFetchCompanyUsers = (
     }
   };
 
+  // Função para buscar usuários completos
+  const fetchFullUserProfiles = async (userIds: string[]): Promise<UserProfile[]> => {
+    if (userIds.length === 0) return [];
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, display_name, email, is_admin')
+        .in('id', userIds);
+        
+      if (error) throw error;
+      
+      if (!data || data.length === 0) {
+        console.log("No user profiles found");
+        return [];
+      }
+      
+      return data as UserProfile[];
+    } catch (error: any) {
+      console.error("Error fetching user profiles:", error);
+      toast.error(`Error loading user profiles: ${error.message}`);
+      return [];
+    }
+  };
+
   // Function to fetch company users
   const fetchCompanyUsers = useCallback(async (company: Company | null) => {
     if (!company || !company.id) {
@@ -103,6 +129,9 @@ export const useFetchCompanyUsers = (
         
         // Fetch user roles
         await fetchUserRoles(userIds);
+        
+        // Fetch full user profiles
+        await fetchFullUserProfiles(userIds);
       } else {
         console.log("No collaborators found for this company");
         setCompanyUsers([]);
@@ -118,5 +147,5 @@ export const useFetchCompanyUsers = (
     }
   }, [setCompanyUsers, setIsLoading, setUserRoles, initialFetchDone]);
 
-  return { fetchCompanyUsers };
+  return { fetchCompanyUsers, fetchFullUserProfiles };
 };
