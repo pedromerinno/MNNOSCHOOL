@@ -5,10 +5,10 @@ import { useFilteredCourses } from "./useFilteredCourses";
 import { useCourseStats } from "./useCourseStats";
 import { useRecentCourses } from "./useRecentCourses";
 import { useCourseData } from "./useCourseData";
-import { FilterOption } from "./types";
+import { FilterOption, Course, CourseStats } from "./types";
 
 export const useMyCourses = () => {
-  const { selectedCompany } = useCompanies();
+  const { selectedCompany, isLoading: companyLoading } = useCompanies();
   const [initialized, setInitialized] = useState(false);
   
   // Use our smaller, specialized hooks
@@ -66,8 +66,9 @@ export const useMyCourses = () => {
     initialized,
     handleFilterChange,
     companyColor: selectedCompany?.cor_principal || "#1EAEDB",
+    companyLoading
   };
 };
 
-// Re-export the type for convenience
-export type { FilterOption } from "./types";
+// Re-export the types for convenience
+export type { FilterOption, Course, CourseStats } from "./types";

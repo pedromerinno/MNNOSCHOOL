@@ -10,7 +10,7 @@ import { Loader2 } from "lucide-react";
 import { useCompanies } from "@/hooks/useCompanies";
 
 const MyCourses = () => {
-  const { selectedCompany, loading: companyLoading } = useCompanies();
+  const { selectedCompany, isLoading: companyLoading } = useCompanies();
   const {
     activeFilter,
     stats,
@@ -20,7 +20,8 @@ const MyCourses = () => {
     hoursWatched,
     initialized,
     handleFilterChange,
-    companyColor
+    companyColor,
+    companyLoading: myCourseCompanyLoading
   } = useMyCourses();
   
   useEffect(() => {
