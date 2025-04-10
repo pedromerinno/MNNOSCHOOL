@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, X, UserPlus, FileText } from "lucide-react";
@@ -40,6 +40,12 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<string>("users");
+  
+  // Force a reload when company changes
+  useEffect(() => {
+    console.log("CollaboratorsManagement: Company changed to", company.nome);
+    setReloadTrigger(prev => prev + 1);
+  }, [company.id, setReloadTrigger]);
   
   // User documents management
   const {

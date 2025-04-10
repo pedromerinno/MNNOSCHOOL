@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Company } from "@/types/company";
@@ -13,9 +13,12 @@ export const useCollaboratorManagement = (company: Company | null) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [userRoles, setUserRoles] = useState<Record<string, string>>({});
   const [reloadTrigger, setReloadTrigger] = useState(0);
+  const initialFetchDone = useRef(false);
+
+  console.log(`useCollaboratorManagement hook - company: ${company?.nome}, reloadTrigger: ${reloadTrigger}`);
   
   // Function to fetch company users
-  const fetchCompanyUsers = async () => {
+  const fetchCompanyUsers = useCallback(async () => {
     if (!company || !company.id) {
       console.log("No company selected or company has no ID");
       setIsLoading(false);
@@ -35,10 +38,11 @@ export const useCollaboratorManagement = (company: Company | null) => {
       
       if (data && data.length > 0) {
         console.log(`Found ${data.length} collaborators`);
-        setCompanyUsers(data.map(item => item.user_id));
+        const userIds = data.map(item => item.user_id);
+        setCompanyUsers(userIds);
         
         // Fetch user roles
-        await fetchUserRoles(data.map(item => item.user_id));
+        await fetchUserRoles(userIds);
       } else {
         console.log("No collaborators found for this company");
         setCompanyUsers([]);
@@ -50,8 +54,9 @@ export const useCollaboratorManagement = (company: Company | null) => {
       toast.error(`Error loading collaborators: ${error.message}`);
     } finally {
       setIsLoading(false);
+      initialFetchDone.current = true;
     }
-  };
+  }, [company]);
   
   // Fetch user roles
   const fetchUserRoles = async (userIds: string[]) => {
@@ -127,6 +132,21 @@ export const useCollaboratorManagement = (company: Company | null) => {
     }
     
     try {
+      // Check if relation already exists
+      const { data: existingRelation, error: checkError } = await supabase
+        .from('user_empresa')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('empresa_id', company.id)
+        .maybeSingle();
+        
+      if (checkError) throw checkError;
+      
+      if (existingRelation) {
+        toast.info("User is already part of this company");
+        return;
+      }
+      
       const { error } = await supabase
         .from('user_empresa')
         .insert({
@@ -142,6 +162,9 @@ export const useCollaboratorManagement = (company: Company | null) => {
       
       // Trigger company relation change to refresh data
       window.dispatchEvent(new Event('company-relation-changed'));
+      
+      // Force a reload to refresh the data
+      setReloadTrigger(prev => prev + 1);
       
     } catch (error: any) {
       console.error("Error adding user to company:", error);
@@ -189,6 +212,9 @@ export const useCollaboratorManagement = (company: Company | null) => {
       // Trigger company relation change event
       window.dispatchEvent(new Event('company-relation-changed'));
       
+      // Force a reload to refresh the data
+      setReloadTrigger(prev => prev + 1);
+      
     } catch (error: any) {
       console.error("Error removing user from company:", error);
       toast.error(`Error removing user: ${error.message}`);
@@ -198,10 +224,10 @@ export const useCollaboratorManagement = (company: Company | null) => {
   // Load data when component mounts and when company changes
   useEffect(() => {
     if (company && company.id) {
-      console.log("Company provided, loading collaborators:", company.nome);
+      console.log(`Company changed or reload triggered: ${company.nome} (${reloadTrigger})`);
       fetchCompanyUsers();
     }
-  }, [company, reloadTrigger]);
+  }, [company, reloadTrigger, fetchCompanyUsers]);
   
   // Ensure users are loaded
   useEffect(() => {
@@ -213,7 +239,7 @@ export const useCollaboratorManagement = (company: Company | null) => {
   
   // Listen for company selection events and reload data
   useEffect(() => {
-    const handleCompanyChange = (event: Event) => {
+    const handleCompanyChange = () => {
       console.log("CollaboratorsManagement: Company change event detected");
       // Force a refresh of company users data
       setReloadTrigger(prev => prev + 1);
@@ -246,6 +272,8 @@ export const useCollaboratorManagement = (company: Company | null) => {
   // Separate users who are already in the company
   const availableUsers = filteredUsers.filter(user => !companyUsers.includes(user.id || ''));
   const filteredCompanyUsers = filteredUsers.filter(user => user.id && companyUsers.includes(user.id));
+
+  console.log(`Company users count: ${companyUsers.length}, Filtered company users: ${filteredCompanyUsers.length}`);
 
   return {
     isLoading,
