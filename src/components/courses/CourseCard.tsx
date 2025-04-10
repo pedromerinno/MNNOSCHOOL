@@ -18,12 +18,12 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
   const { id, title, description, image_url, instructor, progress = 0, completed = false, tags = [] } = course;
   
   return (
-    <Card className="group h-full overflow-hidden rounded-[30px] border border-gray-200 dark:border-gray-700">
+    <Card className="group h-full overflow-hidden rounded-[20px] border border-gray-200 dark:border-gray-700">
       <Link to={`/courses/${id}`} className="block h-full">
         <div className="flex flex-col h-full">
           {/* Hero Image with reduced height */}
           <div className="relative">
-            <div className="aspect-[16/7] w-full overflow-hidden bg-gray-100 dark:bg-gray-800">
+            <div className="aspect-[16/6] w-full overflow-hidden bg-gray-100 dark:bg-gray-800">
               {image_url ? (
                 <img 
                   src={image_url} 
@@ -118,11 +118,11 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
                 className="flex items-center space-x-2"
               >
                 {completed ? (
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800">
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800 px-3 py-1">
                     Concluído
                   </Badge>
                 ) : progress > 0 ? (
-                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800">
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800 px-3 py-1">
                     {progress}% concluído
                   </Badge>
                 ) : null}
@@ -138,3 +138,4 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
     </Card>
   );
 };
+
