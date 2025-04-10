@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Course } from './CourseManagement';
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
+import { ImageUploadField } from "./courses/form/ImageUploadField";
 
 const courseSchema = z.object({
   title: z.string().min(1, "O título é obrigatório"),
@@ -33,7 +34,7 @@ export interface CourseFormProps {
   onSubmit: (data: CourseFormValues) => void;
   onCancel: () => void;
   isSubmitting: boolean;
-  onClose?: () => void; // Add this line to fix the error
+  onClose?: () => void;
 }
 
 export const CourseForm: React.FC<CourseFormProps> = ({ 
@@ -41,7 +42,7 @@ export const CourseForm: React.FC<CourseFormProps> = ({
   onSubmit, 
   onCancel, 
   isSubmitting,
-  onClose // Add this parameter
+  onClose
 }) => {
   const form = useForm<CourseFormValues>({
     resolver: zodResolver(courseSchema),
@@ -131,22 +132,10 @@ export const CourseForm: React.FC<CourseFormProps> = ({
           )}
         />
 
-        <FormField
+        <ImageUploadField 
           control={form.control}
           name="image_url"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>URL da Imagem</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="URL da imagem do curso" 
-                  {...field} 
-                  value={field.value || ""} 
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          label="Capa do Curso"
         />
 
         <FormField
