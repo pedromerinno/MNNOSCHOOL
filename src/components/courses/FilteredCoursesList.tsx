@@ -45,8 +45,8 @@ export const FilteredCoursesList = ({
       tags: course.tags || [],
       progress: course.progress,
       completed: course.completed,
-      favorite: course.favorite,
-      last_accessed: course.last_accessed
+      favorite: course.favorite
+      // Removed last_accessed as it doesn't exist in the destination type
     };
   };
   
