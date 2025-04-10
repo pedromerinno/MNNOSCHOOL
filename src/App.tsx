@@ -12,6 +12,7 @@ import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import UserOnboarding from "./pages/UserOnboarding";
 import Courses from "./pages/Courses";
 import MyCourses from "./pages/MyCourses";
 import CourseDetails from "./pages/CourseDetails";
@@ -38,6 +39,7 @@ const App = () => (
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/onboarding" element={<UserOnboarding />} />
             
             <Route element={<ProtectedRoute />}>
               <Route path="/" element={<>

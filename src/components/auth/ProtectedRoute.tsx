@@ -1,24 +1,30 @@
 
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { Loader2 } from "lucide-react";
 
 export const ProtectedRoute = () => {
-  const { user, loading } = useAuth();
-
-  // Show loading state while checking authentication
+  const { user, loading, userProfile } = useAuth();
+  const location = useLocation();
+  
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-merinno-dark"></div>
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-merinno-dark" />
       </div>
     );
   }
-
-  // Redirect to login if not authenticated
+  
+  // If not logged in, redirect to login
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
-
-  // Render children routes if authenticated
+  
+  // If logged in but needs to complete onboarding
+  if (!userProfile.displayName && location.pathname !== "/onboarding") {
+    return <Navigate to="/onboarding" replace />;
+  }
+  
+  // User is logged in and has completed onboarding
   return <Outlet />;
 };
