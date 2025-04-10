@@ -77,7 +77,7 @@ export const useFetchCompanyUsers = (
     }
   };
 
-  // Função para buscar usuários completos
+  // Function to fetch full user profiles
   const fetchFullUserProfiles = async (userIds: string[]): Promise<UserProfile[]> => {
     if (userIds.length === 0) return [];
     
