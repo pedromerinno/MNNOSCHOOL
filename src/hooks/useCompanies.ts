@@ -106,7 +106,7 @@ export const useCompanies = () => {
     };
     
     loadInitialData();
-  }, [user?.id]);
+  }, [user?.id, userCompanies.length, isLoading, getUserCompanies]);
   
   // Listen for company-relation-changed events to refresh data
   useEffect(() => {
@@ -198,6 +198,7 @@ export const useCompanies = () => {
     updateCompany,
     deleteCompany,
     assignUserToCompany,
-    removeUserFromCompany
+    removeUserFromCompany,
+    user // Make sure to expose user here
   };
 };

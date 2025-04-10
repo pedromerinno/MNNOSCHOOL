@@ -32,7 +32,7 @@ export const useCompanyUpdate = ({
 
       if (error) {
         console.error("Error updating company:", error);
-        toast("Erro ao atualizar empresa", {
+        toast.error("Erro ao atualizar empresa", {
           description: error.message,
         });
         return null;
@@ -54,14 +54,14 @@ export const useCompanyUpdate = ({
         }));
       }
       
-      toast("Empresa atualizada", {
+      toast.success("Empresa atualizada", {
         description: "A empresa foi atualizada com sucesso",
       });
       
       return data as Company;
     } catch (error) {
       console.error("Unexpected error:", error);
-      toast("Erro inesperado", {
+      toast.error("Erro inesperado", {
         description: "Ocorreu um erro ao atualizar a empresa",
       });
       return null;

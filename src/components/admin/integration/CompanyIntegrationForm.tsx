@@ -10,6 +10,7 @@ import { LogoUrlField } from "./form/LogoUrlField";
 import { ColorPickerField } from "./form/ColorPickerField";
 import { SubmitButton } from "./form/SubmitButton";
 import { integrationFormSchema, IntegrationFormValues } from "./form/IntegrationFormSchema";
+import { useCompanyUpdate } from "@/hooks/company/useCompanyUpdate";
 
 interface CompanyIntegrationFormProps {
   company: Company;
@@ -35,9 +36,18 @@ export const CompanyIntegrationForm: React.FC<CompanyIntegrationFormProps> = ({
     }
   });
 
-  // Handle form submission
+  // Watch for changes in the logo field to update the preview
+  const logoUrl = form.watch('logo');
+
+  // Handle form submission and dispatch event
   const handleSubmit = (data: IntegrationFormValues) => {
     onSubmit(data);
+    
+    // After successful submission, dispatch an event to notify other components
+    const updatedCompany = { ...company, ...data };
+    window.dispatchEvent(new CustomEvent('company-updated', { 
+      detail: { company: updatedCompany } 
+    }));
   };
 
   return (

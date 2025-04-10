@@ -33,7 +33,7 @@ const mockJobRoles = [
 ];
 
 const Integration = () => {
-  const { selectedCompany, isLoading, forceGetUserCompanies, user } = useCompanies();
+  const { selectedCompany, isLoading, forceGetUserCompanies, getUserCompanies, user } = useCompanies();
   const [jobRoles, setJobRoles] = useState(mockJobRoles);
   const [localCompany, setLocalCompany] = useState<Company | null>(selectedCompany);
   

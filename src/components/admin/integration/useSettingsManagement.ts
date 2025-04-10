@@ -66,15 +66,22 @@ export const useSettingsManagement = () => {
         
       if (error) throw error;
       
-      // Atualizar o objeto da empresa selecionada localmente
-      setSelectedCompany({
+      // Update the selected company locally
+      const updatedCompany = {
         ...selectedCompany,
         ...formData
-      });
+      };
+      
+      setSelectedCompany(updatedCompany);
       
       toast.success("Informações de integração atualizadas com sucesso");
       
-      // Disparar evento para atualizar dados da empresa em outros componentes
+      // Dispatch event to update company data in other components
+      window.dispatchEvent(new CustomEvent('company-updated', { 
+        detail: { company: updatedCompany } 
+      }));
+      
+      // Trigger refresh event for other components
       window.dispatchEvent(new Event('company-relation-changed'));
       
     } catch (error: any) {
