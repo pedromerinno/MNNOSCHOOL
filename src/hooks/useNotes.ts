@@ -27,7 +27,7 @@ export const useNotes = () => {
         
       if (error) throw error;
       
-      setNotes(data as Note[]);
+      setNotes(data as unknown as Note[]);
     } catch (error: any) {
       console.error('Erro ao buscar notas:', error);
       toast.error(`Erro ao carregar notas: ${error.message}`);
@@ -64,9 +64,9 @@ export const useNotes = () => {
 
       if (error) throw error;
 
-      setNotes(prev => [data as Note, ...prev]);
+      setNotes(prev => [(data as unknown as Note), ...prev]);
       toast.success('Nota adicionada com sucesso');
-      return data as Note;
+      return data as unknown as Note;
     } catch (error: any) {
       console.error('Erro ao adicionar nota:', error);
       toast.error(`Erro ao adicionar nota: ${error.message}`);
