@@ -7,20 +7,20 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCompanies } from '@/hooks/useCompanies';
 
 export const useUserDocumentsViewer = () => {
-  const { userProfile } = useAuth();
+  const { userProfile, user } = useAuth();
   const { selectedCompany } = useCompanies();
   const [documents, setDocuments] = useState<UserDocument[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   const fetchUserDocuments = useCallback(async () => {
-    if (!userProfile || !selectedCompany?.id) {
+    if (!user || !selectedCompany?.id) {
       setDocuments([]);
       setIsLoading(false);
       return;
     }
     
-    // Check if userProfile.id exists
-    const userId = userProfile?.id;
+    // Use user.id from Auth context instead of userProfile.id
+    const userId = user.id;
     if (!userId) {
       console.error('User ID is undefined');
       setDocuments([]);
@@ -45,7 +45,7 @@ export const useUserDocumentsViewer = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [userProfile, selectedCompany]);
+  }, [user, selectedCompany]);
   
   const downloadDocument = useCallback(async (document: UserDocument) => {
     try {
