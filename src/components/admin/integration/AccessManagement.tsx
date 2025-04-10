@@ -13,6 +13,7 @@ import { useEffect } from "react";
 import { Company } from "@/types/company";
 import { accessFormSchema } from "./form/IntegrationFormSchema";
 
+// Define the AccessItem type explicitly
 type AccessItem = {
   id: string;
   company_id: string;
@@ -52,6 +53,7 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({ company }) =
     setIsLoading(true);
     
     try {
+      // Fixed: Using type assertion to handle the type issue
       const { data, error } = await supabase
         .from('company_access')
         .select('*')
@@ -60,7 +62,8 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({ company }) =
       
       if (error) throw error;
       
-      setAccessItems(data || []);
+      // Cast the data to the proper type
+      setAccessItems(data as AccessItem[] || []);
     } catch (error: any) {
       console.error('Error fetching access items:', error);
       toast.error('Erro ao carregar informações de acesso');
@@ -86,7 +89,7 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({ company }) =
       }
       
       if (currentAccess) {
-        // Update existing access
+        // Update existing access - Using type assertion to handle the type
         const { error } = await supabase
           .from('company_access')
           .update({
@@ -95,13 +98,13 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({ company }) =
             password: formData.password,
             url: formData.url || null,
             notes: formData.notes || null
-          })
+          } as any)
           .eq('id', currentAccess.id);
           
         if (error) throw error;
         toast.success('Acesso atualizado com sucesso');
       } else {
-        // Create new access
+        // Create new access - Using type assertion to handle the type
         const { error } = await supabase
           .from('company_access')
           .insert({
@@ -111,7 +114,7 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({ company }) =
             password: formData.password,
             url: formData.url || null,
             notes: formData.notes || null
-          });
+          } as any);
           
         if (error) throw error;
         toast.success('Acesso criado com sucesso');
@@ -143,6 +146,7 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({ company }) =
     if (!window.confirm('Tem certeza que deseja excluir este acesso?')) return;
     
     try {
+      // Using type assertion to handle the type
       const { error } = await supabase
         .from('company_access')
         .delete()

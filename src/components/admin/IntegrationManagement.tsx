@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Building, Video, FileText } from "lucide-react";
+import { Loader2, Building, Video, FileText, Key, Users } from "lucide-react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { Company } from "@/types/company";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { CompanyIntegrationForm } from './integration/CompanyIntegrationForm';
 import { IntegrationVideosManager } from './integration/IntegrationVideosManager';
 import { JobRolesManager } from './integration/JobRolesManager';
+import { AccessManagement } from './integration/AccessManagement';
 
 export const IntegrationManagement: React.FC = () => {
   const { companies, isLoading, fetchCompanies } = useCompanies();
@@ -159,6 +160,16 @@ export const IntegrationManagement: React.FC = () => {
                     <FileText className="h-4 w-4 mr-2" />
                     Cargos
                   </TabsTrigger>
+                  <TabsTrigger 
+                    value="access" 
+                    className="flex items-center py-3 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500"
+                    style={{
+                      borderColor: activeTab === "access" ? selectedCompany?.cor_principal || "#1EAEDB" : "transparent"
+                    }}
+                  >
+                    <Key className="h-4 w-4 mr-2" />
+                    Acessos
+                  </TabsTrigger>
                 </TabsList>
               </div>
               
@@ -175,6 +186,9 @@ export const IntegrationManagement: React.FC = () => {
                 </TabsContent>
                 <TabsContent value="cargo" className="m-0">
                   <JobRolesManager company={selectedCompany} />
+                </TabsContent>
+                <TabsContent value="access" className="m-0">
+                  <AccessManagement company={selectedCompany} />
                 </TabsContent>
               </div>
             </Tabs>
@@ -193,3 +207,4 @@ export const IntegrationManagement: React.FC = () => {
     </div>
   );
 };
+
