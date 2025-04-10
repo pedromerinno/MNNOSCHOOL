@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,361 +13,328 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Video, Plus, Edit, Trash2, ArrowUp, ArrowDown, X, Save } from "lucide-react";
+import { 
+  Video, 
+  Plus, 
+  Pencil, 
+  Trash2, 
+  X, 
+  Check,
+  MoveUp,
+  MoveDown,
+  Loader2
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Company } from "@/types/company";
-
-interface CompanyVideo {
-  id: string;
-  title: string;
-  description: string | null;
-  thumbnail_url: string | null;
-  video_url: string;
-  duration: string | null;
-  order_index: number;
-}
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 interface VideoPlaylistManagerProps {
   company: Company;
 }
 
+interface VideoItem {
+  id: string;
+  title: string;
+  description?: string;
+  video_url: string;
+  thumbnail_url?: string;
+  duration?: string;
+  order_index: number;
+}
+
 export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ company }) => {
-  const [videos, setVideos] = useState<CompanyVideo[]>([]);
+  const [videos, setVideos] = useState<VideoItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [editingVideo, setEditingVideo] = useState<CompanyVideo | null>(null);
-  const [newVideo, setNewVideo] = useState<Partial<CompanyVideo> | null>(null);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null);
   
+  // Form state
+  const [videoTitle, setVideoTitle] = useState("");
+  const [videoDescription, setVideoDescription] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [videoDuration, setVideoDuration] = useState("");
+  
+  // Function to fetch videos
   const fetchVideos = async () => {
+    if (!company || !company.id) return;
+    
     setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from('company_videos')
         .select('*')
         .eq('company_id', company.id)
-        .order('order_index');
+        .order('order_index', { ascending: true });
         
       if (error) throw error;
       
       setVideos(data || []);
     } catch (error: any) {
-      console.error("Error fetching company videos:", error);
-      toast.error(`Erro ao carregar vídeos: ${error.message}`);
+      console.error("Error fetching videos:", error);
+      toast.error(`Error loading videos: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
   };
   
+  // Load videos when company changes
   useEffect(() => {
-    if (company) {
+    if (company && company.id) {
+      console.log(`Loading videos for company: ${company.nome}`);
       fetchVideos();
     }
   }, [company]);
   
-  const handleAddVideo = () => {
-    setNewVideo({
-      title: '',
-      description: '',
-      thumbnail_url: '',
-      video_url: '',
-      duration: '',
-      order_index: videos.length
-    });
-  };
-  
-  const handleEditVideo = (video: CompanyVideo) => {
-    setEditingVideo(video);
-  };
-  
-  const handleCancelEdit = () => {
-    setEditingVideo(null);
-    setNewVideo(null);
-  };
-  
-  const handleSaveVideo = async (video: Partial<CompanyVideo>, isNew: boolean) => {
-    try {
-      if (!video.title || !video.video_url) {
-        toast.error("Título e URL do vídeo são obrigatórios");
-        return;
-      }
-      
-      if (isNew) {
-        const { data, error } = await supabase
-          .from('company_videos')
-          .insert({
-            company_id: company.id,
-            title: video.title,
-            description: video.description || null,
-            thumbnail_url: video.thumbnail_url || null,
-            video_url: video.video_url,
-            duration: video.duration || null,
-            order_index: video.order_index
-          })
-          .select();
-          
-        if (error) throw error;
-        
-        toast.success("Vídeo adicionado com sucesso");
-      } else if (video.id) {
-        const { error } = await supabase
-          .from('company_videos')
-          .update({
-            title: video.title,
-            description: video.description || null,
-            thumbnail_url: video.thumbnail_url || null,
-            video_url: video.video_url,
-            duration: video.duration || null
-          })
-          .eq('id', video.id);
-          
-        if (error) throw error;
-        
-        toast.success("Vídeo atualizado com sucesso");
-      }
-      
-      setEditingVideo(null);
-      setNewVideo(null);
+  // Listen for company change events
+  useEffect(() => {
+    const handleCompanyChange = () => {
+      console.log("VideoPlaylistManager: Company change event detected");
+      resetForm();
       fetchVideos();
+    };
+    
+    window.addEventListener('settings-company-changed', handleCompanyChange);
+    
+    return () => {
+      window.removeEventListener('settings-company-changed', handleCompanyChange);
+    };
+  }, [company]);
+  
+  // Reset form
+  const resetForm = () => {
+    setVideoTitle("");
+    setVideoDescription("");
+    setVideoUrl("");
+    setThumbnailUrl("");
+    setVideoDuration("");
+  };
+  
+  // Handle add video
+  const handleAddVideo = async () => {
+    if (!videoTitle || !videoUrl) {
+      toast.error("Title and video URL are required");
+      return;
+    }
+    
+    try {
+      // Get max order_index
+      const maxOrderIndex = videos.length > 0 
+        ? Math.max(...videos.map(v => v.order_index)) + 1 
+        : 0;
       
+      const { data, error } = await supabase
+        .from('company_videos')
+        .insert({
+          company_id: company.id,
+          title: videoTitle,
+          description: videoDescription || null,
+          video_url: videoUrl,
+          thumbnail_url: thumbnailUrl || null,
+          duration: videoDuration || null,
+          order_index: maxOrderIndex
+        })
+        .select()
+        .single();
+        
+      if (error) throw error;
+      
+      setVideos([...videos, data]);
+      resetForm();
+      setShowAddDialog(false);
+      toast.success("Video added successfully");
     } catch (error: any) {
-      console.error("Error saving video:", error);
-      toast.error(`Erro ao salvar vídeo: ${error.message}`);
+      console.error("Error adding video:", error);
+      toast.error(`Error adding video: ${error.message}`);
     }
   };
   
-  const handleDeleteVideo = async (videoId: string) => {
-    if (!confirm("Tem certeza que deseja excluir este vídeo?")) return;
+  // Handle edit video
+  const handleEditVideo = async () => {
+    if (!selectedVideo) return;
+    
+    if (!videoTitle || !videoUrl) {
+      toast.error("Title and video URL are required");
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('company_videos')
+        .update({
+          title: videoTitle,
+          description: videoDescription || null,
+          video_url: videoUrl,
+          thumbnail_url: thumbnailUrl || null,
+          duration: videoDuration || null
+        })
+        .eq('id', selectedVideo.id);
+        
+      if (error) throw error;
+      
+      setVideos(videos.map(video => 
+        video.id === selectedVideo.id 
+          ? { 
+              ...video, 
+              title: videoTitle,
+              description: videoDescription,
+              video_url: videoUrl,
+              thumbnail_url: thumbnailUrl,
+              duration: videoDuration
+            } 
+          : video
+      ));
+      
+      resetForm();
+      setShowEditDialog(false);
+      setSelectedVideo(null);
+      toast.success("Video updated successfully");
+    } catch (error: any) {
+      console.error("Error updating video:", error);
+      toast.error(`Error updating video: ${error.message}`);
+    }
+  };
+  
+  // Handle delete video
+  const handleDeleteVideo = async () => {
+    if (!selectedVideo) return;
     
     try {
       const { error } = await supabase
         .from('company_videos')
         .delete()
-        .eq('id', videoId);
+        .eq('id', selectedVideo.id);
         
       if (error) throw error;
       
-      toast.success("Vídeo excluído com sucesso");
-      fetchVideos();
+      setVideos(videos.filter(video => video.id !== selectedVideo.id));
+      setShowDeleteDialog(false);
+      setSelectedVideo(null);
+      toast.success("Video deleted successfully");
       
+      // Update order indices
+      const updatedVideos = videos.filter(video => video.id !== selectedVideo.id);
+      updateVideoOrder(updatedVideos);
     } catch (error: any) {
       console.error("Error deleting video:", error);
-      toast.error(`Erro ao excluir vídeo: ${error.message}`);
+      toast.error(`Error deleting video: ${error.message}`);
     }
   };
   
-  const handleMoveVideo = async (videoId: string, direction: 'up' | 'down') => {
-    const videoIndex = videos.findIndex(v => v.id === videoId);
-    if (videoIndex === -1) return;
+  // Open edit dialog
+  const openEditDialog = (video: VideoItem) => {
+    setSelectedVideo(video);
+    setVideoTitle(video.title);
+    setVideoDescription(video.description || "");
+    setVideoUrl(video.video_url);
+    setThumbnailUrl(video.thumbnail_url || "");
+    setVideoDuration(video.duration || "");
+    setShowEditDialog(true);
+  };
+  
+  // Open delete dialog
+  const openDeleteDialog = (video: VideoItem) => {
+    setSelectedVideo(video);
+    setShowDeleteDialog(true);
+  };
+  
+  // Open add dialog
+  const openAddDialog = () => {
+    resetForm();
+    setShowAddDialog(true);
+  };
+  
+  // Update video order
+  const updateVideoOrder = async (updatedVideos: VideoItem[]) => {
+    // Assign new order indices
+    const newOrderVideos = updatedVideos.map((video, index) => ({
+      ...video,
+      order_index: index
+    }));
     
-    const newVideos = [...videos];
-    const targetIndex = direction === 'up' ? videoIndex - 1 : videoIndex + 1;
+    // Update videos locally
+    setVideos(newOrderVideos);
     
-    if (targetIndex < 0 || targetIndex >= newVideos.length) return;
-    
-    // Swap the order_index values
-    const temp = newVideos[videoIndex].order_index;
-    newVideos[videoIndex].order_index = newVideos[targetIndex].order_index;
-    newVideos[targetIndex].order_index = temp;
-    
-    // Swap the positions in the array
-    [newVideos[videoIndex], newVideos[targetIndex]] = [newVideos[targetIndex], newVideos[videoIndex]];
-    
-    setVideos(newVideos);
-    
+    // Update order in database for all videos
     try {
-      // Update first video
-      await supabase
-        .from('company_videos')
-        .update({ order_index: newVideos[videoIndex].order_index })
-        .eq('id', newVideos[videoIndex].id);
-        
-      // Update second video
-      await supabase
-        .from('company_videos')
-        .update({ order_index: newVideos[targetIndex].order_index })
-        .eq('id', newVideos[targetIndex].id);
-        
-    } catch (error: any) {
-      console.error("Error reordering videos:", error);
-      toast.error(`Erro ao reordenar vídeos: ${error.message}`);
-      fetchVideos(); // Revert to original order
-    }
-  };
-  
-  const getYouTubeThumbnail = (url: string) => {
-    const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-    const match = url.match(youtubeRegex);
-    if (match && match[1]) {
-      return `https://img.youtube.com/vi/${match[1]}/mqdefault.jpg`;
-    }
-    return null;
-  };
-  
-  const handleUpdateThumbnail = (video: Partial<CompanyVideo>) => {
-    if (video.video_url) {
-      const thumbnailUrl = getYouTubeThumbnail(video.video_url);
-      if (thumbnailUrl) {
-        if (editingVideo) {
-          setEditingVideo({...editingVideo, thumbnail_url: thumbnailUrl});
-        } else if (newVideo) {
-          setNewVideo({...newVideo, thumbnail_url: thumbnailUrl});
-        }
+      for (const video of newOrderVideos) {
+        await supabase
+          .from('company_videos')
+          .update({ order_index: video.order_index })
+          .eq('id', video.id);
       }
+    } catch (error: any) {
+      console.error("Error updating video order:", error);
+      toast.error(`Error updating video order: ${error.message}`);
+      // Refresh to get correct order
+      fetchVideos();
     }
   };
   
-  const VideoForm = ({ video, isNew, onSave, onCancel }: { 
-    video: Partial<CompanyVideo>, 
-    isNew: boolean,
-    onSave: () => void,
-    onCancel: () => void 
-  }) => (
-    <Card className="mb-6">
-      <CardContent className="p-4">
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor={isNew ? "new-title" : `edit-title-${video.id}`}>Título do Vídeo*</Label>
-              <Input 
-                id={isNew ? "new-title" : `edit-title-${video.id}`}
-                value={video.title || ''} 
-                onChange={e => isNew 
-                  ? setNewVideo({...newVideo!, title: e.target.value})
-                  : setEditingVideo({...editingVideo!, title: e.target.value})
-                }
-                placeholder="Título do vídeo"
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor={isNew ? "new-duration" : `edit-duration-${video.id}`}>Duração</Label>
-              <Input 
-                id={isNew ? "new-duration" : `edit-duration-${video.id}`}
-                value={video.duration || ''} 
-                onChange={e => isNew
-                  ? setNewVideo({...newVideo!, duration: e.target.value})
-                  : setEditingVideo({...editingVideo!, duration: e.target.value})
-                }
-                placeholder="Ex: 5:30"
-              />
-            </div>
-          </div>
-          
-          <div>
-            <Label htmlFor={isNew ? "new-video-url" : `edit-video-url-${video.id}`}>URL do Vídeo (YouTube)*</Label>
-            <div className="flex gap-2">
-              <Input 
-                id={isNew ? "new-video-url" : `edit-video-url-${video.id}`}
-                value={video.video_url || ''} 
-                onChange={e => isNew
-                  ? setNewVideo({...newVideo!, video_url: e.target.value})
-                  : setEditingVideo({...editingVideo!, video_url: e.target.value})
-                }
-                placeholder="https://www.youtube.com/watch?v=..."
-                className="flex-1"
-              />
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => handleUpdateThumbnail(video)}
-                title="Extrair thumbnail do YouTube"
-              >
-                Extrair Thumbnail
-              </Button>
-            </div>
-          </div>
-          
-          <div>
-            <Label htmlFor={isNew ? "new-thumbnail-url" : `edit-thumbnail-url-${video.id}`}>URL da Miniatura</Label>
-            <Input 
-              id={isNew ? "new-thumbnail-url" : `edit-thumbnail-url-${video.id}`}
-              value={video.thumbnail_url || ''} 
-              onChange={e => isNew
-                ? setNewVideo({...newVideo!, thumbnail_url: e.target.value})
-                : setEditingVideo({...editingVideo!, thumbnail_url: e.target.value})
-              }
-              placeholder="https://exemplo.com/imagem.jpg"
-            />
-            {video.thumbnail_url && (
-              <div className="mt-2">
-                <img 
-                  src={video.thumbnail_url} 
-                  alt="Miniatura" 
-                  className="h-20 object-cover rounded" 
-                />
-              </div>
-            )}
-          </div>
-          
-          <div>
-            <Label htmlFor={isNew ? "new-description" : `edit-description-${video.id}`}>Descrição</Label>
-            <Textarea 
-              id={isNew ? "new-description" : `edit-description-${video.id}`}
-              value={video.description || ''} 
-              onChange={e => isNew
-                ? setNewVideo({...newVideo!, description: e.target.value})
-                : setEditingVideo({...editingVideo!, description: e.target.value})
-              }
-              placeholder="Descrição do vídeo..."
-              rows={3}
-            />
-          </div>
-          
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={onCancel}>
-              <X className="h-4 w-4 mr-2" />
-              Cancelar
-            </Button>
-            <Button onClick={onSave}>
-              <Save className="h-4 w-4 mr-2" />
-              Salvar
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-
+  // Move video up
+  const moveVideoUp = (index: number) => {
+    if (index === 0) return;
+    
+    const updatedVideos = [...videos];
+    const temp = updatedVideos[index];
+    updatedVideos[index] = updatedVideos[index - 1];
+    updatedVideos[index - 1] = temp;
+    
+    updateVideoOrder(updatedVideos);
+  };
+  
+  // Move video down
+  const moveVideoDown = (index: number) => {
+    if (index === videos.length - 1) return;
+    
+    const updatedVideos = [...videos];
+    const temp = updatedVideos[index];
+    updatedVideos[index] = updatedVideos[index + 1];
+    updatedVideos[index + 1] = temp;
+    
+    updateVideoOrder(updatedVideos);
+  };
+  
+  // Extract YouTube video ID
+  const getYoutubeVideoId = (url: string) => {
+    if (!url) return null;
+    
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+  
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-lg font-medium mb-1">Vídeos de Integração</h3>
+          <h3 className="text-lg font-medium mb-1">Playlist de Vídeos</h3>
           <p className="text-gray-500 dark:text-gray-400">
-            Gerencie a playlist de vídeos para o processo de integração
+            Gerencie os vídeos exibidos na playlist de integração
           </p>
         </div>
         
-        {!newVideo && !editingVideo && (
-          <Button onClick={handleAddVideo}>
-            <Plus className="h-4 w-4 mr-2" />
-            Adicionar Vídeo
-          </Button>
-        )}
+        <Button onClick={openAddDialog}>
+          <Plus className="h-4 w-4 mr-2" />
+          Adicionar Vídeo
+        </Button>
       </div>
-      
-      {newVideo && (
-        <VideoForm 
-          video={newVideo} 
-          isNew={true}
-          onSave={() => handleSaveVideo(newVideo, true)}
-          onCancel={handleCancelEdit}
-        />
-      )}
-      
-      {editingVideo && (
-        <VideoForm 
-          video={editingVideo} 
-          isNew={false}
-          onSave={() => handleSaveVideo(editingVideo, false)}
-          onCancel={handleCancelEdit}
-        />
-      )}
       
       {isLoading ? (
         <Card>
           <CardContent className="p-6 text-center">
-            <div className="animate-spin h-8 w-8 border-t-2 border-blue-500 border-r-2 rounded-full mx-auto"></div>
+            <Loader2 className="h-8 w-8 animate-spin text-gray-400 mx-auto" />
             <p className="mt-2 text-gray-500">Carregando vídeos...</p>
           </CardContent>
         </Card>
@@ -374,16 +342,14 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
         <Card>
           <CardContent className="p-6 text-center">
             <Video className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium mb-2">Nenhum vídeo adicionado</h3>
+            <h3 className="text-lg font-medium mb-2">Nenhum vídeo encontrado</h3>
             <p className="text-gray-500 dark:text-gray-400 mb-4">
-              Adicione vídeos à playlist de integração para os colaboradores
+              Adicione vídeos à playlist de integração da empresa
             </p>
-            {!newVideo && (
-              <Button onClick={handleAddVideo}>
-                <Plus className="h-4 w-4 mr-2" />
-                Adicionar Primeiro Vídeo
-              </Button>
-            )}
+            <Button onClick={openAddDialog}>
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar Vídeo
+            </Button>
           </CardContent>
         </Card>
       ) : (
@@ -391,79 +357,69 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-10">Ordem</TableHead>
-                <TableHead className="w-16">Miniatura</TableHead>
+                <TableHead>Ordem</TableHead>
                 <TableHead>Título</TableHead>
+                <TableHead>Vídeo</TableHead>
                 <TableHead>Duração</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {videos.map((video) => (
+              {videos.map((video, index) => (
                 <TableRow key={video.id}>
-                  <TableCell className="text-center">
-                    <div className="flex flex-col items-center">
+                  <TableCell>
+                    <div className="flex items-center gap-1">
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleMoveVideo(video.id, 'up')}
-                        disabled={video.order_index === 0}
-                        className="h-6 w-6"
+                        className="h-8 w-8"
+                        onClick={() => moveVideoUp(index)}
+                        disabled={index === 0}
                       >
-                        <ArrowUp className="h-4 w-4" />
+                        <MoveUp className="h-4 w-4" />
                       </Button>
-                      <span>{video.order_index + 1}</span>
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleMoveVideo(video.id, 'down')}
-                        disabled={video.order_index === videos.length - 1}
-                        className="h-6 w-6"
+                        className="h-8 w-8"
+                        onClick={() => moveVideoDown(index)}
+                        disabled={index === videos.length - 1}
                       >
-                        <ArrowDown className="h-4 w-4" />
+                        <MoveDown className="h-4 w-4" />
                       </Button>
+                      <span>{index + 1}</span>
                     </div>
                   </TableCell>
+                  <TableCell className="font-medium">{video.title}</TableCell>
                   <TableCell>
-                    {video.thumbnail_url ? (
-                      <img 
-                        src={video.thumbnail_url} 
-                        alt={video.title}
-                        className="w-16 h-9 object-cover rounded"
-                      />
-                    ) : (
-                      <div className="w-16 h-9 bg-gray-200 flex items-center justify-center rounded">
-                        <Video className="h-4 w-4 text-gray-500" />
-                      </div>
-                    )}
+                    <a
+                      href={video.video_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline"
+                    >
+                      Ver vídeo
+                    </a>
                   </TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="font-medium">{video.title}</p>
-                      {video.description && (
-                        <p className="text-xs text-gray-500 truncate max-w-xs">
-                          {video.description}
-                        </p>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>{video.duration || "—"}</TableCell>
+                  <TableCell>{video.duration || "N/A"}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEditVideo(video)}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEditDialog(video)}
                       >
-                        <Edit className="h-4 w-4" />
+                        <Pencil className="h-4 w-4 mr-2" />
+                        Editar
                       </Button>
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteVideo(video.id)}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openDeleteDialog(video)}
                         className="text-red-500 hover:text-red-700 hover:bg-red-50"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Excluir
                       </Button>
                     </div>
                   </TableCell>
@@ -473,6 +429,213 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
           </Table>
         </Card>
       )}
+      
+      {/* Add Video Dialog */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Adicionar Vídeo</DialogTitle>
+            <DialogDescription>
+              Adicione um novo vídeo à playlist de integração
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="videoTitle">Título do Vídeo*</Label>
+              <Input
+                id="videoTitle"
+                value={videoTitle}
+                onChange={(e) => setVideoTitle(e.target.value)}
+                placeholder="Digite o título do vídeo"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="videoUrl">URL do Vídeo (YouTube)*</Label>
+              <Input
+                id="videoUrl"
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+                placeholder="https://www.youtube.com/watch?v=..."
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="videoDescription">Descrição do Vídeo</Label>
+              <Textarea
+                id="videoDescription"
+                value={videoDescription}
+                onChange={(e) => setVideoDescription(e.target.value)}
+                placeholder="Descreva brevemente o conteúdo do vídeo..."
+                rows={3}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="thumbnailUrl">URL da Miniatura (opcional)</Label>
+              <Input
+                id="thumbnailUrl"
+                value={thumbnailUrl}
+                onChange={(e) => setThumbnailUrl(e.target.value)}
+                placeholder="https://example.com/thumbnail.jpg"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="videoDuration">Duração do Vídeo (opcional)</Label>
+              <Input
+                id="videoDuration"
+                value={videoDuration}
+                onChange={(e) => setVideoDuration(e.target.value)}
+                placeholder="5:30"
+              />
+            </div>
+            
+            {videoUrl && getYoutubeVideoId(videoUrl) && (
+              <div className="aspect-w-16 aspect-h-9">
+                <iframe
+                  src={`https://www.youtube.com/embed/${getYoutubeVideoId(videoUrl)}`}
+                  className="w-full rounded-lg"
+                  style={{ aspectRatio: '16/9' }}
+                  allowFullScreen
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  title="Video Preview"
+                />
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+              <X className="h-4 w-4 mr-2" />
+              Cancelar
+            </Button>
+            <Button onClick={handleAddVideo}>
+              <Check className="h-4 w-4 mr-2" />
+              Adicionar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Edit Video Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Vídeo</DialogTitle>
+            <DialogDescription>
+              Altere as informações do vídeo selecionado
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="editVideoTitle">Título do Vídeo*</Label>
+              <Input
+                id="editVideoTitle"
+                value={videoTitle}
+                onChange={(e) => setVideoTitle(e.target.value)}
+                placeholder="Digite o título do vídeo"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="editVideoUrl">URL do Vídeo (YouTube)*</Label>
+              <Input
+                id="editVideoUrl"
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+                placeholder="https://www.youtube.com/watch?v=..."
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="editVideoDescription">Descrição do Vídeo</Label>
+              <Textarea
+                id="editVideoDescription"
+                value={videoDescription}
+                onChange={(e) => setVideoDescription(e.target.value)}
+                placeholder="Descreva brevemente o conteúdo do vídeo..."
+                rows={3}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="editThumbnailUrl">URL da Miniatura (opcional)</Label>
+              <Input
+                id="editThumbnailUrl"
+                value={thumbnailUrl}
+                onChange={(e) => setThumbnailUrl(e.target.value)}
+                placeholder="https://example.com/thumbnail.jpg"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="editVideoDuration">Duração do Vídeo (opcional)</Label>
+              <Input
+                id="editVideoDuration"
+                value={videoDuration}
+                onChange={(e) => setVideoDuration(e.target.value)}
+                placeholder="5:30"
+              />
+            </div>
+            
+            {videoUrl && getYoutubeVideoId(videoUrl) && (
+              <div className="aspect-w-16 aspect-h-9">
+                <iframe
+                  src={`https://www.youtube.com/embed/${getYoutubeVideoId(videoUrl)}`}
+                  className="w-full rounded-lg"
+                  style={{ aspectRatio: '16/9' }}
+                  allowFullScreen
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  title="Video Preview"
+                />
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+              <X className="h-4 w-4 mr-2" />
+              Cancelar
+            </Button>
+            <Button onClick={handleEditVideo}>
+              <Check className="h-4 w-4 mr-2" />
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Delete Video Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Excluir Vídeo</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir o vídeo "{selectedVideo?.title}"?
+              Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+              <X className="h-4 w-4 mr-2" />
+              Cancelar
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleDeleteVideo}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

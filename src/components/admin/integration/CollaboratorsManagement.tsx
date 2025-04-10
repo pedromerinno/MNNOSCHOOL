@@ -172,6 +172,22 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
     }
   }, [allUsers, loadingUsers, fetchUsers]);
   
+  // Listen for company selection events and reload data
+  useEffect(() => {
+    const handleCompanyChange = (event: Event) => {
+      console.log("CollaboratorsManagement: Company change event detected");
+      fetchCompanyUsers();
+    };
+    
+    window.addEventListener('settings-company-changed', handleCompanyChange);
+    window.addEventListener('company-relation-changed', handleCompanyChange);
+    
+    return () => {
+      window.removeEventListener('settings-company-changed', handleCompanyChange);
+      window.removeEventListener('company-relation-changed', handleCompanyChange);
+    };
+  }, [company]);
+  
   // Filter users based on search term
   const filteredUsers = allUsers.filter(user => {
     const searchLower = searchTerm.toLowerCase();

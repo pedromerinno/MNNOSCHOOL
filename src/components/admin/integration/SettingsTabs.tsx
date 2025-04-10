@@ -101,6 +101,7 @@ export const SettingsTabs: React.FC<SettingsTabsProps> = ({
       <div className="p-6">
         <TabsContent value="info" className="m-0">
           <CompanyIntegrationForm 
+            key={`info-${company.id}`}
             company={company}
             onSubmit={handleFormSubmit}
             isSaving={isSaving}

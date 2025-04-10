@@ -48,6 +48,23 @@ export const useSettingsManagement = () => {
     }
   };
 
+  // Listen for company-updated events to update the selected company
+  useEffect(() => {
+    const handleCompanyUpdated = (event: CustomEvent<{company: Company}>) => {
+      const updatedCompany = event.detail.company;
+      if (selectedCompany && updatedCompany.id === selectedCompany.id) {
+        console.log("Updating selected company with latest data:", updatedCompany.nome);
+        setSelectedCompany(updatedCompany);
+      }
+    };
+    
+    window.addEventListener('company-updated', handleCompanyUpdated as EventListener);
+    
+    return () => {
+      window.removeEventListener('company-updated', handleCompanyUpdated as EventListener);
+    };
+  }, [selectedCompany]);
+
   const handleFormSubmit = async (formData: any) => {
     if (!selectedCompany) {
       toast.error("Nenhuma empresa selecionada");

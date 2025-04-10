@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useCompanies } from "@/hooks/useCompanies";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,36 +14,47 @@ import {
 } from "@/components/ui/accordion";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Company } from "@/types/company";
-
-// Mock data for job roles - in a real app this would come from the database
-const mockJobRoles = [
-  {
-    title: "Desenvolvedor Full Stack",
-    description: "Responsável pelo desenvolvimento de aplicações web completas, desde o backend até o frontend.",
-    responsibilities: "- Desenvolver e manter aplicações web\n- Colaborar com equipes de design e produto\n- Implementar testes automatizados",
-    requirements: "- Experiência com React, Node.js\n- Conhecimento de bancos de dados SQL e NoSQL\n- Boas práticas de desenvolvimento",
-    expectations: "- Entrega de código de qualidade\n- Participação ativa em code reviews\n- Aprendizado contínuo"
-  },
-  {
-    title: "Designer UX/UI",
-    description: "Criar experiências de usuário excepcionais e interfaces visualmente atraentes.",
-    responsibilities: "- Criar wireframes e protótipos\n- Conduzir pesquisas com usuários\n- Desenvolver design systems",
-    requirements: "- Experiência com Figma ou Adobe XD\n- Portfolio com projetos relevantes\n- Conhecimento de princípios de design",
-    expectations: "- Soluções centradas no usuário\n- Inovação em design\n- Colaboração com desenvolvedores"
-  }
-];
+import { supabase } from "@/integrations/supabase/client";
 
 const Integration = () => {
   const { selectedCompany, isLoading, forceGetUserCompanies, getUserCompanies, user } = useCompanies();
-  const [jobRoles, setJobRoles] = useState(mockJobRoles);
   const [localCompany, setLocalCompany] = useState<Company | null>(selectedCompany);
+  const [jobRoles, setJobRoles] = useState<any[]>([]);
+  const [isLoadingRoles, setIsLoadingRoles] = useState(false);
   
   // Update local company state when selectedCompany changes
   useEffect(() => {
     if (selectedCompany) {
       setLocalCompany(selectedCompany);
+      fetchJobRoles(selectedCompany.id);
     }
   }, [selectedCompany]);
+  
+  // Fetch job roles for the selected company
+  const fetchJobRoles = async (companyId: string) => {
+    setIsLoadingRoles(true);
+    try {
+      const { data, error } = await supabase
+        .from('job_roles')
+        .select('*')
+        .eq('company_id', companyId)
+        .order('order_index', { ascending: true });
+        
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        setJobRoles(data);
+      } else {
+        // Set empty array if no roles found
+        setJobRoles([]);
+      }
+    } catch (error) {
+      console.error("Error fetching job roles:", error);
+      setJobRoles([]);
+    } finally {
+      setIsLoadingRoles(false);
+    }
+  };
   
   // Listen for company updates from settings
   useEffect(() => {
@@ -50,6 +62,7 @@ const Integration = () => {
       const updatedCompany = event.detail.company;
       console.log("Company updated in Integration page:", updatedCompany.nome);
       setLocalCompany(updatedCompany);
+      fetchJobRoles(updatedCompany.id);
     };
     
     window.addEventListener('company-updated', handleCompanyUpdated as EventListener);
@@ -73,18 +86,6 @@ const Integration = () => {
     color: companyColor,
     borderColor: companyColor
   };
-
-  // Em uma implementação real, isso buscaria dados do servidor
-  useEffect(() => {
-    // Simulando busca de dados
-    const fetchJobRoles = async () => {
-      // Aqui você faria uma chamada à API
-      // Por enquanto, estamos usando dados simulados
-      setJobRoles(mockJobRoles);
-    };
-    
-    fetchJobRoles();
-  }, [selectedCompany]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -210,6 +211,7 @@ const Integration = () => {
                 <TabsContent value="videos" className="mt-0">
                   <div className="mt-2">
                     <VideoPlaylist 
+                      key={`videos-${localCompany?.id}`}
                       companyId={localCompany?.id} 
                       mainVideo={localCompany?.video_institucional || ""}
                       mainVideoDescription={localCompany?.descricao_video || ""}
@@ -219,9 +221,14 @@ const Integration = () => {
                 
                 <TabsContent value="cargo" className="mt-0">
                   <div className="grid md:grid-cols-1 gap-6">
-                    {jobRoles.length > 0 ? (
+                    {isLoadingRoles ? (
+                      <div className="space-y-4">
+                        <Skeleton className="h-12 w-full" />
+                        <Skeleton className="h-32 w-full" />
+                      </div>
+                    ) : jobRoles.length > 0 ? (
                       jobRoles.map((role, index) => (
-                        <Card key={index} className="overflow-hidden border-l-4" style={{ borderLeftColor: companyColor }}>
+                        <Card key={role.id} className="overflow-hidden border-l-4" style={{ borderLeftColor: companyColor }}>
                           <CardHeader className="py-4 px-6 bg-gray-50 dark:bg-gray-800">
                             <div className="flex items-center gap-2">
                               <BriefcaseBusiness className="h-5 w-5" style={{ color: companyColor }} />
