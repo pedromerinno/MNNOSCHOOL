@@ -22,6 +22,9 @@ const Courses = () => {
   const getTitle = (baseTitle: string) => {
     return selectedCompany ? `${baseTitle} - ${selectedCompany.nome}` : baseTitle;
   };
+  
+  // Get company color for styling
+  const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
 
   return (
     <DashboardLayout>
@@ -39,16 +42,22 @@ const Courses = () => {
         <div className="flex flex-wrap gap-2">
           {filterOptions.map((option) => {
             const Icon = option.icon;
+            const isActive = activeFilter === option.id;
+            
             return (
               <button
                 key={option.id}
                 onClick={() => setActiveFilter(option.id as FilterOption)}
                 className={cn(
                   "inline-flex items-center px-4 py-2 rounded-full border text-sm transition-colors",
-                  activeFilter === option.id
-                    ? "bg-primary text-white border-primary"
+                  isActive
+                    ? "border-transparent text-white"
                     : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                 )}
+                style={isActive ? { 
+                  backgroundColor: companyColor,
+                  borderColor: companyColor 
+                } : {}}
               >
                 <Icon className="mr-2 h-4 w-4" />
                 {option.label}
@@ -64,13 +73,16 @@ const Courses = () => {
           </button>
         </div>
         
-        {/* Progress bar - similar to reference */}
+        {/* Progress bar - with company color */}
         <div className="relative h-1 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
           <div 
-            className="absolute top-0 left-0 h-full bg-blue-500 dark:bg-blue-600 rounded-full"
-            style={{ width: activeFilter === 'all' ? '25%' : 
+            className="absolute top-0 left-0 h-full rounded-full"
+            style={{ 
+              backgroundColor: companyColor,
+              width: activeFilter === 'all' ? '25%' : 
                     activeFilter === 'in-progress' ? '50%' : 
-                    activeFilter === 'completed' ? '75%' : '100%' }}
+                    activeFilter === 'completed' ? '75%' : '100%' 
+            }}
           />
         </div>
         

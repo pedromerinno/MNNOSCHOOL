@@ -1,6 +1,4 @@
 
-import { Search } from "lucide-react";
-import { SearchBar } from "@/components/navigation/SearchBar";
 import { useCompanies } from "@/hooks/useCompanies";
 
 export const DashboardHeader = () => {
@@ -19,7 +17,7 @@ export const DashboardHeader = () => {
       }}
     >
       <div className="flex items-center justify-end">
-        <SearchBar />
+        {/* Search bar removed */}
       </div>
     </div>
   );

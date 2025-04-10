@@ -1,27 +1,30 @@
 
 import React from 'react';
 import { Progress } from "@/components/ui/progress";
+import { useCompanies } from "@/hooks/useCompanies";
 
 interface CourseProgressProps {
   progress: number;
-  showProgressBar?: boolean;
 }
 
-export const CourseProgress: React.FC<CourseProgressProps> = ({ 
-  progress,
-  showProgressBar = true
-}) => {
-  if (progress <= 0 && !showProgressBar) {
-    return null;
-  }
+export const CourseProgress: React.FC<CourseProgressProps> = ({ progress }) => {
+  const { selectedCompany } = useCompanies();
+  const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
   
   return (
-    <div>
-      <h2 className="text-xl font-semibold mb-3">Seu Progresso</h2>
-      <Progress value={progress} className="h-2 mb-2" />
-      <p className="text-sm text-muted-foreground">
-        {progress}% completo
-      </p>
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-medium">Progresso do curso</h3>
+        <span className="text-sm font-medium">{progress}%</span>
+      </div>
+      <Progress 
+        value={progress} 
+        className="h-2"
+        indicatorClassName="bg-transparent"
+        style={{
+          "--progress-background": companyColor
+        } as React.CSSProperties} 
+      />
     </div>
   );
 };

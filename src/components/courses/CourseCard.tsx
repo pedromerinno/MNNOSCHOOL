@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { CompanyThemedBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Course } from './CourseList';
 import { Heart, ChevronRight, UserRound } from 'lucide-react';
@@ -65,14 +65,14 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
             {tags && tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {tags.slice(0, 2).map((tag, index) => (
-                  <Badge key={index} variant="outline" className="text-xs font-normal">
+                  <CompanyThemedBadge key={index} variant="beta" className="text-xs font-normal">
                     {tag}
-                  </Badge>
+                  </CompanyThemedBadge>
                 ))}
                 {tags.length > 2 && (
-                  <Badge variant="outline" className="text-xs font-normal">
+                  <CompanyThemedBadge variant="beta" className="text-xs font-normal">
                     +{tags.length - 2}
-                  </Badge>
+                  </CompanyThemedBadge>
                 )}
               </div>
             )}
@@ -118,13 +118,13 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
                 className="flex items-center space-x-2"
               >
                 {completed ? (
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800 px-3 py-1">
+                  <CompanyThemedBadge variant="outline" className="px-3 py-1">
                     Concluído
-                  </Badge>
+                  </CompanyThemedBadge>
                 ) : progress > 0 ? (
-                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800 px-3 py-1">
+                  <CompanyThemedBadge variant="outline" className="px-3 py-1">
                     {progress}% concluído
-                  </Badge>
+                  </CompanyThemedBadge>
                 ) : null}
                 
                 <div className="rounded-full h-8 w-8 p-0 flex items-center justify-center">
@@ -138,4 +138,3 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
     </Card>
   );
 };
-
