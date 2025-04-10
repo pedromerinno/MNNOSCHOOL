@@ -1,79 +1,46 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from 'sonner';
 import { Course } from './types';
+import { fetchCourses, deleteCourse } from '@/services/courseService';
+import { useCourseForm } from '@/hooks/useCourseForm';
+import { useCompanyCoursesManager } from '@/hooks/useCompanyCoursesManager';
 
 export const useCourses = (companyId?: string) => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isCompanyManagerOpen, setIsCompanyManagerOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
 
-  const fetchCourses = async () => {
+  // Use our extracted hooks
+  const { 
+    selectedCourse, 
+    setSelectedCourse, 
+    isFormOpen, 
+    setIsFormOpen, 
+    isSubmitting, 
+    handleFormSubmit 
+  } = useCourseForm(() => loadCourses());
+
+  const { 
+    isCompanyManagerOpen, 
+    setIsCompanyManagerOpen, 
+    selectedCourseForCompany, 
+    setSelectedCourseForCompany 
+  } = useCompanyCoursesManager();
+
+  const loadCourses = async () => {
     setIsLoading(true);
-    try {
-      let query;
-      
-      if (companyId) {
-        // If companyId is provided, fetch only courses for this company
-        console.log(`Fetching courses for company: ${companyId}`);
-        
-        // First, get the course IDs associated with this company
-        const { data: companyCourses, error: companyCoursesError } = await supabase
-          .from('company_courses')
-          .select('course_id')
-          .eq('empresa_id', companyId);
-          
-        if (companyCoursesError) {
-          throw companyCoursesError;
-        }
-        
-        if (!companyCourses || companyCourses.length === 0) {
-          console.log("No courses found for this company");
-          setCourses([]);
-          setIsLoading(false);
-          return;
-        }
-        
-        const courseIds = companyCourses.map(cc => cc.course_id);
-        
-        // Then fetch the actual courses
-        const { data, error } = await supabase
-          .from('courses')
-          .select('*')
-          .in('id', courseIds)
-          .order('created_at', { ascending: false });
-          
-        if (error) {
-          throw error;
-        }
-        
-        console.log(`Loaded ${data?.length || 0} courses for company ${companyId}`);
-        setCourses(data || []);
-      } else {
-        // Otherwise, fetch all courses
-        const { data, error } = await supabase
-          .from('courses')
-          .select('*')
-          .order('created_at', { ascending: false });
+    const data = await fetchCourses(companyId);
+    setCourses(data);
+    setIsLoading(false);
+  };
 
-        if (error) {
-          throw error;
-        }
-
-        console.log("Cursos carregados com sucesso:", data?.length || 0);
-        setCourses(data || []);
+  // Handle course deletion
+  const handleDeleteCourse = async (courseId: string) => {
+    if (confirm('Tem certeza que deseja excluir este curso? Esta ação não pode ser desfeita.')) {
+      const success = await deleteCourse(courseId);
+      if (success) {
+        loadCourses();
       }
-    } catch (error: any) {
-      console.error("Erro ao carregar cursos:", error);
-      toast.error('Erro ao carregar cursos', {
-        description: error.message,
-      });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -98,125 +65,8 @@ export const useCourses = (companyId?: string) => {
 
   // Fetch courses on mount or when companyId changes
   useEffect(() => {
-    fetchCourses();
-  }, [companyId]); // Add companyId as a dependency to refetch when it changes
-
-  const handleDeleteCourse = async (courseId: string) => {
-    if (confirm('Tem certeza que deseja excluir este curso? Esta ação não pode ser desfeita.')) {
-      try {
-        const { error } = await supabase
-          .from('courses')
-          .delete()
-          .eq('id', courseId);
-
-        if (error) {
-          throw error;
-        }
-
-        toast.success('Curso excluído', {
-          description: 'O curso foi excluído com sucesso.',
-        });
-
-        // Refresh the list
-        fetchCourses();
-      } catch (error: any) {
-        toast.error('Erro ao excluir curso', {
-          description: error.message,
-        });
-      }
-    }
-  };
-
-  const handleFormSubmit = async (data: any) => {
-    setIsSubmitting(true);
-    try {
-      let courseId: string;
-      
-      if (selectedCourse) {
-        // Update existing course
-        const { data: updatedCourse, error } = await supabase
-          .from('courses')
-          .update({
-            title: data.title,
-            description: data.description,
-            image_url: data.image_url,
-            instructor: data.instructor,
-            tags: data.tags,
-          })
-          .eq('id', selectedCourse.id)
-          .select()
-          .single();
-
-        if (error) {
-          throw error;
-        }
-        
-        courseId = selectedCourse.id;
-        
-        toast.success('Curso atualizado', {
-          description: 'As alterações foram salvas com sucesso.',
-        });
-      } else {
-        // Create new course
-        const { data: newCourse, error } = await supabase
-          .from('courses')
-          .insert([{
-            title: data.title,
-            description: data.description,
-            image_url: data.image_url,
-            instructor: data.instructor,
-            tags: data.tags,
-          }])
-          .select()
-          .single();
-
-        if (error) {
-          throw error;
-        }
-        
-        courseId = newCourse.id;
-        
-        // If a companyId was provided in the form, associate the course with the company
-        if (data.companyId) {
-          const { error: relationError } = await supabase
-            .from('company_courses')
-            .insert([{
-              empresa_id: data.companyId,
-              course_id: courseId
-            }]);
-            
-          if (relationError) {
-            throw relationError;
-          }
-        } else if (companyId) {
-          // If no companyId in form but we have a current companyId (from context), use that
-          const { error: relationError } = await supabase
-            .from('company_courses')
-            .insert([{
-              empresa_id: companyId,
-              course_id: courseId
-            }]);
-            
-          if (relationError) {
-            throw relationError;
-          }
-        }
-
-        toast.success('Curso criado', {
-          description: 'O novo curso foi criado com sucesso.',
-        });
-      }
-
-      setIsFormOpen(false);
-      fetchCourses();
-    } catch (error: any) {
-      toast.error('Erro ao salvar curso', {
-        description: error.message,
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    loadCourses();
+  }, [companyId]); 
 
   return {
     courses,
@@ -228,8 +78,7 @@ export const useCourses = (companyId?: string) => {
     isCompanyManagerOpen,
     setIsCompanyManagerOpen,
     isSubmitting,
-    setIsSubmitting,
-    fetchCourses,
+    fetchCourses: loadCourses,
     handleDeleteCourse,
     handleFormSubmit
   };

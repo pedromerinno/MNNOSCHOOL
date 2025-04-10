@@ -10,7 +10,8 @@ import { TagsField } from './courses/form/TagsField';
 import { CompanySelectorField } from './courses/form/CompanySelectorField';
 import { FormActions } from './courses/form/FormActions';
 
-export { CourseFormProps };
+// Use export type to fix the TypeScript error
+export type { CourseFormProps };
 
 export const CourseForm: React.FC<CourseFormProps> = ({ 
   initialData, 
