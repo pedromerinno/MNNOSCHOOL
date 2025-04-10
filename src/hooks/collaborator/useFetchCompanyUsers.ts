@@ -88,6 +88,7 @@ export const useFetchCompanyUsers = (
     try {
       console.log("Fetching collaborators for company:", company.nome, company.id);
       
+      // Get user_empresa relations for this company
       const { data, error } = await supabase
         .from('user_empresa')
         .select('user_id')
