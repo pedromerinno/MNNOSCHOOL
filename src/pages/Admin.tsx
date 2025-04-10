@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,6 +8,7 @@ import { CompanyManagement } from '@/components/admin/CompanyManagement';
 import { CourseManagement } from '@/components/admin/CourseManagement';
 import { IntegrationManagement } from '@/components/admin/integration/IntegrationManagement';
 import { useAuth } from '@/contexts/AuthContext';
+import { Users, Building, Book, Video } from 'lucide-react';
 
 const AdminPage = () => {
   const { userProfile } = useAuth();
@@ -51,7 +53,7 @@ const AdminPage = () => {
                     value="integration" 
                     className="flex items-center py-3 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 text-gray-600 dark:text-gray-300 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400"
                   >
-                    <VideoIcon className="h-4 w-4 mr-2" />
+                    <Video className="h-4 w-4 mr-2" />
                     Integração
                   </TabsTrigger>
                 </TabsList>
