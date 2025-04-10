@@ -1,12 +1,13 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Course } from './types';
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Pencil, Building, Loader2, Users } from "lucide-react";
+import { PlusCircle, Pencil, Building, Loader2, Users, FileText } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { CourseForm } from '../CourseForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CompanyCoursesManager } from '../CompanyCoursesManager';
+import { LessonManager } from './LessonManager';
 import { 
   Table,
   TableBody,
@@ -45,6 +46,8 @@ export const CourseList: React.FC<CourseListProps> = ({
   companyId,
   handleFormSubmit
 }) => {
+  const [isLessonManagerOpen, setIsLessonManagerOpen] = useState(false);
+  
   const handleNewCourse = () => {
     setSelectedCourse(null);
     setIsFormOpen(true);
@@ -58,6 +61,11 @@ export const CourseList: React.FC<CourseListProps> = ({
   const handleManageCompanies = (course: Course) => {
     setSelectedCourse(course);
     setIsCompanyManagerOpen(true);
+  };
+  
+  const handleManageLessons = (course: Course) => {
+    setSelectedCourse(course);
+    setIsLessonManagerOpen(true);
   };
 
   if (isLoading) {
@@ -114,6 +122,14 @@ export const CourseList: React.FC<CourseListProps> = ({
                     <Button 
                       variant="outline" 
                       size="sm"
+                      onClick={() => handleManageLessons(course)}
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      Aulas
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
                       onClick={() => handleEditCourse(course)}
                     >
                       <Pencil className="h-4 w-4 mr-2" />
@@ -167,6 +183,16 @@ export const CourseList: React.FC<CourseListProps> = ({
           )}
         </DialogContent>
       </Dialog>
+      
+      {/* Gerenciador de aulas */}
+      {selectedCourse && (
+        <LessonManager
+          courseId={selectedCourse.id}
+          courseTitle={selectedCourse.title}
+          onClose={() => setIsLessonManagerOpen(false)}
+          open={isLessonManagerOpen}
+        />
+      )}
     </div>
   );
 };
