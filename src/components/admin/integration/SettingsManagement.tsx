@@ -14,7 +14,7 @@ import { IntegrationVideosManager } from './IntegrationVideosManager';
 import { JobRolesManager } from './JobRolesManager';
 import { AccessManagement } from './AccessManagement';
 import { CollaboratorsManagement } from './CollaboratorsManagement';
-import { CourseManagement } from '@/components/admin/CourseManagement';
+import { CompanyCourseManagement } from './CompanyCourseManagement';
 
 export const SettingsManagement: React.FC = () => {
   const { companies, isLoading, fetchCompanies } = useCompanies();
@@ -216,7 +216,7 @@ export const SettingsManagement: React.FC = () => {
                   <CollaboratorsManagement company={selectedCompany} />
                 </TabsContent>
                 <TabsContent value="courses" className="m-0">
-                  <CourseManagement />
+                  <CompanyCourseManagement company={selectedCompany} />
                 </TabsContent>
               </div>
             </Tabs>

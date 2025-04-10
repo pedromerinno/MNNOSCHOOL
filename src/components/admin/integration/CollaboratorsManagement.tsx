@@ -19,7 +19,8 @@ import {
   UserX,
   BadgeCheck,
   BadgeX,
-  Briefcase
+  Briefcase,
+  Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,7 +52,16 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
   
   // Função para buscar usuários da empresa
   const fetchCompanyUsers = async () => {
+    if (!company || !company.id) {
+      console.log("Empresa não definida ou sem ID");
+      setIsLoading(false);
+      return;
+    }
+    
+    setIsLoading(true);
     try {
+      console.log("Buscando colaboradores para empresa:", company.nome, company.id);
+      
       const { data, error } = await supabase
         .from('user_empresa')
         .select('user_id')
@@ -59,10 +69,17 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
         
       if (error) throw error;
       
-      setCompanyUsers(data.map(item => item.user_id));
-      
-      // Buscar cargos dos usuários
-      await fetchUserRoles(data.map(item => item.user_id));
+      if (data && data.length > 0) {
+        console.log(`Encontrados ${data.length} colaboradores`);
+        setCompanyUsers(data.map(item => item.user_id));
+        
+        // Buscar cargos dos usuários
+        await fetchUserRoles(data.map(item => item.user_id));
+      } else {
+        console.log("Nenhum colaborador encontrado para esta empresa");
+        setCompanyUsers([]);
+        setUserRoles({});
+      }
       
     } catch (error: any) {
       console.error("Error fetching company users:", error);
@@ -77,6 +94,7 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
     if (userIds.length === 0) return;
     
     try {
+      // Primeiro, buscar as informações de cargo_id dos perfis
       const { data, error } = await supabase
         .from('profiles')
         .select('id, cargo_id')
@@ -84,54 +102,75 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
         
       if (error) throw error;
       
-      if (data && data.length > 0) {
-        // Filtrar usuários com cargo atribuído
-        const usersWithRoles = data.filter(u => u.cargo_id);
-        if (usersWithRoles.length === 0) return;
-        
-        // Buscar nomes dos cargos
-        const cargoIds = usersWithRoles.map(u => u.cargo_id).filter(Boolean) as string[];
-        
-        if (cargoIds.length > 0) {
-          const { data: rolesData, error: rolesError } = await supabase
-            .from('job_roles')
-            .select('id, title')
-            .in('id', cargoIds);
-            
-          if (rolesError) throw rolesError;
-          
-          const roleMap: Record<string, string> = {};
-          
-          // Criar mapa de nomes de cargos por ID
-          if (rolesData) {
-            const roleNameMap: Record<string, string> = {};
-            rolesData.forEach((role: JobRole) => {
-              roleNameMap[role.id] = role.title;
-            });
-            
-            // Mapear usuários para seus nomes de cargo
-            usersWithRoles.forEach(user => {
-              if (user.cargo_id && roleNameMap[user.cargo_id]) {
-                roleMap[user.id] = roleNameMap[user.cargo_id];
-              }
-            });
-          }
-          
-          setUserRoles(roleMap);
-        }
+      if (!data || data.length === 0) return;
+      
+      // Filtrar usuários com cargo atribuído e obter ids
+      const usersWithRoles = data.filter(u => u.cargo_id);
+      
+      if (usersWithRoles.length === 0) {
+        console.log("Nenhum usuário com cargo atribuído");
+        return;
       }
+      
+      // Extrair IDs de cargos para busca
+      const cargoIds = usersWithRoles
+        .map(u => u.cargo_id)
+        .filter(Boolean) as string[];
+      
+      if (cargoIds.length === 0) return;
+      
+      console.log(`Buscando ${cargoIds.length} cargos`);
+      
+      // Buscar detalhes dos cargos
+      const { data: rolesData, error: rolesError } = await supabase
+        .from('job_roles')
+        .select('id, title')
+        .in('id', cargoIds);
+        
+      if (rolesError) throw rolesError;
+      
+      if (!rolesData || rolesData.length === 0) return;
+      
+      console.log(`Encontrados ${rolesData.length} cargos`);
+      
+      // Criar mapa de nomes de cargos por ID
+      const roleMap: Record<string, string> = {};
+      
+      // Mapear usuários para seus nomes de cargo
+      const roleNameMap: Record<string, string> = {};
+      rolesData.forEach((role: JobRole) => {
+        roleNameMap[role.id] = role.title;
+      });
+      
+      usersWithRoles.forEach(user => {
+        if (user.cargo_id && roleNameMap[user.cargo_id]) {
+          roleMap[user.id] = roleNameMap[user.cargo_id];
+        }
+      });
+      
+      setUserRoles(roleMap);
+      
     } catch (error: any) {
       console.error("Error fetching user roles:", error);
       toast.error(`Erro ao carregar cargos dos usuários: ${error.message}`);
     }
   };
   
-  // Carregar dados iniciais
+  // Carregar dados quando a empresa mudar
   useEffect(() => {
-    if (company) {
+    if (company && company.id) {
+      console.log("Empresa mudou, carregando colaboradores:", company.nome);
       fetchCompanyUsers();
     }
   }, [company]);
+  
+  // Garantir que os usuários sejam carregados
+  useEffect(() => {
+    if (allUsers.length === 0 && !loadingUsers) {
+      console.log("Carregando usuários");
+      fetchUsers();
+    }
+  }, [allUsers, loadingUsers, fetchUsers]);
   
   // Filtra os usuários com base no termo de busca
   const filteredUsers = allUsers.filter(user => {
@@ -148,6 +187,11 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
   
   // Função para adicionar usuário à empresa
   const addUserToCompany = async (userId: string) => {
+    if (!company || !company.id) {
+      toast.error("Nenhuma empresa selecionada");
+      return;
+    }
+    
     try {
       const { error } = await supabase
         .from('user_empresa')
@@ -171,6 +215,11 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
   // Função para remover usuário da empresa
   const removeUserFromCompany = async (userId: string) => {
     if (!confirm("Tem certeza que deseja remover este usuário da empresa?")) return;
+    
+    if (!company || !company.id) {
+      toast.error("Nenhuma empresa selecionada");
+      return;
+    }
     
     try {
       // Primeiro, remover cargo do usuário se tiver um cargo desta empresa
@@ -256,7 +305,7 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
       {isLoading || loadingUsers ? (
         <Card>
           <CardContent className="p-6 text-center">
-            <div className="animate-spin h-8 w-8 border-t-2 border-blue-500 border-r-2 rounded-full mx-auto"></div>
+            <Loader2 className="h-8 w-8 animate-spin text-gray-400 mx-auto" />
             <p className="mt-2 text-gray-500">Carregando colaboradores...</p>
           </CardContent>
         </Card>
@@ -268,9 +317,9 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
             <p className="text-gray-500 dark:text-gray-400 mb-4">
               {searchTerm 
                 ? "Nenhum colaborador corresponde à sua busca" 
-                : "Adicione colaboradores à empresa"}
+                : company ? "Adicione colaboradores à empresa" : "Selecione uma empresa para visualizar colaboradores"}
             </p>
-            {!searchTerm && (
+            {!searchTerm && company && (
               <Button onClick={() => setShowAddUsersDialog(true)}>
                 <UserPlus className="h-4 w-4 mr-2" />
                 Adicionar Colaboradores
@@ -369,7 +418,7 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
           
           {loadingUsers ? (
             <div className="h-72 flex items-center justify-center">
-              <div className="animate-spin h-8 w-8 border-t-2 border-blue-500 border-r-2 rounded-full"></div>
+              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
             </div>
           ) : availableUsers.length === 0 ? (
             <div className="h-72 flex flex-col items-center justify-center">
@@ -432,7 +481,7 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
             </DialogDescription>
           </DialogHeader>
           
-          {selectedUser && (
+          {selectedUser && company && (
             <UserRoleAssignment 
               user={selectedUser}
               companyId={company.id}

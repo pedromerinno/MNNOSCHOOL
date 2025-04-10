@@ -1,17 +1,9 @@
 
 import React from 'react';
 import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs";
-import { 
   Card, 
-  CardContent, 
-  CardHeader 
+  CardContent
 } from "@/components/ui/card";
-import { Book } from "lucide-react";
 import { CourseList } from './courses/CourseList';
 import { useCourses } from './courses/useCourses';
 import { Course } from './courses/types';
@@ -33,6 +25,13 @@ export const CourseManagement: React.FC = () => {
 
   return (
     <div className="space-y-4">
+      <div className="mb-4">
+        <h2 className="text-xl font-semibold">Gerenciamento de Cursos</h2>
+        <p className="text-gray-500 dark:text-gray-400">
+          Administre todos os cursos da plataforma
+        </p>
+      </div>
+      
       <Card>
         <CardContent>
           <CourseList 
@@ -45,10 +44,10 @@ export const CourseManagement: React.FC = () => {
             isCompanyManagerOpen={isCompanyManagerOpen}
             setIsCompanyManagerOpen={setIsCompanyManagerOpen}
             isSubmitting={isSubmitting}
+            showAllCourses={true}
           />
         </CardContent>
       </Card>
     </div>
   );
 };
-
