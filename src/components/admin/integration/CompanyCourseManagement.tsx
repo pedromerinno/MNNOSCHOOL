@@ -34,7 +34,8 @@ export const CompanyCourseManagement: React.FC<CompanyCourseManagementProps> = (
     setIsFormOpen,
     isCompanyManagerOpen, 
     setIsCompanyManagerOpen, 
-    isSubmitting
+    isSubmitting,
+    handleFormSubmit
   } = useCourses(currentCompanyId);
 
   return (
@@ -60,6 +61,7 @@ export const CompanyCourseManagement: React.FC<CompanyCourseManagementProps> = (
             isSubmitting={isSubmitting}
             showAllCourses={false}
             companyId={currentCompanyId}
+            handleFormSubmit={handleFormSubmit}
           />
         </CardContent>
       </Card>
