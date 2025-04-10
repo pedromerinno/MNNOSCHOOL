@@ -1,5 +1,5 @@
 
-import { useCallback } from "react";
+import React, { useCallback, useRef } from "react";
 import { Company } from "@/types/company";
 import { useCompanyRequest } from "./useCompanyRequest";
 import { useCompanyCache } from "./useCompanyCache";
