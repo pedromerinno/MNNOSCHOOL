@@ -41,13 +41,16 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
         // Buscar cargos da empresa
         const { data: roleData, error: roleError } = await supabase
           .from('job_roles')
-          .select('id, title, responsibilities, requirements, expectations, order_index, company_id, description')
+          .select('*')
           .eq('company_id', companyId)
           .order('title');
           
         if (roleError) throw roleError;
         
-        setRoles(roleData || []);
+        // Aqui garantimos que o tipo retornado seja compatível com JobRole
+        if (roleData) {
+          setRoles(roleData as JobRole[]);
+        }
         
         // Buscar cargo atual do usuário
         const { data: userData, error: userError } = await supabase
@@ -65,7 +68,7 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
           // Buscar nome do cargo atual
           const { data: currentRoleData, error: currentRoleError } = await supabase
             .from('job_roles')
-            .select('title, responsibilities, requirements, expectations, order_index, company_id, description')
+            .select('*')
             .eq('id', userData.cargo_id)
             .single();
             
