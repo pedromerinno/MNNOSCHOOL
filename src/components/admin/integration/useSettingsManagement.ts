@@ -29,6 +29,11 @@ export const useSettingsManagement = () => {
     if (companies.length > 0 && !selectedCompany) {
       console.log("Setting initial selected company:", companies[0].nome);
       setSelectedCompany(companies[0]);
+      
+      // Broadcast company selection for other components
+      window.dispatchEvent(new CustomEvent('settings-company-changed', { 
+        detail: { company: companies[0] } 
+      }));
     }
   }, [companies, selectedCompany]);
 

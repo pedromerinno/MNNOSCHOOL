@@ -156,10 +156,10 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
     }
   };
   
-  // Load data when company changes
+  // Load data when component mounts and when company changes
   useEffect(() => {
     if (company && company.id) {
-      console.log("Company changed, loading collaborators:", company.nome);
+      console.log("Company provided, loading collaborators:", company.nome);
       fetchCompanyUsers();
     }
   }, [company, reloadTrigger]);
@@ -167,7 +167,7 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
   // Ensure users are loaded
   useEffect(() => {
     if (allUsers.length === 0 && !loadingUsers) {
-      console.log("Loading users");
+      console.log("Loading users in CollaboratorsManagement");
       fetchUsers();
     }
   }, [allUsers, loadingUsers, fetchUsers]);
@@ -176,17 +176,25 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
   useEffect(() => {
     const handleCompanyChange = (event: Event) => {
       console.log("CollaboratorsManagement: Company change event detected");
-      fetchCompanyUsers();
+      // Force a refresh of company users data
+      setReloadTrigger(prev => prev + 1);
     };
     
-    window.addEventListener('settings-company-changed', handleCompanyChange);
+    const handleSettingsCompanyChanged = (event: CustomEvent<{company: Company}>) => {
+      console.log("Settings company changed event detected:", event.detail.company.nome);
+      // We don't need to set the company here as it will be passed through props
+      // Just trigger a reload of the data
+      setReloadTrigger(prev => prev + 1);
+    };
+    
+    window.addEventListener('settings-company-changed', handleSettingsCompanyChanged as EventListener);
     window.addEventListener('company-relation-changed', handleCompanyChange);
     
     return () => {
-      window.removeEventListener('settings-company-changed', handleCompanyChange);
+      window.removeEventListener('settings-company-changed', handleSettingsCompanyChanged as EventListener);
       window.removeEventListener('company-relation-changed', handleCompanyChange);
     };
-  }, [company]);
+  }, []);
   
   // Filter users based on search term
   const filteredUsers = allUsers.filter(user => {
