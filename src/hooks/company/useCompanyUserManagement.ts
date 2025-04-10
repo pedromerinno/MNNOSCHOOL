@@ -2,6 +2,7 @@
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { UserProfile } from "@/hooks/useUsers";
 
 export const useCompanyUserManagement = () => {
   /**
@@ -87,8 +88,41 @@ export const useCompanyUserManagement = () => {
     }
   }, []);
   
+  /**
+   * Get all users associated with a company
+   */
+  const getCompanyUsers = useCallback(async (companyId: string): Promise<UserProfile[]> => {
+    try {
+      const { data, error } = await supabase
+        .from('user_empresa')
+        .select(`
+          user_id,
+          profiles:user_id(id, display_name, email, is_admin)
+        `)
+        .eq('empresa_id', companyId);
+        
+      if (error) {
+        console.error('Error fetching company users:', error);
+        toast.error("Erro ao buscar usuários da empresa");
+        return [];
+      }
+      
+      // Transform the data to match UserProfile structure
+      const users: UserProfile[] = data
+        .map(item => item.profiles)
+        .filter(Boolean);  // Filter out any null values
+        
+      return users;
+    } catch (error) {
+      console.error('Unexpected error fetching company users:', error);
+      toast.error("Erro inesperado ao buscar usuários");
+      return [];
+    }
+  }, []);
+  
   return {
     assignUserToCompany,
-    removeUserFromCompany
+    removeUserFromCompany,
+    getCompanyUsers
   };
 };

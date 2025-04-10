@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 interface UseCompanyUpdateProps {
   setIsLoading: (isLoading: boolean) => void;
-  setCompanies: (companies: Company[]) => void;
+  setCompanies: (companies: Company[] | ((prevCompanies: Company[]) => Company[])) => void;
   selectedCompany: Company | null;
   setSelectedCompany: (company: Company | null) => void;
 }
@@ -45,7 +45,7 @@ export const useCompanyUpdate = ({
       toast.success(`Empresa ${updatedCompany.nome} atualizada com sucesso`);
       
       // Update the list of companies
-      setCompanies(prevCompanies => 
+      setCompanies((prevCompanies: Company[]) => 
         prevCompanies.map(company => 
           company.id === companyId ? updatedCompany : company
         )

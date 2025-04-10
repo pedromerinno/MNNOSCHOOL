@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 interface UseCompanyCreateProps {
   setIsLoading: (isLoading: boolean) => void;
-  setCompanies: (companies: Company[]) => void;
+  setCompanies: (companies: Company[] | ((prevCompanies: Company[]) => Company[])) => void;
 }
 
 export const useCompanyCreate = ({ 
@@ -39,7 +39,7 @@ export const useCompanyCreate = ({
       toast.success(`Empresa ${newCompany.nome} criada com sucesso`);
       
       // Update the list of companies
-      setCompanies(prevCompanies => [...prevCompanies, newCompany]);
+      setCompanies((prevCompanies: Company[]) => [...prevCompanies, newCompany]);
       
       // Trigger refresh event
       window.dispatchEvent(new Event('company-relation-changed'));

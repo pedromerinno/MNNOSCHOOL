@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 interface UseCompanyDeleteProps {
   setIsLoading: (isLoading: boolean) => void;
-  setCompanies: (companies: Company[]) => void;
+  setCompanies: (companies: Company[] | ((prevCompanies: Company[]) => Company[])) => void;
   selectedCompany: Company | null;
   setSelectedCompany: (company: Company | null) => void;
 }
@@ -38,7 +38,7 @@ export const useCompanyDelete = ({
       toast.success("Empresa excluída com sucesso");
       
       // Update the list of companies
-      setCompanies(prevCompanies => 
+      setCompanies((prevCompanies: Company[]) => 
         prevCompanies.filter(company => company.id !== companyId)
       );
       
