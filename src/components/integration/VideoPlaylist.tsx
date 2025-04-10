@@ -1,9 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { Info, List, Video } from "lucide-react";
+import { Info, List, Video, ExternalLink, AlertCircle } from "lucide-react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface CompanyVideo {
   id: string;
@@ -32,6 +34,8 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
   // State for videos from the database
   const [videos, setVideos] = useState<CompanyVideo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [videoError, setVideoError] = useState(false);
+  const [videoLoading, setVideoLoading] = useState(true);
   
   // Inicializar com o vídeo principal ou com o primeiro vídeo da playlist
   const initialVideo = mainVideo || (videos.length > 0 ? videos[0].video_url : '');
@@ -40,6 +44,12 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
   const [currentVideo, setCurrentVideo] = useState(initialVideo);
   const [currentDescription, setCurrentDescription] = useState(initialDescription);
   const [selectedVideoIndex, setSelectedVideoIndex] = useState<number | null>(null);
+
+  // Resetar estados do vídeo ao trocar de vídeo
+  useEffect(() => {
+    setVideoError(false);
+    setVideoLoading(true);
+  }, [currentVideo]);
 
   // Fetch videos from database
   useEffect(() => {
@@ -89,35 +99,54 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
     setSelectedVideoIndex(index);
   };
 
+  // Extrair o ID do vídeo do YouTube
+  const getYoutubeVideoId = (url: string): string | null => {
+    if (!url) return null;
+    
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+
   // Formatamos o URL do vídeo para garantir que ele funcione como um embed
   const getEmbedUrl = (url: string) => {
     if (!url) return '';
     
-    // Se já for um URL de embed, retorna como está
-    if (url.includes('embed')) return url;
-    
-    // YouTube: converte o URL padrão para o formato de embed
-    if (url.includes('youtube.com/watch')) {
-      const videoId = new URL(url).searchParams.get('v');
-      return `https://www.youtube.com/embed/${videoId}`;
+    // Se já for um URL de embed, transformar para nocookie
+    if (url.includes('youtube.com/embed/')) {
+      const videoId = url.split('/').pop();
+      return `https://www.youtube-nocookie.com/embed/${videoId}`;
     }
     
-    // YouTube: converte o URL curto para o formato de embed
+    // YouTube: converter URL padrão para formato nocookie
+    if (url.includes('youtube.com/watch')) {
+      const videoId = getYoutubeVideoId(url);
+      return videoId ? `https://www.youtube-nocookie.com/embed/${videoId}` : '';
+    }
+    
+    // YouTube: converter URL curta para formato nocookie
     if (url.includes('youtu.be')) {
       const videoId = url.split('/').pop();
-      return `https://www.youtube.com/embed/${videoId}`;
+      return videoId ? `https://www.youtube-nocookie.com/embed/${videoId}` : '';
     }
     
-    // Vimeo: converte o URL padrão para o formato de embed
-    if (url.includes('vimeo.com')) {
-      const videoId = url.split('/').pop();
-      return `https://player.vimeo.com/video/${videoId}`;
-    }
-    
+    // Se não for YouTube, retornar a URL original
     return url;
   };
 
+  const handleVideoError = () => {
+    setVideoError(true);
+    setVideoLoading(false);
+  };
+
+  const handleVideoLoad = () => {
+    setVideoLoading(false);
+    setVideoError(false);
+  };
+
   const embedUrl = getEmbedUrl(currentVideo);
+  const isYouTube = currentVideo && (currentVideo.includes('youtube.com') || currentVideo.includes('youtu.be'));
 
   // If no videos are available and no main video, display a message
   if (!mainVideo && videos.length === 0 && !isLoading) {
@@ -141,15 +170,50 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
           <Card className="overflow-hidden">
-            <div className="aspect-video bg-gray-100 dark:bg-gray-800">
+            <div className="aspect-video bg-gray-100 dark:bg-gray-800 relative">
               {embedUrl ? (
-                <iframe 
-                  src={embedUrl}
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  title="Vídeo de integração"
-                />
+                <>
+                  {videoLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+                      <div className="animate-spin h-8 w-8 border-t-2 border-primary border-r-2 rounded-full"></div>
+                    </div>
+                  )}
+                  
+                  {videoError && isYouTube ? (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+                      <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+                      <h3 className="text-xl font-medium mb-2">A conexão com YouTube foi recusada</h3>
+                      <p className="text-muted-foreground mb-4">
+                        Isso pode ocorrer devido a bloqueios de rede ou restrições de privacidade.
+                      </p>
+                      <Button asChild variant="outline">
+                        <a href={currentVideo} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Assistir diretamente no YouTube
+                        </a>
+                      </Button>
+                    </div>
+                  ) : videoError ? (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+                      <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+                      <h3 className="text-xl font-medium mb-2">Erro ao carregar o vídeo</h3>
+                      <p className="text-muted-foreground mb-4">
+                        Não foi possível carregar o conteúdo do vídeo.
+                      </p>
+                    </div>
+                  ) : null}
+                  
+                  <iframe 
+                    src={embedUrl}
+                    className="w-full h-full"
+                    style={{ display: videoError ? 'none' : 'block' }}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    title="Vídeo de integração"
+                    onError={handleVideoError}
+                    onLoad={handleVideoLoad}
+                  />
+                </>
               ) : (
                 <div className="flex flex-col items-center justify-center h-full">
                   <Video className="h-16 w-16 text-gray-400" />
