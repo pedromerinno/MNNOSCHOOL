@@ -1,15 +1,19 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { BookOpen, Video, Users, FileText, Quote, ArrowRight } from "lucide-react";
+import { BookOpen, Video, Users, FileText, Quote, ArrowRight, Play } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 const Manifesto = () => {
   const { user } = useAuth();
   const { getUserCompanies, selectedCompany, isLoading } = useCompanies();
+  const [videoError, setVideoError] = useState(false);
+  const [loadingVideo, setLoadingVideo] = useState(true);
+  const [showVideo, setShowVideo] = useState(false);
 
   // Initial fetch of user company
   useEffect(() => {
@@ -43,7 +47,7 @@ const Manifesto = () => {
     
     const videoId = getYoutubeVideoId(url);
     if (videoId) {
-      return `https://www.youtube.com/embed/${videoId}`;
+      return `https://www.youtube-nocookie.com/embed/${videoId}`;
     }
     
     // Se já for um URL de embed, retorna como está
@@ -52,7 +56,36 @@ const Manifesto = () => {
     return url;
   };
 
+  // Obter thumbnail do YouTube
+  const getYoutubeThumbnail = (url: string | null) => {
+    if (!url) return null;
+    
+    const videoId = getYoutubeVideoId(url);
+    if (videoId) {
+      // Retorna a thumbnail de alta qualidade
+      return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+    }
+    
+    return null;
+  };
+
   const videoEmbedUrl = getEmbedUrl(selectedCompany?.video_institucional);
+  const thumbnailUrl = getYoutubeThumbnail(selectedCompany?.video_institucional);
+
+  const handleVideoError = () => {
+    console.error('Erro ao carregar vídeo do YouTube');
+    setVideoError(true);
+    setLoadingVideo(false);
+  };
+
+  const handleVideoLoad = () => {
+    setLoadingVideo(false);
+    setVideoError(false);
+  };
+
+  const handlePlayVideo = () => {
+    setShowVideo(true);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -80,17 +113,60 @@ const Manifesto = () => {
         ) : (
           <div className="grid md:grid-cols-2 gap-8 mb-8">
             <Card className="overflow-hidden">
-              {videoEmbedUrl ? (
-                <div className="aspect-video">
-                  <iframe 
-                    className="w-full h-full" 
-                    src={videoEmbedUrl} 
-                    title="Vídeo Institucional" 
-                    frameBorder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowFullScreen
-                  />
-                </div>
+              {videoEmbedUrl && selectedCompany?.video_institucional ? (
+                <>
+                  {!showVideo && thumbnailUrl && !videoError ? (
+                    <div 
+                      className="aspect-video bg-gray-100 dark:bg-gray-800 relative cursor-pointer group"
+                      onClick={handlePlayVideo}
+                    >
+                      <img 
+                        src={thumbnailUrl} 
+                        alt="Thumbnail do vídeo" 
+                        className="w-full h-full object-cover"
+                        onError={() => setVideoError(true)}
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="bg-white/90 dark:bg-gray-800/90 rounded-full p-4">
+                          <Play className="h-10 w-10 text-red-600 dark:text-red-500" />
+                        </div>
+                      </div>
+                    </div>
+                  ) : showVideo && !videoError ? (
+                    <div className="aspect-video">
+                      {loadingVideo && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+                          <Skeleton className="h-full w-full" />
+                        </div>
+                      )}
+                      <iframe 
+                        className="w-full h-full" 
+                        src={videoEmbedUrl} 
+                        title="Vídeo Institucional" 
+                        frameBorder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowFullScreen
+                        onLoad={handleVideoLoad}
+                        onError={handleVideoError}
+                      />
+                    </div>
+                  ) : (
+                    <div className="aspect-video bg-gray-200 dark:bg-gray-800 flex flex-col items-center justify-center p-6">
+                      <Video className="h-16 w-16 text-gray-400 mb-4" />
+                      <span className="text-center text-gray-500 mb-4">A conexão com YouTube foi recusada.</span>
+                      <p className="text-sm text-gray-500 text-center mb-3">
+                        Não foi possível carregar o vídeo. Por favor, tente novamente mais tarde ou entre em contato com o suporte.
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => window.open(selectedCompany.video_institucional, '_blank')}
+                        className="mt-2"
+                      >
+                        Assistir no YouTube <ArrowRight className="h-4 w-4 ml-2" />
+                      </Button>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="aspect-video bg-gray-200 dark:bg-gray-800 flex items-center justify-center">
                   <Video className="h-16 w-16 text-gray-400" />

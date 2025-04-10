@@ -6,12 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Video } from "lucide-react";
+import { Video, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Company } from "@/types/company";
 import { SubmitButton } from "./form/SubmitButton";
 import { VideoPlaylistManager } from "./VideoPlaylistManager";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface IntegrationVideosManagerProps {
   company: Company;
@@ -28,6 +29,13 @@ export const IntegrationVideosManager: React.FC<IntegrationVideosManagerProps> =
     setIsSaving(true);
     
     try {
+      // Validar URL do YouTube
+      if (videoUrl && !isValidYoutubeUrl(videoUrl)) {
+        toast.error("Por favor, insira uma URL válida do YouTube");
+        setIsSaving(false);
+        return;
+      }
+      
       const { error } = await supabase
         .from('empresas')
         .update({
@@ -49,6 +57,14 @@ export const IntegrationVideosManager: React.FC<IntegrationVideosManagerProps> =
     } finally {
       setIsSaving(false);
     }
+  };
+  
+  // Validar URL do YouTube
+  const isValidYoutubeUrl = (url: string) => {
+    if (!url) return true; // Vazio é válido
+    
+    const regExp = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=)|youtu\.be\/)([^#&?]*).*/;
+    return regExp.test(url);
   };
   
   // Extract YouTube video ID from URL
@@ -79,6 +95,15 @@ export const IntegrationVideosManager: React.FC<IntegrationVideosManagerProps> =
             </p>
           </div>
           
+          <Alert variant="info" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Dica para adicionar vídeos do YouTube</AlertTitle>
+            <AlertDescription>
+              Use URLs no formato <code>https://www.youtube.com/watch?v=XXXX</code> ou <code>https://youtu.be/XXXX</code>. 
+              O sistema automaticamente converterá para o formato de incorporação adequado.
+            </AlertDescription>
+          </Alert>
+          
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="videoUrl">URL do Vídeo (YouTube)</Label>
@@ -87,7 +112,11 @@ export const IntegrationVideosManager: React.FC<IntegrationVideosManagerProps> =
                 value={videoUrl}
                 onChange={(e) => setVideoUrl(e.target.value)}
                 placeholder="https://www.youtube.com/watch?v=..."
+                className={!isValidYoutubeUrl(videoUrl) ? "border-red-500" : ""}
               />
+              {!isValidYoutubeUrl(videoUrl) && videoUrl && (
+                <p className="text-red-500 text-sm mt-1">URL do YouTube inválida</p>
+              )}
             </div>
             
             <div className="space-y-2">
@@ -104,7 +133,7 @@ export const IntegrationVideosManager: React.FC<IntegrationVideosManagerProps> =
             {videoId ? (
               <div className="aspect-w-16 aspect-h-9">
                 <iframe
-                  src={`https://www.youtube.com/embed/${videoId}`}
+                  src={`https://www.youtube-nocookie.com/embed/${videoId}`}
                   className="w-full rounded-lg"
                   style={{ aspectRatio: '16/9' }}
                   allowFullScreen
