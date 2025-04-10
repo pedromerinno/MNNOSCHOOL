@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageSquare, Users, ExternalLink, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -59,7 +59,7 @@ const Community = () => {
       id: Date.now().toString(),
       title: newDiscussionTitle,
       content: newDiscussionContent,
-      author: userProfile?.display_name || user?.email?.split("@")[0] || "Usuário",
+      author: userProfile?.displayName || user?.email?.split("@")[0] || "Usuário",
       createdAt: new Date().toISOString(),
       replies: 0,
       participants: 1
