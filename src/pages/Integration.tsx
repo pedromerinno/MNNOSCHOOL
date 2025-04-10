@@ -1,6 +1,7 @@
 
 import { useCompanies } from "@/hooks/useCompanies";
 import { Skeleton } from "@/components/ui/skeleton";
+import { VideoPlaylist } from "@/components/integration/VideoPlaylist";
 
 const Integration = () => {
   const { selectedCompany, isLoading } = useCompanies();
@@ -50,6 +51,16 @@ const Integration = () => {
                   <p className="text-gray-600 dark:text-gray-400">Detalhes sobre suas responsabilidades e expectativas.</p>
                 </div>
               </div>
+              
+              {/* Playlist de vídeos */}
+              <div className="mt-8">
+                <h3 className="text-xl font-semibold mb-4 dark:text-white">Vídeos de integração</h3>
+                <VideoPlaylist 
+                  companyId={selectedCompany?.id} 
+                  mainVideo={selectedCompany?.video_institucional || ""}
+                  mainVideoDescription={selectedCompany?.descricao_video || ""}
+                />
+              </div>
             </>
           )}
         </div>
@@ -59,3 +70,4 @@ const Integration = () => {
 };
 
 export default Integration;
+
