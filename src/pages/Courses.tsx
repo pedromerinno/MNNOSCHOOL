@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { CourseList } from "@/components/courses/CourseList";
@@ -25,7 +24,6 @@ const Courses = () => {
   const [loading, setLoading] = useState(true);
   const [recentLoading, setRecentLoading] = useState(true);
 
-  // Get company color for styling
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
 
   useEffect(() => {
@@ -35,11 +33,9 @@ const Courses = () => {
       try {
         setLoading(true);
         
-        // Get user ID
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Usuário não autenticado');
         
-        // Fetch courses for company
         const { data: companyAccess } = await supabase
           .from('company_courses')
           .select('course_id')
@@ -52,7 +48,6 @@ const Courses = () => {
         
         const courseIds = companyAccess.map(access => access.course_id);
         
-        // Get a random featured course (in a real app, this would be based on criteria)
         const { data: coursesData } = await supabase
           .from('courses')
           .select('*')
@@ -75,11 +70,9 @@ const Courses = () => {
       try {
         setRecentLoading(true);
         
-        // Get user ID
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Usuário não autenticado');
         
-        // Get user's course progress
         const { data: progressData, error: progressError } = await supabase
           .from('user_course_progress')
           .select('course_id, progress, completed, favorite, last_accessed')
@@ -97,10 +90,8 @@ const Courses = () => {
           return;
         }
         
-        // Get courses from the progress data
         const courseIds = progressData.map(item => item.course_id);
         
-        // Fetch courses for company
         const { data: companyAccess } = await supabase
           .from('company_courses')
           .select('course_id')
@@ -114,7 +105,6 @@ const Courses = () => {
         
         const accessibleCourseIds = companyAccess.map(access => access.course_id);
         
-        // Filter course IDs to only include those accessible to the company
         const filteredCourseIds = courseIds.filter(id => 
           accessibleCourseIds.includes(id)
         );
@@ -125,7 +115,6 @@ const Courses = () => {
           return;
         }
         
-        // Get the course details
         const { data: coursesData } = await supabase
           .from('courses')
           .select('*')
@@ -137,7 +126,6 @@ const Courses = () => {
           return;
         }
         
-        // Merge course data with progress data
         const coursesWithProgress = coursesData.map(course => {
           const progress = progressData.find(p => p.course_id === course.id);
           return {
@@ -148,7 +136,6 @@ const Courses = () => {
           };
         });
         
-        // Sort by last accessed
         coursesWithProgress.sort((a, b) => {
           const progressA = progressData.find(p => p.course_id === a.id);
           const progressB = progressData.find(p => p.course_id === b.id);
@@ -190,66 +177,61 @@ const Courses = () => {
           </p>
         </div>
         
-        {/* Featured Course Hero - Updated to match new design */}
         {featuredCourse && (
-          <div className="rounded-2xl overflow-hidden mb-8 bg-[#1A1F2C]">
-            <div className="relative">
-              <div className="flex flex-col md:flex-row">
-                {/* Left content section */}
+          <div className="rounded-2xl overflow-hidden mb-8 bg-[#1A1F2C] h-[350px]">
+            <div className="relative h-full">
+              <div className="flex flex-col md:flex-row h-full">
                 <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-between">
-                  <div>
-                    <h1 className="text-3xl md:text-4xl font-bold text-white mb-6">
-                      {featuredCourse.title}
-                    </h1>
-                    
-                    <div className="flex gap-2 mb-8">
-                      <Badge variant="outline" className="bg-black/30 text-white border-none">
-                        IA
-                      </Badge>
-                      <Badge variant="outline" className="bg-black/30 text-white border-none">
-                        Ilustração
-                      </Badge>
-                      <Badge variant="outline" className="bg-black/30 text-white border-none">
-                        Conceitos
-                      </Badge>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-wrap justify-between items-center">
-                    {/* Instructor avatar and name */}
-                    <div className="flex items-center space-x-3 mb-4 md:mb-0">
-                      <div className="h-10 w-10 rounded-full bg-gray-500 flex items-center justify-center text-white text-lg font-medium overflow-hidden">
-                        {featuredCourse.instructor ? (
-                          <img 
-                            src={`https://i.pravatar.cc/100?u=${featuredCourse.instructor}`} 
-                            alt={featuredCourse.instructor}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <span>P</span>
-                        )}
+                    <div>
+                      <h1 className="text-3xl md:text-4xl font-bold text-white mb-6">
+                        {featuredCourse.title}
+                      </h1>
+                      
+                      <div className="flex gap-2 mb-8">
+                        <Badge variant="outline" className="bg-black/30 text-white border-none">
+                          IA
+                        </Badge>
+                        <Badge variant="outline" className="bg-black/30 text-white border-none">
+                          Ilustração
+                        </Badge>
+                        <Badge variant="outline" className="bg-black/30 text-white border-none">
+                          Conceitos
+                        </Badge>
                       </div>
-                      <span className="text-white">{featuredCourse.instructor || "Pedro"}</span>
                     </div>
                     
-                    {/* Watch now button */}
-                    <Button 
-                      className="bg-white text-black hover:bg-gray-100 rounded-full gap-2 px-6"
-                      onClick={() => window.location.href = `/courses/${featuredCourse.id}`}
-                    >
-                      Assistir agora
-                      <Play className="h-4 w-4" />
-                    </Button>
+                    <div className="flex flex-wrap justify-between items-center">
+                      <div className="flex items-center space-x-3 mb-4 md:mb-0">
+                        <div className="h-10 w-10 rounded-full bg-gray-500 flex items-center justify-center text-white text-lg font-medium overflow-hidden">
+                          {featuredCourse.instructor ? (
+                            <img 
+                              src={`https://i.pravatar.cc/100?u=${featuredCourse.instructor}`} 
+                              alt={featuredCourse.instructor}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <span>P</span>
+                          )}
+                        </div>
+                        <span className="text-white">{featuredCourse.instructor || "Pedro"}</span>
+                      </div>
+                      
+                      <Button 
+                        className="bg-white text-black hover:bg-gray-100 rounded-full gap-2 px-6"
+                        onClick={() => window.location.href = `/courses/${featuredCourse.id}`}
+                      >
+                        Assistir agora
+                        <Play className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
                 
-                {/* Right image section with overlay */}
-                <div className="w-full md:w-1/2 relative">
+                <div className="w-full md:w-1/2 relative h-full">
                   <div className="absolute inset-0 bg-gradient-to-r from-[#1A1F2C] via-transparent to-transparent z-10 md:block hidden"></div>
                   <img 
                     src={featuredCourse.image_url || "https://images.unsplash.com/photo-1617096199719-18e5acee65f8?auto=format&fit=crop&w=1200&q=80"} 
                     alt={featuredCourse.title} 
-                    className="w-full h-full object-cover min-h-[300px]"
+                    className="w-full h-full object-cover"
                   />
                 </div>
               </div>
@@ -257,7 +239,6 @@ const Courses = () => {
           </div>
         )}
         
-        {/* Recent Courses Section */}
         {recentCourses.length > 0 && (
           <RecentCourses 
             courses={recentCourses} 
@@ -266,7 +247,6 @@ const Courses = () => {
           />
         )}
         
-        {/* Header with filter */}
         <div className="flex justify-between items-center mt-8">
           <div className="flex items-center space-x-2">
             <Book className="h-5 w-5 text-gray-500" />
@@ -294,7 +274,6 @@ const Courses = () => {
           </DropdownMenu>
         </div>
         
-        {/* Course List */}
         <CourseList 
           title="" 
           filter="all" 
