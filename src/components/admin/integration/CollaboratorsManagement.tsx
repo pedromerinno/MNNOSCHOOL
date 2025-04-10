@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, X, UserPlus, FileText } from "lucide-react";
 import { Company } from "@/types/company";
-import { useCollaboratorManagement } from "@/hooks/useCollaboratorManagement";
+import { useCollaboratorManagement } from "@/hooks/collaborator";
 import { LoadingCollaborators } from './collaborators/LoadingCollaborators';
 import { EmptyCollaboratorsList } from './collaborators/EmptyCollaboratorsList';
 import { CollaboratorsList } from './collaborators/CollaboratorsList';
