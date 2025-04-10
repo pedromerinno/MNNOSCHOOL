@@ -29,7 +29,7 @@ export const useUserDocumentsViewer = () => {
         
       if (error) throw error;
       
-      setDocuments(data || []);
+      setDocuments(data as UserDocument[]);
     } catch (error: any) {
       console.error('Error fetching user documents:', error);
       toast.error(`Erro ao carregar documentos: ${error.message}`);

@@ -428,6 +428,45 @@ export type Database = {
           },
         ]
       }
+      user_documents: {
+        Row: {
+          company_id: string
+          description: string | null
+          document_type: string
+          file_path: string
+          file_type: string
+          id: string
+          name: string
+          uploaded_at: string
+          uploaded_by: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          description?: string | null
+          document_type: string
+          file_path: string
+          file_type: string
+          id?: string
+          name: string
+          uploaded_at?: string
+          uploaded_by: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          description?: string | null
+          document_type?: string
+          file_path?: string
+          file_type?: string
+          id?: string
+          name?: string
+          uploaded_at?: string
+          uploaded_by?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_empresa: {
         Row: {
           created_at: string

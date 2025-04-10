@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +14,8 @@ interface UserDocumentsListProps {
   onUploadClick: () => void;
 }
 
+const createElement = document.createElement.bind(document);
+
 export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
   documents,
   isLoading,
@@ -29,9 +30,8 @@ export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
         
       if (error) throw error;
       
-      // Create a download link and trigger it
       const url = URL.createObjectURL(data);
-      const a = document.createElement('a');
+      const a = createElement('a');
       a.href = url;
       a.download = document.name;
       a.click();

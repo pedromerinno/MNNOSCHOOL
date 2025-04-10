@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UserDocument, DocumentType } from "@/types/document";
@@ -22,7 +22,7 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
         .eq('company_id', companyId);
 
       if (error) throw error;
-      setDocuments(data || []);
+      setDocuments(data as UserDocument[]);
     } catch (error: any) {
       console.error('Error fetching user documents:', error);
       toast.error(`Erro ao buscar documentos: ${error.message}`);
@@ -36,7 +36,7 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
     file: File, 
     documentType: DocumentType, 
     description?: string
-  ) => {
+  ): Promise<UserDocument | null> => {
     if (!userId || !companyId || !file) {
       toast.error('Informações insuficientes para upload');
       return null;
@@ -73,9 +73,10 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
 
       if (error) throw error;
 
+      const newDoc = data as UserDocument;
+      setDocuments(prev => [...prev, newDoc]);
       toast.success('Documento enviado com sucesso');
-      setDocuments(prev => [...prev, data]);
-      return data;
+      return newDoc;
     } catch (error: any) {
       console.error('Error uploading document:', error);
       toast.error(`Erro no upload: ${error.message}`);
@@ -86,7 +87,7 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
   }, [userId, companyId]);
 
   // Delete a document
-  const deleteDocument = useCallback(async (documentId: string) => {
+  const deleteDocument = useCallback(async (documentId: string): Promise<boolean> => {
     try {
       // 1. Get document details to find the file path
       const { data: document, error: fetchError } = await supabase
@@ -124,13 +125,6 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
       return false;
     }
   }, []);
-
-  // Initial fetch
-  useEffect(() => {
-    if (userId && companyId) {
-      fetchDocuments();
-    }
-  }, [userId, companyId, fetchDocuments]);
 
   return {
     documents,

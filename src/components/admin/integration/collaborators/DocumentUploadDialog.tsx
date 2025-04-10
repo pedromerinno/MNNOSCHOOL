@@ -18,6 +18,8 @@ interface DocumentUploadDialogProps {
   onUploadComplete: () => void;
 }
 
+const createDocument = document.createElement.bind(document);
+
 export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
   open,
   onOpenChange,
