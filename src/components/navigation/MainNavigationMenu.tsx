@@ -13,7 +13,7 @@ import { useCompanies } from "@/hooks/useCompanies";
 
 export const MainNavigationMenu = () => {
   const { user } = useAuth();
-  const { userCompanies } = useCompanies();
+  const { userCompanies, selectedCompany } = useCompanies();
 
   // Log para debug do número de empresas carregadas
   useEffect(() => {
@@ -22,8 +22,15 @@ export const MainNavigationMenu = () => {
     }
   }, [userCompanies.length]);
 
+  // Pegamos a cor da empresa ou usamos o azul padrão
+  const primaryColor = selectedCompany?.cor_principal || "#1EAEDB";
+  const headerBgColor = `${primaryColor}05`; // 05 é a opacidade em hex (2%)
+
   return (
-    <header className="sticky top-0 z-40 w-full border-b shadow-sm bg-background dark:bg-gray-950">
+    <header 
+      className="sticky top-0 z-40 w-full border-b shadow-sm bg-background dark:bg-gray-950"
+      style={{ backgroundColor: headerBgColor }}
+    >
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center space-x-8">
           <div className="flex items-center">
@@ -34,9 +41,9 @@ export const MainNavigationMenu = () => {
         </div>
         
         <div className="flex items-center space-x-3">
-          <ThemeToggle />
-          
           <SearchBar />
+          
+          <ThemeToggle />
           
           {user ? (
             <UserNavigation />
