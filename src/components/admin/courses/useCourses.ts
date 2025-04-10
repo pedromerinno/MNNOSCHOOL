@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from '@/hooks/use-toast';
@@ -79,7 +80,26 @@ export const useCourses = (companyId?: string) => {
     }
   };
 
-  // Fetch courses on mount
+  // Listen for company changes in settings
+  useEffect(() => {
+    const handleSettingsCompanyChange = (e: CustomEvent) => {
+      if (e.detail?.company?.id) {
+        console.log(`Company changed in settings, updating courses for: ${e.detail.company.nome}`);
+        // Close any open dialogs
+        setIsFormOpen(false);
+        setIsCompanyManagerOpen(false);
+        setSelectedCourse(null);
+      }
+    };
+
+    window.addEventListener('settings-company-changed', handleSettingsCompanyChange as EventListener);
+    
+    return () => {
+      window.removeEventListener('settings-company-changed', handleSettingsCompanyChange as EventListener);
+    };
+  }, []);
+
+  // Fetch courses on mount or when companyId changes
   useEffect(() => {
     fetchCourses();
   }, [companyId]); // Add companyId as a dependency to refetch when it changes

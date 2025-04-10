@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building, Video, FileText, Users, Key, Book } from "lucide-react";
 import { Company } from "@/types/company";
@@ -25,6 +25,12 @@ export const SettingsTabs: React.FC<SettingsTabsProps> = ({
   handleFormSubmit,
   isSaving,
 }) => {
+  // When company changes, force re-render of all tabs
+  useEffect(() => {
+    console.log(`SettingsTabs: Company changed to ${company.nome}, ID: ${company.id}`);
+    // This effect will ensure all child components re-render with the new company
+  }, [company.id]);
+
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <div className="border-b">
@@ -101,19 +107,19 @@ export const SettingsTabs: React.FC<SettingsTabsProps> = ({
           />
         </TabsContent>
         <TabsContent value="videos" className="m-0">
-          <IntegrationVideosManager company={company} />
+          <IntegrationVideosManager key={`videos-${company.id}`} company={company} />
         </TabsContent>
         <TabsContent value="cargo" className="m-0">
-          <JobRolesManager company={company} />
+          <JobRolesManager key={`roles-${company.id}`} company={company} />
         </TabsContent>
         <TabsContent value="access" className="m-0">
-          <AccessManagement company={company} />
+          <AccessManagement key={`access-${company.id}`} company={company} />
         </TabsContent>
         <TabsContent value="collaborators" className="m-0">
-          <CollaboratorsManagement company={company} />
+          <CollaboratorsManagement key={`collaborators-${company.id}`} company={company} />
         </TabsContent>
         <TabsContent value="courses" className="m-0">
-          <CompanyCourseManagement company={company} />
+          <CompanyCourseManagement key={`courses-${company.id}`} company={company} />
         </TabsContent>
       </div>
     </Tabs>

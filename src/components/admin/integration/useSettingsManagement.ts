@@ -37,6 +37,14 @@ export const useSettingsManagement = () => {
     if (company) {
       console.log("Company changed to:", company.nome);
       setSelectedCompany(company);
+      
+      // Reset tab to info when changing company to ensure proper content loading
+      setActiveTab("info");
+      
+      // Broadcast company change for other components to react
+      window.dispatchEvent(new CustomEvent('settings-company-changed', { 
+        detail: { company } 
+      }));
     }
   };
 
