@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { CourseList } from "@/components/courses/CourseList";
 import { useCompanies } from "@/hooks/useCompanies";
 import { supabase } from "@/integrations/supabase/client";
-import { Book, Clock, CheckCircle, Star, ListCheck } from "lucide-react";
+import { Book, Clock, CheckCircle, Star, ListCheck, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { CourseProgress } from "@/components/courses/CourseProgress";
@@ -81,7 +80,7 @@ const MyCourses = () => {
           videosCompleted: 2 // Mock data
         });
         
-        // Get recent courses
+        // Get courses in progress
         const coursesWithProgress = coursesData?.map(course => {
           const progress = progressData?.find(p => p.course_id === course.id);
           return {
@@ -92,12 +91,19 @@ const MyCourses = () => {
           };
         }) || [];
         
-        // Sort by last accessed
-        const sortedCourses = coursesWithProgress
-          .filter(c => c.last_accessed)
-          .sort((a, b) => new Date(b.last_accessed).getTime() - new Date(a.last_accessed).getTime());
+        // Get courses in progress (not completed and with progress > 0)
+        const inProgressCourses = coursesWithProgress
+          .filter(c => c.progress > 0 && !c.completed)
+          .sort((a, b) => {
+            // Sort by last accessed, if available
+            if (a.last_accessed && b.last_accessed) {
+              return new Date(b.last_accessed).getTime() - new Date(a.last_accessed).getTime();
+            }
+            // If no last_accessed, sort by progress (higher progress first)
+            return b.progress - a.progress;
+          });
         
-        setRecentCourses(sortedCourses.slice(0, 3));
+        setRecentCourses(inProgressCourses.slice(0, 3));
       } catch (error) {
         console.error('Error fetching course stats:', error);
       } finally {
@@ -158,9 +164,7 @@ const MyCourses = () => {
                   <Button className="bg-white text-black hover:bg-gray-100 gap-2">
                     Assistir agora
                     <div className="bg-black text-white rounded-full h-6 w-6 flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                      </svg>
+                      <Play size={12} />
                     </div>
                   </Button>
                 </div>
@@ -242,11 +246,10 @@ const MyCourses = () => {
                         <div className="flex gap-2 mb-2">
                           <Badge variant="outline" className="bg-gray-100 text-gray-700 text-xs px-2">IA</Badge>
                           <Badge variant="outline" className="bg-gray-100 text-gray-700 text-xs px-2">Ilustração</Badge>
-                          <Badge variant="outline" className="bg-gray-100 text-gray-700 text-xs px-2">conceitos</Badge>
                         </div>
                         
                         <h3 className="font-medium mb-2 line-clamp-2">
-                          Criar um Personagem do Zero
+                          {course.title}
                         </h3>
                         
                         {/* Progress bar */}
@@ -283,7 +286,7 @@ const MyCourses = () => {
                     </Card>
                   ))
                 ) : (
-                  <p className="text-gray-500 col-span-3">Nenhum curso recente encontrado.</p>
+                  <p className="text-gray-500 col-span-3">Nenhum curso em progresso encontrado.</p>
                 )}
               </div>
             </div>
