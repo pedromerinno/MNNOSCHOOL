@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, Play, Clock, FileText, ChevronDown, ChevronUp, LockClosed } from 'lucide-react';
+import { CheckCircle, Play, Clock, FileText, ChevronDown, ChevronUp, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export type Lesson = {
