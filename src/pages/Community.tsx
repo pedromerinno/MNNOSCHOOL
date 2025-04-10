@@ -47,6 +47,16 @@ const Community = () => {
   const [newDiscussionTitle, setNewDiscussionTitle] = useState("");
   const [newDiscussionContent, setNewDiscussionContent] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedDiscussion, setSelectedDiscussion] = useState<null | {
+    id: string;
+    title: string;
+    content: string;
+    author: string;
+    createdAt: string;
+    replies: number;
+    participants: number;
+  }>(null);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
 
   const handleCreateDiscussion = () => {
     if (!newDiscussionTitle.trim() || !newDiscussionContent.trim()) {
@@ -70,6 +80,19 @@ const Community = () => {
     setNewDiscussionContent("");
     setIsDialogOpen(false);
     toast.success("Discussão criada com sucesso!");
+  };
+
+  const handleViewDiscussion = (discussion: {
+    id: string;
+    title: string;
+    content: string;
+    author: string;
+    createdAt: string;
+    replies: number;
+    participants: number;
+  }) => {
+    setSelectedDiscussion(discussion);
+    setViewDialogOpen(true);
   };
 
   const filteredDiscussions = discussions.filter(
@@ -163,7 +186,13 @@ const Community = () => {
                     <CardContent className="p-4">
                       <div className="flex justify-between items-center">
                         <h3 className="font-medium text-lg dark:text-white">{discussion.title}</h3>
-                        <Button variant="ghost" size="sm">Ver</Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleViewDiscussion(discussion)}
+                        >
+                          Ver
+                        </Button>
                       </div>
                       <p className="text-gray-600 dark:text-gray-300 text-sm mt-2 line-clamp-2">
                         {discussion.content}
@@ -263,6 +292,51 @@ const Community = () => {
           </div>
         </div>
       </main>
+
+      {/* View Discussion Dialog */}
+      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+        <DialogContent className="sm:max-w-[700px]">
+          {selectedDiscussion && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-xl">{selectedDiscussion.title}</DialogTitle>
+                <div className="flex items-center text-sm text-gray-500 mt-2">
+                  <span className="mr-2">por {selectedDiscussion.author}</span>
+                  <span className="mx-2">•</span>
+                  <span>{new Date(selectedDiscussion.createdAt).toLocaleDateString()}</span>
+                </div>
+              </DialogHeader>
+              <div className="mt-4">
+                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
+                  {selectedDiscussion.content}
+                </p>
+              </div>
+              <div className="mt-6 pt-6 border-t">
+                <h4 className="font-medium mb-4">Respostas ({selectedDiscussion.replies})</h4>
+                {selectedDiscussion.replies === 0 ? (
+                  <div className="text-center py-8">
+                    <MessageSquare className="h-10 w-10 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-500">Ainda não há respostas para esta discussão.</p>
+                    <p className="text-gray-500 text-sm mt-1">Seja o primeiro a responder!</p>
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm text-center">Respostas serão implementadas em breve.</p>
+                )}
+              </div>
+              <div className="mt-4">
+                <Textarea 
+                  placeholder="Escreva sua resposta..." 
+                  className="w-full"
+                  rows={3}
+                />
+                <div className="flex justify-end mt-2">
+                  <Button>Responder</Button>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
