@@ -1,7 +1,5 @@
-
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { FileText, Settings, Users, Globe, Building, Book, RefreshCw, VideoIcon } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { UserManagement } from '@/components/admin/UserManagement';
@@ -18,29 +16,6 @@ const AdminPage = () => {
     return <Navigate to="/dashboard" replace />;
   }
   
-  const adminSections = [
-    { 
-      title: 'Integração', 
-      description: 'Gerencie informações de contratação', 
-      icon: FileText 
-    },
-    { 
-      title: 'Acessos', 
-      description: 'Configurar ferramentas e acessos', 
-      icon: Settings 
-    },
-    { 
-      title: 'Documentos', 
-      description: 'Gerenciar documentos e contratos', 
-      icon: Users 
-    },
-    { 
-      title: 'Comunidade', 
-      description: 'Configurações de comunicação', 
-      icon: Globe 
-    },
-  ];
-
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8">
@@ -99,27 +74,6 @@ const AdminPage = () => {
             </Tabs>
           </CardContent>
         </Card>
-        
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {adminSections.map((section) => (
-            <Card 
-              key={section.title} 
-              className="hover:shadow-md transition-shadow border border-gray-100 dark:border-gray-800 shadow-sm"
-            >
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/30">
-                    <section.icon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <h3 className="font-medium text-lg dark:text-white">{section.title}</h3>
-                </div>
-                <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm">
-                  {section.description}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
       </main>
     </div>
   );
