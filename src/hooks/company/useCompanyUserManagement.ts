@@ -1,137 +1,94 @@
 
-import { useState } from "react";
+import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { UserProfile } from "@/hooks/useUsers";
+import { toast } from "sonner";
 
 export const useCompanyUserManagement = () => {
-  const [loading, setLoading] = useState(false);
-  
   /**
    * Assign a user to a company
    */
-  const assignUserToCompany = async (userId: string, companyId: string): Promise<boolean> => {
-    setLoading(true);
-    
+  const assignUserToCompany = useCallback(async (userId: string, companyId: string) => {
     try {
-      // Check if the relation already exists
-      const { data: existingData, error: existingError } = await supabase
+      // Check if relation already exists
+      const { data: existingRelation, error: checkError } = await supabase
         .from('user_empresa')
-        .select('*')
+        .select('id')
         .eq('user_id', userId)
         .eq('empresa_id', companyId)
-        .single();
-      
-      if (existingError && existingError.code !== 'PGRST116') {
-        throw new Error(`Error checking existing relation: ${existingError.message}`);
+        .maybeSingle();
+        
+      if (checkError) {
+        console.error('Error checking user-company relation:', checkError);
+        toast.error("Erro ao verificar relação existente");
+        return false;
       }
       
-      // If relation already exists, return success
-      if (existingData) {
-        console.log('User already assigned to company');
+      // If relation already exists, no need to create it again
+      if (existingRelation) {
+        console.log('User already assigned to this company');
+        toast.success("Usuário já está associado a esta empresa");
         return true;
       }
       
-      // Create a new relation
+      // Create new relation
       const { error } = await supabase
         .from('user_empresa')
-        .insert({ user_id: userId, empresa_id: companyId });
-      
+        .insert({
+          user_id: userId,
+          empresa_id: companyId
+        });
+        
       if (error) {
-        throw new Error(`Error assigning user to company: ${error.message}`);
+        console.error('Error assigning user to company:', error);
+        toast.error("Erro ao associar usuário à empresa");
+        return false;
       }
       
+      toast.success("Usuário associado à empresa com sucesso");
+      
+      // Trigger company relation change event
+      window.dispatchEvent(new Event('company-relation-changed'));
+      
       return true;
-    } catch (error: any) {
-      console.error('Error in assignUserToCompany:', error);
+    } catch (error) {
+      console.error('Unexpected error assigning user to company:', error);
+      toast.error("Erro inesperado ao associar usuário");
       return false;
-    } finally {
-      setLoading(false);
     }
-  };
+  }, []);
   
   /**
    * Remove a user from a company
    */
-  const removeUserFromCompany = async (userId: string, companyId: string): Promise<boolean> => {
-    setLoading(true);
-    
+  const removeUserFromCompany = useCallback(async (userId: string, companyId: string) => {
     try {
       const { error } = await supabase
         .from('user_empresa')
         .delete()
         .eq('user_id', userId)
         .eq('empresa_id', companyId);
-      
+        
       if (error) {
-        throw new Error(`Error removing user from company: ${error.message}`);
+        console.error('Error removing user from company:', error);
+        toast.error("Erro ao remover usuário da empresa");
+        return false;
       }
+      
+      toast.success("Usuário removido da empresa com sucesso");
+      
+      // Trigger company relation change event
+      window.dispatchEvent(new Event('company-relation-changed'));
       
       return true;
-    } catch (error: any) {
-      console.error('Error in removeUserFromCompany:', error);
+    } catch (error) {
+      console.error('Unexpected error removing user from company:', error);
+      toast.error("Erro inesperado ao remover usuário");
       return false;
-    } finally {
-      setLoading(false);
     }
-  };
-  
-  /**
-   * Get all users assigned to a company
-   */
-  const getCompanyUsers = async (companyId: string): Promise<UserProfile[]> => {
-    try {
-      const { data, error } = await supabase
-        .from('user_empresa')
-        .select(`
-          user_id,
-          profiles:user_id (
-            id,
-            display_name,
-            avatar,
-            is_admin
-          )
-        `)
-        .eq('empresa_id', companyId);
-      
-      if (error) {
-        throw new Error(`Error fetching company users: ${error.message}`);
-      }
-      
-      // Also fetch email for each user
-      const userIds = data.map((item: any) => item.profiles.id);
-      const { data: usersData, error: usersError } = await supabase.auth.admin.listUsers({
-        perPage: 1000,
-      });
-      
-      if (usersError) {
-        console.error('Error fetching user emails:', usersError);
-      }
-      
-      // Map the users with their email
-      const users = data.map((item: any) => {
-        const profile = item.profiles;
-        const userData = usersData?.users.find((u: any) => u.id === profile.id);
-        
-        return {
-          id: profile.id,
-          display_name: profile.display_name,
-          avatar: profile.avatar,
-          is_admin: profile.is_admin,
-          email: userData?.email || '(email não disponível)'
-        };
-      });
-      
-      return users;
-    } catch (error: any) {
-      console.error('Error in getCompanyUsers:', error);
-      return [];
-    }
-  };
+  }, []);
   
   return {
-    loading,
     assignUserToCompany,
-    removeUserFromCompany,
-    getCompanyUsers
+    removeUserFromCompany
   };
 };

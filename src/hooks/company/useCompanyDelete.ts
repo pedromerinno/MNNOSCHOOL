@@ -1,81 +1,78 @@
 
-import { Dispatch, SetStateAction } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useCallback } from "react";
 import { Company } from "@/types/company";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface UseCompanyDeleteProps {
-  setIsLoading: Dispatch<SetStateAction<boolean>>;
-  setCompanies: Dispatch<SetStateAction<Company[]>>;
+  setIsLoading: (isLoading: boolean) => void;
+  setCompanies: (companies: Company[]) => void;
   selectedCompany: Company | null;
-  setSelectedCompany: Dispatch<SetStateAction<Company | null>>;
+  setSelectedCompany: (company: Company | null) => void;
 }
 
-export const useCompanyDelete = ({
-  setIsLoading,
+export const useCompanyDelete = ({ 
+  setIsLoading, 
   setCompanies,
   selectedCompany,
   setSelectedCompany
 }: UseCompanyDeleteProps) => {
   /**
-   * Deletes a company by ID
+   * Delete a company
    */
-  const deleteCompany = async (companyId: string): Promise<boolean> => {
+  const deleteCompany = useCallback(async (companyId: string) => {
     setIsLoading(true);
+    
     try {
-      // First, remove all user-company associations for this company
-      const { error: relationshipError } = await supabase
-        .from('user_empresa')
-        .delete()
-        .eq('empresa_id', companyId);
-
-      if (relationshipError) {
-        console.error("Error removing user-company relationships:", relationshipError);
-        toast("Erro ao remover associações de usuários", {
-          description: relationshipError.message,
-        });
-        return false;
-      }
-
-      // Then, delete the company
       const { error } = await supabase
         .from('empresas')
         .delete()
         .eq('id', companyId);
-
+        
       if (error) {
-        console.error("Error deleting company:", error);
-        toast("Erro ao excluir empresa", {
-          description: error.message,
-        });
+        console.error('Error deleting company:', error);
+        toast.error("Erro ao excluir empresa");
         return false;
       }
-
-      // Update the local state
-      setCompanies(prev => prev.filter(company => company.id !== companyId));
       
-      // If the selected company was deleted, clear it
+      toast.success("Empresa excluída com sucesso");
+      
+      // Update the list of companies
+      setCompanies(prevCompanies => 
+        prevCompanies.filter(company => company.id !== companyId)
+      );
+      
+      // If this was the currently selected company, clear it
       if (selectedCompany && selectedCompany.id === companyId) {
         setSelectedCompany(null);
+        localStorage.removeItem('selectedCompanyId');
+        localStorage.removeItem('selectedCompany');
       }
       
-      toast("Empresa excluída", {
-        description: "A empresa foi excluída com sucesso",
-      });
+      // Remove from local storage cache
+      const cachedCompanies = localStorage.getItem('userCompanies');
+      if (cachedCompanies) {
+        try {
+          const companies = JSON.parse(cachedCompanies) as Company[];
+          const updatedCache = companies.filter(c => c.id !== companyId);
+          localStorage.setItem('userCompanies', JSON.stringify(updatedCache));
+        } catch (e) {
+          console.error('Error updating company cache:', e);
+        }
+      }
+      
+      // Trigger refresh event
+      window.dispatchEvent(new Event('company-relation-changed'));
       
       return true;
     } catch (error) {
-      console.error("Unexpected error:", error);
-      toast("Erro inesperado", {
-        description: "Ocorreu um erro ao excluir a empresa",
-      });
+      console.error('Unexpected error deleting company:', error);
+      toast.error("Erro inesperado ao excluir empresa");
       return false;
     } finally {
       setIsLoading(false);
     }
-  };
-
-  return {
-    deleteCompany
-  };
+  }, [setIsLoading, setCompanies, selectedCompany, setSelectedCompany]);
+  
+  return { deleteCompany };
 };

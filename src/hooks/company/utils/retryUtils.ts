@@ -1,51 +1,41 @@
 
 /**
- * Helper function to retry failed fetch operations with exponential backoff
+ * Retry an operation multiple times with exponential backoff
+ * 
+ * @param operation The async operation to retry
+ * @param maxRetries Maximum number of retry attempts
+ * @returns The result of the operation
  */
-export const retryOperation = async (operation: () => Promise<any>, maxRetries = 2, initialDelay = 500) => {
-  let lastError;
-  let delay = initialDelay;
+export const retryOperation = async <T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 3
+): Promise<T> => {
+  let lastError: Error | null = null;
   
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      return await operation();
-    } catch (error) {
-      console.warn(`Fetch attempt ${attempt + 1} failed, retrying...`, error);
-      lastError = error;
-      
-      if (attempt < maxRetries - 1) {
-        // Adicionar um jitter (variação aleatória) para evitar thundering herd
-        const jitter = Math.random() * 200;
-        const backoffDelay = delay + jitter;
-        
-        console.log(`Aguardando ${Math.round(backoffDelay)}ms antes da próxima tentativa`);
-        
-        // Wait before retrying
-        await new Promise(resolve => setTimeout(resolve, backoffDelay));
-        
-        // Increase delay for next retry (exponential backoff)
-        delay *= 1.5;
+      if (attempt > 0) {
+        console.log(`Retry attempt ${attempt} of ${maxRetries}`);
       }
+      
+      // Execute the operation
+      const result = await operation();
+      return result;
+    } catch (err) {
+      console.error(`Fetch attempt ${attempt + 1} failed:`, err);
+      lastError = err instanceof Error ? err : new Error('Unknown error');
+      
+      // If this is the last attempt, throw the error
+      if (attempt === maxRetries) {
+        throw lastError;
+      }
+      
+      // Wait before retrying (exponential backoff)
+      const delay = Math.min(1000 * (2 ** attempt), 10000);
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
   
-  // If all retries fail, throw the last error
-  throw lastError;
-};
-
-/**
- * Retry operation with timeout to prevent long-running operations
- */
-export const retryWithTimeout = async (
-  operation: () => Promise<any>, 
-  maxRetries = 2, 
-  initialDelay = 500,
-  timeout = 5000
-) => {
-  return Promise.race([
-    retryOperation(operation, maxRetries, initialDelay),
-    new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Operation timed out')), timeout);
-    })
-  ]);
+  // This should never happen due to the throw in the loop, but TypeScript needs it
+  throw new Error('Retry failed');
 };

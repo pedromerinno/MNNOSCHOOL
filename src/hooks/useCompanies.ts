@@ -1,6 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
-import { Company } from "@/types/company";
+import { useEffect } from "react";
 import { useCompanyState } from "./company/useCompanyState";
 import { useCompanyFetching } from "./company/useCompanyFetching";
 import { useCompanyFetch } from "./company/useCompanyFetch";
@@ -9,7 +8,6 @@ import { useCompanyCreate } from "./company/useCompanyCreate";
 import { useCompanyUpdate } from "./company/useCompanyUpdate";
 import { useCompanyDelete } from "./company/useCompanyDelete";
 import { useCompanyUserManagement } from "./company/useCompanyUserManagement";
-import { useCompanyCache } from "./company/useCompanyCache";
 import { useCompanyEvents } from "./company/useCompanyEvents";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -87,8 +85,6 @@ export const useCompanies = () => {
     assignUserToCompany, 
     removeUserFromCompany 
   } = useCompanyUserManagement();
-  
-  const { cacheUserCompanies, getCachedUserCompanies } = useCompanyCache();
   
   // Listen for company selection events
   useCompanyEvents(setSelectedCompany);
@@ -199,6 +195,6 @@ export const useCompanies = () => {
     deleteCompany,
     assignUserToCompany,
     removeUserFromCompany,
-    user // Make sure to expose user here
+    user
   };
 };

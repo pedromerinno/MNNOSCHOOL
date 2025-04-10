@@ -1,58 +1,58 @@
 
-import { Dispatch, SetStateAction } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useCallback } from "react";
 import { Company } from "@/types/company";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface UseCompanyCreateProps {
-  setIsLoading: Dispatch<SetStateAction<boolean>>;
-  setCompanies: Dispatch<SetStateAction<Company[]>>;
+  setIsLoading: (isLoading: boolean) => void;
+  setCompanies: (companies: Company[]) => void;
 }
 
-export const useCompanyCreate = ({
-  setIsLoading,
-  setCompanies
+export const useCompanyCreate = ({ 
+  setIsLoading, 
+  setCompanies 
 }: UseCompanyCreateProps) => {
   /**
-   * Creates a new company in the database
+   * Create a new company
    */
-  const createCompany = async (companyData: Omit<Company, 'id' | 'created_at' | 'updated_at'>): Promise<Company | null> => {
+  const createCompany = useCallback(async (
+    formData: Omit<Company, 'id' | 'created_at' | 'updated_at'>
+  ) => {
     setIsLoading(true);
+    
     try {
       const { data, error } = await supabase
         .from('empresas')
-        .insert([companyData])
-        .select('*')
+        .insert(formData)
+        .select()
         .single();
-
+        
       if (error) {
-        console.error("Error creating company:", error);
-        toast("Erro ao criar empresa", {
-          description: error.message,
-        });
+        console.error('Error creating company:', error);
+        toast.error("Erro ao criar empresa");
         return null;
       }
-
-      // Update the local state
-      setCompanies(prev => [...prev, data as Company]);
       
-      toast("Empresa criada", {
-        description: "A empresa foi criada com sucesso",
-      });
+      const newCompany = data as Company;
       
-      return data as Company;
+      toast.success(`Empresa ${newCompany.nome} criada com sucesso`);
+      
+      // Update the list of companies
+      setCompanies(prevCompanies => [...prevCompanies, newCompany]);
+      
+      // Trigger refresh event
+      window.dispatchEvent(new Event('company-relation-changed'));
+      
+      return newCompany;
     } catch (error) {
-      console.error("Unexpected error:", error);
-      toast("Erro inesperado", {
-        description: "Ocorreu um erro ao criar a empresa",
-      });
+      console.error('Unexpected error creating company:', error);
+      toast.error("Erro inesperado ao criar empresa");
       return null;
     } finally {
       setIsLoading(false);
     }
-  };
-
-  return {
-    createCompany
-  };
+  }, [setIsLoading, setCompanies]);
+  
+  return { createCompany };
 };

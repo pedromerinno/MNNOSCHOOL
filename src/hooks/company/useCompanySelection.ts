@@ -1,77 +1,73 @@
 
-import { Dispatch, SetStateAction } from "react";
+import { useCallback } from "react";
 import { Company } from "@/types/company";
+import { toast } from "sonner";
 
 interface UseCompanySelectionProps {
-  setSelectedCompany: Dispatch<SetStateAction<Company | null>>;
+  setSelectedCompany: (company: Company | null) => void;
 }
 
-export const useCompanySelection = ({
-  setSelectedCompany
-}: UseCompanySelectionProps) => {
+export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionProps) => {
   /**
-   * Selects a company for the current user session (UI only, no database changes)
-   * Also broadcasts a custom event so other components can react to the selection
+   * Store the selected company in local storage for persistence
    */
-  const selectCompany = (userId: string, company: Company) => {
-    if (!company) {
-      console.warn('Attempted to select empty company data');
-      return;
-    }
-    
-    console.log('Setting selected company:', company);
-    
-    // Check if company has all required properties
-    if (!company.id || !company.nome) {
-      console.error('Company is missing required properties', company);
-      return;
-    }
-    
-    console.log('Frase institucional da empresa:', company.frase_institucional);
-    
-    // Ensure we're storing the complete company object
-    setSelectedCompany(company);
-    
-    // Store selected company in local storage for persistence
-    localStorage.setItem('selectedCompanyId', company.id);
-    
-    // Also cache the full company for offline availability
+  const persistCompanySelection = useCallback((company: Company) => {
     try {
+      localStorage.setItem('selectedCompanyId', company.id);
       localStorage.setItem('selectedCompany', JSON.stringify(company));
+      
+      // Broadcast company selection for other components
+      window.dispatchEvent(new CustomEvent('company-selected', { 
+        detail: { company } 
+      }));
     } catch (e) {
-      console.error('Failed to cache selected company', e);
+      console.error('Failed to persist company selection', e);
     }
-    
-    // Dispatch event to notify other components
-    const navEvent = new CustomEvent('company-selected', { 
-      detail: { userId, company } 
-    });
-    window.dispatchEvent(navEvent);
-    
-    console.log('Company selected:', company.nome, 'Phrase:', company.frase_institucional);
-  };
+  }, []);
 
   /**
-   * Retrieves a previously selected company ID from local storage
+   * Retrieve the stored company ID from local storage
    */
-  const getStoredCompanyId = (): string | null => {
+  const getStoredCompanyId = useCallback((): string | null => {
     return localStorage.getItem('selectedCompanyId');
-  };
-  
+  }, []);
+
   /**
-   * Retrieves the full previously selected company from local storage
+   * Retrieve the stored company object from local storage
    */
-  const getStoredCompany = (): Company | null => {
+  const getStoredCompany = useCallback((): Company | null => {
     const storedCompany = localStorage.getItem('selectedCompany');
     if (!storedCompany) return null;
     
     try {
       return JSON.parse(storedCompany) as Company;
     } catch (e) {
-      console.error('Failed to parse stored company', e);
+      console.error('Error parsing stored company', e);
       return null;
     }
-  };
+  }, []);
+
+  /**
+   * Select a company and update all necessary state
+   */
+  const selectCompany = useCallback((userId: string, company: Company) => {
+    if (!company) {
+      console.error('Attempt to select null company');
+      return;
+    }
+    
+    console.log(`Selecting company: ${company.nome} (${company.id})`);
+    setSelectedCompany(company);
+    
+    // Store selection in local storage
+    persistCompanySelection(company);
+    
+    // Trigger event for components listening for company changes
+    const navEvent = new CustomEvent('company-selected', { 
+      detail: { userId, company } 
+    });
+    window.dispatchEvent(navEvent);
+  }, [setSelectedCompany, persistCompanySelection]);
 
   return {
     selectCompany,
