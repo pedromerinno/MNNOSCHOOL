@@ -1,10 +1,9 @@
-
 import { useEffect, useState } from "react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useFilteredCourses } from "./useFilteredCourses";
 import { useCourseStats } from "./useCourseStats";
 import { useRecentCourses } from "./useRecentCourses";
-import { useCourseData } from "./useCourseData";
+import { useCourseData } from "./course-data";
 import { FilterOption, Course, CourseStats } from "./types";
 
 export const useMyCourses = () => {
@@ -34,10 +33,11 @@ export const useMyCourses = () => {
     setRecentCourses 
   } = useRecentCourses();
   
+  // Use our refactored course data hook
   const { 
     loading, 
     fetchCourseData 
-  } = useCourseData(
+  } = useCourseData({
     setStats,
     setAllCourses,
     setFilteredCourses,
@@ -45,7 +45,7 @@ export const useMyCourses = () => {
     setHoursWatched,
     filterCourses,
     activeFilter
-  );
+  });
 
   // Load course data when component mounts or when company changes
   useEffect(() => {
