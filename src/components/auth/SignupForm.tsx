@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
@@ -14,7 +13,6 @@ export const SignupForm = () => {
   const [passwordError, setPasswordError] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
   const { signUp } = useAuth();
-  const navigate = useNavigate();
 
   const validatePasswords = () => {
     if (password !== confirmPassword) {
@@ -44,8 +42,8 @@ export const SignupForm = () => {
       const { error } = await signUp(email, password);
       
       if (!error) {
-        // Redirect to onboarding page after successful signup
-        navigate("/onboarding");
+        // Profile creation is automatic via database trigger
+        console.log("Usuario cadastrado com sucesso! Perfil será criado automaticamente.");
       }
     } finally {
       setIsRegistering(false);

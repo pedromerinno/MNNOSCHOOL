@@ -12,7 +12,6 @@ import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import UserOnboarding from "./pages/UserOnboarding";
 import Courses from "./pages/Courses";
 import MyCourses from "./pages/MyCourses";
 import CourseDetails from "./pages/CourseDetails";
@@ -29,145 +28,78 @@ import Manifesto from "./pages/Manifesto";
 
 const queryClient = new QueryClient();
 
-// Criar componente separado para rotas protegidas com a navegação
-const ProtectedRouteWithNav = ({ children }) => (
-  <>
-    <MainNavigationMenu />
-    {children}
-  </>
-);
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <Toaster />
+      <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Toaster />
-          <Sonner />
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
-            <Route path="/onboarding" element={<UserOnboarding />} />
             
             <Route element={<ProtectedRoute />}>
-              <Route 
-                path="/" 
-                element={
-                  <ProtectedRouteWithNav>
-                    <Index />
-                  </ProtectedRouteWithNav>
-                } 
-              />
+              <Route path="/" element={<>
+                <MainNavigationMenu />
+                <Index />
+              </>} />
               
               {/* Redirect /dashboard to / */}
               <Route path="/dashboard" element={<Navigate to="/" replace />} />
               
-              <Route 
-                path="/courses" 
-                element={
-                  <ProtectedRouteWithNav>
-                    <Courses />
-                  </ProtectedRouteWithNav>
-                } 
-              />
+              <Route path="/courses" element={<>
+                <MainNavigationMenu />
+                <Courses />
+              </>} />
+              <Route path="/my-courses" element={<>
+                <MainNavigationMenu />
+                <MyCourses />
+              </>} />
+              <Route path="/courses/:courseId" element={<>
+                <MainNavigationMenu />
+                <CourseDetails />
+              </>} />
+              <Route path="/courses/:courseId/lessons/:lessonId" element={<>
+                <MainNavigationMenu />
+                <LessonPage />
+              </>} />
               
-              <Route 
-                path="/my-courses" 
-                element={
-                  <ProtectedRouteWithNav>
-                    <MyCourses />
-                  </ProtectedRouteWithNav>
-                } 
-              />
-              
-              <Route 
-                path="/courses/:courseId" 
-                element={
-                  <ProtectedRouteWithNav>
-                    <CourseDetails />
-                  </ProtectedRouteWithNav>
-                } 
-              />
-              
-              <Route 
-                path="/courses/:courseId/lessons/:lessonId" 
-                element={
-                  <ProtectedRouteWithNav>
-                    <LessonPage />
-                  </ProtectedRouteWithNav>
-                } 
-              />
-              
-              <Route 
-                path="/integration" 
-                element={
-                  <ProtectedRouteWithNav>
-                    <Integration />
-                  </ProtectedRouteWithNav>
-                } 
-              />
-              
-              <Route 
-                path="/access" 
-                element={
-                  <ProtectedRouteWithNav>
-                    <Access />
-                  </ProtectedRouteWithNav>
-                } 
-              />
-              
-              <Route 
-                path="/documents" 
-                element={
-                  <ProtectedRouteWithNav>
-                    <Documents />
-                  </ProtectedRouteWithNav>
-                } 
-              />
-              
-              <Route 
-                path="/school" 
-                element={
-                  <ProtectedRouteWithNav>
-                    <School />
-                  </ProtectedRouteWithNav>
-                } 
-              />
-              
-              <Route 
-                path="/community" 
-                element={
-                  <ProtectedRouteWithNav>
-                    <Community />
-                  </ProtectedRouteWithNav>
-                } 
-              />
-              
-              <Route 
-                path="/notes" 
-                element={
-                  <ProtectedRouteWithNav>
-                    <Notes />
-                  </ProtectedRouteWithNav>
-                } 
-              />
-              
-              <Route 
-                path="/manifesto" 
-                element={
-                  <ProtectedRouteWithNav>
-                    <Manifesto />
-                  </ProtectedRouteWithNav>
-                } 
-              />
+              <Route path="/integration" element={<>
+                <MainNavigationMenu />
+                <Integration />
+              </>} />
+              <Route path="/access" element={<>
+                <MainNavigationMenu />
+                <Access />
+              </>} />
+              <Route path="/documents" element={<>
+                <MainNavigationMenu />
+                <Documents />
+              </>} />
+              <Route path="/school" element={<>
+                <MainNavigationMenu />
+                <School />
+              </>} />
+              <Route path="/community" element={<>
+                <MainNavigationMenu />
+                <Community />
+              </>} />
+              <Route path="/notes" element={<>
+                <MainNavigationMenu />
+                <Notes />
+              </>} />
+              <Route path="/manifesto" element={<>
+                <MainNavigationMenu />
+                <Manifesto />
+              </>} />
               
               <Route 
                 path="/admin" 
-                element={
-                  <ProtectedRouteWithNav>
-                    <Admin />
-                  </ProtectedRouteWithNav>
-                } 
+                element={<>
+                  <MainNavigationMenu />
+                  <Admin />
+                </>} 
               />
             </Route>
             

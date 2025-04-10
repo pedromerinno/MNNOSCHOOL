@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Database } from "@/integrations/supabase/types";
-import { initializeStorage } from "@/utils/setupStorage";
 
 type UserProfile = {
   displayName: string | null;
@@ -270,13 +269,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          await initializeStorage();
-          
           fetchUserProfile(session.user.id);
         }
         
@@ -301,21 +298,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     );
 
-    const initialize = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        await initializeStorage();
-        
         fetchUserProfile(session.user.id);
       }
       
       setLoading(false);
-    };
-    
-    initialize();
+    });
 
     return () => subscription.unsubscribe();
   }, [toast]);

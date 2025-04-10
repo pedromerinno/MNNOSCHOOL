@@ -1,14 +1,14 @@
-import { useEffect, useState } from "react";
+
+import { useEffect } from "react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useFilteredCourses } from "./useFilteredCourses";
 import { useCourseStats } from "./useCourseStats";
 import { useRecentCourses } from "./useRecentCourses";
-import { useCourseData } from "./course-data";
-import { FilterOption, Course, CourseStats } from "./types";
+import { useCourseData } from "./useCourseData";
+import { FilterOption } from "./types";
 
 export const useMyCourses = () => {
-  const { selectedCompany, isLoading: companyLoading } = useCompanies();
-  const [initialized, setInitialized] = useState(false);
+  const { selectedCompany } = useCompanies();
   
   // Use our smaller, specialized hooks
   const { 
@@ -33,11 +33,10 @@ export const useMyCourses = () => {
     setRecentCourses 
   } = useRecentCourses();
   
-  // Use our refactored course data hook
   const { 
     loading, 
     fetchCourseData 
-  } = useCourseData({
+  } = useCourseData(
     setStats,
     setAllCourses,
     setFilteredCourses,
@@ -45,15 +44,11 @@ export const useMyCourses = () => {
     setHoursWatched,
     filterCourses,
     activeFilter
-  });
+  );
 
   // Load course data when component mounts or when company changes
   useEffect(() => {
-    console.log("useMyCourses: fetchCourseData triggered", { selectedCompany: selectedCompany?.id });
-    if (selectedCompany) {
-      fetchCourseData();
-      setInitialized(true);
-    }
+    fetchCourseData();
   }, [selectedCompany, fetchCourseData]);
 
   return {
@@ -63,12 +58,10 @@ export const useMyCourses = () => {
     filteredCourses,
     loading,
     hoursWatched,
-    initialized,
     handleFilterChange,
     companyColor: selectedCompany?.cor_principal || "#1EAEDB",
-    companyLoading
   };
 };
 
-// Re-export the types for convenience
-export type { FilterOption, Course, CourseStats } from "./types";
+// Re-export the type for convenience
+export type { FilterOption } from "./types";

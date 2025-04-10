@@ -1,16 +1,13 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { useMyCourses } from "@/hooks/my-courses";
 import { CourseFilters } from "@/components/courses/CourseFilters";
 import { RecentCourses } from "@/components/courses/RecentCourses";
 import { FilteredCoursesList } from "@/components/courses/FilteredCoursesList";
 import { CourseSidebar } from "@/components/courses/CourseSidebar";
-import { Loader2 } from "lucide-react";
-import { useCompanies } from "@/hooks/useCompanies";
 
 const MyCourses = () => {
-  const { selectedCompany, isLoading: companyLoading } = useCompanies();
   const {
     activeFilter,
     stats,
@@ -18,32 +15,9 @@ const MyCourses = () => {
     filteredCourses,
     loading,
     hoursWatched,
-    initialized,
     handleFilterChange,
-    companyColor,
-    companyLoading: myCourseCompanyLoading
+    companyColor
   } = useMyCourses();
-  
-  useEffect(() => {
-    console.log("MyCourses rendered", { 
-      loading, 
-      companyLoading, 
-      selectedCompany: selectedCompany?.nome,
-      filteredCourses: filteredCourses.length,
-      recentCourses: recentCourses.length
-    });
-  }, [loading, companyLoading, selectedCompany, filteredCourses.length, recentCourses.length]);
-
-  // Show loading state when data is being fetched or company is loading
-  if ((loading || companyLoading) && (!initialized || !filteredCourses.length)) {
-    return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
-        </div>
-      </DashboardLayout>
-    );
-  }
 
   return (
     <DashboardLayout>
