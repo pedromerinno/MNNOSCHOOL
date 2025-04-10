@@ -12,13 +12,13 @@ export const useCompanyCreate = ({
   /**
    * Create a new company and add it to the companies list
    */
-  const createCompany = async (companyData: Partial<Company>): Promise<Company | null> => {
+  const createCompany = async (companyData: Partial<Company> & { nome: string }): Promise<Company | null> => {
     setIsLoading(true);
     
     try {
       const { data, error } = await supabase
         .from('empresas')
-        .insert([companyData])
+        .insert(companyData)
         .select()
         .single();
         
