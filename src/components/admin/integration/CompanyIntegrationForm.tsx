@@ -123,12 +123,14 @@ export const CompanyIntegrationForm: React.FC<CompanyIntegrationFormProps> = ({
                             form.setValue('cor_principal', value);
                           }}
                           className="h-9 w-12 border rounded cursor-pointer"
+                          aria-label="Selecionar cor"
                         />
                       </div>
                     </div>
                     <div 
                       className="w-10 h-10 rounded border flex-shrink-0" 
                       style={{ backgroundColor: field.value || "#1EAEDB" }}
+                      aria-hidden="true"
                     />
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
