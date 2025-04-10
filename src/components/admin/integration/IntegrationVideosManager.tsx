@@ -5,11 +5,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Video } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Company } from "@/types/company";
 import { SubmitButton } from "./form/SubmitButton";
+import { VideoPlaylistManager } from "./VideoPlaylistManager";
 
 interface IntegrationVideosManagerProps {
   company: Company;
@@ -19,6 +21,7 @@ export const IntegrationVideosManager: React.FC<IntegrationVideosManagerProps> =
   const [videoUrl, setVideoUrl] = useState(company.video_institucional || "");
   const [videoDescription, setVideoDescription] = useState(company.descricao_video || "");
   const [isSaving, setIsSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState("main");
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,62 +65,75 @@ export const IntegrationVideosManager: React.FC<IntegrationVideosManagerProps> =
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium mb-2">Vídeo Institucional</h3>
-        <p className="text-gray-500 dark:text-gray-400 mb-4">
-          Adicione um vídeo de apresentação da empresa que será exibido na página de integração
-        </p>
-      </div>
-      
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-2">
-          <Label htmlFor="videoUrl">URL do Vídeo (YouTube)</Label>
-          <Input
-            id="videoUrl"
-            value={videoUrl}
-            onChange={(e) => setVideoUrl(e.target.value)}
-            placeholder="https://www.youtube.com/watch?v=..."
-          />
-        </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="main">Vídeo Institucional</TabsTrigger>
+          <TabsTrigger value="playlist">Playlist de Vídeos</TabsTrigger>
+        </TabsList>
         
-        <div className="space-y-2">
-          <Label htmlFor="videoDescription">Descrição do Vídeo</Label>
-          <Textarea
-            id="videoDescription"
-            value={videoDescription}
-            onChange={(e) => setVideoDescription(e.target.value)}
-            placeholder="Descreva brevemente o conteúdo do vídeo..."
-            rows={3}
-          />
-        </div>
-        
-        {videoId ? (
-          <div className="aspect-w-16 aspect-h-9">
-            <iframe
-              src={`https://www.youtube.com/embed/${videoId}`}
-              className="w-full rounded-lg"
-              style={{ aspectRatio: '16/9' }}
-              allowFullScreen
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              title="Video Institucional"
-            />
+        <TabsContent value="main" className="space-y-6 mt-6">
+          <div>
+            <h3 className="text-lg font-medium mb-2">Vídeo Institucional</h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
+              Adicione um vídeo de apresentação da empresa que será exibido na página de integração
+            </p>
           </div>
-        ) : (
-          <Card>
-            <CardContent className="p-6 text-center">
-              <Video className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-500 dark:text-gray-400">
-                Adicione uma URL do YouTube válida para visualizar o vídeo
-              </p>
-            </CardContent>
-          </Card>
-        )}
+          
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="videoUrl">URL do Vídeo (YouTube)</Label>
+              <Input
+                id="videoUrl"
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+                placeholder="https://www.youtube.com/watch?v=..."
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="videoDescription">Descrição do Vídeo</Label>
+              <Textarea
+                id="videoDescription"
+                value={videoDescription}
+                onChange={(e) => setVideoDescription(e.target.value)}
+                placeholder="Descreva brevemente o conteúdo do vídeo..."
+                rows={3}
+              />
+            </div>
+            
+            {videoId ? (
+              <div className="aspect-w-16 aspect-h-9">
+                <iframe
+                  src={`https://www.youtube.com/embed/${videoId}`}
+                  className="w-full rounded-lg"
+                  style={{ aspectRatio: '16/9' }}
+                  allowFullScreen
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  title="Video Institucional"
+                />
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="p-6 text-center">
+                  <Video className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                  <p className="text-gray-500 dark:text-gray-400">
+                    Adicione uma URL do YouTube válida para visualizar o vídeo
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+            
+            <div className="flex justify-end">
+              <SubmitButton isSaving={isSaving} />
+            </div>
+          </form>
+        </TabsContent>
         
-        <div className="flex justify-end">
-          <SubmitButton isSaving={isSaving} />
-        </div>
-      </form>
+        <TabsContent value="playlist" className="mt-6">
+          <VideoPlaylistManager company={company} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

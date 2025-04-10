@@ -86,6 +86,53 @@ export type Database = {
           },
         ]
       }
+      company_videos: {
+        Row: {
+          company_id: string
+          created_at: string
+          description: string | null
+          duration: string | null
+          id: string
+          order_index: number
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          video_url: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          description?: string | null
+          duration?: string | null
+          id?: string
+          order_index?: number
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          video_url: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          duration?: string | null
+          id?: string
+          order_index?: number
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          video_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_videos_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courses: {
         Row: {
           created_at: string
