@@ -1,13 +1,19 @@
 
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, Users, ExternalLink, Plus, Search } from "lucide-react";
+import { MessageSquare, Users, ExternalLink, Plus, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 
 // Mock data for discussions - in a real app, this would come from Supabase
 const mockDiscussions = [
@@ -88,6 +94,9 @@ const Community = () => {
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [newReplyContent, setNewReplyContent] = useState("");
 
+  // Verificar se o usuário é um administrador
+  const isAdmin = userProfile?.isAdmin === true;
+
   const handleCreateDiscussion = () => {
     if (!newDiscussionTitle.trim() || !newDiscussionContent.trim()) {
       toast.error("Por favor, preencha todos os campos");
@@ -167,6 +176,62 @@ const Community = () => {
     setDiscussions(updatedDiscussions);
     setNewReplyContent("");
     toast.success("Resposta enviada com sucesso!");
+  };
+
+  // Nova função para excluir uma discussão
+  const handleDeleteDiscussion = (discussionId: string) => {
+    if (!isAdmin) {
+      toast.error("Apenas administradores podem excluir discussões");
+      return;
+    }
+
+    const updatedDiscussions = discussions.filter(disc => disc.id !== discussionId);
+    setDiscussions(updatedDiscussions);
+    
+    // Se a discussão a ser excluída está sendo visualizada, fechamos o diálogo
+    if (selectedDiscussion?.id === discussionId) {
+      setViewDialogOpen(false);
+      setSelectedDiscussion(null);
+    }
+    
+    toast.success("Discussão excluída com sucesso!");
+  };
+
+  // Nova função para excluir uma resposta
+  const handleDeleteReply = (discussionId: string, replyId: string) => {
+    if (!isAdmin) {
+      toast.error("Apenas administradores podem excluir respostas");
+      return;
+    }
+
+    // Atualize a discussão selecionada se estiver visualizando-a
+    if (selectedDiscussion?.id === discussionId) {
+      const updatedReplyList = selectedDiscussion.replyList.filter(reply => reply.id !== replyId);
+      
+      const updatedSelectedDiscussion = {
+        ...selectedDiscussion,
+        replies: updatedReplyList.length,
+        replyList: updatedReplyList
+      };
+      
+      setSelectedDiscussion(updatedSelectedDiscussion);
+    }
+    
+    // Atualize a lista de discussões
+    const updatedDiscussions = discussions.map(disc => {
+      if (disc.id === discussionId) {
+        const updatedReplyList = disc.replyList.filter(reply => reply.id !== replyId);
+        return {
+          ...disc,
+          replies: updatedReplyList.length,
+          replyList: updatedReplyList
+        };
+      }
+      return disc;
+    });
+    
+    setDiscussions(updatedDiscussions);
+    toast.success("Resposta excluída com sucesso!");
   };
 
   const filteredDiscussions = discussions.filter(
@@ -256,38 +321,68 @@ const Community = () => {
             ) : (
               <div className="space-y-4">
                 {filteredDiscussions.map((discussion) => (
-                  <Card key={discussion.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-center">
-                        <h3 className="font-medium text-lg dark:text-white">{discussion.title}</h3>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleViewDiscussion(discussion)}
+                  <ContextMenu key={discussion.id}>
+                    <ContextMenuTrigger>
+                      <Card className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-center">
+                            <h3 className="font-medium text-lg dark:text-white">{discussion.title}</h3>
+                            <div className="flex items-center gap-2">
+                              {isAdmin && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteDiscussion(discussion.id);
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleViewDiscussion(discussion)}
+                              >
+                                Ver
+                              </Button>
+                            </div>
+                          </div>
+                          <p className="text-gray-600 dark:text-gray-300 text-sm mt-2 line-clamp-2">
+                            {discussion.content}
+                          </p>
+                          <div className="flex items-center mt-3 text-xs text-gray-500">
+                            <span className="mr-2">por {discussion.author}</span>
+                            <span className="mx-2">•</span>
+                            <span>{new Date(discussion.createdAt).toLocaleDateString()}</span>
+                          </div>
+                          <div className="flex mt-3 text-sm text-gray-500">
+                            <div className="flex items-center mr-4">
+                              <MessageSquare className="h-4 w-4 mr-1" />
+                              <span>{discussion.replies} respostas</span>
+                            </div>
+                            <div className="flex items-center">
+                              <Users className="h-4 w-4 mr-1" />
+                              <span>{discussion.participants} participantes</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </ContextMenuTrigger>
+                    {isAdmin && (
+                      <ContextMenuContent>
+                        <ContextMenuItem 
+                          className="text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-950/20"
+                          onClick={() => handleDeleteDiscussion(discussion.id)}
                         >
-                          Ver
-                        </Button>
-                      </div>
-                      <p className="text-gray-600 dark:text-gray-300 text-sm mt-2 line-clamp-2">
-                        {discussion.content}
-                      </p>
-                      <div className="flex items-center mt-3 text-xs text-gray-500">
-                        <span className="mr-2">por {discussion.author}</span>
-                        <span className="mx-2">•</span>
-                        <span>{new Date(discussion.createdAt).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex mt-3 text-sm text-gray-500">
-                        <div className="flex items-center mr-4">
-                          <MessageSquare className="h-4 w-4 mr-1" />
-                          <span>{discussion.replies} respostas</span>
-                        </div>
-                        <div className="flex items-center">
-                          <Users className="h-4 w-4 mr-1" />
-                          <span>{discussion.participants} participantes</span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Excluir discussão
+                        </ContextMenuItem>
+                      </ContextMenuContent>
+                    )}
+                  </ContextMenu>
                 ))}
               </div>
             )}
@@ -396,13 +491,23 @@ const Community = () => {
                 ) : (
                   <div className="space-y-4">
                     {selectedDiscussion.replyList.map((reply) => (
-                      <div key={reply.id} className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                      <div key={reply.id} className="relative bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                        {isAdmin && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 p-1 h-auto"
+                            onClick={() => handleDeleteReply(selectedDiscussion.id, reply.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                         <div className="flex items-center text-sm text-gray-500 mb-2">
                           <span className="font-medium text-gray-700 dark:text-gray-300">{reply.author}</span>
                           <span className="mx-2">•</span>
                           <span>{new Date(reply.createdAt).toLocaleDateString()}</span>
                         </div>
-                        <p className="text-gray-700 dark:text-gray-300">{reply.content}</p>
+                        <p className="text-gray-700 dark:text-gray-300 pr-6">{reply.content}</p>
                       </div>
                     ))}
                   </div>
@@ -429,3 +534,4 @@ const Community = () => {
 };
 
 export default Community;
+
