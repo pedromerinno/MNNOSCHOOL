@@ -1,6 +1,6 @@
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Link, FileText, Users, School, Globe, Settings } from "lucide-react";
+import { Link, FileText, Users, School, Globe, Settings, StickyNote } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useCompanies } from "@/hooks/useCompanies";
 
@@ -35,11 +35,10 @@ export const QuickLinks = () => {
       description: "Acesso aos cursos"
     },
     { 
-      icon: Globe, 
-      label: "Comunidade", 
-      path: "/community", 
-      hasDropdown: true,
-      description: "Conecte-se com outros usuários"
+      icon: StickyNote, 
+      label: "Notas", 
+      path: "/notes", 
+      description: "Suas anotações pessoais"
     }
   ];
 

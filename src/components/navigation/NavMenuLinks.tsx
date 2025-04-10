@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Book, BookOpen } from "lucide-react";
+import { Book, BookOpen, StickyNote } from "lucide-react";
 
 export const NavMenuLinks = () => {
   const { user, userProfile } = useAuth();
@@ -91,14 +91,14 @@ export const NavMenuLinks = () => {
         </li>
         <li>
           <Link 
-            to="/tools" 
+            to="/notes" 
             className={cn(
               "flex items-center space-x-2 text-sm text-[rgb(107_114_128)] dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light",
-              isCurrentPage('/tools') && "font-bold text-gray-700"
+              isCurrentPage('/notes') && "font-bold text-gray-700"
             )}
           >
-            Ferramentas
-            <Badge variant="beta" className="ml-2 text-xs px-2 py-1">beta</Badge>
+            <StickyNote className="h-4 w-4 mr-1" />
+            Notas
           </Link>
         </li>
         {isAdmin && (
