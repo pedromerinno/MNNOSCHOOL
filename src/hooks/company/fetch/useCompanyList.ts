@@ -14,7 +14,9 @@ export const useCompanyList = ({
    */
   const fetchCompanies = async (): Promise<void> => {
     // Se já estivermos carregando, não iniciar nova requisição
-    setIsLoading(true);
+    if (setIsLoading) {
+      setIsLoading(true);
+    }
     
     try {
       const { data, error } = await retryOperation(
@@ -31,7 +33,9 @@ export const useCompanyList = ({
 
       if (data) {
         console.log(`Fetched ${data.length} companies successfully`);
-        setCompanies(data as Company[]);
+        if (setCompanies) {
+          setCompanies(data as Company[]);
+        }
       }
     } catch (error) {
       console.error("Unexpected error:", error);
@@ -39,7 +43,9 @@ export const useCompanyList = ({
         description: "Ocorreu um erro ao buscar as empresas",
       });
     } finally {
-      setIsLoading(false);
+      if (setIsLoading) {
+        setIsLoading(false);
+      }
     }
   };
 

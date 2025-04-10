@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CompanyIntegrationForm } from './integration/CompanyIntegrationForm';
 import { IntegrationVideosManager } from './integration/IntegrationVideosManager';
+import { JobRolesManager } from './integration/JobRolesManager';
 
 export const IntegrationManagement: React.FC = () => {
   const { companies, isLoading, fetchCompanies } = useCompanies();
@@ -173,15 +174,7 @@ export const IntegrationManagement: React.FC = () => {
                   <IntegrationVideosManager company={selectedCompany} />
                 </TabsContent>
                 <TabsContent value="cargo" className="m-0">
-                  <div className="p-6 text-center border border-dashed rounded-lg bg-gray-50 dark:bg-gray-800">
-                    <h3 className="text-lg font-medium mb-2">Gerenciamento de Cargos</h3>
-                    <p className="text-gray-500 dark:text-gray-400 mb-4">
-                      Esta funcionalidade está em desenvolvimento.
-                    </p>
-                    <Button disabled>
-                      Em breve
-                    </Button>
-                  </div>
+                  <JobRolesManager company={selectedCompany} />
                 </TabsContent>
               </div>
             </Tabs>
