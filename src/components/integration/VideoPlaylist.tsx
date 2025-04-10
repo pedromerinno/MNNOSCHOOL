@@ -1,9 +1,8 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Play, Info, List, Video } from "lucide-react";
+import { Info, List, Video } from "lucide-react";
 
 // Definimos alguns vídeos de exemplo para a playlist
 const SAMPLE_VIDEOS = [
@@ -19,7 +18,7 @@ const SAMPLE_VIDEOS = [
     id: '2', 
     title: 'Conheça Nossa Equipe', 
     thumbnail: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3',
-    url: 'https://www.youtube.com/embed/dQw4w9WgXcQ', 
+    url: 'https://www.youtube.com/embed/C0DPdy98e4c', 
     duration: '5:12',
     description: 'Apresentação dos membros da equipe e suas funções.'
   },
@@ -27,7 +26,7 @@ const SAMPLE_VIDEOS = [
     id: '3', 
     title: 'Nossos Produtos e Serviços', 
     thumbnail: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3',
-    url: 'https://www.youtube.com/embed/dQw4w9WgXcQ', 
+    url: 'https://www.youtube.com/embed/jNQXAC9IVRw', 
     duration: '4:30',
     description: 'Visão geral dos produtos e serviços oferecidos pela empresa.'
   },
@@ -35,7 +34,7 @@ const SAMPLE_VIDEOS = [
     id: '4', 
     title: 'Procedimentos Internos', 
     thumbnail: 'https://images.unsplash.com/photo-1531973576160-7125cd663d86?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3',
-    url: 'https://www.youtube.com/embed/dQw4w9WgXcQ', 
+    url: 'https://www.youtube.com/embed/TcMBFSGVi1c', 
     duration: '6:18',
     description: 'Guia sobre os procedimentos internos e políticas da empresa.'
   },
@@ -52,11 +51,15 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
   mainVideo,
   mainVideoDescription
 }) => {
-  const [activeTab, setActiveTab] = useState<string>("player");
-  const [currentVideo, setCurrentVideo] = useState(mainVideo || SAMPLE_VIDEOS[0].url);
-  const [currentDescription, setCurrentDescription] = useState(mainVideoDescription || SAMPLE_VIDEOS[0].description);
+  // Inicializar com o vídeo principal ou com o primeiro vídeo da playlist
+  const initialVideo = mainVideo || SAMPLE_VIDEOS[0].url;
+  const initialDescription = mainVideoDescription || SAMPLE_VIDEOS[0].description;
+  
+  const [currentVideo, setCurrentVideo] = useState(initialVideo);
+  const [currentDescription, setCurrentDescription] = useState(initialDescription);
   const [selectedVideoIndex, setSelectedVideoIndex] = useState<number | null>(null);
 
+  // Função para selecionar um vídeo da playlist
   const handleSelectVideo = (video: typeof SAMPLE_VIDEOS[0], index: number) => {
     setCurrentVideo(video.url);
     setCurrentDescription(video.description);
@@ -116,31 +119,12 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
             </div>
             
             <CardContent className="p-4">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="player">
-                    <Play className="h-4 w-4 mr-2" />
-                    <span>Reprodutor</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="info">
-                    <Info className="h-4 w-4 mr-2" />
-                    <span>Informações</span>
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value="player" className="mt-4">
-                  <div className="flex justify-between items-center">
-                    <Button variant="outline" size="sm" disabled={!embedUrl}>
-                      <Play className="h-4 w-4 mr-2" />
-                      Reproduzir
-                    </Button>
-                  </div>
-                </TabsContent>
-                <TabsContent value="info" className="mt-4">
-                  <p className="text-gray-700 dark:text-gray-300">
-                    {currentDescription || "Sem descrição disponível."}
-                  </p>
-                </TabsContent>
-              </Tabs>
+              {/* Removido os botões, mantendo apenas a descrição */}
+              <div className="mt-2">
+                <p className="text-gray-700 dark:text-gray-300">
+                  {currentDescription || "Sem descrição disponível."}
+                </p>
+              </div>
             </CardContent>
           </Card>
         </div>
