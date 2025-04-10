@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 import { Company } from "@/types/company";
+import { accessFormSchema } from "./form/IntegrationFormSchema";
 
 type AccessItem = {
   id: string;
@@ -18,7 +19,7 @@ type AccessItem = {
   tool_name: string;
   username: string;
   password: string;
-  url: string;
+  url: string | null;
   notes: string | null;
   created_at: string;
 };
@@ -77,6 +78,13 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({ company }) =
     e.preventDefault();
     
     try {
+      // Validate form data
+      const validationResult = accessFormSchema.safeParse(formData);
+      if (!validationResult.success) {
+        toast.error('Por favor, preencha todos os campos obrigatórios');
+        return;
+      }
+      
       if (currentAccess) {
         // Update existing access
         const { error } = await supabase
@@ -85,7 +93,7 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({ company }) =
             tool_name: formData.tool_name,
             username: formData.username,
             password: formData.password,
-            url: formData.url,
+            url: formData.url || null,
             notes: formData.notes || null
           })
           .eq('id', currentAccess.id);
@@ -101,7 +109,7 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({ company }) =
             tool_name: formData.tool_name,
             username: formData.username,
             password: formData.password,
-            url: formData.url,
+            url: formData.url || null,
             notes: formData.notes || null
           });
           
@@ -125,7 +133,7 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({ company }) =
       tool_name: accessItem.tool_name,
       username: accessItem.username,
       password: accessItem.password,
-      url: accessItem.url,
+      url: accessItem.url || '',
       notes: accessItem.notes || ''
     });
     setIsDialogOpen(true);

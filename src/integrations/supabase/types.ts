@@ -9,6 +9,47 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      company_access: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          password: string
+          tool_name: string
+          url: string | null
+          username: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          password: string
+          tool_name: string
+          url?: string | null
+          username: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          password?: string
+          tool_name?: string
+          url?: string | null
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_access_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_courses: {
         Row: {
           course_id: string
