@@ -2,9 +2,10 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Company } from "@/types/company";
+import { UserProfile } from "@/hooks/useUsers";
 
 export const useCompanyUserRelationship = (
-  setCompanyUsers: (value: React.SetStateAction<string[]>) => void,
+  setCompanyUsers: (value: React.SetStateAction<UserProfile[]>) => void,
   setUserRoles: (value: React.SetStateAction<Record<string, string>>) => void,
   setReloadTrigger: (value: React.SetStateAction<number>) => void
 ) => {
@@ -47,8 +48,23 @@ export const useCompanyUserRelationship = (
         
       if (error) throw error;
       
-      // Update company users list
-      setCompanyUsers(prev => [...prev, userId]);
+      // Update company users list - find the user profile and add it
+      setCompanyUsers(prev => {
+        // Find the user in the previous list to avoid duplicates
+        const userExists = prev.some(user => user.id === userId);
+        if (userExists) return prev;
+        
+        // Create a minimal user profile if we don't have complete data
+        const newUser: UserProfile = { 
+          id: userId,
+          email: null,
+          display_name: null, 
+          is_admin: null
+        };
+        
+        return [...prev, newUser];
+      });
+      
       toast.success("User added successfully");
       
       // Trigger company relation change to refresh data
@@ -99,8 +115,10 @@ export const useCompanyUserRelationship = (
         
       if (error) throw error;
       
-      // Update company users list
-      setCompanyUsers(prev => prev.filter(id => id !== userId));
+      // Update company users list by filtering out the removed user
+      setCompanyUsers(prev => prev.filter(user => user.id !== userId));
+      
+      // Remove user role from the roles map
       setUserRoles(prev => {
         const updated = { ...prev };
         delete updated[userId];
