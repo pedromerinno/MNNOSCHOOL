@@ -33,6 +33,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { UserRoleAssignment } from './UserRoleAssignment';
+import { JobRole } from '@/types/job-roles';
 
 interface CollaboratorsManagementProps {
   company: Company;
@@ -79,14 +80,17 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
       const { data, error } = await supabase
         .from('profiles')
         .select('id, cargo_id')
-        .in('id', userIds)
-        .not('cargo_id', 'is', null);
+        .in('id', userIds);
         
       if (error) throw error;
       
       if (data && data.length > 0) {
+        // Filtrar usuários com cargo atribuído
+        const usersWithRoles = data.filter(u => u.cargo_id);
+        if (usersWithRoles.length === 0) return;
+        
         // Buscar nomes dos cargos
-        const cargoIds = data.map(u => u.cargo_id).filter(Boolean);
+        const cargoIds = usersWithRoles.map(u => u.cargo_id).filter(Boolean) as string[];
         
         if (cargoIds.length > 0) {
           const { data: rolesData, error: rolesError } = await supabase
@@ -101,12 +105,12 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
           // Criar mapa de nomes de cargos por ID
           if (rolesData) {
             const roleNameMap: Record<string, string> = {};
-            rolesData.forEach(role => {
+            rolesData.forEach((role: JobRole) => {
               roleNameMap[role.id] = role.title;
             });
             
             // Mapear usuários para seus nomes de cargo
-            data.forEach(user => {
+            usersWithRoles.forEach(user => {
               if (user.cargo_id && roleNameMap[user.cargo_id]) {
                 roleMap[user.id] = roleNameMap[user.cargo_id];
               }
@@ -170,10 +174,12 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
     
     try {
       // Primeiro, remover cargo do usuário se tiver um cargo desta empresa
-      await supabase
+      const { error: updateError } = await supabase
         .from('profiles')
         .update({ cargo_id: null })
         .eq('id', userId);
+      
+      if (updateError) throw updateError;
       
       // Depois remover relação com a empresa
       const { error } = await supabase

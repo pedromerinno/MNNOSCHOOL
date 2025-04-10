@@ -36,17 +36,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-
-interface JobRole {
-  id: string;
-  title: string;
-  description: string | null;
-  responsibilities: string | null;
-  requirements: string | null;
-  expectations: string | null;
-  order_index: number;
-  company_id: string;
-}
+import { JobRole } from "@/types/job-roles";
 
 interface JobRolesManagerProps {
   company: Company;

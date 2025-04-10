@@ -13,11 +13,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfile } from "@/hooks/useUsers";
-
-interface JobRole {
-  id: string;
-  title: string;
-}
+import { JobRole } from "@/types/job-roles";
 
 interface UserRoleAssignmentProps {
   user: UserProfile;
@@ -45,7 +41,7 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
         // Buscar cargos da empresa
         const { data: roleData, error: roleError } = await supabase
           .from('job_roles')
-          .select('id, title')
+          .select('id, title, responsibilities, requirements, expectations, order_index, company_id, description')
           .eq('company_id', companyId)
           .order('title');
           
@@ -69,7 +65,7 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
           // Buscar nome do cargo atual
           const { data: currentRoleData, error: currentRoleError } = await supabase
             .from('job_roles')
-            .select('title')
+            .select('title, responsibilities, requirements, expectations, order_index, company_id, description')
             .eq('id', userData.cargo_id)
             .single();
             
