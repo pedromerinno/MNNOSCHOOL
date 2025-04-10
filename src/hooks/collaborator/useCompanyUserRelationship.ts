@@ -15,7 +15,14 @@ export const useCompanyUserRelationship = (
       return;
     }
     
+    if (!userId) {
+      toast.error("No user selected");
+      return;
+    }
+    
     try {
+      console.log(`Adding user ${userId} to company ${company.id}`);
+      
       // Check if relation already exists
       const { data: existingRelation, error: checkError } = await supabase
         .from('user_empresa')
@@ -65,7 +72,14 @@ export const useCompanyUserRelationship = (
       return;
     }
     
+    if (!userId) {
+      toast.error("Invalid user");
+      return;
+    }
+    
     try {
+      console.log(`Removing user ${userId} from company ${company.id}`);
+      
       // First, remove user's role if they have one from this company
       const { error: updateError } = await supabase
         .from('profiles')

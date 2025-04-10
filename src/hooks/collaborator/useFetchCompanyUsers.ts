@@ -13,7 +13,7 @@ export const useFetchCompanyUsers = (
 ) => {
   // Function to fetch user roles
   const fetchUserRoles = async (userIds: string[]) => {
-    if (userIds.length === 0) return;
+    if (userIds.length === 0) return {};
     
     try {
       // First, fetch cargo_id info from profiles
@@ -24,14 +24,14 @@ export const useFetchCompanyUsers = (
         
       if (error) throw error;
       
-      if (!data || data.length === 0) return;
+      if (!data || data.length === 0) return {};
       
       // Filter users with assigned roles
       const usersWithRoles = data.filter(u => u.cargo_id);
       
       if (usersWithRoles.length === 0) {
         console.log("No users with assigned roles");
-        return;
+        return {};
       }
       
       // Extract role IDs for search
@@ -39,7 +39,7 @@ export const useFetchCompanyUsers = (
         .map(u => u.cargo_id)
         .filter(Boolean) as string[];
       
-      if (cargoIds.length === 0) return;
+      if (cargoIds.length === 0) return {};
       
       console.log(`Fetching ${cargoIds.length} roles`);
       
@@ -51,7 +51,7 @@ export const useFetchCompanyUsers = (
         
       if (rolesError) throw rolesError;
       
-      if (!rolesData || rolesData.length === 0) return;
+      if (!rolesData || rolesData.length === 0) return {};
       
       console.log(`Found ${rolesData.length} roles`);
       
@@ -69,11 +69,11 @@ export const useFetchCompanyUsers = (
         }
       });
       
-      setUserRoles(roleMap);
-      
+      return roleMap;
     } catch (error: any) {
       console.error("Error fetching user roles:", error);
       toast.error(`Error loading user roles: ${error.message}`);
+      return {};
     }
   };
 
@@ -107,7 +107,9 @@ export const useFetchCompanyUsers = (
     if (!company || !company.id) {
       console.log("No company selected or company has no ID");
       setIsLoading(false);
-      return;
+      setCompanyUsers([]);
+      initialFetchDone.current = true;
+      return [];
     }
     
     setIsLoading(true);
@@ -122,28 +124,35 @@ export const useFetchCompanyUsers = (
         
       if (error) throw error;
       
-      if (data && data.length > 0) {
-        console.log(`Found ${data.length} collaborators`);
-        const userIds = data.map(item => item.user_id);
-        setCompanyUsers(userIds);
-        
-        // Fetch user roles
-        await fetchUserRoles(userIds);
-        
-        // Fetch full user profiles
-        await fetchFullUserProfiles(userIds);
-      } else {
+      if (!data || data.length === 0) {
         console.log("No collaborators found for this company");
         setCompanyUsers([]);
         setUserRoles({});
+        setIsLoading(false);
+        initialFetchDone.current = true;
+        return [];
       }
       
+      console.log(`Found ${data.length} collaborators`);
+      const userIds = data.map(item => item.user_id);
+      setCompanyUsers(userIds);
+      
+      // Fetch user roles
+      const roleMap = await fetchUserRoles(userIds);
+      setUserRoles(roleMap);
+      
+      // Fetch full user profiles
+      const profiles = await fetchFullUserProfiles(userIds);
+      
+      setIsLoading(false);
+      initialFetchDone.current = true;
+      return profiles;
     } catch (error: any) {
       console.error("Error fetching company users:", error);
       toast.error(`Error loading collaborators: ${error.message}`);
-    } finally {
       setIsLoading(false);
       initialFetchDone.current = true;
+      return [];
     }
   }, [setCompanyUsers, setIsLoading, setUserRoles, initialFetchDone]);
 

@@ -1,5 +1,5 @@
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { Company } from "@/types/company";
 import { useUsers } from "@/hooks/useUsers";
 import { useCollaboratorState } from './useCollaboratorState';
@@ -10,6 +10,7 @@ import { CollaboratorData } from './types';
 
 export const useCollaboratorManagement = (company: Company | null): CollaboratorData => {
   const { users: allUsers, loading: loadingUsers, fetchUsers } = useUsers();
+  const [userProfiles, setUserProfiles] = useState([]);
   
   // Get state management and actions
   const {
@@ -27,7 +28,7 @@ export const useCollaboratorManagement = (company: Company | null): Collaborator
   } = useCollaboratorState();
 
   // Get company users fetching functionality
-  const { fetchCompanyUsers } = useFetchCompanyUsers(
+  const { fetchCompanyUsers, fetchFullUserProfiles } = useFetchCompanyUsers(
     setCompanyUsers,
     setIsLoading,
     setUserRoles,
@@ -51,33 +52,37 @@ export const useCollaboratorManagement = (company: Company | null): Collaborator
     return removeUser(userId, company);
   }, [removeUser, company]);
 
-  // Load data when component mounts and when company changes
+  // Load data when component mounts and when company or reload trigger changes
   useEffect(() => {
-    if (company && company.id) {
-      console.log(`Company changed or reload triggered: ${company.nome} (${reloadTrigger})`);
-      fetchCompanyUsers(company);
-    }
+    const loadCompanyUsers = async () => {
+      if (company && company.id) {
+        console.log(`Loading company users for ${company.nome} (${reloadTrigger})`);
+        const profiles = await fetchCompanyUsers(company);
+        console.log(`Retrieved ${profiles.length} user profiles`);
+        setUserProfiles(profiles);
+      }
+    };
+    
+    loadCompanyUsers();
   }, [company, reloadTrigger, fetchCompanyUsers]);
   
-  // Ensure users are loaded
+  // Ensure all users are loaded
   useEffect(() => {
-    if (allUsers.length === 0 && !loadingUsers) {
+    if (!loadingUsers && allUsers.length === 0) {
       console.log("Loading users in CollaboratorsManagement");
       fetchUsers();
     }
-  }, [allUsers, loadingUsers, fetchUsers]);
+  }, [allUsers.length, loadingUsers, fetchUsers]);
   
   // Listen for company selection events and reload data
   useEffect(() => {
     const handleCompanyChange = () => {
       console.log("CollaboratorsManagement: Company change event detected");
-      // Force a refresh of company users data
       setReloadTrigger(prev => prev + 1);
     };
     
     const handleSettingsCompanyChanged = (event: CustomEvent<{company: Company}>) => {
       console.log("Settings company changed event detected:", event.detail.company.nome);
-      // Just trigger a reload of the data
       setReloadTrigger(prev => prev + 1);
     };
     
@@ -90,7 +95,14 @@ export const useCollaboratorManagement = (company: Company | null): Collaborator
     };
   }, [setReloadTrigger]);
 
-  console.log(`Company users count: ${companyUsers.length}, Filtered company users: ${filteredCompanyUsers.length}`);
+  console.log({
+    isLoading,
+    loadingUsers,
+    companyUsersCount: companyUsers.length,
+    filteredCompanyUsersCount: filteredCompanyUsers.length,
+    allUsersCount: allUsers.length,
+    initialFetchDone: initialFetchDone.current
+  });
 
   return {
     isLoading,

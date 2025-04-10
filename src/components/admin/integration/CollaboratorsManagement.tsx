@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, X, UserPlus, FileText } from "lucide-react";
+import { Search, X, UserPlus, FileText, RefreshCw } from "lucide-react";
 import { Company } from "@/types/company";
 import { useCollaboratorManagement } from "@/hooks/collaborator";
 import { LoadingCollaborators } from './collaborators/LoadingCollaborators';
@@ -40,8 +40,9 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<string>("users");
+  const [refreshing, setRefreshing] = useState(false);
   
-  // Force a reload when company changes
+  // Force a reload when component mounts or company changes
   useEffect(() => {
     console.log("CollaboratorsManagement: Company changed to", company.nome);
     setReloadTrigger(prev => prev + 1);
@@ -83,6 +84,13 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
     setShowUploadDialog(false);
   };
   
+  // Handle manual refresh
+  const handleRefresh = () => {
+    setRefreshing(true);
+    setReloadTrigger(prev => prev + 1);
+    setTimeout(() => setRefreshing(false), 1000);
+  };
+  
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -93,10 +101,22 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
           </p>
         </div>
         
-        <Button onClick={() => setShowAddUsersDialog(true)}>
-          <UserPlus className="h-4 w-4 mr-2" />
-          Adicionar Colaboradores
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline"
+            size="icon"
+            onClick={handleRefresh}
+            disabled={refreshing || isLoading}
+            title="Atualizar"
+          >
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+          </Button>
+          
+          <Button onClick={() => setShowAddUsersDialog(true)}>
+            <UserPlus className="h-4 w-4 mr-2" />
+            Adicionar Colaboradores
+          </Button>
+        </div>
       </div>
       
       <div className="relative">

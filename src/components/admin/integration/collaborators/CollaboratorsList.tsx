@@ -28,6 +28,8 @@ export const CollaboratorsList: React.FC<CollaboratorsListProps> = ({
   onManageDocuments,
   onRemoveUser
 }) => {
+  console.log('CollaboratorsList rendering with users:', users.length);
+  
   return (
     <Card>
       <Table>
