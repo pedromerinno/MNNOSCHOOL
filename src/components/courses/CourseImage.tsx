@@ -17,10 +17,10 @@ export const CourseImage: React.FC<CourseImageProps> = ({
         <img 
           src={imageUrl} 
           alt={title} 
-          className="w-full h-64 object-cover rounded-md mb-6" 
+          className="w-full h-64 object-cover rounded-[30px] mb-6" 
         />
       ) : (
-        <div className="w-full h-64 flex items-center justify-center bg-gray-200 dark:bg-gray-800 rounded-md mb-6">
+        <div className="w-full h-64 flex items-center justify-center bg-gray-200 dark:bg-gray-800 rounded-[30px] mb-6">
           <Book className="h-16 w-16 text-gray-400" />
         </div>
       )}

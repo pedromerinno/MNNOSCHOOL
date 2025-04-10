@@ -18,12 +18,12 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
   const { id, title, description, image_url, instructor, progress = 0, completed = false, tags = [] } = course;
   
   return (
-    <Card className="group h-full">
+    <Card className="group h-full overflow-hidden rounded-[30px] border border-gray-200 dark:border-gray-700">
       <Link to={`/courses/${id}`} className="block h-full">
         <div className="flex flex-col h-full">
-          {/* Hero Image */}
+          {/* Hero Image with reduced height */}
           <div className="relative">
-            <div className="aspect-[16/9] w-full overflow-hidden bg-gray-100 dark:bg-gray-800">
+            <div className="aspect-[16/7] w-full overflow-hidden bg-gray-100 dark:bg-gray-800">
               {image_url ? (
                 <img 
                   src={image_url} 
@@ -59,11 +59,11 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
             )}
           </div>
           
-          {/* Content */}
-          <div className="p-4 space-y-3 flex-grow flex flex-col">
-            {/* Tags */}
+          {/* Content - better organized */}
+          <div className="p-5 space-y-3 flex-grow flex flex-col">
+            {/* Tags - moved to top for better organization */}
             {tags && tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-2">
+              <div className="flex flex-wrap gap-2">
                 {tags.slice(0, 2).map((tag, index) => (
                   <Badge key={index} variant="outline" className="text-xs font-normal">
                     {tag}
@@ -77,10 +77,10 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
               </div>
             )}
             
-            {/* Title */}
+            {/* Title - made slightly more prominent */}
             <h3 className="font-semibold text-lg line-clamp-1">{title}</h3>
             
-            {/* Description - optional, can be removed for ultra minimal */}
+            {/* Description - with slightly better formatting */}
             {description && (
               <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2">
                 {description}
@@ -90,8 +90,8 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
             {/* Push metadata to bottom with flex-grow */}
             <div className="flex-grow"></div>
             
-            {/* Metadata & Actions Row */}
-            <div className="flex items-center justify-between pt-2">
+            {/* Metadata & Actions Row - better arranged */}
+            <div className="flex items-center justify-between pt-2 mt-3 border-t border-gray-100 dark:border-gray-800">
               <div className="flex items-center space-x-2">
                 {instructor ? (
                   <div className="flex items-center space-x-2">
@@ -138,4 +138,3 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
     </Card>
   );
 };
-
