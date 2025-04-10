@@ -2,9 +2,19 @@
 import { useCompanies } from "@/hooks/useCompanies";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VideoPlaylist } from "@/components/integration/VideoPlaylist";
+import { CompanyThemedBadge } from "@/components/ui/badge";
 
 const Integration = () => {
   const { selectedCompany, isLoading } = useCompanies();
+  
+  // Definir cor da empresa ou usar padrão se não disponível
+  const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
+  
+  // Estilo dinâmico com a cor da empresa
+  const companyColorStyle = {
+    color: companyColor,
+    borderColor: companyColor
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -22,11 +32,17 @@ const Integration = () => {
             </>
           ) : (
             <>
-              <h2 className="text-xl font-semibold mb-4 dark:text-white">
-                {selectedCompany 
-                  ? `Bem-vindo ao processo de integração da ${selectedCompany.nome}` 
-                  : "Bem-vindo ao processo de integração"}
-              </h2>
+              <div className="flex items-center mb-4">
+                <h2 className="text-xl font-semibold mr-3 dark:text-white">
+                  {selectedCompany 
+                    ? `Bem-vindo ao processo de integração da ${selectedCompany.nome}` 
+                    : "Bem-vindo ao processo de integração"}
+                </h2>
+                {selectedCompany && (
+                  <CompanyThemedBadge variant="beta">Empresa</CompanyThemedBadge>
+                )}
+              </div>
+              
               <p className="text-gray-700 dark:text-gray-300 mb-4">
                 {selectedCompany 
                   ? `Aqui você encontrará todas as informações sobre a ${selectedCompany.nome}, expectativas, 
@@ -34,8 +50,8 @@ const Integration = () => {
                   : "Aqui você encontrará todas as informações sobre nossa empresa, expectativas, descrição do cargo e tudo relacionado à sua contratação."}
               </p>
               <div className="grid md:grid-cols-2 gap-6 mt-8">
-                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                  <h3 className="font-medium mb-2 dark:text-white">
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg" style={{borderLeft: `4px solid ${companyColor}`}}>
+                  <h3 className="font-medium mb-2 dark:text-white" style={companyColorStyle}>
                     {selectedCompany 
                       ? `Sobre a ${selectedCompany.nome}` 
                       : "Sobre a empresa"}
@@ -46,15 +62,15 @@ const Integration = () => {
                       : "Conheça nossa história, valores e visão."}
                   </p>
                 </div>
-                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                  <h3 className="font-medium mb-2 dark:text-white">Descrição do cargo</h3>
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg" style={{borderLeft: `4px solid ${companyColor}`}}>
+                  <h3 className="font-medium mb-2 dark:text-white" style={companyColorStyle}>Descrição do cargo</h3>
                   <p className="text-gray-600 dark:text-gray-400">Detalhes sobre suas responsabilidades e expectativas.</p>
                 </div>
               </div>
               
               {/* Playlist de vídeos */}
               <div className="mt-8">
-                <h3 className="text-xl font-semibold mb-4 dark:text-white">Vídeos de integração</h3>
+                <h3 className="text-xl font-semibold mb-4 dark:text-white" style={companyColorStyle}>Vídeos de integração</h3>
                 <VideoPlaylist 
                   companyId={selectedCompany?.id} 
                   mainVideo={selectedCompany?.video_institucional || ""}

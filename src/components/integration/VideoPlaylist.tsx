@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Info, List, Video } from "lucide-react";
+import { useCompanies } from "@/hooks/useCompanies";
 
 // Definimos alguns vídeos de exemplo para a playlist
 const SAMPLE_VIDEOS = [
@@ -51,6 +52,9 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
   mainVideo,
   mainVideoDescription
 }) => {
+  const { selectedCompany } = useCompanies();
+  const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
+  
   // Inicializar com o vídeo principal ou com o primeiro vídeo da playlist
   const initialVideo = mainVideo || SAMPLE_VIDEOS[0].url;
   const initialDescription = mainVideoDescription || SAMPLE_VIDEOS[0].description;
@@ -96,6 +100,12 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
 
   const embedUrl = getEmbedUrl(currentVideo);
 
+  // Estilo dinâmico com a cor da empresa
+  const companyColorStyle = {
+    borderColor: companyColor,
+    '--company-color': companyColor
+  } as React.CSSProperties;
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -119,7 +129,6 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
             </div>
             
             <CardContent className="p-4">
-              {/* Removido os botões, mantendo apenas a descrição */}
               <div className="mt-2">
                 <p className="text-gray-700 dark:text-gray-300">
                   {currentDescription || "Sem descrição disponível."}
@@ -133,7 +142,7 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center mb-4">
-                <List className="h-5 w-5 mr-2 text-primary" />
+                <List className="h-5 w-5 mr-2" style={{ color: companyColor }} />
                 <h3 className="font-medium">Playlist de vídeos</h3>
               </div>
               
@@ -144,9 +153,14 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
                     onClick={() => handleSelectVideo(video, index)}
                     className={`flex items-start space-x-3 p-2 rounded-md cursor-pointer transition-colors ${
                       selectedVideoIndex === index 
-                        ? 'bg-primary/10 border-l-4 border-primary' 
+                        ? 'border-l-4' 
                         : 'hover:bg-gray-100 dark:hover:bg-gray-800'
                     }`}
+                    style={selectedVideoIndex === index ? 
+                      { 
+                        borderLeftColor: companyColor,
+                        backgroundColor: `${companyColor}10` // 10% opacity
+                      } : {}}
                   >
                     <div className="relative flex-shrink-0 w-20 h-12 rounded overflow-hidden">
                       <img 
