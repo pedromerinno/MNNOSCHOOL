@@ -1,8 +1,8 @@
 
 import { useRef } from "react";
 
-// Minimum time between requests (in ms)
-export const MIN_REQUEST_INTERVAL = 60000; // 60 segundos (aumentado para reduzir chamadas)
+// Minimum time between requests (in ms) - increased to reduce API calls
+export const MIN_REQUEST_INTERVAL = 120000; // 2 minutes
 
 export const useCompanyRequest = () => {
   // Timestamp of the last request
@@ -22,33 +22,33 @@ export const useCompanyRequest = () => {
   ): boolean => {
     const now = Date.now();
     
-    // Se já estivermos buscando dados, não iniciar nova requisição
+    // If already fetching, don't start new request
     if (isFetchingRef.current && !forceRefresh) {
-      console.log('Uma requisição já está em andamento. Ignorando nova requisição.');
+      console.log('A request is already in progress. Ignoring new request.');
       return false;
     }
     
-    // Incrementar contador de requisições pendentes
+    // Increment pending requests counter
     pendingRequestsRef.current += 1;
     
-    // Limitar requisições pendentes a 2 no máximo
+    // Limit pending requests to 2 maximum
     if (pendingRequestsRef.current > 2 && !forceRefresh) {
-      console.log(`Muitas requisições pendentes (${pendingRequestsRef.current}). Limitando.`);
+      console.log(`Too many pending requests (${pendingRequestsRef.current}). Limiting.`);
       pendingRequestsRef.current -= 1;
       return false;
     }
     
-    // Se for uma atualização forçada, sempre permitir
+    // If forced update, always allow
     if (forceRefresh) {
-      console.log('Forçando atualização dos dados.');
+      console.log('Forcing data refresh.');
       return true;
     }
     
-    // Verificar se passou tempo suficiente desde a última requisição
+    // Check if enough time has passed since last request
     const interval = customInterval || MIN_REQUEST_INTERVAL;
     const timeSinceLastFetch = now - lastFetchTimeRef.current;
     if (timeSinceLastFetch < interval && hasLocalData) {
-      console.log(`Última requisição há ${Math.round(timeSinceLastFetch/1000)}s. Usando dados em cache (intervalo mín: ${interval/1000}s).`);
+      console.log(`Last request ${Math.round(timeSinceLastFetch/1000)}s ago. Using cached data (min interval: ${interval/1000}s).`);
       pendingRequestsRef.current -= 1;
       return false;
     }

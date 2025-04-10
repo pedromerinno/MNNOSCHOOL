@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogOut, User, ChevronDown, Building } from "lucide-react";
@@ -66,8 +67,8 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
     signOut();
   };
 
-  const handleDashboardClick = () => {
-    navigate('/dashboard');
+  const handleHomeClick = () => {
+    navigate('/');
   };
 
   const handleCompanySelect = (company) => {
@@ -128,7 +129,7 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
                           <img 
                             src={company.logo} 
                             alt={company.nome} 
-                            className="h-4 w-4 mr-2 object-contain rounded-lg"  // Added rounded-lg for 8px border-radius
+                            className="h-4 w-4 mr-2 object-contain rounded-lg"
                           />
                         )}
                         <span className="truncate">{company.nome}</span>
@@ -161,10 +162,10 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
         <DropdownMenuSeparator />
         
         <DropdownMenuItem 
-          onClick={handleDashboardClick}
+          onClick={handleHomeClick}
           className="cursor-pointer flex items-center gap-2"
         >
-          <span>Dashboard</span>
+          <span>Início</span>
         </DropdownMenuItem>
         
         <DropdownMenuItem 

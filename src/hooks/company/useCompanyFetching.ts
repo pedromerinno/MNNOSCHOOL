@@ -49,6 +49,9 @@ export const useCompanyFetching = ({
   
   const { getCompanyById, getUserCompanies: getCompanies } = useCompanyFetch(companyFetchProps);
   
+  // Track fetch state to prevent duplicate calls
+  const fetchInProgressRef = React.useRef(false);
+  
   /**
    * Fetches user companies with rate limiting and caching
    */
@@ -56,6 +59,12 @@ export const useCompanyFetching = ({
     userId: string, 
     forceRefresh: boolean = false
   ): Promise<Company[]> => {
+    // If a fetch is already in progress and not forcing, return current data
+    if (fetchInProgressRef.current && !forceRefresh) {
+      console.log('A fetch operation is already in progress. Skipping duplicate fetch.');
+      return userCompanies;
+    }
+    
     // Check pending requests and log current state
     console.log(`Active requests: ${pendingRequestsRef.current}`);
     
@@ -65,6 +74,7 @@ export const useCompanyFetching = ({
     }
     
     // Mark request start
+    fetchInProgressRef.current = true;
     startRequest();
     setError(null);
     incrementFetchCount();
@@ -83,6 +93,10 @@ export const useCompanyFetching = ({
       
       // Update timestamp of successful request
       completeRequest();
+      // Cache the companies when we successfully fetch them
+      if (result && result.length > 0) {
+        cacheUserCompanies(result);
+      }
       return result;
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Unknown error');
@@ -99,6 +113,7 @@ export const useCompanyFetching = ({
       return [];
     } finally {
       // Mark request end
+      fetchInProgressRef.current = false;
       resetRequestState();
     }
   }, [
@@ -113,7 +128,8 @@ export const useCompanyFetching = ({
     executeWithRetry,
     getCompanies,
     setUserCompanies,
-    pendingRequestsRef
+    pendingRequestsRef,
+    cacheUserCompanies
   ]);
   
   /**

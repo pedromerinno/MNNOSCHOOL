@@ -15,6 +15,7 @@ export const useCompanyEvents = (
     const handleCompanySelected = (event: CustomEvent<{company: Company}>) => {
       const { company } = event.detail;
       if (company) {
+        // Only log and set if we actually have a company
         console.log('Company selected event received:', company.nome);
         setSelectedCompany(company);
       }

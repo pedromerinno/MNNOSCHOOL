@@ -1,7 +1,6 @@
 
 import { useCallback } from "react";
 import { Company } from "@/types/company";
-import { toast } from "sonner";
 
 interface UseCompanySelectionProps {
   setSelectedCompany: (company: Company | null) => void;
@@ -16,10 +15,7 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
       localStorage.setItem('selectedCompanyId', company.id);
       localStorage.setItem('selectedCompany', JSON.stringify(company));
       
-      // Broadcast company selection for other components
-      window.dispatchEvent(new CustomEvent('company-selected', { 
-        detail: { company } 
-      }));
+      // We remove this dispatch since it will be done in selectCompany
     } catch (e) {
       console.error('Failed to persist company selection', e);
     }
@@ -49,12 +45,24 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
 
   /**
    * Select a company and update all necessary state
+   * We use a debounce flag to prevent duplicate events
    */
+  let lastSelectedCompanyId: string | null = null;
+  
   const selectCompany = useCallback((userId: string, company: Company) => {
     if (!company) {
       console.error('Attempt to select null company');
       return;
     }
+    
+    // Skip if the company has already been selected
+    if (lastSelectedCompanyId === company.id) {
+      console.log(`Company ${company.nome} already selected, skipping event`);
+      return;
+    }
+    
+    // Update the last selected company to prevent duplicate selections
+    lastSelectedCompanyId = company.id;
     
     console.log(`Selecting company: ${company.nome} (${company.id})`);
     setSelectedCompany(company);
@@ -63,6 +71,7 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
     persistCompanySelection(company);
     
     // Trigger event for components listening for company changes
+    // But only do it once per company selection
     const navEvent = new CustomEvent('company-selected', { 
       detail: { userId, company } 
     });
