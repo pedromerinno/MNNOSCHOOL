@@ -20,8 +20,9 @@ export const CourseHero: React.FC<CourseHeroProps> = ({
   courseId
 }) => {
   return (
-    <div className="relative rounded-xl overflow-hidden bg-gradient-to-r from-[#6E59A5] to-[#9b87f5] text-white">
-      <div className="absolute inset-0 z-0 opacity-20">
+    <div className="relative rounded-xl overflow-hidden h-[350px] bg-[#1A1F2C] text-white">
+      {/* Full-width background image */}
+      <div className="absolute inset-0 w-full h-full">
         {imageUrl && (
           <img 
             src={imageUrl} 
@@ -29,10 +30,12 @@ export const CourseHero: React.FC<CourseHeroProps> = ({
             className="w-full h-full object-cover" 
           />
         )}
+        {/* Diagonal black shadow gradient for readability */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-black/70 to-transparent"></div>
       </div>
       
-      <div className="relative z-10 p-8 md:p-12">
-        <div className="flex justify-between items-start">
+      <div className="relative z-10 h-full">
+        <div className="flex flex-col h-full p-8 md:p-12">
           <div className="flex-1">
             <h1 className="text-3xl md:text-4xl font-bold mb-4">{title}</h1>
             {instructor && (
@@ -42,27 +45,26 @@ export const CourseHero: React.FC<CourseHeroProps> = ({
             )}
           </div>
           
-          <div className="flex gap-2">
-            <FavoriteButton 
-              courseId={courseId} 
-              initialFavorite={favorite} 
-              iconOnly={false} 
-              className="bg-white/20 hover:bg-white/30 text-white border-0"
-            />
-            
-            <Button variant="outline" size="icon" className="bg-white/20 hover:bg-white/30 text-white border-0">
-              <Share className="h-4 w-4" />
+          <div className="flex justify-between items-end">
+            <Button variant="default" className="bg-[#1EAEDB] hover:bg-[#0FA0CE]">
+              Começar a Aprender
             </Button>
+            
+            <div className="flex gap-2">
+              <FavoriteButton 
+                courseId={courseId} 
+                initialFavorite={favorite} 
+                iconOnly={false} 
+                className="bg-white/20 hover:bg-white/30 text-white border-0"
+              />
+              
+              <Button variant="outline" size="icon" className="bg-white/20 hover:bg-white/30 text-white border-0">
+                <Share className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-        </div>
-        
-        <div className="flex gap-2 mt-4">
-          <Button variant="default" className="bg-[#1EAEDB] hover:bg-[#0FA0CE]">
-            Começar a Aprender
-          </Button>
         </div>
       </div>
     </div>
   );
 };
-
