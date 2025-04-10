@@ -9,6 +9,7 @@ import { Heart, ChevronRight, UserRound } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/utils/stringUtils";
+import { useCompanies } from "@/hooks/useCompanies";
 
 interface CourseCardProps {
   course: Course;
@@ -16,6 +17,30 @@ interface CourseCardProps {
 
 export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
   const { id, title, description, image_url, instructor, progress = 0, completed = false, tags = [] } = course;
+  const { selectedCompany } = useCompanies();
+  
+  // Use company color or default
+  const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
+  
+  // Generate lighter and darker versions for badge styling
+  const getBadgeStyle = (baseColor: string, isCompleted: boolean) => {
+    if (isCompleted) {
+      return {
+        background: 'rgba(34, 197, 94, 0.1)',
+        color: 'rgb(34, 197, 94)',
+        borderColor: 'rgba(34, 197, 94, 0.2)'
+      };
+    }
+    
+    // For in-progress with company color
+    return {
+      background: `${baseColor}10`,
+      color: baseColor,
+      borderColor: `${baseColor}30`
+    };
+  };
+  
+  const badgeStyle = getBadgeStyle(companyColor, completed);
   
   return (
     <Card className="group h-full overflow-hidden rounded-[20px] border border-gray-200 dark:border-gray-700">
@@ -52,8 +77,8 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
             {progress > 0 && !completed && (
               <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200 dark:bg-gray-700">
                 <div 
-                  className="h-full bg-blue-500 dark:bg-blue-600" 
-                  style={{ width: `${progress}%` }}
+                  className="h-full" 
+                  style={{ width: `${progress}%`, backgroundColor: companyColor }}
                 />
               </div>
             )}
@@ -65,12 +90,29 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
             {tags && tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {tags.slice(0, 2).map((tag, index) => (
-                  <Badge key={index} variant="outline" className="text-xs font-normal">
+                  <Badge 
+                    key={index} 
+                    variant="outline" 
+                    className="text-xs font-normal"
+                    style={{
+                      backgroundColor: `${companyColor}10`,
+                      color: companyColor,
+                      borderColor: `${companyColor}30`
+                    }}
+                  >
                     {tag}
                   </Badge>
                 ))}
                 {tags.length > 2 && (
-                  <Badge variant="outline" className="text-xs font-normal">
+                  <Badge 
+                    variant="outline" 
+                    className="text-xs font-normal"
+                    style={{
+                      backgroundColor: `${companyColor}10`,
+                      color: companyColor,
+                      borderColor: `${companyColor}30`
+                    }}
+                  >
                     +{tags.length - 2}
                   </Badge>
                 )}
@@ -118,11 +160,19 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
                 className="flex items-center space-x-2"
               >
                 {completed ? (
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800 px-3 py-1">
+                  <Badge 
+                    variant="outline" 
+                    className="px-3 py-1"
+                    style={badgeStyle}
+                  >
                     Concluído
                   </Badge>
                 ) : progress > 0 ? (
-                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800 px-3 py-1">
+                  <Badge 
+                    variant="outline" 
+                    className="px-3 py-1"
+                    style={badgeStyle}
+                  >
                     {progress}% concluído
                   </Badge>
                 ) : null}
@@ -138,4 +188,3 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
     </Card>
   );
 };
-

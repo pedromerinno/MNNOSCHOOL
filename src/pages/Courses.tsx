@@ -19,6 +19,9 @@ const Courses = () => {
   const { selectedCompany } = useCompanies();
   const [activeFilter, setActiveFilter] = useState<FilterOption>('all');
 
+  // Pegamos a cor da empresa ou usamos o azul padrão
+  const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
+
   const getTitle = (baseTitle: string) => {
     return selectedCompany ? `${baseTitle} - ${selectedCompany.nome}` : baseTitle;
   };
@@ -46,9 +49,14 @@ const Courses = () => {
                 className={cn(
                   "inline-flex items-center px-4 py-2 rounded-full border text-sm transition-colors",
                   activeFilter === option.id
-                    ? "bg-primary text-white border-primary"
+                    ? "text-white border-transparent"
                     : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                 )}
+                style={
+                  activeFilter === option.id
+                    ? { backgroundColor: companyColor, borderColor: companyColor }
+                    : {}
+                }
               >
                 <Icon className="mr-2 h-4 w-4" />
                 {option.label}
@@ -67,10 +75,13 @@ const Courses = () => {
         {/* Progress bar - similar to reference */}
         <div className="relative h-1 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
           <div 
-            className="absolute top-0 left-0 h-full bg-blue-500 dark:bg-blue-600 rounded-full"
-            style={{ width: activeFilter === 'all' ? '25%' : 
+            className="absolute top-0 left-0 h-full rounded-full"
+            style={{ 
+              width: activeFilter === 'all' ? '25%' : 
                     activeFilter === 'in-progress' ? '50%' : 
-                    activeFilter === 'completed' ? '75%' : '100%' }}
+                    activeFilter === 'completed' ? '75%' : '100%',
+              backgroundColor: companyColor
+            }}
           />
         </div>
         

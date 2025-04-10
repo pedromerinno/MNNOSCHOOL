@@ -1,7 +1,7 @@
 
-import { Search } from "lucide-react";
 import { SearchBar } from "@/components/navigation/SearchBar";
 import { useCompanies } from "@/hooks/useCompanies";
+import { ThemeToggle } from "@/components/navigation/ThemeToggle";
 
 export const DashboardHeader = () => {
   const { selectedCompany } = useCompanies();
@@ -18,8 +18,9 @@ export const DashboardHeader = () => {
         backgroundColor: headerBgColor 
       }}
     >
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-end space-x-3">
         <SearchBar />
+        <ThemeToggle />
       </div>
     </div>
   );

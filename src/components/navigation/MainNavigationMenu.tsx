@@ -2,8 +2,6 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { NavMenuLinks } from "@/components/navigation/NavMenuLinks";
-import { SearchBar } from "@/components/navigation/SearchBar";
-import { ThemeToggle } from "@/components/navigation/ThemeToggle";
 import { NotificationButton } from "@/components/navigation/NotificationButton";
 import { UserNavigation } from "@/components/navigation/UserNavigation";
 import { AuthButtons } from "@/components/navigation/AuthButtons";
@@ -41,10 +39,6 @@ export const MainNavigationMenu = () => {
         </div>
         
         <div className="flex items-center space-x-3">
-          <SearchBar />
-          
-          <ThemeToggle />
-          
           {user ? (
             <UserNavigation />
           ) : (
