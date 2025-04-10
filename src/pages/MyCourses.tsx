@@ -259,7 +259,7 @@ const MyCourses = () => {
         
         {/* Stats Dashboard */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="md:col-span-2">
+          <div className="md:col-span-2 space-y-6">
             {/* Continue Assistindo */}
             <div className="space-y-6">
               <h2 className="text-xl font-semibold">Continue assistindo</h2>
@@ -417,7 +417,7 @@ const MyCourses = () => {
             </div>
           </div>
           
-          <div className="space-y-6">
+          <div className="space-y-6 mt-0">  {/* Removed mt-8 to align with top */}
             {/* Video stats card */}
             <Card className="overflow-hidden shadow-sm">
               <CardContent className="p-6">
