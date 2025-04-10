@@ -27,6 +27,33 @@ const Manifesto = () => {
     fetchUserCompany();
   }, [user, getUserCompanies]);
 
+  // Função para extrair o ID do vídeo do YouTube de uma URL
+  const getYoutubeVideoId = (url: string | null) => {
+    if (!url) return null;
+    
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+  
+  // Converte URL do YouTube para URL de incorporação
+  const getEmbedUrl = (url: string | null) => {
+    if (!url) return '';
+    
+    const videoId = getYoutubeVideoId(url);
+    if (videoId) {
+      return `https://www.youtube.com/embed/${videoId}`;
+    }
+    
+    // Se já for um URL de embed, retorna como está
+    if (url.includes('embed')) return url;
+    
+    return url;
+  };
+
+  const videoEmbedUrl = getEmbedUrl(selectedCompany?.video_institucional);
+
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8">
@@ -53,11 +80,11 @@ const Manifesto = () => {
         ) : (
           <div className="grid md:grid-cols-2 gap-8 mb-8">
             <Card className="overflow-hidden">
-              {selectedCompany?.video_institucional ? (
+              {videoEmbedUrl ? (
                 <div className="aspect-video">
                   <iframe 
                     className="w-full h-full" 
-                    src={selectedCompany.video_institucional} 
+                    src={videoEmbedUrl} 
                     title="Vídeo Institucional" 
                     frameBorder="0" 
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
