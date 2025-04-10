@@ -45,10 +45,18 @@ export const useCollaboratorManagement = (company: Company | null): Collaborator
 
   // Wrapper functions to include company
   const addUserToCompany = useCallback((userId: string) => {
+    if (!company) {
+      console.error('Cannot add user - no company selected');
+      return Promise.resolve(false);
+    }
     return addUser(userId, company);
   }, [addUser, company]);
 
   const removeUserFromCompany = useCallback((userId: string) => {
+    if (!company) {
+      console.error('Cannot remove user - no company selected');
+      return Promise.resolve(false);
+    }
     return removeUser(userId, company);
   }, [removeUser, company]);
 
@@ -57,14 +65,24 @@ export const useCollaboratorManagement = (company: Company | null): Collaborator
     const loadCompanyUsers = async () => {
       if (company && company.id) {
         console.log(`Loading company users for ${company.nome} (${reloadTrigger})`);
-        const profiles = await fetchCompanyUsers(company);
-        console.log(`Retrieved ${profiles.length} user profiles`);
-        setUserProfiles(profiles);
+        try {
+          const profiles = await fetchCompanyUsers(company);
+          console.log(`Retrieved ${profiles?.length || 0} user profiles`);
+          setUserProfiles(profiles || []);
+          // Set loading to false even if there are no profiles
+          setIsLoading(false);
+        } catch (error) {
+          console.error('Error loading company users:', error);
+          setIsLoading(false); // Make sure to set loading to false on error
+        }
+      } else {
+        // No company selected, ensure loading state is reset
+        setIsLoading(false);
       }
     };
     
     loadCompanyUsers();
-  }, [company, reloadTrigger, fetchCompanyUsers]);
+  }, [company, reloadTrigger, fetchCompanyUsers, setIsLoading]);
   
   // Ensure all users are loaded
   useEffect(() => {
@@ -95,14 +113,18 @@ export const useCollaboratorManagement = (company: Company | null): Collaborator
     };
   }, [setReloadTrigger]);
 
-  console.log({
-    isLoading,
-    loadingUsers,
-    companyUsersCount: companyUsers.length,
-    filteredCompanyUsersCount: filteredCompanyUsers.length,
-    allUsersCount: allUsers.length,
-    initialFetchDone: initialFetchDone.current
-  });
+  // Debug output for troubleshooting
+  useEffect(() => {
+    console.log({
+      isLoading,
+      loadingUsers,
+      companyUsersCount: companyUsers.length,
+      filteredCompanyUsersCount: filteredCompanyUsers.length,
+      allUsersCount: allUsers.length,
+      initialFetchDone: initialFetchDone.current,
+      hasCompany: !!company
+    });
+  }, [isLoading, loadingUsers, companyUsers.length, filteredCompanyUsers.length, allUsers.length, initialFetchDone, company]);
 
   return {
     isLoading,

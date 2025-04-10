@@ -122,7 +122,10 @@ export const useFetchCompanyUsers = (
         .select('user_id')
         .eq('empresa_id', company.id);
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching user_empresa relations:", error);
+        throw error;
+      }
       
       if (!data || data.length === 0) {
         console.log("No collaborators found for this company");
@@ -137,12 +140,22 @@ export const useFetchCompanyUsers = (
       const userIds = data.map(item => item.user_id);
       setCompanyUsers(userIds);
       
-      // Fetch user roles
-      const roleMap = await fetchUserRoles(userIds);
-      setUserRoles(roleMap);
+      try {
+        // Fetch user roles
+        const roleMap = await fetchUserRoles(userIds);
+        setUserRoles(roleMap);
+      } catch (roleError) {
+        console.error("Error fetching roles, continuing with empty roles:", roleError);
+        setUserRoles({});
+      }
       
       // Fetch full user profiles
-      const profiles = await fetchFullUserProfiles(userIds);
+      let profiles: UserProfile[] = [];
+      try {
+        profiles = await fetchFullUserProfiles(userIds);
+      } catch (profileError) {
+        console.error("Error fetching profiles:", profileError);
+      }
       
       setIsLoading(false);
       initialFetchDone.current = true;
@@ -152,6 +165,8 @@ export const useFetchCompanyUsers = (
       toast.error(`Error loading collaborators: ${error.message}`);
       setIsLoading(false);
       initialFetchDone.current = true;
+      setCompanyUsers([]);
+      setUserRoles({});
       return [];
     }
   }, [setCompanyUsers, setIsLoading, setUserRoles, initialFetchDone]);

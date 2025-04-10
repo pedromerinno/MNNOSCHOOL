@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, X, UserPlus, FileText, RefreshCw } from "lucide-react";
+import { Search, X, UserPlus, FileText, RefreshCw, AlertCircle } from "lucide-react";
 import { Company } from "@/types/company";
 import { useCollaboratorManagement } from "@/hooks/collaborator";
 import { LoadingCollaborators } from './collaborators/LoadingCollaborators';
@@ -15,6 +15,8 @@ import { UserDocumentsList } from './collaborators/UserDocumentsList';
 import { useUserDocuments } from '@/hooks/useUserDocuments';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "sonner";
 
 interface CollaboratorsManagementProps {
   company: Company;
@@ -41,11 +43,13 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<string>("users");
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   // Force a reload when component mounts or company changes
   useEffect(() => {
     console.log("CollaboratorsManagement: Company changed to", company.nome);
     setReloadTrigger(prev => prev + 1);
+    setError(null); // Reset error state on company change
   }, [company.id, setReloadTrigger]);
   
   // User documents management
@@ -87,9 +91,25 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
   // Handle manual refresh
   const handleRefresh = () => {
     setRefreshing(true);
+    setError(null);
     setReloadTrigger(prev => prev + 1);
-    setTimeout(() => setRefreshing(false), 1000);
+    
+    // Set a timeout to ensure the refreshing state doesn't get stuck
+    setTimeout(() => {
+      setRefreshing(false);
+      // If still loading after timeout, show a message
+      if (isLoading) {
+        toast.warning("Carregamento está demorando mais que o esperado");
+      }
+    }, 5000);
   };
+
+  // Clear the error state if loading is completed
+  useEffect(() => {
+    if (!isLoading && error) {
+      setError(null);
+    }
+  }, [isLoading, error]);
   
   return (
     <div className="space-y-6">
@@ -106,18 +126,28 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
             variant="outline"
             size="icon"
             onClick={handleRefresh}
-            disabled={refreshing || isLoading}
+            disabled={refreshing || !company?.id}
             title="Atualizar"
           >
             <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
           </Button>
           
-          <Button onClick={() => setShowAddUsersDialog(true)}>
+          <Button 
+            onClick={() => setShowAddUsersDialog(true)}
+            disabled={!company?.id}
+          >
             <UserPlus className="h-4 w-4 mr-2" />
             Adicionar Colaboradores
           </Button>
         </div>
       </div>
+      
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
       
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -126,6 +156,7 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
           className="pl-10"
+          disabled={isLoading || !company?.id}
         />
         {searchTerm && (
           <Button
@@ -133,6 +164,7 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
             size="icon"
             className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6"
             onClick={() => setSearchTerm("")}
+            disabled={isLoading}
           >
             <X className="h-4 w-4" />
           </Button>

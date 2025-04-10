@@ -2,12 +2,12 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, UserPlus } from "lucide-react";
+import { UserPlus, Search, Info } from "lucide-react";
 import { Company } from "@/types/company";
 
 interface EmptyCollaboratorsListProps {
   searchTerm: string;
-  company: Company | null;
+  company: Company;
   onAddClick: () => void;
 }
 
@@ -16,31 +16,53 @@ export const EmptyCollaboratorsList: React.FC<EmptyCollaboratorsListProps> = ({
   company,
   onAddClick
 }) => {
-  // Determine the appropriate message to display
-  const getMessage = () => {
-    if (searchTerm) {
-      return "Nenhum colaborador corresponde à sua busca";
-    } else if (!company) {
-      return "Selecione uma empresa para visualizar colaboradores";
-    } else {
-      return "Adicione colaboradores à empresa";
-    }
-  };
-
+  // If we have a search term, show that no results were found
+  if (searchTerm) {
+    return (
+      <Card className="border shadow-sm">
+        <CardContent className="p-6 text-center">
+          <Search className="h-8 w-8 text-gray-400 mx-auto" />
+          <p className="mt-2 text-gray-500">
+            Nenhum colaborador encontrado para "{searchTerm}"
+          </p>
+          <p className="text-sm text-gray-400 mt-1">
+            Tente outro termo de busca ou adicione novos colaboradores
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  // If no company is selected, show a message
+  if (!company || !company.id) {
+    return (
+      <Card className="border shadow-sm">
+        <CardContent className="p-6 text-center">
+          <Info className="h-8 w-8 text-gray-400 mx-auto" />
+          <p className="mt-2 text-gray-500">
+            Selecione uma empresa para gerenciar colaboradores
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  // Default empty state for a company with no collaborators
   return (
     <Card className="border shadow-sm">
       <CardContent className="p-6 text-center">
-        <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-        <h3 className="text-lg font-medium mb-2">Nenhum colaborador encontrado</h3>
-        <p className="text-gray-500 dark:text-gray-400 mb-4">
-          {getMessage()}
+        <UserPlus className="h-8 w-8 text-gray-400 mx-auto" />
+        <p className="mt-2 text-gray-500">
+          Esta empresa não possui colaboradores
         </p>
-        {!searchTerm && company && (
-          <Button onClick={onAddClick} className="inline-flex items-center">
-            <UserPlus className="h-4 w-4 mr-2" />
-            Adicionar Colaboradores
-          </Button>
-        )}
+        <Button 
+          onClick={onAddClick} 
+          className="mt-4"
+          variant="default"
+        >
+          <UserPlus className="h-4 w-4 mr-2" />
+          Adicionar Colaboradores
+        </Button>
       </CardContent>
     </Card>
   );
