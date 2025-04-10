@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { FileText, Settings, Users, Globe, Building, Book, RefreshCw, VideoIcon } from 'lucide-react';
@@ -15,7 +14,6 @@ const AdminPage = () => {
   const { userProfile } = useAuth();
   const [activeTab, setActiveTab] = useState("users");
   
-  // Redirect non-admin users away from this page
   if (userProfile?.isAdmin !== true) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -52,10 +50,8 @@ const AdminPage = () => {
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6 dark:text-white">Painel Administrativo</h1>
         
-        {/* Management Tabs Card */}
         <Card className="mb-8 shadow-sm border border-gray-100 dark:border-gray-800">
           <CardContent className="p-0">
-            {/* Tab Navigation */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <div className="border-b border-gray-100 dark:border-gray-800">
                 <TabsList className="bg-gray-50 dark:bg-gray-900 w-full justify-start rounded-none p-0 h-auto">
@@ -108,7 +104,6 @@ const AdminPage = () => {
           </CardContent>
         </Card>
         
-        {/* Admin Section Cards */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {adminSections.map((section) => (
             <Card 
