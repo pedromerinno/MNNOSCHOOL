@@ -6,6 +6,7 @@ import {
   NavigationMenu,
   NavigationMenuContent,
   NavigationMenuItem,
+  NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
@@ -55,36 +56,32 @@ export const NavMenuLinks = () => {
                 <NavigationMenuContent>
                   <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-2 bg-white dark:bg-gray-800">
                     <li>
-                      <NavigationMenuLink asChild>
-                        <Link
-                          to="/courses"
-                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-                        >
-                          <div className="flex items-center">
-                            <Book className="h-4 w-4 mr-2" />
-                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Todos os Cursos</span>
-                          </div>
-                          <p className="line-clamp-2 text-sm leading-snug text-gray-500 dark:text-gray-400">
-                            Visualize todos os cursos disponíveis da sua empresa
-                          </p>
-                        </Link>
-                      </NavigationMenuLink>
+                      <Link
+                        to="/courses"
+                        className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        <div className="flex items-center">
+                          <Book className="h-4 w-4 mr-2" />
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Todos os Cursos</span>
+                        </div>
+                        <p className="line-clamp-2 text-sm leading-snug text-gray-500 dark:text-gray-400">
+                          Visualize todos os cursos disponíveis da sua empresa
+                        </p>
+                      </Link>
                     </li>
                     <li>
-                      <NavigationMenuLink asChild>
-                        <Link
-                          to="/my-courses"
-                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-                        >
-                          <div className="flex items-center">
-                            <BookOpen className="h-4 w-4 mr-2" />
-                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Meus Cursos</span>
-                          </div>
-                          <p className="line-clamp-2 text-sm leading-snug text-gray-500 dark:text-gray-400">
-                            Cursos favoritados e cursos em andamento
-                          </p>
-                        </Link>
-                      </NavigationMenuLink>
+                      <Link
+                        to="/my-courses"
+                        className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        <div className="flex items-center">
+                          <BookOpen className="h-4 w-4 mr-2" />
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Meus Cursos</span>
+                        </div>
+                        <p className="line-clamp-2 text-sm leading-snug text-gray-500 dark:text-gray-400">
+                          Cursos favoritados e cursos em andamento
+                        </p>
+                      </Link>
                     </li>
                   </ul>
                 </NavigationMenuContent>
