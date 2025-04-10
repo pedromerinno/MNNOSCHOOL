@@ -13,12 +13,14 @@ import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
 type FilterOption = 'all' | 'favorites' | 'completed' | 'in-progress';
 
 const MyCourses = () => {
   const navigate = useNavigate();
   const { selectedCompany } = useCompanies();
+  const { toast } = useToast();
   const [activeFilter, setActiveFilter] = useState<FilterOption>('all');
   const [stats, setStats] = useState({
     favorites: 0,
@@ -43,10 +45,12 @@ const MyCourses = () => {
         if (!user) throw new Error('Usuário não autenticado');
         
         // Fetch courses for company
-        const { data: companyAccess } = await supabase
+        const { data: companyAccess, error: accessError } = await supabase
           .from('company_courses')
           .select('course_id')
           .eq('empresa_id', selectedCompany.id);
+        
+        if (accessError) throw accessError;
         
         if (!companyAccess || companyAccess.length === 0) {
           setStats({ favorites: 0, inProgress: 0, completed: 0, videosCompleted: 0 });
@@ -60,24 +64,40 @@ const MyCourses = () => {
         const courseIds = companyAccess.map(access => access.course_id);
         
         // Get user progress for these courses
-        const { data: progressData } = await supabase
+        const { data: progressData, error: progressError } = await supabase
           .from('user_course_progress')
           .select('course_id, progress, completed, last_accessed, favorite')
           .eq('user_id', user.id)
           .in('course_id', courseIds);
         
+        if (progressError) {
+          console.error('Error fetching progress:', progressError);
+          toast({
+            title: "Erro ao carregar progresso",
+            description: progressError.message,
+            variant: "destructive",
+          });
+          // Continue with empty progress data
+        }
+        
         // Fetch all courses
-        const { data: coursesData } = await supabase
+        const { data: coursesData, error: coursesError } = await supabase
           .from('courses')
           .select('*')
           .in('id', courseIds);
         
+        if (coursesError) throw coursesError;
+        
         // Get completed lessons count for video stats
-        const { data: lessonProgressData } = await supabase
+        const { data: lessonProgressData, error: lessonProgressError } = await supabase
           .from('user_lesson_progress')
           .select('id, completed')
           .eq('user_id', user.id)
           .eq('completed', true);
+        
+        if (lessonProgressError) {
+          console.error('Error fetching lesson progress:', lessonProgressError);
+        }
         
         const completedLessonsCount = lessonProgressData?.length || 0;
         
@@ -129,15 +149,25 @@ const MyCourses = () => {
         
         // Initially set filtered courses based on active filter
         filterCourses(coursesWithProgress, activeFilter);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching course stats:', error);
+        toast({
+          title: "Erro ao carregar cursos",
+          description: error.message || "Ocorreu um erro inesperado",
+          variant: "destructive",
+        });
+        // Reset states on error
+        setStats({ favorites: 0, inProgress: 0, completed: 0, videosCompleted: 0 });
+        setRecentCourses([]);
+        setFilteredCourses([]);
+        setAllCourses([]);
       } finally {
         setLoading(false);
       }
     };
     
     fetchStats();
-  }, [selectedCompany]);
+  }, [selectedCompany, toast]);
 
   // Filter courses based on selected tab
   const filterCourses = (courses: any[], filter: FilterOption) => {

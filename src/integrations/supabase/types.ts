@@ -243,6 +243,7 @@ export type Database = {
           completed: boolean
           course_id: string
           created_at: string
+          favorite: boolean
           id: string
           last_accessed: string
           progress: number
@@ -253,6 +254,7 @@ export type Database = {
           completed?: boolean
           course_id: string
           created_at?: string
+          favorite?: boolean
           id?: string
           last_accessed?: string
           progress?: number
@@ -263,6 +265,7 @@ export type Database = {
           completed?: boolean
           course_id?: string
           created_at?: string
+          favorite?: boolean
           id?: string
           last_accessed?: string
           progress?: number
