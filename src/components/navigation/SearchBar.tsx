@@ -3,6 +3,7 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useCompanies } from "@/hooks/useCompanies";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export const SearchBar = () => {
   const { selectedCompany } = useCompanies();
