@@ -18,7 +18,21 @@ const mockDiscussions = [
     author: "João Silva",
     createdAt: "2023-08-15T10:30:00",
     replies: 24, 
-    participants: 12 
+    participants: 12,
+    replyList: [
+      {
+        id: "r1",
+        author: "Maria Santos",
+        content: "Recomendo sempre perguntar quando tiver dúvidas. A equipe é muito acolhedora!",
+        createdAt: "2023-08-16T09:30:00"
+      },
+      {
+        id: "r2",
+        author: "Carlos Oliveira",
+        content: "Participar das reuniões de equipe desde o início ajuda muito a entender o contexto dos projetos.",
+        createdAt: "2023-08-17T14:20:00"
+      }
+    ]
   },
   { 
     id: "2", 
@@ -27,7 +41,15 @@ const mockDiscussions = [
     author: "Maria Santos",
     createdAt: "2023-08-10T14:20:00",
     replies: 18, 
-    participants: 8 
+    participants: 8,
+    replyList: [
+      {
+        id: "r3",
+        author: "Paulo Silva",
+        content: "Utilizo o Notion para organizar minhas tarefas diárias e o Toggl para controlar meu tempo.",
+        createdAt: "2023-08-11T10:15:00"
+      }
+    ]
   },
   { 
     id: "3", 
@@ -36,7 +58,8 @@ const mockDiscussions = [
     author: "Carlos Oliveira",
     createdAt: "2023-08-05T09:15:00",
     replies: 15, 
-    participants: 10 
+    participants: 10,
+    replyList: []
   },
 ];
 
@@ -55,8 +78,15 @@ const Community = () => {
     createdAt: string;
     replies: number;
     participants: number;
+    replyList: Array<{
+      id: string;
+      author: string;
+      content: string;
+      createdAt: string;
+    }>;
   }>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [newReplyContent, setNewReplyContent] = useState("");
 
   const handleCreateDiscussion = () => {
     if (!newDiscussionTitle.trim() || !newDiscussionContent.trim()) {
@@ -72,7 +102,8 @@ const Community = () => {
       author: userProfile?.displayName || user?.email?.split("@")[0] || "Usuário",
       createdAt: new Date().toISOString(),
       replies: 0,
-      participants: 1
+      participants: 1,
+      replyList: []
     };
 
     setDiscussions([newDiscussion, ...discussions]);
@@ -90,9 +121,52 @@ const Community = () => {
     createdAt: string;
     replies: number;
     participants: number;
+    replyList: Array<{
+      id: string;
+      author: string;
+      content: string;
+      createdAt: string;
+    }>;
   }) => {
     setSelectedDiscussion(discussion);
     setViewDialogOpen(true);
+  };
+
+  const handleSubmitReply = () => {
+    if (!newReplyContent.trim() || !selectedDiscussion) {
+      toast.error("Por favor, escreva uma resposta válida");
+      return;
+    }
+
+    const newReply = {
+      id: `r${Date.now()}`,
+      content: newReplyContent,
+      author: userProfile?.displayName || user?.email?.split("@")[0] || "Usuário",
+      createdAt: new Date().toISOString()
+    };
+
+    // Update selected discussion
+    const updatedSelectedDiscussion = {
+      ...selectedDiscussion,
+      replies: selectedDiscussion.replies + 1,
+      participants: selectedDiscussion.replyList.some(reply => reply.author === newReply.author) 
+        ? selectedDiscussion.participants 
+        : selectedDiscussion.participants + 1,
+      replyList: [...selectedDiscussion.replyList, newReply]
+    };
+    
+    setSelectedDiscussion(updatedSelectedDiscussion);
+
+    // Update discussions list
+    const updatedDiscussions = discussions.map(disc => 
+      disc.id === selectedDiscussion.id 
+        ? updatedSelectedDiscussion 
+        : disc
+    );
+    
+    setDiscussions(updatedDiscussions);
+    setNewReplyContent("");
+    toast.success("Resposta enviada com sucesso!");
   };
 
   const filteredDiscussions = discussions.filter(
@@ -313,14 +387,25 @@ const Community = () => {
               </div>
               <div className="mt-6 pt-6 border-t">
                 <h4 className="font-medium mb-4">Respostas ({selectedDiscussion.replies})</h4>
-                {selectedDiscussion.replies === 0 ? (
-                  <div className="text-center py-8">
+                {selectedDiscussion.replyList.length === 0 ? (
+                  <div className="text-center py-6">
                     <MessageSquare className="h-10 w-10 text-gray-400 mx-auto mb-3" />
                     <p className="text-gray-500">Ainda não há respostas para esta discussão.</p>
                     <p className="text-gray-500 text-sm mt-1">Seja o primeiro a responder!</p>
                   </div>
                 ) : (
-                  <p className="text-gray-500 text-sm text-center">Respostas serão implementadas em breve.</p>
+                  <div className="space-y-4">
+                    {selectedDiscussion.replyList.map((reply) => (
+                      <div key={reply.id} className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                        <div className="flex items-center text-sm text-gray-500 mb-2">
+                          <span className="font-medium text-gray-700 dark:text-gray-300">{reply.author}</span>
+                          <span className="mx-2">•</span>
+                          <span>{new Date(reply.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <p className="text-gray-700 dark:text-gray-300">{reply.content}</p>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
               <div className="mt-4">
@@ -328,9 +413,11 @@ const Community = () => {
                   placeholder="Escreva sua resposta..." 
                   className="w-full"
                   rows={3}
+                  value={newReplyContent}
+                  onChange={(e) => setNewReplyContent(e.target.value)}
                 />
                 <div className="flex justify-end mt-2">
-                  <Button>Responder</Button>
+                  <Button onClick={handleSubmitReply}>Responder</Button>
                 </div>
               </div>
             </>
