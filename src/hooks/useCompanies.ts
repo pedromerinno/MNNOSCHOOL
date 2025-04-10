@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useCompanyState } from "./company/useCompanyState";
 import { useCompanyFetching } from "./company/useCompanyFetching";
@@ -46,11 +45,9 @@ export const useCompanies = () => {
   });
   
   // Import functionality from individual hooks
-  const { fetchCompanies } = useCompanyFetch({ 
+  const { fetchCompanies } = useCompanyCreate({ 
     setIsLoading, 
-    setCompanies, 
-    setUserCompanies, 
-    setSelectedCompany 
+    setCompanies 
   });
   
   const { 
