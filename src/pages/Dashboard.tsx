@@ -6,15 +6,13 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { DashboardMetrics } from "@/components/dashboard/DashboardMetrics";
 import { DashboardChallenges } from "@/components/dashboard/DashboardChallenges";
 import { LeaderBoard } from "@/components/dashboard/LeaderBoard";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { UserInfoHeader } from "@/components/dashboard/UserInfoHeader";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NoCompaniesAvailable } from "@/components/home/NoCompaniesAvailable";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const { getUserCompanies, selectedCompany, isLoading, userCompanies } = useCompanies();
-  const navigate = useNavigate();
 
   // Fetch user's companies
   useEffect(() => {
@@ -45,6 +43,8 @@ const Dashboard = () => {
             Ready to grow? Discover new tasks and seize the opportunity!
           </p>
         </div>
+        
+        <UserInfoHeader />
 
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
