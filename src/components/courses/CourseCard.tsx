@@ -18,7 +18,10 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
   const { id, title, description, image_url, instructor, progress = 0, completed = false, tags = [] } = course;
   
   return (
-    <Card className="overflow-hidden border border-gray-100 dark:border-gray-800 hover:shadow-sm transition-all">
+    <Card className={cn(
+      "overflow-hidden border border-gray-100 dark:border-gray-800 hover:shadow-sm transition-all",
+      "w-[280px] max-w-[300px]" // Increased width from default
+    )}>
       {/* Hero Image */}
       <div className="relative">
         <div className="aspect-[16/9] w-full overflow-hidden bg-gray-100 dark:bg-gray-800">
