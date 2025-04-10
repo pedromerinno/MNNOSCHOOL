@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
+import { CompanyThemedBadge } from "@/components/ui/badge";
+import { ChevronRight } from "lucide-react";
 
 interface RecentCoursesProps {
   courses: any[];
@@ -30,25 +32,39 @@ export const RecentCourses: React.FC<RecentCoursesProps> = ({
           ))
         ) : courses.length > 0 ? (
           courses.map((course) => (
-            <Card key={course.id} className="overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer" 
+            <Card key={course.id} className="overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer group" 
                 onClick={() => navigate(`/courses/${course.id}`)}>
               <div className="relative h-40">
                 <img 
                   src={course.image_url || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&h=450&fit=crop"} 
                   alt={course.title} 
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-300"
                 />
+                {/* Progress overlay */}
+                {course.progress > 0 && !course.completed && (
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200 dark:bg-gray-700">
+                    <div 
+                      className="h-full" 
+                      style={{ 
+                        width: `${course.progress}%`,
+                        backgroundColor: companyColor
+                      }}
+                    ></div>
+                  </div>
+                )}
               </div>
               <CardContent className="p-4">
                 <div className="flex gap-2 mb-2">
                   {course.tags && course.tags.length > 0 ? (
                     course.tags.slice(0, 2).map((tag: string, i: number) => (
-                      <Badge key={i} variant="outline" className="bg-gray-100 text-gray-700 text-xs px-2">{tag}</Badge>
+                      <CompanyThemedBadge key={i} variant="beta" className="text-xs font-normal">
+                        {tag}
+                      </CompanyThemedBadge>
                     ))
                   ) : (
-                    <>
-                      <Badge variant="outline" className="bg-gray-100 text-gray-700 text-xs px-2">Curso</Badge>
-                    </>
+                    <CompanyThemedBadge variant="beta" className="text-xs font-normal">
+                      Curso
+                    </CompanyThemedBadge>
                   )}
                 </div>
                 
@@ -56,34 +72,17 @@ export const RecentCourses: React.FC<RecentCoursesProps> = ({
                   {course.title}
                 </h3>
                 
-                {/* Progress bar */}
-                <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2 mb-1">
-                  <div 
-                    className="h-1.5 rounded-full" 
-                    style={{ 
-                      width: `${course.progress}%`,
-                      backgroundColor: companyColor
-                    }}
-                  ></div>
-                </div>
-                
-                <div className="flex items-center mt-4">
-                  <div className="flex -space-x-2">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="h-6 w-6 rounded-full bg-gray-200 border-2 border-white overflow-hidden">
-                        <img 
-                          src={`https://i.pravatar.cc/100?img=${i + 10}`} 
-                          alt="User" 
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                    ))}
+                <div className="flex items-center justify-between mt-4">
+                  <div className="text-xs text-gray-500">
+                    {course.completed 
+                      ? "Concluído" 
+                      : course.progress > 0 
+                        ? `${course.progress}% concluído` 
+                        : "Não iniciado"}
                   </div>
-                  <span className="text-xs text-gray-500 ml-2">+8</span>
-                  <Button variant="ghost" size="sm" className="ml-auto p-0 h-auto">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="9 18 15 12 9 6"></polyline>
-                    </svg>
+                  
+                  <Button variant="ghost" size="sm" className="p-0 h-8 w-8 rounded-full">
+                    <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
               </CardContent>
