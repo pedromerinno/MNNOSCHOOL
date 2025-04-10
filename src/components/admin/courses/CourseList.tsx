@@ -141,7 +141,7 @@ export const CourseList: React.FC<CourseListProps> = ({
           </SheetHeader>
           <CourseForm 
             initialData={selectedCourse}
-            onSubmit={() => {}} // This should be properly implemented
+            onSubmit={handleFormSubmit}
             onCancel={() => setIsFormOpen(false)}
             isSubmitting={isSubmitting}
             onClose={() => setIsFormOpen(false)}

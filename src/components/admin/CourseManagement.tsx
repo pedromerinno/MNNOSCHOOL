@@ -20,7 +20,8 @@ export const CourseManagement: React.FC = () => {
     setIsFormOpen,
     isCompanyManagerOpen, 
     setIsCompanyManagerOpen, 
-    isSubmitting
+    isSubmitting,
+    handleFormSubmit
   } = useCourses();
 
   return (

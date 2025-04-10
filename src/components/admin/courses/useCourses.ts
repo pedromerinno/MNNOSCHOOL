@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { Course } from './types';
 
 export const useCourses = (companyId?: string) => {
@@ -11,7 +10,6 @@ export const useCourses = (companyId?: string) => {
   const [isCompanyManagerOpen, setIsCompanyManagerOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-  const { toast } = useToast();
 
   const fetchCourses = async () => {
     setIsLoading(true);
@@ -70,10 +68,8 @@ export const useCourses = (companyId?: string) => {
       }
     } catch (error: any) {
       console.error("Erro ao carregar cursos:", error);
-      toast({
-        title: 'Erro ao carregar cursos',
+      toast.error('Erro ao carregar cursos', {
         description: error.message,
-        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -116,18 +112,15 @@ export const useCourses = (companyId?: string) => {
           throw error;
         }
 
-        toast({
-          title: 'Curso excluído',
+        toast.success('Curso excluído', {
           description: 'O curso foi excluído com sucesso.',
         });
 
         // Refresh the list
         fetchCourses();
       } catch (error: any) {
-        toast({
-          title: 'Erro ao excluir curso',
+        toast.error('Erro ao excluir curso', {
           description: error.message,
-          variant: 'destructive',
         });
       }
     }
@@ -145,6 +138,7 @@ export const useCourses = (companyId?: string) => {
             description: data.description,
             image_url: data.image_url,
             instructor: data.instructor,
+            tags: data.tags,
           })
           .eq('id', selectedCourse.id);
 
@@ -152,8 +146,7 @@ export const useCourses = (companyId?: string) => {
           throw error;
         }
 
-        toast({
-          title: 'Curso atualizado',
+        toast.success('Curso atualizado', {
           description: 'As alterações foram salvas com sucesso.',
         });
       } else {
@@ -165,14 +158,14 @@ export const useCourses = (companyId?: string) => {
             description: data.description,
             image_url: data.image_url,
             instructor: data.instructor,
+            tags: data.tags,
           }]);
 
         if (error) {
           throw error;
         }
 
-        toast({
-          title: 'Curso criado',
+        toast.success('Curso criado', {
           description: 'O novo curso foi criado com sucesso.',
         });
       }
@@ -180,10 +173,8 @@ export const useCourses = (companyId?: string) => {
       setIsFormOpen(false);
       fetchCourses();
     } catch (error: any) {
-      toast({
-        title: 'Erro ao salvar curso',
+      toast.error('Erro ao salvar curso', {
         description: error.message,
-        variant: 'destructive',
       });
     } finally {
       setIsSubmitting(false);
