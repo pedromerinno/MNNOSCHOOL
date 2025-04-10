@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Building, Video, FileText, Save } from "lucide-react";
+import { Loader2, Building, Video, FileText } from "lucide-react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { Company } from "@/types/company";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,12 +18,19 @@ export const IntegrationManagement: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("info");
 
+  // Fetch companies on mount
   useEffect(() => {
-    fetchCompanies();
+    const loadCompanies = async () => {
+      console.log("Loading companies in IntegrationManagement");
+      await fetchCompanies();
+    };
+    loadCompanies();
   }, [fetchCompanies]);
 
+  // Set the first company as selected if none is selected yet
   useEffect(() => {
     if (companies.length > 0 && !selectedCompany) {
+      console.log("Setting initial selected company:", companies[0].nome);
       setSelectedCompany(companies[0]);
     }
   }, [companies, selectedCompany]);
@@ -31,16 +38,23 @@ export const IntegrationManagement: React.FC = () => {
   const handleCompanyChange = (companyId: string) => {
     const company = companies.find(c => c.id === companyId);
     if (company) {
+      console.log("Company changed to:", company.nome);
       setSelectedCompany(company);
     }
   };
 
   const handleFormSubmit = async (formData: any) => {
-    if (!selectedCompany) return;
+    if (!selectedCompany) {
+      toast.error("Nenhuma empresa selecionada");
+      return;
+    }
     
     setIsSaving(true);
     
     try {
+      console.log("Saving integration info for company:", selectedCompany.nome);
+      console.log("Form data:", formData);
+      
       const { error } = await supabase
         .from('empresas')
         .update(formData)
@@ -114,6 +128,9 @@ export const IntegrationManagement: React.FC = () => {
                   <TabsTrigger 
                     value="info" 
                     className="flex items-center py-3 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500"
+                    style={{
+                      borderColor: activeTab === "info" ? selectedCompany?.cor_principal || "#1EAEDB" : "transparent"
+                    }}
                   >
                     <Building className="h-4 w-4 mr-2" />
                     Informações da Empresa
@@ -121,6 +138,9 @@ export const IntegrationManagement: React.FC = () => {
                   <TabsTrigger 
                     value="videos" 
                     className="flex items-center py-3 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500"
+                    style={{
+                      borderColor: activeTab === "videos" ? selectedCompany?.cor_principal || "#1EAEDB" : "transparent"
+                    }}
                   >
                     <Video className="h-4 w-4 mr-2" />
                     Vídeos
@@ -128,6 +148,9 @@ export const IntegrationManagement: React.FC = () => {
                   <TabsTrigger 
                     value="cargo" 
                     className="flex items-center py-3 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500"
+                    style={{
+                      borderColor: activeTab === "cargo" ? selectedCompany?.cor_principal || "#1EAEDB" : "transparent"
+                    }}
                   >
                     <FileText className="h-4 w-4 mr-2" />
                     Cargos
