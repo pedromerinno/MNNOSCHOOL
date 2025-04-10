@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { useSettingsManagement } from './useSettingsManagement';
-import { CompanySelector } from './CompanySelector';
+import { CompanySelector } from '@/components/admin/integration/CompanySelector';
 import { SettingsTabs } from './SettingsTabs';
 import { NoCompanySelected } from './NoCompanySelected';
 import { LoadingState } from './LoadingState';
