@@ -2,44 +2,15 @@
 import React, { useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Form } from "@/components/ui/form";
 import { Course } from './CourseManagement';
-import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
-import { ImageUploadField } from "./courses/form/ImageUploadField";
-import { CompanySelector } from './integration/CompanySelector';
-import { useCompanies } from '@/hooks/useCompanies';
+import { courseSchema, CourseFormValues, CourseFormProps } from './courses/form/CourseFormTypes';
+import { CourseFormFields } from './courses/form/CourseFormFields';
+import { TagsField } from './courses/form/TagsField';
+import { CompanySelectorField } from './courses/form/CompanySelectorField';
+import { FormActions } from './courses/form/FormActions';
 
-const courseSchema = z.object({
-  title: z.string().min(1, "O título é obrigatório"),
-  description: z.string().nullable().optional(),
-  image_url: z.string().nullable().optional(),
-  instructor: z.string().nullable().optional(),
-  tags: z.array(z.string()).optional().default([]),
-  companyId: z.string().optional(),
-});
-
-type CourseFormValues = z.infer<typeof courseSchema>;
-
-export interface CourseFormProps {
-  initialData?: Course | null;
-  onSubmit: (data: CourseFormValues) => void;
-  onCancel: () => void;
-  isSubmitting: boolean;
-  onClose?: () => void;
-  preselectedCompanyId?: string;
-}
+export { CourseFormProps };
 
 export const CourseForm: React.FC<CourseFormProps> = ({ 
   initialData, 
@@ -49,8 +20,6 @@ export const CourseForm: React.FC<CourseFormProps> = ({
   onClose,
   preselectedCompanyId
 }) => {
-  const { companies, isLoading: isLoadingCompanies } = useCompanies();
-  
   const form = useForm<CourseFormValues>({
     resolver: zodResolver(courseSchema),
     defaultValues: {
@@ -70,177 +39,32 @@ export const CourseForm: React.FC<CourseFormProps> = ({
     }
   }, [preselectedCompanyId, form]);
 
-  const [tagInput, setTagInput] = React.useState<string>("");
-
-  const addTag = () => {
-    if (!tagInput.trim()) return;
-    
-    const currentTags = form.getValues("tags") || [];
-    if (!currentTags.includes(tagInput.trim())) {
-      form.setValue("tags", [...currentTags, tagInput.trim()]);
-    }
-    setTagInput("");
-  };
-
-  const removeTag = (tagToRemove: string) => {
-    const currentTags = form.getValues("tags") || [];
-    form.setValue("tags", currentTags.filter(tag => tag !== tagToRemove));
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      addTag();
-    }
-  };
-
   // Determine if we need to show the company selector
   // Only show when creating a new course and no preselected company
   const showCompanySelector = !initialData && !preselectedCompanyId;
+  
+  // Check if a company is selected
+  const companySelected = !!form.getValues("companyId");
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        {showCompanySelector && (
-          <FormField
-            control={form.control}
-            name="companyId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Empresa</FormLabel>
-                <FormControl>
-                  <select
-                    className="w-full p-2 border rounded-md"
-                    {...field}
-                    disabled={isLoadingCompanies}
-                  >
-                    <option value="">Selecione uma empresa</option>
-                    {companies.map((company) => (
-                      <option key={company.id} value={company.id}>
-                        {company.nome}
-                      </option>
-                    ))}
-                  </select>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
-
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Título do Curso</FormLabel>
-              <FormControl>
-                <Input placeholder="Digite o título do curso" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+        <CompanySelectorField 
+          form={form} 
+          showCompanySelector={showCompanySelector} 
         />
+        
+        <CourseFormFields form={form} />
+        
+        <TagsField form={form} />
 
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Descrição</FormLabel>
-              <FormControl>
-                <Textarea 
-                  placeholder="Digite a descrição do curso" 
-                  {...field} 
-                  value={field.value || ""} 
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+        <FormActions 
+          onCancel={onClose || onCancel} 
+          isSubmitting={isSubmitting} 
+          isEditing={!!initialData}
+          showCompanySelector={showCompanySelector}
+          companySelected={companySelected}
         />
-
-        <FormField
-          control={form.control}
-          name="instructor"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Instrutor</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Nome do instrutor" 
-                  {...field} 
-                  value={field.value || ""} 
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <ImageUploadField 
-          control={form.control}
-          name="image_url"
-          label="Capa do Curso"
-        />
-
-        <FormField
-          control={form.control}
-          name="tags"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Tags (para quem o curso é recomendado)</FormLabel>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {field.value?.map((tag) => (
-                  <Badge key={tag} className="flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                    {tag}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
-                      onClick={() => removeTag(tag)} 
-                    />
-                  </Badge>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Input
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="designer, motion, developer..."
-                  className="flex-1"
-                />
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={addTag}
-                >
-                  Adicionar
-                </Button>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Pressione Enter ou clique em "Adicionar" para incluir uma tag
-              </p>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="flex justify-end space-x-2 pt-4">
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={onClose || onCancel}
-            disabled={isSubmitting}
-          >
-            Cancelar
-          </Button>
-          <Button 
-            type="submit" 
-            disabled={isSubmitting || (showCompanySelector && !form.getValues("companyId"))}
-          >
-            {isSubmitting ? 'Salvando...' : initialData ? 'Atualizar Curso' : 'Criar Curso'}
-          </Button>
-        </div>
       </form>
     </Form>
   );
