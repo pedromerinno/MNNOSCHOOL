@@ -17,15 +17,32 @@ export const useCourseData = (
   const { selectedCompany } = useCompanies();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   const fetchCourseData = useCallback(async () => {
-    if (!selectedCompany) return;
+    if (!selectedCompany) {
+      console.log("No company selected, skipping course data fetch");
+      setStats({ favorites: 0, inProgress: 0, completed: 0, videosCompleted: 0 });
+      setRecentCourses([]);
+      setFilteredCourses([]);
+      setAllCourses([]);
+      setLoading(false);
+      return;
+    }
     
+    console.log("Fetching course data for company:", selectedCompany.nome);
     setLoading(true);
+    setError(null);
+    
     try {
       // Get user ID
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuário não autenticado');
+      if (!user) {
+        console.error("User not authenticated");
+        throw new Error('Usuário não autenticado');
+      }
+      
+      console.log("Fetching courses for company ID:", selectedCompany.id);
       
       // Fetch courses for company
       const { data: companyAccess, error: accessError } = await supabase
@@ -33,9 +50,13 @@ export const useCourseData = (
         .select('course_id')
         .eq('empresa_id', selectedCompany.id);
       
-      if (accessError) throw accessError;
+      if (accessError) {
+        console.error("Error fetching company access:", accessError);
+        throw accessError;
+      }
       
       if (!companyAccess || companyAccess.length === 0) {
+        console.log("No courses found for company");
         setStats({ favorites: 0, inProgress: 0, completed: 0, videosCompleted: 0 });
         setRecentCourses([]);
         setFilteredCourses([]);
@@ -45,6 +66,7 @@ export const useCourseData = (
       }
       
       const courseIds = companyAccess.map(access => access.course_id);
+      console.log(`Found ${courseIds.length} course IDs for company`);
       
       // Get user progress for these courses
       const { data: progressData, error: progressError } = await supabase
@@ -60,16 +82,19 @@ export const useCourseData = (
           description: progressError.message,
           variant: "destructive",
         });
-        // Continue with empty progress data instead of throwing an error
-        const emptyProgress: any[] = [];
+        // Continue with empty progress data
+        const progressMap: any[] = [];
         
-        // Process with empty progress data
+        // Fetch courses
         const { data: coursesData, error: coursesError } = await supabase
           .from('courses')
           .select('*')
           .in('id', courseIds);
         
-        if (coursesError) throw coursesError;
+        if (coursesError) {
+          console.error("Error fetching courses:", coursesError);
+          throw coursesError;
+        }
         
         const coursesWithProgress = coursesData?.map(course => {
           return {
@@ -82,7 +107,7 @@ export const useCourseData = (
         }) || [];
         
         setAllCourses(coursesWithProgress);
-        setFilteredCourses(coursesWithProgress);
+        filterCourses(coursesWithProgress, activeFilter);
         setRecentCourses([]);
         setStats({favorites: 0, inProgress: 0, completed: 0, videosCompleted: 0});
         setHoursWatched(0);
@@ -96,7 +121,12 @@ export const useCourseData = (
         .select('*')
         .in('id', courseIds);
       
-      if (coursesError) throw coursesError;
+      if (coursesError) {
+        console.error("Error fetching courses:", coursesError);
+        throw coursesError;
+      }
+      
+      console.log(`Fetched ${coursesData?.length || 0} courses`);
       
       // Get completed lessons count for video stats
       const { data: lessonProgressData, error: lessonProgressError } = await supabase
@@ -141,6 +171,8 @@ export const useCourseData = (
         };
       }) || [];
       
+      console.log(`Processed ${coursesWithProgress.length} courses with progress`);
+      
       setAllCourses(coursesWithProgress);
       
       // Get courses in progress (not completed and with progress > 0)
@@ -161,6 +193,7 @@ export const useCourseData = (
       filterCourses(coursesWithProgress, activeFilter);
     } catch (error: any) {
       console.error('Error fetching course stats:', error);
+      setError(error);
       toast({
         title: "Erro ao carregar cursos",
         description: error.message || "Ocorreu um erro inesperado",
@@ -178,7 +211,7 @@ export const useCourseData = (
 
   return {
     loading,
-    setLoading,
+    error,
     fetchCourseData
   };
 };
