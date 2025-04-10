@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from 'sonner';
@@ -126,12 +127,14 @@ export const useCourses = (companyId?: string) => {
     }
   };
 
-  const handleFormSubmit = async (data: Omit<Course, 'id' | 'created_at'>) => {
+  const handleFormSubmit = async (data: any) => {
     setIsSubmitting(true);
     try {
+      let courseId: string;
+      
       if (selectedCourse) {
         // Update existing course
-        const { error } = await supabase
+        const { data: updatedCourse, error } = await supabase
           .from('courses')
           .update({
             title: data.title,
@@ -140,18 +143,22 @@ export const useCourses = (companyId?: string) => {
             instructor: data.instructor,
             tags: data.tags,
           })
-          .eq('id', selectedCourse.id);
+          .eq('id', selectedCourse.id)
+          .select()
+          .single();
 
         if (error) {
           throw error;
         }
-
+        
+        courseId = selectedCourse.id;
+        
         toast.success('Curso atualizado', {
           description: 'As alterações foram salvas com sucesso.',
         });
       } else {
         // Create new course
-        const { error } = await supabase
+        const { data: newCourse, error } = await supabase
           .from('courses')
           .insert([{
             title: data.title,
@@ -159,10 +166,40 @@ export const useCourses = (companyId?: string) => {
             image_url: data.image_url,
             instructor: data.instructor,
             tags: data.tags,
-          }]);
+          }])
+          .select()
+          .single();
 
         if (error) {
           throw error;
+        }
+        
+        courseId = newCourse.id;
+        
+        // If a companyId was provided in the form, associate the course with the company
+        if (data.companyId) {
+          const { error: relationError } = await supabase
+            .from('company_courses')
+            .insert([{
+              empresa_id: data.companyId,
+              course_id: courseId
+            }]);
+            
+          if (relationError) {
+            throw relationError;
+          }
+        } else if (companyId) {
+          // If no companyId in form but we have a current companyId (from context), use that
+          const { error: relationError } = await supabase
+            .from('company_courses')
+            .insert([{
+              empresa_id: companyId,
+              course_id: courseId
+            }]);
+            
+          if (relationError) {
+            throw relationError;
+          }
         }
 
         toast.success('Curso criado', {

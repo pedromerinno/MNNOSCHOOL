@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -18,6 +18,8 @@ import { Course } from './CourseManagement';
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
 import { ImageUploadField } from "./courses/form/ImageUploadField";
+import { CompanySelector } from './integration/CompanySelector';
+import { useCompanies } from '@/hooks/useCompanies';
 
 const courseSchema = z.object({
   title: z.string().min(1, "O título é obrigatório"),
@@ -25,6 +27,7 @@ const courseSchema = z.object({
   image_url: z.string().nullable().optional(),
   instructor: z.string().nullable().optional(),
   tags: z.array(z.string()).optional().default([]),
+  companyId: z.string().optional(),
 });
 
 type CourseFormValues = z.infer<typeof courseSchema>;
@@ -35,6 +38,7 @@ export interface CourseFormProps {
   onCancel: () => void;
   isSubmitting: boolean;
   onClose?: () => void;
+  preselectedCompanyId?: string;
 }
 
 export const CourseForm: React.FC<CourseFormProps> = ({ 
@@ -42,8 +46,11 @@ export const CourseForm: React.FC<CourseFormProps> = ({
   onSubmit, 
   onCancel, 
   isSubmitting,
-  onClose
+  onClose,
+  preselectedCompanyId
 }) => {
+  const { companies, isLoading: isLoadingCompanies } = useCompanies();
+  
   const form = useForm<CourseFormValues>({
     resolver: zodResolver(courseSchema),
     defaultValues: {
@@ -52,8 +59,16 @@ export const CourseForm: React.FC<CourseFormProps> = ({
       image_url: initialData?.image_url || "",
       instructor: initialData?.instructor || "",
       tags: initialData?.tags || [],
+      companyId: preselectedCompanyId || "",
     },
   });
+
+  // Update form value when preselectedCompanyId changes
+  useEffect(() => {
+    if (preselectedCompanyId) {
+      form.setValue("companyId", preselectedCompanyId);
+    }
+  }, [preselectedCompanyId, form]);
 
   const [tagInput, setTagInput] = React.useState<string>("");
 
@@ -79,9 +94,40 @@ export const CourseForm: React.FC<CourseFormProps> = ({
     }
   };
 
+  // Determine if we need to show the company selector
+  // Only show when creating a new course and no preselected company
+  const showCompanySelector = !initialData && !preselectedCompanyId;
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {showCompanySelector && (
+          <FormField
+            control={form.control}
+            name="companyId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Empresa</FormLabel>
+                <FormControl>
+                  <select
+                    className="w-full p-2 border rounded-md"
+                    {...field}
+                    disabled={isLoadingCompanies}
+                  >
+                    <option value="">Selecione uma empresa</option>
+                    {companies.map((company) => (
+                      <option key={company.id} value={company.id}>
+                        {company.nome}
+                      </option>
+                    ))}
+                  </select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
         <FormField
           control={form.control}
           name="title"
@@ -190,7 +236,7 @@ export const CourseForm: React.FC<CourseFormProps> = ({
           </Button>
           <Button 
             type="submit" 
-            disabled={isSubmitting}
+            disabled={isSubmitting || (showCompanySelector && !form.getValues("companyId"))}
           >
             {isSubmitting ? 'Salvando...' : initialData ? 'Atualizar Curso' : 'Criar Curso'}
           </Button>

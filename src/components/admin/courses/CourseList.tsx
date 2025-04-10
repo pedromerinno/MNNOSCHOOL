@@ -147,6 +147,7 @@ export const CourseList: React.FC<CourseListProps> = ({
             onCancel={() => setIsFormOpen(false)}
             isSubmitting={isSubmitting}
             onClose={() => setIsFormOpen(false)}
+            preselectedCompanyId={companyId}
           />
         </SheetContent>
       </Sheet>
