@@ -2,7 +2,6 @@
 import { useEffect } from "react";
 import { useCompanyState } from "./company/useCompanyState";
 import { useCompanyFetching } from "./company/useCompanyFetching";
-import { useCompanyFetch } from "./company/useCompanyFetch";
 import { useCompanySelection } from "./company/useCompanySelection";
 import { useCompanyCreate } from "./company/useCompanyCreate";
 import { useCompanyUpdate } from "./company/useCompanyUpdate";
