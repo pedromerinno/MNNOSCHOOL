@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { VideoPlaylist } from "@/components/integration/VideoPlaylist";
 import { CompanyThemedBadge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Video, Building, BriefcaseBusiness, ChevronRight, Info, ArrowLeft, Globe } from "lucide-react";
+import { FileText, Video, Building, BriefcaseBusiness, ChevronRight, Info, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -83,6 +83,12 @@ const Integration = () => {
   // Definir cor da empresa ou usar padrão se não disponível
   const companyColor = localCompany?.cor_principal || "#1EAEDB";
   
+  // Estilo dinâmico com a cor da empresa
+  const companyColorStyle = {
+    color: companyColor,
+    borderColor: companyColor
+  };
+
   const handleTabChange = (value: string) => {
     setActiveTab(value);
   };
@@ -90,8 +96,7 @@ const Integration = () => {
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8">
-        {/* Header with back button */}
-        <div className="flex items-center mb-8 gap-2">
+        <div className="flex items-center mb-6 gap-2">
           <Button 
             variant="ghost" 
             size="sm" 
@@ -103,291 +108,252 @@ const Integration = () => {
           <h1 className="text-3xl font-bold dark:text-white">Integração</h1>
         </div>
         
-        {/* Main content card with improved styling */}
-        <Card className="border-0 shadow-md overflow-hidden bg-white dark:bg-card">
+        <div className="bg-white dark:bg-card rounded-lg p-6 shadow-sm">
           {isLoading ? (
-            <CardContent className="p-8">
+            <>
               <Skeleton className="h-8 w-64 mb-4" />
               <Skeleton className="h-4 w-full mb-4" />
               <div className="grid md:grid-cols-2 gap-6 mt-8">
                 <Skeleton className="h-32" />
                 <Skeleton className="h-32" />
               </div>
-            </CardContent>
+            </>
           ) : (
             <>
-              {/* Header section with company welcome */}
-              <div className="relative">
-                <div className="absolute top-0 left-0 w-full h-16 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800/50 dark:to-gray-700/50" />
-                <CardHeader className="relative z-10 pt-8 pb-6">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div>
-                      <h2 className="text-2xl font-semibold mb-2 dark:text-white">
+              <div className="flex items-center mb-6">
+                <h2 className="text-xl font-semibold mr-3 dark:text-white">
+                  {localCompany 
+                    ? `Bem-vindo ao processo de integração da ${localCompany.nome}` 
+                    : "Bem-vindo ao processo de integração"}
+                </h2>
+                {localCompany && (
+                  <CompanyThemedBadge 
+                    variant="beta"
+                    style={{
+                      backgroundColor: `${companyColor}20`, 
+                      color: companyColor,
+                      borderColor: `${companyColor}40`
+                    }}
+                  >
+                    Empresa
+                  </CompanyThemedBadge>
+                )}
+              </div>
+              
+              <p className="text-gray-700 dark:text-gray-300 mb-6">
+                {localCompany 
+                  ? `Aqui você encontrará todas as informações sobre a ${localCompany.nome}, expectativas, 
+                    descrição do cargo e tudo relacionado à sua contratação.`
+                  : "Aqui você encontrará todas as informações sobre nossa empresa, expectativas, descrição do cargo e tudo relacionado à sua contratação."}
+              </p>
+
+              <Tabs value={activeTab} onValueChange={handleTabChange} className="mt-6">
+                <TabsList className="bg-gray-100 dark:bg-gray-800 p-1.5 mb-6 rounded-xl" style={{ '--tab-accent': companyColor } as React.CSSProperties}>
+                  <TabsTrigger 
+                    value="sobre" 
+                    className="data-[state=active]:text-white data-[state=active]:shadow-sm rounded-lg transition-all duration-200 py-2.5"
+                    style={{ 
+                      backgroundColor: activeTab === "sobre" ? companyColor : 'transparent',
+                      '--tw-data-[state=active]:bg-color': companyColor
+                    } as React.CSSProperties}
+                  >
+                    <Building className="h-4 w-4 mr-2" />
+                    Sobre a Empresa
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="videos" 
+                    className="data-[state=active]:text-white data-[state=active]:shadow-sm rounded-lg transition-all duration-200 py-2.5"
+                    style={{ 
+                      backgroundColor: activeTab === "videos" ? companyColor : 'transparent',
+                      '--tw-data-[state=active]:bg-color': companyColor
+                    } as React.CSSProperties}
+                  >
+                    <Video className="h-4 w-4 mr-2" />
+                    Vídeos
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="cargo" 
+                    className="data-[state=active]:text-white data-[state=active]:shadow-sm rounded-lg transition-all duration-200 py-2.5"
+                    style={{ 
+                      backgroundColor: activeTab === "cargo" ? companyColor : 'transparent',
+                      '--tw-data-[state=active]:bg-color': companyColor
+                    } as React.CSSProperties}
+                  >
+                    <BriefcaseBusiness className="h-4 w-4 mr-2" />
+                    Cargos
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="sobre" className="mt-0">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg shadow-sm" style={{borderLeft: `4px solid ${companyColor}`}}>
+                      <h3 className="font-medium mb-2 dark:text-white" style={{color: companyColor}}>
                         {localCompany 
-                          ? `Bem-vindo ao processo de integração da ${localCompany.nome}` 
-                          : "Bem-vindo ao processo de integração"}
-                      </h2>
-                      <p className="text-gray-700 dark:text-gray-300">
-                        {localCompany 
-                          ? `Aqui você encontrará todas as informações sobre a ${localCompany.nome}, expectativas, 
-                            descrição do cargo e tudo relacionado à sua contratação.`
-                          : "Aqui você encontrará todas as informações sobre nossa empresa, expectativas, descrição do cargo e tudo relacionado à sua contratação."}
+                          ? `Sobre a ${localCompany.nome}` 
+                          : "Sobre a empresa"}
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        {localCompany?.historia 
+                          ? localCompany.historia
+                          : "Conheça nossa história, valores e visão."}
                       </p>
                     </div>
-                    {localCompany && (
-                      <CompanyThemedBadge 
-                        variant="beta"
-                        className="px-3 py-1.5 text-sm font-medium"
-                        style={{
-                          backgroundColor: `${companyColor}20`, 
-                          color: companyColor,
-                          borderColor: `${companyColor}40`
-                        }}
-                      >
-                        <Globe className="w-4 h-4 mr-1" />
-                        Empresa
-                      </CompanyThemedBadge>
-                    )}
+                    
+                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg shadow-sm" style={{borderLeft: `4px solid ${companyColor}`}}>
+                      <h3 className="font-medium mb-2 dark:text-white" style={{color: companyColor}}>
+                        Missão
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        {localCompany?.missao 
+                          ? localCompany.missao
+                          : "Nossa missão e propósito."}
+                      </p>
+                    </div>
+                    
+                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg shadow-sm" style={{borderLeft: `4px solid ${companyColor}`}}>
+                      <h3 className="font-medium mb-2 dark:text-white" style={{color: companyColor}}>
+                        Valores
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-400 whitespace-pre-line">
+                        {localCompany?.valores 
+                          ? localCompany.valores
+                          : "Os valores que orientam nossas ações."}
+                      </p>
+                    </div>
+                    
+                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg shadow-sm" style={{borderLeft: `4px solid ${companyColor}`}}>
+                      <h3 className="font-medium mb-2 dark:text-white" style={{color: companyColor}}>
+                        Frase Institucional
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        {localCompany?.frase_institucional 
+                          ? `"${localCompany.frase_institucional}"`
+                          : "Nossa frase que resume nossa essência."}
+                      </p>
+                    </div>
                   </div>
-                </CardHeader>
-              </div>
-
-              <CardContent className="px-6 pb-8 pt-0">
-                <Tabs value={activeTab} onValueChange={handleTabChange} className="mt-6">
-                  {/* Improved tabs styling */}
-                  <TabsList 
-                    className="bg-gray-100 dark:bg-gray-800 p-1.5 mb-8 rounded-xl flex flex-wrap w-full md:w-auto" 
-                    style={{ '--tab-accent': companyColor } as React.CSSProperties}
-                  >
-                    <TabsTrigger 
-                      value="sobre" 
-                      className="data-[state=active]:text-white data-[state=active]:shadow-sm rounded-lg transition-all duration-200 py-2.5 flex-1 md:flex-none"
-                      style={{ 
-                        backgroundColor: activeTab === "sobre" ? companyColor : 'transparent',
-                        '--tw-data-[state=active]:bg-color': companyColor
-                      } as React.CSSProperties}
-                    >
-                      <Building className="h-4 w-4 mr-2" />
-                      Sobre a Empresa
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="videos" 
-                      className="data-[state=active]:text-white data-[state=active]:shadow-sm rounded-lg transition-all duration-200 py-2.5 flex-1 md:flex-none"
-                      style={{ 
-                        backgroundColor: activeTab === "videos" ? companyColor : 'transparent',
-                        '--tw-data-[state=active]:bg-color': companyColor
-                      } as React.CSSProperties}
-                    >
-                      <Video className="h-4 w-4 mr-2" />
-                      Vídeos
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="cargo" 
-                      className="data-[state=active]:text-white data-[state=active]:shadow-sm rounded-lg transition-all duration-200 py-2.5 flex-1 md:flex-none"
-                      style={{ 
-                        backgroundColor: activeTab === "cargo" ? companyColor : 'transparent',
-                        '--tw-data-[state=active]:bg-color': companyColor
-                      } as React.CSSProperties}
-                    >
-                      <BriefcaseBusiness className="h-4 w-4 mr-2" />
-                      Cargos
-                    </TabsTrigger>
-                  </TabsList>
-                  
-                  {/* About company tab content */}
-                  <TabsContent value="sobre" className="mt-0 animate-fade-in">
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <Card className="overflow-hidden border-0 bg-gray-50 dark:bg-gray-800 transition-all duration-200 hover:shadow-md" style={{borderLeft: `4px solid ${companyColor}`}}>
-                        <CardHeader className="p-4 pb-1">
-                          <h3 className="font-medium text-lg dark:text-white" style={{color: companyColor}}>
-                            {localCompany 
-                              ? `Sobre a ${localCompany.nome}` 
-                              : "Sobre a empresa"}
-                          </h3>
-                        </CardHeader>
-                        <CardContent className="p-4 pt-2">
-                          <p className="text-gray-600 dark:text-gray-400">
-                            {localCompany?.historia 
-                              ? localCompany.historia
-                              : "Conheça nossa história, valores e visão."}
-                          </p>
-                        </CardContent>
-                      </Card>
-                      
-                      <Card className="overflow-hidden border-0 bg-gray-50 dark:bg-gray-800 transition-all duration-200 hover:shadow-md" style={{borderLeft: `4px solid ${companyColor}`}}>
-                        <CardHeader className="p-4 pb-1">
-                          <h3 className="font-medium text-lg dark:text-white" style={{color: companyColor}}>
-                            Missão
-                          </h3>
-                        </CardHeader>
-                        <CardContent className="p-4 pt-2">
-                          <p className="text-gray-600 dark:text-gray-400">
-                            {localCompany?.missao 
-                              ? localCompany.missao
-                              : "Nossa missão e propósito."}
-                          </p>
-                        </CardContent>
-                      </Card>
-                      
-                      <Card className="overflow-hidden border-0 bg-gray-50 dark:bg-gray-800 transition-all duration-200 hover:shadow-md" style={{borderLeft: `4px solid ${companyColor}`}}>
-                        <CardHeader className="p-4 pb-1">
-                          <h3 className="font-medium text-lg dark:text-white" style={{color: companyColor}}>
-                            Valores
-                          </h3>
-                        </CardHeader>
-                        <CardContent className="p-4 pt-2">
-                          <p className="text-gray-600 dark:text-gray-400 whitespace-pre-line">
-                            {localCompany?.valores 
-                              ? localCompany.valores
-                              : "Os valores que orientam nossas ações."}
-                          </p>
-                        </CardContent>
-                      </Card>
-                      
-                      <Card className="overflow-hidden border-0 bg-gray-50 dark:bg-gray-800 transition-all duration-200 hover:shadow-md" style={{borderLeft: `4px solid ${companyColor}`}}>
-                        <CardHeader className="p-4 pb-1">
-                          <h3 className="font-medium text-lg dark:text-white" style={{color: companyColor}}>
-                            Frase Institucional
-                          </h3>
-                        </CardHeader>
-                        <CardContent className="p-4 pt-2">
-                          <p className="text-gray-600 dark:text-gray-400 italic">
-                            {localCompany?.frase_institucional 
-                              ? `"${localCompany.frase_institucional}"`
-                              : "Nossa frase que resume nossa essência."}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </TabsContent>
-                  
-                  {/* Videos tab content */}
-                  <TabsContent value="videos" className="mt-0 animate-fade-in">
-                    <div className="mt-2">
-                      <VideoPlaylist 
-                        key={`videos-${localCompany?.id}`}
-                        companyId={localCompany?.id} 
-                        mainVideo={localCompany?.video_institucional || ""}
-                        mainVideoDescription={localCompany?.descricao_video || ""}
-                      />
-                    </div>
-                  </TabsContent>
-                  
-                  {/* Roles tab content */}
-                  <TabsContent value="cargo" className="mt-0 animate-fade-in">
-                    <div className="grid md:grid-cols-1 gap-6">
-                      {isLoadingRoles ? (
-                        <div className="space-y-4">
-                          <Skeleton className="h-12 w-full" />
-                          <Skeleton className="h-32 w-full" />
-                        </div>
-                      ) : jobRoles.length > 0 ? (
-                        jobRoles.map((role, index) => (
-                          <Card key={role.id} className="overflow-hidden border-0 shadow-sm hover:shadow-md transition-all duration-200" style={{ borderLeft: `4px solid ${companyColor}` }}>
-                            <CardHeader className="py-4 px-6 bg-gray-50 dark:bg-gray-800">
-                              <div className="flex items-center gap-2">
-                                <BriefcaseBusiness className="h-5 w-5" style={{ color: companyColor }} />
-                                <h3 className="font-medium text-lg" style={{ color: companyColor }}>
-                                  {role.title}
-                                </h3>
-                              </div>
-                            </CardHeader>
-                            <CardContent className="p-6">
-                              <p className="text-gray-600 dark:text-gray-300 mb-6">
-                                {role.description}
-                              </p>
-                              
-                              <Accordion type="single" collapsible className="w-full">
-                                {role.responsibilities && (
-                                  <AccordionItem value="responsibilities" className="border-b">
-                                    <AccordionTrigger className="py-4 text-base font-medium hover:text-primary hover:no-underline">
-                                      <span className="flex items-center gap-2">
-                                        <Info className="h-4 w-4" style={{ color: companyColor }} />
-                                        Responsabilidades
-                                      </span>
-                                    </AccordionTrigger>
-                                    <AccordionContent className="text-gray-600 dark:text-gray-300 whitespace-pre-line pl-6">
-                                      {role.responsibilities}
-                                    </AccordionContent>
-                                  </AccordionItem>
-                                )}
-                                
-                                {role.requirements && (
-                                  <AccordionItem value="requirements" className="border-b">
-                                    <AccordionTrigger className="py-4 text-base font-medium hover:text-primary hover:no-underline">
-                                      <span className="flex items-center gap-2">
-                                        <Info className="h-4 w-4" style={{ color: companyColor }} />
-                                        Requisitos
-                                      </span>
-                                    </AccordionTrigger>
-                                    <AccordionContent className="text-gray-600 dark:text-gray-300 whitespace-pre-line pl-6">
-                                      {role.requirements}
-                                    </AccordionContent>
-                                  </AccordionItem>
-                                )}
-                                
-                                {role.expectations && (
-                                  <AccordionItem value="expectations" className="border-b">
-                                    <AccordionTrigger className="py-4 text-base font-medium hover:text-primary hover:no-underline">
-                                      <span className="flex items-center gap-2">
-                                        <Info className="h-4 w-4" style={{ color: companyColor }} />
-                                        Expectativas
-                                      </span>
-                                    </AccordionTrigger>
-                                    <AccordionContent className="text-gray-600 dark:text-gray-300 whitespace-pre-line pl-6">
-                                      {role.expectations}
-                                    </AccordionContent>
-                                  </AccordionItem>
-                                )}
-                              </Accordion>
-                            </CardContent>
-                            <CardFooter className="py-3 px-6 bg-gray-50 dark:bg-gray-800 border-t">
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="ml-auto text-xs group hover:bg-opacity-10"
-                                style={{ 
-                                  borderColor: companyColor,
-                                  color: companyColor,
-                                  hoverBgColor: `${companyColor}10`
-                                }}
-                              >
-                                Ver Detalhes
-                                <ChevronRight className="h-4 w-4 ml-1 transition-transform group-hover:translate-x-1" />
-                              </Button>
-                            </CardFooter>
-                          </Card>
-                        ))
-                      ) : (
-                        <Card className="overflow-hidden border-0 shadow-sm bg-gray-50 dark:bg-gray-800" style={{borderLeft: `4px solid ${companyColor}`}}>
+                </TabsContent>
+                
+                <TabsContent value="videos" className="mt-0">
+                  <div className="mt-2">
+                    <VideoPlaylist 
+                      key={`videos-${localCompany?.id}`}
+                      companyId={localCompany?.id} 
+                      mainVideo={localCompany?.video_institucional || ""}
+                      mainVideoDescription={localCompany?.descricao_video || ""}
+                    />
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="cargo" className="mt-0">
+                  <div className="grid md:grid-cols-1 gap-6">
+                    {isLoadingRoles ? (
+                      <div className="space-y-4">
+                        <Skeleton className="h-12 w-full" />
+                        <Skeleton className="h-32 w-full" />
+                      </div>
+                    ) : jobRoles.length > 0 ? (
+                      jobRoles.map((role, index) => (
+                        <Card key={role.id} className="overflow-hidden border-l-4 shadow-sm hover:shadow transition-all duration-200" style={{ borderLeftColor: companyColor }}>
+                          <CardHeader className="py-4 px-6 bg-gray-50 dark:bg-gray-800">
+                            <div className="flex items-center gap-2">
+                              <BriefcaseBusiness className="h-5 w-5" style={{ color: companyColor }} />
+                              <h3 className="font-medium text-lg" style={{ color: companyColor }}>
+                                {role.title}
+                              </h3>
+                            </div>
+                          </CardHeader>
                           <CardContent className="p-6">
-                            <h3 className="text-xl font-medium mb-4 dark:text-white" style={{color: companyColor}}>
-                              Descrição de Cargos
-                            </h3>
-                            <p className="text-gray-600 dark:text-gray-400 mb-4">
-                              Ainda não há informações sobre cargos disponíveis para {localCompany?.nome || "esta empresa"}.
+                            <p className="text-gray-600 dark:text-gray-300 mb-6">
+                              {role.description}
                             </p>
+                            
+                            <Accordion type="single" collapsible className="w-full">
+                              {role.responsibilities && (
+                                <AccordionItem value="responsibilities" className="border-b">
+                                  <AccordionTrigger className="py-4 text-base font-medium hover:text-primary hover:no-underline">
+                                    <span className="flex items-center gap-2">
+                                      <Info className="h-4 w-4" style={{ color: companyColor }} />
+                                      Responsabilidades
+                                    </span>
+                                  </AccordionTrigger>
+                                  <AccordionContent className="text-gray-600 dark:text-gray-300 whitespace-pre-line pl-6">
+                                    {role.responsibilities}
+                                  </AccordionContent>
+                                </AccordionItem>
+                              )}
+                              
+                              {role.requirements && (
+                                <AccordionItem value="requirements" className="border-b">
+                                  <AccordionTrigger className="py-4 text-base font-medium hover:text-primary hover:no-underline">
+                                    <span className="flex items-center gap-2">
+                                      <Info className="h-4 w-4" style={{ color: companyColor }} />
+                                      Requisitos
+                                    </span>
+                                  </AccordionTrigger>
+                                  <AccordionContent className="text-gray-600 dark:text-gray-300 whitespace-pre-line pl-6">
+                                    {role.requirements}
+                                  </AccordionContent>
+                                </AccordionItem>
+                              )}
+                              
+                              {role.expectations && (
+                                <AccordionItem value="expectations" className="border-b">
+                                  <AccordionTrigger className="py-4 text-base font-medium hover:text-primary hover:no-underline">
+                                    <span className="flex items-center gap-2">
+                                      <Info className="h-4 w-4" style={{ color: companyColor }} />
+                                      Expectativas
+                                    </span>
+                                  </AccordionTrigger>
+                                  <AccordionContent className="text-gray-600 dark:text-gray-300 whitespace-pre-line pl-6">
+                                    {role.expectations}
+                                  </AccordionContent>
+                                </AccordionItem>
+                              )}
+                            </Accordion>
+                          </CardContent>
+                          <CardFooter className="py-3 px-6 bg-gray-50 dark:bg-gray-800 border-t">
                             <Button 
                               variant="outline" 
-                              className="hover:bg-opacity-10"
+                              size="sm" 
+                              className="ml-auto text-xs group"
                               style={{ 
                                 borderColor: companyColor,
                                 color: companyColor
                               }}
                             >
-                              Saiba Mais
-                              <ChevronRight className="h-4 w-4 ml-1" />
+                              Ver Detalhes
+                              <ChevronRight className="h-4 w-4 ml-1 transition-transform group-hover:translate-x-1" />
                             </Button>
-                          </CardContent>
+                          </CardFooter>
                         </Card>
-                      )}
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
+                      ))
+                    ) : (
+                      <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg shadow-sm" style={{borderLeft: `4px solid ${companyColor}`}}>
+                        <h3 className="text-xl font-medium mb-4 dark:text-white" style={{color: companyColor}}>
+                          Descrição de Cargos
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-400 mb-4">
+                          Ainda não há informações sobre cargos disponíveis para {localCompany?.nome || "esta empresa"}.
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          style={{ 
+                            borderColor: companyColor,
+                            color: companyColor
+                          }}
+                        >
+                          Saiba Mais
+                          <ChevronRight className="h-4 w-4 ml-1" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
             </>
           )}
-        </Card>
+        </div>
       </main>
     </div>
   );

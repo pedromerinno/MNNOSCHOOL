@@ -38,7 +38,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
   return (
     <>
-      <div className="aspect-video bg-gray-100 dark:bg-gray-800 relative rounded-t-lg overflow-hidden">
+      <div className="aspect-video bg-gray-100 dark:bg-gray-800 relative">
         {videoUrl ? (
           <>
             {videoLoading && (
@@ -54,7 +54,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                 <p className="text-muted-foreground mb-4">
                   Isso pode ocorrer devido a bloqueios de rede ou restrições de privacidade.
                 </p>
-                <Button asChild variant="outline" className="shadow-sm">
+                <Button asChild variant="outline">
                   <a href={videoUrl} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="h-4 w-4 mr-2" />
                     Assistir diretamente no YouTube
@@ -85,15 +85,15 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
             )}
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full py-16">
+          <div className="flex flex-col items-center justify-center h-full">
             <Video className="h-16 w-16 text-gray-400" />
             <p className="text-gray-500 mt-4">Nenhum vídeo selecionado</p>
           </div>
         )}
       </div>
       
-      <CardContent className="p-5 bg-gray-50 dark:bg-gray-800/50 border-t dark:border-gray-700">
-        <div className="prose prose-sm max-w-none dark:prose-invert">
+      <CardContent className="p-4">
+        <div className="mt-2">
           <p className="text-gray-700 dark:text-gray-300">
             {description || "Sem descrição disponível."}
           </p>

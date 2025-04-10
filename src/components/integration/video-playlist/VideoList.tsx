@@ -30,9 +30,9 @@ export const VideoList: React.FC<VideoListProps> = ({
   currentVideo
 }) => {
   return (
-    <Card className="border shadow-sm dark:bg-card/80 backdrop-blur-sm">
-      <CardContent className="p-0">
-        <div className="flex items-center p-4 border-b dark:border-gray-700" style={{ backgroundColor: `${companyColor}10` }}>
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex items-center mb-4">
           <List className="h-5 w-5 mr-2" style={{ color: companyColor }} />
           <h3 className="font-medium">Playlist de vídeos</h3>
         </div>
@@ -40,7 +40,7 @@ export const VideoList: React.FC<VideoListProps> = ({
         {isLoading ? (
           <LoadingState />
         ) : (
-          <div className="space-y-1 max-h-[400px] overflow-y-auto p-2">
+          <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
             {/* Main video as first item if it exists */}
             {mainVideo && (
               <VideoListItem
