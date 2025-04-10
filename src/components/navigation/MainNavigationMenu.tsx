@@ -22,14 +22,12 @@ export const MainNavigationMenu = () => {
     }
   }, [userCompanies.length]);
 
-  // Pegamos a cor da empresa ou usamos o azul padrão
-  const primaryColor = selectedCompany?.cor_principal || "#1EAEDB";
-  const headerBgColor = `${primaryColor}05`; // 05 é a opacidade em hex (2%)
+  // Usando background transparente para combinar com a página
+  const headerBgColor = "transparent"; 
 
   return (
     <header 
-      className="sticky top-0 z-40 w-full border-b shadow-sm bg-background dark:bg-gray-950"
-      style={{ backgroundColor: headerBgColor }}
+      className="sticky top-0 z-40 w-full border-b shadow-sm bg-[#F8F7F4] dark:bg-gray-950"
     >
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center space-x-8">

@@ -4,10 +4,8 @@ import { useCompanies } from "@/hooks/useCompanies";
 export const DashboardHeader = () => {
   const { selectedCompany } = useCompanies();
   
-  // Pegamos a cor da empresa ou usamos o azul padrão
-  const headerBgColor = selectedCompany?.cor_principal 
-    ? `${selectedCompany.cor_principal}10` // 10 é a opacidade em hex (6%)
-    : "rgba(30, 174, 219, 0.06)"; // Azul padrão com opacidade baixa
+  // Use company color with very low opacity or transparent background
+  const headerBgColor = "transparent"; // Changed to transparent
   
   return (
     <div 
