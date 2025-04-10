@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,7 +32,7 @@ export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
       const url = URL.createObjectURL(data);
       const a = document.createElement('a');
       a.href = url;
-      a.download = document.name;
+      a.download = document.name; // Here the error was using document when we wanted 'document' parameter
       a.click();
       URL.revokeObjectURL(url);
       

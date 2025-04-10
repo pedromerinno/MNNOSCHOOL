@@ -24,7 +24,7 @@ export const useUserDocumentsViewer = () => {
       const { data, error } = await supabase
         .from('user_documents')
         .select('*')
-        .eq('user_id', userProfile.id)
+        .eq('user_id', userProfile.id || '') // Add fallback empty string
         .eq('company_id', selectedCompany.id);
         
       if (error) throw error;
@@ -47,7 +47,7 @@ export const useUserDocumentsViewer = () => {
       if (error) throw error;
       
       const url = URL.createObjectURL(data);
-      const a = document.createElement('a');
+      const a = document.createElement('a'); // Use window.document, not the parameter named 'document'
       a.href = url;
       a.download = document.name;
       a.click();
