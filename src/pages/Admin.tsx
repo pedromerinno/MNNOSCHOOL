@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { UserManagement } from '@/components/admin/UserManagement';
 import { CompanyManagement } from '@/components/admin/CompanyManagement';
 import { CourseManagement } from '@/components/admin/CourseManagement';
-import { IntegrationManagement } from '@/components/admin/IntegrationManagement';
+import { IntegrationManagement } from '@/components/admin/integration/IntegrationManagement';
 import { useAuth } from '@/contexts/AuthContext';
 
 const AdminPage = () => {

@@ -9,9 +9,9 @@ import { useCompanies } from "@/hooks/useCompanies";
 import { Company } from "@/types/company";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CompanyIntegrationForm } from './integration/CompanyIntegrationForm';
-import { IntegrationVideosManager } from './integration/IntegrationVideosManager';
-import { JobRolesManager } from './integration/JobRolesManager';
+import { CompanyIntegrationForm } from './CompanyIntegrationForm';
+import { IntegrationVideosManager } from './IntegrationVideosManager';
+import { JobRolesManager } from './JobRolesManager';
 import { AccessManagement } from './AccessManagement';
 import { CollaboratorsManagement } from './CollaboratorsManagement';
 
