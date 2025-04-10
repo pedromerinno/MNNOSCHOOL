@@ -30,7 +30,7 @@ export const QuickLinks = () => {
     { 
       icon: School, 
       label: "Escola", 
-      path: "/school", 
+      path: "/courses", 
       hasDropdown: true,
       description: "Acesso aos cursos"
     },
