@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,7 +21,8 @@ import {
   Check,
   MoveUp,
   MoveDown,
-  Loader2
+  Loader2,
+  FileImage
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,6 +35,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface VideoPlaylistManagerProps {
   company: Company;
@@ -57,15 +58,14 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null);
+  const [isExtractingThumbnail, setIsExtractingThumbnail] = useState(false);
   
-  // Form state
   const [videoTitle, setVideoTitle] = useState("");
   const [videoDescription, setVideoDescription] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [videoDuration, setVideoDuration] = useState("");
   
-  // Function to fetch videos
   const fetchVideos = async () => {
     if (!company || !company.id) return;
     
@@ -88,7 +88,6 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
     }
   };
   
-  // Load videos when company changes
   useEffect(() => {
     if (company && company.id) {
       console.log(`Loading videos for company: ${company.nome}`);
@@ -96,7 +95,6 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
     }
   }, [company]);
   
-  // Listen for company change events
   useEffect(() => {
     const handleCompanyChange = () => {
       console.log("VideoPlaylistManager: Company change event detected");
@@ -111,16 +109,44 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
     };
   }, [company]);
   
-  // Reset form
   const resetForm = () => {
     setVideoTitle("");
     setVideoDescription("");
     setVideoUrl("");
     setThumbnailUrl("");
     setVideoDuration("");
+    setIsExtractingThumbnail(false);
   };
   
-  // Handle add video
+  const extractYouTubeThumbnail = () => {
+    if (!videoUrl) {
+      toast.error("Please enter a YouTube URL first");
+      return;
+    }
+    
+    setIsExtractingThumbnail(true);
+    
+    try {
+      const videoId = getYoutubeVideoId(videoUrl);
+      
+      if (!videoId) {
+        toast.error("Could not extract video ID from URL");
+        setIsExtractingThumbnail(false);
+        return;
+      }
+      
+      const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+      
+      setThumbnailUrl(thumbnailUrl);
+      toast.success("Thumbnail extracted successfully");
+    } catch (error) {
+      toast.error("Failed to extract thumbnail");
+      console.error("Error extracting thumbnail:", error);
+    } finally {
+      setIsExtractingThumbnail(false);
+    }
+  };
+  
   const handleAddVideo = async () => {
     if (!videoTitle || !videoUrl) {
       toast.error("Title and video URL are required");
@@ -128,7 +154,6 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
     }
     
     try {
-      // Get max order_index
       const maxOrderIndex = videos.length > 0 
         ? Math.max(...videos.map(v => v.order_index)) + 1 
         : 0;
@@ -159,7 +184,6 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
     }
   };
   
-  // Handle edit video
   const handleEditVideo = async () => {
     if (!selectedVideo) return;
     
@@ -205,7 +229,6 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
     }
   };
   
-  // Handle delete video
   const handleDeleteVideo = async () => {
     if (!selectedVideo) return;
     
@@ -222,7 +245,6 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
       setSelectedVideo(null);
       toast.success("Video deleted successfully");
       
-      // Update order indices
       const updatedVideos = videos.filter(video => video.id !== selectedVideo.id);
       updateVideoOrder(updatedVideos);
     } catch (error: any) {
@@ -231,7 +253,6 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
     }
   };
   
-  // Open edit dialog
   const openEditDialog = (video: VideoItem) => {
     setSelectedVideo(video);
     setVideoTitle(video.title);
@@ -242,30 +263,24 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
     setShowEditDialog(true);
   };
   
-  // Open delete dialog
   const openDeleteDialog = (video: VideoItem) => {
     setSelectedVideo(video);
     setShowDeleteDialog(true);
   };
   
-  // Open add dialog
   const openAddDialog = () => {
     resetForm();
     setShowAddDialog(true);
   };
   
-  // Update video order
   const updateVideoOrder = async (updatedVideos: VideoItem[]) => {
-    // Assign new order indices
     const newOrderVideos = updatedVideos.map((video, index) => ({
       ...video,
       order_index: index
     }));
     
-    // Update videos locally
     setVideos(newOrderVideos);
     
-    // Update order in database for all videos
     try {
       for (const video of newOrderVideos) {
         await supabase
@@ -276,12 +291,10 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
     } catch (error: any) {
       console.error("Error updating video order:", error);
       toast.error(`Error updating video order: ${error.message}`);
-      // Refresh to get correct order
       fetchVideos();
     }
   };
   
-  // Move video up
   const moveVideoUp = (index: number) => {
     if (index === 0) return;
     
@@ -293,7 +306,6 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
     updateVideoOrder(updatedVideos);
   };
   
-  // Move video down
   const moveVideoDown = (index: number) => {
     if (index === videos.length - 1) return;
     
@@ -305,7 +317,6 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
     updateVideoOrder(updatedVideos);
   };
   
-  // Extract YouTube video ID
   const getYoutubeVideoId = (url: string) => {
     if (!url) return null;
     
@@ -430,9 +441,8 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
         </Card>
       )}
       
-      {/* Add Video Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-xl">
           <DialogHeader>
             <DialogTitle>Adicionar Vídeo</DialogTitle>
             <DialogDescription>
@@ -473,7 +483,28 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="thumbnailUrl">URL da Miniatura (opcional)</Label>
+              <div className="flex justify-between items-end mb-1">
+                <Label htmlFor="thumbnailUrl">URL da Miniatura (opcional)</Label>
+                <Button 
+                  type="button" 
+                  size="sm" 
+                  variant="outline"
+                  onClick={extractYouTubeThumbnail}
+                  disabled={isExtractingThumbnail || !videoUrl}
+                >
+                  {isExtractingThumbnail ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Extraindo...
+                    </>
+                  ) : (
+                    <>
+                      <FileImage className="h-4 w-4 mr-2" />
+                      Extrair Thumbnail
+                    </>
+                  )}
+                </Button>
+              </div>
               <Input
                 id="thumbnailUrl"
                 value={thumbnailUrl}
@@ -491,6 +522,21 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
                 placeholder="5:30"
               />
             </div>
+            
+            {thumbnailUrl && (
+              <div className="mt-4">
+                <p className="text-sm text-gray-500 mb-2">Prévia da Miniatura:</p>
+                <img 
+                  src={thumbnailUrl} 
+                  alt="Thumbnail preview" 
+                  className="max-h-48 rounded border border-gray-200 object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/640x360?text=Thumbnail+Error';
+                    toast.error("Erro ao carregar a miniatura");
+                  }}
+                />
+              </div>
+            )}
             
             {videoUrl && getYoutubeVideoId(videoUrl) && (
               <div className="aspect-w-16 aspect-h-9">
@@ -520,9 +566,8 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
         </DialogContent>
       </Dialog>
       
-      {/* Edit Video Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-xl">
           <DialogHeader>
             <DialogTitle>Editar Vídeo</DialogTitle>
             <DialogDescription>
@@ -563,7 +608,28 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="editThumbnailUrl">URL da Miniatura (opcional)</Label>
+              <div className="flex justify-between items-end mb-1">
+                <Label htmlFor="editThumbnailUrl">URL da Miniatura (opcional)</Label>
+                <Button 
+                  type="button" 
+                  size="sm" 
+                  variant="outline"
+                  onClick={extractYouTubeThumbnail}
+                  disabled={isExtractingThumbnail || !videoUrl}
+                >
+                  {isExtractingThumbnail ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Extraindo...
+                    </>
+                  ) : (
+                    <>
+                      <FileImage className="h-4 w-4 mr-2" />
+                      Extrair Thumbnail
+                    </>
+                  )}
+                </Button>
+              </div>
               <Input
                 id="editThumbnailUrl"
                 value={thumbnailUrl}
@@ -581,6 +647,21 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
                 placeholder="5:30"
               />
             </div>
+            
+            {thumbnailUrl && (
+              <div className="mt-4">
+                <p className="text-sm text-gray-500 mb-2">Prévia da Miniatura:</p>
+                <img 
+                  src={thumbnailUrl} 
+                  alt="Thumbnail preview" 
+                  className="max-h-48 rounded border border-gray-200 object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/640x360?text=Thumbnail+Error';
+                    toast.error("Erro ao carregar a miniatura");
+                  }}
+                />
+              </div>
+            )}
             
             {videoUrl && getYoutubeVideoId(videoUrl) && (
               <div className="aspect-w-16 aspect-h-9">
@@ -610,7 +691,6 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
         </DialogContent>
       </Dialog>
       
-      {/* Delete Video Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
