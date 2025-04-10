@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { CourseCard } from './CourseCard';
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +14,7 @@ export type Course = {
   instructor: string | null;
   progress?: number;
   completed?: boolean;
+  tags?: string[];
 };
 
 type CourseListProps = {
@@ -143,29 +143,25 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{title}</h2>
-      </div>
-      
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(3)].map((_, i) => (
-            <Skeleton key={i} className="h-64 w-full rounded-md" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          {[...Array(8)].map((_, i) => (
+            <Skeleton key={i} className="h-[300px] w-full rounded-lg" />
           ))}
         </div>
       ) : courses.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {courses.map(course => (
             <CourseCard key={course.id} course={course} />
           ))}
         </div>
       ) : (
-        <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
-          <AlertCircle className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+        <div className="flex flex-col items-center justify-center py-10 border border-dashed rounded-lg border-gray-200 dark:border-gray-800 text-center">
+          <AlertCircle className="h-10 w-10 text-gray-400 dark:text-gray-500 mb-3" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">
             Nenhum curso encontrado
           </h3>
-          <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+          <p className="text-gray-500 dark:text-gray-400 max-w-md">
             {selectedCompany 
               ? `Não foram encontrados cursos para a empresa ${selectedCompany.nome} que correspondam aos filtros selecionados.`
               : 'Por favor, selecione uma empresa para ver os cursos disponíveis.'}
