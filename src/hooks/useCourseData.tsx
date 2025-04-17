@@ -101,6 +101,7 @@ export const useCourseData = (courseId: string | undefined) => {
           duration: lesson.duration,
           type: lesson.type,
           order_index: lesson.order_index,
+          course_id: courseId, // Add the course_id here
           completed: lessonProgressData?.some(progress => 
             progress.lesson_id === lesson.id && progress.completed
           ) || false

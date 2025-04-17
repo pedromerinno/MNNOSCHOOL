@@ -1,10 +1,11 @@
+
 import { z } from "zod";
 import { Lesson } from "@/components/courses/CourseLessonList";
 
 // Extend the Lesson type to ensure it includes all fields we need
 export interface ExtendedLesson extends Omit<Lesson, 'content' | 'course_id'> {
   content?: string;
-  course_id?: string;
+  course_id: string; // Changed from optional to required to match Lesson type
 }
 
 export const lessonSchema = z.object({
