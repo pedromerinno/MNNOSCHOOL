@@ -28,15 +28,14 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
   useEffect(() => {
     const checkBucket = async () => {
       try {
-        const { data, error } = await supabase.storage.from('course-assets').getPublicUrl('test-connection');
+        // The getPublicUrl method doesn't return an error property in its response
+        // It just returns { data: { publicUrl: string } }
+        const { data } = await supabase.storage.from('course-assets').getPublicUrl('test-connection');
         
-        if (error) {
-          console.warn("Error checking bucket:", error);
-          return;
+        if (data) {
+          console.log("'course-assets' bucket is ready for use");
+          setBucketReady(true);
         }
-        
-        console.log("'course-assets' bucket is ready for use");
-        setBucketReady(true);
       } catch (err) {
         console.error("Error checking storage bucket:", err);
       }
@@ -158,6 +157,7 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
               </div>
             )}
           </div>
+          <FormMessage />
         </FormItem>
       )}
     />
