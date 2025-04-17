@@ -116,7 +116,7 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
         toast.error(`Error uploading image: ${error.message || "Unknown error"}`);
       }
     } finally {
-      setIsLoading(false);
+      setIsUploading(false);
       // Clear the input value so the same file can be selected again
       e.target.value = '';
     }
