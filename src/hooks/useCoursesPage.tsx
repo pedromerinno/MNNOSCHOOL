@@ -8,7 +8,7 @@ type FilterOption = 'all' | 'newest' | 'popular';
 export const useCoursesPage = () => {
   const { selectedCompany } = useCompanies();
   const [activeFilter, setActiveFilter] = useState<FilterOption>('all');
-  const [featuredCourse, setFeaturedCourse] = useState<any>(null);
+  const [featuredCourses, setFeaturedCourses] = useState<any[]>([]);
   const [recentCourses, setRecentCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [recentLoading, setRecentLoading] = useState(true);
@@ -16,7 +16,7 @@ export const useCoursesPage = () => {
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
 
   useEffect(() => {
-    const fetchFeaturedCourse = async () => {
+    const fetchFeaturedCourses = async () => {
       if (!selectedCompany) return;
       
       try {
@@ -31,6 +31,7 @@ export const useCoursesPage = () => {
           .eq('empresa_id', selectedCompany.id);
         
         if (!companyAccess || companyAccess.length === 0) {
+          setFeaturedCourses([]);
           setLoading(false);
           return;
         }
@@ -41,13 +42,16 @@ export const useCoursesPage = () => {
           .from('courses')
           .select('*')
           .in('id', courseIds)
-          .limit(1);
+          .limit(5); // Get multiple courses for the carousel
         
         if (coursesData && coursesData.length > 0) {
-          setFeaturedCourse(coursesData[0]);
+          setFeaturedCourses(coursesData);
+        } else {
+          setFeaturedCourses([]);
         }
       } catch (error) {
-        console.error('Error fetching featured course:', error);
+        console.error('Error fetching featured courses:', error);
+        setFeaturedCourses([]);
       } finally {
         setLoading(false);
       }
@@ -139,12 +143,13 @@ export const useCoursesPage = () => {
         setRecentCourses(coursesWithProgress);
       } catch (error) {
         console.error('Error fetching recent courses:', error);
+        setRecentCourses([]);
       } finally {
         setRecentLoading(false);
       }
     };
     
-    fetchFeaturedCourse();
+    fetchFeaturedCourses();
     fetchRecentCourses();
   }, [selectedCompany]);
 
@@ -157,7 +162,7 @@ export const useCoursesPage = () => {
   return {
     activeFilter,
     setActiveFilter,
-    featuredCourse,
+    featuredCourses,
     recentCourses,
     loading,
     recentLoading,

@@ -17,8 +17,25 @@ interface CourseCarouselProps {
   loading: boolean;
 }
 
-export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses, loading }) => {
+export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], loading }) => {
   const navigate = useNavigate();
+
+  // Show empty state if no courses or still loading
+  if (loading) {
+    return (
+      <div className="w-full h-[400px] rounded-2xl bg-gray-100 animate-pulse flex items-center justify-center">
+        <p className="text-gray-500">Loading featured courses...</p>
+      </div>
+    );
+  }
+
+  if (!courses || courses.length === 0) {
+    return (
+      <div className="w-full h-[400px] rounded-2xl bg-gray-100 flex items-center justify-center">
+        <p className="text-gray-500">No featured courses available</p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">
