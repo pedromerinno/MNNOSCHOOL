@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +9,7 @@ export type Lesson = {
   id: string;
   title: string;
   description: string;
-  content: string;
+  content?: string;
   type: string;
   course_id: string;
   order_index: number;

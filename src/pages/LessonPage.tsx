@@ -43,29 +43,29 @@ const LessonPage = () => {
       <div className="container max-w-6xl mx-auto px-4 py-8">
         <LessonHeader lesson={lesson} courseId={courseId} />
         
-        <LessonContent lesson={lesson} />
-        
-        <div className="max-w-4xl mx-auto">
-          <LessonActions
-            completed={lesson.completed}
-            onMarkCompleted={markLessonCompleted}
-            likes={likes}
-            userLiked={userLiked}
-            onToggleLike={toggleLikeLesson}
-          />
+        <div className="space-y-8">
+          <LessonContent lesson={lesson} />
           
-          <LessonNavigation
-            previousLesson={previousLesson}
-            nextLesson={nextLesson}
-            onNavigate={navigateToLesson}
-          />
-          
-          <div className="mt-8">
+          <div className="max-w-4xl mx-auto">
             <CourseDescription description={lesson.course_description || null} />
-          </div>
-          
-          <div className="mt-8">
-            <LessonComments lessonId={lesson.id} />
+            
+            <LessonActions
+              completed={lesson.completed}
+              onMarkCompleted={markLessonCompleted}
+              likes={likes}
+              userLiked={userLiked}
+              onToggleLike={toggleLikeLesson}
+            />
+            
+            <LessonNavigation
+              previousLesson={previousLesson}
+              nextLesson={nextLesson}
+              onNavigate={navigateToLesson}
+            />
+            
+            <div className="mt-8">
+              <LessonComments lessonId={lesson.id} />
+            </div>
           </div>
         </div>
       </div>

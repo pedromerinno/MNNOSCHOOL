@@ -1,12 +1,11 @@
-
 import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from '@/hooks/use-toast';
 import { Lesson } from '@/components/courses/CourseLessonList';
 
-// Extend the Lesson type to include the content field
-interface ExtendedLesson extends Lesson {
-  content?: string | null;
+export interface ExtendedLesson extends Omit<Lesson, 'content' | 'course_id'> {
+  content?: string;
+  course_id?: string;
 }
 
 export const useLessons = (courseId: string) => {
