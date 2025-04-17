@@ -32,7 +32,7 @@ interface CommentResponse {
 export function useComments(lessonId: string) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [connectionError, setConnectionError] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | boolean>(false);
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -84,7 +84,8 @@ export function useComments(lessonId: string) {
         console.error('Erro ao carregar comentários:', error);
         if (isMounted) {
           setLoading(false);
-          setConnectionError(true);
+          // Set as string if error message is available, otherwise true
+          setConnectionError(error instanceof Error ? error.message : true);
         }
       }
     };

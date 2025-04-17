@@ -21,6 +21,7 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
 
   // Don't show schema-related errors to users
   const shouldShowError = connectionError && 
+    typeof connectionError === 'string' && 
     !connectionError.includes('schema') && 
     !connectionError.includes('relationship');
 
