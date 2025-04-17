@@ -67,15 +67,18 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], lo
                   )}
                   
                   <div className="absolute bottom-0 left-0 right-0 p-8">
-                    <div className="space-y-4 max-w-xl"> {/* Reduced max-w from 2xl to xl */}
+                    <div className="space-y-4 max-w-xl">
                       <div>
-                        {/* Replace Criação with course tags */}
-                        <CourseCardTags tags={course.tags} />
+                        {/* Improved visibility of course tags */}
+                        <CourseCardTags 
+                          tags={course.tags} 
+                          className="mb-2" // Add margin below tags
+                        />
                         <h2 className="text-4xl font-bold text-white mt-2">
                           {course.title}
                         </h2>
                       </div>
-                      <p className="text-white/90">
+                      <p className="text-white/90 mb-6"> {/* Increased margin-bottom */}
                         {course.description}
                       </p>
                       <Button
