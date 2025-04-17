@@ -1,10 +1,11 @@
+
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useCompanies } from "@/hooks/useCompanies";
-import { CourseCardTags } from "./card/CourseCardTags";
+import { CompanyThemedBadge } from "@/components/ui/badge";
 import {
   Carousel,
   CarouselContent,
@@ -68,10 +69,17 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], lo
                   <div className="absolute bottom-0 left-0 right-0 p-8">
                     <div className="space-y-4 max-w-xl">
                       <div>
-                        <CourseCardTags 
-                          tags={course.tags} 
-                          className="mb-2"
-                        />
+                        <div className="flex gap-2 mb-2">
+                          {course.tags?.map((tag: string, index: number) => (
+                            <CompanyThemedBadge 
+                              key={index} 
+                              variant="outline" 
+                              className="bg-transparent text-white border-white/40"
+                            >
+                              {tag}
+                            </CompanyThemedBadge>
+                          ))}
+                        </div>
                         <h2 className="text-4xl font-bold text-white mt-2">
                           {course.title}
                         </h2>
