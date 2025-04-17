@@ -1,8 +1,8 @@
 
 import { useRef } from "react";
 
-// Increase the minimum time between requests to reduce API load
-export const MIN_REQUEST_INTERVAL = 300000; // 5 minutes
+// Reducing this to 5 seconds to improve user experience while still preventing excessive API calls
+export const MIN_REQUEST_INTERVAL = 5000; // 5 seconds 
 
 export const useCompanyRequest = () => {
   // Timestamp of the last request
@@ -22,21 +22,6 @@ export const useCompanyRequest = () => {
   ): boolean => {
     const now = Date.now();
     
-    // If already fetching, don't start new request
-    if (isFetchingRef.current && !forceRefresh) {
-      console.log('[Company Request] A request is already in progress. Ignoring new request.');
-      return false;
-    }
-    
-    // Limit total pending requests to 1 maximum (strict throttling)
-    if (pendingRequestsRef.current > 0 && !forceRefresh) {
-      console.log(`[Company Request] Already has ${pendingRequestsRef.current} pending request(s). Limiting API calls.`);
-      return false;
-    }
-    
-    // Increment pending requests counter
-    pendingRequestsRef.current += 1;
-    
     // If forced update, always allow
     if (forceRefresh) {
       console.log('[Company Request] Forcing data refresh as requested.');
@@ -48,7 +33,6 @@ export const useCompanyRequest = () => {
     const timeSinceLastFetch = now - lastFetchTimeRef.current;
     if (timeSinceLastFetch < interval && hasLocalData) {
       console.log(`[Company Request] Last request ${Math.round(timeSinceLastFetch/1000)}s ago. Using cached data (min interval: ${interval/1000}s).`);
-      pendingRequestsRef.current -= 1;
       return false;
     }
     
@@ -60,6 +44,8 @@ export const useCompanyRequest = () => {
    */
   const startRequest = (): void => {
     isFetchingRef.current = true;
+    pendingRequestsRef.current += 1;
+    console.log(`[Company Request] Starting request. Total pending: ${pendingRequestsRef.current}`);
   };
   
   /**
@@ -72,6 +58,7 @@ export const useCompanyRequest = () => {
     if (pendingRequestsRef.current > 0) {
       pendingRequestsRef.current -= 1;
     }
+    console.log(`[Company Request] Request completed. Total pending: ${pendingRequestsRef.current}`);
   };
   
   /**
@@ -84,6 +71,7 @@ export const useCompanyRequest = () => {
     if (pendingRequestsRef.current > 0) {
       pendingRequestsRef.current -= 1;
     }
+    console.log(`[Company Request] Request reset. Total pending: ${pendingRequestsRef.current}`);
   };
   
   return {

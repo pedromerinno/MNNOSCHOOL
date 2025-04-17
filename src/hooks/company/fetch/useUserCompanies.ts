@@ -11,8 +11,9 @@ const CACHE_EXPIRATION = 30 * 60 * 1000;
 export const useUserCompanies = ({
   setIsLoading,
   setUserCompanies,
-  setSelectedCompany
-}: Pick<UseCompanyFetchProps, 'setIsLoading' | 'setUserCompanies' | 'setSelectedCompany'>) => {
+  setSelectedCompany,
+  setError
+}: Pick<UseCompanyFetchProps, 'setIsLoading' | 'setUserCompanies' | 'setSelectedCompany' | 'setError'>) => {
   
   /**
    * Verifica se o cache de empresas está válido
@@ -41,7 +42,7 @@ export const useUserCompanies = ({
    * Fetches all companies a user is related to and automatically selects
    * the first one if there's only one company
    */
-  const getUserCompanies = async (userId: string): Promise<Company[]> => {
+  const getUserCompanies = async (userId: string, signal?: AbortSignal): Promise<Company[]> => {
     // Primeiro, verifique se já temos dados em cache
     const cachedCompanies = localStorage.getItem('userCompanies');
     let cachedData: Company[] = [];
@@ -86,19 +87,39 @@ export const useUserCompanies = ({
     }
 
     try {
-      // Buscar ids das empresas e empresas em paralelo para reduzir tempo de carregamento
-      const fetchRelationsPromise = retryOperation(
-        async () => await supabase.from('user_empresa').select('empresa_id').eq('user_id', userId)
+      // Check if request has been aborted
+      if (signal?.aborted) {
+        console.log("Request was aborted before it started");
+        throw new DOMException("Aborted", "AbortError");
+      }
+      
+      // Create the fetch options with the abort signal
+      const fetchOptions = signal ? { signal } : undefined;
+
+      // Buscar ids das empresas
+      const userCompanyRelations = await retryOperation(
+        async () => {
+          const req = supabase
+            .from('user_empresa')
+            .select('empresa_id')
+            .eq('user_id', userId);
+            
+          // Add abort signal to the request if available  
+          if (signal) {
+            req.abortSignal(signal);
+          }
+          
+          return await req;
+        }
       );
 
-      // Se já tivermos dados em cache, não bloqueamos a UI enquanto buscamos atualizações
-      const userCompanyRelations = await fetchRelationsPromise;
+      if (signal?.aborted) {
+        throw new DOMException("Aborted", "AbortError");
+      }
 
       if (userCompanyRelations.error) {
         console.error("Error fetching user company relations:", userCompanyRelations.error);
-        toast.error("Erro ao buscar empresas do usuário", {
-          description: userCompanyRelations.error.message,
-        });
+        setError(new Error(userCompanyRelations.error.message || "Falha ao buscar relações de empresas"));
         
         // Return cached data if available
         if (cachedData.length > 0) {
@@ -124,16 +145,32 @@ export const useUserCompanies = ({
       const companyIds = userCompanyRelations.data.map(relation => relation.empresa_id);
       console.log("Found company IDs for user:", companyIds);
 
+      // Check if request has been aborted again
+      if (signal?.aborted) {
+        throw new DOMException("Aborted", "AbortError");
+      }
+
       // Fetch all companies with these IDs
       const { data: companies, error: companiesError } = await retryOperation(
-        async () => await supabase.from('empresas').select('*').in('id', companyIds).order('nome')
+        async () => {
+          const req = supabase
+            .from('empresas')
+            .select('*')
+            .in('id', companyIds)
+            .order('nome');
+            
+          // Add abort signal to the request if available  
+          if (signal) {
+            req.abortSignal(signal);
+          }
+          
+          return await req;
+        }
       );
 
       if (companiesError) {
         console.error("Error fetching companies:", companiesError);
-        toast.error("Erro ao buscar detalhes das empresas", {
-          description: companiesError.message,
-        });
+        setError(new Error(companiesError.message || "Falha ao buscar detalhes das empresas"));
         
         // Return cached data if available
         if (cachedData.length > 0) {
@@ -169,10 +206,15 @@ export const useUserCompanies = ({
       setIsLoading(false);
       return userCompaniesData;
     } catch (error) {
+      // Don't show errors for aborted requests
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        console.log('Request was aborted during execution');
+        setIsLoading(false);
+        return cachedData;
+      }
+      
       console.error("Unexpected error:", error);
-      toast.error("Erro inesperado", {
-        description: "Ocorreu um erro ao buscar as empresas",
-      });
+      setError(error instanceof Error ? error : new Error("Ocorreu um erro ao buscar as empresas"));
       
       // Return cached data in case of error
       if (cachedData.length > 0) {

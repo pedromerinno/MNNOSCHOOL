@@ -44,13 +44,16 @@ export const useCompanyFetching = ({
     setIsLoading,
     setCompanies: setUserCompanies,
     setUserCompanies,
-    setSelectedCompany
+    setSelectedCompany,
+    setError
   };
   
   const { getCompanyById, getUserCompanies: getCompanies } = useCompanyFetch(companyFetchProps);
   
   // Track fetch state to prevent duplicate calls
   const fetchInProgressRef = React.useRef(false);
+  // Track abort controllers for active requests
+  const abortControllerRef = useRef<AbortController | null>(null);
   
   /**
    * Fetches user companies with rate limiting and caching
@@ -59,6 +62,13 @@ export const useCompanyFetching = ({
     userId: string, 
     forceRefresh: boolean = false
   ): Promise<Company[]> => {
+    // Cancel any existing requests if forcing a refresh
+    if (forceRefresh && abortControllerRef.current) {
+      console.log('Cancelling previous request due to forced refresh');
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    
     // If a fetch is already in progress and not forcing, return current data
     if (fetchInProgressRef.current && !forceRefresh) {
       console.log('A fetch operation is already in progress. Skipping duplicate fetch.');
@@ -80,17 +90,21 @@ export const useCompanyFetching = ({
     setError(null);
     incrementFetchCount();
     
+    // Create a new abort controller for this request
+    abortControllerRef.current = new AbortController();
+    
     try {
       // Use cached data for immediate UI update only if not doing a forced refresh
       if (!forceRefresh) {
         const cachedData = getCachedUserCompanies();
         if (cachedData && cachedData.length > 0) {
           setUserCompanies(cachedData);
+          console.log("Using cached data while fetching fresh data:", cachedData.length, "companies");
         }
       }
       
       // Perform request to get updated data
-      const result = await executeWithRetry(() => getCompanies(userId));
+      const result = await executeWithRetry(() => getCompanies(userId, abortControllerRef.current?.signal));
       
       // Update timestamp of successful request
       completeRequest();
@@ -98,6 +112,7 @@ export const useCompanyFetching = ({
       // Cache the companies when we successfully fetch them
       if (result && result.length > 0) {
         cacheUserCompanies(result);
+        console.log("Successfully fetched and cached", result.length, "companies");
       }
       
       // Make sure we update loading state with result
@@ -106,6 +121,14 @@ export const useCompanyFetching = ({
       return result;
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Unknown error');
+      
+      // Don't show errors for aborted requests
+      if (error.name === 'AbortError') {
+        console.log('Request was aborted');
+        setIsLoading(false);
+        return userCompanies;
+      }
+      
       setError(error);
       console.error("Error fetching companies:", error);
       
@@ -123,6 +146,7 @@ export const useCompanyFetching = ({
       fetchInProgressRef.current = false;
       setIsLoading(false); // Ensure loading is set to false even if there was an error
       resetRequestState();
+      abortControllerRef.current = null;
     }
   }, [
     userCompanies,
