@@ -36,13 +36,22 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
             </h1>
             
             <div className="flex gap-2 mb-8">
-              <Badge variant="outline" className="bg-black/30 text-white border-none">
+              <Badge 
+                variant="outline" 
+                className="bg-transparent text-white border-white/40"
+              >
                 IA
               </Badge>
-              <Badge variant="outline" className="bg-black/30 text-white border-none">
+              <Badge 
+                variant="outline" 
+                className="bg-transparent text-white border-white/40"
+              >
                 Ilustração
               </Badge>
-              <Badge variant="outline" className="bg-black/30 text-white border-none">
+              <Badge 
+                variant="outline" 
+                className="bg-transparent text-white border-white/40"
+              >
                 Conceitos
               </Badge>
             </div>
