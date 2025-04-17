@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useCompanies } from "@/hooks/useCompanies";
 import {
   Carousel,
   CarouselContent,
@@ -19,6 +20,7 @@ interface CourseCarouselProps {
 
 export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], loading }) => {
   const navigate = useNavigate();
+  const { selectedCompany } = useCompanies();
 
   // Show empty state if no courses or still loading
   if (loading) {
@@ -50,8 +52,21 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], lo
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent">
+                  {/* Company Logo */}
+                  {selectedCompany?.logo && (
+                    <div className="absolute top-8 left-8">
+                      <div className="w-16 h-16 rounded-full overflow-hidden bg-white/10 p-2">
+                        <img 
+                          src={selectedCompany.logo} 
+                          alt={selectedCompany.nome}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="absolute bottom-0 left-0 right-0 p-8">
-                    <div className="space-y-4">
+                    <div className="space-y-4 max-w-2xl">
                       <div>
                         <span className="text-white/80 text-sm uppercase tracking-wider">
                           {course.type || "Criação"}
@@ -67,7 +82,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], lo
                         onClick={() => navigate(`/courses/${course.id}`)}
                         className="bg-white text-black hover:bg-gray-100"
                       >
-                        Watch now
+                        Assistir
                         <Play className="w-4 h-4 ml-2" />
                       </Button>
                     </div>
