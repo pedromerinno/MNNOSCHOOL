@@ -1,11 +1,13 @@
 
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { CourseCarousel } from "@/components/courses/CourseCarousel";
 import { CourseCategories } from "@/components/courses/CourseCategories";
 import { useCoursesPage } from "@/hooks/useCoursesPage";
 
 const Courses = () => {
+  const navigate = useNavigate();
   const {
     featuredCourses,
     allCompanyCourses,
@@ -22,7 +24,7 @@ const Courses = () => {
           loading={loading} 
         />
         
-        {/* Categories - Moved right after the carousel */}
+        {/* Categories - Right after the carousel */}
         <CourseCategories />
         
         {/* All Company Courses */}
@@ -31,7 +33,11 @@ const Courses = () => {
             <h2 className="text-xl font-semibold">Todos os cursos</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {allCompanyCourses?.map((course) => (
-                <div key={course.id} className="group relative aspect-[4/3] rounded-lg overflow-hidden">
+                <div 
+                  key={course.id} 
+                  className="group relative aspect-[4/3] rounded-lg overflow-hidden cursor-pointer"
+                  onClick={() => navigate(`/courses/${course.id}`)}
+                >
                   <img
                     src={course.image_url || "https://source.unsplash.com/random"}
                     alt={course.title}
