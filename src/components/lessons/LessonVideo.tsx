@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { ExternalLink, AlertCircle, Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -24,11 +25,38 @@ export const LessonVideo: React.FC<LessonVideoProps> = ({
 }) => {
   const [videoError, setVideoError] = useState<boolean>(false);
   const [videoLoading, setVideoLoading] = useState<boolean>(true);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     setVideoError(false);
     setVideoLoading(true);
   }, [videoUrl]);
+
+  useEffect(() => {
+    // Setup message event listener for YouTube iframe API
+    const handleYouTubeEvents = (event: MessageEvent) => {
+      if (typeof event.data === 'string') {
+        try {
+          const data = JSON.parse(event.data);
+          // YouTube iframe API sends events as JSON with an event property
+          if (data.event === 'onStateChange' && data.info === 0) { // 0 = ended
+            console.log('Video ended event detected');
+            if (onVideoEnd) {
+              onVideoEnd();
+            }
+          }
+        } catch (e) {
+          // Not a JSON message or not from YouTube iframe API
+        }
+      }
+    };
+
+    window.addEventListener('message', handleYouTubeEvents);
+    
+    return () => {
+      window.removeEventListener('message', handleYouTubeEvents);
+    };
+  }, [onVideoEnd]);
 
   const handleVideoError = () => {
     setVideoError(true);
@@ -41,6 +69,7 @@ export const LessonVideo: React.FC<LessonVideoProps> = ({
   };
 
   const handleVideoEnded = () => {
+    console.log('Native video ended event fired');
     if (onVideoEnd) {
       onVideoEnd();
     }
@@ -60,17 +89,17 @@ export const LessonVideo: React.FC<LessonVideoProps> = ({
     
     if (url.includes('youtube.com/embed/')) {
       const videoId = url.split('/').pop();
-      return `https://www.youtube-nocookie.com/embed/${videoId}?enablejsapi=1`;
+      return `https://www.youtube-nocookie.com/embed/${videoId}?enablejsapi=1&origin=${window.location.origin}`;
     }
     
     if (url.includes('youtube.com/watch')) {
       const videoId = getYoutubeVideoId(url);
-      return videoId ? `https://www.youtube-nocookie.com/embed/${videoId}?enablejsapi=1` : null;
+      return videoId ? `https://www.youtube-nocookie.com/embed/${videoId}?enablejsapi=1&origin=${window.location.origin}` : null;
     }
     
     if (url.includes('youtu.be')) {
       const videoId = url.split('/').pop();
-      return videoId ? `https://www.youtube-nocookie.com/embed/${videoId}?enablejsapi=1` : null;
+      return videoId ? `https://www.youtube-nocookie.com/embed/${videoId}?enablejsapi=1&origin=${window.location.origin}` : null;
     }
     
     return url;
@@ -116,6 +145,7 @@ export const LessonVideo: React.FC<LessonVideoProps> = ({
             
             {embedUrl && (
               <iframe
+                ref={iframeRef}
                 src={embedUrl}
                 className="w-full h-full"
                 style={{ display: videoError ? 'none' : 'block' }}

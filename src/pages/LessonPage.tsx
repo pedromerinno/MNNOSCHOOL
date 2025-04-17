@@ -32,13 +32,22 @@ const LessonPage = () => {
     showAutoplayPrompt,
     toggleAutoplay,
     handleVideoEnd,
-    setShowAutoplayPrompt
+    setShowAutoplayPrompt,
+    cancelAutoplay
   } = useAutoplayNavigation(nextLesson, courseId);
 
+  // Reset autoplay prompt when changing lessons
   useEffect(() => {
     window.scrollTo(0, 0);
     setShowAutoplayPrompt(false);
-  }, [lessonId]);
+  }, [lessonId, setShowAutoplayPrompt]);
+
+  // If video ends or lesson changes, ensure autoplay prompt is hidden
+  useEffect(() => {
+    return () => {
+      cancelAutoplay();
+    };
+  }, [lessonId, cancelAutoplay]);
 
   if (loading) {
     return <LessonSkeleton />;
