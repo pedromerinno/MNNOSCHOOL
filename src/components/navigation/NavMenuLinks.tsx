@@ -51,7 +51,7 @@ export const NavMenuLinks = () => {
                     (isCurrentPage('/courses') || isCurrentPage('/my-courses')) && "font-bold text-gray-700"
                   )}
                 >
-                  <span>Cursos</span>
+                  <span>School</span>
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-2 bg-white dark:bg-gray-800">
@@ -62,10 +62,10 @@ export const NavMenuLinks = () => {
                       >
                         <div className="flex items-center">
                           <Book className="h-4 w-4 mr-2" />
-                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Todos os Cursos</span>
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">All Courses</span>
                         </div>
                         <p className="line-clamp-2 text-sm leading-snug text-gray-500 dark:text-gray-400">
-                          Visualize todos os cursos disponíveis da sua empresa
+                          View all courses available in your company
                         </p>
                       </Link>
                     </li>
@@ -76,10 +76,10 @@ export const NavMenuLinks = () => {
                       >
                         <div className="flex items-center">
                           <BookOpen className="h-4 w-4 mr-2" />
-                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Meus Cursos</span>
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Dashboard</span>
                         </div>
                         <p className="line-clamp-2 text-sm leading-snug text-gray-500 dark:text-gray-400">
-                          Cursos favoritados e cursos em andamento
+                          Favorited and ongoing courses
                         </p>
                       </Link>
                     </li>
