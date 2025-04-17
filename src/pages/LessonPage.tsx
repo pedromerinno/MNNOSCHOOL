@@ -40,27 +40,29 @@ const LessonPage = () => {
 
   return (
     <DashboardLayout>
-      <div className="container max-w-4xl mx-auto px-4 py-8">
+      <div className="container max-w-6xl mx-auto px-4 py-8">
         <LessonHeader lesson={lesson} courseId={courseId} />
         
         <LessonContent lesson={lesson} />
         
-        <LessonActions
-          completed={lesson.completed}
-          onMarkCompleted={markLessonCompleted}
-          likes={likes}
-          userLiked={userLiked}
-          onToggleLike={toggleLikeLesson}
-        />
-        
-        <LessonNavigation
-          previousLesson={previousLesson}
-          nextLesson={nextLesson}
-          onNavigate={navigateToLesson}
-        />
-        
-        <div className="mt-8">
-          <LessonComments lessonId={lesson.id} />
+        <div className="max-w-4xl mx-auto">
+          <LessonActions
+            completed={lesson.completed}
+            onMarkCompleted={markLessonCompleted}
+            likes={likes}
+            userLiked={userLiked}
+            onToggleLike={toggleLikeLesson}
+          />
+          
+          <LessonNavigation
+            previousLesson={previousLesson}
+            nextLesson={nextLesson}
+            onNavigate={navigateToLesson}
+          />
+          
+          <div className="mt-8">
+            <LessonComments lessonId={lesson.id} />
+          </div>
         </div>
       </div>
     </DashboardLayout>
