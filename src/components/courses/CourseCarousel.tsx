@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useCompanies } from "@/hooks/useCompanies";
+import { CourseCardTags } from "./card/CourseCardTags";
 import {
   Carousel,
   CarouselContent,
@@ -52,10 +53,10 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], lo
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent">
-                  {/* Company Logo */}
+                  {/* Company Logo - Reduced size */}
                   {selectedCompany?.logo && (
                     <div className="absolute top-8 left-8">
-                      <div className="w-16 h-16 rounded-full overflow-hidden bg-white/10 p-2">
+                      <div className="w-12 h-12 rounded-full overflow-hidden bg-white/10 p-2">
                         <img 
                           src={selectedCompany.logo} 
                           alt={selectedCompany.nome}
@@ -68,9 +69,8 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], lo
                   <div className="absolute bottom-0 left-0 right-0 p-8">
                     <div className="space-y-4 max-w-2xl">
                       <div>
-                        <span className="text-white/80 text-sm uppercase tracking-wider">
-                          {course.type || "Criação"}
-                        </span>
+                        {/* Replace Criação with course tags */}
+                        <CourseCardTags tags={course.tags} />
                         <h2 className="text-4xl font-bold text-white mt-2">
                           {course.title}
                         </h2>
