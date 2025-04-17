@@ -10,7 +10,7 @@ export const CourseCardTags: React.FC<CourseCardTagsProps> = ({ tags }) => {
   if (!tags || tags.length === 0) {
     return (
       <div className="flex flex-wrap gap-2">
-        <CompanyThemedBadge variant="beta" className="text-xs font-normal">
+        <CompanyThemedBadge variant="beta" className="text-xs font-normal text-white">
           Curso
         </CompanyThemedBadge>
       </div>
@@ -20,12 +20,19 @@ export const CourseCardTags: React.FC<CourseCardTagsProps> = ({ tags }) => {
   return (
     <div className="flex flex-wrap gap-2">
       {tags.slice(0, 2).map((tag, index) => (
-        <CompanyThemedBadge key={index} variant="beta" className="text-xs font-normal">
+        <CompanyThemedBadge 
+          key={index} 
+          variant="beta" 
+          className="text-xs font-normal text-white"
+        >
           {tag}
         </CompanyThemedBadge>
       ))}
       {tags.length > 2 && (
-        <CompanyThemedBadge variant="beta" className="text-xs font-normal">
+        <CompanyThemedBadge 
+          variant="beta" 
+          className="text-xs font-normal text-white"
+        >
           +{tags.length - 2}
         </CompanyThemedBadge>
       )}

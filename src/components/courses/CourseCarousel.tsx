@@ -53,21 +53,21 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], lo
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent">
-                  {/* Company Logo - Reduced size */}
+                  {/* Company Logo - Perfectly round */}
                   {selectedCompany?.logo && (
                     <div className="absolute top-8 left-8">
-                      <div className="w-12 h-12 rounded-full overflow-hidden bg-white/10 p-2">
+                      <div className="w-12 h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center p-1">
                         <img 
                           src={selectedCompany.logo} 
                           alt={selectedCompany.nome}
-                          className="w-full h-full object-contain"
+                          className="w-full h-full object-cover rounded-full"
                         />
                       </div>
                     </div>
                   )}
                   
                   <div className="absolute bottom-0 left-0 right-0 p-8">
-                    <div className="space-y-4 max-w-2xl">
+                    <div className="space-y-4 max-w-xl"> {/* Reduced max-w from 2xl to xl */}
                       <div>
                         {/* Replace Criação with course tags */}
                         <CourseCardTags tags={course.tags} />
