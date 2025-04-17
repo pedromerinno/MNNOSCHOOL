@@ -4,6 +4,13 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { UseFormReturn } from "react-hook-form";
 import { CourseFormValues } from "./CourseFormTypes";
 import { useCompanies } from '@/hooks/useCompanies';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 
 interface CompanySelectorFieldProps {
   form: UseFormReturn<CourseFormValues>;
@@ -25,18 +32,36 @@ export const CompanySelectorField: React.FC<CompanySelectorFieldProps> = ({ form
         <FormItem>
           <FormLabel>Empresa</FormLabel>
           <FormControl>
-            <select
-              className="w-full p-2 border rounded-md"
-              {...field}
+            <Select
               disabled={isLoadingCompanies}
+              onValueChange={field.onChange}
+              value={field.value}
             >
-              <option value="">Selecione uma empresa</option>
-              {companies.map((company) => (
-                <option key={company.id} value={company.id}>
-                  {company.nome}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full bg-white">
+                <SelectValue placeholder="Selecione uma empresa" />
+              </SelectTrigger>
+              <SelectContent className="z-50 bg-white">
+                {companies.map((company) => (
+                  <SelectItem key={company.id} value={company.id} className="cursor-pointer">
+                    <div className="flex items-center">
+                      {company.logo && (
+                        <img
+                          src={company.logo}
+                          alt={company.nome}
+                          className="h-4 w-4 mr-2 object-contain"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = "/placeholder.svg";
+                            target.onerror = null;
+                          }}
+                        />
+                      )}
+                      {company.nome}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </FormControl>
           <FormMessage />
         </FormItem>
