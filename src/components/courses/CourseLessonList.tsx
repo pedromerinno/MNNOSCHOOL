@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,13 +7,14 @@ import { cn } from '@/lib/utils';
 export type Lesson = {
   id: string;
   title: string;
-  description: string | null;
-  duration: string | null;
+  description: string;
+  content: string;
   type: string;
+  course_id: string;
   order_index: number;
-  completed: boolean;
-  content?: string | null;
-  course_id?: string;
+  duration?: string;
+  completed?: boolean;
+  course_description?: string | null;
 };
 
 interface CourseLessonListProps {

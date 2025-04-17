@@ -50,11 +50,13 @@ export const useLessonFetch = (lessonId: string | undefined) => {
           console.error('Erro ao buscar progresso da aula:', progressError);
         }
         
-        setLesson({
+        const lessonWithCourseDescription = {
           ...lessonData,
           course_description: lessonData.courses?.description || null,
           completed: progressData?.completed || false
-        });
+        } as Lesson;
+        
+        setLesson(lessonWithCourseDescription);
         
         // Update last access
         if (userId) {

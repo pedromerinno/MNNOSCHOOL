@@ -61,7 +61,7 @@ const LessonPage = () => {
           />
           
           <div className="mt-8">
-            <CourseDescription description={lesson.course_description} />
+            <CourseDescription description={lesson.course_description || null} />
           </div>
           
           <div className="mt-8">
