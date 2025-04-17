@@ -23,7 +23,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], lo
   // Show empty state if no courses or still loading
   if (loading) {
     return (
-      <div className="w-full h-[400px] rounded-2xl bg-gray-100 animate-pulse flex items-center justify-center">
+      <div className="w-full h-[500px] rounded-2xl bg-gray-100 animate-pulse flex items-center justify-center">
         <p className="text-gray-500">Loading featured courses...</p>
       </div>
     );
@@ -31,19 +31,19 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], lo
 
   if (!courses || courses.length === 0) {
     return (
-      <div className="w-full h-[400px] rounded-2xl bg-gray-100 flex items-center justify-center">
+      <div className="w-full h-[500px] rounded-2xl bg-gray-100 flex items-center justify-center">
         <p className="text-gray-500">No featured courses available</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full relative">
       <Carousel>
         <CarouselContent>
           {courses.map((course) => (
             <CarouselItem key={course.id}>
-              <div className="relative h-[400px] rounded-2xl overflow-hidden">
+              <div className="relative h-[500px] rounded-2xl overflow-hidden">
                 <img
                   src={course.image_url || "https://source.unsplash.com/random"}
                   alt={course.title}
@@ -77,8 +77,8 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], lo
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="left-4" />
-        <CarouselNext className="right-4" />
+        <CarouselPrevious className="absolute left-[-50px] top-1/2 -translate-y-1/2" />
+        <CarouselNext className="absolute right-[-50px] top-1/2 -translate-y-1/2" />
       </Carousel>
     </div>
   );
