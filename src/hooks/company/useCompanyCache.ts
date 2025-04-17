@@ -1,100 +1,98 @@
 
 import { Company } from "@/types/company";
 
-// Cache expiration time in milliseconds (now 10 minutes, was 5 minutes)
-const CACHE_EXPIRATION = 10 * 60 * 1000;
+// Time to cache in minutes
+const CACHE_EXPIRATION_MINUTES = 60; // 1 hour cache
 
+/**
+ * Hook for caching company data to reduce API calls
+ */
 export const useCompanyCache = () => {
+  // Cache keys
+  const USER_COMPANIES_KEY = 'userCompanies';
+  const USER_COMPANIES_TIMESTAMP_KEY = 'userCompaniesTimestamp';
+  
   /**
-   * Store company list in local storage for offline access
+   * Check if the cache has expired
    */
-  const cacheUserCompanies = (companies: Company[]) => {
-    if (companies.length > 0) {
-      try {
-        localStorage.setItem('userCompanies', JSON.stringify(companies));
-        localStorage.setItem('userCompaniesTimestamp', Date.now().toString());
-      } catch (e) {
-        console.error('Failed to cache user companies', e);
-      }
+  const isCacheExpired = (): boolean => {
+    try {
+      const timestampStr = localStorage.getItem(USER_COMPANIES_TIMESTAMP_KEY);
+      if (!timestampStr) return true;
+      
+      const timestamp = parseInt(timestampStr, 10);
+      const now = Date.now();
+      const minutesSinceLastCache = (now - timestamp) / (1000 * 60);
+      
+      return minutesSinceLastCache > CACHE_EXPIRATION_MINUTES;
+    } catch (e) {
+      console.error("[Company Cache] Error checking cache expiration:", e);
+      return true;
     }
   };
-
+  
   /**
-   * Retrieve cached company list from local storage
+   * Get cached user companies
    */
   const getCachedUserCompanies = (): Company[] | null => {
-    const cachedCompanies = localStorage.getItem('userCompanies');
-    if (!cachedCompanies) return null;
-
     try {
-      // Check cache expiration
-      if (isCacheExpired()) {
-        console.log('Cache is expired, will fetch fresh data');
-      }
+      const cachedData = localStorage.getItem(USER_COMPANIES_KEY);
+      if (!cachedData) return null;
       
-      return JSON.parse(cachedCompanies) as Company[];
+      const companies = JSON.parse(cachedData) as Company[];
+      console.log(`[Company Cache] Retrieved ${companies.length} companies from cache`);
+      return companies;
     } catch (e) {
-      console.error('Error parsing cached companies', e);
+      console.error("[Company Cache] Error retrieving companies from cache:", e);
       return null;
     }
   };
   
   /**
-   * Remove a specific company from the cache
+   * Cache user companies
+   */
+  const cacheUserCompanies = (companies: Company[]): void => {
+    try {
+      localStorage.setItem(USER_COMPANIES_KEY, JSON.stringify(companies));
+      localStorage.setItem(USER_COMPANIES_TIMESTAMP_KEY, Date.now().toString());
+      console.log(`[Company Cache] Cached ${companies.length} companies`);
+    } catch (e) {
+      console.error("[Company Cache] Error caching companies:", e);
+    }
+  };
+  
+  /**
+   * Clear cached user companies
+   */
+  const clearCachedUserCompanies = (): void => {
+    try {
+      localStorage.removeItem(USER_COMPANIES_KEY);
+      localStorage.removeItem(USER_COMPANIES_TIMESTAMP_KEY);
+      console.log("[Company Cache] Cleared companies cache");
+    } catch (e) {
+      console.error("[Company Cache] Error clearing cache:", e);
+    }
+  };
+  
+  /**
+   * Remove a company from cache
    */
   const removeCachedCompany = (companyId: string): void => {
     try {
-      const cachedCompanies = getCachedUserCompanies();
-      if (!cachedCompanies) return;
+      const companies = getCachedUserCompanies();
+      if (!companies) return;
       
-      const updatedCompanies = cachedCompanies.filter(company => company.id !== companyId);
-      localStorage.setItem('userCompanies', JSON.stringify(updatedCompanies));
-      
-      // If the selected company was this one, remove it
-      const selectedCompanyId = localStorage.getItem('selectedCompanyId');
-      if (selectedCompanyId === companyId) {
-        localStorage.removeItem('selectedCompanyId');
-        localStorage.removeItem('selectedCompany');
-      }
-      
-      console.log(`Removed company ${companyId} from cache`);
+      const updatedCompanies = companies.filter(company => company.id !== companyId);
+      cacheUserCompanies(updatedCompanies);
+      console.log(`[Company Cache] Removed company ${companyId} from cache`);
     } catch (e) {
-      console.error('Failed to remove company from cache', e);
+      console.error("[Company Cache] Error removing company from cache:", e);
     }
   };
-
-  /**
-   * Clear cached company list
-   */
-  const clearCachedUserCompanies = () => {
-    localStorage.removeItem('userCompanies');
-    localStorage.removeItem('userCompaniesTimestamp');
-    
-    // Don't clear selected company here - it will be updated if needed
-    console.log('Cleared user companies cache');
-  };
-
-  /**
-   * Check if we need to refresh cached data
-   */
-  const isCacheExpired = (): boolean => {
-    const timestamp = localStorage.getItem('userCompaniesTimestamp');
-    if (!timestamp) return true;
-    
-    const lastUpdate = parseInt(timestamp, 10);
-    const now = Date.now();
-    
-    const isExpired = (now - lastUpdate) > CACHE_EXPIRATION;
-    if (isExpired) {
-      console.log(`Cache expired (${Math.round((now - lastUpdate)/1000)}s > ${CACHE_EXPIRATION/1000}s)`);
-    }
-    
-    return isExpired;
-  };
-
+  
   return {
-    cacheUserCompanies,
     getCachedUserCompanies,
+    cacheUserCompanies,
     clearCachedUserCompanies,
     removeCachedCompany,
     isCacheExpired

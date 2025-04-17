@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useCompanyState } from "./company/useCompanyState";
 import { useCompanyFetching } from "./company/useCompanyFetching";
@@ -92,7 +93,7 @@ export const useCompanies = () => {
         try {
           await getUserCompanies(user.id);
         } catch (error) {
-          console.error('Error loading initial company data:', error);
+          console.error('[useCompanies] Error loading initial company data:', error);
         }
       }
     };
@@ -107,17 +108,39 @@ export const useCompanies = () => {
         try {
           await forceGetUserCompanies(user.id);
         } catch (error) {
-          console.error('Error refreshing companies after relation change:', error);
+          console.error('[useCompanies] Error refreshing companies after relation change:', error);
         }
       }
     };
     
     window.addEventListener('company-relation-changed', handleCompanyRelationChange);
     
+    // Add a new event listener for force-reload-companies
+    const handleForceReload = async () => {
+      if (user?.id) {
+        try {
+          console.log('[useCompanies] Force reloading companies due to user request');
+          await forceGetUserCompanies(user.id);
+        } catch (error) {
+          console.error('[useCompanies] Error force reloading companies:', error);
+        }
+      } else {
+        try {
+          console.log('[useCompanies] Force reloading all companies due to user request');
+          await fetchCompanies();
+        } catch (error) {
+          console.error('[useCompanies] Error force reloading all companies:', error);
+        }
+      }
+    };
+    
+    window.addEventListener('force-reload-companies', handleForceReload);
+    
     return () => {
       window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
+      window.removeEventListener('force-reload-companies', handleForceReload);
     };
-  }, [user?.id, forceGetUserCompanies]);
+  }, [user?.id, forceGetUserCompanies, fetchCompanies]);
   
   // Try to restore previously selected company on hook initialization
   useEffect(() => {
@@ -128,7 +151,7 @@ export const useCompanies = () => {
       // First try to get the full company object from local storage
       const cachedCompany = getStoredCompany();
       if (cachedCompany) {
-        console.log('Restored selected company from cache:', cachedCompany.nome);
+        console.log('[useCompanies] Restored selected company from cache:', cachedCompany.nome);
         setSelectedCompany(cachedCompany);
         return;
       }
@@ -143,30 +166,30 @@ export const useCompanies = () => {
           
           if (storedCompany) {
             setSelectedCompany(storedCompany);
-            console.log('Restored selected company from localStorage ID:', storedCompany.nome);
+            console.log('[useCompanies] Restored selected company from localStorage ID:', storedCompany.nome);
           } else {
             // If not found, try to fetch it
             try {
               const company = await getCompanyById(storedCompanyId);
               if (company) {
                 setSelectedCompany(company);
-                console.log('Restored selected company from database:', company.nome);
+                console.log('[useCompanies] Restored selected company from database:', company.nome);
               }
             } catch (error) {
-              console.error('Failed to restore company from localStorage', error);
+              console.error('[useCompanies] Failed to restore company from localStorage', error);
               localStorage.removeItem('selectedCompanyId');
               
               // If fetch failed but we have userCompanies, select the first one
               if (userCompanies.length > 0) {
                 setSelectedCompany(userCompanies[0]);
-                console.log('Selected first available company after fetch failure:', userCompanies[0].nome);
+                console.log('[useCompanies] Selected first available company after fetch failure:', userCompanies[0].nome);
               }
             }
           }
         } else if (userCompanies.length === 1) {
           // Automatically select the only company if there's just one
           setSelectedCompany(userCompanies[0]);
-          console.log('Auto-selected the only available company:', userCompanies[0].nome);
+          console.log('[useCompanies] Auto-selected the only available company:', userCompanies[0].nome);
         }
       }
     };

@@ -1,8 +1,8 @@
 
 import { useRef } from "react";
 
-// Minimum time between requests (in ms) - increased to reduce API calls
-export const MIN_REQUEST_INTERVAL = 120000; // 2 minutes
+// Increase the minimum time between requests to reduce API load
+export const MIN_REQUEST_INTERVAL = 300000; // 5 minutes
 
 export const useCompanyRequest = () => {
   // Timestamp of the last request
@@ -24,23 +24,22 @@ export const useCompanyRequest = () => {
     
     // If already fetching, don't start new request
     if (isFetchingRef.current && !forceRefresh) {
-      console.log('A request is already in progress. Ignoring new request.');
+      console.log('[Company Request] A request is already in progress. Ignoring new request.');
+      return false;
+    }
+    
+    // Limit total pending requests to 1 maximum (strict throttling)
+    if (pendingRequestsRef.current > 0 && !forceRefresh) {
+      console.log(`[Company Request] Already has ${pendingRequestsRef.current} pending request(s). Limiting API calls.`);
       return false;
     }
     
     // Increment pending requests counter
     pendingRequestsRef.current += 1;
     
-    // Limit pending requests to 2 maximum
-    if (pendingRequestsRef.current > 2 && !forceRefresh) {
-      console.log(`Too many pending requests (${pendingRequestsRef.current}). Limiting.`);
-      pendingRequestsRef.current -= 1;
-      return false;
-    }
-    
     // If forced update, always allow
     if (forceRefresh) {
-      console.log('Forcing data refresh.');
+      console.log('[Company Request] Forcing data refresh as requested.');
       return true;
     }
     
@@ -48,7 +47,7 @@ export const useCompanyRequest = () => {
     const interval = customInterval || MIN_REQUEST_INTERVAL;
     const timeSinceLastFetch = now - lastFetchTimeRef.current;
     if (timeSinceLastFetch < interval && hasLocalData) {
-      console.log(`Last request ${Math.round(timeSinceLastFetch/1000)}s ago. Using cached data (min interval: ${interval/1000}s).`);
+      console.log(`[Company Request] Last request ${Math.round(timeSinceLastFetch/1000)}s ago. Using cached data (min interval: ${interval/1000}s).`);
       pendingRequestsRef.current -= 1;
       return false;
     }

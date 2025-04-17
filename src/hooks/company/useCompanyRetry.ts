@@ -4,7 +4,7 @@
  */
 export const useCompanyRetry = () => {
   // Maximum number of retries when fetch fails
-  const MAX_RETRY_ATTEMPTS = 3;
+  const MAX_RETRY_ATTEMPTS = 2; // Reduced from 3 to limit API calls
 
   /**
    * Execute an operation with retry logic
@@ -21,14 +21,14 @@ export const useCompanyRetry = () => {
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         if (attempt > 0) {
-          console.log(`Retry attempt ${attempt} of ${maxRetries}`);
+          console.log(`[Company Retry] Retry attempt ${attempt} of ${maxRetries}`);
         }
         
         // Execute the operation
         const result = await operation();
         return result;
       } catch (err) {
-        console.error(`Fetch attempt ${attempt + 1} failed:`, err);
+        console.error(`[Company Retry] Fetch attempt ${attempt + 1} failed:`, err);
         lastError = err instanceof Error ? err : new Error('Unknown error');
         
         // If this is the last attempt, throw the error
@@ -36,8 +36,8 @@ export const useCompanyRetry = () => {
           throw lastError;
         }
         
-        // Wait before retrying (exponential backoff)
-        const delay = Math.min(1000 * (2 ** attempt), 10000);
+        // Wait before retrying (exponential backoff with larger delays)
+        const delay = Math.min(2000 * (2 ** attempt), 15000); // Increased delay
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
