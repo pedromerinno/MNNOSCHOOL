@@ -53,7 +53,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], lo
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent">
-                  {/* Company Logo - Perfectly round */}
+                  {/* Company Logo */}
                   {selectedCompany?.logo && (
                     <div className="absolute top-8 left-8">
                       <div className="w-12 h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center p-1">
@@ -67,26 +67,28 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], lo
                   )}
                   
                   <div className="absolute bottom-0 left-0 right-0 p-8">
-                    <div className="space-y-4 max-w-xl">
-                      <div>
-                        <div className="flex gap-2 mb-2">
-                          {course.tags?.map((tag: string, index: number) => (
-                            <CompanyThemedBadge 
-                              key={index} 
-                              variant="outline" 
-                              className="bg-transparent text-white border-white/40"
-                            >
-                              {tag}
-                            </CompanyThemedBadge>
-                          ))}
+                    <div className="flex justify-between items-end">
+                      <div className="space-y-4 max-w-xl">
+                        <div>
+                          <div className="flex gap-2 mb-4">
+                            {course.tags?.map((tag: string, index: number) => (
+                              <CompanyThemedBadge 
+                                key={index} 
+                                variant="outline" 
+                                className="bg-transparent text-white border-white/40 px-4 py-1.5"
+                              >
+                                {tag}
+                              </CompanyThemedBadge>
+                            ))}
+                          </div>
+                          <h2 className="text-4xl font-bold text-white mt-2">
+                            {course.title}
+                          </h2>
                         </div>
-                        <h2 className="text-4xl font-bold text-white mt-2">
-                          {course.title}
-                        </h2>
+                        <p className="text-white/90">
+                          {course.description}
+                        </p>
                       </div>
-                      <p className="text-white/90 mb-8">
-                        {course.description}
-                      </p>
                       <Button
                         onClick={() => navigate(`/courses/${course.id}`)}
                         className="bg-white text-black hover:bg-gray-100"
