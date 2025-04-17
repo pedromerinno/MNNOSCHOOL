@@ -10,6 +10,7 @@ import { LessonNavigation } from '@/components/courses/LessonNavigation';
 import { LessonComments } from '@/components/courses/LessonComments';
 import { LessonSkeleton } from '@/components/lessons/LessonSkeleton';
 import { LessonNotFound } from '@/components/lessons/LessonNotFound';
+import { CourseDescription } from '@/components/courses/CourseDescription';
 
 const LessonPage = () => {
   const { courseId, lessonId } = useParams<{ courseId: string, lessonId: string }>();
@@ -26,7 +27,6 @@ const LessonPage = () => {
   } = useLessonData(lessonId);
 
   useEffect(() => {
-    // Scroll to top when changing lessons
     window.scrollTo(0, 0);
   }, [lessonId]);
 
@@ -59,6 +59,10 @@ const LessonPage = () => {
             nextLesson={nextLesson}
             onNavigate={navigateToLesson}
           />
+          
+          <div className="mt-8">
+            <CourseDescription description={lesson.course_description} />
+          </div>
           
           <div className="mt-8">
             <LessonComments lessonId={lesson.id} />

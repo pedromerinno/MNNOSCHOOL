@@ -21,10 +21,15 @@ export const useLessonFetch = (lessonId: string | undefined) => {
         setLoading(true);
         setError(null);
         
-        // Buscar os dados da aula
+        // Buscar os dados da aula incluindo a descrição do curso
         const { data: lessonData, error: lessonError } = await supabase
           .from('lessons')
-          .select('*')
+          .select(`
+            *,
+            courses (
+              description
+            )
+          `)
           .eq('id', lessonId)
           .single();
         
@@ -47,10 +52,11 @@ export const useLessonFetch = (lessonId: string | undefined) => {
         
         setLesson({
           ...lessonData,
+          course_description: lessonData.courses?.description || null,
           completed: progressData?.completed || false
         });
         
-        // Atualizar o último acesso a esta aula
+        // Update last access
         if (userId) {
           const { error: updateError } = await supabase
             .from('user_lesson_progress')
