@@ -1,11 +1,9 @@
+
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useCompanies } from "@/hooks/useCompanies";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { getInitials } from "@/utils/stringUtils";
 import {
   Carousel,
   CarouselContent,
@@ -21,7 +19,6 @@ interface CourseCarouselProps {
 
 export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], loading }) => {
   const navigate = useNavigate();
-  const { selectedCompany } = useCompanies();
 
   // Show empty state if no courses or still loading
   if (loading) {
@@ -66,42 +63,13 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], lo
                       <p className="text-white/90">
                         {course.description}
                       </p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-6">
-                          {/* Company Logo */}
-                          {selectedCompany?.logo && (
-                            <div className="w-12 h-12 rounded-full overflow-hidden bg-white/10 p-2">
-                              <img 
-                                src={selectedCompany.logo} 
-                                alt={selectedCompany.nome}
-                                className="w-full h-full object-contain"
-                              />
-                            </div>
-                          )}
-                          {/* Instructor Avatar */}
-                          {course.instructor && (
-                            <div className="flex items-center space-x-2">
-                              <Avatar className="h-12 w-12 border-2 border-white/20">
-                                <AvatarImage 
-                                  src={`https://i.pravatar.cc/150?u=${course.instructor}`} 
-                                  alt={course.instructor} 
-                                />
-                                <AvatarFallback className="bg-gray-700 text-white">
-                                  {getInitials(course.instructor)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="text-white/90">{course.instructor}</span>
-                            </div>
-                          )}
-                        </div>
-                        <Button
-                          onClick={() => navigate(`/courses/${course.id}`)}
-                          className="bg-white text-black hover:bg-gray-100"
-                        >
-                          Watch now
-                          <Play className="w-4 h-4 ml-2" />
-                        </Button>
-                      </div>
+                      <Button
+                        onClick={() => navigate(`/courses/${course.id}`)}
+                        className="bg-white text-black hover:bg-gray-100"
+                      >
+                        Watch now
+                        <Play className="w-4 h-4 ml-2" />
+                      </Button>
                     </div>
                   </div>
                 </div>
