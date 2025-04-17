@@ -19,6 +19,11 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
     submitComment 
   } = useComments(lessonId);
 
+  // Don't show schema-related errors to users
+  const shouldShowError = connectionError && 
+    !connectionError.includes('schema') && 
+    !connectionError.includes('relationship');
+
   return (
     <Card className="border border-border">
       <CardHeader className="pb-3">
@@ -28,7 +33,7 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {connectionError && (
+        {shouldShowError && (
           <div className="mb-4 p-2 border border-amber-200 bg-amber-50 text-amber-700 rounded-md flex items-center gap-2 dark:bg-amber-900/20 dark:border-amber-800/50 dark:text-amber-500">
             <AlertTriangle className="h-4 w-4 flex-shrink-0" />
             <span className="text-sm">Problema de conexão detectado. Alguns recursos podem estar limitados.</span>
