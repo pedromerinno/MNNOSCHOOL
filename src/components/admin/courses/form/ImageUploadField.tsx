@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Control } from "react-hook-form";
-import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Image, Upload } from "lucide-react";
@@ -28,26 +28,15 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
   useEffect(() => {
     const checkBucket = async () => {
       try {
-        const { data: buckets, error } = await supabase.storage.listBuckets();
+        const { data, error } = await supabase.storage.from('course-assets').getPublicUrl('test-connection');
         
         if (error) {
-          console.warn("Error checking buckets:", error);
+          console.warn("Error checking bucket:", error);
           return;
         }
         
-        const courseAssetsBucket = buckets?.find(b => b.name === 'course-assets');
-        
-        if (!courseAssetsBucket) {
-          console.warn("Bucket 'course-assets' not found. It may need to be created in Supabase.");
-          toast.error("Storage bucket not configured. Contact administrator.", {
-            id: "bucket-error",
-            duration: 5000
-          });
-          return;
-        }
-        
-        setBucketReady(true);
         console.log("'course-assets' bucket is ready for use");
+        setBucketReady(true);
       } catch (err) {
         console.error("Error checking storage bucket:", err);
       }
@@ -62,22 +51,13 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
     
     const file = files[0];
     if (!file.type.startsWith('image/')) {
-      toast.error("Please select a valid image");
+      toast.error("Por favor, selecione uma imagem válida");
       return;
     }
 
     setIsUploading(true);
     
     try {
-      if (!bucketReady) {
-        const { data: buckets } = await supabase.storage.listBuckets();
-        const courseAssetsBucket = buckets?.find(b => b.name === 'course-assets');
-        
-        if (!courseAssetsBucket) {
-          throw new Error("Bucket 'course-assets' not found. Contact administrator.");
-        }
-      }
-      
       // Create a unique file name using timestamp
       const fileExt = file.name.split('.').pop();
       const fileName = `covers/${objectPrefix}-${Date.now()}.${fileExt}`;
@@ -106,14 +86,14 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
       
       // Update the form field with the new URL
       onChange(publicUrl);
-      toast.success("Image uploaded successfully");
+      toast.success("Imagem enviada com sucesso");
     } catch (error: any) {
       console.error("Error uploading image:", error);
       
       if (error.message && error.message.includes("storage/bucket-not-found")) {
-        toast.error("Storage not configured. Contact administrator.");
+        toast.error("Armazenamento não configurado. Entre em contato com o administrador.");
       } else {
-        toast.error(`Error uploading image: ${error.message || "Unknown error"}`);
+        toast.error(`Erro ao enviar imagem: ${error.message || "Erro desconhecido"}`);
       }
     } finally {
       setIsUploading(false);
@@ -147,12 +127,12 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
                 <Button 
                   type="button" 
                   variant="outline"
-                  disabled={isUploading || !bucketReady}
+                  disabled={isUploading}
                   className="relative"
                   onClick={() => document.getElementById(`image-upload-${name}`)?.click()}
                 >
                   <Upload className="h-4 w-4 mr-2" />
-                  {isUploading ? 'Uploading...' : !bucketReady ? 'Initializing...' : 'Upload'}
+                  {isUploading ? 'Enviando...' : 'Enviar'}
                 </Button>
                 <input 
                   id={`image-upload-${name}`}
