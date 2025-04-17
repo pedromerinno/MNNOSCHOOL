@@ -13,7 +13,7 @@ export const CourseCardTags: React.FC<CourseCardTagsProps> = ({ tags, className 
       <div className={`flex flex-wrap gap-2 ${className}`}>
         <CompanyThemedBadge 
           variant="beta" 
-          className="text-xs font-normal text-white bg-white/20 border-white/30"
+          className="text-xs font-normal text-white bg-white/30 border-white/40"
         >
           Curso
         </CompanyThemedBadge>
@@ -27,7 +27,7 @@ export const CourseCardTags: React.FC<CourseCardTagsProps> = ({ tags, className 
         <CompanyThemedBadge 
           key={index} 
           variant="beta" 
-          className="text-xs font-normal text-white bg-white/20 border-white/30"
+          className="text-xs font-normal text-white bg-white/30 border-white/40"
         >
           {tag}
         </CompanyThemedBadge>
@@ -35,7 +35,7 @@ export const CourseCardTags: React.FC<CourseCardTagsProps> = ({ tags, className 
       {tags.length > 2 && (
         <CompanyThemedBadge 
           variant="beta" 
-          className="text-xs font-normal text-white bg-white/20 border-white/30"
+          className="text-xs font-normal text-white bg-white/30 border-white/40"
         >
           +{tags.length - 2}
         </CompanyThemedBadge>

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -69,16 +68,15 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], lo
                   <div className="absolute bottom-0 left-0 right-0 p-8">
                     <div className="space-y-4 max-w-xl">
                       <div>
-                        {/* Improved visibility of course tags */}
                         <CourseCardTags 
                           tags={course.tags} 
-                          className="mb-2" // Add margin below tags
+                          className="mb-2"
                         />
                         <h2 className="text-4xl font-bold text-white mt-2">
                           {course.title}
                         </h2>
                       </div>
-                      <p className="text-white/90 mb-6"> {/* Increased margin-bottom */}
+                      <p className="text-white/90 mb-8">
                         {course.description}
                       </p>
                       <Button
