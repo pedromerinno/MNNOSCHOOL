@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { UseFormReturn } from "react-hook-form";
 import { CourseFormValues } from "./CourseFormTypes";
@@ -12,6 +12,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface CompanySelectorFieldProps {
   form: UseFormReturn<CourseFormValues>;
@@ -20,14 +21,36 @@ interface CompanySelectorFieldProps {
 
 export const CompanySelectorField: React.FC<CompanySelectorFieldProps> = ({ form, showCompanySelector }) => {
   const { companies, userCompanies, isLoading: isLoadingCompanies, forceGetUserCompanies, user } = useCompanies();
+  const [hasTriedFetch, setHasTriedFetch] = useState(false);
   
   // Force reload companies when component mounts
   useEffect(() => {
-    if (user?.id && showCompanySelector) {
-      console.log("CompanySelectorField: Forcing reload of user companies");
+    if (user?.id && showCompanySelector && !hasTriedFetch) {
+      console.log("CompanySelectorField: Forcing reload of user companies for user:", user.id);
       forceGetUserCompanies(user.id);
+      setHasTriedFetch(true);
+      
+      // For debugging: Dispatch an event to force reload companies globally
+      window.dispatchEvent(new CustomEvent('force-reload-companies'));
     }
-  }, [user?.id, forceGetUserCompanies, showCompanySelector]);
+  }, [user?.id, forceGetUserCompanies, showCompanySelector, hasTriedFetch]);
+  
+  // Notify the user if loading takes too long
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
+    if (isLoadingCompanies && showCompanySelector) {
+      timeoutId = setTimeout(() => {
+        toast.info("Buscando empresas disponíveis...", {
+          id: "loading-companies"
+        });
+      }, 2000);
+    }
+    
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [isLoadingCompanies, showCompanySelector]);
   
   if (!showCompanySelector) {
     return null;
@@ -37,8 +60,9 @@ export const CompanySelectorField: React.FC<CompanySelectorFieldProps> = ({ form
   const availableCompanies = userCompanies.length > 0 ? userCompanies : companies;
   
   // Debug output to help diagnose issues
-  console.log("CompanySelectorField: Available companies:", availableCompanies.length);
+  console.log("CompanySelectorField: Available companies:", availableCompanies);
   console.log("CompanySelectorField: Is loading:", isLoadingCompanies);
+  console.log("CompanySelectorField: Has tried fetch:", hasTriedFetch);
 
   return (
     <FormField

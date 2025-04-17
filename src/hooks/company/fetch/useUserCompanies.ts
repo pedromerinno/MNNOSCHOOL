@@ -53,7 +53,7 @@ export const useUserCompanies = ({
         
         // Atualizar o estado com dados em cache imediatamente
         setUserCompanies(cachedData);
-        console.log("Usando dados em cache enquanto busca atualização");
+        console.log("Usando dados em cache enquanto busca atualização:", cachedData.length, "empresas");
         
         // Se tivermos apenas uma empresa em cache, selecione-a automaticamente
         if (cachedData.length === 1) {
@@ -72,6 +72,7 @@ export const useUserCompanies = ({
         // Se o cache for válido e não estiver vazio, podemos retornar os dados do cache
         if (isCacheValid() && cachedData.length > 0) {
           console.log("Cache válido, pulando requisição ao servidor");
+          setIsLoading(false); // Explicitly set loading to false when using cache
           return cachedData;
         }
       } catch (e) {
@@ -95,7 +96,7 @@ export const useUserCompanies = ({
 
       if (userCompanyRelations.error) {
         console.error("Error fetching user company relations:", userCompanyRelations.error);
-        toast("Erro ao buscar empresas do usuário", {
+        toast.error("Erro ao buscar empresas do usuário", {
           description: userCompanyRelations.error.message,
         });
         
@@ -104,6 +105,8 @@ export const useUserCompanies = ({
           setIsLoading(false);
           return cachedData;
         }
+        
+        setIsLoading(false);
         return [];
       }
 
@@ -119,6 +122,7 @@ export const useUserCompanies = ({
 
       // Extract company IDs
       const companyIds = userCompanyRelations.data.map(relation => relation.empresa_id);
+      console.log("Found company IDs for user:", companyIds);
 
       // Fetch all companies with these IDs
       const { data: companies, error: companiesError } = await retryOperation(
@@ -127,7 +131,7 @@ export const useUserCompanies = ({
 
       if (companiesError) {
         console.error("Error fetching companies:", companiesError);
-        toast("Erro ao buscar detalhes das empresas", {
+        toast.error("Erro ao buscar detalhes das empresas", {
           description: companiesError.message,
         });
         
@@ -136,10 +140,13 @@ export const useUserCompanies = ({
           setIsLoading(false);
           return cachedData;
         }
+        
+        setIsLoading(false);
         return [];
       }
 
       const userCompaniesData = companies as Company[];
+      console.log("Fetched companies:", userCompaniesData.length);
       setUserCompanies(userCompaniesData);
       
       // Cache the companies for offline fallback and update timestamp
@@ -159,21 +166,25 @@ export const useUserCompanies = ({
         window.dispatchEvent(navEvent);
       }
       
+      setIsLoading(false);
       return userCompaniesData;
     } catch (error) {
       console.error("Unexpected error:", error);
-      toast("Erro inesperado", {
+      toast.error("Erro inesperado", {
         description: "Ocorreu um erro ao buscar as empresas",
       });
       
       // Return cached data in case of error
       if (cachedData.length > 0) {
         console.log("Using cached companies due to error");
+        setIsLoading(false);
         return cachedData;
       }
+      
+      setIsLoading(false);
       return [];
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Ensure loading state is reset
     }
   };
 

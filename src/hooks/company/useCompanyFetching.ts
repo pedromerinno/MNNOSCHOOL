@@ -73,9 +73,10 @@ export const useCompanyFetching = ({
       return userCompanies;
     }
     
-    // Mark request start
+    // Mark request start and set loading state
     fetchInProgressRef.current = true;
     startRequest();
+    setIsLoading(true); // Explicitly set loading to true
     setError(null);
     incrementFetchCount();
     
@@ -93,14 +94,20 @@ export const useCompanyFetching = ({
       
       // Update timestamp of successful request
       completeRequest();
+      
       // Cache the companies when we successfully fetch them
       if (result && result.length > 0) {
         cacheUserCompanies(result);
       }
+      
+      // Make sure we update loading state with result
+      setIsLoading(false);
+      
       return result;
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Unknown error');
       setError(error);
+      console.error("Error fetching companies:", error);
       
       // Try to load from cache as last resort
       const cachedData = getCachedUserCompanies();
@@ -112,8 +119,9 @@ export const useCompanyFetching = ({
       
       return [];
     } finally {
-      // Mark request end
+      // Mark request end and ensure loading state is reset
       fetchInProgressRef.current = false;
+      setIsLoading(false); // Ensure loading is set to false even if there was an error
       resetRequestState();
     }
   }, [
@@ -129,7 +137,8 @@ export const useCompanyFetching = ({
     getCompanies,
     setUserCompanies,
     pendingRequestsRef,
-    cacheUserCompanies
+    cacheUserCompanies,
+    setIsLoading
   ]);
   
   /**
