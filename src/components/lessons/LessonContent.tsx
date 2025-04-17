@@ -8,15 +8,37 @@ import { LessonQuiz } from './LessonQuiz';
 
 interface LessonContentProps {
   lesson: Lesson;
+  onVideoEnd?: () => void;
+  autoplay?: boolean;
+  showAutoplayPrompt?: boolean;
+  onToggleAutoplay?: () => void;
+  nextLessonTitle?: string;
 }
 
-export const LessonContent: React.FC<LessonContentProps> = ({ lesson }) => {
+export const LessonContent: React.FC<LessonContentProps> = ({ 
+  lesson,
+  onVideoEnd,
+  autoplay,
+  showAutoplayPrompt,
+  onToggleAutoplay,
+  nextLessonTitle
+}) => {
   const renderLessonContent = () => {
     if (!lesson) return null;
     
     switch (lesson.type.toLowerCase()) {
       case 'video':
-        return <LessonVideo videoUrl={lesson.content} title={lesson.title} />;
+        return (
+          <LessonVideo 
+            videoUrl={lesson.content} 
+            title={lesson.title}
+            onVideoEnd={onVideoEnd}
+            autoplay={autoplay}
+            showAutoplayPrompt={showAutoplayPrompt}
+            onToggleAutoplay={onToggleAutoplay}
+            nextLessonTitle={nextLessonTitle}
+          />
+        );
       case 'text':
         return <LessonText content={lesson.content} />;
       case 'quiz':

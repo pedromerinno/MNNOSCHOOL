@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useLessonData } from '@/hooks/useLessonData';
+import { useAutoplayNavigation } from '@/hooks/lesson/useAutoplayNavigation';
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { LessonHeader } from '@/components/lessons/LessonHeader';
 import { LessonContent } from '@/components/lessons/LessonContent';
@@ -26,8 +27,17 @@ const LessonPage = () => {
     toggleLikeLesson
   } = useLessonData(lessonId);
 
+  const {
+    autoplay,
+    showAutoplayPrompt,
+    toggleAutoplay,
+    handleVideoEnd,
+    setShowAutoplayPrompt
+  } = useAutoplayNavigation(nextLesson, courseId);
+
   useEffect(() => {
     window.scrollTo(0, 0);
+    setShowAutoplayPrompt(false);
   }, [lessonId]);
 
   if (loading) {
@@ -44,7 +54,14 @@ const LessonPage = () => {
         <LessonHeader lesson={lesson} courseId={courseId} />
         
         <div className="space-y-8">
-          <LessonContent lesson={lesson} />
+          <LessonContent 
+            lesson={lesson}
+            onVideoEnd={handleVideoEnd}
+            autoplay={autoplay}
+            showAutoplayPrompt={showAutoplayPrompt}
+            onToggleAutoplay={toggleAutoplay}
+            nextLessonTitle={nextLesson?.title}
+          />
           
           <div className="max-w-4xl mx-auto">
             <CourseDescription description={lesson.course_description || null} />
