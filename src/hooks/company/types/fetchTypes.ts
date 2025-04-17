@@ -1,10 +1,8 @@
 
-import { Dispatch, SetStateAction } from "react";
-import { Company } from "@/types/company";
-
 export interface UseCompanyFetchProps {
-  setIsLoading: Dispatch<SetStateAction<boolean>>;
-  setCompanies: Dispatch<SetStateAction<Company[]>>;
-  setUserCompanies: Dispatch<SetStateAction<Company[]>>;
-  setSelectedCompany: Dispatch<SetStateAction<Company | null>>;
+  setIsLoading: (isLoading: boolean) => void;
+  setCompanies?: (companies: any[]) => void;
+  setUserCompanies?: (companies: any[]) => void;
+  setSelectedCompany?: (company: any | null) => void;
+  setError: (error: Error | null) => void;
 }

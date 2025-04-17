@@ -10,13 +10,13 @@ export const useCompanyFetch = (props: UseCompanyFetchProps) => {
   const { getUserCompanies: _getUserCompanies } = useUserCompanies(props);
   const { getCompanyById: _getCompanyById } = useCompanyDetails(props);
 
-  // Envolver com useCallback para evitar recriações da função
+  // Wrap with useCallback to avoid recreating the function
   const fetchCompanies = useCallback(async () => {
     return await _fetchCompanies();
   }, [_fetchCompanies]);
 
-  const getUserCompanies = useCallback(async (userId: string) => {
-    return await _getUserCompanies(userId);
+  const getUserCompanies = useCallback(async (userId: string, signal?: AbortSignal) => {
+    return await _getUserCompanies(userId, signal);
   }, [_getUserCompanies]);
 
   const getCompanyById = useCallback(async (companyId: string) => {

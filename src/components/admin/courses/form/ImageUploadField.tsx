@@ -24,27 +24,32 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [bucketReady, setBucketReady] = useState(false);
 
-  // Verifica se o bucket course-assets existe
+  // Check if the course-assets bucket exists
   useEffect(() => {
     const checkBucket = async () => {
       try {
         const { data: buckets, error } = await supabase.storage.listBuckets();
         
         if (error) {
-          console.warn("Erro ao verificar buckets:", error);
+          console.warn("Error checking buckets:", error);
           return;
         }
         
         const courseAssetsBucket = buckets?.find(b => b.name === 'course-assets');
         
         if (!courseAssetsBucket) {
-          console.warn("Bucket 'course-assets' não encontrado. Verifique se ele foi criado no Supabase.");
+          console.warn("Bucket 'course-assets' not found. It may need to be created in Supabase.");
+          toast.error("Storage bucket not configured. Contact administrator.", {
+            id: "bucket-error",
+            duration: 5000
+          });
           return;
         }
         
         setBucketReady(true);
+        console.log("'course-assets' bucket is ready for use");
       } catch (err) {
-        console.error("Erro ao verificar storage bucket:", err);
+        console.error("Error checking storage bucket:", err);
       }
     };
     
@@ -57,7 +62,7 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
     
     const file = files[0];
     if (!file.type.startsWith('image/')) {
-      toast.error("Por favor selecione uma imagem válida");
+      toast.error("Please select a valid image");
       return;
     }
 
@@ -69,13 +74,15 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
         const courseAssetsBucket = buckets?.find(b => b.name === 'course-assets');
         
         if (!courseAssetsBucket) {
-          throw new Error("Bucket 'course-assets' não encontrado. Contate o administrador.");
+          throw new Error("Bucket 'course-assets' not found. Contact administrator.");
         }
       }
       
       // Create a unique file name using timestamp
       const fileExt = file.name.split('.').pop();
       const fileName = `covers/${objectPrefix}-${Date.now()}.${fileExt}`;
+      
+      console.log(`Attempting to upload to course-assets/${fileName}`);
       
       // Upload the file to Supabase Storage
       const { data, error } = await supabase.storage
@@ -85,26 +92,31 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
           upsert: true
         });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Upload error details:", error);
+        throw error;
+      }
       
       // Get the public URL
       const { data: { publicUrl } } = supabase.storage
         .from('course-assets')
         .getPublicUrl(fileName);
       
+      console.log("File uploaded successfully. Public URL:", publicUrl);
+      
       // Update the form field with the new URL
       onChange(publicUrl);
-      toast.success("Imagem carregada com sucesso");
+      toast.success("Image uploaded successfully");
     } catch (error: any) {
       console.error("Error uploading image:", error);
       
-      if (error.message.includes("storage/bucket-not-found")) {
-        toast.error("Armazenamento não configurado. Contate o administrador.");
+      if (error.message && error.message.includes("storage/bucket-not-found")) {
+        toast.error("Storage not configured. Contact administrator.");
       } else {
-        toast.error(`Erro ao carregar imagem: ${error.message}`);
+        toast.error(`Error uploading image: ${error.message || "Unknown error"}`);
       }
     } finally {
-      setIsUploading(false);
+      setIsLoading(false);
       // Clear the input value so the same file can be selected again
       e.target.value = '';
     }
@@ -135,12 +147,12 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
                 <Button 
                   type="button" 
                   variant="outline"
-                  disabled={isUploading}
+                  disabled={isUploading || !bucketReady}
                   className="relative"
                   onClick={() => document.getElementById(`image-upload-${name}`)?.click()}
                 >
                   <Upload className="h-4 w-4 mr-2" />
-                  {isUploading ? 'Carregando...' : 'Upload'}
+                  {isUploading ? 'Uploading...' : !bucketReady ? 'Initializing...' : 'Upload'}
                 </Button>
                 <input 
                   id={`image-upload-${name}`}
@@ -155,7 +167,7 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
               <div className="border rounded-md p-2 flex justify-center">
                 <img 
                   src={field.value} 
-                  alt="Imagem do curso" 
+                  alt="Course image" 
                   className="max-h-32 object-contain"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;

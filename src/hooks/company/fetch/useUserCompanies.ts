@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { retryOperation } from "../utils/retryUtils";
 import { UseCompanyFetchProps } from "../types/fetchTypes";
 
-// Tempo de expiração do cache em ms (30 minutos)
+// Cache expiration time in ms (30 minutes)
 const CACHE_EXPIRATION = 30 * 60 * 1000;
 
 export const useUserCompanies = ({
@@ -13,10 +13,10 @@ export const useUserCompanies = ({
   setUserCompanies,
   setSelectedCompany,
   setError
-}: Pick<UseCompanyFetchProps, 'setIsLoading' | 'setUserCompanies' | 'setSelectedCompany' | 'setError'>) => {
+}: UseCompanyFetchProps) => {
   
   /**
-   * Verifica se o cache de empresas está válido
+   * Check if the companies cache is valid
    */
   const isCacheValid = (): boolean => {
     const cachedData = localStorage.getItem('userCompaniesTimestamp');
@@ -32,7 +32,7 @@ export const useUserCompanies = ({
   };
   
   /**
-   * Atualiza o timestamp do cache de empresas
+   * Update the timestamp of the companies cache
    */
   const updateCacheTimestamp = (): void => {
     localStorage.setItem('userCompaniesTimestamp', Date.now().toString());
@@ -43,24 +43,26 @@ export const useUserCompanies = ({
    * the first one if there's only one company
    */
   const getUserCompanies = async (userId: string, signal?: AbortSignal): Promise<Company[]> => {
-    // Primeiro, verifique se já temos dados em cache
+    // First check if we already have cached data
     const cachedCompanies = localStorage.getItem('userCompanies');
     let cachedData: Company[] = [];
     
-    // Usar dados em cache imediatamente para melhorar a percepção de velocidade
+    // Use cached data immediately to improve perceived speed
     if (cachedCompanies) {
       try {
         cachedData = JSON.parse(cachedCompanies) as Company[];
         
-        // Atualizar o estado com dados em cache imediatamente
-        setUserCompanies(cachedData);
-        console.log("Usando dados em cache enquanto busca atualização:", cachedData.length, "empresas");
+        // Update state with cached data immediately
+        if (setUserCompanies) {
+          setUserCompanies(cachedData);
+        }
+        console.log("Using cached data while fetching update:", cachedData.length, "companies");
         
-        // Se tivermos apenas uma empresa em cache, selecione-a automaticamente
-        if (cachedData.length === 1) {
+        // If we have only one company in cache, select it automatically
+        if (cachedData.length === 1 && setSelectedCompany) {
           setSelectedCompany(cachedData[0]);
           
-          // Pre-carregar a frase institucional para exibição imediata
+          // Pre-load institutional phrase for immediate display
           if (cachedData[0].frase_institucional) {
             // Dispatch event to notify other components about this selection
             const navEvent = new CustomEvent('company-selected', { 
@@ -70,14 +72,14 @@ export const useUserCompanies = ({
           }
         }
         
-        // Se o cache for válido e não estiver vazio, podemos retornar os dados do cache
+        // If cache is valid and not empty, we can return cached data
         if (isCacheValid() && cachedData.length > 0) {
-          console.log("Cache válido, pulando requisição ao servidor");
+          console.log("Valid cache, skipping server request");
           setIsLoading(false); // Explicitly set loading to false when using cache
           return cachedData;
         }
       } catch (e) {
-        console.error("Erro ao parsear empresas em cache", e);
+        console.error("Error parsing cached companies", e);
       }
     }
 
@@ -96,7 +98,7 @@ export const useUserCompanies = ({
       // Create the fetch options with the abort signal
       const fetchOptions = signal ? { signal } : undefined;
 
-      // Buscar ids das empresas
+      // Fetch company ids
       const userCompanyRelations = await retryOperation(
         async () => {
           const req = supabase
@@ -119,7 +121,7 @@ export const useUserCompanies = ({
 
       if (userCompanyRelations.error) {
         console.error("Error fetching user company relations:", userCompanyRelations.error);
-        setError(new Error(userCompanyRelations.error.message || "Falha ao buscar relações de empresas"));
+        setError(new Error(userCompanyRelations.error.message || "Failed to fetch company relations"));
         
         // Return cached data if available
         if (cachedData.length > 0) {
@@ -133,8 +135,12 @@ export const useUserCompanies = ({
 
       if (!userCompanyRelations.data || userCompanyRelations.data.length === 0) {
         console.log("No company relations found for user", userId);
-        setUserCompanies([]);
-        setSelectedCompany(null);
+        if (setUserCompanies) {
+          setUserCompanies([]);
+        }
+        if (setSelectedCompany) {
+          setSelectedCompany(null);
+        }
         localStorage.removeItem('userCompanies');
         localStorage.removeItem('userCompaniesTimestamp');
         setIsLoading(false);
@@ -170,7 +176,7 @@ export const useUserCompanies = ({
 
       if (companiesError) {
         console.error("Error fetching companies:", companiesError);
-        setError(new Error(companiesError.message || "Falha ao buscar detalhes das empresas"));
+        setError(new Error(companiesError.message || "Failed to fetch company details"));
         
         // Return cached data if available
         if (cachedData.length > 0) {
@@ -184,7 +190,9 @@ export const useUserCompanies = ({
 
       const userCompaniesData = companies as Company[];
       console.log("Fetched companies:", userCompaniesData.length);
-      setUserCompanies(userCompaniesData);
+      if (setUserCompanies) {
+        setUserCompanies(userCompaniesData);
+      }
       
       // Cache the companies for offline fallback and update timestamp
       if (userCompaniesData.length > 0) {
@@ -193,7 +201,7 @@ export const useUserCompanies = ({
       }
       
       // If there's only one company, automatically select it
-      if (userCompaniesData.length === 1) {
+      if (userCompaniesData.length === 1 && setSelectedCompany) {
         setSelectedCompany(userCompaniesData[0]);
         
         // Dispatch event to notify other components about this selection
@@ -214,7 +222,7 @@ export const useUserCompanies = ({
       }
       
       console.error("Unexpected error:", error);
-      setError(error instanceof Error ? error : new Error("Ocorreu um erro ao buscar as empresas"));
+      setError(error instanceof Error ? error : new Error("An error occurred while fetching companies"));
       
       // Return cached data in case of error
       if (cachedData.length > 0) {
