@@ -126,10 +126,23 @@ export const useUserProfile = () => {
         updateData.is_admin = profile.isAdmin;
       }
 
+      // Fixed line: Get user data with await
+      const userData = await supabase.auth.getUser();
+      const userId = userData.data.user?.id;
+
+      if (!userId) {
+        toast({
+          title: "Erro ao atualizar perfil",
+          description: "Usuário não encontrado",
+          variant: "destructive",
+        });
+        throw new Error("User not found");
+      }
+
       const { error } = await supabase
         .from('profiles')
         .update(updateData)
-        .eq('id', supabase.auth.getUser().data.user?.id);
+        .eq('id', userId);
 
       if (error) {
         console.error('Error updating profile in database:', error);
@@ -177,13 +190,26 @@ export const useUserProfile = () => {
         isAdmin: true
       };
       
+      // Fixed line: Get user data with await
+      const userData = await supabase.auth.getUser();
+      const userId = userData.data.user?.id;
+
+      if (!userId) {
+        toast({
+          title: "Erro ao atualizar perfil",
+          description: "Usuário não encontrado",
+          variant: "destructive",
+        });
+        throw new Error("User not found");
+      }
+
       const { error } = await supabase
         .from('profiles')
         .update({
           is_admin: true,
           updated_at: new Date().toISOString()
         })
-        .eq('id', supabase.auth.getUser().data.user?.id);
+        .eq('id', userId);
       
       if (error) {
         console.error('Error making user admin:', error);
