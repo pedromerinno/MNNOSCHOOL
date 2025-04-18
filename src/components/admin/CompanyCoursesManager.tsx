@@ -37,11 +37,20 @@ export const CompanyCoursesManager: React.FC<CompanyCoursesManagerProps> = ({
 
         if (companiesError) throw companiesError;
 
-        // Add missing required fields with default values if they don't exist
+        // Transform raw database results into properly typed Company objects
         const companiesWithDefaults = companiesData?.map(company => ({
           ...company,
+          // Explicitly cast any fields that might be undefined
           descricao: company.descricao || null,
-          responsavel: company.responsavel || null
+          responsavel: company.responsavel || null,
+          cor_principal: company.cor_principal || null,
+          logo: company.logo || null,
+          frase_institucional: company.frase_institucional || null,
+          missao: company.missao || null,
+          historia: company.historia || null,
+          valores: company.valores || null,
+          video_institucional: company.video_institucional || null,
+          descricao_video: company.descricao_video || null
         })) as Company[];
 
         // Try to fetch company access relationships with explicit table aliases
