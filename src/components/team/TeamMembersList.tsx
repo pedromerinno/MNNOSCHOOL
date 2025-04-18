@@ -52,7 +52,7 @@ export const TeamMembersList = ({ members }: TeamMembersListProps) => {
               </div>
 
               <Button
-                variant="default"
+                variant="outline"
                 size="sm"
                 className="w-full gap-2"
                 onClick={(e) => {
