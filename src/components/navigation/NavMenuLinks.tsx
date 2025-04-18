@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Book, BookOpen, Users } from "lucide-react";
+import { Book, BookOpen } from "lucide-react";
 
 export const NavMenuLinks = () => {
   const { user, userProfile } = useAuth();
@@ -29,12 +29,12 @@ export const NavMenuLinks = () => {
 
   return (
     <nav>
-      <ul className="flex items-center space-x-6">
+      <ul className="flex items-center space-x-8">
         <li>
           <Link 
             to="/" 
             className={cn(
-              "text-sm text-[rgb(107_114_128)] dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light",
+              "text-sm text-[rgb(107_114_128)] dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light px-3 py-2",
               isCurrentPage('/') && "font-bold text-gray-700"
             )}
           >
@@ -47,7 +47,7 @@ export const NavMenuLinks = () => {
               <NavigationMenuItem>
                 <NavigationMenuTrigger 
                   className={cn(
-                    "bg-transparent hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent text-[rgb(107_114_128)] dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light text-sm",
+                    "bg-transparent hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent text-[rgb(107_114_128)] dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light text-sm px-3 py-2",
                     (isCurrentPage('/courses') || isCurrentPage('/my-courses')) && "font-bold text-gray-700"
                   )}
                 >
@@ -93,11 +93,10 @@ export const NavMenuLinks = () => {
           <Link 
             to="/community" 
             className={cn(
-              "flex items-center space-x-2 text-sm text-[rgb(107_114_128)] dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light",
+              "text-sm text-[rgb(107_114_128)] dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light px-3 py-2",
               isCurrentPage('/community') && "font-bold text-gray-700"
             )}
           >
-            <Users className="h-4 w-4 mr-1" />
             Comunidade
           </Link>
         </li>
@@ -106,7 +105,7 @@ export const NavMenuLinks = () => {
             <Link 
               to="/admin" 
               className={cn(
-                "text-sm text-[rgb(107_114_128)] dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light",
+                "text-sm text-[rgb(107_114_128)] dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light px-3 py-2",
                 isCurrentPage('/admin') && "font-bold text-gray-700"
               )}
             >
