@@ -12,6 +12,7 @@ import { LessonComments } from '@/components/courses/LessonComments';
 import { LessonSkeleton } from '@/components/lessons/LessonSkeleton';
 import { LessonNotFound } from '@/components/lessons/LessonNotFound';
 import { CourseDescription } from '@/components/courses/CourseDescription';
+import { LessonPlaylist } from '@/components/lessons/LessonPlaylist';
 
 const LessonPage = () => {
   const { courseId, lessonId } = useParams<{ courseId: string, lessonId: string }>();
@@ -62,36 +63,46 @@ const LessonPage = () => {
       <div className="container max-w-6xl mx-auto px-4 py-8">
         <LessonHeader lesson={lesson} courseId={courseId} />
         
-        <div className="space-y-8">
-          <LessonContent 
-            lesson={lesson}
-            onVideoEnd={handleVideoEnd}
-            autoplay={autoplay}
-            showAutoplayPrompt={showAutoplayPrompt}
-            onToggleAutoplay={toggleAutoplay}
-            nextLessonTitle={nextLesson?.title}
-          />
-          
-          <div className="max-w-4xl mx-auto">
-            <CourseDescription description={lesson.course_description || null} />
-            
-            <LessonActions
-              completed={lesson.completed}
-              onMarkCompleted={markLessonCompleted}
-              likes={likes}
-              userLiked={userLiked}
-              onToggleLike={toggleLikeLesson}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
+            <LessonContent 
+              lesson={lesson}
+              onVideoEnd={handleVideoEnd}
+              autoplay={autoplay}
+              showAutoplayPrompt={showAutoplayPrompt}
+              onToggleAutoplay={toggleAutoplay}
+              nextLessonTitle={nextLesson?.title}
             />
             
-            <LessonNavigation
-              previousLesson={previousLesson}
-              nextLesson={nextLesson}
-              onNavigate={navigateToLesson}
-            />
-            
-            <div className="mt-8">
-              <LessonComments lessonId={lesson.id} />
+            <div className="max-w-4xl">
+              <CourseDescription description={lesson.course_description || null} />
+              
+              <LessonActions
+                completed={lesson.completed}
+                onMarkCompleted={markLessonCompleted}
+                likes={likes}
+                userLiked={userLiked}
+                onToggleLike={toggleLikeLesson}
+              />
+              
+              <LessonNavigation
+                previousLesson={previousLesson}
+                nextLesson={nextLesson}
+                onNavigate={navigateToLesson}
+              />
+              
+              <div className="mt-8">
+                <LessonComments lessonId={lesson.id} />
+              </div>
             </div>
+          </div>
+
+          <div className="lg:sticky lg:top-4 lg:self-start">
+            <LessonPlaylist
+              lessons={lesson.course_lessons || []}
+              currentLessonId={lesson.id}
+              onLessonSelect={navigateToLesson}
+            />
           </div>
         </div>
       </div>
