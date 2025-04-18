@@ -37,6 +37,13 @@ export const CompanyCoursesManager: React.FC<CompanyCoursesManagerProps> = ({
 
         if (companiesError) throw companiesError;
 
+        // Add missing required fields with default values if they don't exist
+        const companiesWithDefaults = companiesData?.map(company => ({
+          ...company,
+          descricao: company.descricao || null,
+          responsavel: company.responsavel || null
+        })) as Company[];
+
         // Try to fetch company access relationships with explicit table aliases
         try {
           const { data: courseCompaniesData, error: courseCompaniesError } = await supabase
@@ -62,7 +69,7 @@ export const CompanyCoursesManager: React.FC<CompanyCoursesManagerProps> = ({
           setSelectedCompanies([]);
         }
 
-        setCompanies(companiesData || []);
+        setCompanies(companiesWithDefaults || []);
         
         console.log(`Found ${companiesData?.length || 0} companies`);
       } catch (error: any) {
