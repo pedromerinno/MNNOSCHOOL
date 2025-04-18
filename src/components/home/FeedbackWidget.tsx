@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
@@ -31,17 +30,14 @@ export const FeedbackWidget = () => {
     }
   };
 
-  // Convert from_profile to complete UserProfile
-  const mapToUserProfile = (profile: any): UserProfile => {
-    return {
-      id: profile.id,
-      display_name: profile.display_name,
-      email: profile.email || null,
-      is_admin: profile.is_admin || false,
-      avatar: profile.avatar || null,
-      cargo: profile.cargo || null
-    };
-  };
+  const mapToUserProfile = (profile: any): UserProfile => ({
+    id: profile.id,
+    display_name: profile.display_name,
+    email: null,
+    is_admin: false,
+    avatar: profile.avatar || null,
+    cargo: profile.cargo || null
+  });
 
   return (
     <Card className="border-0 shadow-none overflow-hidden rounded-[30px] bg-[#FAFFF7] dark:bg-[#1A2E1A]">

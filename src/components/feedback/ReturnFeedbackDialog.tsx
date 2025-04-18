@@ -36,4 +36,4 @@ export const ReturnFeedbackDialog = ({ toUser, trigger }: ReturnFeedbackDialogPr
       </DialogContent>
     </Dialog>
   );
-}
+};

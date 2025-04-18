@@ -40,7 +40,7 @@ export const FeedbackForm = ({ toUser }: FeedbackFormProps) => {
       
       toast.success("Feedback enviado com sucesso!");
       setFeedback("");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao enviar feedback:", error);
       toast.error("Erro ao enviar feedback");
     } finally {
