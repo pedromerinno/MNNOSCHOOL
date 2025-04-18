@@ -7,6 +7,7 @@ import { useReceivedFeedbacks } from "@/hooks/feedback/useReceivedFeedbacks";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ReturnFeedbackDialog } from "../feedback/ReturnFeedbackDialog";
+import { UserProfile } from "@/hooks/useUsers";
 
 export const FeedbackWidget = () => {
   const { feedbacks, loading } = useReceivedFeedbacks();
@@ -28,6 +29,18 @@ export const FeedbackWidget = () => {
       console.error('Error formatting date:', error);
       return 'recentemente';
     }
+  };
+
+  // Convert from_profile to complete UserProfile
+  const mapToUserProfile = (profile: any): UserProfile => {
+    return {
+      id: profile.id,
+      display_name: profile.display_name,
+      email: profile.email || null,
+      is_admin: profile.is_admin || false,
+      avatar: profile.avatar || null,
+      cargo: profile.cargo || null
+    };
   };
 
   return (
@@ -76,7 +89,7 @@ export const FeedbackWidget = () => {
                 </div>
                 {feedbacks[0].from_profile && (
                   <ReturnFeedbackDialog
-                    toUser={feedbacks[0].from_profile}
+                    toUser={mapToUserProfile(feedbacks[0].from_profile)}
                     trigger={
                       <button 
                         className="self-start px-8 py-3 rounded-full bg-white/80 dark:bg-white/10 text-black dark:text-white hover:bg-white dark:hover:bg-white/20 transition-colors"
