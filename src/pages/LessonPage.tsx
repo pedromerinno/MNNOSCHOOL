@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useLessonData } from '@/hooks/useLessonData';
@@ -38,13 +37,11 @@ const LessonPage = () => {
     cancelAutoplay
   } = useAutoplayNavigation(nextLesson, courseId);
 
-  // Reset autoplay prompt when changing lessons
   useEffect(() => {
     window.scrollTo(0, 0);
     setShowAutoplayPrompt(false);
   }, [lessonId, setShowAutoplayPrompt]);
 
-  // If video ends or lesson changes, ensure autoplay prompt is hidden
   useEffect(() => {
     return () => {
       cancelAutoplay();
@@ -103,6 +100,7 @@ const LessonPage = () => {
               lessons={lesson.course_lessons || []}
               currentLessonId={lesson.id}
               onLessonSelect={navigateToLesson}
+              loading={loading}
             />
           </div>
         </div>
