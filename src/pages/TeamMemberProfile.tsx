@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -97,7 +96,6 @@ const TeamMemberProfile = () => {
     fetchMemberProfile();
   }, [memberId, selectedCompany]);
 
-  // Listen for new feedbacks and update the list
   useEffect(() => {
     if (!memberId || !selectedCompany) return;
 
@@ -114,7 +112,6 @@ const TeamMemberProfile = () => {
         async (payload) => {
           const newFeedback = payload.new as any;
           
-          // Fetch the sender's profile
           const { data: profileData } = await supabase
             .from('profiles')
             .select('id, display_name, avatar')
@@ -126,7 +123,6 @@ const TeamMemberProfile = () => {
             from_profile: profileData || null
           };
           
-          // Add the new feedback to the list
           setFeedbacks(prev => [enrichedFeedback, ...prev]);
         }
       )
@@ -163,7 +159,7 @@ const TeamMemberProfile = () => {
             className="flex items-center gap-2" 
             onClick={() => navigate('/team')}
           >
-            <ArrowLeft className="h-4 w-4" /> Back to Team
+            <ArrowLeft className="h-4 w-4" /> Voltar para Equipe
           </Button>
         </div>
 
@@ -173,7 +169,6 @@ const TeamMemberProfile = () => {
           </div>
           
           <div className="md:col-span-2">
-            {/* Updated to use the new FeedbackForm API */}
             <FeedbackForm toUser={member} />
             <FeedbackList feedbacks={feedbacks} />
           </div>

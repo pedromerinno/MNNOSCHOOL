@@ -44,7 +44,7 @@ export const TeamMembersList = ({ members }: TeamMembersListProps) => {
                 variant="ghost"
                 size="icon"
                 onClick={() => navigate(`/team/${member.id}`)}
-                title="Ver perfil e dar feedback"
+                title="Ver perfil e enviar feedback"
               >
                 <MessageSquare className="h-4 w-4" />
               </Button>
