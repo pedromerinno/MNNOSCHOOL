@@ -57,12 +57,13 @@ export const FeedbackForm = ({ toUser, onFeedbackSent }: FeedbackFormProps) => {
       // Call the callback if provided
       if (onFeedbackSent && data) {
         // Add the from_profile to match the expected format
+        const userDisplayName = user.email || user.id; // Using email as fallback
         const enrichedFeedback = {
           ...data,
           from_profile: {
             id: user.id,
-            display_name: user.display_name || user.email,
-            avatar: user.avatar || null
+            display_name: userDisplayName,
+            avatar: null // Default to null if avatar is not available
           }
         };
         onFeedbackSent(enrichedFeedback);
