@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useRef } from 'react';
-import { ExternalLink, AlertCircle, Play, Pause } from "lucide-react";
+import { ExternalLink, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -8,9 +7,7 @@ interface LessonVideoProps {
   videoUrl: string | null;
   title: string;
   onVideoEnd?: () => void;
-  autoplay?: boolean;
   showAutoplayPrompt?: boolean;
-  onToggleAutoplay?: () => void;
   nextLessonTitle?: string;
 }
 
@@ -18,9 +15,7 @@ export const LessonVideo: React.FC<LessonVideoProps> = ({
   videoUrl, 
   title,
   onVideoEnd,
-  autoplay = true,
-  showAutoplayPrompt = false,
-  onToggleAutoplay,
+  showAutoplayPrompt,
   nextLessonTitle
 }) => {
   const [videoError, setVideoError] = useState<boolean>(false);
@@ -33,20 +28,17 @@ export const LessonVideo: React.FC<LessonVideoProps> = ({
   }, [videoUrl]);
 
   useEffect(() => {
-    // Setup message event listener for YouTube iframe API
     const handleYouTubeEvents = (event: MessageEvent) => {
       if (typeof event.data === 'string') {
         try {
           const data = JSON.parse(event.data);
-          // YouTube iframe API sends events as JSON with an event property
-          if (data.event === 'onStateChange' && data.info === 0) { // 0 = ended
+          if (data.event === 'onStateChange' && data.info === 0) {
             console.log('Video ended event detected');
             if (onVideoEnd) {
               onVideoEnd();
             }
           }
         } catch (e) {
-          // Not a JSON message or not from YouTube iframe API
         }
       }
     };
@@ -109,8 +101,8 @@ export const LessonVideo: React.FC<LessonVideoProps> = ({
   const embedUrl = videoUrl ? getEmbedUrl(videoUrl) : null;
 
   return (
-    <div className="relative">
-      <div className="aspect-video bg-muted rounded-lg overflow-hidden relative w-full max-w-full">
+    <div className="relative w-full">
+      <div className="aspect-video bg-muted rounded-lg overflow-hidden relative w-full max-w-[1200px] mx-auto">
         {videoUrl ? (
           <>
             {videoLoading && (
@@ -163,29 +155,6 @@ export const LessonVideo: React.FC<LessonVideoProps> = ({
           </div>
         )}
       </div>
-
-      {onToggleAutoplay && (
-        <div className="absolute top-4 right-4 z-10">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={onToggleAutoplay}
-            className="bg-black/50 hover:bg-black/70 text-white"
-          >
-            {autoplay ? (
-              <>
-                <Play className="h-4 w-4 mr-2" />
-                Autoplay ON
-              </>
-            ) : (
-              <>
-                <Pause className="h-4 w-4 mr-2" />
-                Autoplay OFF
-              </>
-            )}
-          </Button>
-        </div>
-      )}
 
       {showAutoplayPrompt && nextLessonTitle && (
         <Alert className="absolute bottom-4 right-4 w-72 bg-black/80 text-white border-none">

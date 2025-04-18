@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useLessonData } from '@/hooks/useLessonData';
@@ -30,9 +29,7 @@ const LessonPage = () => {
   } = useLessonData(lessonId);
 
   const {
-    autoplay,
     showAutoplayPrompt,
-    toggleAutoplay,
     handleVideoEnd,
     setShowAutoplayPrompt,
     cancelAutoplay
@@ -67,9 +64,7 @@ const LessonPage = () => {
             <LessonContent 
               lesson={lesson}
               onVideoEnd={handleVideoEnd}
-              autoplay={autoplay}
               showAutoplayPrompt={showAutoplayPrompt}
-              onToggleAutoplay={toggleAutoplay}
               nextLessonTitle={nextLesson?.title}
             />
             

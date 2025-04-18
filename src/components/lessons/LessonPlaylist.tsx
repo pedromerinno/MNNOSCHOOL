@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Play } from "lucide-react";
@@ -29,7 +30,7 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-medium flex items-center justify-between">
-          Playlist do Curso
+          Aulas do Curso
           <span className="text-sm text-muted-foreground">
             Aula {currentIndex + 1} de {lessons.length}
           </span>

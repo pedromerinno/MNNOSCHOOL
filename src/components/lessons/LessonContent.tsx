@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from "@/components/ui/card";
 import { Lesson } from '@/components/courses/CourseLessonList';
@@ -9,18 +8,14 @@ import { LessonQuiz } from './LessonQuiz';
 interface LessonContentProps {
   lesson: Lesson;
   onVideoEnd?: () => void;
-  autoplay?: boolean;
   showAutoplayPrompt?: boolean;
-  onToggleAutoplay?: () => void;
   nextLessonTitle?: string;
 }
 
 export const LessonContent: React.FC<LessonContentProps> = ({ 
   lesson,
   onVideoEnd,
-  autoplay,
   showAutoplayPrompt,
-  onToggleAutoplay,
   nextLessonTitle
 }) => {
   const renderLessonContent = () => {
@@ -33,9 +28,7 @@ export const LessonContent: React.FC<LessonContentProps> = ({
             videoUrl={lesson.content || ''} 
             title={lesson.title}
             onVideoEnd={onVideoEnd}
-            autoplay={autoplay}
             showAutoplayPrompt={showAutoplayPrompt}
-            onToggleAutoplay={onToggleAutoplay}
             nextLessonTitle={nextLessonTitle}
           />
         );
