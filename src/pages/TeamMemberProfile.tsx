@@ -13,6 +13,18 @@ import { ArrowLeft, Send } from "lucide-react";
 import { LoadingState } from "@/components/team/LoadingState";
 import { EmptyState } from "@/components/team/EmptyState";
 
+interface Feedback {
+  id: string;
+  content: string;
+  created_at: string;
+  from_user_id: string;
+  from_profile?: {
+    id: string;
+    display_name: string | null;
+    avatar: string | null;
+  } | null;
+}
+
 const TeamMemberProfile = () => {
   const { memberId } = useParams();
   const navigate = useNavigate();
@@ -20,7 +32,7 @@ const TeamMemberProfile = () => {
   const [member, setMember] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [feedback, setFeedback] = useState("");
-  const [feedbacks, setFeedbacks] = useState<any[]>([]);
+  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -47,25 +59,40 @@ const TeamMemberProfile = () => {
         // Fetch existing feedbacks
         const { data: feedbackData, error: feedbackError } = await supabase
           .from('user_feedbacks')
-          .select(`
-            id,
-            content,
-            created_at,
-            from_user_id,
-            from_profile:profiles(id, display_name, avatar)
-          `)
+          .select('id, content, created_at, from_user_id')
           .eq('to_user_id', memberId)
           .eq('company_id', selectedCompany.id)
           .order('created_at', { ascending: false });
 
         if (feedbackError) {
           console.error("Error fetching feedbacks:", feedbackError);
+          throw feedbackError;
+        }
+
+        // Fetch profiles for each feedback sender
+        if (feedbackData && feedbackData.length > 0) {
+          const enrichedFeedbacks = await Promise.all(
+            feedbackData.map(async (fb) => {
+              const { data: profileData } = await supabase
+                .from('profiles')
+                .select('id, display_name, avatar')
+                .eq('id', fb.from_user_id)
+                .single();
+              
+              return {
+                ...fb,
+                from_profile: profileData || null
+              };
+            })
+          );
+          
+          setFeedbacks(enrichedFeedbacks);
         } else {
-          setFeedbacks(feedbackData || []);
+          setFeedbacks([]);
         }
       } catch (err) {
-        console.error('Error fetching member profile:', err);
-        toast.error("Error loading member profile");
+        console.error('Error fetching member profile or feedbacks:', err);
+        toast.error("Erro ao carregar dados do perfil");
       } finally {
         setIsLoading(false);
       }
@@ -86,11 +113,12 @@ const TeamMemberProfile = () => {
       const currentUserId = userData.user?.id;
       
       if (!currentUserId) {
-        toast.error("Error identifying current user");
+        toast.error("Erro ao identificar usuário atual");
         return;
       }
 
-      const { data, error } = await supabase
+      // Insert the feedback
+      const { data: insertedFeedback, error } = await supabase
         .from('user_feedbacks')
         .insert({
           from_user_id: currentUserId,
@@ -98,25 +126,32 @@ const TeamMemberProfile = () => {
           company_id: selectedCompany.id,
           content: feedback
         })
-        .select(`
-          id,
-          content,
-          created_at,
-          from_user_id,
-          from_profile:profiles(id, display_name, avatar)
-        `)
+        .select('id, content, created_at, from_user_id')
         .single();
 
       if (error) {
         throw error;
       }
 
-      setFeedbacks([data, ...feedbacks]);
+      // Get the profile of the sender
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar')
+        .eq('id', currentUserId)
+        .single();
+
+      // Add the new feedback to the state
+      const newFeedback = {
+        ...insertedFeedback,
+        from_profile: profileData || null
+      };
+
+      setFeedbacks([newFeedback, ...feedbacks]);
       setFeedback("");
-      toast.success("Feedback sent successfully!");
+      toast.success("Feedback enviado com sucesso!");
     } catch (err: any) {
       console.error('Error sending feedback:', err);
-      toast.error(err.message || "Error sending feedback");
+      toast.error(err.message || "Erro ao enviar feedback");
     } finally {
       setSubmitting(false);
     }
@@ -237,7 +272,7 @@ const TeamMemberProfile = () => {
                             )}
                           </Avatar>
                           <div>
-                            <p className="font-medium">{feedback.from_profile?.display_name}</p>
+                            <p className="font-medium">{feedback.from_profile?.display_name || 'Unknown User'}</p>
                             <p className="text-xs text-gray-500 dark:text-gray-400">
                               {new Date(feedback.created_at).toLocaleDateString('pt-BR', {
                                 day: '2-digit',
