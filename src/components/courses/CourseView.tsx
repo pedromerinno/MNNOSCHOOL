@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCourseData } from '@/hooks/useCourseData';
@@ -47,7 +48,7 @@ export const CourseView: React.FC = () => {
     : `${minutes} min`;
 
   return (
-    <div className="container max-w-6xl mx-auto px-4 py-8">
+    <div className="container max-w-7xl mx-auto px-4 py-8">
       <CourseHeader 
         title={course.title} 
         instructor={course.instructor} 
