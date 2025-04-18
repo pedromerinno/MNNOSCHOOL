@@ -8,6 +8,7 @@ export interface ReceivedFeedback {
   id: string;
   content: string;
   created_at: string;
+  from_user_id?: string;
   from_profile?: {
     id: string;
     display_name: string | null;
@@ -37,20 +38,10 @@ export const useReceivedFeedbacks = () => {
           throw new Error('User not authenticated');
         }
 
-        // Fetch feedbacks with user profile information in a single query
+        // First, fetch the feedbacks
         const { data: feedbackData, error } = await supabase
           .from('user_feedbacks')
-          .select(`
-            id,
-            content,
-            created_at,
-            from_profile:from_user_id (
-              id,
-              display_name,
-              avatar,
-              cargo
-            )
-          `)
+          .select('id, content, created_at, from_user_id')
           .eq('to_user_id', user.id)
           .eq('company_id', selectedCompany.id)
           .order('created_at', { ascending: false })
@@ -60,7 +51,44 @@ export const useReceivedFeedbacks = () => {
           throw error;
         }
 
-        setFeedbacks(feedbackData || []);
+        if (!feedbackData || feedbackData.length === 0) {
+          setFeedbacks([]);
+          setLoading(false);
+          return;
+        }
+
+        // Then fetch the associated profiles
+        const enrichedFeedbacks = await Promise.all(
+          feedbackData.map(async (feedback) => {
+            if (!feedback.from_user_id) {
+              return {
+                ...feedback,
+                from_profile: null
+              };
+            }
+
+            const { data: profileData, error: profileError } = await supabase
+              .from('profiles')
+              .select('id, display_name, avatar, cargo')
+              .eq('id', feedback.from_user_id)
+              .single();
+
+            if (profileError) {
+              console.error('Error fetching profile:', profileError);
+              return {
+                ...feedback,
+                from_profile: null
+              };
+            }
+
+            return {
+              ...feedback,
+              from_profile: profileData
+            };
+          })
+        );
+        
+        setFeedbacks(enrichedFeedbacks);
       } catch (err) {
         console.error('Error fetching feedbacks:', err);
         toast.error("Erro ao carregar feedbacks");
