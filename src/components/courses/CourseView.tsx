@@ -123,6 +123,7 @@ export const CourseView: React.FC = () => {
         <div className="w-full md:w-4/12 mt-8 md:mt-0">
           <CourseLessonList 
             lessons={course.lessons} 
+            courseId={course.id}  
             onStartLesson={startLesson} 
           />
         </div>
@@ -130,4 +131,3 @@ export const CourseView: React.FC = () => {
     </div>
   );
 };
-
