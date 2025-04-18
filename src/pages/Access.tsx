@@ -26,41 +26,51 @@ const Access = () => {
 
       setIsLoading(true);
       try {
-        console.log('Fetching access items for company:', selectedCompany.id);
+        console.log('Fetching access items for company:', selectedCompany.id, 'User ID:', user.id);
         
-        // First check if user is associated with this company
-        const { data: userCompanyRelation, error: relationError } = await supabase
-          .from('user_empresa')
+        // Get the access items directly without checking user-company relation first
+        // This should work for all users that have access to the company
+        const { data, error } = await supabase
+          .from('company_access')
           .select('*')
-          .eq('user_id', user.id)
-          .eq('empresa_id', selectedCompany.id)
-          .maybeSingle();
+          .eq('company_id', selectedCompany.id)
+          .order('tool_name');
         
-        if (relationError) {
-          console.error('Error checking user-company relation:', relationError);
-          throw relationError;
+        if (error) {
+          console.error('Error fetching company access items:', error);
+          throw error;
         }
         
-        // If user is related to this company, fetch access items
-        if (userCompanyRelation) {
-          console.log('User is related to company, fetching access items');
-          const { data, error } = await supabase
-            .from('company_access')
-            .select('*')
-            .eq('company_id', selectedCompany.id)
-            .order('tool_name');
-          
-          if (error) throw error;
-          
-          console.log('Access items fetched:', data?.length);
-          setAccessItems(data as AccessItem[] || []);
+        console.log('Access items fetched:', data?.length);
+        
+        if (data && data.length > 0) {
+          setAccessItems(data as AccessItem[]);
         } else {
-          console.log('User does not have permission to view accesses for this company');
-          setAccessItems([]);
+          // Double-check if the user is actually related to this company
+          const { data: userCompanyRelation, error: relationError } = await supabase
+            .from('user_empresa')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('empresa_id', selectedCompany.id)
+            .maybeSingle();
+          
+          if (relationError) {
+            console.error('Error checking user-company relation:', relationError);
+            throw relationError;
+          }
+          
+          if (userCompanyRelation) {
+            console.log('User is related to company but no access items were found');
+            setAccessItems([]);
+          } else {
+            console.log('User does not have permission to view accesses for this company');
+            setAccessItems([]);
+          }
         }
       } catch (error: any) {
         console.error('Erro ao carregar informações de acesso:', error);
         toast.error('Não foi possível carregar os dados de acesso');
+        setAccessItems([]);
       } finally {
         setIsLoading(false);
       }

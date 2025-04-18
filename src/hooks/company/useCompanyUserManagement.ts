@@ -120,9 +120,34 @@ export const useCompanyUserManagement = () => {
     }
   }, []);
   
+  /**
+   * Check if a user belongs to a company
+   */
+  const checkUserCompanyRelation = useCallback(async (userId: string, companyId: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .from('user_empresa')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('empresa_id', companyId)
+        .maybeSingle();
+        
+      if (error) {
+        console.error('Error checking user-company relation:', error);
+        return false;
+      }
+      
+      return !!data;
+    } catch (error) {
+      console.error('Unexpected error checking user-company relation:', error);
+      return false;
+    }
+  }, []);
+  
   return {
     assignUserToCompany,
     removeUserFromCompany,
-    getCompanyUsers
+    getCompanyUsers,
+    checkUserCompanyRelation
   };
 };
