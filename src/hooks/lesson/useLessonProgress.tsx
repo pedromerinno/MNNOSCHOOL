@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -10,6 +10,11 @@ export const useLessonProgress = (
 ) => {
   const [completed, setCompleted] = useState<boolean>(initialCompleted);
   const { toast } = useToast();
+
+  // Sync state with initialCompleted when lessonId changes
+  useEffect(() => {
+    setCompleted(initialCompleted);
+  }, [lessonId, initialCompleted]);
 
   const markLessonCompleted = useCallback(async () => {
     if (!lessonId || !courseId) return;

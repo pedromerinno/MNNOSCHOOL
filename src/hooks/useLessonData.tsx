@@ -1,5 +1,5 @@
 
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useLessonFetch } from './lesson/useLessonFetch';
 import { useLessonNavigation } from './lesson/useLessonNavigation';
 import { useLessonProgress } from './lesson/useLessonProgress';
@@ -11,12 +11,17 @@ export const useLessonData = (lessonId: string | undefined) => {
   const { completed, markLessonCompleted } = useLessonProgress(lessonId, lesson?.course_id, lesson?.completed);
   const { likes, userLiked, toggleLikeLesson } = useLessonLikes(Math.floor(Math.random() * 10), false);
 
+  // Reset state when lessonId changes
+  useEffect(() => {
+    if (lessonId) {
+      refetch();
+    }
+  }, [lessonId, refetch]);
+
   const handleNavigateToLesson = useCallback((newLessonId: string) => {
-    // Primeiro navegamos
+    // Navegamos para a nova aula
     navigateToLesson(newLessonId);
-    // Então forçamos um refetch dos dados
-    refetch();
-  }, [navigateToLesson, refetch]);
+  }, [navigateToLesson]);
 
   return { 
     lesson, 

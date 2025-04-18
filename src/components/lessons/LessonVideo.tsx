@@ -110,7 +110,7 @@ export const LessonVideo: React.FC<LessonVideoProps> = ({
 
   return (
     <div className="relative">
-      <div className="aspect-video bg-muted rounded-lg overflow-hidden relative">
+      <div className="aspect-video bg-muted rounded-lg overflow-hidden relative w-full max-w-full">
         {videoUrl ? (
           <>
             {videoLoading && (
