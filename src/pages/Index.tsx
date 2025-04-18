@@ -8,23 +8,8 @@ import { NoCompaniesAvailable } from "@/components/home/NoCompaniesAvailable";
 
 const Index = () => {
   const [isPageLoading, setIsPageLoading] = useState(true);
-  const { userCompanies, isLoading, error } = useCompanies();
+  const { userCompanies, isLoading } = useCompanies();
   const { user } = useAuth();
-
-  // Log para debugar problema de empresas
-  useEffect(() => {
-    if (user) {
-      console.log("Index: usuário autenticado", {
-        id: user.id,
-        email: user.email
-      });
-      console.log("Index: estado das empresas", {
-        quantidadeEmpresas: userCompanies.length,
-        carregando: isLoading,
-        erro: error?.message
-      });
-    }
-  }, [user, userCompanies.length, isLoading, error]);
 
   // Simular um carregamento mínimo para garantir que a UI não pisque
   useEffect(() => {
@@ -59,9 +44,8 @@ const Index = () => {
     );
   }
 
-  // Se o usuário estiver logado e não tiver empresas, mostra a tela de sem empresas
+  // Check if user is logged in and has no companies
   if (user && userCompanies.length === 0) {
-    console.log("Index: usuário não possui empresas, exibindo NoCompaniesAvailable");
     return <NoCompaniesAvailable />;
   }
 

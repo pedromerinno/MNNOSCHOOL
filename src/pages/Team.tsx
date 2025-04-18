@@ -5,16 +5,10 @@ import { TeamHeader } from "@/components/team/TeamHeader";
 import { LoadingState } from "@/components/team/LoadingState";
 import { EmptyState } from "@/components/team/EmptyState";
 import { useTeamMembers } from "@/hooks/team/useTeamMembers";
-import { useEffect } from "react";
 
 const Team = () => {
   const { selectedCompany } = useCompanies();
   const { members, isLoading, error } = useTeamMembers();
-
-  // Reset scroll position when component mounts or company changes
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [selectedCompany?.id]);
 
   if (!selectedCompany) {
     return (
@@ -27,6 +21,10 @@ const Team = () => {
         </main>
       </div>
     );
+  }
+
+  if (isLoading) {
+    return <LoadingState />;
   }
 
   if (error) {
@@ -42,16 +40,11 @@ const Team = () => {
     );
   }
 
-  // For extreme loading scenarios, show full page loading
-  if (isLoading && members.length === 0) {
-    return <LoadingState />;
-  }
-
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8 space-y-8 max-w-7xl">
         <TeamHeader company={selectedCompany} memberCount={members.length} />
-        <TeamMembersList members={members} isLoading={isLoading} />
+        <TeamMembersList members={members} />
       </main>
     </div>
   );

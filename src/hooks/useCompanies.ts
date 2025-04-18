@@ -9,7 +9,6 @@ import { useCompanyDelete } from "./company/useCompanyDelete";
 import { useCompanyUserManagement } from "./company/useCompanyUserManagement";
 import { useCompanyEvents } from "./company/useCompanyEvents";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
 
 export const useCompanies = () => {
   // Get auth context for global access
@@ -92,39 +91,24 @@ export const useCompanies = () => {
     const loadInitialData = async () => {
       if (user?.id && userCompanies.length === 0 && !isLoading) {
         try {
-          console.log('[useCompanies] Carregando empresas do usuário:', user.id);
           await getUserCompanies(user.id);
-          
-          if (userCompanies.length === 0) {
-            console.log('[useCompanies] Nenhuma empresa encontrada para o usuário. Tentando novamente...');
-            // Try one more time with force refresh
-            await forceGetUserCompanies(user.id);
-            
-            if (userCompanies.length === 0) {
-              console.log('[useCompanies] Ainda sem empresas após segunda tentativa');
-            }
-          } else {
-            console.log('[useCompanies] Empresas carregadas com sucesso:', userCompanies.length);
-          }
         } catch (error) {
-          console.error('[useCompanies] Erro ao carregar empresas do usuário:', error);
-          toast.error("Erro ao carregar empresas. Tente novamente mais tarde.");
+          console.error('[useCompanies] Error loading initial company data:', error);
         }
       }
     };
     
     loadInitialData();
-  }, [user?.id, userCompanies.length, isLoading, getUserCompanies, forceGetUserCompanies]);
+  }, [user?.id, userCompanies.length, isLoading, getUserCompanies]);
   
   // Listen for company-relation-changed events to refresh data
   useEffect(() => {
     const handleCompanyRelationChange = async () => {
       if (user?.id) {
         try {
-          console.log('[useCompanies] Relação de empresas alterada, atualizando...');
           await forceGetUserCompanies(user.id);
         } catch (error) {
-          console.error('[useCompanies] Erro ao atualizar empresas após alteração de relação:', error);
+          console.error('[useCompanies] Error refreshing companies after relation change:', error);
         }
       }
     };
@@ -135,17 +119,17 @@ export const useCompanies = () => {
     const handleForceReload = async () => {
       if (user?.id) {
         try {
-          console.log('[useCompanies] Forçando recarregamento de empresas');
+          console.log('[useCompanies] Force reloading companies due to user request');
           await forceGetUserCompanies(user.id);
         } catch (error) {
-          console.error('[useCompanies] Erro ao forçar recarregamento de empresas:', error);
+          console.error('[useCompanies] Error force reloading companies:', error);
         }
       } else {
         try {
-          console.log('[useCompanies] Forçando recarregamento de todas as empresas');
+          console.log('[useCompanies] Force reloading all companies due to user request');
           await fetchCompanies();
         } catch (error) {
-          console.error('[useCompanies] Erro ao forçar recarregamento de todas as empresas:', error);
+          console.error('[useCompanies] Error force reloading all companies:', error);
         }
       }
     };
@@ -167,7 +151,7 @@ export const useCompanies = () => {
       // First try to get the full company object from local storage
       const cachedCompany = getStoredCompany();
       if (cachedCompany) {
-        console.log('[useCompanies] Restaurando empresa selecionada do cache:', cachedCompany.nome);
+        console.log('[useCompanies] Restored selected company from cache:', cachedCompany.nome);
         setSelectedCompany(cachedCompany);
         return;
       }
@@ -182,30 +166,30 @@ export const useCompanies = () => {
           
           if (storedCompany) {
             setSelectedCompany(storedCompany);
-            console.log('[useCompanies] Restaurando empresa selecionada do ID armazenado:', storedCompany.nome);
+            console.log('[useCompanies] Restored selected company from localStorage ID:', storedCompany.nome);
           } else {
             // If not found, try to fetch it
             try {
               const company = await getCompanyById(storedCompanyId);
               if (company) {
                 setSelectedCompany(company);
-                console.log('[useCompanies] Restaurando empresa selecionada do banco de dados:', company.nome);
+                console.log('[useCompanies] Restored selected company from database:', company.nome);
               }
             } catch (error) {
-              console.error('[useCompanies] Falha ao restaurar empresa do localStorage', error);
+              console.error('[useCompanies] Failed to restore company from localStorage', error);
               localStorage.removeItem('selectedCompanyId');
               
               // If fetch failed but we have userCompanies, select the first one
               if (userCompanies.length > 0) {
                 setSelectedCompany(userCompanies[0]);
-                console.log('[useCompanies] Selecionada primeira empresa disponível após falha na busca:', userCompanies[0].nome);
+                console.log('[useCompanies] Selected first available company after fetch failure:', userCompanies[0].nome);
               }
             }
           }
         } else if (userCompanies.length === 1) {
           // Automatically select the only company if there's just one
           setSelectedCompany(userCompanies[0]);
-          console.log('[useCompanies] Auto-selecionada a única empresa disponível:', userCompanies[0].nome);
+          console.log('[useCompanies] Auto-selected the only available company:', userCompanies[0].nome);
         }
       }
     };

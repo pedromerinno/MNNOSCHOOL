@@ -12,25 +12,136 @@ import { EmptyState } from "@/components/team/EmptyState";
 import { ProfileCard } from "@/components/team/profile/ProfileCard";
 import { FeedbackForm } from "@/components/team/feedback/FeedbackForm";
 import { FeedbackList } from "@/components/team/feedback/FeedbackList";
-import { useMemberProfile } from "@/hooks/team/useMemberProfile";
+
+interface Feedback {
+  id: string;
+  content: string;
+  created_at: string;
+  from_user_id: string;
+  from_profile?: {
+    id: string;
+    display_name: string | null;
+    avatar: string | null;
+  } | null;
+}
 
 const TeamMemberProfile = () => {
   const { memberId } = useParams();
   const navigate = useNavigate();
   const { selectedCompany } = useCompanies();
-  const { 
-    member, 
-    feedbacks, 
-    isLoading, 
-    error,
-    addFeedback 
-  } = useMemberProfile(memberId, selectedCompany?.id);
+  const [member, setMember] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
+
+  useEffect(() => {
+    const fetchMemberProfile = async () => {
+      if (!memberId || !selectedCompany) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, display_name, email, cargo, avatar, is_admin')
+          .eq('id', memberId)
+          .single();
+
+        if (error) {
+          throw error;
+        }
+
+        setMember(data);
+
+        const { data: feedbackData, error: feedbackError } = await supabase
+          .from('user_feedbacks')
+          .select('id, content, created_at, from_user_id')
+          .eq('to_user_id', memberId)
+          .eq('company_id', selectedCompany.id)
+          .order('created_at', { ascending: false });
+
+        if (feedbackError) {
+          console.error("Error fetching feedbacks:", feedbackError);
+          throw feedbackError;
+        }
+
+        if (feedbackData && feedbackData.length > 0) {
+          const enrichedFeedbacks = await Promise.all(
+            feedbackData.map(async (fb) => {
+              const { data: profileData } = await supabase
+                .from('profiles')
+                .select('id, display_name, avatar')
+                .eq('id', fb.from_user_id)
+                .single();
+              
+              return {
+                ...fb,
+                from_profile: profileData || null
+              };
+            })
+          );
+          
+          setFeedbacks(enrichedFeedbacks);
+        } else {
+          setFeedbacks([]);
+        }
+      } catch (err) {
+        console.error('Error fetching member profile or feedbacks:', err);
+        toast.error("Erro ao carregar dados do perfil");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMemberProfile();
+  }, [memberId, selectedCompany]);
+
+  useEffect(() => {
+    if (!memberId || !selectedCompany) return;
+
+    const channel = supabase
+      .channel('user_feedbacks_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',  // Listen for all events (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'user_feedbacks',
+          filter: `to_user_id=eq.${memberId}`
+        },
+        async (payload) => {
+          // Handle different event types
+          if (payload.eventType === 'INSERT') {
+            const newFeedback = payload.new as any;
+            
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('id, display_name, avatar')
+              .eq('id', newFeedback.from_user_id)
+              .single();
+            
+            const enrichedFeedback = {
+              ...newFeedback,
+              from_profile: profileData || null
+            };
+            
+            setFeedbacks(prev => [enrichedFeedback, ...prev]);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [memberId, selectedCompany]);
 
   if (isLoading) {
     return <LoadingState />;
   }
 
-  if (error || !member) {
+  if (!member) {
     return (
       <div className="min-h-screen bg-background">
         <main className="container mx-auto px-4 py-8">
@@ -62,7 +173,7 @@ const TeamMemberProfile = () => {
           </div>
           
           <div className="md:col-span-2">
-            <FeedbackForm toUser={member} onFeedbackSent={addFeedback} />
+            <FeedbackForm toUser={member} />
             <FeedbackList feedbacks={feedbacks} />
           </div>
         </div>

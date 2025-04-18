@@ -11,7 +11,7 @@ interface ProfileCardProps {
 
 export const ProfileCard = ({ member }: ProfileCardProps) => {
   return (
-    <Card className="border-0 bg-white shadow-sm">
+    <Card className="border-0 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <CardContent className="p-6 space-y-6">
         <div className="flex flex-col items-center text-center">
           <Avatar className="h-24 w-24 border-2 border-primary/10">
