@@ -43,6 +43,8 @@ export const useUserCompanies = ({
    * the first one if there's only one company
    */
   const getUserCompanies = async (userId: string, signal?: AbortSignal): Promise<Company[]> => {
+    console.log(`[useUserCompanies] Iniciando busca de empresas para usuário: ${userId}`);
+    
     // First check if we already have cached data
     const cachedCompanies = localStorage.getItem('userCompanies');
     let cachedData: Company[] = [];
@@ -56,7 +58,7 @@ export const useUserCompanies = ({
         if (setUserCompanies) {
           setUserCompanies(cachedData);
         }
-        console.log("Using cached data while fetching update:", cachedData.length, "companies");
+        console.log("[useUserCompanies] Usando dados em cache enquanto busca dados atualizados:", cachedData.length, "empresas");
         
         // If we have only one company in cache, select it automatically
         if (cachedData.length === 1 && setSelectedCompany) {
@@ -74,12 +76,12 @@ export const useUserCompanies = ({
         
         // If cache is valid and not empty, we can return cached data
         if (isCacheValid() && cachedData.length > 0) {
-          console.log("Valid cache, skipping server request");
+          console.log("[useUserCompanies] Cache válido, pulando requisição ao servidor");
           setIsLoading(false); // Explicitly set loading to false when using cache
           return cachedData;
         }
       } catch (e) {
-        console.error("Error parsing cached companies", e);
+        console.error("[useUserCompanies] Erro ao analisar empresas em cache", e);
       }
     }
 
@@ -91,7 +93,7 @@ export const useUserCompanies = ({
     try {
       // Check if request has been aborted
       if (signal?.aborted) {
-        console.log("Request was aborted before it started");
+        console.log("[useUserCompanies] Requisição foi cancelada antes de iniciar");
         throw new DOMException("Aborted", "AbortError");
       }
       
@@ -99,6 +101,7 @@ export const useUserCompanies = ({
       const fetchOptions = signal ? { signal } : undefined;
 
       // Fetch company ids
+      console.log("[useUserCompanies] Buscando relações empresa-usuário");
       const userCompanyRelations = await retryOperation(
         async () => {
           const req = supabase
@@ -120,8 +123,8 @@ export const useUserCompanies = ({
       }
 
       if (userCompanyRelations.error) {
-        console.error("Error fetching user company relations:", userCompanyRelations.error);
-        setError(new Error(userCompanyRelations.error.message || "Failed to fetch company relations"));
+        console.error("[useUserCompanies] Erro ao buscar relações empresa-usuário:", userCompanyRelations.error);
+        setError(new Error(userCompanyRelations.error.message || "Falha ao buscar relações de empresa"));
         
         // Return cached data if available
         if (cachedData.length > 0) {
@@ -133,8 +136,17 @@ export const useUserCompanies = ({
         return [];
       }
 
-      if (!userCompanyRelations.data || userCompanyRelations.data.length === 0) {
-        console.log("No company relations found for user", userId);
+      // Verificação adicional para caso em que não há erro, mas data é null
+      if (!userCompanyRelations.data) {
+        console.log("[useUserCompanies] Resposta recebida mas data é null");
+        setUserCompanies([]);
+        setSelectedCompany(null);
+        setIsLoading(false);
+        return [];
+      }
+
+      if (userCompanyRelations.data.length === 0) {
+        console.log("[useUserCompanies] Nenhuma relação empresa-usuário encontrada para o usuário", userId);
         if (setUserCompanies) {
           setUserCompanies([]);
         }
@@ -149,7 +161,7 @@ export const useUserCompanies = ({
 
       // Extract company IDs
       const companyIds = userCompanyRelations.data.map(relation => relation.empresa_id);
-      console.log("Found company IDs for user:", companyIds);
+      console.log("[useUserCompanies] IDs de empresas encontrados para o usuário:", companyIds);
 
       // Check if request has been aborted again
       if (signal?.aborted) {
@@ -157,6 +169,7 @@ export const useUserCompanies = ({
       }
 
       // Fetch all companies with these IDs
+      console.log("[useUserCompanies] Buscando detalhes das empresas");
       const { data: companies, error: companiesError } = await retryOperation(
         async () => {
           const req = supabase
@@ -175,8 +188,8 @@ export const useUserCompanies = ({
       );
 
       if (companiesError) {
-        console.error("Error fetching companies:", companiesError);
-        setError(new Error(companiesError.message || "Failed to fetch company details"));
+        console.error("[useUserCompanies] Erro ao buscar empresas:", companiesError);
+        setError(new Error(companiesError.message || "Falha ao buscar detalhes da empresa"));
         
         // Return cached data if available
         if (cachedData.length > 0) {
@@ -188,8 +201,23 @@ export const useUserCompanies = ({
         return [];
       }
 
+      // Verificação adicional para caso em que não há erro, mas data é null
+      if (!companies) {
+        console.log("[useUserCompanies] Resposta de empresas recebida mas data é null");
+        // Se temos relações mas não conseguimos buscar as empresas, isso é um erro
+        setError(new Error("Falha ao buscar detalhes das empresas"));
+        
+        if (cachedData.length > 0) {
+          setIsLoading(false);
+          return cachedData;
+        }
+        
+        setIsLoading(false);
+        return [];
+      }
+
       const userCompaniesData = companies as Company[];
-      console.log("Fetched companies:", userCompaniesData.length);
+      console.log("[useUserCompanies] Empresas encontradas:", userCompaniesData.length);
       if (setUserCompanies) {
         setUserCompanies(userCompaniesData);
       }
@@ -216,17 +244,17 @@ export const useUserCompanies = ({
     } catch (error) {
       // Don't show errors for aborted requests
       if (error instanceof DOMException && error.name === 'AbortError') {
-        console.log('Request was aborted during execution');
+        console.log('[useUserCompanies] Requisição foi cancelada durante a execução');
         setIsLoading(false);
         return cachedData;
       }
       
-      console.error("Unexpected error:", error);
-      setError(error instanceof Error ? error : new Error("An error occurred while fetching companies"));
+      console.error("[useUserCompanies] Erro inesperado:", error);
+      setError(error instanceof Error ? error : new Error("Ocorreu um erro ao buscar empresas"));
       
       // Return cached data in case of error
       if (cachedData.length > 0) {
-        console.log("Using cached companies due to error");
+        console.log("[useUserCompanies] Usando empresas em cache devido a erro");
         setIsLoading(false);
         return cachedData;
       }
