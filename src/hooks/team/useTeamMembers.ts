@@ -23,22 +23,44 @@ export const useTeamMembers = () => {
         setIsLoading(true);
         setError(null);
 
-        const { data, error } = await supabase
+        // First, query all user_empresa relations for the selected company
+        const { data: userCompanyRelations, error: relationsError } = await supabase
           .from('user_empresa')
-          .select(`
-            user_id,
-            profiles:user_id(id, display_name, email, cargo, avatar, is_admin)
-          `)
+          .select('user_id')
           .eq('empresa_id', selectedCompany.id);
 
-        if (error) {
-          throw error;
+        if (relationsError) {
+          throw relationsError;
         }
 
-        // Transformar os dados para combinar com a estrutura UserProfile
-        const teamMembers: UserProfile[] = data
-          .map(item => item.profiles)
-          .filter(Boolean);
+        if (!userCompanyRelations || userCompanyRelations.length === 0) {
+          setMembers([]);
+          setIsLoading(false);
+          return;
+        }
+
+        // Extract user IDs from relations
+        const userIds = userCompanyRelations.map(relation => relation.user_id);
+
+        // Now fetch all profiles for these users
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, display_name, email, cargo, avatar, is_admin')
+          .in('id', userIds);
+
+        if (profilesError) {
+          throw profilesError;
+        }
+
+        // Map profiles to UserProfile type
+        const teamMembers: UserProfile[] = profilesData.map(profile => ({
+          id: profile.id,
+          display_name: profile.display_name,
+          email: profile.email,
+          cargo: profile.cargo,
+          avatar: profile.avatar,
+          is_admin: profile.is_admin
+        }));
 
         setMembers(teamMembers);
       } catch (err) {
