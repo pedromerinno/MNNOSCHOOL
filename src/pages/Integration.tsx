@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { useCompanies } from "@/hooks/useCompanies";
 import { Skeleton } from "@/components/ui/skeleton";
-import { VideoPlaylist } from "@/components/integration/VideoPlaylist";
+import { VideoPlaylist } from "@/components/integration/video-playlist";
 import { CompanyThemedBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, BriefcaseBusiness } from "lucide-react";
