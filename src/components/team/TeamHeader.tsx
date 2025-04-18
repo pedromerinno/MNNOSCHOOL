@@ -1,6 +1,6 @@
 
-import { Company } from "@/types/company";
 import { Users } from "lucide-react";
+import { Company } from "@/types/company";
 
 interface TeamHeaderProps {
   company: Company;
@@ -9,13 +9,15 @@ interface TeamHeaderProps {
 
 export const TeamHeader = ({ company, memberCount }: TeamHeaderProps) => {
   return (
-    <div className="mb-8">
-      <div className="flex items-center gap-2 mb-2">
-        <Users className="h-6 w-6 text-gray-500" />
-        <h1 className="text-3xl font-bold dark:text-white">Equipe</h1>
+    <div className="space-y-4 mb-8">
+      <div className="flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-primary/10">
+          <Users className="h-5 w-5 text-primary" />
+        </div>
+        <h1 className="text-2xl font-semibold tracking-tight">Equipe</h1>
       </div>
-      <p className="text-gray-600 dark:text-gray-300">
-        Conheça os {memberCount} membros da equipe {company.nome} e compartilhe feedbacks.
+      <p className="text-muted-foreground">
+        {memberCount} {memberCount === 1 ? 'membro' : 'membros'} fazem parte da equipe {company.nome}
       </p>
     </div>
   );

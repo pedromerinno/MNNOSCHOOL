@@ -1,5 +1,4 @@
 
-import { useEffect, useState } from "react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { TeamMembersList } from "@/components/team/TeamMembersList";
 import { TeamHeader } from "@/components/team/TeamHeader";
@@ -43,7 +42,7 @@ const Team = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 space-y-8 max-w-7xl">
         <TeamHeader company={selectedCompany} memberCount={members.length} />
         <TeamMembersList members={members} />
       </main>
