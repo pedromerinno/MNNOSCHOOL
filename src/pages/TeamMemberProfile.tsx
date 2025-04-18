@@ -44,7 +44,7 @@ const TeamMemberProfile = () => {
 
         setMember(data);
 
-        // Buscar feedbacks existentes
+        // Fetch existing feedbacks
         const { data: feedbackData, error: feedbackError } = await supabase
           .from('user_feedbacks')
           .select(`
@@ -52,20 +52,20 @@ const TeamMemberProfile = () => {
             content,
             created_at,
             from_user_id,
-            from_profile:profiles!from_user_id(id, display_name, avatar)
+            from_profile:profiles(id, display_name, avatar)
           `)
           .eq('to_user_id', memberId)
           .eq('company_id', selectedCompany.id)
           .order('created_at', { ascending: false });
 
         if (feedbackError) {
-          console.error("Erro ao buscar feedbacks:", feedbackError);
+          console.error("Error fetching feedbacks:", feedbackError);
         } else {
           setFeedbacks(feedbackData || []);
         }
       } catch (err) {
-        console.error('Erro ao buscar perfil do membro:', err);
-        toast.error("Erro ao carregar perfil do membro");
+        console.error('Error fetching member profile:', err);
+        toast.error("Error loading member profile");
       } finally {
         setIsLoading(false);
       }
@@ -86,7 +86,7 @@ const TeamMemberProfile = () => {
       const currentUserId = userData.user?.id;
       
       if (!currentUserId) {
-        toast.error("Erro ao identificar usuário atual");
+        toast.error("Error identifying current user");
         return;
       }
 
@@ -103,7 +103,7 @@ const TeamMemberProfile = () => {
           content,
           created_at,
           from_user_id,
-          from_profile:profiles!from_user_id(id, display_name, avatar)
+          from_profile:profiles(id, display_name, avatar)
         `)
         .single();
 
@@ -113,10 +113,10 @@ const TeamMemberProfile = () => {
 
       setFeedbacks([data, ...feedbacks]);
       setFeedback("");
-      toast.success("Feedback enviado com sucesso!");
+      toast.success("Feedback sent successfully!");
     } catch (err: any) {
-      console.error('Erro ao enviar feedback:', err);
-      toast.error(err.message || "Erro ao enviar feedback");
+      console.error('Error sending feedback:', err);
+      toast.error(err.message || "Error sending feedback");
     } finally {
       setSubmitting(false);
     }
@@ -148,34 +148,35 @@ const TeamMemberProfile = () => {
             className="flex items-center gap-2" 
             onClick={() => navigate('/team')}
           >
-            <ArrowLeft className="h-4 w-4" /> Voltar para Equipe
+            <ArrowLeft className="h-4 w-4" /> Back to Team
           </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Profile Card */}
           <div className="md:col-span-1">
             <Card>
               <CardContent className="p-6">
                 <div className="flex flex-col items-center">
                   <Avatar className="h-24 w-24 mb-4">
                     <AvatarFallback>
-                      {member.display_name?.substring(0, 2).toUpperCase() || 'U'}
+                      {member?.display_name?.substring(0, 2).toUpperCase() || 'U'}
                     </AvatarFallback>
-                    {member.avatar && <AvatarImage src={member.avatar} alt={member.display_name || ''} />}
+                    {member?.avatar && <AvatarImage src={member.avatar} alt={member.display_name || ''} />}
                   </Avatar>
                   
-                  <h2 className="text-xl font-bold text-center">{member.display_name}</h2>
-                  <p className="text-gray-500 dark:text-gray-400 text-center">{member.email}</p>
+                  <h2 className="text-xl font-bold text-center">{member?.display_name}</h2>
+                  <p className="text-gray-500 dark:text-gray-400 text-center">{member?.email}</p>
                   
-                  {member.cargo && (
+                  {member?.cargo && (
                     <p className="text-gray-500 dark:text-gray-400 mt-2 text-center">
                       {member.cargo}
                     </p>
                   )}
                   
-                  {member.is_admin && (
+                  {member?.is_admin && (
                     <span className="bg-primary/10 text-primary px-2 py-1 rounded text-xs mt-2">
-                      Administrador
+                      Administrator
                     </span>
                   )}
                 </div>
@@ -183,15 +184,16 @@ const TeamMemberProfile = () => {
             </Card>
           </div>
           
+          {/* Feedback Section */}
           <div className="md:col-span-2">
             <Card className="mb-6">
               <CardHeader>
-                <CardTitle>Enviar Feedback</CardTitle>
+                <CardTitle>Send Feedback</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <Textarea
-                    placeholder={`Escreva seu feedback para ${member.display_name}...`}
+                    placeholder={`Write your feedback for ${member?.display_name}...`}
                     value={feedback}
                     onChange={(e) => setFeedback(e.target.value)}
                     rows={4}
@@ -203,21 +205,22 @@ const TeamMemberProfile = () => {
                     className="w-full sm:w-auto flex items-center gap-2"
                   >
                     <Send className="h-4 w-4" /> 
-                    Enviar Feedback
+                    Send Feedback
                   </Button>
                 </div>
               </CardContent>
             </Card>
             
+            {/* Feedbacks List */}
             <Card>
               <CardHeader>
-                <CardTitle>Feedbacks Recebidos</CardTitle>
+                <CardTitle>Received Feedbacks</CardTitle>
               </CardHeader>
               <CardContent>
                 {feedbacks.length === 0 ? (
                   <div className="text-center py-6">
                     <p className="text-gray-500 dark:text-gray-400">
-                      Nenhum feedback recebido ainda.
+                      No feedback received yet.
                     </p>
                   </div>
                 ) : (
@@ -227,14 +230,14 @@ const TeamMemberProfile = () => {
                         <div className="flex items-start space-x-3 mb-2">
                           <Avatar className="h-8 w-8">
                             <AvatarFallback>
-                              {feedback.from_profile.display_name?.substring(0, 2).toUpperCase() || 'U'}
+                              {feedback.from_profile?.display_name?.substring(0, 2).toUpperCase() || 'U'}
                             </AvatarFallback>
-                            {feedback.from_profile.avatar && (
+                            {feedback.from_profile?.avatar && (
                               <AvatarImage src={feedback.from_profile.avatar} alt={feedback.from_profile.display_name || ''} />
                             )}
                           </Avatar>
                           <div>
-                            <p className="font-medium">{feedback.from_profile.display_name}</p>
+                            <p className="font-medium">{feedback.from_profile?.display_name}</p>
                             <p className="text-xs text-gray-500 dark:text-gray-400">
                               {new Date(feedback.created_at).toLocaleDateString('pt-BR', {
                                 day: '2-digit',
