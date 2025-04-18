@@ -25,7 +25,8 @@ const LessonPage = () => {
     navigateToLesson,
     likes,
     userLiked,
-    toggleLikeLesson
+    toggleLikeLesson,
+    completed
   } = useLessonData(lessonId);
 
   const {
@@ -78,7 +79,7 @@ const LessonPage = () => {
               <CourseDescription description={lesson.course_description || null} />
               
               <LessonActions
-                completed={lesson.completed}
+                completed={completed}
                 onMarkCompleted={markLessonCompleted}
                 likes={likes}
                 userLiked={userLiked}

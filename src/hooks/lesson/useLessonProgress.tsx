@@ -1,28 +1,17 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 export const useLessonProgress = (
   lessonId: string | undefined, 
   courseId: string | undefined, 
-  initialCompleted?: boolean
+  initialCompleted: boolean = false
 ) => {
-  const [completed, setCompleted] = useState<boolean>(initialCompleted || false);
+  const [completed, setCompleted] = useState<boolean>(initialCompleted);
   const { toast } = useToast();
-  const initializedRef = useRef(false);
 
-  // Update state when initialCompleted prop changes, but only once on mount
-  // or when initialCompleted actually changes value
-  useEffect(() => {
-    // Se é a primeira renderização ou se o initialCompleted realmente mudou
-    if (!initializedRef.current || (initialCompleted !== undefined && initialCompleted !== completed)) {
-      setCompleted(initialCompleted || false);
-      initializedRef.current = true;
-    }
-  }, [initialCompleted]);
-
-  const markLessonCompleted = async () => {
+  const markLessonCompleted = useCallback(async () => {
     if (!lessonId || !courseId) return;
     
     try {
@@ -121,7 +110,7 @@ export const useLessonProgress = (
         variant: 'destructive',
       });
     }
-  };
+  }, [completed, courseId, lessonId, toast]);
 
   return { completed, markLessonCompleted };
 };
