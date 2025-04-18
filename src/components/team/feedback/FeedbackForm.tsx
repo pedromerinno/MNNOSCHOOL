@@ -17,7 +17,7 @@ interface FeedbackFormProps {
 export const FeedbackForm = ({ toUser, onFeedbackSent }: FeedbackFormProps) => {
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const { selectedCompany } = useCompanies();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,13 +57,12 @@ export const FeedbackForm = ({ toUser, onFeedbackSent }: FeedbackFormProps) => {
       // Call the callback if provided
       if (onFeedbackSent && data) {
         // Add the from_profile to match the expected format
-        const userDisplayName = user.email || user.id; // Using email as fallback
         const enrichedFeedback = {
           ...data,
           from_profile: {
             id: user.id,
-            display_name: userDisplayName,
-            avatar: null // Default to null if avatar is not available
+            display_name: userProfile.displayName || user.email || user.id,
+            avatar: userProfile.avatar || null
           }
         };
         onFeedbackSent(enrichedFeedback);
