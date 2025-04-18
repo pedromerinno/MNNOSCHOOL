@@ -32,7 +32,6 @@ const TeamMemberProfile = () => {
   const [member, setMember] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
-  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchMemberProfile = async () => {
@@ -98,55 +97,45 @@ const TeamMemberProfile = () => {
     fetchMemberProfile();
   }, [memberId, selectedCompany]);
 
-  const handleSubmitFeedback = async (feedback: string) => {
-    if (!selectedCompany || !memberId) return;
+  // Listen for new feedbacks and update the list
+  useEffect(() => {
+    if (!memberId || !selectedCompany) return;
 
-    try {
-      setSubmitting(true);
-      
-      const { data: userData } = await supabase.auth.getUser();
-      const currentUserId = userData.user?.id;
-      
-      if (!currentUserId) {
-        toast.error("Erro ao identificar usuário atual");
-        return;
-      }
+    const channel = supabase
+      .channel('user_feedbacks_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'user_feedbacks',
+          filter: `to_user_id=eq.${memberId}`
+        },
+        async (payload) => {
+          const newFeedback = payload.new as any;
+          
+          // Fetch the sender's profile
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('id, display_name, avatar')
+            .eq('id', newFeedback.from_user_id)
+            .single();
+          
+          const enrichedFeedback = {
+            ...newFeedback,
+            from_profile: profileData || null
+          };
+          
+          // Add the new feedback to the list
+          setFeedbacks(prev => [enrichedFeedback, ...prev]);
+        }
+      )
+      .subscribe();
 
-      const { data: insertedFeedback, error } = await supabase
-        .from('user_feedbacks')
-        .insert({
-          from_user_id: currentUserId,
-          to_user_id: memberId,
-          company_id: selectedCompany.id,
-          content: feedback
-        })
-        .select('id, content, created_at, from_user_id')
-        .single();
-
-      if (error) {
-        throw error;
-      }
-
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('id, display_name, avatar')
-        .eq('id', currentUserId)
-        .single();
-
-      const newFeedback = {
-        ...insertedFeedback,
-        from_profile: profileData || null
-      };
-
-      setFeedbacks([newFeedback, ...feedbacks]);
-      toast.success("Feedback enviado com sucesso!");
-    } catch (err: any) {
-      console.error('Error sending feedback:', err);
-      toast.error(err.message || "Erro ao enviar feedback");
-    } finally {
-      setSubmitting(false);
-    }
-  };
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [memberId, selectedCompany]);
 
   if (isLoading) {
     return <LoadingState />;
@@ -184,11 +173,8 @@ const TeamMemberProfile = () => {
           </div>
           
           <div className="md:col-span-2">
-            <FeedbackForm 
-              memberName={member.display_name}
-              onSubmit={handleSubmitFeedback}
-              isSubmitting={submitting}
-            />
+            {/* Updated to use the new FeedbackForm API */}
+            <FeedbackForm toUser={member} />
             <FeedbackList feedbacks={feedbacks} />
           </div>
         </div>
