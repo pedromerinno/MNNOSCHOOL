@@ -9,9 +9,7 @@ export interface Company {
   valores: string | null;
   video_institucional: string | null;
   descricao_video: string | null;
-  cor_principal: string | null;
-  descricao: string | null;  // Added property
-  responsavel: string | null;  // Added property
+  cor_principal: string | null; // New column added
   created_at: string;
   updated_at: string;
 }
