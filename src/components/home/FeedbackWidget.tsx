@@ -51,12 +51,19 @@ export const FeedbackWidget = () => {
                   <img 
                     src={feedbacks[0].from_profile?.avatar || 'https://i.pravatar.cc/150'} 
                     alt={`${feedbacks[0].from_profile?.display_name || 'Usuário'} avatar`}
-                    className="h-8 w-8 rounded-full mr-4"
+                    className="h-8 w-8 rounded-full mr-4 object-cover"
                   />
-                  <span className="text-base font-medium text-black dark:text-white mr-6">
-                    {feedbacks[0].from_profile?.display_name || 'Usuário'}
-                  </span>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                  <div className="flex flex-col">
+                    <span className="text-base font-medium text-black dark:text-white">
+                      {feedbacks[0].from_profile?.display_name || 'Usuário'}
+                    </span>
+                    {feedbacks[0].from_profile?.cargo && (
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        {feedbacks[0].from_profile.cargo}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-sm text-gray-500 dark:text-gray-400 ml-auto">
                     {formatDate(feedbacks[0].created_at)}
                   </span>
                 </div>

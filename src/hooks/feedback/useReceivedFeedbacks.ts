@@ -12,6 +12,7 @@ export interface ReceivedFeedback {
     id: string;
     display_name: string | null;
     avatar: string | null;
+    cargo: string | null;
   } | null;
 }
 
@@ -36,9 +37,20 @@ export const useReceivedFeedbacks = () => {
           throw new Error('User not authenticated');
         }
 
+        // Fetch feedbacks with user profile information in a single query
         const { data: feedbackData, error } = await supabase
           .from('user_feedbacks')
-          .select('id, content, created_at, from_user_id')
+          .select(`
+            id,
+            content,
+            created_at,
+            from_profile:from_user_id (
+              id,
+              display_name,
+              avatar,
+              cargo
+            )
+          `)
           .eq('to_user_id', user.id)
           .eq('company_id', selectedCompany.id)
           .order('created_at', { ascending: false })
@@ -48,26 +60,7 @@ export const useReceivedFeedbacks = () => {
           throw error;
         }
 
-        if (feedbackData && feedbackData.length > 0) {
-          const enrichedFeedbacks = await Promise.all(
-            feedbackData.map(async (fb) => {
-              const { data: profileData } = await supabase
-                .from('profiles')
-                .select('id, display_name, avatar')
-                .eq('id', fb.from_user_id)
-                .single();
-              
-              return {
-                ...fb,
-                from_profile: profileData || null
-              };
-            })
-          );
-          
-          setFeedbacks(enrichedFeedbacks);
-        } else {
-          setFeedbacks([]);
-        }
+        setFeedbacks(feedbackData || []);
       } catch (err) {
         console.error('Error fetching feedbacks:', err);
         toast.error("Erro ao carregar feedbacks");
