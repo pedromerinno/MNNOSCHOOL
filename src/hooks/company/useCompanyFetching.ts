@@ -54,6 +54,8 @@ export const useCompanyFetching = ({
   const fetchInProgressRef = React.useRef(false);
   // Track abort controllers for active requests
   const abortControllerRef = useRef<AbortController | null>(null);
+  // Track last successful fetch time for this specific hook instance
+  const lastSuccessfulFetchRef = useRef<number>(0);
   
   /**
    * Fetches user companies with rate limiting and caching
@@ -62,6 +64,18 @@ export const useCompanyFetching = ({
     userId: string, 
     forceRefresh: boolean = false
   ): Promise<Company[]> => {
+    // Implement a specific throttling for this component - minimum 30 seconds between fetches
+    // unless forced refresh is explicitly requested
+    const now = Date.now();
+    const timeSinceLastSuccess = now - lastSuccessfulFetchRef.current;
+    const COMPONENT_SPECIFIC_THROTTLE = 30000; // 30 seconds
+    
+    if (!forceRefresh && lastSuccessfulFetchRef.current > 0 && 
+        timeSinceLastSuccess < COMPONENT_SPECIFIC_THROTTLE && userCompanies.length > 0) {
+      console.log(`[useCompanyFetching] Last successful fetch was ${Math.round(timeSinceLastSuccess/1000)}s ago. Using cached data.`);
+      return userCompanies;
+    }
+    
     // Cancel any existing requests if forcing a refresh
     if (forceRefresh && abortControllerRef.current) {
       console.log('Cancelling previous request due to forced refresh');
@@ -108,6 +122,9 @@ export const useCompanyFetching = ({
       
       // Update timestamp of successful request
       completeRequest();
+      
+      // Record the timestamp of the successful fetch for this instance
+      lastSuccessfulFetchRef.current = Date.now();
       
       // Cache the companies when we successfully fetch them
       if (result && result.length > 0) {

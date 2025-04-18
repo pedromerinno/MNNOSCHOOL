@@ -1,8 +1,8 @@
 
 import { useRef } from "react";
 
-// Reducing this to 5 seconds to improve user experience while still preventing excessive API calls
-export const MIN_REQUEST_INTERVAL = 5000; // 5 seconds 
+// Increasing to 10 seconds to reduce frequency of API calls during errors
+export const MIN_REQUEST_INTERVAL = 10000; // 10 seconds 
 
 export const useCompanyRequest = () => {
   // Timestamp of the last request
@@ -11,6 +11,8 @@ export const useCompanyRequest = () => {
   const isFetchingRef = useRef<boolean>(false);
   // Request queue to manage concurrent requests
   const pendingRequestsRef = useRef<number>(0);
+  // Maximum number of concurrent requests to prevent resource exhaustion
+  const MAX_CONCURRENT_REQUESTS = 2;
   
   /**
    * Checks if a new request should be made based on timing and current state
@@ -22,7 +24,13 @@ export const useCompanyRequest = () => {
   ): boolean => {
     const now = Date.now();
     
-    // If forced update, always allow
+    // If there are too many pending requests, block new ones
+    if (pendingRequestsRef.current >= MAX_CONCURRENT_REQUESTS) {
+      console.log(`[Company Request] Too many concurrent requests (${pendingRequestsRef.current}). Throttling.`);
+      return false;
+    }
+    
+    // If forced update, always allow (but still respect concurrent request limit)
     if (forceRefresh) {
       console.log('[Company Request] Forcing data refresh as requested.');
       return true;

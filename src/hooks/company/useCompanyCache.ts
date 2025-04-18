@@ -1,8 +1,8 @@
 
 import { Company } from "@/types/company";
 
-// Time to cache in minutes
-const CACHE_EXPIRATION_MINUTES = 60; // 1 hour cache
+// Increase cache time to reduce API calls
+const CACHE_EXPIRATION_MINUTES = 120; // 2 hours cache
 
 /**
  * Hook for caching company data to reduce API calls
@@ -44,6 +44,7 @@ export const useCompanyCache = () => {
       return companies;
     } catch (e) {
       console.error("[Company Cache] Error retrieving companies from cache:", e);
+      clearCachedUserCompanies(); // Clear corrupted cache data
       return null;
     }
   };
@@ -52,12 +53,26 @@ export const useCompanyCache = () => {
    * Cache user companies
    */
   const cacheUserCompanies = (companies: Company[]): void => {
+    if (!companies || companies.length === 0) {
+      console.log("[Company Cache] No companies to cache, skipping");
+      return;
+    }
+    
     try {
       localStorage.setItem(USER_COMPANIES_KEY, JSON.stringify(companies));
       localStorage.setItem(USER_COMPANIES_TIMESTAMP_KEY, Date.now().toString());
       console.log(`[Company Cache] Cached ${companies.length} companies`);
     } catch (e) {
       console.error("[Company Cache] Error caching companies:", e);
+      try {
+        // If failed to store, it might be because of quota exceeded, try clearing and storing again
+        localStorage.clear();
+        localStorage.setItem(USER_COMPANIES_KEY, JSON.stringify(companies));
+        localStorage.setItem(USER_COMPANIES_TIMESTAMP_KEY, Date.now().toString());
+        console.log(`[Company Cache] Cleared cache and successfully cached ${companies.length} companies`);
+      } catch (e2) {
+        console.error("[Company Cache] Failed to cache companies even after clearing storage:", e2);
+      }
     }
   };
   
