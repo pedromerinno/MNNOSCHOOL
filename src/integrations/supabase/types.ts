@@ -503,6 +503,44 @@ export type Database = {
           },
         ]
       }
+      user_feedbacks: {
+        Row: {
+          company_id: string
+          content: string
+          created_at: string | null
+          from_user_id: string
+          id: string
+          to_user_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          company_id: string
+          content: string
+          created_at?: string | null
+          from_user_id: string
+          id?: string
+          to_user_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string
+          content?: string
+          created_at?: string | null
+          from_user_id?: string
+          id?: string
+          to_user_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_feedbacks_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_lesson_progress: {
         Row: {
           completed: boolean

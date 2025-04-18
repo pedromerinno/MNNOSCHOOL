@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -25,6 +24,7 @@ import Community from "./pages/Community";
 import Admin from "./pages/Admin";
 import Notes from "./pages/Notes";
 import Manifesto from "./pages/Manifesto";
+import Team from "./pages/Team";
 
 // Crie um cliente de consulta com configurações padrão
 const queryClient = new QueryClient({
@@ -113,6 +113,12 @@ const App = () => {
                     <Admin />
                   </>} 
                 />
+
+              <Route path="/team" element={<>
+                <MainNavigationMenu />
+                <Team />
+              </>} />
+              
               </Route>
               
               <Route path="*" element={<NotFound />} />

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -98,6 +97,17 @@ export const NavMenuLinks = () => {
             )}
           >
             Comunidade
+          </Link>
+        </li>
+        <li>
+          <Link 
+            to="/team" 
+            className={cn(
+              "text-sm text-[rgb(107_114_128)] dark:text-gray-300 hover:text-merinno-primary hover:dark:text-merinno-primary-light px-3 py-2",
+              isCurrentPage('/team') && "font-bold text-gray-700"
+            )}
+          >
+            Equipe
           </Link>
         </li>
         {isAdmin && (
