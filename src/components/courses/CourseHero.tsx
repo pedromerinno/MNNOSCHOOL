@@ -1,8 +1,9 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Share } from 'lucide-react';
+import { Share, Heart } from 'lucide-react';
 import { FavoriteButton } from './FavoriteButton';
+import { useNavigate } from 'react-router-dom';
 
 interface CourseHeroProps {
   imageUrl: string | null;
@@ -10,6 +11,7 @@ interface CourseHeroProps {
   instructor: string;
   favorite: boolean;
   courseId: string;
+  firstLessonId?: string;
 }
 
 export const CourseHero: React.FC<CourseHeroProps> = ({ 
@@ -17,8 +19,17 @@ export const CourseHero: React.FC<CourseHeroProps> = ({
   title,
   instructor,
   favorite,
-  courseId
+  courseId,
+  firstLessonId
 }) => {
+  const navigate = useNavigate();
+
+  const handleStartLearning = () => {
+    if (firstLessonId) {
+      navigate(`/courses/${courseId}/lessons/${firstLessonId}`);
+    }
+  };
+
   return (
     <div className="relative rounded-xl overflow-hidden h-[350px] bg-[#1A1F2C] text-white">
       {/* Full-width background image */}
@@ -46,7 +57,11 @@ export const CourseHero: React.FC<CourseHeroProps> = ({
           </div>
           
           <div className="flex justify-between items-end">
-            <Button variant="default" className="bg-[#1EAEDB] hover:bg-[#0FA0CE]">
+            <Button 
+              variant="outline" 
+              className="bg-white hover:bg-white/90 text-black"
+              onClick={handleStartLearning}
+            >
               Começar a Aprender
             </Button>
             
@@ -54,7 +69,7 @@ export const CourseHero: React.FC<CourseHeroProps> = ({
               <FavoriteButton 
                 courseId={courseId} 
                 initialFavorite={favorite} 
-                iconOnly={false} 
+                iconOnly={true}
                 className="bg-white/20 hover:bg-white/30 text-white border-0"
               />
               

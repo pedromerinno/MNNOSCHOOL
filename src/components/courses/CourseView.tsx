@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCourseData } from '@/hooks/useCourseData';
@@ -26,6 +25,8 @@ export const CourseView: React.FC = () => {
   if (!course) {
     return <CourseNotFound />;
   }
+
+  const firstLessonId = course.lessons && course.lessons.length > 0 ? course.lessons[0].id : undefined;
 
   // Calculate total duration of the course
   const totalDuration = course.lessons && course.lessons.length > 0 
@@ -59,6 +60,7 @@ export const CourseView: React.FC = () => {
           instructor={course.instructor || ""}
           favorite={course.favorite || false}
           courseId={course.id}
+          firstLessonId={firstLessonId}
         />
       </div>
       

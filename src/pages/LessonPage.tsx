@@ -69,7 +69,7 @@ const LessonPage = () => {
             />
             
             <div className="max-w-full">
-              <CourseDescription description={lesson.course_description || null} />
+              <CourseDescription description={lesson.description || null} />
               
               <LessonActions
                 completed={completed}
