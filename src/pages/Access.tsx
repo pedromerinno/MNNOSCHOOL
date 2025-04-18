@@ -26,6 +26,9 @@ const Access = () => {
 
       setIsLoading(true);
       try {
+        console.log('Fetching access items for company:', selectedCompany.id);
+        
+        // First check if user is associated with this company
         const { data: userCompanyRelation, error: relationError } = await supabase
           .from('user_empresa')
           .select('*')
@@ -33,9 +36,14 @@ const Access = () => {
           .eq('empresa_id', selectedCompany.id)
           .maybeSingle();
         
-        if (relationError) throw relationError;
+        if (relationError) {
+          console.error('Error checking user-company relation:', relationError);
+          throw relationError;
+        }
         
+        // If user is related to this company, fetch access items
         if (userCompanyRelation) {
+          console.log('User is related to company, fetching access items');
           const { data, error } = await supabase
             .from('company_access')
             .select('*')
@@ -44,6 +52,7 @@ const Access = () => {
           
           if (error) throw error;
           
+          console.log('Access items fetched:', data?.length);
           setAccessItems(data as AccessItem[] || []);
         } else {
           console.log('User does not have permission to view accesses for this company');
