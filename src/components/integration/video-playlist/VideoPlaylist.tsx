@@ -21,12 +21,9 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
   mainVideoDescription
 }) => {
   const { selectedCompany } = useCompanies();
-  
-  // State for videos from the database
   const [videos, setVideos] = useState<CompanyVideo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Inicializar com o vídeo principal ou com o primeiro vídeo da playlist
   const initialVideo = mainVideo || (videos.length > 0 ? videos[0].video_url : '');
   const initialDescription = mainVideoDescription || (videos.length > 0 ? videos[0].description || '' : '');
   
@@ -34,7 +31,6 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
   const [currentDescription, setCurrentDescription] = useState(initialDescription);
   const [selectedVideoIndex, setSelectedVideoIndex] = useState<number | null>(null);
 
-  // Fetch videos from database
   useEffect(() => {
     const fetchVideos = async () => {
       if (!companyId) return;
@@ -51,7 +47,6 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
         
         setVideos(data || []);
         
-        // If we have videos and no current video is set, set the first one
         if (data && data.length > 0 && !currentVideo) {
           setCurrentVideo(data[0].video_url);
           setCurrentDescription(data[0].description || '');
@@ -66,23 +61,19 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
     fetchVideos();
   }, [companyId]);
 
-  // Update initialVideo and initialDescription when videos are loaded
   useEffect(() => {
-    // Only update if we don't have a current video yet
     if (!currentVideo && videos.length > 0) {
       setCurrentVideo(videos[0].video_url);
       setCurrentDescription(videos[0].description || '');
     }
   }, [videos]);
 
-  // Função para selecionar um vídeo da playlist
   const handleSelectVideo = (video: CompanyVideo, index: number) => {
     setCurrentVideo(video.video_url);
     setCurrentDescription(video.description || '');
     setSelectedVideoIndex(index);
   };
 
-  // If no videos are available and no main video, display a message
   if (!mainVideo && videos.length === 0 && !isLoading) {
     return <NoVideosAvailable />;
   }
