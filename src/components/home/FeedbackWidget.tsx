@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from 'date-fns';
-import { pt } from 'date-fns/locale';
+import { pt } from 'date-fns/locale/pt-BR';
 import { useReceivedFeedbacks } from "@/hooks/feedback/useReceivedFeedbacks";
 import { supabase } from "@/integrations/supabase/client";
 
