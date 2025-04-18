@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -42,36 +43,50 @@ const TeamMemberProfile = () => {
       try {
         setIsLoading(true);
         
-        const [profileResponse, feedbackResponse] = await Promise.all([
-          supabase
-            .from('profiles')
-            .select('id, display_name, email, cargo, avatar, is_admin')
-            .eq('id', memberId)
-            .single(),
-            
-          supabase
-            .from('user_feedbacks')
-            .select(`
-              id, 
-              content, 
-              created_at, 
-              from_user_id,
-              from_profile:profiles!user_feedbacks_from_user_id_fkey (
-                id,
-                display_name,
-                avatar
-              )
-            `)
-            .eq('to_user_id', memberId)
-            .eq('company_id', selectedCompany.id)
-            .order('created_at', { ascending: false })
-        ]);
+        // Get the member profile
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, display_name, email, cargo, avatar, is_admin')
+          .eq('id', memberId)
+          .single();
 
-        if (profileResponse.error) throw profileResponse.error;
-        if (feedbackResponse.error) throw feedbackResponse.error;
+        if (profileError) throw profileError;
+        setMember(profileData);
 
-        setMember(profileResponse.data);
-        setFeedbacks(feedbackResponse.data || []);
+        // Get the feedbacks for the member without the join
+        const { data: feedbackData, error: feedbackError } = await supabase
+          .from('user_feedbacks')
+          .select('id, content, created_at, from_user_id')
+          .eq('to_user_id', memberId)
+          .eq('company_id', selectedCompany.id)
+          .order('created_at', { ascending: false });
+
+        if (feedbackError) throw feedbackError;
+
+        // Get profile information for each feedback sender separately
+        const enrichedFeedbacks = await Promise.all(
+          (feedbackData || []).map(async (feedback) => {
+            if (!feedback.from_user_id) {
+              return {
+                ...feedback,
+                from_profile: null
+              };
+            }
+
+            const { data: fromProfileData } = await supabase
+              .from('profiles')
+              .select('id, display_name, avatar')
+              .eq('id', feedback.from_user_id)
+              .single();
+
+            return {
+              ...feedback,
+              from_profile: fromProfileData || null
+            };
+          })
+        );
+
+        setFeedbacks(enrichedFeedbacks);
       } catch (err) {
         console.error('Error fetching member profile or feedbacks:', err);
         toast.error("Erro ao carregar dados do perfil");
