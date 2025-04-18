@@ -3,7 +3,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale/pt-BR';
 import { useReceivedFeedbacks } from "@/hooks/feedback/useReceivedFeedbacks";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -15,6 +14,17 @@ export const FeedbackWidget = () => {
     const { data } = await supabase.auth.getUser();
     if (data.user) {
       navigate(`/team/${data.user.id}`);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      return formatDistanceToNow(new Date(dateString), {
+        addSuffix: true
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'recentemente';
     }
   };
 
@@ -47,10 +57,7 @@ export const FeedbackWidget = () => {
                     {feedbacks[0].from_profile?.display_name || 'Usuário'}
                   </span>
                   <span className="text-sm text-gray-500 dark:text-gray-400">
-                    {formatDistanceToNow(new Date(feedbacks[0].created_at), {
-                      addSuffix: true,
-                      locale: ptBR
-                    })}
+                    {formatDate(feedbacks[0].created_at)}
                   </span>
                 </div>
                 <button 
