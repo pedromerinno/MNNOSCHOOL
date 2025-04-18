@@ -1,32 +1,10 @@
 
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Textarea } from "@/components/ui/textarea";
-
-interface FeedbackProfile {
-  id: string;
-  display_name: string | null;
-  avatar: string | null;
-}
-
-interface Feedback {
-  id: string;
-  content: string;
-  created_at: string;
-  from_user_id: string;
-  from_profile?: FeedbackProfile | null;
-}
+import { FeedbackItem } from "./FeedbackItem";
+import { Feedback } from "./types";
 
 interface FeedbackListProps {
   feedbacks: Feedback[];
@@ -34,51 +12,6 @@ interface FeedbackListProps {
 
 export const FeedbackList = ({ feedbacks: initialFeedbacks }: FeedbackListProps) => {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>(initialFeedbacks);
-  const [editingFeedbackId, setEditingFeedbackId] = useState<string | null>(null);
-  const [editContent, setEditContent] = useState<string>("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleStartEdit = (feedback: Feedback) => {
-    setEditingFeedbackId(feedback.id);
-    setEditContent(feedback.content);
-  };
-
-  const handleCancelEdit = () => {
-    setEditingFeedbackId(null);
-    setEditContent("");
-  };
-
-  const handleSaveEdit = async (feedbackId: string) => {
-    if (!editContent.trim()) return;
-
-    try {
-      setIsSubmitting(true);
-
-      const { error } = await supabase
-        .from('user_feedbacks')
-        .update({ content: editContent })
-        .eq('id', feedbackId);
-
-      if (error) throw error;
-
-      // Update local state
-      setFeedbacks(prev => 
-        prev.map(feedback => 
-          feedback.id === feedbackId 
-            ? { ...feedback, content: editContent } 
-            : feedback
-        )
-      );
-
-      toast.success("Feedback atualizado com sucesso");
-      setEditingFeedbackId(null);
-    } catch (error) {
-      console.error('Erro ao atualizar feedback:', error);
-      toast.error("Erro ao atualizar feedback");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleDeleteFeedback = async (feedbackId: string) => {
     try {
@@ -89,13 +22,35 @@ export const FeedbackList = ({ feedbacks: initialFeedbacks }: FeedbackListProps)
 
       if (error) throw error;
       
-      // Update local state
       setFeedbacks(prev => prev.filter(feedback => feedback.id !== feedbackId));
-      
       toast.success("Feedback excluído com sucesso");
     } catch (error) {
       console.error('Erro ao excluir feedback:', error);
       toast.error("Erro ao excluir feedback");
+    }
+  };
+
+  const handleUpdateFeedback = async (feedbackId: string, content: string) => {
+    try {
+      const { error } = await supabase
+        .from('user_feedbacks')
+        .update({ content })
+        .eq('id', feedbackId);
+
+      if (error) throw error;
+
+      setFeedbacks(prev => 
+        prev.map(feedback => 
+          feedback.id === feedbackId 
+            ? { ...feedback, content } 
+            : feedback
+        )
+      );
+
+      toast.success("Feedback atualizado com sucesso");
+    } catch (error) {
+      console.error('Erro ao atualizar feedback:', error);
+      toast.error("Erro ao atualizar feedback");
     }
   };
 
@@ -114,83 +69,12 @@ export const FeedbackList = ({ feedbacks: initialFeedbacks }: FeedbackListProps)
         ) : (
           <div className="space-y-6">
             {feedbacks.map((feedback) => (
-              <div key={feedback.id} className="border-b border-gray-200 dark:border-gray-800 pb-6 last:border-0 last:pb-0">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-start space-x-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback>
-                        {feedback.from_profile?.display_name?.substring(0, 2).toUpperCase() || 'U'}
-                      </AvatarFallback>
-                      {feedback.from_profile?.avatar && (
-                        <AvatarImage src={feedback.from_profile.avatar} alt={feedback.from_profile.display_name || ''} />
-                      )}
-                    </Avatar>
-                    <div>
-                      <p className="font-medium">{feedback.from_profile?.display_name || 'Usuário Desconhecido'}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {new Date(feedback.created_at).toLocaleDateString('pt-BR', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => handleStartEdit(feedback)}
-                      >
-                        <Pencil className="h-4 w-4 mr-2" />
-                        Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-red-600 dark:text-red-400"
-                        onClick={() => handleDeleteFeedback(feedback.id)}
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Excluir
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-                
-                {editingFeedbackId === feedback.id ? (
-                  <div className="pl-11 space-y-2">
-                    <Textarea 
-                      value={editContent}
-                      onChange={(e) => setEditContent(e.target.value)}
-                      className="min-h-[100px] w-full"
-                    />
-                    <div className="flex justify-end gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={handleCancelEdit}
-                      >
-                        Cancelar
-                      </Button>
-                      <Button 
-                        size="sm"
-                        onClick={() => handleSaveEdit(feedback.id)}
-                        disabled={!editContent.trim() || isSubmitting}
-                      >
-                        Salvar
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-gray-700 dark:text-gray-300 pl-11">{feedback.content}</p>
-                )}
-              </div>
+              <FeedbackItem
+                key={feedback.id}
+                feedback={feedback}
+                onDelete={handleDeleteFeedback}
+                onUpdate={handleUpdateFeedback}
+              />
             ))}
           </div>
         )}
