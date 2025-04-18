@@ -49,7 +49,7 @@ export const FeedbackWidget = () => {
                   <span className="text-sm text-gray-500 dark:text-gray-400">
                     {formatDistanceToNow(new Date(feedbacks[0].created_at), {
                       addSuffix: true,
-                      locale: ptBR
+                      locale: pt
                     })}
                   </span>
                 </div>
