@@ -35,6 +35,7 @@ export const useTeamMembers = () => {
           throw error;
         }
 
+        // Transformar os dados para combinar com a estrutura UserProfile
         const teamMembers: UserProfile[] = data
           .map(item => item.profiles)
           .filter(Boolean);

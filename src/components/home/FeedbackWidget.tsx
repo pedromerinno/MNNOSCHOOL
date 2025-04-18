@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from 'date-fns';
 import { useReceivedFeedbacks } from "@/hooks/feedback/useReceivedFeedbacks";
 import { supabase } from "@/integrations/supabase/client";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export const FeedbackWidget = () => {
   const { feedbacks, loading } = useReceivedFeedbacks();
@@ -48,11 +49,16 @@ export const FeedbackWidget = () => {
               </p>
               <div className="flex flex-col">
                 <div className="flex items-center mb-4">
-                  <img 
-                    src={feedbacks[0].from_profile?.avatar || 'https://i.pravatar.cc/150'} 
-                    alt={`${feedbacks[0].from_profile?.display_name || 'Usuário'} avatar`}
-                    className="h-8 w-8 rounded-full mr-4 object-cover"
-                  />
+                  <Avatar className="h-8 w-8 mr-4">
+                    <AvatarImage 
+                      src={feedbacks[0].from_profile?.avatar || 'https://i.pravatar.cc/150'} 
+                      alt={`${feedbacks[0].from_profile?.display_name || 'Usuário'} avatar`}
+                      className="object-cover"
+                    />
+                    <AvatarFallback>
+                      {(feedbacks[0].from_profile?.display_name || 'U').charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
                   <div className="flex flex-col">
                     <span className="text-base font-medium text-black dark:text-white">
                       {feedbacks[0].from_profile?.display_name || 'Usuário'}
@@ -68,8 +74,9 @@ export const FeedbackWidget = () => {
                   </span>
                 </div>
                 <button 
-                  onClick={() => navigate(`/team/${feedbacks[0].from_profile?.id}`)}
+                  onClick={() => feedbacks[0].from_profile?.id ? navigate(`/team/${feedbacks[0].from_profile.id}`) : null}
                   className="self-start px-8 py-3 rounded-full bg-white/80 dark:bg-white/10 text-black dark:text-white hover:bg-white dark:hover:bg-white/20 transition-colors"
+                  disabled={!feedbacks[0].from_profile?.id}
                 >
                   retribuir
                 </button>

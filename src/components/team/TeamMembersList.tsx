@@ -20,18 +20,18 @@ export const TeamMembersList = ({ members }: TeamMembersListProps) => {
           <CardContent className="p-6">
             <div className="flex items-start space-x-4">
               <Avatar className="h-12 w-12">
+                <AvatarImage src={member.avatar || undefined} alt={member.display_name || ''} />
                 <AvatarFallback>
                   {member.display_name?.substring(0, 2).toUpperCase() || 'U'}
                 </AvatarFallback>
-                {member.avatar && <AvatarImage src={member.avatar} alt={member.display_name || ''} />}
               </Avatar>
               
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                  {member.display_name}
+                  {member.display_name || 'Usuário'}
                 </p>
                 <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                  {member.email}
+                  {member.email || ''}
                 </p>
                 {member.cargo && (
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
