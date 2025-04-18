@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -9,6 +8,8 @@ export interface UserProfile {
   email: string | null;
   display_name: string | null;
   is_admin: boolean | null;
+  avatar?: string | null;
+  cargo?: string | null;
 }
 
 export function useUsers() {
@@ -60,7 +61,7 @@ export function useUsers() {
       // Get the profiles with basic information including email
       const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('id, display_name, is_admin, email, created_at');
+        .select('id, display_name, is_admin, email, created_at, avatar, cargo');
       
       if (error) {
         throw error;
@@ -71,7 +72,9 @@ export function useUsers() {
         id: profile.id,
         email: profile.email || profile.id.toLowerCase() + '@example.com', // Use email from DB or fallback
         display_name: profile.display_name || `User ${profile.id.substring(0, 6)}`,
-        is_admin: profile.is_admin
+        is_admin: profile.is_admin,
+        avatar: profile.avatar,
+        cargo: profile.cargo
       }));
       
       setUsers(formattedUsers);

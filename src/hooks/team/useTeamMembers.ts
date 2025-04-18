@@ -27,7 +27,7 @@ export const useTeamMembers = () => {
           .from('user_empresa')
           .select(`
             user_id,
-            profiles:user_id(id, display_name, email, cargo, avatar)
+            profiles:user_id(id, display_name, email, cargo, avatar, is_admin)
           `)
           .eq('empresa_id', selectedCompany.id);
 
