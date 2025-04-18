@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -10,11 +10,15 @@ export const useLessonProgress = (
 ) => {
   const [completed, setCompleted] = useState<boolean>(initialCompleted || false);
   const { toast } = useToast();
+  const initializedRef = useRef(false);
 
-  // Update state when initialCompleted prop changes
+  // Update state when initialCompleted prop changes, but only once on mount
+  // or when initialCompleted actually changes value
   useEffect(() => {
-    if (initialCompleted !== undefined) {
-      setCompleted(initialCompleted);
+    // Se é a primeira renderização ou se o initialCompleted realmente mudou
+    if (!initializedRef.current || (initialCompleted !== undefined && initialCompleted !== completed)) {
+      setCompleted(initialCompleted || false);
+      initializedRef.current = true;
     }
   }, [initialCompleted]);
 
