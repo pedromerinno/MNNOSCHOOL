@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useCompanies } from "@/hooks/useCompanies";
 import { CompanyThemedBadge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Carousel,
   CarouselContent,
@@ -23,23 +24,40 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], lo
   const navigate = useNavigate();
   const { selectedCompany } = useCompanies();
 
-  // Show empty state if no courses or still loading
+  // Loading state with Skeleton UI
   if (loading) {
     return (
-      <div className="w-full h-[500px] rounded-2xl bg-gray-100 animate-pulse flex items-center justify-center">
-        <p className="text-gray-500">Loading featured courses...</p>
+      <div className="w-full h-[500px] rounded-2xl overflow-hidden relative">
+        <Skeleton className="w-full h-full absolute inset-0" />
+        <div className="absolute inset-0 p-8 flex flex-col justify-end">
+          <Skeleton className="w-24 h-8 mb-4" />
+          <Skeleton className="w-3/4 h-12 mb-4" />
+          <Skeleton className="w-1/2 h-4 mb-2" />
+          <Skeleton className="w-1/3 h-4 mb-8" />
+          <div className="flex justify-between items-end">
+            <div className="space-y-2">
+              <Skeleton className="w-32 h-8" />
+            </div>
+            <Skeleton className="w-32 h-10" />
+          </div>
+        </div>
       </div>
     );
   }
 
+  // Empty state with better messaging
   if (!courses || courses.length === 0) {
     return (
-      <div className="w-full h-[500px] rounded-2xl bg-gray-100 flex items-center justify-center">
-        <p className="text-gray-500">No featured courses available</p>
+      <div className="w-full h-[500px] rounded-2xl bg-gray-100 dark:bg-gray-800 flex flex-col items-center justify-center p-8 text-center">
+        <h3 className="text-xl font-semibold mb-2">Nenhum curso em destaque disponível</h3>
+        <p className="text-gray-500 dark:text-gray-400 max-w-md">
+          Esta empresa ainda não possui cursos em destaque ou você não tem acesso a eles.
+        </p>
       </div>
     );
   }
 
+  // Normal carousel with courses
   return (
     <div className="w-full relative">
       <Carousel>
@@ -61,6 +79,10 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], lo
                           src={selectedCompany.logo} 
                           alt={selectedCompany.nome}
                           className="w-full h-full object-cover rounded-full"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = "/placeholder.svg";
+                          }}
                         />
                       </div>
                     </div>
@@ -103,8 +125,12 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], lo
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="absolute left-[-50px] top-1/2 -translate-y-1/2" />
-        <CarouselNext className="absolute right-[-50px] top-1/2 -translate-y-1/2" />
+        {courses.length > 1 && (
+          <>
+            <CarouselPrevious className="absolute left-[-20px] md:left-[-50px] top-1/2 -translate-y-1/2" />
+            <CarouselNext className="absolute right-[-20px] md:right-[-50px] top-1/2 -translate-y-1/2" />
+          </>
+        )}
       </Carousel>
     </div>
   );
