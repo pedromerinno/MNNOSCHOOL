@@ -5,15 +5,16 @@ import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useReceivedFeedbacks } from "@/hooks/feedback/useReceivedFeedbacks";
+import { supabase } from "@/integrations/supabase/client";
 
 export const FeedbackWidget = () => {
   const { feedbacks, loading } = useReceivedFeedbacks();
   const navigate = useNavigate();
 
-  const goToTeamProfile = () => {
-    const { data: { user } } = supabase.auth.getUser();
-    if (user) {
-      navigate(`/team/${user.id}`);
+  const goToTeamProfile = async () => {
+    const { data } = await supabase.auth.getUser();
+    if (data.user) {
+      navigate(`/team/${data.user.id}`);
     }
   };
 
