@@ -1,5 +1,6 @@
 
 import { UserProfile } from "@/contexts/types/auth-types";
+import { User } from "@supabase/supabase-js";
 
 export interface UseProfileState {
   userProfile: UserProfile;
