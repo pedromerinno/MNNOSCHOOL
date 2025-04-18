@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -104,26 +105,29 @@ const TeamMemberProfile = () => {
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',  // Listen for all events (INSERT, UPDATE, DELETE)
           schema: 'public',
           table: 'user_feedbacks',
           filter: `to_user_id=eq.${memberId}`
         },
         async (payload) => {
-          const newFeedback = payload.new as any;
-          
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('id, display_name, avatar')
-            .eq('id', newFeedback.from_user_id)
-            .single();
-          
-          const enrichedFeedback = {
-            ...newFeedback,
-            from_profile: profileData || null
-          };
-          
-          setFeedbacks(prev => [enrichedFeedback, ...prev]);
+          // Handle different event types
+          if (payload.eventType === 'INSERT') {
+            const newFeedback = payload.new as any;
+            
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('id, display_name, avatar')
+              .eq('id', newFeedback.from_user_id)
+              .single();
+            
+            const enrichedFeedback = {
+              ...newFeedback,
+              from_profile: profileData || null
+            };
+            
+            setFeedbacks(prev => [enrichedFeedback, ...prev]);
+          }
         }
       )
       .subscribe();

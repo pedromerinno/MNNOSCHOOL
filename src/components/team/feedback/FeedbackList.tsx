@@ -10,9 +10,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { EditFeedbackDialog } from "./EditFeedbackDialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Textarea } from "@/components/ui/textarea";
 
 interface FeedbackProfile {
   id: string;
@@ -32,9 +32,53 @@ interface FeedbackListProps {
   feedbacks: Feedback[];
 }
 
-export const FeedbackList = ({ feedbacks }: FeedbackListProps) => {
-  const [editingFeedback, setEditingFeedback] = useState<Feedback | null>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+export const FeedbackList = ({ feedbacks: initialFeedbacks }: FeedbackListProps) => {
+  const [feedbacks, setFeedbacks] = useState<Feedback[]>(initialFeedbacks);
+  const [editingFeedbackId, setEditingFeedbackId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleStartEdit = (feedback: Feedback) => {
+    setEditingFeedbackId(feedback.id);
+    setEditContent(feedback.content);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingFeedbackId(null);
+    setEditContent("");
+  };
+
+  const handleSaveEdit = async (feedbackId: string) => {
+    if (!editContent.trim()) return;
+
+    try {
+      setIsSubmitting(true);
+
+      const { error } = await supabase
+        .from('user_feedbacks')
+        .update({ content: editContent })
+        .eq('id', feedbackId);
+
+      if (error) throw error;
+
+      // Update local state
+      setFeedbacks(prev => 
+        prev.map(feedback => 
+          feedback.id === feedbackId 
+            ? { ...feedback, content: editContent } 
+            : feedback
+        )
+      );
+
+      toast.success("Feedback atualizado com sucesso");
+      setEditingFeedbackId(null);
+    } catch (error) {
+      console.error('Erro ao atualizar feedback:', error);
+      toast.error("Erro ao atualizar feedback");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleDeleteFeedback = async (feedbackId: string) => {
     try {
@@ -44,6 +88,9 @@ export const FeedbackList = ({ feedbacks }: FeedbackListProps) => {
         .eq('id', feedbackId);
 
       if (error) throw error;
+      
+      // Update local state
+      setFeedbacks(prev => prev.filter(feedback => feedback.id !== feedbackId));
       
       toast.success("Feedback excluído com sucesso");
     } catch (error) {
@@ -100,10 +147,7 @@ export const FeedbackList = ({ feedbacks }: FeedbackListProps) => {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
-                        onClick={() => {
-                          setEditingFeedback(feedback);
-                          setIsEditDialogOpen(true);
-                        }}
+                        onClick={() => handleStartEdit(feedback)}
                       >
                         <Pencil className="h-4 w-4 mr-2" />
                         Editar
@@ -118,21 +162,39 @@ export const FeedbackList = ({ feedbacks }: FeedbackListProps) => {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-                <p className="text-gray-700 dark:text-gray-300 pl-11">{feedback.content}</p>
+                
+                {editingFeedbackId === feedback.id ? (
+                  <div className="pl-11 space-y-2">
+                    <Textarea 
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      className="min-h-[100px] w-full"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={handleCancelEdit}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button 
+                        size="sm"
+                        onClick={() => handleSaveEdit(feedback.id)}
+                        disabled={!editContent.trim() || isSubmitting}
+                      >
+                        Salvar
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-gray-700 dark:text-gray-300 pl-11">{feedback.content}</p>
+                )}
               </div>
             ))}
           </div>
         )}
       </CardContent>
-
-      <EditFeedbackDialog
-        isOpen={isEditDialogOpen}
-        onClose={() => {
-          setIsEditDialogOpen(false);
-          setEditingFeedback(null);
-        }}
-        feedback={editingFeedback}
-      />
     </Card>
   );
 };
