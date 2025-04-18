@@ -16,6 +16,8 @@ export interface Lesson {
   completed?: boolean;
   content?: string | null;
   course_description?: string | null;
+  likes?: number;
+  user_liked?: boolean;
   course_lessons?: Array<{
     id: string;
     title: string;

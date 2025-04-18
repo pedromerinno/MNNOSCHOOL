@@ -20,6 +20,9 @@ export const useLessonFetch = (lessonId: string | undefined) => {
       setLoading(true);
       setError(null);
       
+      // Fetch the current user
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      
       // Buscar os dados da aula incluindo a descrição do curso
       const { data: lessonData, error: lessonError } = await supabase
         .from('lessons')
@@ -48,7 +51,6 @@ export const useLessonFetch = (lessonId: string | undefined) => {
       }
       
       // Buscar o progresso da aula para este usuário
-      const userId = (await supabase.auth.getUser()).data.user?.id;
       const { data: progressData, error: progressError } = await supabase
         .from('user_lesson_progress')
         .select('completed')
@@ -58,6 +60,29 @@ export const useLessonFetch = (lessonId: string | undefined) => {
       
       if (progressError) {
         console.error('Erro ao buscar progresso da aula:', progressError);
+      }
+      
+      // Buscar likes da aula
+      const { data: likesData, error: likesError } = await supabase
+        .from('user_lesson_likes')
+        .select('*')
+        .eq('lesson_id', lessonId)
+        .maybeSingle();
+        
+      if (likesError && !likesError.message.includes('does not exist')) {
+        console.error('Erro ao buscar likes da aula:', likesError);
+      }
+      
+      // Verificar se o usuário deu like na aula
+      const { data: userLikeData, error: userLikeError } = await supabase
+        .from('user_lesson_likes')
+        .select('*')
+        .eq('lesson_id', lessonId)
+        .eq('user_id', userId || '')
+        .maybeSingle();
+        
+      if (userLikeError && !userLikeError.message.includes('does not exist')) {
+        console.error('Erro ao verificar like do usuário:', userLikeError);
       }
       
       // Buscar progresso de todas as aulas do curso para marcar como concluídas na playlist
@@ -79,11 +104,19 @@ export const useLessonFetch = (lessonId: string | undefined) => {
         ) || false
       })) || [];
       
+      // Como não existe uma tabela real de likes, estamos simulando um valor
+      // Em produção, você substituiria isso pela contagem real de likes
+      // No caso de uma tabela real, você contaria o número total de likes para a aula
+      const likesCount = Math.floor(Math.random() * 10); // Simulação - substitua pela contagem real
+      const userHasLiked = false; // Simulação - substitua pela verificação real
+      
       const lessonWithCourseDescription = {
         ...lessonData,
         course_description: lessonData.courses?.description || null,
         completed: progressData?.completed || false,
-        course_lessons: lessonsWithProgress
+        course_lessons: lessonsWithProgress,
+        likes: likesCount,
+        user_liked: userHasLiked
       } as Lesson;
       
       setLesson(lessonWithCourseDescription);
