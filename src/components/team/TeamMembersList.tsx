@@ -1,7 +1,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Mail, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { UserProfile } from "@/hooks/useUsers";
@@ -14,44 +14,60 @@ export const TeamMembersList = ({ members }: TeamMembersListProps) => {
   const navigate = useNavigate();
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {members.map((member) => (
         <Card 
           key={member.id} 
-          className="transition-all duration-200 hover:shadow-lg hover:-translate-y-1"
+          className="group transition-all duration-200 hover:shadow-lg hover:-translate-y-1 border-0 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-background/60"
         >
           <CardContent className="p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-3 flex-1 min-w-0">
-                <Avatar className="h-10 w-10 border">
-                  <AvatarImage src={member.avatar || undefined} alt={member.display_name || ''} />
-                  <AvatarFallback className="bg-primary/10 text-primary">
-                    {member.display_name?.substring(0, 2).toUpperCase() || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-                
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">
-                    {member.display_name || 'Usuário'}
-                  </p>
-                  <p className="text-sm text-muted-foreground truncate">
-                    {member.email || ''}
-                  </p>
-                  {member.cargo && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {member.cargo}
-                    </p>
-                  )}
+            <div className="flex flex-col items-start gap-4">
+              <div className="flex items-start justify-between w-full">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-12 w-12 border-2 border-primary/10">
+                    <AvatarImage src={member.avatar || undefined} alt={member.display_name || ''} />
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      {member.display_name?.substring(0, 2).toUpperCase() || <UserRound className="h-6 w-6" />}
+                    </AvatarFallback>
+                  </Avatar>
+                  
+                  <div>
+                    <h3 className="font-medium text-lg">
+                      {member.display_name || 'Usuário'}
+                    </h3>
+                    {member.cargo && (
+                      <p className="text-sm text-muted-foreground">
+                        {member.cargo}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
+                {member.is_admin && (
+                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                    Admin
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 w-full">
                 <Button
-                  variant="ghost"
-                  size="icon"
+                  variant="outline" 
+                  size="sm"
+                  className="flex-1 gap-2"
+                  onClick={() => window.location.href = `mailto:${member.email}`}
+                >
+                  <Mail className="h-4 w-4" />
+                  Email
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="flex-1 gap-2"
                   onClick={() => navigate(`/team/${member.id}`)}
-                  className="shrink-0"
-                  title="Ver perfil e enviar feedback"
                 >
                   <MessageSquare className="h-4 w-4" />
+                  Feedback
                 </Button>
               </div>
             </div>
