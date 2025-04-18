@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -42,50 +41,37 @@ const TeamMemberProfile = () => {
 
       try {
         setIsLoading(true);
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, display_name, email, cargo, avatar, is_admin')
-          .eq('id', memberId)
-          .single();
+        
+        const [profileResponse, feedbackResponse] = await Promise.all([
+          supabase
+            .from('profiles')
+            .select('id, display_name, email, cargo, avatar, is_admin')
+            .eq('id', memberId)
+            .single(),
+            
+          supabase
+            .from('user_feedbacks')
+            .select(`
+              id, 
+              content, 
+              created_at, 
+              from_user_id,
+              from_profile:profiles!user_feedbacks_from_user_id_fkey (
+                id,
+                display_name,
+                avatar
+              )
+            `)
+            .eq('to_user_id', memberId)
+            .eq('company_id', selectedCompany.id)
+            .order('created_at', { ascending: false })
+        ]);
 
-        if (error) {
-          throw error;
-        }
+        if (profileResponse.error) throw profileResponse.error;
+        if (feedbackResponse.error) throw feedbackResponse.error;
 
-        setMember(data);
-
-        const { data: feedbackData, error: feedbackError } = await supabase
-          .from('user_feedbacks')
-          .select('id, content, created_at, from_user_id')
-          .eq('to_user_id', memberId)
-          .eq('company_id', selectedCompany.id)
-          .order('created_at', { ascending: false });
-
-        if (feedbackError) {
-          console.error("Error fetching feedbacks:", feedbackError);
-          throw feedbackError;
-        }
-
-        if (feedbackData && feedbackData.length > 0) {
-          const enrichedFeedbacks = await Promise.all(
-            feedbackData.map(async (fb) => {
-              const { data: profileData } = await supabase
-                .from('profiles')
-                .select('id, display_name, avatar')
-                .eq('id', fb.from_user_id)
-                .single();
-              
-              return {
-                ...fb,
-                from_profile: profileData || null
-              };
-            })
-          );
-          
-          setFeedbacks(enrichedFeedbacks);
-        } else {
-          setFeedbacks([]);
-        }
+        setMember(profileResponse.data);
+        setFeedbacks(feedbackResponse.data || []);
       } catch (err) {
         console.error('Error fetching member profile or feedbacks:', err);
         toast.error("Erro ao carregar dados do perfil");
@@ -111,7 +97,6 @@ const TeamMemberProfile = () => {
           filter: `to_user_id=eq.${memberId}`
         },
         async (payload) => {
-          // Handle different event types
           if (payload.eventType === 'INSERT') {
             const newFeedback = payload.new as any;
             

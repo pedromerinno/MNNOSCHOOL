@@ -5,11 +5,48 @@ import { useCompanies } from "@/hooks/useCompanies";
 import { UserProfile } from "@/hooks/useUsers";
 import { toast } from "sonner";
 
+const CACHE_KEY = 'team_members_cache';
+const CACHE_EXPIRATION = 5 * 60 * 1000; // 5 minutos
+
 export const useTeamMembers = () => {
   const [members, setMembers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const { selectedCompany } = useCompanies();
+
+  const getCachedMembers = () => {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (!cached) return null;
+
+    try {
+      const { data, timestamp, companyId } = JSON.parse(cached);
+      const now = Date.now();
+      
+      // Verificar se o cache é válido e pertence à empresa selecionada
+      if (now - timestamp < CACHE_EXPIRATION && companyId === selectedCompany?.id) {
+        console.log('Usando dados em cache para membros da equipe');
+        return data;
+      }
+      
+      localStorage.removeItem(CACHE_KEY);
+      return null;
+    } catch {
+      localStorage.removeItem(CACHE_KEY);
+      return null;
+    }
+  };
+
+  const cacheMembers = (data: UserProfile[]) => {
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify({
+        data,
+        timestamp: Date.now(),
+        companyId: selectedCompany?.id
+      }));
+    } catch (error) {
+      console.error('Erro ao cachear membros:', error);
+    }
+  };
 
   useEffect(() => {
     const fetchMembers = async () => {
@@ -20,18 +57,24 @@ export const useTeamMembers = () => {
       }
 
       try {
-        setIsLoading(true);
         setError(null);
 
-        // First, query all user_empresa relations for the selected company
+        // Tentar usar cache primeiro
+        const cachedData = getCachedMembers();
+        if (cachedData) {
+          setMembers(cachedData);
+          setIsLoading(false);
+        } else {
+          setIsLoading(true);
+        }
+
+        // Query para relações user_empresa
         const { data: userCompanyRelations, error: relationsError } = await supabase
           .from('user_empresa')
           .select('user_id')
           .eq('empresa_id', selectedCompany.id);
 
-        if (relationsError) {
-          throw relationsError;
-        }
+        if (relationsError) throw relationsError;
 
         if (!userCompanyRelations || userCompanyRelations.length === 0) {
           setMembers([]);
@@ -39,20 +82,16 @@ export const useTeamMembers = () => {
           return;
         }
 
-        // Extract user IDs from relations
         const userIds = userCompanyRelations.map(relation => relation.user_id);
 
-        // Now fetch all profiles for these users
+        // Query otimizada para profiles
         const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
           .select('id, display_name, email, cargo, avatar, is_admin')
           .in('id', userIds);
 
-        if (profilesError) {
-          throw profilesError;
-        }
+        if (profilesError) throw profilesError;
 
-        // Map profiles to UserProfile type
         const teamMembers: UserProfile[] = profilesData.map(profile => ({
           id: profile.id,
           display_name: profile.display_name,
@@ -63,6 +102,7 @@ export const useTeamMembers = () => {
         }));
 
         setMembers(teamMembers);
+        cacheMembers(teamMembers);
       } catch (err) {
         console.error('Error fetching team members:', err);
         setError(err as Error);
