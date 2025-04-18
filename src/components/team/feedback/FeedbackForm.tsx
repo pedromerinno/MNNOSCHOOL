@@ -1,77 +1,100 @@
 
 import { useState } from "react";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Send } from "lucide-react";
 import { UserProfile } from "@/hooks/useUsers";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useCompanies } from "@/hooks/useCompanies";
 
 interface FeedbackFormProps {
   toUser: UserProfile;
+  onFeedbackSent?: (feedback: any) => void;
 }
 
-export const FeedbackForm = ({ toUser }: FeedbackFormProps) => {
-  const [feedback, setFeedback] = useState("");
+export const FeedbackForm = ({ toUser, onFeedbackSent }: FeedbackFormProps) => {
+  const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAuth();
   const { selectedCompany } = useCompanies();
 
-  const handleSubmit = async () => {
-    if (!feedback.trim() || !toUser.id || !selectedCompany) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     
+    if (!content.trim()) {
+      toast.error("O feedback não pode estar vazio");
+      return;
+    }
+    
+    if (!user || !selectedCompany) {
+      toast.error("Erro ao enviar feedback. Tente novamente mais tarde.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
-      setIsSubmitting(true);
-      
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) throw new Error("Usuário não autenticado");
-      
-      const { error } = await supabase
+      const feedbackData = {
+        content,
+        from_user_id: user.id,
+        to_user_id: toUser.id,
+        company_id: selectedCompany.id
+      };
+
+      const { data, error } = await supabase
         .from('user_feedbacks')
-        .insert({
-          content: feedback,
-          from_user_id: userData.user.id,
-          to_user_id: toUser.id,
-          company_id: selectedCompany.id
-        });
-      
+        .insert(feedbackData)
+        .select()
+        .single();
+
       if (error) throw error;
       
       toast.success("Feedback enviado com sucesso!");
-      setFeedback("");
-    } catch (error: any) {
-      console.error("Erro ao enviar feedback:", error);
-      toast.error("Erro ao enviar feedback");
+      setContent("");
+      
+      // Call the callback if provided
+      if (onFeedbackSent && data) {
+        // Add the from_profile to match the expected format
+        const enrichedFeedback = {
+          ...data,
+          from_profile: {
+            id: user.id,
+            display_name: user.display_name || user.email,
+            avatar: user.avatar || null
+          }
+        };
+        onFeedbackSent(enrichedFeedback);
+      }
+    } catch (err) {
+      console.error("Error sending feedback:", err);
+      toast.error("Erro ao enviar feedback. Tente novamente mais tarde.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Card className="mb-6">
-      <CardHeader>
-        <CardTitle>Enviar Feedback</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <Textarea
-            placeholder={`Escreva seu feedback para ${toUser.display_name || 'o usuário'}...`}
-            value={feedback}
-            onChange={(e) => setFeedback(e.target.value)}
-            rows={4}
-            className="resize-none"
-          />
-          <Button 
-            onClick={handleSubmit} 
-            disabled={!feedback.trim() || isSubmitting}
-            className="w-full sm:w-auto flex items-center gap-2"
-          >
-            <Send className="h-4 w-4" /> 
-            Enviar Feedback
-          </Button>
-        </div>
-      </CardContent>
+    <Card className="mb-8 border-0 bg-white shadow-sm">
+      <form onSubmit={handleSubmit} className="p-6">
+        <h3 className="text-lg font-medium mb-4">Enviar feedback para {toUser.display_name}</h3>
+        
+        <Textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="Escreva seu feedback aqui..."
+          className="mb-4 min-h-[120px]"
+        />
+        
+        <Button 
+          type="submit" 
+          disabled={isSubmitting}
+          className="w-full sm:w-auto"
+        >
+          {isSubmitting ? "Enviando..." : "Enviar Feedback"}
+        </Button>
+      </form>
     </Card>
   );
 };

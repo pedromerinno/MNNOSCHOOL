@@ -18,12 +18,15 @@ export const useTeamMembers = () => {
   const [members, setMembers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [isFetching, setIsFetching] = useState(false);
   const { selectedCompany } = useCompanies();
 
   // Cache management functions
   const getCachedMembers = useCallback((): TeamMembersCache | null => {
+    if (!selectedCompany?.id) return null;
+    
     try {
-      const cached = localStorage.getItem('teamMembersCache');
+      const cached = localStorage.getItem(`teamMembersCache_${selectedCompany.id}`);
       if (!cached) return null;
 
       const cache = JSON.parse(cached) as TeamMembersCache;
@@ -32,7 +35,7 @@ export const useTeamMembers = () => {
       // Check if cache is valid and for the current company
       if (
         cache && 
-        cache.companyId === selectedCompany?.id && 
+        cache.companyId === selectedCompany.id && 
         now - cache.timestamp < CACHE_DURATION
       ) {
         return cache;
@@ -53,7 +56,7 @@ export const useTeamMembers = () => {
         timestamp: Date.now()
       };
       
-      localStorage.setItem('teamMembersCache', JSON.stringify(cache));
+      localStorage.setItem(`teamMembersCache_${companyId}`, JSON.stringify(cache));
     } catch (err) {
       console.error('Error caching team members:', err);
       // Continue without caching
@@ -68,8 +71,14 @@ export const useTeamMembers = () => {
         return;
       }
 
+      // Prevent duplicate requests
+      if (isFetching) {
+        return;
+      }
+
       try {
         setIsLoading(true);
+        setIsFetching(true);
         setError(null);
 
         // Try to get cached data first
@@ -79,21 +88,11 @@ export const useTeamMembers = () => {
           setMembers(cachedData.members);
           setIsLoading(false);
           
-          // Fetch updated data in the background
-          fetchFreshData();
+          // If we're using cached data, no need to fetch again right away
+          // This helps prevent excessive requests
           return;
         }
 
-        // If no cache, fetch data normally
-        await fetchFreshData();
-      } catch (err) {
-        console.error('Error in team members hook:', err);
-        setError(err as Error);
-      }
-    };
-
-    const fetchFreshData = async () => {
-      try {
         // First, query all user_empresa relations for the selected company
         const { data: userCompanyRelations, error: relationsError } = await supabase
           .from('user_empresa')
@@ -145,11 +144,12 @@ export const useTeamMembers = () => {
         setError(err as Error);
       } finally {
         setIsLoading(false);
+        setIsFetching(false);
       }
     };
 
     fetchMembers();
-  }, [selectedCompany, getCachedMembers, setCachedMembers]);
+  }, [selectedCompany, getCachedMembers, setCachedMembers, isFetching]);
 
   return { members, isLoading, error };
 };

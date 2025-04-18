@@ -5,10 +5,16 @@ import { TeamHeader } from "@/components/team/TeamHeader";
 import { LoadingState } from "@/components/team/LoadingState";
 import { EmptyState } from "@/components/team/EmptyState";
 import { useTeamMembers } from "@/hooks/team/useTeamMembers";
+import { useEffect } from "react";
 
 const Team = () => {
   const { selectedCompany } = useCompanies();
   const { members, isLoading, error } = useTeamMembers();
+
+  // Reset scroll position when component mounts or company changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [selectedCompany?.id]);
 
   if (!selectedCompany) {
     return (
