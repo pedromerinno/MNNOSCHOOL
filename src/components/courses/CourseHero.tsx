@@ -46,8 +46,8 @@ export const CourseHero: React.FC<CourseHeroProps> = ({
       </div>
       
       <div className="relative z-10 h-full">
-        <div className="flex flex-col h-full p-6">
-          <div className="flex-1">
+        <div className="flex flex-col h-full p-8">
+          <div className="flex-1 max-w-3xl">
             <h1 className="text-3xl md:text-4xl font-bold mb-4">{title}</h1>
             {instructor && (
               <p className="text-white/80 mb-6">
@@ -70,13 +70,13 @@ export const CourseHero: React.FC<CourseHeroProps> = ({
                 courseId={courseId} 
                 initialFavorite={favorite} 
                 iconOnly={true}
-                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white border-0"
+                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white border-0 h-10 w-10 rounded-full"
               />
               
               <Button 
                 variant="outline" 
                 size="icon" 
-                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white border-0"
+                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white border-0 h-10 w-10 rounded-full"
               >
                 <Share className="h-4 w-4" />
               </Button>
