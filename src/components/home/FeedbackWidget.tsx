@@ -6,6 +6,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { useReceivedFeedbacks } from "@/hooks/feedback/useReceivedFeedbacks";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ReturnFeedbackDialog } from "../feedback/ReturnFeedbackDialog";
 
 export const FeedbackWidget = () => {
   const { feedbacks, loading } = useReceivedFeedbacks();
@@ -73,13 +74,18 @@ export const FeedbackWidget = () => {
                     {formatDate(feedbacks[0].created_at)}
                   </span>
                 </div>
-                <button 
-                  onClick={() => feedbacks[0].from_profile?.id ? navigate(`/team/${feedbacks[0].from_profile.id}`) : null}
-                  className="self-start px-8 py-3 rounded-full bg-white/80 dark:bg-white/10 text-black dark:text-white hover:bg-white dark:hover:bg-white/20 transition-colors"
-                  disabled={!feedbacks[0].from_profile?.id}
-                >
-                  retribuir
-                </button>
+                {feedbacks[0].from_profile && (
+                  <ReturnFeedbackDialog
+                    toUser={feedbacks[0].from_profile}
+                    trigger={
+                      <button 
+                        className="self-start px-8 py-3 rounded-full bg-white/80 dark:bg-white/10 text-black dark:text-white hover:bg-white dark:hover:bg-white/20 transition-colors"
+                      >
+                        retribuir
+                      </button>
+                    }
+                  />
+                )}
               </div>
             </div>
           ) : (
