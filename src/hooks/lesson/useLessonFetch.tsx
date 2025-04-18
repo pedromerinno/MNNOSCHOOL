@@ -62,29 +62,6 @@ export const useLessonFetch = (lessonId: string | undefined) => {
         console.error('Erro ao buscar progresso da aula:', progressError);
       }
       
-      // Buscar likes da aula
-      const { data: likesData, error: likesError } = await supabase
-        .from('user_lesson_likes')
-        .select('*')
-        .eq('lesson_id', lessonId)
-        .maybeSingle();
-        
-      if (likesError && !likesError.message.includes('does not exist')) {
-        console.error('Erro ao buscar likes da aula:', likesError);
-      }
-      
-      // Verificar se o usuário deu like na aula
-      const { data: userLikeData, error: userLikeError } = await supabase
-        .from('user_lesson_likes')
-        .select('*')
-        .eq('lesson_id', lessonId)
-        .eq('user_id', userId || '')
-        .maybeSingle();
-        
-      if (userLikeError && !userLikeError.message.includes('does not exist')) {
-        console.error('Erro ao verificar like do usuário:', userLikeError);
-      }
-      
       // Buscar progresso de todas as aulas do curso para marcar como concluídas na playlist
       const { data: lessonsProgressData, error: lessonsProgressError } = await supabase
         .from('user_lesson_progress')
@@ -106,9 +83,8 @@ export const useLessonFetch = (lessonId: string | undefined) => {
       
       // Como não existe uma tabela real de likes, estamos simulando um valor
       // Em produção, você substituiria isso pela contagem real de likes
-      // No caso de uma tabela real, você contaria o número total de likes para a aula
-      const likesCount = Math.floor(Math.random() * 10); // Simulação - substitua pela contagem real
-      const userHasLiked = false; // Simulação - substitua pela verificação real
+      const likesCount = Math.floor(Math.random() * 50) + 1; // Simulação - entre 1 e 50 likes
+      const userHasLiked = false; // Simulação - por padrão o usuário não deu like
       
       const lessonWithCourseDescription = {
         ...lessonData,
