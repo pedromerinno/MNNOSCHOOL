@@ -1,7 +1,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
-import { MessageSquare, Mail, UserRound } from "lucide-react";
+import { MessageSquare, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { UserProfile } from "@/hooks/useUsers";
@@ -18,7 +18,8 @@ export const TeamMembersList = ({ members }: TeamMembersListProps) => {
       {members.map((member) => (
         <Card 
           key={member.id} 
-          className="group transition-all duration-200 hover:shadow-lg hover:-translate-y-1 border-0 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+          className="group transition-all duration-200 hover:shadow-lg hover:-translate-y-1 border-0 bg-white cursor-pointer"
+          onClick={() => navigate(`/team/${member.id}`)}
         >
           <CardContent className="p-6">
             <div className="flex flex-col items-start gap-4">
@@ -50,26 +51,18 @@ export const TeamMembersList = ({ members }: TeamMembersListProps) => {
                 )}
               </div>
 
-              <div className="flex items-center gap-2 w-full">
-                <Button
-                  variant="outline" 
-                  size="sm"
-                  className="flex-1 gap-2"
-                  onClick={() => window.location.href = `mailto:${member.email}`}
-                >
-                  <Mail className="h-4 w-4" />
-                  Email
-                </Button>
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="flex-1 gap-2"
-                  onClick={() => navigate(`/team/${member.id}`)}
-                >
-                  <MessageSquare className="h-4 w-4" />
-                  Feedback
-                </Button>
-              </div>
+              <Button
+                variant="default"
+                size="sm"
+                className="w-full gap-2"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/team/${member.id}`);
+                }}
+              >
+                <MessageSquare className="h-4 w-4" />
+                Feedback
+              </Button>
             </div>
           </CardContent>
         </Card>
