@@ -23,10 +23,6 @@ const Team = () => {
     );
   }
 
-  if (isLoading) {
-    return <LoadingState />;
-  }
-
   if (error) {
     return (
       <div className="min-h-screen bg-background">
@@ -40,11 +36,16 @@ const Team = () => {
     );
   }
 
+  // For extreme loading scenarios, show full page loading
+  if (isLoading && members.length === 0) {
+    return <LoadingState />;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8 space-y-8 max-w-7xl">
         <TeamHeader company={selectedCompany} memberCount={members.length} />
-        <TeamMembersList members={members} />
+        <TeamMembersList members={members} isLoading={isLoading} />
       </main>
     </div>
   );
