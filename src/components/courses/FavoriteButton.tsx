@@ -120,10 +120,10 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
       >
         <Heart
           className={cn(
-            "h-4 w-4 transition-colors",
+            "h-4 w-4 transition-colors text-white", // Changed to text-white
             isFavorite
-              ? "fill-red-500 text-red-500"
-              : "text-gray-600 dark:text-gray-400"
+              ? "fill-red-500"
+              : ""
           )}
         />
       </Button>
