@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Share, Heart } from 'lucide-react';
+import { Share } from 'lucide-react';
 import { FavoriteButton } from './FavoriteButton';
 import { useNavigate } from 'react-router-dom';
 
@@ -31,7 +31,7 @@ export const CourseHero: React.FC<CourseHeroProps> = ({
   };
 
   return (
-    <div className="relative rounded-xl overflow-hidden h-[350px] bg-[#1A1F2C] text-white">
+    <div className="relative rounded-xl overflow-hidden h-[400px] bg-[#1A1F2C] text-white">
       {/* Full-width background image */}
       <div className="absolute inset-0 w-full h-full">
         {imageUrl && (
@@ -46,7 +46,7 @@ export const CourseHero: React.FC<CourseHeroProps> = ({
       </div>
       
       <div className="relative z-10 h-full">
-        <div className="flex flex-col h-full p-8 md:p-12">
+        <div className="flex flex-col h-full p-6">
           <div className="flex-1">
             <h1 className="text-3xl md:text-4xl font-bold mb-4">{title}</h1>
             {instructor && (
@@ -56,7 +56,7 @@ export const CourseHero: React.FC<CourseHeroProps> = ({
             )}
           </div>
           
-          <div className="flex justify-between items-end">
+          <div className="flex justify-between items-center">
             <Button 
               variant="outline" 
               className="bg-white hover:bg-white/90 text-black"
@@ -65,15 +65,19 @@ export const CourseHero: React.FC<CourseHeroProps> = ({
               Começar a Aprender
             </Button>
             
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <FavoriteButton 
                 courseId={courseId} 
                 initialFavorite={favorite} 
                 iconOnly={true}
-                className="bg-white/20 hover:bg-white/30 text-white border-0"
+                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white border-0"
               />
               
-              <Button variant="outline" size="icon" className="bg-white/20 hover:bg-white/30 text-white border-0">
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white border-0"
+              >
                 <Share className="h-4 w-4" />
               </Button>
             </div>
@@ -83,3 +87,4 @@ export const CourseHero: React.FC<CourseHeroProps> = ({
     </div>
   );
 };
+
