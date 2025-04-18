@@ -14,6 +14,7 @@ export interface Lesson {
   order_index?: number;
   course_id?: string;
   completed?: boolean;
+  content?: string | null;
   course_description?: string | null;
   course_lessons?: Array<{
     id: string;
@@ -29,18 +30,22 @@ interface CourseLessonListProps {
   lessons: Lesson[];
   courseId: string;
   onSelectLesson?: (lessonId: string) => void;
+  onStartLesson?: (lessonId: string) => Promise<void>;
 }
 
 export const CourseLessonList: React.FC<CourseLessonListProps> = ({
   lessons,
   courseId,
-  onSelectLesson
+  onSelectLesson,
+  onStartLesson
 }) => {
   const navigate = useNavigate();
   
   const handleLessonClick = (lessonId: string) => {
     if (onSelectLesson) {
       onSelectLesson(lessonId);
+    } else if (onStartLesson) {
+      onStartLesson(lessonId);
     } else {
       navigate(`/courses/${courseId}/lessons/${lessonId}`);
     }

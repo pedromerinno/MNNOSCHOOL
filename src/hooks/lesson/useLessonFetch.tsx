@@ -40,7 +40,7 @@ export const useLessonFetch = (lessonId: string | undefined) => {
         // Buscar todas as aulas do mesmo curso
         const { data: courseLessons, error: courseLessonsError } = await supabase
           .from('lessons')
-          .select('id, title, type, duration, completed, order_index')
+          .select('id, title, type, duration, completed, order_index, content')
           .eq('course_id', lessonData.course_id)
           .order('order_index', { ascending: true });
           

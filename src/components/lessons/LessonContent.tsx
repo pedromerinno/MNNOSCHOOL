@@ -30,7 +30,7 @@ export const LessonContent: React.FC<LessonContentProps> = ({
       case 'video':
         return (
           <LessonVideo 
-            videoUrl={lesson.content} 
+            videoUrl={lesson.content || ''} 
             title={lesson.title}
             onVideoEnd={onVideoEnd}
             autoplay={autoplay}
@@ -40,9 +40,9 @@ export const LessonContent: React.FC<LessonContentProps> = ({
           />
         );
       case 'text':
-        return <LessonText content={lesson.content} />;
+        return <LessonText content={lesson.content || null} />;
       case 'quiz':
-        return <LessonQuiz title={lesson.title} content={lesson.content} />;
+        return <LessonQuiz title={lesson.title} content={lesson.content || null} />;
       default:
         return (
           <div className="p-6 bg-muted rounded-lg">

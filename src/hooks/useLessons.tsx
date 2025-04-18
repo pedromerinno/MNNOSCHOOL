@@ -49,12 +49,16 @@ export const useLessons = (courseId: string) => {
     
     setIsSubmitting(true);
     try {
+      // Ensure order_index is not undefined
+      const lessonDataWithDefaults = {
+        ...lessonData,
+        course_id: courseId,
+        order_index: lessonData.order_index ?? 0, // Default to 0 if undefined
+      };
+
       const { data, error } = await supabase
         .from('lessons')
-        .insert([{
-          ...lessonData,
-          course_id: courseId,
-        }])
+        .insert([lessonDataWithDefaults])
         .select()
         .single();
 
