@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useCompanies } from "@/hooks/useCompanies";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -113,19 +112,11 @@ const Integration = () => {
                     </CompanyThemedBadge>
                   )}
                 </div>
-                
-                <p className="text-gray-700 dark:text-gray-300">
-                  {localCompany 
-                    ? `Aqui você encontrará todas as informações sobre a ${localCompany.nome}, expectativas, 
-                      descrição do cargo e tudo relacionado à sua contratação.`
-                    : "Aqui você encontrará todas as informações sobre nossa empresa, expectativas, descrição do cargo e tudo relacionado à sua contratação."}
-                </p>
               </div>
 
               <div className="p-6 space-y-8">
                 {/* Culture Manual Section */}
-                <section className="space-y-6">
-                  <h3 className="text-lg font-semibold">Manual de Cultura</h3>
+                <section>
                   <CultureManual
                     companyValues={localCompany?.valores || ""}
                     companyMission={localCompany?.missao || ""}
