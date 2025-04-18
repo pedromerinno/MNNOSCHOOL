@@ -23,7 +23,7 @@ type AccessItem = {
 };
 
 const Access = () => {
-  const { selectedCompany } = useCompanies();
+  const { selectedCompany, user } = useCompanies();
   const [accessItems, setAccessItems] = useState<AccessItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedAccess, setSelectedAccess] = useState<AccessItem | null>(null);
@@ -31,7 +31,7 @@ const Access = () => {
 
   useEffect(() => {
     const fetchAccessItems = async () => {
-      if (!selectedCompany) {
+      if (!selectedCompany || !user) {
         setAccessItems([]);
         setIsLoading(false);
         return;
@@ -39,15 +39,31 @@ const Access = () => {
 
       setIsLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('company_access')
+        // First, check if the user belongs to the selected company
+        const { data: userCompanyRelation, error: relationError } = await supabase
+          .from('user_empresa')
           .select('*')
-          .eq('company_id', selectedCompany.id)
-          .order('tool_name');
+          .eq('user_id', user.id)
+          .eq('empresa_id', selectedCompany.id)
+          .maybeSingle();
         
-        if (error) throw error;
+        if (relationError) throw relationError;
         
-        setAccessItems(data as AccessItem[] || []);
+        // If the user is related to this company or is an admin, fetch the access items
+        if (userCompanyRelation) {
+          const { data, error } = await supabase
+            .from('company_access')
+            .select('*')
+            .eq('company_id', selectedCompany.id)
+            .order('tool_name');
+          
+          if (error) throw error;
+          
+          setAccessItems(data as AccessItem[] || []);
+        } else {
+          console.log('User does not have permission to view accesses for this company');
+          setAccessItems([]);
+        }
       } catch (error: any) {
         console.error('Erro ao carregar informações de acesso:', error);
         toast.error('Não foi possível carregar os dados de acesso');
@@ -57,7 +73,7 @@ const Access = () => {
     };
 
     fetchAccessItems();
-  }, [selectedCompany]);
+  }, [selectedCompany, user]);
 
   const copyToClipboard = (text: string, message: string) => {
     navigator.clipboard.writeText(text)
