@@ -52,7 +52,7 @@ const TeamMemberProfile = () => {
             content,
             created_at,
             from_user_id,
-            profiles:from_user_id(id, display_name, avatar)
+            from_profile:profiles!from_user_id(id, display_name, avatar)
           `)
           .eq('to_user_id', memberId)
           .eq('company_id', selectedCompany.id)
@@ -103,7 +103,7 @@ const TeamMemberProfile = () => {
           content,
           created_at,
           from_user_id,
-          profiles:from_user_id(id, display_name, avatar)
+          from_profile:profiles!from_user_id(id, display_name, avatar)
         `)
         .single();
 
@@ -227,14 +227,14 @@ const TeamMemberProfile = () => {
                         <div className="flex items-start space-x-3 mb-2">
                           <Avatar className="h-8 w-8">
                             <AvatarFallback>
-                              {feedback.profiles.display_name?.substring(0, 2).toUpperCase() || 'U'}
+                              {feedback.from_profile.display_name?.substring(0, 2).toUpperCase() || 'U'}
                             </AvatarFallback>
-                            {feedback.profiles.avatar && (
-                              <AvatarImage src={feedback.profiles.avatar} alt={feedback.profiles.display_name || ''} />
+                            {feedback.from_profile.avatar && (
+                              <AvatarImage src={feedback.from_profile.avatar} alt={feedback.from_profile.display_name || ''} />
                             )}
                           </Avatar>
                           <div>
-                            <p className="font-medium">{feedback.profiles.display_name}</p>
+                            <p className="font-medium">{feedback.from_profile.display_name}</p>
                             <p className="text-xs text-gray-500 dark:text-gray-400">
                               {new Date(feedback.created_at).toLocaleDateString('pt-BR', {
                                 day: '2-digit',
