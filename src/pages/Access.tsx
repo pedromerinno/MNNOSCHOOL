@@ -15,6 +15,7 @@ const Access = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedAccess, setSelectedAccess] = useState<AccessItem | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [hasPermission, setHasPermission] = useState(true);
 
   useEffect(() => {
     const fetchAccessItems = async () => {
@@ -25,11 +26,12 @@ const Access = () => {
       }
 
       setIsLoading(true);
+      setHasPermission(true);
+
       try {
         console.log('Fetching access items for company:', selectedCompany.id, 'User ID:', user.id);
         
-        // Get the access items directly without checking user-company relation first
-        // This should work for all users that have access to the company
+        // Buscar os itens de acesso diretamente - a política RLS cuidará das permissões
         const { data, error } = await supabase
           .from('company_access')
           .select('*')
@@ -37,35 +39,19 @@ const Access = () => {
           .order('tool_name');
         
         if (error) {
-          console.error('Error fetching company access items:', error);
-          throw error;
-        }
-        
-        console.log('Access items fetched:', data?.length);
-        
-        if (data && data.length > 0) {
-          setAccessItems(data as AccessItem[]);
-        } else {
-          // Double-check if the user is actually related to this company
-          const { data: userCompanyRelation, error: relationError } = await supabase
-            .from('user_empresa')
-            .select('*')
-            .eq('user_id', user.id)
-            .eq('empresa_id', selectedCompany.id)
-            .maybeSingle();
-          
-          if (relationError) {
-            console.error('Error checking user-company relation:', relationError);
-            throw relationError;
-          }
-          
-          if (userCompanyRelation) {
-            console.log('User is related to company but no access items were found');
+          // Se for um erro de permissão (violating row-level security), isso significa
+          // que o usuário não tem permissão para ver os dados desta empresa
+          if (error.code === '42501' || error.message.includes('policy')) {
+            console.log('Acesso negado pela política RLS:', error.message);
+            setHasPermission(false);
             setAccessItems([]);
           } else {
-            console.log('User does not have permission to view accesses for this company');
-            setAccessItems([]);
+            console.error('Erro ao buscar itens de acesso:', error);
+            throw error;
           }
+        } else {
+          console.log('Itens de acesso encontrados:', data?.length);
+          setAccessItems(data as AccessItem[] || []);
         }
       } catch (error: any) {
         console.error('Erro ao carregar informações de acesso:', error);
@@ -95,6 +81,20 @@ const Access = () => {
           <EmptyState 
             title="Selecione uma empresa"
             description="Selecione uma empresa no menu superior para visualizar os acessos cadastrados."
+          />
+        </main>
+      </div>
+    );
+  }
+
+  if (!hasPermission) {
+    return (
+      <div className="min-h-screen bg-background">
+        <main className="container mx-auto px-4 py-8">
+          <h1 className="text-3xl font-bold mb-6 dark:text-white">Acessos</h1>
+          <EmptyState 
+            title="Acesso não autorizado"
+            description={`Você não tem permissão para visualizar os acessos da empresa ${selectedCompany.nome}. Entre em contato com o administrador.`}
           />
         </main>
       </div>
