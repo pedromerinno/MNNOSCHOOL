@@ -36,6 +36,17 @@ export const useLessonFetch = (lessonId: string | undefined) => {
         if (lessonError) {
           throw lessonError;
         }
+
+        // Buscar todas as aulas do mesmo curso
+        const { data: courseLessons, error: courseLessonsError } = await supabase
+          .from('lessons')
+          .select('id, title, type, duration, completed, order_index')
+          .eq('course_id', lessonData.course_id)
+          .order('order_index', { ascending: true });
+          
+        if (courseLessonsError) {
+          console.error('Erro ao buscar aulas do curso:', courseLessonsError);
+        }
         
         // Buscar o progresso da aula para este usuário
         const userId = (await supabase.auth.getUser()).data.user?.id;
@@ -50,10 +61,30 @@ export const useLessonFetch = (lessonId: string | undefined) => {
           console.error('Erro ao buscar progresso da aula:', progressError);
         }
         
+        // Buscar progresso de todas as aulas do curso para marcar como concluídas na playlist
+        const { data: lessonsProgressData, error: lessonsProgressError } = await supabase
+          .from('user_lesson_progress')
+          .select('lesson_id, completed')
+          .eq('user_id', userId || '')
+          .in('lesson_id', courseLessons?.map(lesson => lesson.id) || []);
+
+        if (lessonsProgressError) {
+          console.error('Erro ao buscar progresso das aulas:', lessonsProgressError);
+        }
+
+        // Marcar as aulas como concluídas na lista
+        const lessonsWithProgress = courseLessons?.map(lesson => ({
+          ...lesson,
+          completed: lessonsProgressData?.some(
+            progress => progress.lesson_id === lesson.id && progress.completed
+          ) || false
+        })) || [];
+        
         const lessonWithCourseDescription = {
           ...lessonData,
           course_description: lessonData.courses?.description || null,
-          completed: progressData?.completed || false
+          completed: progressData?.completed || false,
+          course_lessons: lessonsWithProgress
         } as Lesson;
         
         setLesson(lessonWithCourseDescription);

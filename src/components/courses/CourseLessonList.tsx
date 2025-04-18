@@ -1,109 +1,101 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, Play, Clock, FileText } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Separator } from "@/components/ui/separator";
+import { Play, Clock, CheckCircle } from "lucide-react";
+import { useNavigate } from 'react-router-dom';
 
-export type Lesson = {
+export interface Lesson {
   id: string;
   title: string;
-  description: string;
-  content?: string;
+  description?: string | null;
+  duration?: string | null;
   type: string;
-  course_id: string;
-  order_index: number;
-  duration?: string;
+  order_index?: number;
+  course_id?: string;
   completed?: boolean;
   course_description?: string | null;
-};
+  course_lessons?: Array<{
+    id: string;
+    title: string;
+    type: string;
+    duration?: string | null;
+    completed?: boolean;
+    order_index?: number;
+  }>;
+}
 
 interface CourseLessonListProps {
   lessons: Lesson[];
-  onStartLesson: (lessonId: string) => void;
+  courseId: string;
+  onSelectLesson?: (lessonId: string) => void;
 }
 
-export const CourseLessonList: React.FC<CourseLessonListProps> = ({ 
+export const CourseLessonList: React.FC<CourseLessonListProps> = ({
   lessons,
-  onStartLesson
+  courseId,
+  onSelectLesson
 }) => {
-  const getLessonIcon = (type: string, completed: boolean) => {
-    if (completed) {
-      return <CheckCircle className="h-4 w-4 text-green-500" />;
-    }
-    
-    switch (type.toLowerCase()) {
-      case 'video':
-        return <Play className="h-4 w-4 text-primary" />;
-      case 'text':
-        return <FileText className="h-4 w-4 text-primary" />;
-      case 'quiz':
-        return <FileText className="h-4 w-4 text-primary" />;
-      default:
-        return <Play className="h-4 w-4 text-primary" />;
+  const navigate = useNavigate();
+  
+  const handleLessonClick = (lessonId: string) => {
+    if (onSelectLesson) {
+      onSelectLesson(lessonId);
+    } else {
+      navigate(`/courses/${courseId}/lessons/${lessonId}`);
     }
   };
 
-  // Sort lessons by order_index
-  const sortedLessons = [...lessons].sort((a, b) => a.order_index - b.order_index);
-
   return (
-    <Card className="border border-border sticky top-4">
-      <CardHeader className="bg-primary/5 pb-3">
-        <CardTitle className="text-xl">Conteúdo do Curso</CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="divide-y divide-border">
-          {sortedLessons.map((lesson) => (
-            <div 
-              key={lesson.id}
-              className={cn(
-                "p-4 hover:bg-muted/30 transition-colors",
-                lesson.completed && "bg-green-50/50 dark:bg-green-900/10"
-              )}
-            >
-              <div className="flex items-start gap-3">
-                <div className="mt-1">
-                  {getLessonIcon(lesson.type, lesson.completed)}
+    <div className="space-y-4 mt-4">
+      <h3 className="text-xl font-bold">Aulas do Curso</h3>
+      <Separator />
+      
+      <div className="space-y-2">
+        {lessons.map((lesson, index) => (
+          <div 
+            key={lesson.id}
+            className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
+            onClick={() => handleLessonClick(lesson.id)}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0">
+                  {lesson.completed ? (
+                    <div className="w-8 h-8 rounded-full bg-green-500/20 text-green-500 flex items-center justify-center">
+                      <CheckCircle className="w-5 h-5" />
+                    </div>
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                      {index + 1}
+                    </div>
+                  )}
                 </div>
                 
-                <div className="flex-1">
-                  <h4 className="font-medium text-sm">{lesson.title}</h4>
-                  
-                  <div className="flex items-center text-xs text-muted-foreground mt-1">
-                    <span className="capitalize mr-2">{lesson.type}</span>
+                <div>
+                  <h4 className="font-medium">{lesson.title}</h4>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                    <span className="capitalize">{lesson.type}</span>
                     {lesson.duration && (
-                      <div className="flex items-center">
-                        <Clock className="h-3 w-3 mr-1" />
-                        <span>{lesson.duration}</span>
-                      </div>
+                      <>
+                        <span>•</span>
+                        <div className="flex items-center">
+                          <Clock className="w-3 h-3 mr-1" />
+                          <span>{lesson.duration}</span>
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>
-                
-                <Button
-                  variant={lesson.completed ? "outline" : "default"}
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onStartLesson(lesson.id);
-                  }}
-                  className="ml-2 flex-shrink-0"
-                >
-                  {lesson.completed ? "Revisar" : "Iniciar"}
-                </Button>
               </div>
+              
+              <Button variant="ghost" size="icon" className="rounded-full">
+                <Play className="h-4 w-4" />
+              </Button>
             </div>
-          ))}
-        </div>
-        
-        {/* If there are no lessons */}
-        {lessons.length === 0 && (
-          <div className="p-6 text-center">
-            <p className="text-muted-foreground">Nenhuma lição disponível para este curso ainda.</p>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        ))}
+      </div>
+    </div>
   );
 };
