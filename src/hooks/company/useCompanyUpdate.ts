@@ -79,3 +79,4 @@ export const useCompanyUpdate = ({
   
   return { updateCompany };
 };
+

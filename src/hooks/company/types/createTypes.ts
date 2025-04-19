@@ -6,3 +6,4 @@ export interface UseCompanyCreateProps {
   setIsLoading: Dispatch<SetStateAction<boolean>>;
   setCompanies: Dispatch<SetStateAction<Company[]>>;
 }
+
