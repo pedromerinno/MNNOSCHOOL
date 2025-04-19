@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -7,8 +8,27 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
-import { PageLayout } from "@/components/layout/PageLayout";
 
+import Index from "./pages/Index";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import Courses from "./pages/Courses";
+import MyCourses from "./pages/MyCourses";
+import CourseDetails from "./pages/CourseDetails";
+import LessonPage from "./pages/LessonPage";
+import NotFound from "./pages/NotFound";
+import Integration from "./pages/Integration";
+import Access from "./pages/Access";
+import Documents from "./pages/Documents";
+import School from "./pages/School";
+import Community from "./pages/Community";
+import Admin from "./pages/Admin";
+import Notes from "./pages/Notes";
+import Manifesto from "./pages/Manifesto";
+import Team from "./pages/Team";
+import TeamMemberProfile from "./pages/TeamMemberProfile";
+
+// Crie um cliente de consulta com configurações padrão
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -19,6 +39,7 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
+  // Registre quando o App é carregado para depuração
   console.log("App component rendering");
   
   return (
@@ -35,109 +56,74 @@ const App = () => {
               <Route element={<ProtectedRoute />}>
                 <Route path="/" element={<>
                   <MainNavigationMenu />
-                  <PageLayout title="Dashboard">
-                    <Index />
-                  </PageLayout>
+                  <Index />
                 </>} />
                 
+                {/* Redirect /dashboard to / */}
                 <Route path="/dashboard" element={<Navigate to="/" replace />} />
                 
                 <Route path="/courses" element={<>
                   <MainNavigationMenu />
-                  <PageLayout title="Cursos">
-                    <Courses />
-                  </PageLayout>
+                  <Courses />
                 </>} />
-
                 <Route path="/my-courses" element={<>
                   <MainNavigationMenu />
-                  <PageLayout title="Meus Cursos">
-                    <MyCourses />
-                  </PageLayout>
+                  <MyCourses />
                 </>} />
-
                 <Route path="/courses/:courseId" element={<>
                   <MainNavigationMenu />
-                  <PageLayout title="Detalhes do Curso">
-                    <CourseDetails />
-                  </PageLayout>
+                  <CourseDetails />
                 </>} />
-
                 <Route path="/courses/:courseId/lessons/:lessonId" element={<>
                   <MainNavigationMenu />
-                  <PageLayout title="Aula">
-                    <LessonPage />
-                  </PageLayout>
+                  <LessonPage />
                 </>} />
                 
                 <Route path="/integration" element={<>
                   <MainNavigationMenu />
-                  <PageLayout title="Integração">
-                    <Integration />
-                  </PageLayout>
+                  <Integration />
                 </>} />
-
                 <Route path="/access" element={<>
                   <MainNavigationMenu />
-                  <PageLayout title="Acessos">
-                    <Access />
-                  </PageLayout>
+                  <Access />
                 </>} />
-
                 <Route path="/documents" element={<>
                   <MainNavigationMenu />
-                  <PageLayout title="Documentos">
-                    <Documents />
-                  </PageLayout>
+                  <Documents />
                 </>} />
-
                 <Route path="/school" element={<>
                   <MainNavigationMenu />
-                  <PageLayout title="Escola">
-                    <School />
-                  </PageLayout>
+                  <School />
                 </>} />
-
                 <Route path="/community" element={<>
                   <MainNavigationMenu />
-                  <PageLayout title="Comunidade">
-                    <Community />
-                  </PageLayout>
+                  <Community />
                 </>} />
-
                 <Route path="/notes" element={<>
                   <MainNavigationMenu />
-                  <PageLayout title="Anotações">
-                    <Notes />
-                  </PageLayout>
+                  <Notes />
                 </>} />
-
                 <Route path="/manifesto" element={<>
                   <MainNavigationMenu />
-                  <PageLayout title="Manifesto">
-                    <Manifesto />
-                  </PageLayout>
+                  <Manifesto />
                 </>} />
                 
-                <Route path="/admin" element={<>
-                  <MainNavigationMenu />
-                  <PageLayout title="Administração">
+                <Route 
+                  path="/admin" 
+                  element={<>
+                    <MainNavigationMenu />
                     <Admin />
-                  </PageLayout>
-                </>} />
+                  </>} 
+                />
 
                 <Route path="/team" element={<>
                   <MainNavigationMenu />
-                  <PageLayout title="Equipe">
-                    <Team />
-                  </PageLayout>
+                  <Team />
                 </>} />
                 
                 <Route path="/team/:memberId" element={<>
                   <MainNavigationMenu />
-                  <PageLayout title="Perfil do Membro">
-                    <TeamMemberProfile />
-                  </PageLayout>
+                  <TeamMemberProfile />
                 </>} />
               
               </Route>
