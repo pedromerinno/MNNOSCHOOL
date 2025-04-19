@@ -61,7 +61,7 @@ export const SearchBar = () => {
     setLoading(true);
     
     try {
-      console.log("Filtering courses for:", searchQuery);
+      console.log("Filtering courses for:", searchQuery, "from", courses.length, "courses");
       
       // Filter courses based on search query
       const filteredCourses = courses.filter(course => 
@@ -71,7 +71,7 @@ export const SearchBar = () => {
         ))
       ).slice(0, 5); // Limit to 5 suggestions
       
-      console.log("Found courses:", filteredCourses.length);
+      console.log("Found courses:", filteredCourses.length, "matching courses");
       setSuggestions(filteredCourses);
     } catch (error) {
       console.error("Error filtering courses:", error);
@@ -89,8 +89,22 @@ export const SearchBar = () => {
 
   // This useEffect will run the search whenever searchQuery changes
   useEffect(() => {
-    performSearch();
+    console.log("Search query changed, running search for:", searchQuery);
+    // Force the search to run with a small timeout to ensure UI updates
+    const timer = setTimeout(() => {
+      performSearch();
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, [searchQuery, performSearch]);
+
+  // This effect runs when dialog opens to ensure search is performed
+  useEffect(() => {
+    if (open && searchQuery.trim()) {
+      console.log("Dialog opened, forcing search to run");
+      performSearch();
+    }
+  }, [open, searchQuery, performSearch]);
 
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
   
@@ -120,7 +134,14 @@ export const SearchBar = () => {
 
       <CommandDialog 
         open={open} 
-        onOpenChange={setOpen}
+        onOpenChange={(newOpen) => {
+          setOpen(newOpen);
+          // Force search to run when dialog opens
+          if (newOpen && searchQuery.trim()) {
+            performSearch();
+          }
+        }}
+        className="search-dialog-position"
       >
         <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-lg">
           <Command className="rounded-lg border-none bg-transparent">
@@ -128,7 +149,10 @@ export const SearchBar = () => {
               <DialogTitle className="sr-only">Pesquisar cursos</DialogTitle>
               <CommandInput 
                 value={searchQuery}
-                onValueChange={handleInputChange}
+                onValueChange={(value) => {
+                  handleInputChange(value);
+                  console.log("Command input changed to:", value);
+                }}
                 placeholder="Digite para pesquisar cursos..."
                 className="border-b border-gray-200 dark:border-gray-700"
               />
