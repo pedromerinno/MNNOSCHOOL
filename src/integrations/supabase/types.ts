@@ -422,7 +422,6 @@ export type Database = {
       profiles: {
         Row: {
           avatar: string | null
-          cargo: string | null
           cargo_id: string | null
           created_at: string
           display_name: string | null
@@ -433,7 +432,6 @@ export type Database = {
         }
         Insert: {
           avatar?: string | null
-          cargo?: string | null
           cargo_id?: string | null
           created_at?: string
           display_name?: string | null
@@ -444,7 +442,6 @@ export type Database = {
         }
         Update: {
           avatar?: string | null
-          cargo?: string | null
           cargo_id?: string | null
           created_at?: string
           display_name?: string | null

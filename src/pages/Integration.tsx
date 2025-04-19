@@ -9,11 +9,14 @@ import { Company } from "@/types/company";
 import { supabase } from "@/integrations/supabase/client";
 import { JobRole } from "@/types/job-roles";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Integration = () => {
   const { selectedCompany, isLoading, forceGetUserCompanies, getUserCompanies, user } = useCompanies();
+  const { userProfile } = useAuth();
   const [localCompany, setLocalCompany] = useState<Company | null>(selectedCompany);
   const [jobRoles, setJobRoles] = useState<JobRole[]>([]);
+  const [userRole, setUserRole] = useState<JobRole | null>(null);
   const [isLoadingRoles, setIsLoadingRoles] = useState(false);
   const [activeTab, setActiveTab] = useState("culture");
   
@@ -43,6 +46,14 @@ const Integration = () => {
       if (data && data.length > 0) {
         console.log(`Fetched ${data.length} job roles for company ${companyId}`);
         setJobRoles(data);
+        
+        // Se temos um userProfile com cargo_id, vamos buscar o cargo do usuário
+        if (userProfile?.cargo_id) {
+          const userRole = data.find(role => role.id === userProfile.cargo_id);
+          if (userRole) {
+            setUserRole(userRole);
+          }
+        }
       } else {
         console.log(`No job roles found for company ${companyId}`);
         setJobRoles([]);
@@ -64,7 +75,7 @@ const Integration = () => {
       fetchJobRoles(updatedCompany.id);
     };
     
-    const handleUserRoleUpdated = () => {
+    const handleRoleUpdated = () => {
       console.log("User role updated event detected, refreshing data");
       if (localCompany?.id) {
         fetchJobRoles(localCompany.id);
@@ -77,12 +88,12 @@ const Integration = () => {
         forceGetUserCompanies(user.id);
       }
     });
-    window.addEventListener('user-role-updated', handleUserRoleUpdated as EventListener);
+    window.addEventListener('user-role-updated', handleRoleUpdated as EventListener);
     
     return () => {
       window.removeEventListener('company-updated', handleCompanyUpdated as EventListener);
       window.removeEventListener('company-relation-changed', () => {});
-      window.removeEventListener('user-role-updated', handleUserRoleUpdated as EventListener);
+      window.removeEventListener('user-role-updated', handleRoleUpdated as EventListener);
     };
   }, [forceGetUserCompanies, user?.id, localCompany]);
   
@@ -105,6 +116,7 @@ const Integration = () => {
             companyColor={companyColor}
             jobRoles={jobRoles}
             isLoadingRoles={isLoadingRoles}
+            userRole={userRole}
           />
         </>
       )}
