@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Company } from "@/types/company";
 import { supabase } from "@/integrations/supabase/client";
 import { JobRole } from "@/types/job-roles";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface IntegrationTabsProps {
   activeTab: string;
@@ -26,33 +27,38 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
   jobRoles
 }) => {
   const [userRole, setUserRole] = useState<JobRole | null>(null);
+  const { userProfile } = useAuth();
 
   useEffect(() => {
     const fetchUserRole = async () => {
       try {
-        // Primeiro, buscar o cargo_id do usuário
-        const { data: userData, error: userError } = await supabase
-          .from('profiles')
-          .select('cargo_id')
+        // If we don't have a user profile or cargo_id, we can't fetch a role
+        if (!userProfile?.id || !userProfile?.cargo_id || !company) {
+          console.log('No user cargo_id found or company not selected');
+          setUserRole(null);
+          return;
+        }
+
+        console.log('Fetching role details for cargo_id:', userProfile.cargo_id);
+        
+        // Fetch the role details using the cargo_id from the user profile
+        const { data: roleData, error: roleError } = await supabase
+          .from('job_roles')
+          .select('*')
+          .eq('id', userProfile.cargo_id)
+          .eq('company_id', company.id)
           .single();
 
-        if (userError) throw userError;
-
-        if (userData?.cargo_id && company) {
-          // Depois, buscar os detalhes do cargo específico
-          const { data: roleData, error: roleError } = await supabase
-            .from('job_roles')
-            .select('*')
-            .eq('id', userData.cargo_id)
-            .eq('company_id', company.id)
-            .single();
-
-          if (roleError) throw roleError;
-          
-          setUserRole(roleData);
+        if (roleError) {
+          console.error('Error fetching user role:', roleError);
+          setUserRole(null);
+          return;
         }
+        
+        console.log('User role found:', roleData);
+        setUserRole(roleData);
       } catch (error) {
-        console.error('Error fetching user role:', error);
+        console.error('Error in fetchUserRole:', error);
         setUserRole(null);
       }
     };
@@ -60,7 +66,7 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
     if (company) {
       fetchUserRole();
     }
-  }, [company]);
+  }, [company, userProfile]);
 
   return (
     <div className="w-full">
@@ -142,7 +148,9 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
                 <CardContent className="p-6 text-center">
                   <BriefcaseBusiness className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                   <p className="text-gray-500 dark:text-gray-400">
-                    Nenhum cargo atribuído para você nesta empresa
+                    {userProfile?.cargo_id 
+                      ? "Cargo não encontrado para esta empresa" 
+                      : "Nenhum cargo atribuído para você nesta empresa"}
                   </p>
                 </CardContent>
               </Card>
