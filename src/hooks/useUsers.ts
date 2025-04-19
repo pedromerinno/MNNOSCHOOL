@@ -10,6 +10,7 @@ export interface UserProfile {
   is_admin: boolean | null;
   avatar?: string | null;
   cargo?: string | null;
+  cargo_id?: string | null; // Adicionando a propriedade cargo_id que faltava
 }
 
 export function useUsers() {
@@ -71,7 +72,7 @@ export function useUsers() {
       // Get the profiles with basic information including email
       const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('id, display_name, is_admin, email, created_at, avatar, cargo');
+        .select('id, display_name, is_admin, email, created_at, avatar, cargo, cargo_id');
       
       if (error) {
         throw error;
@@ -84,7 +85,8 @@ export function useUsers() {
         display_name: profile.display_name || `User ${profile.id.substring(0, 6)}`,
         is_admin: profile.is_admin,
         avatar: profile.avatar,
-        cargo: profile.cargo
+        cargo: profile.cargo,
+        cargo_id: profile.cargo_id
       }));
       
       setUsers(formattedUsers);

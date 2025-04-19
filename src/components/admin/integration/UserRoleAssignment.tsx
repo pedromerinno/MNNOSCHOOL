@@ -54,7 +54,7 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
           setRoles(roleData as JobRole[]);
         }
         
-        // Buscar cargo atual do usuário
+        // Buscar cargo atual do usuário - garantindo que cargo_id existe
         if (user.cargo_id) {
           setCurrentRoleId(user.cargo_id);
           setSelectedRoleId(user.cargo_id);
