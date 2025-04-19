@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useCompanyState } from "./company/useCompanyState";
 import { useCompanyFetching } from "./company/useCompanyFetching";
@@ -9,6 +8,7 @@ import { useCompanyDelete } from "./company/useCompanyDelete";
 import { useCompanyUserManagement } from "./company/useCompanyUserManagement";
 import { useCompanyEvents } from "./company/useCompanyEvents";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/supabase";
 
 export const useCompanies = () => {
   // Get auth context for global access
@@ -91,7 +91,22 @@ export const useCompanies = () => {
     const loadInitialData = async () => {
       if (user?.id && userCompanies.length === 0 && !isLoading) {
         try {
-          await getUserCompanies(user.id);
+          // If user is super admin, fetch all companies
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('super_admin')
+            .eq('id', user.id)
+            .single();
+          
+          if (profileData?.super_admin) {
+            const { data: allCompanies } = await supabase
+              .from('empresas')
+              .select('*');
+            
+            setUserCompanies(allCompanies || []);
+          } else {
+            await getUserCompanies(user.id);
+          }
         } catch (error) {
           console.error('[useCompanies] Error loading initial company data:', error);
         }

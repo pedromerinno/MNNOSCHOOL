@@ -14,7 +14,7 @@ const AdminPage = () => {
   const { userProfile } = useAuth();
   const [activeTab, setActiveTab] = useState("users");
   
-  if (userProfile?.isAdmin !== true) {
+  if (!userProfile?.isAdmin && !userProfile?.superAdmin) {
     return <Navigate to="/dashboard" replace />;
   }
   

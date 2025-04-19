@@ -5,12 +5,12 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
 type UserProfile = {
-  id?: string; // Make id optional to match the usage in the app
+  id?: string;
   displayName: string | null;
   avatar: string | null;
   isAdmin?: boolean;
-  cargo?: string | null;
-  cargo_id?: string | null; // Added cargo_id property
+  superAdmin?: boolean;
+  cargo_id?: string | null;
 };
 
 type AuthContextType = {
@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     displayName: null,
     avatar: null,
     isAdmin: false,
-    cargo: null,
+    superAdmin: false,
     cargo_id: null
   });
   const navigate = useNavigate();
@@ -60,65 +60,49 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      const { data: columnExists, error: columnCheckError } = await supabase
+      const { data: columnExists } = await supabase
         .from('profiles')
-        .select('is_admin')
+        .select('is_admin, super_admin')
         .limit(1)
         .maybeSingle();
-      
-      const isAdminColumnExists = !columnCheckError || !columnCheckError.message.includes("column 'is_admin' does not exist");
-      
-      const columnsToSelect = isAdminColumnExists 
-        ? 'display_name, avatar, is_admin, cargo, cargo_id' // Added cargo_id to the query
-        : 'display_name, avatar, cargo, cargo_id'; // Added cargo_id to the query
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select(columnsToSelect)
-        .eq('id', userId)
-        .single();
+    
+    const isAdminColumnExists = columnExists?.is_admin !== undefined;
+    const isSuperAdminColumnExists = columnExists?.super_admin !== undefined;
+    
+    const columnsToSelect = `display_name, avatar, cargo_id${isAdminColumnExists ? ', is_admin' : ''}${isSuperAdminColumnExists ? ', super_admin' : ''}`;
+    
+    const { data, error } = await supabase
+      .from('profiles')
+      .select(columnsToSelect)
+      .eq('id', userId)
+      .single();
 
-      if (error) {
-        console.error('Error fetching user profile:', error);
-        
-        if (error.code === 'PGRST116') {
-          console.log('Profile not found, creating a new one...');
-          await createUserProfile(userId);
-          return;
-        }
+    if (error) {
+      console.error('Error fetching user profile:', error);
+      
+      if (error.code === 'PGRST116') {
+        console.log('Profile not found, creating a new one...');
+        await createUserProfile(userId);
         return;
       }
-
-      if (data && typeof data === 'object') {
-        const profileData = data as any;
-        
-        const displayName = profileData.display_name !== undefined ? profileData.display_name : null;
-        const avatar = profileData.avatar !== undefined ? profileData.avatar : null;
-        const cargo = profileData.cargo !== undefined ? profileData.cargo : null;
-        const cargo_id = profileData.cargo_id !== undefined ? profileData.cargo_id : null; // Added cargo_id
-        const isAdmin = isAdminColumnExists && profileData.is_admin === true;
-        
-        setUserProfile({
-          displayName,
-          avatar,
-          isAdmin,
-          cargo,
-          cargo_id // Added cargo_id
-        });
-      } else {
-        console.error('Invalid data format received from database:', data);
-        setUserProfile({
-          displayName: null,
-          avatar: null,
-          isAdmin: false,
-          cargo: null,
-          cargo_id: null // Added cargo_id
-        });
-      }
-    } catch (error) {
-      console.error('Error in fetchUserProfile:', error);
+      return;
     }
-  };
+
+    if (data && typeof data === 'object') {
+      const profileData = data as any;
+      
+      setUserProfile({
+        displayName: profileData.display_name || null,
+        avatar: profileData.avatar || null,
+        isAdmin: isAdminColumnExists ? profileData.is_admin === true : false,
+        superAdmin: isSuperAdminColumnExists ? profileData.super_admin === true : false,
+        cargo_id: profileData.cargo_id || null
+      });
+    }
+  } catch (error) {
+    console.error('Error in fetchUserProfile:', error);
+  }
+};
 
   const createUserProfile = async (userId: string) => {
     try {
@@ -158,6 +142,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         displayName,
         avatar: null,
         isAdmin: false,
+        superAdmin: false,
         cargo: null,
         cargo_id: null // Added cargo_id
       });
@@ -299,6 +284,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUserProfile({
             displayName: null,
             avatar: null,
+            isAdmin: false,
+            superAdmin: false,
             cargo: null,
             cargo_id: null
           });
