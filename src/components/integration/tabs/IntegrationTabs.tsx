@@ -70,7 +70,7 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
           </TabsTrigger>
         </TabsList>
 
-        <div className="mt-6 space-y-6">
+        <div className="mt-6 mb-12 space-y-6"> {/* Added mb-12 for consistent bottom margin */}
           <TabsContent value="culture" className="m-0">
             <CultureManual
               companyValues={company?.valores || ""}
@@ -115,3 +115,4 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
     </div>
   );
 };
+
