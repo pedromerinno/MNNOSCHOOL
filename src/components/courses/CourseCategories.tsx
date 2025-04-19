@@ -2,20 +2,27 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { 
-  GridIcon, 
+  GridIcon,
   Layers,
   GraduationCap,
   Film,
-  CircleDot
+  CircleDot,
+  BookOpen,
+  Palette,
+  Code
 } from "lucide-react";
 
-const categories = [
-  { id: "all", name: "Todos", icon: GridIcon },
-  { id: "vfx", name: "VFX e Composição", icon: Layers },
-  { id: "3d", name: "3D", icon: GraduationCap },
-  { id: "motion", name: "Motion Design", icon: Film },
-  { id: "shader", name: "Shaders", icon: CircleDot },
-];
+// Map of icons for different categories
+const iconMap: { [key: string]: any } = {
+  "all": GridIcon,
+  "vfx": Layers,
+  "3d": GraduationCap,
+  "motion": Film,
+  "shader": CircleDot,
+  "tutorial": BookOpen,
+  "design": Palette,
+  "code": Code
+};
 
 const bgColors = [
   'bg-blue-50',
@@ -31,30 +38,40 @@ const bgColors = [
 interface CourseCategoriesProps {
   activeCategory: string;
   onCategoryChange: (category: string) => void;
+  availableCategories: string[];
 }
 
 export const CourseCategories: React.FC<CourseCategoriesProps> = ({ 
   activeCategory,
-  onCategoryChange
+  onCategoryChange,
+  availableCategories
 }) => {
+  const categories = [
+    { id: "all", name: "Todos" },
+    ...availableCategories.map(category => ({
+      id: category,
+      name: category.charAt(0).toUpperCase() + category.slice(1)
+    }))
+  ];
+
   return (
     <div className="flex flex-wrap gap-3">
       {categories.map((category, index) => {
-        const Icon = category.icon;
+        const Icon = iconMap[category.id.toLowerCase()] || CircleDot;
         const isActive = activeCategory === category.id;
         const randomBg = bgColors[index % bgColors.length];
         
         return (
           <Card 
             key={category.id} 
-            className={`inline-flex items-center gap-2 px-4 py-2 cursor-pointer transition-all rounded-lg
+            className={`inline-flex items-center gap-3 px-6 py-3 cursor-pointer transition-all rounded-xl
               ${isActive 
                 ? 'bg-black text-white' 
                 : `${randomBg} hover:bg-gray-100`
               }`}
             onClick={() => onCategoryChange(category.id)}
           >
-            <div className={`p-1.5 rounded-full ${isActive ? 'bg-white/20' : 'bg-white'}`}>
+            <div className={`p-2 rounded-full ${isActive ? 'bg-white/20' : 'bg-white'}`}>
               <Icon 
                 size={18}
                 className={isActive ? 'text-white' : 'text-black'}

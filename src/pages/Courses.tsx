@@ -18,6 +18,18 @@ const Courses = () => {
 
   const [activeCategory, setActiveCategory] = useState("all");
 
+  // Extract unique categories from all courses
+  const availableCategories = React.useMemo(() => {
+    if (!allCompanyCourses) return [];
+    
+    const categories = new Set<string>();
+    allCompanyCourses.forEach(course => {
+      course.tags?.forEach(tag => categories.add(tag));
+    });
+    
+    return Array.from(categories);
+  }, [allCompanyCourses]);
+
   const filteredCourses = allCompanyCourses?.filter(course => {
     if (activeCategory === "all") return true;
     return course.tags?.includes(activeCategory);
@@ -38,6 +50,7 @@ const Courses = () => {
           <CourseCategories 
             activeCategory={activeCategory}
             onCategoryChange={setActiveCategory}
+            availableCategories={availableCategories}
           />
         </div>
         
