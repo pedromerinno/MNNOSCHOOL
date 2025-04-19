@@ -1,4 +1,6 @@
 
+import { AccessItem } from "../types";
+
 export interface AccessDetailsProps {
   access: AccessItem | null;
   isOpen: boolean;
