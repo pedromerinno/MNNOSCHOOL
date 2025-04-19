@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchCourses } from "@/services/courseService";
 
 export const SearchBar = () => {
   const { selectedCompany } = useCompanies();
@@ -13,6 +14,7 @@ export const SearchBar = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,25 +31,30 @@ export const SearchBar = () => {
 
   useEffect(() => {
     const fetchSuggestions = async () => {
-      if (!searchQuery.trim() || !selectedCompany?.id) return setSuggestions([]);
+      if (!searchQuery.trim() || !selectedCompany?.id) {
+        setSuggestions([]);
+        return;
+      }
       
-      const { data: companyAccess } = await supabase
-        .from('company_courses')
-        .select('course_id')
-        .eq('empresa_id', selectedCompany.id);
+      setLoading(true);
+      
+      try {
+        // Get all courses available to this company
+        const allCourses = await fetchCourses(selectedCompany.id);
         
-      if (!companyAccess || companyAccess.length === 0) return setSuggestions([]);
-      
-      const courseIds = companyAccess.map(access => access.course_id);
-      
-      const { data } = await supabase
-        .from('courses')
-        .select('id, title, tags')
-        .in('id', courseIds)
-        .ilike('title', `%${searchQuery}%`)
-        .limit(5);
+        // Filter courses based on search query
+        const filteredCourses = allCourses.filter(course => 
+          course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          course.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+        ).slice(0, 5); // Limit to 5 suggestions
         
-      setSuggestions(data || []);
+        setSuggestions(filteredCourses);
+      } catch (error) {
+        console.error("Error fetching search suggestions:", error);
+        setSuggestions([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
     const debounceTimer = setTimeout(() => {
@@ -91,25 +98,32 @@ export const SearchBar = () => {
             placeholder="Digite para pesquisar cursos..."
           />
           <CommandList>
-            <CommandEmpty>Nenhum curso encontrado.</CommandEmpty>
-            <CommandGroup heading="Cursos sugeridos">
-              {suggestions.map((course) => (
-                <CommandItem
-                  key={course.id}
-                  onSelect={() => handleSelect(course.id)}
-                  className="flex items-center gap-2 cursor-pointer"
-                >
-                  <div>
-                    <div className="font-medium">{course.title}</div>
-                    {course.tags && (
-                      <div className="text-sm text-gray-500">
-                        {course.tags.join(' • ')}
-                      </div>
-                    )}
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
+            {loading ? (
+              <div className="py-6 text-center text-sm text-gray-500">
+                Buscando cursos...
+              </div>
+            ) : suggestions.length === 0 && searchQuery ? (
+              <CommandEmpty>Nenhum curso encontrado.</CommandEmpty>
+            ) : (
+              <CommandGroup heading="Cursos sugeridos">
+                {suggestions.map((course) => (
+                  <CommandItem
+                    key={course.id}
+                    onSelect={() => handleSelect(course.id)}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <div>
+                      <div className="font-medium">{course.title}</div>
+                      {course.tags && (
+                        <div className="text-sm text-gray-500">
+                          {course.tags.join(' • ')}
+                        </div>
+                      )}
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
           </CommandList>
         </Command>
       </CommandDialog>
