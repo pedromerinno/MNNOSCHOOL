@@ -21,7 +21,7 @@ export interface DiscussionReply {
   author_id: string;
   content: string;
   created_at: string;
-  image_url?: string | null;
+  image_url: string | null;
   profiles?: {
     display_name: string | null;
     avatar: string | null;
