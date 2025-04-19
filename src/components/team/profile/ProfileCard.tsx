@@ -26,9 +26,9 @@ export const ProfileCard = ({ member }: ProfileCardProps) => {
               {member?.display_name}
             </h2>
             
-            {member?.cargo && (
+            {member?.cargo_id && (
               <p className="text-muted-foreground">
-                {member.cargo}
+                Cargo ID: {member.cargo_id}
               </p>
             )}
             

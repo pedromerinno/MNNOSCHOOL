@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
@@ -36,7 +37,7 @@ export const FeedbackWidget = () => {
     email: null,
     is_admin: false,
     avatar: profile.avatar || null,
-    cargo: profile.cargo || null
+    cargo_id: profile.cargo_id || null
   });
 
   return (
@@ -73,11 +74,7 @@ export const FeedbackWidget = () => {
                     <span className="text-base font-medium text-black dark:text-white">
                       {feedbacks[0].from_profile?.display_name || 'Usuário'}
                     </span>
-                    {feedbacks[0].from_profile?.cargo && (
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
-                        {feedbacks[0].from_profile.cargo}
-                      </span>
-                    )}
+                    {/* Removed cargo references as this field doesn't exist in the profile type */}
                   </div>
                   <span className="text-sm text-gray-500 dark:text-gray-400 ml-auto">
                     {formatDate(feedbacks[0].created_at)}

@@ -13,7 +13,8 @@ export interface ReceivedFeedback {
     id: string;
     display_name: string | null;
     avatar: string | null;
-    // Removed cargo field as it doesn't exist in profiles table
+    // Using cargo_id instead of cargo
+    cargo_id?: string | null;
   } | null;
 }
 
@@ -57,7 +58,7 @@ export const useReceivedFeedbacks = () => {
           return;
         }
 
-        // Then fetch the associated profiles - updated to remove 'cargo' field
+        // Then fetch the associated profiles - updated to use cargo_id field
         const enrichedFeedbacks = await Promise.all(
           (feedbackData || []).map(async (feedback) => {
             if (!feedback.from_user_id) {
@@ -69,7 +70,7 @@ export const useReceivedFeedbacks = () => {
 
             const { data: profileData, error: profileError } = await supabase
               .from('profiles')
-              .select('id, display_name, avatar')
+              .select('id, display_name, avatar, cargo_id')
               .eq('id', feedback.from_user_id)
               .single();
 
