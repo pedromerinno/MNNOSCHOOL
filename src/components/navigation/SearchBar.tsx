@@ -29,6 +29,7 @@ export const SearchBar = () => {
     navigate(`/courses/${courseId}`);
   };
 
+  // This useEffect will fetch suggestions whenever searchQuery or selectedCompany changes
   useEffect(() => {
     const fetchSuggestions = async () => {
       if (!searchQuery.trim() || !selectedCompany?.id) {
@@ -45,7 +46,9 @@ export const SearchBar = () => {
         // Filter courses based on search query
         const filteredCourses = allCourses.filter(course => 
           course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          course.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+          (course.tags && course.tags.some(tag => 
+            tag.toLowerCase().includes(searchQuery.toLowerCase())
+          ))
         ).slice(0, 5); // Limit to 5 suggestions
         
         setSuggestions(filteredCourses);
@@ -66,6 +69,11 @@ export const SearchBar = () => {
 
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
   
+  // Function to handle input change from either search input
+  const handleInputChange = (value: string) => {
+    setSearchQuery(value);
+  };
+  
   return (
     <>
       <div className="relative w-64">
@@ -83,7 +91,7 @@ export const SearchBar = () => {
           <Search className="h-4 w-4 text-gray-400 dark:text-gray-500 mr-2 flex-shrink-0" />
           <input
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleInputChange(e.target.value)}
             placeholder="Pesquisar..."
             className="w-full bg-transparent border-0 p-0 h-8 text-sm focus:outline-none"
           />
@@ -94,7 +102,7 @@ export const SearchBar = () => {
         <Command>
           <CommandInput 
             value={searchQuery}
-            onValueChange={setSearchQuery}
+            onValueChange={handleInputChange}
             placeholder="Digite para pesquisar cursos..."
           />
           <CommandList>
@@ -143,4 +151,3 @@ export const SearchBar = () => {
     </>
   );
 };
-
