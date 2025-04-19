@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -43,10 +42,10 @@ const TeamMemberProfile = () => {
       try {
         setIsLoading(true);
         
-        // Get the member profile
+        // Get the member profile - updated to remove 'cargo' which doesn't exist
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('id, display_name, email, cargo, avatar, is_admin')
+          .select('id, display_name, email, cargo_id, avatar, is_admin')
           .eq('id', memberId)
           .single();
 

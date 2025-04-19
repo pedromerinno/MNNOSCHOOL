@@ -1,3 +1,4 @@
+
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -144,9 +145,10 @@ export const useCompanyUserManagement = () => {
       const userIds = userCompanyRelations.map(relation => relation.user_id);
       
       // Get complete user profiles - using a separate query to avoid RLS issues
+      // Updated to remove 'cargo' which doesn't exist in the database
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, display_name, email, cargo_id, cargo, is_admin')
+        .select('id, display_name, email, cargo_id, is_admin, avatar')
         .in('id', userIds);
         
       if (profilesError) throw profilesError;

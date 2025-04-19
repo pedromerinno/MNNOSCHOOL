@@ -36,11 +36,7 @@ export const TeamMembersList = ({ members }: TeamMembersListProps) => {
                     <h3 className="font-medium text-lg">
                       {member.display_name || 'Usuário'}
                     </h3>
-                    {member.cargo && (
-                      <p className="text-sm text-muted-foreground">
-                        {member.cargo}
-                      </p>
-                    )}
+                    {/* Reference to role removed since cargo field doesn't exist */}
                   </div>
                 </div>
 

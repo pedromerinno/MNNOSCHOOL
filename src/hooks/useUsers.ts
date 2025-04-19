@@ -1,16 +1,14 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { setAdminStatusById } from '@/utils/adminUtils';
 
 export interface UserProfile {
-  id: string; // Changed from optional to required since we need this field
+  id: string; 
   email: string | null;
   display_name: string | null;
   is_admin: boolean | null;
   avatar?: string | null;
-  cargo?: string | null;
   cargo_id?: string | null;
 }
 
@@ -85,7 +83,7 @@ export function useUsers() {
       
       const result = await supabase
         .from('profiles')
-        .select('id, display_name, is_admin, email, created_at, avatar, cargo, cargo_id');
+        .select('id, display_name, is_admin, email, created_at, avatar, cargo_id');
         
       if (result.error) {
         console.error('Error fetching profiles:', result.error);
@@ -98,7 +96,6 @@ export function useUsers() {
         display_name: profile.display_name || `User ${profile.id.substring(0, 6)}`,
         is_admin: profile.is_admin,
         avatar: profile.avatar,
-        cargo: profile.cargo,
         cargo_id: profile.cargo_id
       }));
       
@@ -132,7 +129,6 @@ export function useUsers() {
             email: 'admin@example.com',
             display_name: 'Admin (Offline Mode)',
             is_admin: true,
-            cargo: 'Administrador',
             cargo_id: 'mock-admin-role'
           }
         ];

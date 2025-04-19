@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -22,7 +21,6 @@ export const useTeamMembers = () => {
       const { data, timestamp, companyId } = JSON.parse(cached);
       const now = Date.now();
       
-      // Verificar se o cache é válido e pertence à empresa selecionada
       if (now - timestamp < CACHE_EXPIRATION && companyId === selectedCompany?.id) {
         console.log('Usando dados em cache para membros da equipe');
         return data;
@@ -59,7 +57,6 @@ export const useTeamMembers = () => {
       try {
         setError(null);
 
-        // Tentar usar cache primeiro
         const cachedData = getCachedMembers();
         if (cachedData) {
           setMembers(cachedData);
@@ -68,7 +65,6 @@ export const useTeamMembers = () => {
           setIsLoading(true);
         }
 
-        // Query para relações user_empresa
         const { data: userCompanyRelations, error: relationsError } = await supabase
           .from('user_empresa')
           .select('user_id')
@@ -84,10 +80,9 @@ export const useTeamMembers = () => {
 
         const userIds = userCompanyRelations.map(relation => relation.user_id);
 
-        // Query otimizada para profiles
         const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
-          .select('id, display_name, email, cargo, avatar, is_admin')
+          .select('id, display_name, email, cargo_id, avatar, is_admin')
           .in('id', userIds);
 
         if (profilesError) throw profilesError;
@@ -96,7 +91,7 @@ export const useTeamMembers = () => {
           id: profile.id,
           display_name: profile.display_name,
           email: profile.email,
-          cargo: profile.cargo,
+          cargo_id: profile.cargo_id,
           avatar: profile.avatar,
           is_admin: profile.is_admin
         }));
