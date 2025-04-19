@@ -13,8 +13,6 @@ export const CompanyHeader: React.FC<CompanyHeaderProps> = ({
 }) => {
   if (!company) return null;
 
-  return (
-    <div className="p-10">
-    </div>
-  );
+  return null; // Removing the header completely
 };
+
