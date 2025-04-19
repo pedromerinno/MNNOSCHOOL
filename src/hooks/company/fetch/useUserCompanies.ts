@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Company } from "@/types/company";
 import { toast } from "sonner";
@@ -65,32 +64,20 @@ export const useUserCompanies = ({
       if (signal?.aborted) {
         throw new DOMException("Aborted", "AbortError");
       }
-      
-      console.log("Fetching user_empresa relations for user:", userId);
-      
-      // Usar a função otimizada para obter as relações de usuário-empresa
-      const { data: relations, error: relationsError } = await retryOperation(
-        async () => {
-          const req = supabase
-            .from('user_empresa')
-            .select('empresa_id')
-            .eq('user_id', userId);
-            
-          if (signal) {
-            req.abortSignal(signal);
-          }
-          
-          return await req;
-        }
-      );
+
+      // Primeiro, buscar as relações de empresa do usuário
+      const { data: relations, error: relationsError } = await supabase
+        .from('user_empresa')
+        .select('empresa_id')
+        .eq('user_id', userId);
 
       if (relationsError) {
-        console.error("Error in user_empresa relation query:", relationsError);
+        console.error("Error fetching user-company relations:", relationsError);
         throw relationsError;
       }
 
       if (!relations || relations.length === 0) {
-        console.log("No company relations found for user:", userId);
+        console.log("No companies found for user:", userId);
         setUserCompanies([]);
         setSelectedCompany(null);
         localStorage.removeItem('userCompanies');
@@ -98,59 +85,48 @@ export const useUserCompanies = ({
         return [];
       }
 
+      // Buscar os detalhes das empresas
       const companyIds = relations.map(r => r.empresa_id);
-      console.log("Found company relations:", companyIds.length);
-      
-      const { data: companies, error: companiesError } = await retryOperation(
-        async () => {
-          const req = supabase
-            .from('empresas')
-            .select('*')
-            .in('id', companyIds)
-            .order('nome');
-            
-          if (signal) {
-            req.abortSignal(signal);
-          }
-          
-          return await req;
-        }
-      );
+      console.log(`Found ${companyIds.length} company relations`);
 
-      if (companiesError) throw companiesError;
+      const { data: companies, error: companiesError } = await supabase
+        .from('empresas')
+        .select('*')
+        .in('id', companyIds)
+        .order('nome');
+
+      if (companiesError) {
+        console.error("Error fetching companies:", companiesError);
+        throw companiesError;
+      }
 
       const userCompaniesData = companies as Company[];
-      console.log("Successfully fetched companies:", userCompaniesData.length);
-      
+      console.log(`Successfully fetched ${userCompaniesData.length} companies`);
+
       setUserCompanies(userCompaniesData);
-      
+
       if (userCompaniesData.length > 0) {
         localStorage.setItem('userCompanies', JSON.stringify(userCompaniesData));
         localStorage.setItem('userCompaniesTimestamp', Date.now().toString());
+
+        if (userCompaniesData.length === 1) {
+          setSelectedCompany(userCompaniesData[0]);
+        }
       }
-      
-      if (userCompaniesData.length === 1) {
-        setSelectedCompany(userCompaniesData[0]);
-      }
-      
+
       setIsLoading(false);
       return userCompaniesData;
     } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') {
-        console.log('Request was aborted');
-        return cachedData;
-      }
-      
-      console.error("Error fetching user companies:", error);
-      setError(error instanceof Error ? error : new Error("Failed to fetch user companies"));
+      console.error("Error in getUserCompanies:", error);
+      setError(error instanceof Error ? error : new Error("Failed to fetch companies"));
       
       if (cachedData.length > 0) {
+        console.log("Using cached data due to error");
         return cachedData;
       }
       
-      return [];
-    } finally {
       setIsLoading(false);
+      return [];
     }
   };
 

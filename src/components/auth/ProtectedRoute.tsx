@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,9 +19,9 @@ export const ProtectedRoute = () => {
       if (loading) {
         console.log("ProtectedRoute: Tempo limite de carregamento atingido");
         setInitialLoadDone(true);
-        setAuthError("Tempo limite de autenticação excedido. Tente novamente ou faça login novamente.");
+        setAuthError("Tempo limite de autenticação excedido. Por favor, recarregue a página ou faça login novamente.");
       }
-    }, 10000); // Increased to 10000 ms to allow more time for auth to complete
+    }, 15000); // Increased timeout to 15 seconds for slower connections
     
     // If loading is completed, mark as done
     if (!loading) {
@@ -82,13 +81,13 @@ export const ProtectedRoute = () => {
     </div>
   );
 
-  // Show loading state
+  // Show loading state with improved message
   if (loading && !initialLoadDone) {
-    console.log("ProtectedRoute: Mostrando estado de carregamento");
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-        <p className="ml-2">Carregando...</p>
+      <div className="flex flex-col items-center justify-center h-screen p-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+        <p className="text-lg text-gray-600">Verificando autenticação...</p>
+        <p className="text-sm text-gray-400 mt-2">Isso pode levar alguns segundos</p>
       </div>
     );
   }
