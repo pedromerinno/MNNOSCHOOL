@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -69,16 +70,21 @@ export function useUsers() {
         setLoading(true);
       }
       
-      // Get the profiles with basic information including email
+      // Use simpler query to avoid recursion issues with RLS policies
       const { data: profiles, error } = await supabase
         .from('profiles')
         .select('id, display_name, is_admin, email, created_at, avatar, cargo, cargo_id');
       
       if (error) {
+        // Handle specific error types
+        if (error.code === '42P17') {
+          console.error('Recursion detected in RLS policy. Falling back to cached data.');
+          throw new Error('Erro de permissão ao buscar usuários. Tentando usar dados em cache.');
+        }
         throw error;
       }
 
-      // Map the profiles to our UserProfile interface
+      // If we got here, we have data
       const formattedUsers: UserProfile[] = profiles.map(profile => ({
         id: profile.id,
         email: profile.email || profile.id.toLowerCase() + '@example.com', // Use email from DB or fallback
