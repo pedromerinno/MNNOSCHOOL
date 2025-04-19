@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCourseData } from '@/hooks/useCourseData';
@@ -12,12 +11,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CourseDescription } from './CourseDescription';
 import { Badge } from '@/components/ui/badge';
 import { Clock, BookOpen, Star } from 'lucide-react';
+import { useCompanies } from '@/hooks/useCompanies';
 
 export const CourseView: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const { course, loading } = useCourseData(courseId);
   const { startLesson } = useLessonNavigation(courseId);
   const [activeTab, setActiveTab] = useState<string>("description");
+  const { selectedCompany } = useCompanies();
+  const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
 
   if (loading) {
     return <CourseViewSkeleton />;
@@ -29,10 +31,8 @@ export const CourseView: React.FC = () => {
 
   const firstLessonId = course.lessons && course.lessons.length > 0 ? course.lessons[0].id : undefined;
 
-  // Calculate total duration of the course
   const totalDuration = course.lessons && course.lessons.length > 0 
     ? course.lessons.reduce((total, lesson) => {
-        // Extract minutes from duration string (e.g., "15 min" -> 15)
         const minutes = lesson.duration 
           ? parseInt(lesson.duration.replace(/[^0-9]/g, '')) 
           : 0;
@@ -40,7 +40,6 @@ export const CourseView: React.FC = () => {
       }, 0)
     : 0;
   
-  // Format total duration as hours and minutes
   const hours = Math.floor(totalDuration / 60);
   const minutes = totalDuration % 60;
   const formattedDuration = hours > 0 
@@ -67,7 +66,6 @@ export const CourseView: React.FC = () => {
       
       <div className="flex flex-col md:flex-row items-start gap-8">
         <div className="w-full md:w-8/12 space-y-8">
-          {/* Course stats */}
           <div className="flex items-center gap-6 text-sm">
             <div className="flex items-center gap-1">
               <Clock className="h-4 w-4 text-muted-foreground" />
@@ -86,7 +84,6 @@ export const CourseView: React.FC = () => {
             )}
           </div>
           
-          {/* Course progress if started */}
           {course.progress > 0 && (
             <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
               <div className="flex justify-between items-center mb-2">
@@ -102,11 +99,30 @@ export const CourseView: React.FC = () => {
             </div>
           )}
           
-          {/* Tabs for content */}
           <Tabs defaultValue="description" value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="description">Descrição</TabsTrigger>
-              <TabsTrigger value="reviews">Avaliações</TabsTrigger>
+            <TabsList className="grid grid-cols-2 w-full rounded-2xl p-1.5 bg-transparent dark:bg-transparent gap-2">
+              <TabsTrigger 
+                value="description"
+                className="flex items-center gap-2 rounded-xl py-4 px-6 transition-colors"
+                style={{
+                  backgroundColor: activeTab === "description" ? `${companyColor}10` : undefined,
+                  borderColor: activeTab === "description" ? companyColor : undefined,
+                  color: activeTab === "description" ? companyColor : undefined
+                }}
+              >
+                Descrição
+              </TabsTrigger>
+              <TabsTrigger 
+                value="reviews"
+                className="flex items-center gap-2 rounded-xl py-4 px-6 transition-colors"
+                style={{
+                  backgroundColor: activeTab === "reviews" ? `${companyColor}10` : undefined,
+                  borderColor: activeTab === "reviews" ? companyColor : undefined,
+                  color: activeTab === "reviews" ? companyColor : undefined
+                }}
+              >
+                Avaliações
+              </TabsTrigger>
             </TabsList>
             <TabsContent value="description" className="mt-6">
               <CourseDescription description={course.description} />
