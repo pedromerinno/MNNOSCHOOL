@@ -76,8 +76,8 @@ const Integration = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-8">
-        <div className="flex items-center mb-8 gap-2">
+      <main className="container mx-auto px-6 py-12">
+        <div className="flex items-center mb-12 gap-2">
           <Button 
             variant="ghost" 
             size="sm" 
@@ -86,21 +86,18 @@ const Integration = () => {
           >
             <ArrowLeft className="h-5 w-5 text-gray-500" />
           </Button>
-          <h1 className="text-3xl font-bold dark:text-white">Integração</h1>
+          <h1 className="text-3xl font-bold dark:text-white">
+            Bem-vindo ao processo de integração
+          </h1>
         </div>
         
-        <div className="bg-white dark:bg-card rounded-lg shadow-sm">
+        <div className="bg-white dark:bg-card rounded-xl shadow-sm">
           {isLoading ? (
             <LoadingState />
           ) : (
             <>
-              <div className="p-8">
+              <div className="p-10">
                 <div className="flex items-center mb-8">
-                  <h2 className="text-2xl font-semibold mr-3 dark:text-white">
-                    {localCompany 
-                      ? `Bem-vindo ao processo de integração da ${localCompany.nome}` 
-                      : "Bem-vindo ao processo de integração"}
-                  </h2>
                   {localCompany && (
                     <CompanyThemedBadge 
                       variant="beta"
@@ -109,14 +106,15 @@ const Integration = () => {
                         color: companyColor,
                         borderColor: `${companyColor}40`
                       }}
+                      className="mr-4"
                     >
-                      Empresa
+                      {localCompany.nome}
                     </CompanyThemedBadge>
                   )}
                 </div>
               </div>
 
-              <div className="px-8 pb-8">
+              <div className="px-10 pb-10">
                 <Tabs
                   defaultValue="culture"
                   value={activeTab}
