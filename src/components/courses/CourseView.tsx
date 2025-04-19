@@ -109,13 +109,13 @@ export const CourseView: React.FC = () => {
                   <TabsList className="bg-gray-50 dark:bg-gray-900 w-full justify-start rounded-none p-0 h-auto">
                     <TabsTrigger 
                       value="description" 
-                      className="flex items-center py-3 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500"
+                      className="flex items-center py-3 px-6 transition-colors rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent"
                     >
                       Descrição
                     </TabsTrigger>
                     <TabsTrigger 
                       value="reviews" 
-                      className="flex items-center py-3 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500"
+                      className="flex items-center py-3 px-6 transition-colors rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent"
                     >
                       Avaliações
                     </TabsTrigger>
