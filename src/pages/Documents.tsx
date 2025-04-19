@@ -47,10 +47,13 @@ const Documents = () => {
     }
   };
 
+  // Modify this function to handle the boolean return from deleteDocument but return void
   const handleDelete = async (document: UserDocument): Promise<void> => {
     if (window.confirm(`Tem certeza que deseja excluir o documento "${document.name}"?`)) {
-      await deleteDocument(document.id);
-      refreshDocuments();
+      const success = await deleteDocument(document.id);
+      if (success) {
+        refreshDocuments();
+      }
     }
   };
 
