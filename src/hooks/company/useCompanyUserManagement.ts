@@ -1,4 +1,3 @@
-
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -93,29 +92,33 @@ export const useCompanyUserManagement = () => {
    */
   const getCompanyUsers = useCallback(async (companyId: string): Promise<UserProfile[]> => {
     try {
-      const { data, error } = await supabase
+      // Buscar todos os usuários associados à empresa através da tabela user_empresa
+      const { data: userCompanyRelations, error: relationError } = await supabase
         .from('user_empresa')
-        .select(`
-          user_id,
-          profiles:user_id(id, display_name, email, is_admin)
-        `)
+        .select('user_id')
         .eq('empresa_id', companyId);
         
-      if (error) {
-        console.error('Error fetching company users:', error);
-        toast.error("Erro ao buscar usuários da empresa");
+      if (relationError) throw relationError;
+      
+      if (!userCompanyRelations || userCompanyRelations.length === 0) {
         return [];
       }
       
-      // Transform the data to match UserProfile structure
-      const users: UserProfile[] = data
-        .map(item => item.profiles)
-        .filter(Boolean);  // Filter out any null values
+      // Pegar os IDs dos usuários
+      const userIds = userCompanyRelations.map(relation => relation.user_id);
+      
+      // Buscar os perfis completos dos usuários
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, display_name, email, cargo_id, cargo, is_admin')
+        .in('id', userIds);
         
-      return users;
-    } catch (error) {
-      console.error('Unexpected error fetching company users:', error);
-      toast.error("Erro inesperado ao buscar usuários");
+      if (profilesError) throw profilesError;
+      
+      return profiles || [];
+    } catch (error: any) {
+      console.error('Error fetching company users:', error);
+      toast.error(`Erro ao buscar usuários da empresa: ${error.message}`);
       return [];
     }
   }, []);
