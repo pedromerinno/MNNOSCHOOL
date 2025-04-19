@@ -4,6 +4,7 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { DocumentPreview } from "@/components/documents/DocumentPreview";
 import { DocumentTabs } from "@/components/documents/DocumentTabs";
 import { useDocumentManager } from "@/hooks/useDocumentManager";
+import { UserDocument, DocumentType } from "@/types/document";
 
 const Documents = () => {
   const [activeTab, setActiveTab] = useState("all");
