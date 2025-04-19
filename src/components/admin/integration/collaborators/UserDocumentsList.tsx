@@ -1,13 +1,14 @@
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from "@/components/ui/card";
+import React, { useEffect } from 'react';
+import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { FileText, Download, Trash2, Upload, AlertCircle, Eye } from "lucide-react";
-import { UserDocument, DOCUMENT_TYPE_LABELS } from "@/types/document";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { format } from "date-fns";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { UserDocument } from "@/types/document";
+import { supabase } from "@/integrations/supabase/client";
+import { DocumentCard } from './documents/DocumentCard';
+import { EmptyDocumentsList } from './documents/EmptyDocumentsList';
+import { useUserDocumentsList } from '@/hooks/useUserDocumentsList';
 
 interface UserDocumentsListProps {
   documents: UserDocument[];
@@ -20,16 +21,22 @@ export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
   documents,
   isLoading,
   onDelete,
-  onUploadClick
+  onUploadClick,
 }) => {
-  const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const {
+    downloadingId,
+    deletingId,
+    error,
+    previewUrl,
+    previewOpen,
+    setPreviewOpen,
+    currentUserId,
+    setCurrentUserId,
+    handleDownload,
+    handlePreview,
+    confirmDelete,
+  } = useUserDocumentsList(onDelete);
 
-  // Get current user ID once on component mount
   useEffect(() => {
     const fetchUserId = async () => {
       const { data } = await supabase.auth.getUser();
@@ -37,96 +44,13 @@ export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
     };
     
     fetchUserId();
-  }, []);
-
-  useEffect(() => {
-    console.log("Documents in UserDocumentsList:", documents);
-  }, [documents]);
-
-  const handleDownload = async (document: UserDocument) => {
-    setDownloadingId(document.id);
-    setError(null);
-    
-    try {
-      const { data, error } = await supabase.storage
-        .from('documents')
-        .download(document.file_path);
-        
-      if (error) throw error;
-      
-      const url = URL.createObjectURL(data);
-      const a = window.document.createElement('a');
-      a.href = url;
-      a.download = document.name;
-      a.click();
-      URL.revokeObjectURL(url);
-      
-    } catch (error: any) {
-      console.error('Error downloading document:', error);
-      
-      let errorMessage = 'Falha ao baixar o documento';
-      
-      if (error.message.includes("storage/object-not-found")) {
-        errorMessage = "Arquivo não encontrado. Pode ter sido excluído.";
-      } else {
-        errorMessage = `Falha ao baixar o documento: ${error.message}`;
-      }
-      
-      setError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setDownloadingId(null);
-    }
-  };
-
-  const handlePreview = async (document: UserDocument) => {
-    try {
-      const { data, error } = await supabase.storage
-        .from('documents')
-        .createSignedUrl(document.file_path, 3600);
-        
-      if (error) throw error;
-      
-      setPreviewUrl(data.signedUrl);
-      setPreviewOpen(true);
-    } catch (error: any) {
-      console.error('Error previewing document:', error);
-      toast.error(`Falha ao visualizar o documento: ${error.message}`);
-    }
-  };
-
-  const canDeleteDocument = (document: UserDocument) => {
-    return document.uploaded_by === currentUserId;
-  };
-
-  const confirmDelete = async (document: UserDocument) => {
-    if (!canDeleteDocument(document)) {
-      toast.error("Você só pode excluir documentos que você mesmo enviou.");
-      return;
-    }
-
-    if (window.confirm(`Tem certeza que deseja excluir o documento "${document.name}"?`)) {
-      setDeletingId(document.id);
-      setError(null);
-      try {
-        await onDelete(document.id);
-      } catch (error: any) {
-        setError(`Falha ao excluir o documento: ${error.message}`);
-      } finally {
-        setDeletingId(null);
-      }
-    }
-  };
+  }, [setCurrentUserId]);
 
   if (isLoading) {
     return (
       <div className="space-y-3">
         {[1, 2, 3].map(i => (
-          <Card key={i} className="animate-pulse">
-            <CardContent className="h-20 flex items-center justify-center">
-              <span className="text-gray-400">Carregando...</span>
-            </CardContent>
-          </Card>
+          <div key={i} className="h-24 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-lg" />
         ))}
       </div>
     );
@@ -134,103 +58,38 @@ export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
 
   if (error) {
     return (
-      <Card className="border border-red-200 shadow-sm">
-        <CardContent className="p-4 text-center">
-          <AlertCircle className="mx-auto h-10 w-10 text-red-500 mb-2" />
-          <p className="font-medium text-red-700">Erro</p>
-          <p className="text-sm text-red-600 mt-1">{error}</p>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="mt-3"
-            onClick={() => setError(null)}
-          >
-            Fechar
-          </Button>
-        </CardContent>
-      </Card>
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>{error}</AlertDescription>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="mt-3"
+          onClick={() => window.location.reload()}
+        >
+          Tentar novamente
+        </Button>
+      </Alert>
     );
   }
 
   if (documents.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <FileText className="mx-auto h-12 w-12 text-gray-400 mb-3" />
-        <h3 className="text-lg font-medium mb-2">Nenhum documento</h3>
-        <p className="text-gray-500 mb-4">
-          Este colaborador não possui documentos cadastrados.
-        </p>
-        <Button onClick={onUploadClick}>
-          <Upload className="mr-2 h-4 w-4" />
-          Adicionar Documento
-        </Button>
-      </div>
-    );
+    return <EmptyDocumentsList onUploadClick={onUploadClick} />;
   }
 
   return (
     <div className="space-y-3">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-medium">Documentos do Colaborador</h3>
-        <Button onClick={onUploadClick} size="sm">
-          <Upload className="mr-2 h-4 w-4" />
-          Adicionar
-        </Button>
-      </div>
-      
       {documents.map(document => (
-        <Card key={document.id} className="hover:shadow-sm transition-shadow">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center max-w-[70%]">
-                <div className="bg-gray-100 dark:bg-gray-800 p-2 rounded-full mr-3 flex-shrink-0">
-                  <FileText className="h-5 w-5 text-blue-500" />
-                </div>
-                <div className="overflow-hidden">
-                  <p className="font-medium truncate" title={document.name}>{document.name}</p>
-                  <div className="flex text-sm text-gray-500 space-x-2">
-                    <span className="truncate">{DOCUMENT_TYPE_LABELS[document.document_type] || document.document_type}</span>
-                    <span>•</span>
-                    <span>{format(new Date(document.uploaded_at), 'dd/MM/yyyy')}</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex space-x-2 flex-shrink-0">
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  onClick={() => handlePreview(document)}
-                  title="Visualizar documento"
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  onClick={() => handleDownload(document)}
-                  title="Baixar documento"
-                  disabled={!!downloadingId}
-                  className={downloadingId === document.id ? "animate-pulse" : ""}
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
-                {canDeleteDocument(document) && (
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    onClick={() => confirmDelete(document)}
-                    title="Excluir documento"
-                    disabled={!!deletingId}
-                    className={`${deletingId === document.id ? "animate-pulse" : ""} text-red-500 hover:bg-red-50 hover:text-red-600`}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <DocumentCard
+          key={document.id}
+          document={document}
+          downloadingId={downloadingId}
+          deletingId={deletingId}
+          canDeleteDocument={document.uploaded_by === currentUserId}
+          onPreview={() => handlePreview(document)}
+          onDownload={() => handleDownload(document)}
+          onDelete={() => confirmDelete(document)}
+        />
       ))}
 
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
