@@ -1,28 +1,6 @@
 
 import React from "react";
 import { Card } from "@/components/ui/card";
-import { 
-  GridIcon,
-  Layers,
-  GraduationCap,
-  Film,
-  CircleDot,
-  BookOpen,
-  Palette,
-  Code
-} from "lucide-react";
-
-// Map of icons for different categories
-const iconMap: { [key: string]: any } = {
-  "all": GridIcon,
-  "vfx": Layers,
-  "3d": GraduationCap,
-  "motion": Film,
-  "shader": CircleDot,
-  "tutorial": BookOpen,
-  "design": Palette,
-  "code": Code
-};
 
 const bgColors = [
   'bg-blue-50',
@@ -57,28 +35,33 @@ export const CourseCategories: React.FC<CourseCategoriesProps> = ({
   return (
     <div className="flex flex-wrap gap-3">
       {categories.map((category, index) => {
-        const Icon = iconMap[category.id.toLowerCase()] || CircleDot;
         const isActive = activeCategory === category.id;
         const randomBg = bgColors[index % bgColors.length];
         
+        // Determine text color based on background
+        const textColorMap: { [key: string]: string } = {
+          'bg-blue-50': 'text-blue-800',
+          'bg-green-50': 'text-green-800',
+          'bg-purple-50': 'text-purple-800',
+          'bg-orange-50': 'text-orange-800',
+          'bg-pink-50': 'text-pink-800',
+          'bg-teal-50': 'text-teal-800',
+          'bg-indigo-50': 'text-indigo-800',
+          'bg-cyan-50': 'text-cyan-800',
+        };
+
         return (
-          <Card 
+          <div 
             key={category.id} 
-            className={`inline-flex items-center gap-3 px-6 py-3 cursor-pointer transition-all rounded-xl
+            className={`inline-flex items-center gap-3 px-6 py-3 cursor-pointer transition-all rounded-2xl
               ${isActive 
                 ? 'bg-black text-white' 
-                : `${randomBg} hover:bg-gray-100`
+                : `${randomBg} ${textColorMap[randomBg]} hover:opacity-80`
               }`}
             onClick={() => onCategoryChange(category.id)}
           >
-            <div className={`p-2 rounded-full ${isActive ? 'bg-white/20' : 'bg-white'}`}>
-              <Icon 
-                size={18}
-                className={isActive ? 'text-white' : 'text-black'}
-              />
-            </div>
             <span className="font-medium">{category.name}</span>
-          </Card>
+          </div>
         );
       })}
     </div>
