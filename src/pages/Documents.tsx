@@ -6,7 +6,7 @@ import { DocumentTabs } from "@/components/documents/DocumentTabs";
 import { useDocumentManager } from "@/hooks/useDocumentManager";
 
 const Documents = () => {
-  const [activeTab, setActiveTab] = useState("company");
+  const [activeTab, setActiveTab] = useState("all");
   const {
     documents,
     isUploading,

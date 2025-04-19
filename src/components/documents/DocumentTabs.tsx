@@ -1,6 +1,6 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { File, FolderOpen } from "lucide-react";
+import { File, FolderOpen, Files } from "lucide-react";
 import { DocumentUploadForm } from "@/components/documents/DocumentUploadForm";
 import { DocumentList } from "@/components/documents/DocumentList";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -35,9 +35,35 @@ export const DocumentTabs = ({
 }: DocumentTabsProps) => {
   const { selectedCompany } = useCompanies();
 
+  const getFilteredDocuments = (tab: string) => {
+    switch (tab) {
+      case "company":
+        // Filter to show only company uploaded documents (where user_id is not the uploader)
+        return documents.filter(doc => doc.uploaded_by !== doc.user_id);
+      case "personal":
+        // Filter to show only personally uploaded documents
+        return documents.filter(doc => doc.uploaded_by === doc.user_id);
+      default:
+        // "all" tab - show all documents
+        return documents;
+    }
+  };
+
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid grid-cols-2 w-full rounded-2xl p-1.5 bg-transparent dark:bg-transparent gap-2">
+      <TabsList className="grid grid-cols-3 w-full rounded-2xl p-1.5 bg-transparent dark:bg-transparent gap-2">
+        <TabsTrigger 
+          value="all" 
+          className="flex items-center gap-2 rounded-xl py-4 px-6 transition-colors"
+          style={{
+            backgroundColor: activeTab === "all" ? `${selectedCompany?.cor_principal}10` : undefined,
+            borderColor: activeTab === "all" ? selectedCompany?.cor_principal : undefined,
+            color: activeTab === "all" ? selectedCompany?.cor_principal : undefined
+          }}
+        >
+          <Files className="h-4 w-4" />
+          Todos
+        </TabsTrigger>
         <TabsTrigger 
           value="company" 
           className="flex items-center gap-2 rounded-xl py-4 px-6 transition-colors"
@@ -65,17 +91,20 @@ export const DocumentTabs = ({
       </TabsList>
       
       <div className="mt-10 mb-16 space-y-8">
-        {["company", "personal"].map((tabValue) => (
+        {["all", "company", "personal"].map((tabValue) => (
           <TabsContent key={tabValue} value={tabValue} className="m-0">
-            <DocumentUploadForm
-              open={uploadOpen}
-              onOpenChange={setUploadOpen}
-              onUpload={onUpload}
-              isUploading={isUploading}
-            />
+            {/* Only show upload form in personal documents tab */}
+            {tabValue === "personal" && (
+              <DocumentUploadForm
+                open={uploadOpen}
+                onOpenChange={setUploadOpen}
+                onUpload={onUpload}
+                isUploading={isUploading}
+              />
+            )}
             
             <DocumentList
-              documents={documents}
+              documents={getFilteredDocuments(tabValue)}
               onDownload={onDownload}
               onPreview={onPreview}
               onDelete={onDelete}
