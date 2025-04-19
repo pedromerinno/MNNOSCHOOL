@@ -49,7 +49,7 @@ export const CultureManual: React.FC<CultureManualProps> = ({
   return (
     <div className="space-y-12 pb-12">
       <div className="grid gap-8 md:grid-cols-2 mt-8">
-        <Card className="transition-all duration-200 shadow-none rounded-xl md:col-span-2 bg-gray-50 dark:bg-gray-900 mt-16">
+        <Card className="transition-all duration-200 shadow-none rounded-xl md:col-span-2 bg-gray-50 dark:bg-gray-900 mt-8"> {/* Changed from mt-16 to mt-8 */}
           <CardHeader>
             <CardTitle className="text-2xl">Missão</CardTitle>
           </CardHeader>
