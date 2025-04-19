@@ -4,22 +4,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { DocumentType, UserDocument } from "@/types/document";
 import { useDocumentValidation } from './useDocumentValidation';
+import { useUploadValidation } from './useUploadValidation';
+import { useStorageOperations } from './useStorageOperations';
 
 export const useDocumentUploadOperations = (
   userId: string | null,
   companyId: string | null,
-  setDocuments: (docs: UserDocument[]) => void,
+  setDocuments: React.Dispatch<React.SetStateAction<UserDocument[]>>,
   setIsUploading: (loading: boolean) => void
 ) => {
   const { checkBucketExists } = useDocumentValidation();
+  const { validateUpload } = useUploadValidation();
+  const { uploadToStorage } = useStorageOperations();
 
   const uploadDocument = useCallback(async (
     file: File, 
     documentType: DocumentType, 
     description?: string
   ): Promise<UserDocument | null> => {
-    if (!userId || !companyId || !file) {
-      toast.error('Informações insuficientes para upload');
+    if (!validateUpload(file, userId, companyId)) {
       return null;
     }
 
@@ -31,20 +34,8 @@ export const useDocumentUploadOperations = (
         toast.error("Sistema de armazenamento não está disponível. Contate o administrador.");
         return null;
       }
-      
-      const userDir = `user-documents/${userId}`;
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${userDir}/${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = fileName;
 
-      const { error: uploadError } = await supabase.storage
-        .from('documents')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true
-        });
-
-      if (uploadError) throw uploadError;
+      const filePath = await uploadToStorage(userId!, file);
 
       const { data, error } = await supabase
         .from('user_documents')
@@ -63,7 +54,7 @@ export const useDocumentUploadOperations = (
 
       if (error) throw error;
 
-      const newDoc = data as unknown as UserDocument;
+      const newDoc = data as UserDocument;
       setDocuments(prev => [...prev, newDoc]);
       toast.success('Documento enviado com sucesso');
       return newDoc;
@@ -82,7 +73,7 @@ export const useDocumentUploadOperations = (
     } finally {
       setIsUploading(false);
     }
-  }, [userId, companyId, checkBucketExists, setDocuments, setIsUploading]);
+  }, [userId, companyId, checkBucketExists, setDocuments, setIsUploading, validateUpload, uploadToStorage]);
 
   return { uploadDocument };
 };

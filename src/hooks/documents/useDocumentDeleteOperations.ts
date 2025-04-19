@@ -6,7 +6,7 @@ import { useDocumentValidation } from './useDocumentValidation';
 import { UserDocument } from '@/types/document';
 
 export const useDocumentDeleteOperations = (
-  setDocuments: (docs: UserDocument[]) => void
+  setDocuments: React.Dispatch<React.SetStateAction<UserDocument[]>>
 ) => {
   const { checkBucketExists } = useDocumentValidation();
 
@@ -59,7 +59,7 @@ export const useDocumentDeleteOperations = (
 
       if (deleteError) throw deleteError;
 
-      setDocuments(prev => prev.filter(doc => doc.id !== documentId));
+      setDocuments(currentDocs => currentDocs.filter(doc => doc.id !== documentId));
       toast.success('Documento excluído com sucesso');
       return true;
     } catch (error: any) {
