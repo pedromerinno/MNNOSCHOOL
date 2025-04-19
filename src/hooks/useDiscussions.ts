@@ -21,7 +21,7 @@ export const useDiscussions = () => {
         .from('discussions')
         .select(`
           *,
-          profiles:author_id (
+          profiles (
             display_name,
             avatar
           ),
@@ -31,7 +31,7 @@ export const useDiscussions = () => {
             created_at,
             author_id,
             image_url,
-            profiles:author_id (
+            profiles (
               display_name,
               avatar
             )
@@ -52,7 +52,10 @@ export const useDiscussions = () => {
         updated_at: item.updated_at,
         image_url: item.image_url,
         profiles: item.profiles || { display_name: 'Usuário desconhecido', avatar: null },
-        discussion_replies: item.discussion_replies || []
+        discussion_replies: item.discussion_replies ? item.discussion_replies.map((reply: any) => ({
+          ...reply,
+          profiles: reply.profiles || { display_name: 'Usuário desconhecido', avatar: null }
+        })) : []
       })) : [];
       
       setDiscussions(formattedDiscussions);
