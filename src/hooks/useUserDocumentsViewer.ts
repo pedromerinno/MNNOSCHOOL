@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -52,7 +53,7 @@ export const useUserDocumentsViewer = () => {
     }
   }, [user, selectedCompany]);
   
-  const downloadDocument = useCallback(async (document: UserDocument) => {
+  const downloadDocument = useCallback(async (document: UserDocument): Promise<void> => {
     try {
       const { data, error } = await supabase.storage
         .from('documents')
@@ -66,8 +67,6 @@ export const useUserDocumentsViewer = () => {
       a.download = document.name;
       a.click();
       URL.revokeObjectURL(url);
-      
-      return true;
     } catch (error: any) {
       console.error('Error downloading document:', error);
       
@@ -76,8 +75,6 @@ export const useUserDocumentsViewer = () => {
       } else {
         toast.error(`Erro ao baixar documento: ${error.message}`);
       }
-      
-      return false;
     }
   }, []);
 
