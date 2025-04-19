@@ -54,7 +54,7 @@ const Documents = () => {
     }
   };
 
-  // Wrapper function to adapt handleUpload to match the expected void return type
+  // Wrapper function to adapt handleUpload to match the expected return type
   const handleDocumentUpload = async (file: File, documentType: DocumentType, description: string): Promise<boolean> => {
     return await handleUpload(file, documentType, description);
   };
