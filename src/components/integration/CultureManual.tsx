@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,7 @@ export const CultureManual: React.FC<CultureManualProps> = ({
             <CardTitle className="text-2xl">Missão</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-600 dark:text-gray-300 text-xl font-medium leading-relaxed">
+            <p className="text-gray-600 dark:text-gray-300 text-xl font-normal leading-relaxed">
               {companyMission || "Transformar criatividade em estratégia. Marcas em movimento. Ideias em legado."}
             </p>
           </CardContent>
@@ -53,10 +54,18 @@ export const CultureManual: React.FC<CultureManualProps> = ({
               {values.map((value: { title: string; description: string }, index: number) => (
                 <div
                   key={index}
-                  className="p-4 rounded-xl border bg-card text-card-foreground transition-colors hover:border-primary/20"
+                  className="p-6 rounded-xl border bg-card text-card-foreground transition-colors hover:border-primary/20"
                 >
                   <div className="mb-3" style={{ color: companyColor }}>
-                    <span className="text-lg font-semibold">{index + 1}</span>
+                    <span 
+                      className="inline-flex items-center justify-center w-8 h-8 text-sm font-semibold rounded-full" 
+                      style={{ 
+                        backgroundColor: `${companyColor}20`, 
+                        color: companyColor 
+                      }}
+                    >
+                      {index + 1}
+                    </span>
                   </div>
                   <h3 className="font-medium mb-2">{value.title}</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
