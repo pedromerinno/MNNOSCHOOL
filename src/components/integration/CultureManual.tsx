@@ -2,8 +2,6 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { Star, Users, TrendingUp, Pen, Target, PlayCircle, Sparkles } from "lucide-react";
 import { VideoPlayer } from './video-playlist/VideoPlayer';
 
@@ -25,14 +23,8 @@ export const CultureManual: React.FC<CultureManualProps> = ({
   videoDescription
 }) => {
   const [accepted, setAccepted] = useState(false);
-
-  const values = [
-    { icon: <Star className="h-5 w-5" />, title: "Excelência", description: "Cuidamos do que entregamos" },
-    { icon: <Pen className="h-5 w-5" />, title: "Autenticidade", description: "Somos autorais" },
-    { icon: <Target className="h-5 w-5" />, title: "Comprometimento", description: "Levamos até o fim" },
-    { icon: <Users className="h-5 w-5" />, title: "Colaboração", description: "Criamos juntos" },
-    { icon: <TrendingUp className="h-5 w-5" />, title: "Evolução", description: "Aprendemos sempre" },
-  ];
+  
+  const values = companyValues ? JSON.parse(companyValues) : [];
 
   return (
     <div className="space-y-12">
@@ -60,13 +52,13 @@ export const CultureManual: React.FC<CultureManualProps> = ({
           </CardHeader>
           <CardContent>
             <div className="grid gap-6 md:grid-cols-5">
-              {values.map((value, index) => (
+              {values.map((value: { title: string; description: string }, index: number) => (
                 <div
                   key={index}
                   className="p-4 rounded-xl border bg-card text-card-foreground transition-colors hover:border-primary/20"
                 >
                   <div className="mb-3" style={{ color: companyColor }}>
-                    {value.icon}
+                    <Star className="h-4 w-4" />
                   </div>
                   <h3 className="font-medium mb-2">{value.title}</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -133,7 +125,7 @@ export const CultureManual: React.FC<CultureManualProps> = ({
             className="rounded border-gray-300"
           />
           <label htmlFor="culture-accept" className="text-sm text-gray-600 dark:text-gray-400">
-            Li e estou alinhado com a cultura MERINNO
+            Li e estou alinhado com a cultura da empresa
           </label>
         </div>
       </div>

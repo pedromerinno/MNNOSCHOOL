@@ -9,8 +9,8 @@ import { TextInputField } from "./form/TextInputField";
 import { LogoUrlField } from "./form/LogoUrlField";
 import { ColorPickerField } from "./form/ColorPickerField";
 import { SubmitButton } from "./form/SubmitButton";
+import { ValuesField } from "./form/ValuesField";
 import { integrationFormSchema, IntegrationFormValues } from "./form/IntegrationFormSchema";
-import { useCompanyUpdate } from "@/hooks/company/useCompanyUpdate";
 
 interface CompanyIntegrationFormProps {
   company: Company;
@@ -30,7 +30,7 @@ export const CompanyIntegrationForm: React.FC<CompanyIntegrationFormProps> = ({
       logo: company.logo || "",
       historia: company.historia || "",
       missao: company.missao || "",
-      valores: company.valores || "",
+      valores: company.valores ? JSON.parse(company.valores) : [],
       frase_institucional: company.frase_institucional || "",
       cor_principal: company.cor_principal || "#1EAEDB"
     }
@@ -39,20 +39,9 @@ export const CompanyIntegrationForm: React.FC<CompanyIntegrationFormProps> = ({
   // Watch for changes in the logo field to update the preview
   const logoUrl = form.watch('logo');
 
-  // Handle form submission and dispatch event
-  const handleSubmit = (data: IntegrationFormValues) => {
-    onSubmit(data);
-    
-    // After successful submission, dispatch an event to notify other components
-    const updatedCompany = { ...company, ...data };
-    window.dispatchEvent(new CustomEvent('company-updated', { 
-      detail: { company: updatedCompany } 
-    }));
-  };
-
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <TextInputField
           control={form.control}
           name="nome"
@@ -88,12 +77,7 @@ export const CompanyIntegrationForm: React.FC<CompanyIntegrationFormProps> = ({
           placeholder="Descreva a missão da empresa..."
         />
         
-        <TextareaField
-          control={form.control}
-          name="valores"
-          label="Valores"
-          placeholder="Liste os valores da empresa..."
-        />
+        <ValuesField form={form} />
         
         <ColorPickerField 
           control={form.control}

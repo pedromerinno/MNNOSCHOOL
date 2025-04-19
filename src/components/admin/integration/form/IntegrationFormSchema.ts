@@ -6,7 +6,10 @@ export const integrationFormSchema = z.object({
   logo: z.string().optional().nullable(),
   historia: z.string().optional().nullable(),
   missao: z.string().optional().nullable(),
-  valores: z.string().optional().nullable(),
+  valores: z.array(z.object({
+    title: z.string(),
+    description: z.string()
+  })).default([]),
   frase_institucional: z.string().optional().nullable(),
   cor_principal: z.string().min(4, "Cor inválida").default("#1EAEDB"),
 });
