@@ -31,11 +31,15 @@ export const useCompanyUserManagement = () => {
         return true;
       }
       
+      // FIX: Properly get current user ID by waiting for the promise to resolve
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentUserId = session?.user?.id;
+      
       // Get current user to verify if is admin
       const { data: currentUserProfile, error: profileError } = await supabase
         .from('profiles')
         .select('is_admin')
-        .eq('id', (await supabase.auth.getSession()).data.session?.user?.id)
+        .eq('id', currentUserId)
         .single();
         
       if (profileError) {
@@ -81,11 +85,15 @@ export const useCompanyUserManagement = () => {
    */
   const removeUserFromCompany = useCallback(async (userId: string, companyId: string) => {
     try {
+      // FIX: Properly get current user ID by waiting for the promise to resolve
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentUserId = session?.user?.id;
+      
       // Get current user to verify if is admin
       const { data: currentUserProfile, error: profileError } = await supabase
         .from('profiles')
         .select('is_admin')
-        .eq('id', (await supabase.auth.getSession()).data.session?.user?.id)
+        .eq('id', currentUserId)
         .single();
         
       if (profileError) {
@@ -129,11 +137,15 @@ export const useCompanyUserManagement = () => {
    */
   const getCompanyUsers = useCallback(async (companyId: string): Promise<UserProfile[]> => {
     try {
+      // FIX: Properly get current user ID by waiting for the promise to resolve
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentUserId = session?.user?.id;
+      
       // Verificar se o usuário atual é administrador
       const { data: currentUserProfile, error: profileError } = await supabase
         .from('profiles')
         .select('is_admin')
-        .eq('id', (await supabase.auth.getSession()).data.session?.user?.id)
+        .eq('id', currentUserId)
         .single();
         
       if (profileError) {

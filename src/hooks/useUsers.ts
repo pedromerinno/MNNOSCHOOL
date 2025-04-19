@@ -70,11 +70,15 @@ export function useUsers() {
         setLoading(true);
       }
       
+      // FIX: Properly get current user ID by waiting for the promise to resolve
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentUserId = session?.user?.id;
+      
       // Verifique se o usuário atual é um admin antes de buscar os usuários
       const { data: currentUserData, error: currentUserError } = await supabase
         .from('profiles')
         .select('is_admin')
-        .eq('id', supabase.auth.getSession().then(({ data }) => data.session?.user?.id))
+        .eq('id', currentUserId)
         .single();
 
       if (currentUserError) {
