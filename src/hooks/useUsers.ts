@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -18,10 +19,10 @@ export function useUsers() {
   const { toast } = useToast();
   
   const getCachedUsers = (): UserProfile[] | null => {
-    const cachedUsers = localStorage.getItem('cachedUsers');
-    if (!cachedUsers) return null;
-    
     try {
+      const cachedUsers = localStorage.getItem('cachedUsers');
+      if (!cachedUsers) return null;
+      
       const parsed = JSON.parse(cachedUsers);
       const now = new Date().getTime();
       if (parsed.expiry > now) {
@@ -37,13 +38,35 @@ export function useUsers() {
   
   const setCachedUsers = (data: UserProfile[]) => {
     try {
+      // Only cache up to 10 users to avoid quota issues
+      const usersToCache = data.slice(0, 10);
       const expiry = new Date().getTime() + (15 * 60 * 1000);
-      localStorage.setItem('cachedUsers', JSON.stringify({
-        data,
-        expiry
-      }));
+      
+      // Try to store in localStorage with error handling
+      try {
+        localStorage.setItem('cachedUsers', JSON.stringify({
+          data: usersToCache,
+          expiry
+        }));
+      } catch (storageError) {
+        // If quota exceeded, try to clear some space
+        console.warn('Storage quota exceeded, clearing cache and trying again', storageError);
+        localStorage.removeItem('cachedUsers');
+        
+        // Try one more time with even fewer users
+        try {
+          localStorage.setItem('cachedUsers', JSON.stringify({
+            data: usersToCache.slice(0, 5),
+            expiry
+          }));
+        } catch (retryError) {
+          console.error('Failed to cache users even after cleanup', retryError);
+          // Continue without caching
+        }
+      }
     } catch (e) {
       console.error('Erro ao armazenar usuários em cache', e);
+      // Continue without caching
     }
   };
 

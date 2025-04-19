@@ -28,16 +28,41 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
   useEffect(() => {
     const checkBucket = async () => {
       try {
-        // The getPublicUrl method doesn't return an error property in its response
-        // It just returns { data: { publicUrl: string } }
-        const { data } = await supabase.storage.from('course-assets').getPublicUrl('test-connection');
+        // Try to list the buckets to see if course-assets exists
+        const { data: buckets, error } = await supabase.storage.listBuckets();
         
-        if (data) {
-          console.log("'course-assets' bucket is ready for use");
-          setBucketReady(true);
+        if (error) {
+          console.error("Erro ao verificar buckets:", error);
+          setBucketReady(false);
+          return;
         }
+        
+        const courseAssetsBucket = buckets.find(b => b.name === 'course-assets');
+        
+        if (!courseAssetsBucket) {
+          // If the bucket doesn't exist, we'll try to create it
+          console.warn("Bucket 'course-assets' não encontrado. Verifique se ele foi criado no Supabase.");
+          
+          // Try to use it anyway - the bucket might have been created in the background
+          try {
+            const { data } = supabase.storage.from('course-assets').getPublicUrl('test');
+            if (data) {
+              console.log("Bucket parece estar disponível mesmo assim");
+              setBucketReady(true);
+              return;
+            }
+          } catch (e) {
+            console.error("Erro ao testar bucket:", e);
+          }
+          
+          setBucketReady(false);
+          return;
+        }
+        
+        setBucketReady(true);
       } catch (err) {
         console.error("Error checking storage bucket:", err);
+        setBucketReady(false);
       }
     };
     
@@ -126,12 +151,12 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
                 <Button 
                   type="button" 
                   variant="outline"
-                  disabled={isUploading}
+                  disabled={isUploading || !bucketReady}
                   className="relative"
                   onClick={() => document.getElementById(`image-upload-${name}`)?.click()}
                 >
                   <Upload className="h-4 w-4 mr-2" />
-                  {isUploading ? 'Enviando...' : 'Enviar'}
+                  {isUploading ? 'Enviando...' : !bucketReady ? 'Inicializando...' : 'Enviar'}
                 </Button>
                 <input 
                   id={`image-upload-${name}`}

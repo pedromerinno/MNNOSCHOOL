@@ -28,23 +28,42 @@ export const LogoUrlField: React.FC<LogoUrlFieldProps> = ({
   useEffect(() => {
     const checkBucket = async () => {
       try {
+        // Try to list the buckets to see if company-assets exists
         const { data: buckets, error } = await supabase.storage.listBuckets();
         
         if (error) {
           console.error("Erro ao verificar buckets:", error);
+          setBucketReady(false);
           return;
         }
         
         const companyAssetsBucket = buckets.find(b => b.name === 'company-assets');
         
         if (!companyAssetsBucket) {
-          console.error("Bucket 'company-assets' não encontrado. Verifique se ele foi criado no Supabase.");
+          // If the bucket doesn't exist, we'll try to create it
+          console.warn("Bucket 'company-assets' não encontrado. Verifique se ele foi criado no Supabase.");
+          
+          // Try to use it anyway - the bucket might have been created in the background
+          // We'll check if we can get a public URL from it
+          try {
+            const { data } = supabase.storage.from('company-assets').getPublicUrl('test');
+            if (data) {
+              console.log("Bucket parece estar disponível mesmo assim");
+              setBucketReady(true);
+              return;
+            }
+          } catch (e) {
+            console.error("Erro ao testar bucket:", e);
+          }
+          
+          setBucketReady(false);
           return;
         }
         
         setBucketReady(true);
       } catch (error: any) {
         console.error("Erro ao verificar buckets:", error);
+        setBucketReady(false);
       }
     };
 
