@@ -1,5 +1,5 @@
+
 import React, { useState } from "react";
-import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Search } from "lucide-react";
@@ -9,6 +9,7 @@ import { Discussion } from "@/components/community/Discussion";
 import { DiscussionForm } from "@/components/community/DiscussionForm";
 import { DiscussionView } from "@/components/community/DiscussionView";
 import { useCompanies } from "@/hooks/useCompanies";
+import { CommunityLayout } from "@/components/community/layout/CommunityLayout";
 
 const Community = () => {
   const { selectedCompany } = useCompanies();
@@ -34,19 +35,19 @@ const Community = () => {
 
   if (!selectedCompany) {
     return (
-      <PageLayout title="Comunidade">
+      <CommunityLayout>
         <div className="flex flex-col items-center justify-center py-12">
           <h3 className="text-lg font-medium mb-2">Selecione uma empresa para visualizar as discussões</h3>
           <p className="text-sm text-gray-500">
             Você precisa selecionar uma empresa para participar das discussões.
           </p>
         </div>
-      </PageLayout>
+      </CommunityLayout>
     );
   }
 
   return (
-    <PageLayout title="Comunidade">
+    <CommunityLayout>
       <div className="max-w-5xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
           <div className="relative w-full md:w-auto md:flex-1">
@@ -111,7 +112,7 @@ const Community = () => {
         onReply={addReply}
         onDeleteReply={deleteReply}
       />
-    </PageLayout>
+    </CommunityLayout>
   );
 };
 
