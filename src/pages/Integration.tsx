@@ -8,6 +8,7 @@ import { LoadingState } from '@/components/integration/video-playlist/LoadingSta
 import { IntegrationLayout } from '@/components/integration/layout/IntegrationLayout';
 import { CompanyHeader } from '@/components/integration/header/CompanyHeader';
 import { IntegrationTabs } from '@/components/integration/tabs/IntegrationTabs';
+import { toast } from "sonner";
 
 const Integration = () => {
   const { selectedCompany, isLoading, forceGetUserCompanies, getUserCompanies, user } = useCompanies();
@@ -32,11 +33,18 @@ const Integration = () => {
         .eq('company_id', companyId)
         .order('order_index', { ascending: true });
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching job roles:", error);
+        toast.error("Erro ao carregar cargos");
+        setJobRoles([]);
+        return;
+      }
       
       if (data && data.length > 0) {
+        console.log(`Fetched ${data.length} job roles for company ${companyId}`);
         setJobRoles(data);
       } else {
+        console.log(`No job roles found for company ${companyId}`);
         setJobRoles([]);
       }
     } catch (error) {

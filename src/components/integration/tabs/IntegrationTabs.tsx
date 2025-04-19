@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, PlayCircle, BriefcaseBusiness } from "lucide-react";
@@ -9,6 +10,7 @@ import { Company } from "@/types/company";
 import { supabase } from "@/integrations/supabase/client";
 import { JobRole } from "@/types/job-roles";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface IntegrationTabsProps {
   activeTab: string;
@@ -26,35 +28,66 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
   jobRoles
 }) => {
   const [userRole, setUserRole] = useState<JobRole | null>(null);
+  const [isLoadingRole, setIsLoadingRole] = useState(false);
   const { userProfile } = useAuth();
 
   useEffect(() => {
     const fetchUserRole = async () => {
       try {
-        if (!userProfile?.id || !userProfile?.cargo_id || !company) {
-          console.log('No user cargo_id found or company not selected');
+        if (!userProfile?.id || !company?.id) {
+          console.log('No user profile or company selected');
           setUserRole(null);
           return;
         }
-
+        
+        setIsLoadingRole(true);
+        
+        // Primeiro, buscar o cargo_id do perfil do usuário
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('cargo_id')
+          .eq('id', userProfile.id)
+          .single();
+          
+        if (profileError) {
+          console.error('Error fetching user profile:', profileError);
+          toast.error("Erro ao carregar informações do perfil");
+          setUserRole(null);
+          setIsLoadingRole(false);
+          return;
+        }
+        
+        if (!profileData?.cargo_id) {
+          console.log('User has no assigned role');
+          setUserRole(null);
+          setIsLoadingRole(false);
+          return;
+        }
+        
+        console.log('User cargo_id found:', profileData.cargo_id);
+        
+        // Buscar os detalhes do cargo usando o cargo_id e o company_id
         const { data: roleData, error: roleError } = await supabase
           .from('job_roles')
           .select('*')
-          .eq('id', userProfile.cargo_id)
+          .eq('id', profileData.cargo_id)
           .eq('company_id', company.id)
           .single();
-
+          
         if (roleError) {
           console.error('Error fetching user role:', roleError);
           setUserRole(null);
+          setIsLoadingRole(false);
           return;
         }
-
+        
         console.log('User role found:', roleData);
         setUserRole(roleData);
       } catch (error) {
         console.error('Error in fetchUserRole:', error);
         setUserRole(null);
+      } finally {
+        setIsLoadingRole(false);
       }
     };
 
@@ -132,7 +165,13 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
           </TabsContent>
 
           <TabsContent value="role" className="m-0">
-            {userRole ? (
+            {isLoadingRole ? (
+              <Card>
+                <CardContent className="p-6 flex items-center justify-center">
+                  <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
+                </CardContent>
+              </Card>
+            ) : userRole ? (
               <UserRole
                 key={userRole.id}
                 role={userRole}
@@ -143,9 +182,7 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
                 <CardContent className="p-6 text-center">
                   <BriefcaseBusiness className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                   <p className="text-gray-500 dark:text-gray-400">
-                    {userProfile?.cargo_id 
-                      ? "Cargo não encontrado para esta empresa" 
-                      : "Nenhum cargo atribuído para você nesta empresa"}
+                    Nenhum cargo atribuído para você nesta empresa
                   </p>
                 </CardContent>
               </Card>
