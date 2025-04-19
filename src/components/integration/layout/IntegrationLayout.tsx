@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -34,7 +33,7 @@ export const IntegrationLayout: React.FC<React.PropsWithChildren<{}>> = ({ child
           </div>
         </div>
         
-        <div className="bg-white dark:bg-card rounded-xl shadow-sm">
+        <div className="bg-white dark:bg-card rounded-xl shadow-sm p-6">
           {children}
         </div>
       </main>

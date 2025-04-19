@@ -15,8 +15,6 @@ export const CompanyHeader: React.FC<CompanyHeaderProps> = ({
 
   return (
     <div className="p-10">
-      <div className="flex items-center mb-8">
-      </div>
     </div>
   );
 };
