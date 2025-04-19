@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -18,16 +18,26 @@ const Access = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [hasPermission, setHasPermission] = useState(true);
   const [requestInProgress, setRequestInProgress] = useState(false);
+  
+  // Add ref to track last selected company to prevent duplicate fetches
+  const lastSelectedCompanyIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const fetchAccessItems = async () => {
+      // Skip if no company or user is selected
       if (!selectedCompany || !user) {
         setAccessItems([]);
         setIsLoading(false);
         return;
       }
+      
+      // Skip if this is the same company we already fetched for
+      if (lastSelectedCompanyIdRef.current === selectedCompany.id) {
+        console.log('Already fetched data for this company, skipping duplicate fetch');
+        return;
+      }
 
-      // Prevent duplicate requests
+      // Prevent duplicate requests for the same operation
       if (requestInProgress) {
         console.log('Request already in progress, skipping duplicate fetch');
         return;
@@ -61,6 +71,8 @@ const Access = () => {
         } else {
           console.log('Itens de acesso encontrados:', data?.length);
           setAccessItems(data as AccessItem[] || []);
+          // Store the current company ID to prevent duplicate fetches
+          lastSelectedCompanyIdRef.current = selectedCompany.id;
         }
       } catch (error: any) {
         console.error('Erro ao carregar informações de acesso:', error);
@@ -73,7 +85,14 @@ const Access = () => {
     };
 
     fetchAccessItems();
-  }, [selectedCompany, user]);
+    
+    // Clean-up function to reset the requestInProgress if component unmounts mid-request
+    return () => {
+      if (requestInProgress) {
+        setRequestInProgress(false);
+      }
+    };
+  }, [selectedCompany, user, requestInProgress]);
 
   const openAccessDetails = (access: AccessItem) => {
     setSelectedAccess(access);
