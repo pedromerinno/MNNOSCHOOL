@@ -118,6 +118,15 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
         setCurrentRoleTitle(updatedRoleData.title);
       }
       
+      // Disparar evento personalizado para notificar outros componentes
+      window.dispatchEvent(new CustomEvent('user-role-updated', {
+        detail: { 
+          userId: user.id,
+          roleId: selectedRoleId,
+          companyId: companyId
+        }
+      }));
+      
       toast.success("Cargo atualizado com sucesso");
       
       if (onSuccess) {
@@ -153,6 +162,15 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
       setCurrentRoleId(null);
       setCurrentRoleTitle(null);
       setSelectedRoleId(null);
+      
+      // Disparar evento personalizado para notificar outros componentes
+      window.dispatchEvent(new CustomEvent('user-role-updated', {
+        detail: { 
+          userId: user.id,
+          roleId: null,
+          companyId: companyId
+        }
+      }));
       
       toast.success("Cargo removido com sucesso");
       
