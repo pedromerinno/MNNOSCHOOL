@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,7 +23,8 @@ import {
   X, 
   Save, 
   Check, 
-  Info 
+  Info,
+  Users
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,6 +52,7 @@ export const JobRolesManager: React.FC<JobRolesManagerProps> = ({ company }) => 
   const [selectedRole, setSelectedRole] = useState<JobRole | null>(null);
   const [assignedUsers, setAssignedUsers] = useState<{ id: string; display_name: string }[]>([]);
   const [selectedRoleForUsers, setSelectedRoleForUsers] = useState<JobRole | null>(null);
+  const [showRoleUsersDialog, setShowRoleUsersDialog] = useState(false);
   
   const fetchJobRoles = async () => {
     setIsLoading(true);
@@ -90,7 +93,7 @@ export const JobRolesManager: React.FC<JobRolesManagerProps> = ({ company }) => 
   };
   
   const handleEditRole = (role: JobRole) => {
-    setEditingRole(role);
+    setEditingRole({...role});
   };
   
   const handleCancelEdit = () => {
@@ -235,98 +238,134 @@ export const JobRolesManager: React.FC<JobRolesManagerProps> = ({ company }) => 
     }
   };
   
+  const manageRoleUsers = (role: JobRole) => {
+    setSelectedRoleForUsers(role);
+    setShowRoleUsersDialog(true);
+  };
+  
   const RoleForm = ({ role, isNew, onSave, onCancel }: { 
     role: Partial<JobRole>, 
     isNew: boolean,
     onSave: () => void,
     onCancel: () => void 
-  }) => (
-    <Card className="mb-6">
-      <CardContent className="p-4">
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor={isNew ? "new-title" : `edit-title-${role.id}`}>Título do Cargo*</Label>
-            <Input 
-              id={isNew ? "new-title" : `edit-title-${role.id}`}
-              value={role.title || ''} 
-              onChange={e => isNew 
-                ? setNewRole({...newRole!, title: e.target.value})
-                : setEditingRole({...editingRole!, title: e.target.value})
-              }
-              placeholder="Ex: Desenvolvedor Frontend"
-            />
+  }) => {
+    // Criar estado local separado para os campos do formulário
+    const [formValues, setFormValues] = useState({
+      title: role.title || '',
+      description: role.description || '',
+      responsibilities: role.responsibilities || '',
+      requirements: role.requirements || '',
+      expectations: role.expectations || ''
+    });
+    
+    // Atualizar o estado local quando a props role muda
+    useEffect(() => {
+      setFormValues({
+        title: role.title || '',
+        description: role.description || '',
+        responsibilities: role.responsibilities || '',
+        requirements: role.requirements || '',
+        expectations: role.expectations || ''
+      });
+    }, [role]);
+    
+    // Função para atualizar os valores do formulário localmente
+    const handleChange = (field: string, value: string) => {
+      setFormValues(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    };
+    
+    // Função para salvar os valores locais no estado principal
+    const handleSaveValues = () => {
+      if (isNew) {
+        setNewRole({
+          ...role,
+          ...formValues
+        });
+      } else {
+        setEditingRole({
+          ...role,
+          ...formValues
+        });
+      }
+      onSave();
+    };
+    
+    return (
+      <Card className="mb-6">
+        <CardContent className="p-4">
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor={isNew ? "new-title" : `edit-title-${role.id}`}>Título do Cargo*</Label>
+              <Input 
+                id={isNew ? "new-title" : `edit-title-${role.id}`}
+                value={formValues.title} 
+                onChange={(e) => handleChange('title', e.target.value)}
+                placeholder="Ex: Desenvolvedor Frontend"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor={isNew ? "new-description" : `edit-description-${role.id}`}>Descrição</Label>
+              <Textarea 
+                id={isNew ? "new-description" : `edit-description-${role.id}`}
+                value={formValues.description} 
+                onChange={(e) => handleChange('description', e.target.value)}
+                placeholder="Descrição geral do cargo"
+                rows={3}
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor={isNew ? "new-responsibilities" : `edit-responsibilities-${role.id}`}>Responsabilidades</Label>
+              <Textarea 
+                id={isNew ? "new-responsibilities" : `edit-responsibilities-${role.id}`}
+                value={formValues.responsibilities} 
+                onChange={(e) => handleChange('responsibilities', e.target.value)}
+                placeholder="Responsabilidades do cargo"
+                rows={3}
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor={isNew ? "new-requirements" : `edit-requirements-${role.id}`}>Requisitos</Label>
+              <Textarea 
+                id={isNew ? "new-requirements" : `edit-requirements-${role.id}`}
+                value={formValues.requirements} 
+                onChange={(e) => handleChange('requirements', e.target.value)}
+                placeholder="Requisitos e habilidades necessárias"
+                rows={3}
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor={isNew ? "new-expectations" : `edit-expectations-${role.id}`}>Expectativas</Label>
+              <Textarea 
+                id={isNew ? "new-expectations" : `edit-expectations-${role.id}`}
+                value={formValues.expectations} 
+                onChange={(e) => handleChange('expectations', e.target.value)}
+                placeholder="Expectativas do cargo"
+                rows={3}
+              />
+            </div>
+            
+            <div className="flex justify-end gap-2 mt-4">
+              <Button variant="outline" onClick={onCancel}>
+                <X className="h-4 w-4 mr-2" />
+                Cancelar
+              </Button>
+              <Button onClick={handleSaveValues}>
+                <Save className="h-4 w-4 mr-2" />
+                Salvar
+              </Button>
+            </div>
           </div>
-          
-          <div>
-            <Label htmlFor={isNew ? "new-description" : `edit-description-${role.id}`}>Descrição</Label>
-            <Textarea 
-              id={isNew ? "new-description" : `edit-description-${role.id}`}
-              value={role.description || ''} 
-              onChange={e => isNew
-                ? setNewRole({...newRole!, description: e.target.value})
-                : setEditingRole({...editingRole!, description: e.target.value})
-              }
-              placeholder="Descrição geral do cargo"
-              rows={3}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor={isNew ? "new-responsibilities" : `edit-responsibilities-${role.id}`}>Responsabilidades</Label>
-            <Textarea 
-              id={isNew ? "new-responsibilities" : `edit-responsibilities-${role.id}`}
-              value={role.responsibilities || ''} 
-              onChange={e => isNew
-                ? setNewRole({...newRole!, responsibilities: e.target.value})
-                : setEditingRole({...editingRole!, responsibilities: e.target.value})
-              }
-              placeholder="Responsabilidades do cargo"
-              rows={3}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor={isNew ? "new-requirements" : `edit-requirements-${role.id}`}>Requisitos</Label>
-            <Textarea 
-              id={isNew ? "new-requirements" : `edit-requirements-${role.id}`}
-              value={role.requirements || ''} 
-              onChange={e => isNew
-                ? setNewRole({...newRole!, requirements: e.target.value})
-                : setEditingRole({...editingRole!, requirements: e.target.value})
-              }
-              placeholder="Requisitos e habilidades necessárias"
-              rows={3}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor={isNew ? "new-expectations" : `edit-expectations-${role.id}`}>Expectativas</Label>
-            <Textarea 
-              id={isNew ? "new-expectations" : `edit-expectations-${role.id}`}
-              value={role.expectations || ''} 
-              onChange={e => isNew
-                ? setNewRole({...newRole!, expectations: e.target.value})
-                : setEditingRole({...editingRole!, expectations: e.target.value})
-              }
-              placeholder="Expectativas do cargo"
-              rows={3}
-            />
-          </div>
-          
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={onCancel}>
-              <X className="h-4 w-4 mr-2" />
-              Cancelar
-            </Button>
-            <Button onClick={onSave}>
-              <Save className="h-4 w-4 mr-2" />
-              Salvar
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -445,6 +484,14 @@ export const JobRolesManager: React.FC<JobRolesManagerProps> = ({ company }) => 
                       <Button
                         variant="ghost"
                         size="icon"
+                        onClick={() => manageRoleUsers(role)}
+                        title="Gerenciar usuários"
+                      >
+                        <Users className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => handleEditRole(role)}
                         title="Editar"
                       >
@@ -549,6 +596,30 @@ export const JobRolesManager: React.FC<JobRolesManagerProps> = ({ company }) => 
           </DialogContent>
         </Dialog>
       )}
+      
+      {selectedRoleForUsers && (
+        <Dialog open={showRoleUsersDialog} onOpenChange={setShowRoleUsersDialog}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Gerenciar usuários - {selectedRoleForUsers.title}</DialogTitle>
+              <DialogDescription>
+                Adicione ou remova usuários desse cargo
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="py-4">
+              <RoleUsersDialog roleId={selectedRoleForUsers.id} companyId={company.id} />
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowRoleUsersDialog(false)}>
+                Fechar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
+

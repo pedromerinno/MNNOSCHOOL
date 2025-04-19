@@ -1,222 +1,232 @@
 
 import React, { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, UserPlus, UserMinus } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Label } from "@/components/ui/label";
+import { Check, X, Search, UserPlus, UserMinus } from "lucide-react";
 import { toast } from "sonner";
-import { JobRole } from "@/types/job-roles";
-import { UserProfile } from "@/hooks/useUsers";
 
 interface RoleUsersDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  role: JobRole;
+  roleId: string;
   companyId: string;
 }
 
-export const RoleUsersDialog: React.FC<RoleUsersDialogProps> = ({
-  open,
-  onOpenChange,
-  role,
-  companyId
-}) => {
-  const [users, setUsers] = useState<UserProfile[]>([]);
-  const [availableUsers, setAvailableUsers] = useState<UserProfile[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
+interface User {
+  id: string;
+  display_name: string;
+  cargo_id: string | null;
+}
+
+export const RoleUsersDialog: React.FC<RoleUsersDialogProps> = ({ roleId, companyId }) => {
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Fetch both users with this role and available users
-  const fetchUsers = async () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [companyUsers, setCompanyUsers] = useState<User[]>([]);
+  const [assignedUsers, setAssignedUsers] = useState<User[]>([]);
+  const [unassignedUsers, setUnassignedUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  
+  // Buscar usuários da empresa
+  const fetchCompanyUsers = async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      setError(null);
-
-      // Buscar usuários da empresa
-      const { data: companyUsers, error: companyError } = await supabase
-        .from('user_empresa')
-        .select('user_id')
-        .eq('empresa_id', companyId);
-
-      if (companyError) throw companyError;
-
-      const userIds = companyUsers.map(u => u.user_id);
-
-      // Buscar perfis dos usuários que já têm este cargo
-      const { data: roleUsers, error: roleError } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
-        .select('*')
-        .eq('cargo_id', role.id);
-
-      if (roleError) throw roleError;
-
-      // Buscar perfis dos usuários disponíveis (que não têm este cargo)
-      const { data: otherUsers, error: otherError } = await supabase
-        .from('profiles')
-        .select('*')
-        .in('id', userIds)
-        .is('cargo_id', null);
-
-      if (otherError) throw otherError;
-
-      setUsers(roleUsers || []);
-      setAvailableUsers(otherUsers || []);
-
+        .select('id, display_name, cargo_id')
+        .in('id', supabase.from('user_empresa').select('user_id').eq('empresa_id', companyId));
+        
+      if (error) throw error;
+      
+      setCompanyUsers(data || []);
+      
+      // Separar usuários com e sem este cargo
+      const assigned = data?.filter(user => user.cargo_id === roleId) || [];
+      const unassigned = data?.filter(user => user.cargo_id !== roleId) || [];
+      
+      setAssignedUsers(assigned);
+      setUnassignedUsers(unassigned);
+      setFilteredUsers(unassigned);
+      
     } catch (error: any) {
-      console.error('Error fetching users:', error);
-      setError(error.message);
-      toast.error(`Erro ao carregar usuários: ${error.message}`);
+      console.error("Error fetching company users:", error);
+      toast.error(`Erro ao buscar usuários: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
   };
-
+  
   useEffect(() => {
-    if (open) {
-      fetchUsers();
+    fetchCompanyUsers();
+  }, [roleId, companyId]);
+  
+  // Filtrar usuários sem cargo quando a busca mudar
+  useEffect(() => {
+    if (searchQuery) {
+      const filtered = unassignedUsers.filter(user => 
+        user.display_name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredUsers(filtered);
+    } else {
+      setFilteredUsers(unassignedUsers);
     }
-  }, [open, companyId, role.id]);
-
-  const assignUserRole = async (userId: string) => {
+  }, [searchQuery, unassignedUsers]);
+  
+  // Adicionar usuário ao cargo
+  const assignUserToRole = async (userId: string) => {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ 
-          cargo_id: role.id,
-          updated_at: new Date().toISOString()
-        })
+        .update({ cargo_id: roleId })
         .eq('id', userId);
-
+        
       if (error) throw error;
-
-      toast.success('Cargo atribuído com sucesso');
-      fetchUsers();
+      
+      // Atualizar as listas localmente
+      const user = unassignedUsers.find(u => u.id === userId);
+      if (user) {
+        const updatedUser = { ...user, cargo_id: roleId };
+        setAssignedUsers([...assignedUsers, updatedUser]);
+        setUnassignedUsers(unassignedUsers.filter(u => u.id !== userId));
+        setFilteredUsers(filteredUsers.filter(u => u.id !== userId));
+      }
+      
+      toast.success("Usuário adicionado ao cargo com sucesso");
+      
     } catch (error: any) {
-      console.error('Error assigning role:', error);
-      toast.error(`Erro ao atribuir cargo: ${error.message}`);
+      console.error("Error assigning user to role:", error);
+      toast.error(`Erro ao adicionar usuário ao cargo: ${error.message}`);
     }
   };
-
-  const removeUserRole = async (userId: string) => {
+  
+  // Remover usuário do cargo
+  const removeUserFromRole = async (userId: string) => {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ 
-          cargo_id: null,
-          updated_at: new Date().toISOString()
-        })
+        .update({ cargo_id: null })
         .eq('id', userId);
-
+        
       if (error) throw error;
-
-      toast.success('Cargo removido com sucesso');
-      fetchUsers();
+      
+      // Atualizar as listas localmente
+      const user = assignedUsers.find(u => u.id === userId);
+      if (user) {
+        const updatedUser = { ...user, cargo_id: null };
+        setUnassignedUsers([...unassignedUsers, updatedUser]);
+        setAssignedUsers(assignedUsers.filter(u => u.id !== userId));
+        
+        // Atualizar os filtrados apenas se o usuário atender os critérios de busca
+        if (!searchQuery || updatedUser.display_name.toLowerCase().includes(searchQuery.toLowerCase())) {
+          setFilteredUsers([...filteredUsers, updatedUser]);
+        }
+      }
+      
+      toast.success("Usuário removido do cargo com sucesso");
+      
     } catch (error: any) {
-      console.error('Error removing role:', error);
-      toast.error(`Erro ao remover cargo: ${error.message}`);
+      console.error("Error removing user from role:", error);
+      toast.error(`Erro ao remover usuário do cargo: ${error.message}`);
     }
   };
-
-  const filteredUsers = users.filter(user => 
-    user.display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const filteredAvailableUsers = availableUsers.filter(user =>
-    user.display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
+  
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center p-6">
+        <div className="animate-spin h-8 w-8 border-t-2 border-blue-500 border-r-2 rounded-full"></div>
+        <p className="mt-2 text-gray-500">Carregando usuários...</p>
+      </div>
+    );
+  }
+  
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>Gerenciar Usuários do Cargo</DialogTitle>
-          <DialogDescription>
-            Atribua ou remova usuários do cargo: {role.title}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-6 py-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Buscar usuários..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-
-          {isLoading ? (
-            <div className="flex justify-center py-4">
-              <div className="animate-spin h-6 w-6 border-t-2 border-blue-500 rounded-full" />
-            </div>
-          ) : error ? (
-            <div className="text-center text-red-500 py-4">
-              {error}
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Usuários com o cargo */}
+        <div className="space-y-3">
+          <h3 className="text-sm font-medium">Usuários com esse cargo</h3>
+          
+          {assignedUsers.length === 0 ? (
+            <div className="p-4 text-center bg-gray-50 dark:bg-gray-900 rounded-md">
+              <p className="text-sm text-gray-500">
+                Nenhum usuário possui este cargo
+              </p>
             </div>
           ) : (
-            <div className="space-y-6">
-              {/* Usuários com este cargo */}
-              <div>
-                <h4 className="text-sm font-medium mb-3">Usuários com este cargo</h4>
-                {filteredUsers.length === 0 ? (
-                  <p className="text-sm text-gray-500">Nenhum usuário atribuído a este cargo</p>
-                ) : (
-                  <div className="space-y-2">
-                    {filteredUsers.map(user => (
-                      <div key={user.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <span className="text-sm">{user.display_name || user.email}</span>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => removeUserRole(user.id!)}
-                        >
-                          <UserMinus className="h-4 w-4 mr-2" />
-                          Remover
-                        </Button>
+            <div className="border rounded-md overflow-hidden">
+              <div className="max-h-80 overflow-y-auto">
+                <ul className="divide-y">
+                  {assignedUsers.map(user => (
+                    <li key={user.id} className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-800">
+                      <div className="flex items-center">
+                        <Check className="h-4 w-4 text-green-500 mr-2" />
+                        <span>{user.display_name}</span>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Usuários disponíveis */}
-              <div>
-                <h4 className="text-sm font-medium mb-3">Usuários disponíveis</h4>
-                {filteredAvailableUsers.length === 0 ? (
-                  <p className="text-sm text-gray-500">Nenhum usuário disponível</p>
-                ) : (
-                  <div className="space-y-2">
-                    {filteredAvailableUsers.map(user => (
-                      <div key={user.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <span className="text-sm">{user.display_name || user.email}</span>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => assignUserRole(user.id!)}
-                        >
-                          <UserPlus className="h-4 w-4 mr-2" />
-                          Adicionar
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="text-red-500 hover:text-red-700"
+                        onClick={() => removeUserFromRole(user.id)}
+                      >
+                        <UserMinus className="h-4 w-4 mr-1" />
+                        <span className="hidden sm:inline">Remover</span>
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
           )}
         </div>
-      </DialogContent>
-    </Dialog>
+        
+        {/* Usuários disponíveis */}
+        <div className="space-y-3">
+          <h3 className="text-sm font-medium">Usuários disponíveis</h3>
+          
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Buscar usuários..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          
+          {filteredUsers.length === 0 ? (
+            <div className="p-4 text-center bg-gray-50 dark:bg-gray-900 rounded-md">
+              <p className="text-sm text-gray-500">
+                {searchQuery 
+                  ? "Nenhum usuário encontrado com essa busca" 
+                  : "Nenhum usuário disponível"
+                }
+              </p>
+            </div>
+          ) : (
+            <div className="border rounded-md overflow-hidden">
+              <div className="max-h-72 overflow-y-auto">
+                <ul className="divide-y">
+                  {filteredUsers.map(user => (
+                    <li key={user.id} className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-800">
+                      <span>{user.display_name}</span>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="text-blue-500 hover:text-blue-700"
+                        onClick={() => assignUserToRole(user.id)}
+                      >
+                        <UserPlus className="h-4 w-4 mr-1" />
+                        <span className="hidden sm:inline">Adicionar</span>
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 };
+
+export default RoleUsersDialog;
