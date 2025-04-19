@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Download, Trash2, Upload, AlertCircle } from "lucide-react";
+import { FileText, Download, Trash2, Upload, AlertCircle, Eye } from "lucide-react";
 import { UserDocument, DOCUMENT_TYPE_LABELS } from "@/types/document";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface UserDocumentsListProps {
   documents: UserDocument[];
@@ -23,6 +24,8 @@ export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const handleDownload = async (document: UserDocument) => {
     setDownloadingId(document.id);
@@ -60,7 +63,32 @@ export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
     }
   };
 
+  const handlePreview = async (document: UserDocument) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .createSignedUrl(document.file_path, 3600);
+        
+      if (error) throw error;
+      
+      setPreviewUrl(data.signedUrl);
+      setPreviewOpen(true);
+    } catch (error: any) {
+      console.error('Error previewing document:', error);
+      toast.error(`Falha ao visualizar o documento: ${error.message}`);
+    }
+  };
+
+  const canDeleteDocument = (document: UserDocument) => {
+    return document.uploaded_by === (supabase.auth.getUser())?.data?.user?.id;
+  };
+
   const confirmDelete = async (document: UserDocument) => {
+    if (!canDeleteDocument(document)) {
+      toast.error("Você só pode excluir documentos que você mesmo enviou.");
+      return;
+    }
+
     if (window.confirm(`Tem certeza que deseja excluir o documento "${document.name}"?`)) {
       setDeletingId(document.id);
       setError(null);
@@ -156,6 +184,14 @@ export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
                 <Button 
                   variant="outline" 
                   size="icon" 
+                  onClick={() => handlePreview(document)}
+                  title="Visualizar documento"
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="icon" 
                   onClick={() => handleDownload(document)}
                   title="Baixar documento"
                   disabled={!!downloadingId}
@@ -163,21 +199,35 @@ export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
                 >
                   <Download className="h-4 w-4" />
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  onClick={() => confirmDelete(document)}
-                  title="Excluir documento"
-                  disabled={!!deletingId}
-                  className={`${deletingId === document.id ? "animate-pulse" : ""} text-red-500 hover:bg-red-50 hover:text-red-600`}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                {canDeleteDocument(document) && (
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={() => confirmDelete(document)}
+                    title="Excluir documento"
+                    disabled={!!deletingId}
+                    className={`${deletingId === document.id ? "animate-pulse" : ""} text-red-500 hover:bg-red-50 hover:text-red-600`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </div>
           </CardContent>
         </Card>
       ))}
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-4xl h-[80vh]">
+          {previewUrl && (
+            <iframe
+              src={previewUrl}
+              className="w-full h-full"
+              title="Document preview"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
