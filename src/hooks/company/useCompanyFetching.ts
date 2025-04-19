@@ -1,4 +1,3 @@
-
 import React, { useCallback, useRef } from "react";
 import { Company } from "@/types/company";
 import { useCompanyRequest } from "./useCompanyRequest";
@@ -51,15 +50,12 @@ export const useCompanyFetching = ({
   const { getCompanyById, getUserCompanies: getCompanies } = useCompanyFetch(companyFetchProps);
   
   // Track fetch state to prevent duplicate calls
-  const fetchInProgressRef = React.useRef(false);
+  const fetchInProgressRef = useRef(false);
   // Track abort controllers for active requests
   const abortControllerRef = useRef<AbortController | null>(null);
   // Track last successful fetch time for this specific hook instance
   const lastSuccessfulFetchRef = useRef<number>(0);
   
-  /**
-   * Fetches user companies with rate limiting and caching
-   */
   const getUserCompanies = useCallback(async (
     userId: string, 
     forceRefresh: boolean = false
@@ -182,12 +178,8 @@ export const useCompanyFetching = ({
     setIsLoading
   ]);
   
-  /**
-   * Forces a fetch of user companies, ignoring timing checks and clearing cache first
-   */
   const forceGetUserCompanies = useCallback(async (userId: string): Promise<Company[]> => {
     console.log('Forcing user companies fetch and clearing cache first');
-    // Clear caches before fetching to ensure we get fresh data
     clearCachedUserCompanies();
     return getUserCompanies(userId, true);
   }, [getUserCompanies, clearCachedUserCompanies]);

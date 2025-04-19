@@ -4,8 +4,9 @@ import { Company } from "@/types/company";
 
 export const useCompanyEvents = (setSelectedCompany: (company: Company | null) => void) => {
   useEffect(() => {
-    const handleCompanySelected = (event: CustomEvent<{ company: Company }>) => {
-      setSelectedCompany(event.detail.company);
+    const handleCompanySelected = (event: CustomEvent) => {
+      const { company } = event.detail;
+      setSelectedCompany(company);
     };
 
     window.addEventListener('company-selected', handleCompanySelected as EventListener);

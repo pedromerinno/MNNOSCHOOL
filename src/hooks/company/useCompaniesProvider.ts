@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCompanyState } from "./useCompanyState";
 import { useCompanyFetching } from "./useCompanyFetching";
 import { useCompanyModification } from "./useCompanyModification";
+import { useCompanyEvents } from "./useCompanyEvents";
 import { useEffect } from "react";
 
 export const useCompaniesProvider = () => {
@@ -38,6 +39,9 @@ export const useCompaniesProvider = () => {
   } = useCompanyModification({
     ...stateActions
   });
+
+  // Listen for selected company events
+  useCompanyEvents(stateActions.setSelectedCompany);
 
   // Global data loading - load user companies only when user is logged in
   useEffect(() => {
