@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useCompanies } from '@/hooks/useCompanies';
@@ -41,7 +40,6 @@ export const useDiscussions = () => {
 
       if (error) throw error;
       
-      // Fix the type conversion issue by manually mapping the response
       const formattedDiscussions = data ? data.map((item: any) => ({
         id: item.id,
         title: item.title,
@@ -63,7 +61,7 @@ export const useDiscussions = () => {
     }
   };
 
-  const createDiscussion = async (title: string, content: string) => {
+  const createDiscussion = async (title: string, content: string, imageUrl?: string) => {
     if (!selectedCompany?.id || !user?.id) {
       toast.error('Nenhuma empresa selecionada');
       return;
@@ -77,7 +75,8 @@ export const useDiscussions = () => {
             title,
             content,
             company_id: selectedCompany.id,
-            author_id: user.id
+            author_id: user.id,
+            image_url: imageUrl
           }
         ])
         .select()
@@ -111,7 +110,7 @@ export const useDiscussions = () => {
     }
   };
 
-  const addReply = async (discussionId: string, content: string) => {
+  const addReply = async (discussionId: string, content: string, imageUrl?: string) => {
     if (!user?.id) {
       toast.error('Você precisa estar logado para responder');
       return;
@@ -124,7 +123,8 @@ export const useDiscussions = () => {
           {
             discussion_id: discussionId,
             content,
-            author_id: user.id
+            author_id: user.id,
+            image_url: imageUrl
           }
         ]);
 
@@ -155,7 +155,6 @@ export const useDiscussions = () => {
     }
   };
 
-  // Fetch discussions when company changes
   useEffect(() => {
     fetchDiscussions();
   }, [selectedCompany?.id]);

@@ -7,6 +7,7 @@ export interface Discussion {
   company_id: string;
   created_at: string;
   updated_at: string;
+  image_url?: string | null;
   profiles?: {
     display_name: string | null;
     avatar: string | null;
@@ -20,6 +21,7 @@ export interface DiscussionReply {
   author_id: string;
   content: string;
   created_at: string;
+  image_url?: string | null;
   profiles?: {
     display_name: string | null;
     avatar: string | null;

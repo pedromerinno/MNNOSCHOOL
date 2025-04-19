@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
@@ -19,8 +18,8 @@ const Community = () => {
   const [selectedDiscussion, setSelectedDiscussion] = useState<DiscussionType | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
 
-  const handleCreateDiscussion = async (title: string, content: string) => {
-    await createDiscussion(title, content);
+  const handleCreateDiscussion = async (title: string, content: string, imageUrl?: string) => {
+    await createDiscussion(title, content, imageUrl);
   };
 
   const handleViewDiscussion = (discussion: DiscussionType) => {

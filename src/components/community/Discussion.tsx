@@ -2,7 +2,7 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Users, Trash2 } from "lucide-react";
+import { MessageSquare, Users, Trash2, Image } from "lucide-react";
 import { Discussion as DiscussionType } from "@/types/discussions";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
@@ -54,6 +54,15 @@ export const Discussion: React.FC<DiscussionProps> = ({
             </Button>
           </div>
         </div>
+        {discussion.image_url && (
+          <div className="my-4">
+            <img 
+              src={discussion.image_url} 
+              alt={discussion.title} 
+              className="w-full h-48 object-cover rounded-lg"
+            />
+          </div>
+        )}
         <p className="text-gray-600 dark:text-gray-300 text-sm mt-2 line-clamp-2">
           {discussion.content}
         </p>
