@@ -1,0 +1,37 @@
+
+import React from 'react';
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { CompanyThemedBadge } from "@/components/ui/badge";
+import { useCompanies } from "@/hooks/useCompanies";
+
+interface PageHeaderProps {
+  title: string;
+}
+
+export const PageHeader: React.FC<PageHeaderProps> = ({ title }) => {
+  const { selectedCompany } = useCompanies();
+
+  return (
+    <div className="flex items-center mb-12 gap-4">
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        className="p-0 hover:bg-transparent" 
+        onClick={() => window.history.back()}
+      >
+        <ArrowLeft className="h-5 w-5 text-gray-500" />
+      </Button>
+      <div className="flex items-center gap-3">
+        <h1 className="text-3xl font-bold dark:text-white">
+          {title}
+        </h1>
+        {selectedCompany && (
+          <CompanyThemedBadge variant="beta">
+            {selectedCompany.nome}
+          </CompanyThemedBadge>
+        )}
+      </div>
+    </div>
+  );
+};
