@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +17,7 @@ const Access = () => {
   const [selectedAccess, setSelectedAccess] = useState<AccessItem | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [hasPermission, setHasPermission] = useState(true);
+  const [requestInProgress, setRequestInProgress] = useState(false);
 
   useEffect(() => {
     const fetchAccessItems = async () => {
@@ -25,8 +27,15 @@ const Access = () => {
         return;
       }
 
+      // Prevent duplicate requests
+      if (requestInProgress) {
+        console.log('Request already in progress, skipping duplicate fetch');
+        return;
+      }
+
       setIsLoading(true);
       setHasPermission(true);
+      setRequestInProgress(true);
 
       try {
         console.log('Fetching access items for company:', selectedCompany.id, 'User ID:', user.id);
@@ -59,6 +68,7 @@ const Access = () => {
         setAccessItems([]);
       } finally {
         setIsLoading(false);
+        setRequestInProgress(false);
       }
     };
 
@@ -76,42 +86,34 @@ const Access = () => {
 
   if (!selectedCompany) {
     return (
-      <div className="min-h-screen bg-background">
-        <main className="container mx-auto px-4 py-8">
-          <EmptyState 
-            title="Selecione uma empresa"
-            description="Selecione uma empresa no menu superior para visualizar os acessos cadastrados."
-          />
-        </main>
-      </div>
+      <PageLayout title="Acessos">
+        <EmptyState 
+          title="Selecione uma empresa"
+          description="Selecione uma empresa no menu superior para visualizar os acessos cadastrados."
+        />
+      </PageLayout>
     );
   }
 
   if (!hasPermission) {
     return (
-      <div className="min-h-screen bg-background">
-        <main className="container mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold mb-6 dark:text-white">Acessos</h1>
-          <EmptyState 
-            title="Acesso não autorizado"
-            description={`Você não tem permissão para visualizar os acessos da empresa ${selectedCompany.nome}. Entre em contato com o administrador.`}
-          />
-        </main>
-      </div>
+      <PageLayout title="Acessos">
+        <EmptyState 
+          title="Acesso não autorizado"
+          description={`Você não tem permissão para visualizar os acessos da empresa ${selectedCompany.nome}. Entre em contato com o administrador.`}
+        />
+      </PageLayout>
     );
   }
 
   if (accessItems.length === 0) {
     return (
-      <div className="min-h-screen bg-background">
-        <main className="container mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold mb-6 dark:text-white">Acessos</h1>
-          <EmptyState 
-            title="Nenhum acesso cadastrado"
-            description={`Não há informações de acesso cadastradas para ${selectedCompany.nome}. Peça ao administrador para adicionar os acessos necessários.`}
-          />
-        </main>
-      </div>
+      <PageLayout title="Acessos">
+        <EmptyState 
+          title="Nenhum acesso cadastrado"
+          description={`Não há informações de acesso cadastradas para ${selectedCompany.nome}. Peça ao administrador para adicionar os acessos necessários.`}
+        />
+      </PageLayout>
     );
   }
 
