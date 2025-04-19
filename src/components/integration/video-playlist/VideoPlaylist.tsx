@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Info, List, Video } from "lucide-react";
@@ -23,11 +24,8 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
   const [videos, setVideos] = useState<CompanyVideo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   
-  const initialVideo = mainVideo || (videos.length > 0 ? videos[0].video_url : '');
-  const initialDescription = mainVideoDescription || (videos.length > 0 ? videos[0].description || '' : '');
-  
-  const [currentVideo, setCurrentVideo] = useState(initialVideo);
-  const [currentDescription, setCurrentDescription] = useState(initialDescription);
+  const [currentVideo, setCurrentVideo] = useState('');
+  const [currentDescription, setCurrentDescription] = useState('');
   const [selectedVideoIndex, setSelectedVideoIndex] = useState<number | null>(null);
 
   useEffect(() => {
@@ -46,7 +44,7 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
         
         setVideos(data || []);
         
-        if (data && data.length > 0 && !currentVideo) {
+        if (data && data.length > 0) {
           setCurrentVideo(data[0].video_url);
           setCurrentDescription(data[0].description || '');
         }
@@ -60,20 +58,13 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
     fetchVideos();
   }, [companyId]);
 
-  useEffect(() => {
-    if (!currentVideo && videos.length > 0) {
-      setCurrentVideo(videos[0].video_url);
-      setCurrentDescription(videos[0].description || '');
-    }
-  }, [videos]);
-
   const handleSelectVideo = (video: CompanyVideo, index: number) => {
     setCurrentVideo(video.video_url);
     setCurrentDescription(video.description || '');
     setSelectedVideoIndex(index);
   };
 
-  if (!mainVideo && videos.length === 0 && !isLoading) {
+  if (!currentVideo && videos.length === 0 && !isLoading) {
     return <NoVideosAvailable />;
   }
 
@@ -92,16 +83,12 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
         <div>
           <VideoList 
             videos={videos}
-            mainVideo=""
+            mainVideo="" // Removendo o vídeo principal da playlist
             mainVideoDescription=""
             isLoading={isLoading}
             selectedVideoIndex={selectedVideoIndex}
             onSelectVideo={handleSelectVideo}
-            onSelectMainVideo={() => {
-              setCurrentVideo(mainVideo);
-              setCurrentDescription(mainVideoDescription);
-              setSelectedVideoIndex(null);
-            }}
+            onSelectMainVideo={() => {}} // Função vazia para remover a seleção do vídeo principal
             companyColor={selectedCompany?.cor_principal || "#1EAEDB"}
             currentVideo={currentVideo}
           />
@@ -110,3 +97,4 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
     </div>
   );
 };
+
