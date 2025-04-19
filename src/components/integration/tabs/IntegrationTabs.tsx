@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, PlayCircle, BriefcaseBusiness } from "lucide-react";
@@ -30,10 +31,10 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
         onValueChange={setActiveTab}
         className="w-full"
       >
-        <TabsList className="grid grid-cols-3 w-full rounded-2xl p-1.5">
+        <TabsList className="grid grid-cols-3 w-full rounded-2xl p-1.5 bg-gray-100 dark:bg-gray-800 gap-2">
           <TabsTrigger 
             value="culture"
-            className="flex items-center gap-2 rounded-xl py-4 px-6"
+            className="flex items-center gap-2 rounded-xl py-4 px-6 data-[state=active]:bg-white data-[state=active]:shadow-sm"
             style={{
               borderColor: activeTab === "culture" ? companyColor : undefined,
               color: activeTab === "culture" ? companyColor : undefined
@@ -44,7 +45,7 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
           </TabsTrigger>
           <TabsTrigger 
             value="videos"
-            className="flex items-center gap-2 rounded-xl py-4 px-6"
+            className="flex items-center gap-2 rounded-xl py-4 px-6 data-[state=active]:bg-white data-[state=active]:shadow-sm"
             style={{
               borderColor: activeTab === "videos" ? companyColor : undefined,
               color: activeTab === "videos" ? companyColor : undefined
@@ -55,7 +56,7 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
           </TabsTrigger>
           <TabsTrigger 
             value="role"
-            className="flex items-center gap-2 rounded-xl py-4 px-6"
+            className="flex items-center gap-2 rounded-xl py-4 px-6 data-[state=active]:bg-white data-[state=active]:shadow-sm"
             style={{
               borderColor: activeTab === "role" ? companyColor : undefined,
               color: activeTab === "role" ? companyColor : undefined
@@ -66,7 +67,7 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
           </TabsTrigger>
         </TabsList>
 
-        <div className="mt-4 space-y-4">
+        <div className="mt-6 space-y-6">
           <TabsContent value="culture" className="m-0">
             <CultureManual
               companyValues={company?.valores || ""}
@@ -111,3 +112,4 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
     </div>
   );
 };
+

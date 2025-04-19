@@ -32,7 +32,7 @@ export const CultureManual: React.FC<CultureManualProps> = ({
   return (
     <div className="space-y-12">
       <div className="grid gap-8 md:grid-cols-2">
-        <Card className="transition-all duration-200 shadow-none rounded-xl md:col-span-2">
+        <Card className="transition-all duration-200 shadow-none rounded-xl md:col-span-2 bg-gray-50 dark:bg-gray-900">
           <CardHeader>
             <CardTitle className="text-2xl">Missão</CardTitle>
           </CardHeader>
@@ -43,7 +43,7 @@ export const CultureManual: React.FC<CultureManualProps> = ({
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-2 transition-all duration-200 shadow-none rounded-xl">
+        <Card className="md:col-span-2 transition-all duration-200 shadow-none rounded-xl bg-gray-50 dark:bg-gray-900">
           <CardHeader>
             <CardTitle className="text-2xl">
               Nossos Valores
@@ -54,11 +54,11 @@ export const CultureManual: React.FC<CultureManualProps> = ({
               {values.map((value: { title: string; description: string }, index: number) => (
                 <div
                   key={index}
-                  className="p-6 rounded-xl border bg-card text-card-foreground transition-colors hover:border-primary/20"
+                  className="p-8 rounded-xl border bg-card text-card-foreground transition-colors hover:border-primary/20"
                 >
-                  <div className="mb-3" style={{ color: companyColor }}>
+                  <div className="mb-4" style={{ color: companyColor }}>
                     <span 
-                      className="inline-flex items-center justify-center w-8 h-8 text-sm font-semibold rounded-full" 
+                      className="inline-flex items-center justify-center w-10 h-10 text-sm font-semibold rounded-full" 
                       style={{ 
                         backgroundColor: `${companyColor}20`, 
                         color: companyColor 
@@ -137,3 +137,4 @@ export const CultureManual: React.FC<CultureManualProps> = ({
     </div>
   );
 };
+
