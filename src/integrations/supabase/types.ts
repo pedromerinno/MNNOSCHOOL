@@ -427,6 +427,7 @@ export type Database = {
           display_name: string | null
           email: string | null
           id: string
+          interesses: string[] | null
           is_admin: boolean | null
           super_admin: boolean | null
           updated_at: string
@@ -438,6 +439,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id: string
+          interesses?: string[] | null
           is_admin?: boolean | null
           super_admin?: boolean | null
           updated_at?: string
@@ -449,6 +451,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          interesses?: string[] | null
           is_admin?: boolean | null
           super_admin?: boolean | null
           updated_at?: string

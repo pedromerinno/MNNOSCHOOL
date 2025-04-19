@@ -1,15 +1,17 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
+import { InterestsSelector } from "./InterestsSelector";
 
 export const SignupForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [interests, setInterests] = useState<string[]>([]);
   const [isRegistering, setIsRegistering] = useState(false);
   const { signUp } = useAuth();
 
@@ -38,8 +40,10 @@ export const SignupForm = () => {
     setIsRegistering(true);
     
     try {
-      await signUp(email, password, email.split('@')[0]);
+      await signUp(email, password, email.split('@')[0], { interests });
       console.log("Usuario cadastrado com sucesso! Perfil será criado automaticamente.");
+    } catch (error) {
+      console.error("Erro no cadastro:", error);
     } finally {
       setIsRegistering(false);
     }
@@ -49,7 +53,7 @@ export const SignupForm = () => {
     <div className="w-full max-w-md">
       <h2 className="text-3xl font-medium mb-1">Criar conta</h2>
       <p className="text-sm text-gray-500 mb-8">
-        Preencha os campos a baixo para começar sua jornada conosco.
+        Preencha os campos abaixo para começar sua jornada conosco.
       </p>
       
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -97,6 +101,11 @@ export const SignupForm = () => {
             <p className="text-sm text-red-500 mt-1">{passwordError}</p>
           )}
         </div>
+        
+        <InterestsSelector 
+          selectedInterests={interests}
+          onInterestsChange={setInterests}
+        />
         
         <Button
           type="submit"

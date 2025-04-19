@@ -11,7 +11,7 @@ interface AuthContextType {
   loading: boolean;
   signIn: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
-  signUp: (email: string, password: string, displayName: string) => Promise<void>;
+  signUp: (email: string, password: string, displayName: string, metadata?: { interests?: string[] }) => Promise<void>;
   updateUserProfile: (userData: Partial<UserProfile>) => Promise<void>;
   updateUserData: (userData: Partial<UserProfile>) => Promise<void>;
 }
@@ -116,7 +116,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signUp = async (email: string, password: string, displayName: string) => {
+  const signUp = async (
+    email: string, 
+    password: string, 
+    displayName: string, 
+    metadata?: { interests?: string[] }
+  ) => {
     try {
       setLoading(true);
       const { data, error } = await supabase.auth.signUp({
@@ -125,21 +130,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         options: {
           data: {
             display_name: displayName,
+            interests: metadata?.interests || [],
           },
         },
       });
+
       if (error) throw error;
 
       if (data.user) {
         await supabase
           .from('profiles')
-          .insert([
-            {
-              id: data.user.id,
-              email: data.user.email,
-              display_name: displayName,
-            },
-          ]);
+          .update({ 
+            display_name: displayName,
+            interesses: metadata?.interests || []
+          })
+          .eq('id', data.user.id);
       }
 
       alert('Verifique seu email para confirmar o cadastro.');
