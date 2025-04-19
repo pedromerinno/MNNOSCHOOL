@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useCompanies } from "@/hooks/useCompanies";
 
 interface DiscussionProps {
   discussion: DiscussionType;
@@ -25,6 +26,9 @@ export const Discussion: React.FC<DiscussionProps> = ({
   index
 }) => {
   const { userProfile } = useAuth();
+  const { selectedCompany } = useCompanies();
+  const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
+  
   const isAdmin = userProfile?.isAdmin === true;
   const isAuthor = userProfile?.id && discussion.author_id === userProfile.id;
 
@@ -40,13 +44,17 @@ export const Discussion: React.FC<DiscussionProps> = ({
       "hover:shadow-md transition-shadow border-l-4",
       discussion.status === 'closed' 
         ? "border-l-green-500 bg-green-50/50 dark:bg-green-900/10" 
-        : "border-l-blue-500"
-    )}>
+        : `border-l-[${companyColor}]`
+    )}
+    style={{
+      borderLeftColor: discussion.status === 'closed' ? 'rgb(34 197 94)' : companyColor
+    }}
+    >
       <CardContent className="p-4">
         <div className="flex justify-between items-start gap-4">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-sm text-gray-500">#{index + 1}</span>
+              <span className="text-sm text-gray-500 font-medium">#{index + 1}</span>
               <h3 className="font-medium text-lg dark:text-white">{discussion.title}</h3>
               {discussion.status === 'closed' && (
                 <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
@@ -59,11 +67,13 @@ export const Discussion: React.FC<DiscussionProps> = ({
             </p>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <Avatar className="h-6 w-6">
+                <Avatar className="h-7 w-7">
                   <AvatarImage src={authorAvatar || undefined} />
-                  <AvatarFallback>{authorName.charAt(0)}</AvatarFallback>
+                  <AvatarFallback style={{ backgroundColor: `${companyColor}20`, color: companyColor }}>
+                    {authorName ? authorName.charAt(0).toUpperCase() : 'U'}
+                  </AvatarFallback>
                 </Avatar>
-                <span className="text-sm text-gray-600">{authorName}</span>
+                <span className="text-sm text-gray-600 font-medium">{authorName}</span>
               </div>
               <span className="text-sm text-gray-500">{format(new Date(discussion.created_at), 'dd/MM/yyyy')}</span>
               <div className="flex items-center text-sm text-gray-500 gap-4">
@@ -116,6 +126,10 @@ export const Discussion: React.FC<DiscussionProps> = ({
               variant="ghost" 
               size="sm"
               onClick={() => onView(discussion)}
+              style={{ 
+                color: companyColor,
+              }}
+              className="hover:bg-opacity-10 hover:bg-black"
             >
               Ver
             </Button>

@@ -22,13 +22,21 @@ export const useDiscussions = () => {
         .from('discussions')
         .select(`
           *,
+          profiles:author_id (
+            display_name,
+            avatar
+          ),
           discussion_replies (
             id,
             discussion_id,
             content,
             created_at,
             author_id,
-            image_url
+            image_url,
+            profiles:author_id (
+              display_name,
+              avatar
+            )
           )
         `)
         .eq('company_id', selectedCompany.id)
@@ -37,7 +45,6 @@ export const useDiscussions = () => {
       if (error) throw error;
       
       // Transform the data to match the Discussion type
-      // Adding client-side properties since they're not in the database yet
       const formattedData = data?.map(item => {
         // Create the basic discussion object with properties from the database
         const discussion: Discussion = {
@@ -48,9 +55,9 @@ export const useDiscussions = () => {
           company_id: item.company_id,
           created_at: item.created_at,
           updated_at: item.updated_at,
-          // Add these properties as client-side properties
-          image_url: null, 
-          status: 'open' as const,
+          image_url: item.image_url || null, 
+          status: item.status || 'open' as const,
+          profiles: item.profiles || { display_name: 'Usuário', avatar: null },
           discussion_replies: (item.discussion_replies || []).map((reply: any) => ({
             id: reply.id,
             discussion_id: reply.discussion_id,
@@ -58,6 +65,7 @@ export const useDiscussions = () => {
             content: reply.content,
             created_at: reply.created_at,
             image_url: reply.image_url || null,
+            profiles: reply.profiles || { display_name: 'Usuário', avatar: null }
           }))
         };
         
