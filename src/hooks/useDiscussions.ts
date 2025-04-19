@@ -47,8 +47,8 @@ export const useDiscussions = () => {
         created_at: item.created_at,
         updated_at: item.updated_at,
         // Add these properties that aren't in the database yet
-        image_url: null,
-        status: 'open' as const,
+        image_url: item.image_url || null,
+        status: item.status || 'open' as const,
         discussion_replies: (item.discussion_replies || []).map((reply: any) => ({
           id: reply.id,
           discussion_id: reply.discussion_id,
