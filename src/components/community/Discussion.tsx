@@ -16,6 +16,7 @@ interface DiscussionProps {
   onDelete: (id: string) => void;
   onToggleStatus: (id: string, status: 'open' | 'closed') => void;
   index: number;
+  totalCount: number;
 }
 
 export const Discussion: React.FC<DiscussionProps> = ({
@@ -23,7 +24,8 @@ export const Discussion: React.FC<DiscussionProps> = ({
   onView,
   onDelete,
   onToggleStatus,
-  index
+  index,
+  totalCount
 }) => {
   const { userProfile } = useAuth();
   const { selectedCompany } = useCompanies();
@@ -39,6 +41,9 @@ export const Discussion: React.FC<DiscussionProps> = ({
   const authorName = discussion.profiles?.display_name || 'Usuário';
   const authorAvatar = discussion.profiles?.avatar;
 
+  // Calculate the inverted number (oldest = #1)
+  const discussionNumber = totalCount - index;
+
   return (
     <Card className={cn(
       "hover:shadow-md transition-shadow border-l-4",
@@ -50,11 +55,11 @@ export const Discussion: React.FC<DiscussionProps> = ({
       borderLeftColor: discussion.status === 'closed' ? 'rgb(34 197 94)' : companyColor
     }}
     >
-      <CardContent className="p-4">
+      <CardContent className="p-6">
         <div className="flex justify-between items-start gap-4">
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-sm text-gray-500 font-medium">#{index + 1}</span>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-sm text-gray-500 font-medium">#{discussionNumber}</span>
               <h3 className="font-medium text-lg dark:text-white">{discussion.title}</h3>
               {discussion.status === 'closed' && (
                 <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
@@ -62,12 +67,12 @@ export const Discussion: React.FC<DiscussionProps> = ({
                 </span>
               )}
             </div>
-            <p className="text-gray-600 dark:text-gray-300 text-sm line-clamp-2 mb-3">
+            <p className="text-gray-600 dark:text-gray-300 text-sm line-clamp-2 mb-4">
               {discussion.content}
             </p>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <Avatar className="h-7 w-7">
+                <Avatar className="h-6 w-6">
                   <AvatarImage src={authorAvatar || undefined} />
                   <AvatarFallback style={{ backgroundColor: `${companyColor}20`, color: companyColor }}>
                     {authorName ? authorName.charAt(0).toUpperCase() : 'U'}
@@ -139,3 +144,4 @@ export const Discussion: React.FC<DiscussionProps> = ({
     </Card>
   );
 };
+
