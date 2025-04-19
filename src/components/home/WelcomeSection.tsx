@@ -82,7 +82,7 @@ export const WelcomeSection = () => {
   const userName = userProfile?.displayName || user?.email?.split('@')[0] || 'Usuário';
 
   const handleLearnMore = () => {
-    navigate('/manifesto');
+    navigate('/integration'); // Changed from '/manifesto'
   };
 
   const defaultPhrase = "Juntos, estamos desenhando o futuro de grandes empresas";
@@ -129,3 +129,4 @@ export const WelcomeSection = () => {
     </div>
   );
 };
+

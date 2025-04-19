@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -122,7 +122,7 @@ const School = () => {
   ];
 
   const categories = [
-    { id: "all", name: "Todos" },
+    { id: "all", name: "Todos os Cursos" }, // Changed from "Todos"
     { id: "3d", name: "3D" },
     { id: "brand", name: "Brand" },
     { id: "motion", name: "Motion Design" },
@@ -430,3 +430,4 @@ const School = () => {
 };
 
 export default School;
+
