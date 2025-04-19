@@ -2,16 +2,16 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { CompanyThemedBadge } from "@/components/ui/badge";
+import { useCompanies } from "@/hooks/useCompanies";
 
-interface IntegrationLayoutProps {
-  children: React.ReactNode;
-}
+export const IntegrationLayout: React.FC<React.PropsWithChildren<{}>> = ({ children }) => {
+  const { selectedCompany } = useCompanies();
 
-export const IntegrationLayout: React.FC<IntegrationLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-6 py-12">
-        <div className="flex items-center mb-12 gap-2">
+        <div className="flex items-center mb-12 gap-4">
           <Button 
             variant="ghost" 
             size="sm" 
@@ -20,9 +20,19 @@ export const IntegrationLayout: React.FC<IntegrationLayoutProps> = ({ children }
           >
             <ArrowLeft className="h-5 w-5 text-gray-500" />
           </Button>
-          <h1 className="text-3xl font-bold dark:text-white">
-            Bem-vindo ao processo de integração
-          </h1>
+          <div className="flex items-center gap-3">
+            {selectedCompany && (
+              <CompanyThemedBadge 
+                variant="beta"
+                className="mr-2"
+              >
+                {selectedCompany.nome}
+              </CompanyThemedBadge>
+            )}
+            <h1 className="text-3xl font-bold dark:text-white">
+              Bem-vindo ao processo de integração
+            </h1>
+          </div>
         </div>
         
         <div className="bg-white dark:bg-card rounded-xl shadow-sm">
