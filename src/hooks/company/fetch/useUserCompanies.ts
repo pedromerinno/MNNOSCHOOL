@@ -38,25 +38,19 @@ export const useUserCompanies = ({
     const cachedCompanies = localStorage.getItem('userCompanies');
     let cachedData: Company[] = [];
     
-    // Use cached data immediately to improve perceived speed
     if (cachedCompanies) {
       try {
         cachedData = JSON.parse(cachedCompanies) as Company[];
         
-        // Update state with cached data immediately
         if (setUserCompanies) {
           setUserCompanies(cachedData);
         }
-        console.log("Using cached data while fetching update:", cachedData.length, "companies");
         
-        // If we have only one company in cache, select it automatically
         if (cachedData.length === 1 && setSelectedCompany) {
           setSelectedCompany(cachedData[0]);
         }
         
-        // If cache is valid and not empty, we can return cached data
         if (isCacheValid() && cachedData.length > 0) {
-          console.log("Valid cache, skipping server request");
           setIsLoading(false);
           return cachedData;
         }
@@ -87,9 +81,7 @@ export const useUserCompanies = ({
         }
       );
 
-      if (relationsError) {
-        throw relationsError;
-      }
+      if (relationsError) throw relationsError;
 
       if (!relations || relations.length === 0) {
         setUserCompanies([]);
@@ -116,14 +108,11 @@ export const useUserCompanies = ({
         }
       );
 
-      if (companiesError) {
-        throw companiesError;
-      }
+      if (companiesError) throw companiesError;
 
       const userCompaniesData = companies as Company[];
       setUserCompanies(userCompaniesData);
       
-      // Cache the companies
       if (userCompaniesData.length > 0) {
         localStorage.setItem('userCompanies', JSON.stringify(userCompaniesData));
         localStorage.setItem('userCompaniesTimestamp', Date.now().toString());
