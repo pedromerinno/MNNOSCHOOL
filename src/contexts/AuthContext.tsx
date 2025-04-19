@@ -1,11 +1,12 @@
-import { createContext, useContext, useEffect, useState } from "react";
+
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { Database } from "@/integrations/supabase/types";
 
 type UserProfile = {
+  id?: string; // Make id optional to match the usage in the app
   displayName: string | null;
   avatar: string | null;
   isAdmin?: boolean;
