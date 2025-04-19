@@ -5,6 +5,7 @@ import { RefreshCw } from "lucide-react";
 
 interface Props {
   children?: ReactNode;
+  fallback?: ReactNode;
 }
 
 interface State {
@@ -28,6 +29,12 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public render() {
     if (this.state.hasError) {
+      // Se um fallback personalizado foi fornecido, use-o
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+
+      // Renderização padrão de erro
       return (
         <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gray-50 dark:bg-gray-900">
           <div className="w-full max-w-md rounded-lg shadow-lg bg-white dark:bg-gray-800 p-8 text-center">
