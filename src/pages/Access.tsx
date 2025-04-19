@@ -1,93 +1,18 @@
-import { useState, useEffect, useRef } from "react";
+
 import { useCompanies } from "@/hooks/useCompanies";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { AccessList } from "@/components/access/AccessList";
-import { AccessDetails } from "@/components/access/AccessDetails";
+import { useAccessItems } from "@/hooks/useAccessItems";
 import { LoadingState } from "@/components/access/LoadingState";
 import { EmptyState } from "@/components/access/EmptyState";
-import { AccessItem } from "@/components/access/types";
+import { AccessDescription } from "@/components/access/AccessDescription";
+import { AccessContent } from "@/components/access/AccessContent";
 import { PageLayout } from "@/components/layout/PageLayout";
 
 const Access = () => {
   const { selectedCompany, user } = useCompanies();
-  const [accessItems, setAccessItems] = useState<AccessItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedAccess, setSelectedAccess] = useState<AccessItem | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [hasPermission, setHasPermission] = useState(true);
-  const [requestInProgress, setRequestInProgress] = useState(false);
-  
-  const lastSelectedCompanyIdRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    const fetchAccessItems = async () => {
-      if (!selectedCompany || !user) {
-        setAccessItems([]);
-        setIsLoading(false);
-        return;
-      }
-      
-      if (lastSelectedCompanyIdRef.current === selectedCompany.id) {
-        console.log('Already fetched data for this company, skipping duplicate fetch');
-        return;
-      }
-
-      if (requestInProgress) {
-        console.log('Request already in progress, skipping duplicate fetch');
-        return;
-      }
-
-      setIsLoading(true);
-      setHasPermission(true);
-      setRequestInProgress(true);
-
-      try {
-        console.log('Fetching access items for company:', selectedCompany.id, 'User ID:', user.id);
-        
-        const { data, error } = await supabase
-          .from('company_access')
-          .select('*')
-          .eq('company_id', selectedCompany.id)
-          .order('tool_name');
-        
-        if (error) {
-          if (error.code === '42501' || error.message.includes('policy')) {
-            console.log('Acesso negado pela política RLS:', error.message);
-            setHasPermission(false);
-            setAccessItems([]);
-          } else {
-            console.error('Erro ao buscar itens de acesso:', error);
-            throw error;
-          }
-        } else {
-          console.log('Itens de acesso encontrados:', data?.length);
-          setAccessItems(data as AccessItem[] || []);
-          lastSelectedCompanyIdRef.current = selectedCompany.id;
-        }
-      } catch (error: any) {
-        console.error('Erro ao carregar informações de acesso:', error);
-        toast.error('Não foi possível carregar os dados de acesso');
-        setAccessItems([]);
-      } finally {
-        setIsLoading(false);
-        setRequestInProgress(false);
-      }
-    };
-
-    fetchAccessItems();
-    
-    return () => {
-      if (requestInProgress) {
-        setRequestInProgress(false);
-      }
-    };
-  }, [selectedCompany, user, requestInProgress]);
-
-  const openAccessDetails = (access: AccessItem) => {
-    setSelectedAccess(access);
-    setIsDialogOpen(true);
-  };
+  const { accessItems, isLoading, hasPermission } = useAccessItems({
+    companyId: selectedCompany?.id,
+    userId: user?.id
+  });
 
   if (isLoading) {
     return <LoadingState />;
@@ -128,26 +53,10 @@ const Access = () => {
 
   return (
     <PageLayout title="Acessos">
-      <div className="bg-white dark:bg-card rounded-xl shadow-sm p-6 mb-6">
-        <p className="text-gray-700 dark:text-gray-300 text-base leading-relaxed">
-          Aqui estão todos os acessos às ferramentas e plataformas utilizadas pela empresa {selectedCompany?.nome}. 
-          Clique em um card para visualizar as informações completas.
-        </p>
-      </div>
-        
-      <div className="bg-white dark:bg-card rounded-xl shadow-sm p-6">
-        <AccessList 
-          items={accessItems}
-          onSelectAccess={openAccessDetails}
-          companyColor={selectedCompany?.cor_principal}
-        />
-      </div>
-
-      <AccessDetails 
-        access={selectedAccess}
-        isOpen={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
-        companyColor={selectedCompany?.cor_principal}
+      <AccessDescription companyName={selectedCompany.nome} />
+      <AccessContent 
+        items={accessItems}
+        companyColor={selectedCompany.cor_principal}
       />
     </PageLayout>
   );
