@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useCompanies } from '@/hooks/useCompanies';
@@ -29,6 +30,7 @@ export const useDiscussions = () => {
             content,
             created_at,
             author_id,
+            image_url,
             profiles:author_id (
               display_name,
               avatar
@@ -48,6 +50,7 @@ export const useDiscussions = () => {
         company_id: item.company_id,
         created_at: item.created_at,
         updated_at: item.updated_at,
+        image_url: item.image_url,
         profiles: item.profiles || { display_name: 'Usuário desconhecido', avatar: null },
         discussion_replies: item.discussion_replies || []
       })) : [];
@@ -68,17 +71,18 @@ export const useDiscussions = () => {
     }
 
     try {
+      // Create discussion object based on whether imageUrl is provided
+      const discussionData = {
+        title,
+        content,
+        company_id: selectedCompany.id,
+        author_id: user.id,
+        ...(imageUrl && { image_url: imageUrl })
+      };
+
       const { data, error } = await supabase
         .from('discussions')
-        .insert([
-          {
-            title,
-            content,
-            company_id: selectedCompany.id,
-            author_id: user.id,
-            image_url: imageUrl
-          }
-        ])
+        .insert([discussionData])
         .select()
         .single();
 
@@ -117,16 +121,17 @@ export const useDiscussions = () => {
     }
     
     try {
+      // Create reply object based on whether imageUrl is provided
+      const replyData = {
+        discussion_id: discussionId,
+        content,
+        author_id: user.id,
+        ...(imageUrl && { image_url: imageUrl })
+      };
+
       const { error } = await supabase
         .from('discussion_replies')
-        .insert([
-          {
-            discussion_id: discussionId,
-            content,
-            author_id: user.id,
-            image_url: imageUrl
-          }
-        ]);
+        .insert([replyData]);
 
       if (error) throw error;
       
