@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Check, History, Star, Users, TrendingUp, Pen, Target, PlayCircle } from "lucide-react";
+import { Star, Users, TrendingUp, Pen, Target, PlayCircle, Sparkles } from "lucide-react";
 import { VideoPlayer } from './video-playlist/VideoPlayer';
 
 interface CultureManualProps {
@@ -27,7 +27,7 @@ export const CultureManual: React.FC<CultureManualProps> = ({
   const [accepted, setAccepted] = useState(false);
 
   const values = [
-    { icon: <Check className="h-5 w-5" />, title: "Excelência", description: "Cuidamos do que entregamos" },
+    { icon: <Star className="h-5 w-5" />, title: "Excelência", description: "Cuidamos do que entregamos" },
     { icon: <Pen className="h-5 w-5" />, title: "Autenticidade", description: "Somos autorais" },
     { icon: <Target className="h-5 w-5" />, title: "Comprometimento", description: "Levamos até o fim" },
     { icon: <Users className="h-5 w-5" />, title: "Colaboração", description: "Criamos juntos" },
@@ -35,61 +35,25 @@ export const CultureManual: React.FC<CultureManualProps> = ({
   ];
 
   return (
-    <div className="space-y-8">
-      <div className="text-center space-y-4">
-        <h1 className="text-3xl font-semibold">Manual de Cultura MERINNO</h1>
-        <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-          Tudo o que você precisa saber para entender nossa história, nossos valores e o tipo de profissional que acreditamos.
-        </p>
-      </div>
-
+    <div className="space-y-12">
       <div className="grid gap-8 md:grid-cols-2">
-        <Card className="transition-all duration-200 hover:shadow-md">
-          <CardHeader className="flex flex-row items-center gap-4">
-            <History style={{ color: companyColor }} className="h-8 w-8" />
-            <div>
-              <CardTitle className="text-lg">Nossa História</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-gray-600 dark:text-gray-300 line-clamp-3">
-              {companyHistory || "História não disponível"}
-            </p>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  Ler mais
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Nossa História</DialogTitle>
-                </DialogHeader>
-                <div className="mt-4 whitespace-pre-line">
-                  {companyHistory || "História não disponível"}
-                </div>
-              </DialogContent>
-            </Dialog>
-          </CardContent>
-        </Card>
-
-        <Card className="transition-all duration-200 hover:shadow-md">
+        <Card className="transition-all duration-200 shadow-none rounded-xl md:col-span-2">
           <CardHeader className="flex flex-row items-center gap-4">
             <Star style={{ color: companyColor }} className="h-8 w-8" />
             <div>
-              <CardTitle className="text-lg">Missão</CardTitle>
+              <CardTitle className="text-2xl">Missão</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-600 dark:text-gray-300 text-lg font-medium">
+            <p className="text-gray-600 dark:text-gray-300 text-xl font-medium leading-relaxed">
               {companyMission || "Transformar criatividade em estratégia. Marcas em movimento. Ideias em legado."}
             </p>
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-2 transition-all duration-200 hover:shadow-md">
+        <Card className="md:col-span-2 transition-all duration-200 shadow-none rounded-xl">
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
+            <CardTitle className="text-2xl flex items-center gap-2">
               <Star style={{ color: companyColor }} className="h-6 w-6" />
               Nossos Valores
             </CardTitle>
@@ -99,7 +63,7 @@ export const CultureManual: React.FC<CultureManualProps> = ({
               {values.map((value, index) => (
                 <div
                   key={index}
-                  className="p-4 rounded-lg border bg-card text-card-foreground hover:shadow-sm transition-shadow"
+                  className="p-4 rounded-xl border bg-card text-card-foreground transition-colors hover:border-primary/20"
                 >
                   <div className="mb-3" style={{ color: companyColor }}>
                     {value.icon}
@@ -114,9 +78,9 @@ export const CultureManual: React.FC<CultureManualProps> = ({
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-2 transition-all duration-200 hover:shadow-md">
+        <Card className="md:col-span-2 transition-all duration-200 shadow-none rounded-xl">
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
+            <CardTitle className="text-2xl flex items-center gap-2">
               <PlayCircle style={{ color: companyColor }} className="h-6 w-6" />
               Vídeo Institucional
             </CardTitle>
@@ -136,17 +100,23 @@ export const CultureManual: React.FC<CultureManualProps> = ({
         </Card>
       </div>
 
-      <div className="flex flex-col items-center gap-4 pt-8">
+      <div className="flex flex-col items-center gap-6 pt-8">
         <Button
-          className="relative group overflow-hidden"
+          className="relative group overflow-hidden rounded-xl px-8 py-6 text-lg font-medium transition-all duration-300 hover:scale-105"
           style={{
             backgroundColor: companyColor || '#1EAEDB',
-            transition: 'transform 0.2s',
           }}
           onClick={() => setAccepted(!accepted)}
         >
-          <span className="relative z-10">
-            {accepted ? "Cultura aceita ✨" : "Quero fazer parte disso"}
+          <span className="relative z-10 flex items-center gap-2">
+            {accepted ? (
+              <>
+                <Sparkles className="h-5 w-5" />
+                Cultura aceita
+              </>
+            ) : (
+              "Quero fazer parte disso"
+            )}
           </span>
           <div
             className="absolute inset-0 bg-white transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"
