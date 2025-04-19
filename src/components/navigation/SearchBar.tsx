@@ -119,62 +119,62 @@ export const SearchBar = () => {
       <CommandDialog 
         open={open} 
         onOpenChange={setOpen}
-        className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border border-gray-200 dark:border-gray-700"
       >
-        <Command className="rounded-lg border-none bg-transparent">
-          <div className="flex flex-col">
-            <DialogTitle className="sr-only">Pesquisar cursos</DialogTitle>
-            <CommandInput 
-              value={searchQuery}
-              onValueChange={handleInputChange}
-              placeholder="Digite para pesquisar cursos..."
-              className="border-b border-gray-200 dark:border-gray-700"
-            />
-            <CommandList className="max-h-[300px] overflow-y-auto">
-              {loading ? (
-                <div className="py-6 text-center text-sm text-gray-500">
-                  Buscando cursos...
-                </div>
-              ) : suggestions.length === 0 && searchQuery ? (
-                <CommandEmpty>Nenhum curso encontrado.</CommandEmpty>
-              ) : (
-                <CommandGroup heading="Cursos sugeridos">
-                  {suggestions.map((course) => (
-                    <CommandItem
-                      key={course.id}
-                      onSelect={() => handleSelect(course.id)}
-                      className="flex items-center gap-3 cursor-pointer p-2 hover:bg-gray-100 dark:hover:bg-gray-800"
-                    >
-                      {/* Course thumbnail */}
-                      <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
-                        {course.image_url ? (
-                          <img 
-                            src={course.image_url} 
-                            alt={course.title}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gray-200 dark:bg-gray-700" />
-                        )}
-                      </div>
-                      
-                      <div className="min-w-0 flex-1">
-                        <div className="font-medium truncate">{course.title}</div>
-                        {course.tags && (
-                          <div className="text-sm text-gray-500 truncate">
-                            {course.tags.join(' • ')}
-                          </div>
-                        )}
-                      </div>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              )}
-            </CommandList>
-          </div>
-        </Command>
+        <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-lg">
+          <Command className="rounded-lg border-none bg-transparent">
+            <div className="flex flex-col">
+              <DialogTitle className="sr-only">Pesquisar cursos</DialogTitle>
+              <CommandInput 
+                value={searchQuery}
+                onValueChange={handleInputChange}
+                placeholder="Digite para pesquisar cursos..."
+                className="border-b border-gray-200 dark:border-gray-700"
+              />
+              <CommandList className="max-h-[300px] overflow-y-auto">
+                {loading ? (
+                  <div className="py-6 text-center text-sm text-gray-500">
+                    Buscando cursos...
+                  </div>
+                ) : suggestions.length === 0 && searchQuery ? (
+                  <CommandEmpty>Nenhum curso encontrado.</CommandEmpty>
+                ) : (
+                  <CommandGroup heading="Cursos sugeridos">
+                    {suggestions.map((course) => (
+                      <CommandItem
+                        key={course.id}
+                        onSelect={() => handleSelect(course.id)}
+                        className="flex items-center gap-3 cursor-pointer p-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      >
+                        {/* Course thumbnail */}
+                        <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                          {course.image_url ? (
+                            <img 
+                              src={course.image_url} 
+                              alt={course.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-200 dark:bg-gray-700" />
+                          )}
+                        </div>
+                        
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium truncate">{course.title}</div>
+                          {course.tags && (
+                            <div className="text-sm text-gray-500 truncate">
+                              {course.tags.join(' • ')}
+                            </div>
+                          )}
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
+              </CommandList>
+            </div>
+          </Command>
+        </div>
       </CommandDialog>
     </>
   );
 };
-
