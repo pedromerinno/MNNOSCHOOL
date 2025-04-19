@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Upload, Download, File, FolderOpen } from "lucide-react";
@@ -30,7 +29,6 @@ const Documents = () => {
   const [documentType, setDocumentType] = useState<DocumentType>("confidentiality_agreement");
   const [description, setDescription] = useState("");
   
-  // Group documents by type
   const documentsByType = documents.reduce((acc, doc) => {
     if (!acc[doc.document_type]) {
       acc[doc.document_type] = [];
@@ -69,7 +67,6 @@ const Documents = () => {
     setIsUploading(true);
     
     try {
-      // Check if bucket exists
       const { data: buckets } = await supabase.storage.listBuckets();
       const documentsBucket = buckets?.find(b => b.name === 'documents');
       
@@ -79,7 +76,6 @@ const Documents = () => {
         return;
       }
       
-      // Get user ID
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error("Usuário não autenticado");
@@ -87,7 +83,6 @@ const Documents = () => {
         return;
       }
       
-      // 1. Upload file to storage
       const userDir = `user-documents/${user.id}`;
       const fileExt = file.name.split('.').pop();
       const fileName = `${userDir}/${Math.random().toString(36).substring(2)}.${fileExt}`;
@@ -102,7 +97,6 @@ const Documents = () => {
 
       if (uploadError) throw uploadError;
 
-      // 2. Create database record
       const { error } = await supabase
         .from('user_documents')
         .insert({
@@ -283,7 +277,27 @@ const Documents = () => {
                 <h2 className="text-xl font-semibold mb-4 dark:text-white">Enviar Documentos</h2>
                 <Card>
                   <CardContent className="p-6">
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                    <div
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.currentTarget.classList.add('border-primary');
+                      }}
+                      onDragLeave={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.classList.remove('border-primary');
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.classList.remove('border-primary');
+                        const files = Array.from(e.dataTransfer.files);
+                        if (files.length > 0) {
+                          setFile(files[0]);
+                          setUploadOpen(true);
+                        }
+                      }}
+                      className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition-colors"
+                    >
                       <Upload className="h-10 w-10 text-gray-400 mx-auto mb-4" />
                       <p className="text-gray-600 dark:text-gray-400 mb-2">
                         Arraste e solte seus documentos aqui
@@ -298,7 +312,6 @@ const Documents = () => {
           </TabsContent>
         </Tabs>
 
-        {/* Modal de Upload */}
         <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
