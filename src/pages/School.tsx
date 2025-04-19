@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -5,6 +6,8 @@ import { FeaturedCourseHero } from "@/components/school/FeaturedCourseHero";
 import { ContinueLearning } from "@/components/school/ContinueLearning";
 import { ForumSection } from "@/components/school/ForumSection";
 import { RecentCourses } from "@/components/school/RecentCourses";
+import { Card, CardContent } from "@/components/ui/card";
+import { ChevronRight, Clock, Search } from "lucide-react";
 
 const School = () => {
   const [activeTab, setActiveTab] = useState("all");
@@ -112,6 +115,20 @@ const School = () => {
     { id: "motion", name: "Motion Design" },
     { id: "design", name: "Design" },
     { id: "planning", name: "Planejamento" }
+  ];
+  
+  // Define the missing statistics data
+  const statistics = {
+    completedVideos: 12,
+    hoursWatched: 45
+  };
+  
+  // Define the missing suggestedTopics data
+  const suggestedTopics = [
+    { id: "1", name: "Design de Personagens" },
+    { id: "2", name: "UI/UX Avançado" },
+    { id: "3", name: "Animação 3D" },
+    { id: "4", name: "Identidade Visual" }
   ];
 
   const handleCategoryChange = (value: string) => {
