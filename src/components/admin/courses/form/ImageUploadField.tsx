@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Control } from "react-hook-form";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
@@ -22,53 +21,7 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
   objectPrefix = 'courses'
 }) => {
   const [isUploading, setIsUploading] = useState(false);
-  const [bucketReady, setBucketReady] = useState(false);
-
-  // Check if the course-assets bucket exists
-  useEffect(() => {
-    const checkBucket = async () => {
-      try {
-        // Try to list the buckets to see if course-assets exists
-        const { data: buckets, error } = await supabase.storage.listBuckets();
-        
-        if (error) {
-          console.error("Erro ao verificar buckets:", error);
-          setBucketReady(false);
-          return;
-        }
-        
-        const courseAssetsBucket = buckets.find(b => b.name === 'course-assets');
-        
-        if (!courseAssetsBucket) {
-          // If the bucket doesn't exist, we'll try to create it
-          console.warn("Bucket 'course-assets' não encontrado. Verifique se ele foi criado no Supabase.");
-          
-          // Try to use it anyway - the bucket might have been created in the background
-          try {
-            const { data } = supabase.storage.from('course-assets').getPublicUrl('test');
-            if (data) {
-              console.log("Bucket parece estar disponível mesmo assim");
-              setBucketReady(true);
-              return;
-            }
-          } catch (e) {
-            console.error("Erro ao testar bucket:", e);
-          }
-          
-          setBucketReady(false);
-          return;
-        }
-        
-        setBucketReady(true);
-      } catch (err) {
-        console.error("Error checking storage bucket:", err);
-        setBucketReady(false);
-      }
-    };
-    
-    checkBucket();
-  }, []);
-
+  
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, onChange: (value: string) => void) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -85,8 +38,6 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
       // Create a unique file name using timestamp
       const fileExt = file.name.split('.').pop();
       const fileName = `covers/${objectPrefix}-${Date.now()}.${fileExt}`;
-      
-      console.log(`Attempting to upload to course-assets/${fileName}`);
       
       // Upload the file to Supabase Storage
       const { data, error } = await supabase.storage
@@ -106,18 +57,16 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
         .from('course-assets')
         .getPublicUrl(fileName);
       
-      console.log("File uploaded successfully. Public URL:", publicUrl);
-      
       // Update the form field with the new URL
       onChange(publicUrl);
       toast.success("Imagem enviada com sucesso");
     } catch (error: any) {
       console.error("Error uploading image:", error);
       
-      if (error.message && error.message.includes("storage/bucket-not-found")) {
-        toast.error("Armazenamento não configurado. Entre em contato com o administrador.");
+      if (error.message?.includes("storage/bucket-not-found")) {
+        toast.error("Sistema de armazenamento não configurado. Contate o administrador.");
       } else {
-        toast.error(`Erro ao enviar imagem: ${error.message || "Erro desconhecido"}`);
+        toast.error(`Erro ao enviar imagem: ${error.message}`);
       }
     } finally {
       setIsUploading(false);
@@ -151,12 +100,12 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
                 <Button 
                   type="button" 
                   variant="outline"
-                  disabled={isUploading || !bucketReady}
+                  disabled={isUploading}
                   className="relative"
                   onClick={() => document.getElementById(`image-upload-${name}`)?.click()}
                 >
                   <Upload className="h-4 w-4 mr-2" />
-                  {isUploading ? 'Enviando...' : !bucketReady ? 'Inicializando...' : 'Enviar'}
+                  {isUploading ? 'Enviando...' : 'Enviar'}
                 </Button>
                 <input 
                   id={`image-upload-${name}`}

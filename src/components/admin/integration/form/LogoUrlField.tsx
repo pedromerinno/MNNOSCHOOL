@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Control } from "react-hook-form";
 import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
@@ -22,54 +21,7 @@ export const LogoUrlField: React.FC<LogoUrlFieldProps> = ({
   companyId
 }) => {
   const [isUploading, setIsUploading] = useState(false);
-  const [bucketReady, setBucketReady] = useState(false);
-
-  // Verifica se o bucket company-assets existe
-  useEffect(() => {
-    const checkBucket = async () => {
-      try {
-        // Try to list the buckets to see if company-assets exists
-        const { data: buckets, error } = await supabase.storage.listBuckets();
-        
-        if (error) {
-          console.error("Erro ao verificar buckets:", error);
-          setBucketReady(false);
-          return;
-        }
-        
-        const companyAssetsBucket = buckets.find(b => b.name === 'company-assets');
-        
-        if (!companyAssetsBucket) {
-          // If the bucket doesn't exist, we'll try to create it
-          console.warn("Bucket 'company-assets' não encontrado. Verifique se ele foi criado no Supabase.");
-          
-          // Try to use it anyway - the bucket might have been created in the background
-          // We'll check if we can get a public URL from it
-          try {
-            const { data } = supabase.storage.from('company-assets').getPublicUrl('test');
-            if (data) {
-              console.log("Bucket parece estar disponível mesmo assim");
-              setBucketReady(true);
-              return;
-            }
-          } catch (e) {
-            console.error("Erro ao testar bucket:", e);
-          }
-          
-          setBucketReady(false);
-          return;
-        }
-        
-        setBucketReady(true);
-      } catch (error: any) {
-        console.error("Erro ao verificar buckets:", error);
-        setBucketReady(false);
-      }
-    };
-
-    checkBucket();
-  }, []);
-
+  
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, onChange: (value: string) => void) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -83,15 +35,6 @@ export const LogoUrlField: React.FC<LogoUrlFieldProps> = ({
     setIsUploading(true);
     
     try {
-      if (!bucketReady) {
-        const { data: buckets } = await supabase.storage.listBuckets();
-        const companyAssetsBucket = buckets.find(b => b.name === 'company-assets');
-        
-        if (!companyAssetsBucket) {
-          throw new Error("Bucket 'company-assets' não encontrado. Contate o administrador.");
-        }
-      }
-      
       // Create a unique file name using the company ID and timestamp
       const fileExt = file.name.split('.').pop();
       const fileName = `${companyId || 'company'}-${Date.now()}.${fileExt}`;
@@ -117,7 +60,12 @@ export const LogoUrlField: React.FC<LogoUrlFieldProps> = ({
       toast.success("Logo carregado com sucesso");
     } catch (error: any) {
       console.error("Error uploading logo:", error);
-      toast.error(`Erro ao carregar logo: ${error.message}`);
+      
+      if (error.message?.includes("storage/bucket-not-found")) {
+        toast.error("Sistema de armazenamento não configurado. Contate o administrador.");
+      } else {
+        toast.error(`Erro ao carregar logo: ${error.message}`);
+      }
     } finally {
       setIsUploading(false);
       // Clear the input value so the same file can be selected again
@@ -150,12 +98,12 @@ export const LogoUrlField: React.FC<LogoUrlFieldProps> = ({
                 <Button 
                   type="button" 
                   variant="outline"
-                  disabled={isUploading || !bucketReady}
+                  disabled={isUploading}
                   className="relative"
                   onClick={() => document.getElementById(`logo-upload-${name}`)?.click()}
                 >
                   <Upload className="h-4 w-4 mr-2" />
-                  {isUploading ? 'Carregando...' : !bucketReady ? 'Inicializando...' : 'Upload'}
+                  {isUploading ? 'Carregando...' : 'Upload'}
                 </Button>
                 <input 
                   id={`logo-upload-${name}`}
