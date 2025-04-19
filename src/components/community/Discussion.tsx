@@ -2,17 +2,19 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Users, Trash2, Check, Image } from "lucide-react";
+import { MessageSquare, Users, Trash2, Check } from "lucide-react";
 import { Discussion as DiscussionType } from "@/types/discussions";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface DiscussionProps {
   discussion: DiscussionType;
   onView: (discussion: DiscussionType) => void;
   onDelete: (id: string) => void;
   onToggleStatus: (id: string, status: 'open' | 'closed') => void;
+  index: number;
 }
 
 export const Discussion: React.FC<DiscussionProps> = ({
@@ -20,6 +22,7 @@ export const Discussion: React.FC<DiscussionProps> = ({
   onView,
   onDelete,
   onToggleStatus,
+  index
 }) => {
   const { userProfile } = useAuth();
   const isAdmin = userProfile?.isAdmin === true;
@@ -28,6 +31,9 @@ export const Discussion: React.FC<DiscussionProps> = ({
   const participantsCount = new Set(
     discussion.discussion_replies.map((reply) => reply.author_id)
   ).size;
+
+  const authorName = discussion.profiles?.display_name || 'Usuário';
+  const authorAvatar = discussion.profiles?.avatar;
 
   return (
     <Card className={cn(
@@ -40,6 +46,7 @@ export const Discussion: React.FC<DiscussionProps> = ({
         <div className="flex justify-between items-start gap-4">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
+              <span className="text-sm text-gray-500">#{index + 1}</span>
               <h3 className="font-medium text-lg dark:text-white">{discussion.title}</h3>
               {discussion.status === 'closed' && (
                 <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
@@ -47,19 +54,31 @@ export const Discussion: React.FC<DiscussionProps> = ({
                 </span>
               )}
             </div>
-            {discussion.image_url && (
-              <div className="my-4">
-                <img 
-                  src={discussion.image_url} 
-                  alt={discussion.title} 
-                  className="w-full h-48 object-cover rounded-lg"
-                />
-              </div>
-            )}
-            <p className="text-gray-600 dark:text-gray-300 text-sm mt-2 line-clamp-2">
+            <p className="text-gray-600 dark:text-gray-300 text-sm line-clamp-2 mb-3">
               {discussion.content}
             </p>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={authorAvatar || undefined} />
+                  <AvatarFallback>{authorName.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <span className="text-sm text-gray-600">{authorName}</span>
+              </div>
+              <span className="text-sm text-gray-500">{format(new Date(discussion.created_at), 'dd/MM/yyyy')}</span>
+              <div className="flex items-center text-sm text-gray-500 gap-4">
+                <div className="flex items-center">
+                  <MessageSquare className="h-4 w-4 mr-1" />
+                  <span>{discussion.discussion_replies.length}</span>
+                </div>
+                <div className="flex items-center">
+                  <Users className="h-4 w-4 mr-1" />
+                  <span>{participantsCount}</span>
+                </div>
+              </div>
+            </div>
           </div>
+
           <div className="flex flex-col gap-2">
             {(isAdmin || isAuthor) && (
               <>
@@ -100,21 +119,6 @@ export const Discussion: React.FC<DiscussionProps> = ({
             >
               Ver
             </Button>
-          </div>
-        </div>
-        <div className="flex items-center mt-3 text-xs text-gray-500">
-          <span className="mr-2">por {discussion.profiles?.display_name}</span>
-          <span className="mx-2">•</span>
-          <span>{format(new Date(discussion.created_at), 'dd/MM/yyyy')}</span>
-        </div>
-        <div className="flex mt-3 text-sm text-gray-500">
-          <div className="flex items-center mr-4">
-            <MessageSquare className="h-4 w-4 mr-1" />
-            <span>{discussion.discussion_replies.length} respostas</span>
-          </div>
-          <div className="flex items-center">
-            <Users className="h-4 w-4 mr-1" />
-            <span>{participantsCount} participantes</span>
           </div>
         </div>
       </CardContent>

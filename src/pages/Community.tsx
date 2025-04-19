@@ -212,13 +212,14 @@ const Community = () => {
           </div>
         ) : (
           <div className="grid gap-4">
-            {filteredDiscussions.map((discussion) => (
+            {filteredDiscussions.map((discussion, index) => (
               <Discussion
                 key={discussion.id}
                 discussion={discussion}
                 onView={handleViewDiscussion}
                 onDelete={deleteDiscussion}
                 onToggleStatus={toggleDiscussionStatus}
+                index={index}
               />
             ))}
           </div>
