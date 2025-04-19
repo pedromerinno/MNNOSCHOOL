@@ -37,11 +37,14 @@ export const SearchBar = () => {
       
       try {
         console.log("Fetching courses for company:", selectedCompany.id);
+        setLoading(true);
         const allCourses = await fetchCourses(selectedCompany.id);
         console.log("Loaded", allCourses.length, "courses for company", selectedCompany.id);
         setCourses(allCourses);
       } catch (error) {
         console.error("Error fetching courses:", error);
+      } finally {
+        setLoading(false);
       }
     };
     
@@ -50,7 +53,7 @@ export const SearchBar = () => {
 
   // This function filters the already loaded courses
   const performSearch = useCallback(() => {
-    if (!searchQuery.trim() || courses.length === 0) {
+    if (!searchQuery.trim()) {
       setSuggestions([]);
       return;
     }
@@ -86,7 +89,6 @@ export const SearchBar = () => {
 
   // This useEffect will run the search whenever searchQuery changes
   useEffect(() => {
-    // Immediate search for better responsiveness
     performSearch();
   }, [searchQuery, performSearch]);
 
@@ -126,11 +128,7 @@ export const SearchBar = () => {
               <DialogTitle className="sr-only">Pesquisar cursos</DialogTitle>
               <CommandInput 
                 value={searchQuery}
-                onValueChange={(value) => {
-                  handleInputChange(value);
-                  // Ensure immediate search happens here too
-                  performSearch();
-                }}
+                onValueChange={handleInputChange}
                 placeholder="Digite para pesquisar cursos..."
                 className="border-b border-gray-200 dark:border-gray-700"
               />
@@ -138,6 +136,10 @@ export const SearchBar = () => {
                 {loading ? (
                   <div className="py-6 text-center text-sm text-gray-500">
                     Buscando cursos...
+                  </div>
+                ) : searchQuery.trim() === "" ? (
+                  <div className="py-6 text-center text-sm text-gray-500">
+                    Digite para pesquisar cursos
                   </div>
                 ) : searchQuery && suggestions.length === 0 ? (
                   <CommandEmpty>Nenhum curso encontrado.</CommandEmpty>
