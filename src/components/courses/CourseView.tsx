@@ -124,10 +124,10 @@ export const CourseView: React.FC = () => {
                 Avaliações
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="description" className="mt-10">
+            <TabsContent value="description" className="mt-12">
               <CourseDescription description={course.description} />
             </TabsContent>
-            <TabsContent value="reviews" className="mt-10">
+            <TabsContent value="reviews" className="mt-12">
               <div className="text-center py-8">
                 <Star className="h-8 w-8 text-yellow-400 mx-auto mb-2" />
                 <h3 className="text-lg font-medium mb-1">Sem avaliações ainda</h3>
