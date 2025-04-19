@@ -51,9 +51,11 @@ const Community = () => {
     );
   }
 
+  const companyColor = selectedCompany.cor_principal || "#1EAEDB";
+
   return (
     <CommunityLayout>
-      <div className="max-w-5xl mx-auto">
+      <div className="">
         <div className="flex flex-col gap-4 mb-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div className="relative w-full md:w-auto md:flex-1">
@@ -75,18 +77,27 @@ const Community = () => {
           <div className="flex gap-2">
             <Button 
               variant={statusFilter === 'all' ? "default" : "outline"}
+              className={`rounded-xl py-4 px-6 transition-colors ${
+                statusFilter === 'all' ? `bg-[${companyColor}10]` : ''
+              }`}
               onClick={() => setStatusFilter('all')}
             >
               Todas
             </Button>
             <Button 
               variant={statusFilter === 'open' ? "default" : "outline"}
+              className={`rounded-xl py-4 px-6 transition-colors ${
+                statusFilter === 'open' ? `bg-[${companyColor}10]` : ''
+              }`}
               onClick={() => setStatusFilter('open')}
             >
               Abertas
             </Button>
             <Button 
               variant={statusFilter === 'closed' ? "default" : "outline"}
+              className={`rounded-xl py-4 px-6 transition-colors ${
+                statusFilter === 'closed' ? `bg-[${companyColor}10]` : ''
+              }`}
               onClick={() => setStatusFilter('closed')}
             >
               Concluídas
@@ -146,3 +157,4 @@ const Community = () => {
 };
 
 export default Community;
+
