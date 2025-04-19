@@ -53,7 +53,7 @@ export const CourseCategories: React.FC<CourseCategoriesProps> = ({
         return (
           <div 
             key={category.id} 
-            className={`inline-flex items-center gap-3 px-6 py-3 cursor-pointer transition-all rounded-2xl
+            className={`inline-flex items-center gap-3 px-8 py-4 cursor-pointer transition-all rounded-2xl
               ${isActive 
                 ? 'bg-black text-white' 
                 : `${randomBg} ${textColorMap[randomBg]} hover:opacity-80`
