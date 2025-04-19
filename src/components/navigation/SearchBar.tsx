@@ -110,12 +110,25 @@ export const SearchBar = () => {
                   <CommandItem
                     key={course.id}
                     onSelect={() => handleSelect(course.id)}
-                    className="flex items-center gap-2 cursor-pointer"
+                    className="flex items-center gap-3 cursor-pointer"
                   >
-                    <div>
-                      <div className="font-medium">{course.title}</div>
+                    {/* Course thumbnail */}
+                    <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                      {course.image_url ? (
+                        <img 
+                          src={course.image_url} 
+                          alt={course.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-200 dark:bg-gray-700" />
+                      )}
+                    </div>
+                    
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium truncate">{course.title}</div>
                       {course.tags && (
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-gray-500 truncate">
                           {course.tags.join(' • ')}
                         </div>
                       )}
@@ -130,3 +143,4 @@ export const SearchBar = () => {
     </>
   );
 };
+
