@@ -51,18 +51,16 @@ export const SearchBar = () => {
     loadAllCourses();
   }, [selectedCompany?.id]);
 
-  // This function filters the already loaded courses
+  // This function performs immediate filtering on the loaded courses
   const performSearch = useCallback(() => {
     if (!searchQuery.trim()) {
       setSuggestions([]);
       return;
     }
     
-    setLoading(true);
+    console.log("Filtering courses for:", searchQuery, "from", courses.length, "courses");
     
     try {
-      console.log("Filtering courses for:", searchQuery, "from", courses.length, "courses");
-      
       // Filter courses based on search query
       const filteredCourses = courses.filter(course => 
         course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -76,8 +74,6 @@ export const SearchBar = () => {
     } catch (error) {
       console.error("Error filtering courses:", error);
       setSuggestions([]);
-    } finally {
-      setLoading(false);
     }
   }, [searchQuery, courses]);
 
@@ -85,17 +81,16 @@ export const SearchBar = () => {
   const handleInputChange = (value: string) => {
     console.log("Input changed to:", value);
     setSearchQuery(value);
+    // Immediately trigger search without debounce
+    if (courses.length > 0) {
+      performSearch();
+    }
   };
 
-  // This useEffect will run the search whenever searchQuery changes
+  // This useEffect ensures search is run whenever searchQuery changes
   useEffect(() => {
     console.log("Search query changed, running search for:", searchQuery);
-    // Force the search to run with a small timeout to ensure UI updates
-    const timer = setTimeout(() => {
-      performSearch();
-    }, 100);
-    
-    return () => clearTimeout(timer);
+    performSearch();
   }, [searchQuery, performSearch]);
 
   // This effect runs when dialog opens to ensure search is performed
@@ -155,6 +150,7 @@ export const SearchBar = () => {
                 }}
                 placeholder="Digite para pesquisar cursos..."
                 className="border-b border-gray-200 dark:border-gray-700"
+                autoFocus
               />
               <CommandList className="max-h-[300px] overflow-y-auto">
                 {loading ? (
