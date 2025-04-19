@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -21,7 +22,7 @@ export const IntegrationLayout: React.FC<React.PropsWithChildren<{}>> = ({ child
           </Button>
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold dark:text-white">
-              Bem-vindo ao processo de integração
+              Integração
             </h1>
             {selectedCompany && (
               <CompanyThemedBadge 

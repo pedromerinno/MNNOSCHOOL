@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,7 +49,7 @@ export const CultureManual: React.FC<CultureManualProps> = ({
   return (
     <div className="space-y-12 pb-12">
       <div className="grid gap-8 md:grid-cols-2 mt-8">
-        <Card className="transition-all duration-200 shadow-none rounded-xl md:col-span-2 bg-gray-50 dark:bg-gray-900">
+        <Card className="transition-all duration-200 shadow-none rounded-xl md:col-span-2 bg-gray-50 dark:bg-gray-900 mt-16">
           <CardHeader>
             <CardTitle className="text-2xl">Missão</CardTitle>
           </CardHeader>
