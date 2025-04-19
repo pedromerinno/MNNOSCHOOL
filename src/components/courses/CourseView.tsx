@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCourseData } from '@/hooks/useCourseData';
@@ -11,7 +12,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CourseDescription } from './CourseDescription';
 import { Badge } from '@/components/ui/badge';
 import { Clock, BookOpen, Star } from 'lucide-react';
-import { Card, CardContent } from "@/components/ui/card";
 
 export const CourseView: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -102,43 +102,25 @@ export const CourseView: React.FC = () => {
             </div>
           )}
           
-          <Card>
-            <CardContent className="p-0">
-              <Tabs defaultValue="description" value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <div className="border-b">
-                  <TabsList className="bg-gray-50 dark:bg-gray-900 w-full justify-start rounded-none p-0 h-auto">
-                    <TabsTrigger 
-                      value="description" 
-                      className="flex items-center py-3 px-6 transition-colors rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent"
-                    >
-                      Descrição
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="reviews" 
-                      className="flex items-center py-3 px-6 transition-colors rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent"
-                    >
-                      Avaliações
-                    </TabsTrigger>
-                  </TabsList>
-                </div>
-                
-                <div className="p-6">
-                  <TabsContent value="description" className="m-0">
-                    <CourseDescription description={course.description} />
-                  </TabsContent>
-                  <TabsContent value="reviews" className="m-0">
-                    <div className="text-center py-8">
-                      <Star className="h-8 w-8 text-yellow-400 mx-auto mb-2" />
-                      <h3 className="text-lg font-medium mb-1">Sem avaliações ainda</h3>
-                      <p className="text-muted-foreground">
-                        Seja o primeiro a avaliar este curso
-                      </p>
-                    </div>
-                  </TabsContent>
-                </div>
-              </Tabs>
-            </CardContent>
-          </Card>
+          {/* Tabs for content */}
+          <Tabs defaultValue="description" value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="description">Descrição</TabsTrigger>
+              <TabsTrigger value="reviews">Avaliações</TabsTrigger>
+            </TabsList>
+            <TabsContent value="description" className="mt-6">
+              <CourseDescription description={course.description} />
+            </TabsContent>
+            <TabsContent value="reviews" className="mt-6">
+              <div className="text-center py-8">
+                <Star className="h-8 w-8 text-yellow-400 mx-auto mb-2" />
+                <h3 className="text-lg font-medium mb-1">Sem avaliações ainda</h3>
+                <p className="text-muted-foreground">
+                  Seja o primeiro a avaliar este curso
+                </p>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
         
         <div className="w-full md:w-4/12 mt-8 md:mt-0">
