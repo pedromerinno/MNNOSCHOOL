@@ -2,10 +2,9 @@
 import { Search } from "lucide-react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { supabase } from "@/integrations/supabase/client";
 import { fetchCourses } from "@/services/courseService";
 
 export const SearchBar = () => {
@@ -29,50 +28,54 @@ export const SearchBar = () => {
     navigate(`/courses/${courseId}`);
   };
 
-  // This useEffect will fetch suggestions whenever searchQuery or selectedCompany changes
-  useEffect(() => {
-    const fetchSuggestions = async () => {
-      if (!searchQuery.trim() || !selectedCompany?.id) {
-        setSuggestions([]);
-        return;
-      }
+  // Create a memoized fetch suggestions function that can be called directly
+  const performSearch = useCallback(async () => {
+    if (!searchQuery.trim() || !selectedCompany?.id) {
+      setSuggestions([]);
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      console.log("Performing search for:", searchQuery);
+      // Get all courses available to this company
+      const allCourses = await fetchCourses(selectedCompany.id);
       
-      setLoading(true);
+      // Filter courses based on search query
+      const filteredCourses = allCourses.filter(course => 
+        course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (course.tags && course.tags.some(tag => 
+          tag.toLowerCase().includes(searchQuery.toLowerCase())
+        ))
+      ).slice(0, 5); // Limit to 5 suggestions
       
-      try {
-        // Get all courses available to this company
-        const allCourses = await fetchCourses(selectedCompany.id);
-        
-        // Filter courses based on search query
-        const filteredCourses = allCourses.filter(course => 
-          course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (course.tags && course.tags.some(tag => 
-            tag.toLowerCase().includes(searchQuery.toLowerCase())
-          ))
-        ).slice(0, 5); // Limit to 5 suggestions
-        
-        setSuggestions(filteredCourses);
-      } catch (error) {
-        console.error("Error fetching search suggestions:", error);
-        setSuggestions([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+      console.log("Found courses:", filteredCourses.length);
+      setSuggestions(filteredCourses);
+    } catch (error) {
+      console.error("Error fetching search suggestions:", error);
+      setSuggestions([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchQuery, selectedCompany?.id]);
 
+  // Handle input change from either search input
+  const handleInputChange = (value: string) => {
+    console.log("Input changed to:", value);
+    setSearchQuery(value);
+  };
+
+  // This useEffect will run the search whenever searchQuery changes
+  useEffect(() => {
     const debounceTimer = setTimeout(() => {
-      fetchSuggestions();
+      performSearch();
     }, 300);
 
     return () => clearTimeout(debounceTimer);
-  }, [searchQuery, selectedCompany?.id]);
+  }, [searchQuery, performSearch]);
 
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
-  
-  // Function to handle input change from either search input
-  const handleInputChange = (value: string) => {
-    setSearchQuery(value);
-  };
   
   return (
     <>
