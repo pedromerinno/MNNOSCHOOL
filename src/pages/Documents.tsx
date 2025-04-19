@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Upload, Download, File, FolderOpen, Eye } from "lucide-react";
+import { FileText, Upload, Download, File, FolderOpen, Eye, Trash2 } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -22,7 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 const Documents = () => {
   const { selectedCompany } = useCompanies();
   const [activeTab, setActiveTab] = useState("company");
-  const { documents, isLoading, downloadDocument, refreshDocuments } = useUserDocumentsViewer();
+  const { documents, isLoading, downloadDocument, refreshDocuments, deleteDocument } = useUserDocumentsViewer();
   const [isUploading, setIsUploading] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -31,7 +31,8 @@ const Documents = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<UserDocument | null>(null);
-  
+  const [userProfile, setUserProfile] = useState<any>(null);
+
   const documentsByType = documents.reduce((acc, doc) => {
     if (!acc[doc.document_type]) {
       acc[doc.document_type] = [];
@@ -139,6 +140,22 @@ const Documents = () => {
     } catch (error: any) {
       console.error('Error previewing document:', error);
       toast.error(`Falha ao visualizar o documento: ${error.message}`);
+    }
+  };
+
+  const canDeleteDocument = (document: UserDocument) => {
+    return document.uploaded_by === userProfile?.id;
+  };
+
+  const handleDeleteDocument = async (document: UserDocument) => {
+    if (!canDeleteDocument(document)) {
+      toast.error("Você só pode excluir documentos que você mesmo enviou");
+      return;
+    }
+
+    if (window.confirm(`Tem certeza que deseja excluir o documento "${document.name}"?`)) {
+      await deleteDocument(document.id);
+      refreshDocuments();
     }
   };
 
@@ -297,6 +314,17 @@ const Documents = () => {
                               <Download className="h-4 w-4 mr-1" />
                               Baixar
                             </Button>
+                            {canDeleteDocument(doc) && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleDeleteDocument(doc)}
+                                className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                Excluir
+                              </Button>
+                            )}
                           </div>
                         </CardContent>
                       </Card>

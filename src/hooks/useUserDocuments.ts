@@ -9,7 +9,6 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Verifica se o bucket documents existe
   const checkBucketExists = useCallback(async () => {
     try {
       const { data: buckets, error } = await supabase.storage.listBuckets();
@@ -33,7 +32,6 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
     }
   }, []);
 
-  // Fetch user documents
   const fetchDocuments = useCallback(async () => {
     if (!userId || !companyId) {
       setDocuments([]);
@@ -51,12 +49,12 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
         .from('user_documents')
         .select('*')
         .eq('user_id', userId)
-        .eq('company_id', companyId);
+        .eq('company_id', companyId)
+        .order('uploaded_at', { ascending: false });
 
       if (error) throw error;
       
       console.log(`Found ${data?.length || 0} documents`);
-      // Type assertion to force cast to our type - we know the structure matches
       setDocuments(data as unknown as UserDocument[]);
     } catch (error: any) {
       console.error('Error fetching user documents:', error);
@@ -67,7 +65,6 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
     }
   }, [userId, companyId]);
 
-  // Upload a document for a user
   const uploadDocument = useCallback(async (
     file: File, 
     documentType: DocumentType, 
@@ -80,7 +77,6 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
 
     setIsUploading(true);
     try {
-      // Check if bucket exists
       const bucketExists = await checkBucketExists();
       
       if (!bucketExists) {
@@ -88,7 +84,6 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
         return null;
       }
       
-      // 1. Upload file to storage
       const userDir = `user-documents/${userId}`;
       const fileExt = file.name.split('.').pop();
       const fileName = `${userDir}/${Math.random().toString(36).substring(2)}.${fileExt}`;
@@ -103,7 +98,6 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
 
       if (uploadError) throw uploadError;
 
-      // 2. Create database record using any type to bypass TypeScript checks since we know the structure
       const { data, error } = await supabase
         .from('user_documents')
         .insert({
@@ -121,7 +115,6 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
 
       if (error) throw error;
 
-      // Cast to UserDocument type
       const newDoc = data as unknown as UserDocument;
       setDocuments(prev => [...prev, newDoc]);
       toast.success('Documento enviado com sucesso');
@@ -143,48 +136,55 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
     }
   }, [userId, companyId, checkBucketExists]);
 
-  // Delete a document
   const deleteDocument = useCallback(async (documentId: string): Promise<boolean> => {
+    if (!documentId) {
+      toast.error("ID do documento não fornecido");
+      return false;
+    }
+
     try {
-      // Check if bucket exists first
-      const bucketExists = await checkBucketExists();
-      
-      if (!bucketExists) {
-        toast.error("Sistema de armazenamento não está disponível. Contate o administrador.");
-        return false;
-      }
-      
-      // 1. Get document details to find the file path
       const { data: document, error: fetchError } = await supabase
         .from('user_documents')
-        .select('file_path')
+        .select('file_path, uploaded_by')
         .eq('id', documentId)
         .single();
 
       if (fetchError) throw fetchError;
 
-      // 2. Delete the file from storage
-      if (document && (document as any).file_path) {
-        const filePath = (document as any).file_path;
-        const { error: storageError } = await supabase.storage
-          .from('documents')
-          .remove([filePath]);
-
-        if (storageError) {
-          console.warn("Erro ao remover arquivo do storage (continuando mesmo assim):", storageError);
-          // Continue despite storage error - we still want to remove the database record
-        }
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!document || !user) {
+        toast.error("Documento não encontrado ou usuário não autenticado");
+        return false;
       }
 
-      // 3. Delete the database record
-      const { error } = await supabase
+      if (document.uploaded_by !== user.id) {
+        toast.error("Você só pode excluir documentos que você mesmo enviou");
+        return false;
+      }
+
+      const bucketExists = await checkBucketExists();
+      
+      if (!bucketExists) {
+        toast.error("Sistema de armazenamento não está disponível");
+        return false;
+      }
+
+      const { error: storageError } = await supabase.storage
+        .from('documents')
+        .remove([document.file_path]);
+
+      if (storageError) {
+        console.warn("Erro ao remover arquivo do storage:", storageError);
+      }
+
+      const { error: deleteError } = await supabase
         .from('user_documents')
         .delete()
         .eq('id', documentId);
 
-      if (error) throw error;
+      if (deleteError) throw deleteError;
 
-      // 4. Update state
       setDocuments(prev => prev.filter(doc => doc.id !== documentId));
       toast.success('Documento excluído com sucesso');
       return true;
