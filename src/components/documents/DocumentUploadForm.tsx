@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { DocumentType, DOCUMENT_TYPE_LABELS } from "@/types/document";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface DocumentUploadFormProps {
   open: boolean;

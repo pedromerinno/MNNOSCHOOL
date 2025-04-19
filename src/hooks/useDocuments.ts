@@ -28,10 +28,10 @@ export const useDocuments = () => {
     file: File, 
     documentType: DocumentType, 
     description: string
-  ) => {
+  ): Promise<boolean> => {
     if (!file || !selectedCompany?.id) {
       toast.error("Por favor, selecione um arquivo e verifique se a empresa está selecionada");
-      return;
+      return false;
     }
 
     setIsUploading(true);
@@ -41,7 +41,7 @@ export const useDocuments = () => {
       if (!user) {
         toast.error("Usuário não autenticado");
         setIsUploading(false);
-        return;
+        return false;
       }
       
       const userDir = `user-documents/${user.id}`;
@@ -84,7 +84,7 @@ export const useDocuments = () => {
     }
   };
 
-  const canDeleteDocument = (document: UserDocument) => {
+  const canDeleteDocument = (document: UserDocument): boolean => {
     return document.uploaded_by === currentUserId;
   };
 

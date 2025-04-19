@@ -9,9 +9,10 @@ import { FolderOpen, File } from "lucide-react";
 import { DocumentPreview } from "@/components/documents/DocumentPreview";
 import { DocumentUploadForm } from "@/components/documents/DocumentUploadForm";
 import { DocumentList } from "@/components/documents/DocumentList";
-import { UserDocument } from "@/types/document";
+import { UserDocument, DocumentType } from "@/types/document";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useDocuments } from "@/hooks/useDocuments";
 
 const Documents = () => {
   const { selectedCompany } = useCompanies();
@@ -23,6 +24,8 @@ const Documents = () => {
     deleteDocument, 
     refreshDocuments 
   } = useUserDocumentsViewer();
+  
+  const { isUploading, handleUpload, canDeleteDocument } = useDocuments();
   
   const [uploadOpen, setUploadOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -44,7 +47,7 @@ const Documents = () => {
     }
   };
 
-  const handleDelete = async (document: UserDocument) => {
+  const handleDelete = async (document: UserDocument): Promise<void> => {
     if (window.confirm(`Tem certeza que deseja excluir o documento "${document.name}"?`)) {
       await deleteDocument(document.id);
       refreshDocuments();
