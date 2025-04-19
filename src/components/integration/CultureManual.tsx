@@ -24,10 +24,27 @@ export const CultureManual: React.FC<CultureManualProps> = ({
 }) => {
   const [accepted, setAccepted] = useState(false);
   
-  // Handle values that might be a string or already an object
-  const values = typeof companyValues === 'string' 
-    ? (companyValues ? JSON.parse(companyValues) : []) 
-    : (companyValues || []);
+  // Handle values with improved error handling
+  const getValues = () => {
+    if (!companyValues) return [];
+    
+    if (typeof companyValues === 'string') {
+      try {
+        return JSON.parse(companyValues);
+      } catch (error) {
+        console.error('Error parsing company values:', error);
+        // If it's not valid JSON, check if it might be a single value
+        if (companyValues.trim()) {
+          return [{ title: 'Valor', description: companyValues }];
+        }
+        return [];
+      }
+    }
+    
+    return Array.isArray(companyValues) ? companyValues : [];
+  };
+  
+  const values = getValues();
 
   return (
     <div className="space-y-12">
@@ -137,4 +154,3 @@ export const CultureManual: React.FC<CultureManualProps> = ({
     </div>
   );
 };
-
