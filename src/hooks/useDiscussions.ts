@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useCompanies } from '@/hooks/useCompanies';
@@ -22,13 +21,21 @@ export const useDiscussions = () => {
         .from('discussions')
         .select(`
           *,
+          profiles (
+            display_name,
+            avatar
+          ),
           discussion_replies (
             id,
             discussion_id,
             content,
             created_at,
             author_id,
-            image_url
+            image_url,
+            profiles (
+              display_name,
+              avatar
+            )
           )
         `)
         .eq('company_id', selectedCompany.id)
@@ -36,78 +43,8 @@ export const useDiscussions = () => {
 
       if (error) throw error;
       
-      if (!data || data.length === 0) {
-        setDiscussions([]);
-        setIsLoading(false);
-        return;
-      }
-      
-      // Extract all user IDs from discussions and replies
-      const authorIds = data.map(item => item.author_id);
-      const replyAuthorIds = data.flatMap(item => 
-        item.discussion_replies?.map(reply => reply.author_id) || []
-      );
-      
-      // Combine and remove duplicates
-      const allUserIds = [...new Set([...authorIds, ...replyAuthorIds])];
-      
-      // Fetch profile information for all authors
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, display_name, avatar')
-        .in('id', allUserIds);
-        
-      if (profilesError) throw profilesError;
-      
-      // Create a lookup map for profiles
-      const profilesMap: Record<string, { display_name: string | null; avatar: string | null }> = {};
-      (profilesData || []).forEach(profile => {
-        profilesMap[profile.id] = {
-          display_name: profile.display_name,
-          avatar: profile.avatar
-        };
-      });
-      
-      // Format discussions with profile information
-      const formattedDiscussions: Discussion[] = data.map((item) => {
-        const authorProfile = profilesMap[item.author_id] || {
-          display_name: 'Usuário desconhecido',
-          avatar: null
-        };
-        
-        const formattedReplies: DiscussionReply[] = (item.discussion_replies || []).map((reply) => {
-          const replyAuthorProfile = profilesMap[reply.author_id] || {
-            display_name: 'Usuário desconhecido',
-            avatar: null
-          };
-          
-          return {
-            id: reply.id,
-            discussion_id: item.id,
-            content: reply.content,
-            created_at: reply.created_at,
-            author_id: reply.author_id,
-            image_url: reply.image_url || null,
-            profiles: replyAuthorProfile
-          };
-        });
-        
-        return {
-          id: item.id,
-          title: item.title,
-          content: item.content,
-          author_id: item.author_id,
-          company_id: item.company_id,
-          created_at: item.created_at,
-          updated_at: item.updated_at,
-          image_url: item.image_url || null,
-          profiles: authorProfile,
-          discussion_replies: formattedReplies
-        };
-      });
-      
-      setDiscussions(formattedDiscussions);
-    } catch (error) {
+      setDiscussions(data || []);
+    } catch (error: any) {
       console.error('Error fetching discussions:', error);
       toast.error('Erro ao carregar discussões');
     } finally {
@@ -122,18 +59,16 @@ export const useDiscussions = () => {
     }
 
     try {
-      // Create discussion object based on whether imageUrl is provided
-      const discussionData = {
-        title,
-        content,
-        company_id: selectedCompany.id,
-        author_id: user.id,
-        ...(imageUrl && { image_url: imageUrl })
-      };
-
       const { data, error } = await supabase
         .from('discussions')
-        .insert([discussionData])
+        .insert([{
+          title,
+          content,
+          company_id: selectedCompany.id,
+          author_id: user.id,
+          status: 'open',
+          ...(imageUrl && { image_url: imageUrl })
+        }])
         .select()
         .single();
 
@@ -142,9 +77,26 @@ export const useDiscussions = () => {
       toast.success('Discussão criada com sucesso!');
       await fetchDiscussions();
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating discussion:', error);
       toast.error('Erro ao criar discussão');
+    }
+  };
+
+  const toggleDiscussionStatus = async (discussionId: string, newStatus: 'open' | 'closed') => {
+    try {
+      const { error } = await supabase
+        .from('discussions')
+        .update({ status: newStatus })
+        .eq('id', discussionId);
+
+      if (error) throw error;
+      
+      toast.success(`Discussão ${newStatus === 'closed' ? 'concluída' : 'reaberta'} com sucesso!`);
+      await fetchDiscussions();
+    } catch (error: any) {
+      console.error('Error updating discussion status:', error);
+      toast.error('Erro ao atualizar status da discussão');
     }
   };
 
@@ -172,7 +124,6 @@ export const useDiscussions = () => {
     }
     
     try {
-      // Create reply object based on whether imageUrl is provided
       const replyData = {
         discussion_id: discussionId,
         content,
@@ -221,6 +172,7 @@ export const useDiscussions = () => {
     createDiscussion,
     deleteDiscussion,
     addReply,
-    deleteReply
+    deleteReply,
+    toggleDiscussionStatus
   };
 };

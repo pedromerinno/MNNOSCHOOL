@@ -11,10 +11,13 @@ import { DiscussionView } from "@/components/community/DiscussionView";
 import { useCompanies } from "@/hooks/useCompanies";
 import { CommunityLayout } from "@/components/community/layout/CommunityLayout";
 
+type FilterStatus = 'all' | 'open' | 'closed';
+
 const Community = () => {
   const { selectedCompany } = useCompanies();
-  const { discussions, isLoading, createDiscussion, deleteDiscussion, addReply, deleteReply } = useDiscussions();
+  const { discussions, isLoading, createDiscussion, deleteDiscussion, addReply, deleteReply, toggleDiscussionStatus } = useDiscussions();
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedDiscussion, setSelectedDiscussion] = useState<DiscussionType | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
@@ -29,8 +32,10 @@ const Community = () => {
   };
 
   const filteredDiscussions = discussions.filter(
-    discussion => discussion.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    discussion.content.toLowerCase().includes(searchQuery.toLowerCase())
+    discussion => 
+      (discussion.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+       discussion.content.toLowerCase().includes(searchQuery.toLowerCase())) &&
+      (statusFilter === 'all' || discussion.status === statusFilter)
   );
 
   if (!selectedCompany) {
@@ -49,21 +54,44 @@ const Community = () => {
   return (
     <CommunityLayout>
       <div className="max-w-5xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
-          <div className="relative w-full md:w-auto md:flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-            <Input
-              type="text"
-              placeholder="Buscar discussões..."
-              className="pl-9 w-full"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="relative w-full md:w-auto md:flex-1">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+              <Input
+                type="text"
+                placeholder="Buscar discussões..."
+                className="pl-9 w-full"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <Button onClick={() => setIsDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Discussão
+            </Button>
           </div>
-          <Button onClick={() => setIsDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Discussão
-          </Button>
+          
+          <div className="flex gap-2">
+            <Button 
+              variant={statusFilter === 'all' ? "default" : "outline"}
+              onClick={() => setStatusFilter('all')}
+            >
+              Todas
+            </Button>
+            <Button 
+              variant={statusFilter === 'open' ? "default" : "outline"}
+              onClick={() => setStatusFilter('open')}
+            >
+              Abertas
+            </Button>
+            <Button 
+              variant={statusFilter === 'closed' ? "default" : "outline"}
+              onClick={() => setStatusFilter('closed')}
+            >
+              Concluídas
+            </Button>
+          </div>
         </div>
 
         {isLoading ? (
@@ -93,6 +121,7 @@ const Community = () => {
                 discussion={discussion}
                 onView={handleViewDiscussion}
                 onDelete={deleteDiscussion}
+                onToggleStatus={toggleDiscussionStatus}
               />
             ))}
           </div>
