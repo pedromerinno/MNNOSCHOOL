@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -63,7 +62,7 @@ export const Discussion: React.FC<DiscussionProps> = ({
               <h3 className="font-medium text-lg dark:text-white">{discussion.title}</h3>
               {discussion.status === 'closed' && (
                 <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                  Concluída
+                  Resolvida
                 </span>
               )}
             </div>
@@ -144,4 +143,3 @@ export const Discussion: React.FC<DiscussionProps> = ({
     </Card>
   );
 };
-

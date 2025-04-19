@@ -161,7 +161,7 @@ const Community = () => {
                 }}
                 onClick={() => setStatusFilter('closed')}
               >
-                Concluídas
+                Resolvidas
               </Button>
             </div>
 
@@ -183,7 +183,7 @@ const Community = () => {
                 onClick={() => setIsDialogOpen(true)}
                 className="rounded-full h-11 px-6 gap-2 bg-primary hover:bg-primary/90 whitespace-nowrap"
               >
-                <Plus className="h-5 w-5" />
+                <Plus className="h-4 w-4 mr-2" />
                 Nova Discussão
               </Button>
             </div>
