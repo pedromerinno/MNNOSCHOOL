@@ -27,8 +27,7 @@ export const useDiscussions = () => {
             id,
             content,
             created_at,
-            author_id,
-            image_url
+            author_id
           )
         `)
         .eq('company_id', selectedCompany.id)
@@ -95,7 +94,6 @@ export const useDiscussions = () => {
           company_id: item.company_id,
           created_at: item.created_at,
           updated_at: item.updated_at,
-          image_url: item.image_url,
           profiles: authorProfile,
           discussion_replies: formattedReplies
         };
