@@ -3,14 +3,14 @@ import React from "react";
 import { Card } from "@/components/ui/card";
 
 const bgColors = [
-  'bg-blue-50',
-  'bg-green-50',
-  'bg-purple-50',
-  'bg-orange-50',
-  'bg-pink-50',
-  'bg-teal-50',
-  'bg-indigo-50',
-  'bg-cyan-50',
+  'bg-blue-100',
+  'bg-green-100',
+  'bg-purple-100',
+  'bg-orange-100',
+  'bg-pink-100',
+  'bg-teal-100',
+  'bg-indigo-100',
+  'bg-cyan-100',
 ];
 
 interface CourseCategoriesProps {
@@ -38,22 +38,21 @@ export const CourseCategories: React.FC<CourseCategoriesProps> = ({
         const isActive = activeCategory === category.id;
         const randomBg = bgColors[index % bgColors.length];
         
-        // Determine text color based on background
         const textColorMap: { [key: string]: string } = {
-          'bg-blue-50': 'text-blue-800',
-          'bg-green-50': 'text-green-800',
-          'bg-purple-50': 'text-purple-800',
-          'bg-orange-50': 'text-orange-800',
-          'bg-pink-50': 'text-pink-800',
-          'bg-teal-50': 'text-teal-800',
-          'bg-indigo-50': 'text-indigo-800',
-          'bg-cyan-50': 'text-cyan-800',
+          'bg-blue-100': 'text-blue-900',
+          'bg-green-100': 'text-green-900',
+          'bg-purple-100': 'text-purple-900',
+          'bg-orange-100': 'text-orange-900',
+          'bg-pink-100': 'text-pink-900',
+          'bg-teal-100': 'text-teal-900',
+          'bg-indigo-100': 'text-indigo-900',
+          'bg-cyan-100': 'text-cyan-900',
         };
 
         return (
           <div 
             key={category.id} 
-            className={`inline-flex items-center gap-3 px-8 py-4 cursor-pointer transition-all rounded-2xl
+            className={`inline-flex items-center gap-3 px-10 py-5 cursor-pointer transition-all rounded-3xl
               ${isActive 
                 ? 'bg-black text-white' 
                 : `${randomBg} ${textColorMap[randomBg]} hover:opacity-80`
@@ -67,3 +66,4 @@ export const CourseCategories: React.FC<CourseCategoriesProps> = ({
     </div>
   );
 };
+
