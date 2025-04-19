@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -47,11 +46,9 @@ const Documents = () => {
     }
   };
 
-  // Fix: Make this function return Promise<void> instead of Promise<boolean>
   const handleDelete = async (document: UserDocument): Promise<void> => {
     if (window.confirm(`Tem certeza que deseja excluir o documento "${document.name}"?`)) {
       await deleteDocument(document.id);
-      // No return statement with boolean, letting the function implicitly return undefined (void)
       refreshDocuments();
     }
   };

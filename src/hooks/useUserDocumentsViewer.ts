@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -21,7 +20,6 @@ export const useUserDocumentsViewer = () => {
       return;
     }
     
-    // Use user.id from Auth context instead of userProfile.id
     const userId = user.id;
     if (!userId) {
       console.error('User ID is undefined');
@@ -83,21 +81,19 @@ export const useUserDocumentsViewer = () => {
     }
   }, []);
 
-  const deleteDocument = useCallback(async (documentId: string): Promise<boolean> => {
+  const deleteDocument = useCallback(async (documentId: string): Promise<void> => {
     if (!documentId) {
       toast.error("ID do documento não fornecido");
-      return false;
+      return;
     }
 
     try {
-      // Get current user to verify permissions
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       if (!currentUser) {
         toast.error("Usuário não autenticado");
-        return false;
+        return;
       }
 
-      // Fetch document details to verify ownership
       const { data: document, error: fetchError } = await supabase
         .from('user_documents')
         .select('file_path, uploaded_by')
@@ -108,16 +104,14 @@ export const useUserDocumentsViewer = () => {
 
       if (!document) {
         toast.error("Documento não encontrado");
-        return false;
+        return;
       }
 
-      // Check if user owns the document
       if (document.uploaded_by !== currentUser.id) {
         toast.error("Você só pode excluir documentos que você mesmo enviou");
-        return false;
+        return;
       }
 
-      // Delete the file from storage
       const { error: storageError } = await supabase.storage
         .from('documents')
         .remove([document.file_path]);
@@ -126,7 +120,6 @@ export const useUserDocumentsViewer = () => {
         console.warn("Erro ao remover arquivo do storage:", storageError);
       }
 
-      // Delete the document record from the database
       const { error: deleteError } = await supabase
         .from('user_documents')
         .delete()
@@ -134,14 +127,11 @@ export const useUserDocumentsViewer = () => {
 
       if (deleteError) throw deleteError;
 
-      // Update local state
       setDocuments(prev => prev.filter(doc => doc.id !== documentId));
       toast.success('Documento excluído com sucesso');
-      return true;
     } catch (error: any) {
       console.error('Error deleting document:', error);
       toast.error(`Erro ao excluir documento: ${error.message}`);
-      return false;
     }
   }, []);
   
