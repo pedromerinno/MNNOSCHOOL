@@ -5,19 +5,24 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Check, History, Star, Users, TrendingUp, Pen, Target, PlayCircle } from "lucide-react";
+import { VideoPlayer } from './video-playlist/VideoPlayer';
 
 interface CultureManualProps {
   companyValues: string;
   companyMission: string;
   companyHistory: string;
   companyColor: string;
+  videoUrl?: string;
+  videoDescription?: string;
 }
 
 export const CultureManual: React.FC<CultureManualProps> = ({
   companyValues,
   companyMission,
   companyHistory,
-  companyColor
+  companyColor,
+  videoUrl,
+  videoDescription
 }) => {
   const [accepted, setAccepted] = useState(false);
 
@@ -30,15 +35,15 @@ export const CultureManual: React.FC<CultureManualProps> = ({
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="text-center space-y-3">
+    <div className="space-y-8">
+      <div className="text-center space-y-4">
         <h1 className="text-3xl font-semibold">Manual de Cultura MERINNO</h1>
         <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
           Tudo o que você precisa saber para entender nossa história, nossos valores e o tipo de profissional que acreditamos.
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-8 md:grid-cols-2">
         <Card className="transition-all duration-200 hover:shadow-md">
           <CardHeader className="flex flex-row items-center gap-4">
             <History style={{ color: companyColor }} className="h-8 w-8" />
@@ -90,16 +95,16 @@ export const CultureManual: React.FC<CultureManualProps> = ({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-5">
+            <div className="grid gap-6 md:grid-cols-5">
               {values.map((value, index) => (
                 <div
                   key={index}
                   className="p-4 rounded-lg border bg-card text-card-foreground hover:shadow-sm transition-shadow"
                 >
-                  <div className="mb-2" style={{ color: companyColor }}>
+                  <div className="mb-3" style={{ color: companyColor }}>
                     {value.icon}
                   </div>
-                  <h3 className="font-medium mb-1">{value.title}</h3>
+                  <h3 className="font-medium mb-2">{value.title}</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     {value.description}
                   </p>
@@ -113,19 +118,25 @@ export const CultureManual: React.FC<CultureManualProps> = ({
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <PlayCircle style={{ color: companyColor }} className="h-6 w-6" />
-              Vídeo de Boas-vindas
+              Vídeo Institucional
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-center py-12">
-            <PlayCircle className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-            <p className="text-gray-600 dark:text-gray-400">
-              Em breve nosso vídeo de cultura e bastidores do time MERINNO.
-            </p>
+          <CardContent>
+            {videoUrl ? (
+              <VideoPlayer videoUrl={videoUrl} description={videoDescription || ''} />
+            ) : (
+              <div className="text-center py-12">
+                <PlayCircle className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+                <p className="text-gray-600 dark:text-gray-400">
+                  Vídeo institucional não disponível no momento.
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      <div className="flex flex-col items-center gap-4 pt-6">
+      <div className="flex flex-col items-center gap-4 pt-8">
         <Button
           className="relative group overflow-hidden"
           style={{

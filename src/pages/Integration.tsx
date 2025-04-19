@@ -77,7 +77,7 @@ const Integration = () => {
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8">
-        <div className="flex items-center mb-6 gap-2">
+        <div className="flex items-center mb-8 gap-2">
           <Button 
             variant="ghost" 
             size="sm" 
@@ -94,9 +94,9 @@ const Integration = () => {
             <LoadingState />
           ) : (
             <>
-              <div className="p-6">
-                <div className="flex items-center mb-6">
-                  <h2 className="text-xl font-semibold mr-3 dark:text-white">
+              <div className="p-8">
+                <div className="flex items-center mb-8">
+                  <h2 className="text-2xl font-semibold mr-3 dark:text-white">
                     {localCompany 
                       ? `Bem-vindo ao processo de integração da ${localCompany.nome}` 
                       : "Bem-vindo ao processo de integração"}
@@ -116,7 +116,7 @@ const Integration = () => {
                 </div>
               </div>
 
-              <div className="px-6">
+              <div className="px-8 pb-8">
                 <Tabs
                   defaultValue="culture"
                   value={activeTab}
@@ -159,13 +159,15 @@ const Integration = () => {
                     </TabsTrigger>
                   </TabsList>
 
-                  <div className="mt-6 space-y-8">
+                  <div className="mt-8 space-y-8">
                     <TabsContent value="culture" className="m-0">
                       <CultureManual
                         companyValues={localCompany?.valores || ""}
                         companyMission={localCompany?.missao || ""}
                         companyHistory={localCompany?.historia || ""}
                         companyColor={companyColor}
+                        videoUrl={localCompany?.video_institucional}
+                        videoDescription={localCompany?.descricao_video}
                       />
                     </TabsContent>
 
