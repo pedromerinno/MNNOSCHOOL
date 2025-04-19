@@ -21,17 +21,16 @@ export const IntegrationLayout: React.FC<React.PropsWithChildren<{}>> = ({ child
             <ArrowLeft className="h-5 w-5 text-gray-500" />
           </Button>
           <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold dark:text-white">
+              Bem-vindo ao processo de integração
+            </h1>
             {selectedCompany && (
               <CompanyThemedBadge 
                 variant="beta"
-                className="mr-2"
               >
                 {selectedCompany.nome}
               </CompanyThemedBadge>
             )}
-            <h1 className="text-3xl font-bold dark:text-white">
-              Bem-vindo ao processo de integração
-            </h1>
           </div>
         </div>
         
