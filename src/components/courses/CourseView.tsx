@@ -102,24 +102,39 @@ export const CourseView: React.FC = () => {
             </div>
           )}
           
-          {/* Tabs for content */}
+          {/* Updated Tabs Section */}
           <Tabs defaultValue="description" value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="description">Descrição</TabsTrigger>
-              <TabsTrigger value="reviews">Avaliações</TabsTrigger>
-            </TabsList>
-            <TabsContent value="description" className="mt-6">
-              <CourseDescription description={course.description} />
-            </TabsContent>
-            <TabsContent value="reviews" className="mt-6">
-              <div className="text-center py-8">
-                <Star className="h-8 w-8 text-yellow-400 mx-auto mb-2" />
-                <h3 className="text-lg font-medium mb-1">Sem avaliações ainda</h3>
-                <p className="text-muted-foreground">
-                  Seja o primeiro a avaliar este curso
-                </p>
-              </div>
-            </TabsContent>
+            <div className="border-b">
+              <TabsList className="bg-gray-50 dark:bg-gray-900 w-full justify-start rounded-none p-0 h-auto">
+                <TabsTrigger 
+                  value="description" 
+                  className="flex items-center py-3 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500"
+                >
+                  Descrição
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="reviews" 
+                  className="flex items-center py-3 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500"
+                >
+                  Avaliações
+                </TabsTrigger>
+              </TabsList>
+            </div>
+            
+            <div className="p-6">
+              <TabsContent value="description" className="m-0">
+                <CourseDescription description={course.description} />
+              </TabsContent>
+              <TabsContent value="reviews" className="m-0">
+                <div className="text-center py-8">
+                  <Star className="h-8 w-8 text-yellow-400 mx-auto mb-2" />
+                  <h3 className="text-lg font-medium mb-1">Sem avaliações ainda</h3>
+                  <p className="text-muted-foreground">
+                    Seja o primeiro a avaliar este curso
+                  </p>
+                </div>
+              </TabsContent>
+            </div>
           </Tabs>
         </div>
         
@@ -134,3 +149,4 @@ export const CourseView: React.FC = () => {
     </div>
   );
 };
+
