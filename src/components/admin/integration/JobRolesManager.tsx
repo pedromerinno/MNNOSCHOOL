@@ -38,6 +38,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { JobRole } from "@/types/job-roles";
+import RoleUsersDialog from './dialogs/RoleUsersDialog';
 
 interface JobRolesManagerProps {
   company: Company;
@@ -249,7 +250,7 @@ export const JobRolesManager: React.FC<JobRolesManagerProps> = ({ company }) => 
     onSave: () => void,
     onCancel: () => void 
   }) => {
-    // Criar estado local separado para os campos do formulário
+    // Create local state for form values
     const [formValues, setFormValues] = useState({
       title: role.title || '',
       description: role.description || '',
@@ -258,7 +259,7 @@ export const JobRolesManager: React.FC<JobRolesManagerProps> = ({ company }) => 
       expectations: role.expectations || ''
     });
     
-    // Atualizar o estado local quando a props role muda
+    // Update local state when the role prop changes
     useEffect(() => {
       setFormValues({
         title: role.title || '',
@@ -269,7 +270,7 @@ export const JobRolesManager: React.FC<JobRolesManagerProps> = ({ company }) => 
       });
     }, [role]);
     
-    // Função para atualizar os valores do formulário localmente
+    // Function to update form values locally
     const handleChange = (field: string, value: string) => {
       setFormValues(prev => ({
         ...prev,
@@ -277,16 +278,16 @@ export const JobRolesManager: React.FC<JobRolesManagerProps> = ({ company }) => 
       }));
     };
     
-    // Função para salvar os valores locais no estado principal
+    // Function to save form values to parent state
     const handleSaveValues = () => {
-      if (isNew) {
+      if (isNew && newRole) {
         setNewRole({
-          ...role,
+          ...newRole,
           ...formValues
         });
-      } else {
+      } else if (editingRole) {
         setEditingRole({
-          ...role,
+          ...editingRole,
           ...formValues
         });
       }
@@ -622,4 +623,3 @@ export const JobRolesManager: React.FC<JobRolesManagerProps> = ({ company }) => 
     </div>
   );
 };
-

@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Check, X, Search, UserPlus, UserMinus } from "lucide-react";
 import { toast } from "sonner";
 
@@ -18,7 +17,7 @@ interface User {
   cargo_id: string | null;
 }
 
-export const RoleUsersDialog: React.FC<RoleUsersDialogProps> = ({ roleId, companyId }) => {
+const RoleUsersDialog: React.FC<RoleUsersDialogProps> = ({ roleId, companyId }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [companyUsers, setCompanyUsers] = useState<User[]>([]);
@@ -26,20 +25,41 @@ export const RoleUsersDialog: React.FC<RoleUsersDialogProps> = ({ roleId, compan
   const [unassignedUsers, setUnassignedUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   
-  // Buscar usuários da empresa
+  // Fetch company users
   const fetchCompanyUsers = async () => {
     setIsLoading(true);
     try {
+      // First, get user IDs from the user_empresa table
+      const { data: userEmpresas, error: userEmpresasError } = await supabase
+        .from('user_empresa')
+        .select('user_id')
+        .eq('empresa_id', companyId);
+        
+      if (userEmpresasError) throw userEmpresasError;
+      
+      // Extract just the user_ids into an array
+      const userIds = userEmpresas?.map(ue => ue.user_id) || [];
+      
+      if (userIds.length === 0) {
+        setCompanyUsers([]);
+        setAssignedUsers([]);
+        setUnassignedUsers([]);
+        setFilteredUsers([]);
+        setIsLoading(false);
+        return;
+      }
+      
+      // Then get the profiles that match these user IDs
       const { data, error } = await supabase
         .from('profiles')
         .select('id, display_name, cargo_id')
-        .in('id', supabase.from('user_empresa').select('user_id').eq('empresa_id', companyId));
+        .in('id', userIds);
         
       if (error) throw error;
       
       setCompanyUsers(data || []);
       
-      // Separar usuários com e sem este cargo
+      // Separate users with and without this role
       const assigned = data?.filter(user => user.cargo_id === roleId) || [];
       const unassigned = data?.filter(user => user.cargo_id !== roleId) || [];
       
@@ -59,7 +79,7 @@ export const RoleUsersDialog: React.FC<RoleUsersDialogProps> = ({ roleId, compan
     fetchCompanyUsers();
   }, [roleId, companyId]);
   
-  // Filtrar usuários sem cargo quando a busca mudar
+  // Filter unassigned users when search changes
   useEffect(() => {
     if (searchQuery) {
       const filtered = unassignedUsers.filter(user => 
@@ -71,7 +91,7 @@ export const RoleUsersDialog: React.FC<RoleUsersDialogProps> = ({ roleId, compan
     }
   }, [searchQuery, unassignedUsers]);
   
-  // Adicionar usuário ao cargo
+  // Add user to role
   const assignUserToRole = async (userId: string) => {
     try {
       const { error } = await supabase
@@ -81,7 +101,7 @@ export const RoleUsersDialog: React.FC<RoleUsersDialogProps> = ({ roleId, compan
         
       if (error) throw error;
       
-      // Atualizar as listas localmente
+      // Update lists locally
       const user = unassignedUsers.find(u => u.id === userId);
       if (user) {
         const updatedUser = { ...user, cargo_id: roleId };
@@ -98,7 +118,7 @@ export const RoleUsersDialog: React.FC<RoleUsersDialogProps> = ({ roleId, compan
     }
   };
   
-  // Remover usuário do cargo
+  // Remove user from role
   const removeUserFromRole = async (userId: string) => {
     try {
       const { error } = await supabase
@@ -108,14 +128,14 @@ export const RoleUsersDialog: React.FC<RoleUsersDialogProps> = ({ roleId, compan
         
       if (error) throw error;
       
-      // Atualizar as listas localmente
+      // Update lists locally
       const user = assignedUsers.find(u => u.id === userId);
       if (user) {
         const updatedUser = { ...user, cargo_id: null };
         setUnassignedUsers([...unassignedUsers, updatedUser]);
         setAssignedUsers(assignedUsers.filter(u => u.id !== userId));
         
-        // Atualizar os filtrados apenas se o usuário atender os critérios de busca
+        // Update filtered users only if user meets search criteria
         if (!searchQuery || updatedUser.display_name.toLowerCase().includes(searchQuery.toLowerCase())) {
           setFilteredUsers([...filteredUsers, updatedUser]);
         }
@@ -141,7 +161,7 @@ export const RoleUsersDialog: React.FC<RoleUsersDialogProps> = ({ roleId, compan
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Usuários com o cargo */}
+        {/* Users with this role */}
         <div className="space-y-3">
           <h3 className="text-sm font-medium">Usuários com esse cargo</h3>
           
@@ -178,7 +198,7 @@ export const RoleUsersDialog: React.FC<RoleUsersDialogProps> = ({ roleId, compan
           )}
         </div>
         
-        {/* Usuários disponíveis */}
+        {/* Available users */}
         <div className="space-y-3">
           <h3 className="text-sm font-medium">Usuários disponíveis</h3>
           
