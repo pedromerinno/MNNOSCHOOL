@@ -73,7 +73,7 @@ const Courses = () => {
                         {course.tags?.map((tag: string, index: number) => (
                           <span 
                             key={index} 
-                            className="px-3 py-1 text-xs rounded-full bg-white/10 text-white border border-white/40"
+                            className="px-4 py-1.5 text-xs rounded-xl bg-white/20 text-white border border-white/40"
                           >
                             {tag}
                           </span>
