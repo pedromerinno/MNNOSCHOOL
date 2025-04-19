@@ -37,27 +37,32 @@ export const useDiscussions = () => {
       if (error) throw error;
       
       // Transform the data to match the Discussion type
-      // Add image_url and status as client-side properties since they're not in the database yet
-      const formattedData = data?.map(item => ({
-        id: item.id,
-        title: item.title,
-        content: item.content,
-        author_id: item.author_id,
-        company_id: item.company_id,
-        created_at: item.created_at,
-        updated_at: item.updated_at,
-        // Add these properties that aren't in the database yet
-        image_url: item.image_url || null,
-        status: item.status || 'open' as const,
-        discussion_replies: (item.discussion_replies || []).map((reply: any) => ({
-          id: reply.id,
-          discussion_id: reply.discussion_id,
-          author_id: reply.author_id,
-          content: reply.content,
-          created_at: reply.created_at,
-          image_url: reply.image_url || null,
-        }))
-      })) || [];
+      // Adding client-side properties since they're not in the database yet
+      const formattedData = data?.map(item => {
+        // Create the basic discussion object with properties from the database
+        const discussion: Discussion = {
+          id: item.id,
+          title: item.title,
+          content: item.content,
+          author_id: item.author_id,
+          company_id: item.company_id,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          // Add these properties as client-side properties
+          image_url: null, 
+          status: 'open' as const,
+          discussion_replies: (item.discussion_replies || []).map((reply: any) => ({
+            id: reply.id,
+            discussion_id: reply.discussion_id,
+            author_id: reply.author_id,
+            content: reply.content,
+            created_at: reply.created_at,
+            image_url: reply.image_url || null,
+          }))
+        };
+        
+        return discussion;
+      }) || [];
       
       setDiscussions(formattedData);
     } catch (error: any) {
