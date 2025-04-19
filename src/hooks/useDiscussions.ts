@@ -100,9 +100,9 @@ export const useDiscussions = () => {
           company_id: discussion.company_id,
           created_at: discussion.created_at,
           updated_at: discussion.updated_at,
-          // Use null for image_url if it doesn't exist yet in the database
+          // Use the image_url from the database or null if it doesn't exist
           image_url: discussion.image_url || null,
-          // Use 'open' as default status if it doesn't exist yet in the database
+          // Use the status from the database or 'open' as default
           status: discussion.status || 'open' as const,
           // Use the profile from our map, or a default if not found
           profiles: profilesMap[discussion.author_id] || { display_name: 'Usuário', avatar: null },
