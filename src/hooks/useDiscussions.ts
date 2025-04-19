@@ -17,24 +17,18 @@ export const useDiscussions = () => {
 
     try {
       setIsLoading(true);
+      
+      // Fetch discussions without trying to join profiles directly
       const { data, error } = await supabase
         .from('discussions')
         .select(`
           *,
-          profiles (
-            display_name,
-            avatar
-          ),
           discussion_replies (
             id,
             content,
             created_at,
             author_id,
-            image_url,
-            profiles (
-              display_name,
-              avatar
-            )
+            image_url
           )
         `)
         .eq('company_id', selectedCompany.id)
@@ -42,21 +36,70 @@ export const useDiscussions = () => {
 
       if (error) throw error;
       
-      const formattedDiscussions = data ? data.map((item: any) => ({
-        id: item.id,
-        title: item.title,
-        content: item.content,
-        author_id: item.author_id,
-        company_id: item.company_id,
-        created_at: item.created_at,
-        updated_at: item.updated_at,
-        image_url: item.image_url,
-        profiles: item.profiles || { display_name: 'Usuário desconhecido', avatar: null },
-        discussion_replies: item.discussion_replies ? item.discussion_replies.map((reply: any) => ({
-          ...reply,
-          profiles: reply.profiles || { display_name: 'Usuário desconhecido', avatar: null }
-        })) : []
-      })) : [];
+      if (!data || data.length === 0) {
+        setDiscussions([]);
+        setIsLoading(false);
+        return;
+      }
+      
+      // Extract all user IDs from discussions and replies
+      const authorIds = data.map(item => item.author_id);
+      const replyAuthorIds = data.flatMap(item => 
+        item.discussion_replies?.map(reply => reply.author_id) || []
+      );
+      
+      // Combine and remove duplicates
+      const allUserIds = [...new Set([...authorIds, ...replyAuthorIds])];
+      
+      // Fetch profile information for all authors
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar')
+        .in('id', allUserIds);
+        
+      if (profilesError) throw profilesError;
+      
+      // Create a lookup map for profiles
+      const profilesMap = (profilesData || []).reduce((acc, profile) => {
+        acc[profile.id] = {
+          display_name: profile.display_name,
+          avatar: profile.avatar
+        };
+        return acc;
+      }, {});
+      
+      // Format discussions with profile information
+      const formattedDiscussions = data.map((item) => {
+        const authorProfile = profilesMap[item.author_id] || {
+          display_name: 'Usuário desconhecido',
+          avatar: null
+        };
+        
+        const formattedReplies = (item.discussion_replies || []).map((reply) => {
+          const replyAuthorProfile = profilesMap[reply.author_id] || {
+            display_name: 'Usuário desconhecido',
+            avatar: null
+          };
+          
+          return {
+            ...reply,
+            profiles: replyAuthorProfile
+          };
+        });
+        
+        return {
+          id: item.id,
+          title: item.title,
+          content: item.content,
+          author_id: item.author_id,
+          company_id: item.company_id,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          image_url: item.image_url,
+          profiles: authorProfile,
+          discussion_replies: formattedReplies
+        };
+      });
       
       setDiscussions(formattedDiscussions);
     } catch (error) {
