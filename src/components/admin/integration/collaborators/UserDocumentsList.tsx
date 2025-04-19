@@ -39,6 +39,10 @@ export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
     fetchUserId();
   }, []);
 
+  useEffect(() => {
+    console.log("Documents in UserDocumentsList:", documents);
+  }, [documents]);
+
   const handleDownload = async (document: UserDocument) => {
     setDownloadingId(document.id);
     setError(null);

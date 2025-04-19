@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -46,12 +45,7 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
     setError(null);
     
     try {
-      // Check if bucket exists
-      const bucketExists = await checkBucketExists();
-      
-      if (!bucketExists) {
-        console.warn("Storage bucket não disponível, continuando mesmo assim");
-      }
+      console.log(`Fetching documents for user ${userId} in company ${companyId}`);
       
       const { data, error } = await supabase
         .from('user_documents')
@@ -61,6 +55,7 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
 
       if (error) throw error;
       
+      console.log(`Found ${data?.length || 0} documents`);
       // Type assertion to force cast to our type - we know the structure matches
       setDocuments(data as unknown as UserDocument[]);
     } catch (error: any) {
@@ -70,7 +65,7 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
     } finally {
       setIsLoading(false);
     }
-  }, [userId, companyId, checkBucketExists]);
+  }, [userId, companyId]);
 
   // Upload a document for a user
   const uploadDocument = useCallback(async (

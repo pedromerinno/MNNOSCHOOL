@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Upload, Download, File, FolderOpen } from "lucide-react";
+import { FileText, Upload, Download, File, FolderOpen, Eye } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -28,6 +28,9 @@ const Documents = () => {
   const [file, setFile] = useState<File | null>(null);
   const [documentType, setDocumentType] = useState<DocumentType>("confidentiality_agreement");
   const [description, setDescription] = useState("");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<UserDocument | null>(null);
   
   const documentsByType = documents.reduce((acc, doc) => {
     if (!acc[doc.document_type]) {
@@ -122,6 +125,23 @@ const Documents = () => {
     }
   };
 
+  const handleViewDocument = async (document: UserDocument) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .createSignedUrl(document.file_path, 3600);
+        
+      if (error) throw error;
+      
+      setPreviewUrl(data.signedUrl);
+      setSelectedDocument(document);
+      setPreviewOpen(true);
+    } catch (error: any) {
+      console.error('Error previewing document:', error);
+      toast.error(`Falha ao visualizar o documento: ${error.message}`);
+    }
+  };
+
   return (
     <PageLayout title="Documentos">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -198,13 +218,24 @@ const Documents = () => {
                                 </p>
                               </div>
                             </div>
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => handleDownload(doc)}
-                            >
-                              <Download className="h-4 w-4" />
-                            </Button>
+                            <div className="flex space-x-2">
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => handleViewDocument(doc)}
+                                title="Visualizar documento"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => handleDownload(doc)}
+                                title="Baixar documento"
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -249,14 +280,24 @@ const Documents = () => {
                               </p>
                             </div>
                           </div>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleDownload(doc)}
-                          >
-                            <Download className="h-4 w-4 mr-1" />
-                            Baixar
-                          </Button>
+                          <div className="flex space-x-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleViewDocument(doc)}
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              Visualizar
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleDownload(doc)}
+                            >
+                              <Download className="h-4 w-4 mr-1" />
+                              Baixar
+                            </Button>
+                          </div>
                         </CardContent>
                       </Card>
                     ))}
@@ -378,6 +419,18 @@ const Documents = () => {
                 )}
               </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+          <DialogContent className="max-w-4xl h-[80vh]">
+            {previewUrl && (
+              <iframe
+                src={previewUrl}
+                className="w-full h-full"
+                title={selectedDocument?.name || "Document preview"}
+              />
+            )}
           </DialogContent>
         </Dialog>
     </PageLayout>
