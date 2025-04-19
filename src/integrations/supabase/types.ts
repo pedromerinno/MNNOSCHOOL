@@ -700,6 +700,10 @@ export type Database = {
         Args: Record<PropertyKey, never> | { user_id: string }
         Returns: boolean
       }
+      is_user_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       user_belongs_to_company: {
         Args: { company_id: string } | { user_id: string; company_id: string }
         Returns: boolean
