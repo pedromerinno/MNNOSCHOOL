@@ -31,7 +31,7 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
         onValueChange={setActiveTab}
         className="w-full"
       >
-        <TabsList className="grid grid-cols-3 w-full rounded-2xl p-1.5 dark:bg-gray-800/50 gap-2">
+        <TabsList className="grid grid-cols-3 w-full rounded-2xl p-1.5 bg-transparent dark:bg-transparent gap-2">
           <TabsTrigger 
             value="culture"
             className="flex items-center gap-2 rounded-xl py-4 px-6 transition-colors"
