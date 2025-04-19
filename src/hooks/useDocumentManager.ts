@@ -5,7 +5,7 @@ import { useDocumentDeletion } from "@/hooks/documents/useDocumentDeletion";
 import { useDocumentUpload } from "@/hooks/documents/useDocumentUpload";
 
 export const useDocumentManager = () => {
-  const { documents, isLoading, downloadDocument } = useUserDocumentsViewer();
+  const { documents, isLoading, downloadDocument, refreshDocuments } = useUserDocumentsViewer();
   const { previewUrl, previewOpen, setPreviewOpen, handlePreview } = useDocumentPreview();
   const { handleDelete } = useDocumentDeletion();
   const { 
@@ -29,6 +29,7 @@ export const useDocumentManager = () => {
     downloadDocument,
     handlePreview,
     handleDelete,
-    handleDocumentUpload
+    handleDocumentUpload,
+    refreshDocuments
   };
 };

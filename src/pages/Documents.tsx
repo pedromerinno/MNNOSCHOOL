@@ -19,8 +19,22 @@ const Documents = () => {
     handlePreview,
     handleDelete,
     handleDocumentUpload,
-    canDeleteDocument
+    canDeleteDocument,
+    refreshDocuments
   } = useDocumentManager();
+
+  const handleUpload = async (file: File, documentType: DocumentType, description: string) => {
+    const success = await handleDocumentUpload(file, documentType, description);
+    if (success) {
+      await refreshDocuments();
+    }
+    return success;
+  };
+
+  const handleDocumentDelete = async (document: UserDocument) => {
+    await handleDelete(document);
+    await refreshDocuments();
+  };
 
   return (
     <PageLayout title="Documentos">
@@ -31,10 +45,10 @@ const Documents = () => {
         uploadOpen={uploadOpen}
         setUploadOpen={setUploadOpen}
         isUploading={isUploading}
-        onUpload={handleDocumentUpload}
+        onUpload={handleUpload}
         onDownload={downloadDocument}
         onPreview={handlePreview}
-        onDelete={handleDelete}
+        onDelete={handleDocumentDelete}
         canDeleteDocument={canDeleteDocument}
       />
 
