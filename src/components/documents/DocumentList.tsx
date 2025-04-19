@@ -9,7 +9,7 @@ interface DocumentListProps {
   documents: UserDocument[];
   onDownload: (document: UserDocument) => Promise<void>;
   onPreview: (document: UserDocument) => Promise<void>;
-  onDelete: (document: UserDocument) => Promise<void | boolean>;
+  onDelete: (document: UserDocument) => Promise<void>;
   canDeleteDocument: (document: UserDocument) => boolean;
 }
 

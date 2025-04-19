@@ -47,13 +47,12 @@ const Documents = () => {
     }
   };
 
-  // Modify this function to handle the boolean return from deleteDocument but return void
+  // Fix: Make this function return Promise<void> instead of Promise<boolean>
   const handleDelete = async (document: UserDocument): Promise<void> => {
     if (window.confirm(`Tem certeza que deseja excluir o documento "${document.name}"?`)) {
-      const success = await deleteDocument(document.id);
-      if (success) {
-        refreshDocuments();
-      }
+      await deleteDocument(document.id);
+      // No return statement with boolean, letting the function implicitly return undefined (void)
+      refreshDocuments();
     }
   };
 
