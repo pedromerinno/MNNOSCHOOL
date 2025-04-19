@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DocumentType, DOCUMENT_TYPE_LABELS } from "@/types/document";
 import { AlertCircle, Loader2, Upload } from "lucide-react";
-import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from '@/hooks/useDocumentUpload';
+import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from '@/hooks/documents/constants';
 
 interface DocumentUploadFormProps {
   onSubmit: (file: File, documentType: DocumentType, description: string) => Promise<void>;

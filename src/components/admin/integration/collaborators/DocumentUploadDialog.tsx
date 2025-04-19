@@ -20,6 +20,7 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
   companyId,
   onUploadComplete
 }) => {
+  // Pass the parameters as an object to match the new hook signature
   const { isUploading, fileError, uploadDocument } = useDocumentUpload({
     userId,
     companyId,

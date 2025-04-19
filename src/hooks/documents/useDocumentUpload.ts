@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DocumentType, UserDocument } from '@/types/document';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -8,7 +8,11 @@ import { useUploadValidation } from './useUploadValidation';
 import { useStorageOperations } from './useStorageOperations';
 import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from './constants';
 
-export const useDocumentUpload = () => {
+// Make these constants available for import
+export { MAX_FILE_SIZE, ALLOWED_FILE_TYPES };
+
+// Add optional parameters to make the hook more flexible
+export const useDocumentUpload = (params?: { userId?: string, companyId?: string, onUploadComplete?: () => void }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -18,7 +22,7 @@ export const useDocumentUpload = () => {
   const { uploadToStorage } = useStorageOperations();
 
   // Fetch current user ID
-  useState(() => {
+  useEffect(() => {
     const fetchCurrentUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setCurrentUserId(user?.id || null);
@@ -49,19 +53,27 @@ export const useDocumentUpload = () => {
   const uploadDocument = async (file: File, documentType: DocumentType, description: string) => {
     if (!validateFile(file)) return false;
 
-    const { data: { user } } = await supabase.auth.getUser();
-    const userId = user?.id;
+    // Use provided userId or fetch it
+    let userId = params?.userId;
+    let companyId = params?.companyId;
     
-    const { data: userData } = await supabase.auth.getUser();
-    const { data: userCompanies } = await supabase
-      .from('user_empresa')
-      .select('empresa_id')
-      .eq('user_id', userData.user?.id)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
+    if (!userId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      userId = user?.id;
+    }
     
-    const companyId = userCompanies?.empresa_id;
+    if (!companyId && !params?.companyId) {
+      const { data: userData } = await supabase.auth.getUser();
+      const { data: userCompanies } = await supabase
+        .from('user_empresa')
+        .select('empresa_id')
+        .eq('user_id', userData.user?.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      
+      companyId = userCompanies?.empresa_id;
+    }
     
     if (!userId || !companyId) {
       toast.error('Informações insuficientes para upload');
@@ -90,6 +102,12 @@ export const useDocumentUpload = () => {
       if (error) throw error;
 
       toast.success('Documento enviado com sucesso');
+      
+      // Call onUploadComplete if provided
+      if (params?.onUploadComplete) {
+        params.onUploadComplete();
+      }
+      
       return true;
     } catch (error: any) {
       console.error('Erro no upload do documento:', error);
