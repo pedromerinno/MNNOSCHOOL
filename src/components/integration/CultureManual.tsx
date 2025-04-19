@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,8 +46,8 @@ export const CultureManual: React.FC<CultureManualProps> = ({
   const values = getValues();
 
   return (
-    <div className="space-y-12">
-      <div className="grid gap-8 md:grid-cols-2">
+    <div className="space-y-12 pb-12">
+      <div className="grid gap-8 md:grid-cols-2 mt-8">
         <Card className="transition-all duration-200 shadow-none rounded-xl md:col-span-2 bg-gray-50 dark:bg-gray-900">
           <CardHeader>
             <CardTitle className="text-2xl">Missão</CardTitle>
@@ -116,7 +115,7 @@ export const CultureManual: React.FC<CultureManualProps> = ({
 
       <div className="flex flex-col items-center gap-6 pt-8">
         <Button
-          className="relative group overflow-hidden rounded-xl px-8 py-6 text-lg font-medium transition-all duration-300 hover:scale-105"
+          className="relative group overflow-hidden rounded-xl px-8 py-6 text-lg font-medium"
           style={{
             backgroundColor: companyColor || '#1EAEDB',
           }}
@@ -132,10 +131,6 @@ export const CultureManual: React.FC<CultureManualProps> = ({
               "Quero fazer parte disso"
             )}
           </span>
-          <div
-            className="absolute inset-0 bg-white transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"
-            style={{ mixBlendMode: 'overlay' }}
-          />
         </Button>
         
         <div className="flex items-center gap-2">
