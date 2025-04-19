@@ -1,8 +1,10 @@
+
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { UserProfile } from '@/hooks/useUsers';
+import { UserProfile } from '@/types/user';
+import { toast } from 'sonner';
 
 interface AuthContextType {
   user: any;
@@ -26,42 +28,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const navigate = useNavigate();
 
   useEffect(() => {
-    const loadSession = async () => {
+    const setupAuth = async () => {
       try {
         setLoading(true);
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (session) {
-          setUser(session.user);
-          setSession(session);
-          await fetchUserProfile(session.user.id);
+        
+        // Configurar o listener de eventos de autenticação PRIMEIRO
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event, newSession) => {
+            console.log(`Auth event: ${event}`);
+            
+            // Atualizações síncronas primeiro
+            setSession(newSession);
+            setUser(newSession?.user || null);
+            
+            // Depois, usar setTimeout para operações assíncronas adicionais
+            if (newSession?.user) {
+              setTimeout(async () => {
+                await fetchUserProfile(newSession.user.id);
+              }, 0);
+            } else if (event === 'SIGNED_OUT') {
+              setUserProfile(null);
+            }
+          }
+        );
+        
+        // DEPOIS verificar sessão existente
+        const { data } = await supabase.auth.getSession();
+        
+        if (data.session) {
+          setSession(data.session);
+          setUser(data.session.user);
+          await fetchUserProfile(data.session.user.id);
         }
+        
+        return () => {
+          subscription.unsubscribe();
+        };
       } catch (error) {
-        console.error('Erro ao carregar a sessão:', error);
+        console.error('Erro ao configurar autenticação:', error);
+        toast.error('Erro ao carregar a sessão. Por favor, tente novamente.');
       } finally {
         setLoading(false);
       }
     };
-
-    loadSession();
-
-    supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-        setUser(session?.user || null);
-        setSession(session || null);
-        if (session?.user) {
-          await fetchUserProfile(session.user.id);
-        }
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null);
-        setSession(null);
-        setUserProfile(null);
-      }
-    });
+    
+    setupAuth();
   }, []);
 
   const fetchUserProfile = async (userId: string) => {
     try {
+      console.log(`Buscando perfil do usuário: ${userId}`);
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -70,18 +87,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         console.error('Erro ao buscar perfil:', error);
+        return;
       }
 
       if (data) {
-        setUserProfile({
+        const profile: UserProfile = {
           id: data.id,
           email: data.email,
           display_name: data.display_name,
           is_admin: data.is_admin,
           super_admin: data.super_admin,
           avatar: data.avatar,
-          cargo_id: data.cargo_id
-        });
+          cargo_id: data.cargo_id,
+          interesses: data.interesses
+        };
+        
+        console.log('Perfil de usuário carregado:', profile);
+        setUserProfile(profile);
       }
     } catch (error) {
       console.error('Erro ao buscar perfil:', error);
@@ -91,11 +113,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithOtp({ email });
+      const { error } = await supabase.auth.signInWithOtp({ 
+        email,
+        options: {
+          emailRedirectTo: window.location.origin
+        }
+      });
+      
       if (error) throw error;
-      alert('Verifique seu email para o link de login.');
+      toast.success('Verifique seu email para o link de login.');
     } catch (error: any) {
-      alert(error.error_description || error.message);
+      console.error('Erro no login:', error);
+      toast.error(error.error_description || error.message || 'Falha ao fazer login');
     } finally {
       setLoading(false);
     }
@@ -105,12 +134,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       await supabase.auth.signOut();
+      
+      // Limpar todos os estados relacionados ao usuário
       setUser(null);
       setSession(null);
       setUserProfile(null);
+      
+      // Redirecionar para a página inicial
       navigate('/');
-    } catch (error) {
+      toast.success('Você saiu da sua conta');
+    } catch (error: any) {
       console.error('Erro ao fazer logout:', error);
+      toast.error('Erro ao fazer logout: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -132,55 +167,69 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             display_name: displayName,
             interests: metadata?.interests || [],
           },
+          emailRedirectTo: window.location.origin
         },
       });
 
       if (error) throw error;
 
       if (data.user) {
-        await supabase
+        const { error: profileError } = await supabase
           .from('profiles')
           .update({ 
             display_name: displayName,
             interesses: metadata?.interests || []
           })
           .eq('id', data.user.id);
+          
+        if (profileError) {
+          console.error('Erro ao atualizar perfil:', profileError);
+        }
       }
 
-      alert('Verifique seu email para confirmar o cadastro.');
+      toast.success('Verifique seu email para confirmar o cadastro.');
     } catch (error: any) {
-      alert(error.error_description || error.message);
+      console.error('Erro no cadastro:', error);
+      toast.error(error.error_description || error.message || 'Falha no cadastro');
     } finally {
       setLoading(false);
     }
   };
 
   const updateUserProfile = async (userData: Partial<UserProfile>) => {
-    setUserProfile(prev => ({
+    setUserProfile(prev => prev ? ({
       ...prev,
       ...userData,
-    }));
+    }) : null);
   };
 
   const updateUserData = async (userData: Partial<UserProfile>) => {
-    if (user) {
-      try {
-        const { error } = await supabase
-          .from('profiles')
-          .update(userData)
-          .eq('id', user.id);
+    if (!user) {
+      toast.error('Nenhum usuário logado');
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update(userData)
+        .eq('id', user.id);
 
-        if (error) {
-          console.error('Erro ao atualizar dados do usuário:', error);
-        }
-
-        setUserProfile(prevProfile => ({
-          ...prevProfile,
-          ...userData,
-        }));
-      } catch (error) {
-        console.error('Error updating user data:', error);
+      if (error) {
+        console.error('Erro ao atualizar dados do usuário:', error);
+        toast.error('Erro ao atualizar dados: ' + error.message);
+        return;
       }
+
+      setUserProfile(prevProfile => prevProfile ? ({
+        ...prevProfile,
+        ...userData,
+      }) : null);
+      
+      toast.success('Perfil atualizado com sucesso');
+    } catch (error: any) {
+      console.error('Erro ao atualizar dados do usuário:', error);
+      toast.error('Erro ao atualizar dados: ' + error.message);
     }
   };
 
