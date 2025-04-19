@@ -60,9 +60,15 @@ export const IntegrationManagement: React.FC = () => {
     try {
       console.log("Saving integration info for company:", selectedCompany.nome);
       
+      // Convert valores array to JSON string before sending to database
+      const dataToSave = {
+        ...formData,
+        valores: Array.isArray(formData.valores) ? JSON.stringify(formData.valores) : formData.valores
+      };
+      
       const { error } = await supabase
         .from('empresas')
-        .update(formData)
+        .update(dataToSave)
         .eq('id', selectedCompany.id);
         
       if (error) throw error;
@@ -70,7 +76,8 @@ export const IntegrationManagement: React.FC = () => {
       // Atualizar o objeto da empresa selecionada localmente
       setSelectedCompany({
         ...selectedCompany,
-        ...formData
+        ...formData,
+        valores: dataToSave.valores // Use the JSON string version
       });
       
       toast.success("Informações de integração atualizadas com sucesso");

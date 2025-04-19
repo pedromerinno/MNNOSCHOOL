@@ -6,7 +6,7 @@ import { Star, Users, TrendingUp, Pen, Target, PlayCircle, Sparkles } from "luci
 import { VideoPlayer } from './video-playlist/VideoPlayer';
 
 interface CultureManualProps {
-  companyValues: string;
+  companyValues: any;
   companyMission: string;
   companyHistory: string;
   companyColor: string;
@@ -24,7 +24,10 @@ export const CultureManual: React.FC<CultureManualProps> = ({
 }) => {
   const [accepted, setAccepted] = useState(false);
   
-  const values = companyValues ? JSON.parse(companyValues) : [];
+  // Handle values that might be a string or already an object
+  const values = typeof companyValues === 'string' 
+    ? (companyValues ? JSON.parse(companyValues) : []) 
+    : (companyValues || []);
 
   return (
     <div className="space-y-12">

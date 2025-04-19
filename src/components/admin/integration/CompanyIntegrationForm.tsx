@@ -23,6 +23,11 @@ export const CompanyIntegrationForm: React.FC<CompanyIntegrationFormProps> = ({
   onSubmit,
   isSaving
 }) => {
+  // Parse valores from string to array if it exists, otherwise use empty array
+  const initialValores = company.valores ? 
+    (typeof company.valores === 'string' ? JSON.parse(company.valores) : company.valores) : 
+    [];
+
   const form = useForm<IntegrationFormValues>({
     resolver: zodResolver(integrationFormSchema),
     defaultValues: {
@@ -30,7 +35,7 @@ export const CompanyIntegrationForm: React.FC<CompanyIntegrationFormProps> = ({
       logo: company.logo || "",
       historia: company.historia || "",
       missao: company.missao || "",
-      valores: company.valores ? JSON.parse(company.valores) : [],
+      valores: initialValores,
       frase_institucional: company.frase_institucional || "",
       cor_principal: company.cor_principal || "#1EAEDB"
     }
