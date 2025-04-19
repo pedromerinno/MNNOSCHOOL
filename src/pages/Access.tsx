@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,25 +18,21 @@ const Access = () => {
   const [hasPermission, setHasPermission] = useState(true);
   const [requestInProgress, setRequestInProgress] = useState(false);
   
-  // Add ref to track last selected company to prevent duplicate fetches
   const lastSelectedCompanyIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const fetchAccessItems = async () => {
-      // Skip if no company or user is selected
       if (!selectedCompany || !user) {
         setAccessItems([]);
         setIsLoading(false);
         return;
       }
       
-      // Skip if this is the same company we already fetched for
       if (lastSelectedCompanyIdRef.current === selectedCompany.id) {
         console.log('Already fetched data for this company, skipping duplicate fetch');
         return;
       }
 
-      // Prevent duplicate requests for the same operation
       if (requestInProgress) {
         console.log('Request already in progress, skipping duplicate fetch');
         return;
@@ -50,7 +45,6 @@ const Access = () => {
       try {
         console.log('Fetching access items for company:', selectedCompany.id, 'User ID:', user.id);
         
-        // Buscar os itens de acesso diretamente - a política RLS cuidará das permissões
         const { data, error } = await supabase
           .from('company_access')
           .select('*')
@@ -58,8 +52,6 @@ const Access = () => {
           .order('tool_name');
         
         if (error) {
-          // Se for um erro de permissão (violating row-level security), isso significa
-          // que o usuário não tem permissão para ver os dados desta empresa
           if (error.code === '42501' || error.message.includes('policy')) {
             console.log('Acesso negado pela política RLS:', error.message);
             setHasPermission(false);
@@ -71,7 +63,6 @@ const Access = () => {
         } else {
           console.log('Itens de acesso encontrados:', data?.length);
           setAccessItems(data as AccessItem[] || []);
-          // Store the current company ID to prevent duplicate fetches
           lastSelectedCompanyIdRef.current = selectedCompany.id;
         }
       } catch (error: any) {
@@ -86,7 +77,6 @@ const Access = () => {
 
     fetchAccessItems();
     
-    // Clean-up function to reset the requestInProgress if component unmounts mid-request
     return () => {
       if (requestInProgress) {
         setRequestInProgress(false);
@@ -138,14 +128,14 @@ const Access = () => {
 
   return (
     <PageLayout title="Acessos">
-      <div className="bg-white dark:bg-card rounded-xl shadow-sm p-8 mb-6">
+      <div className="bg-white dark:bg-card rounded-xl shadow-sm p-6 mb-6">
         <p className="text-gray-700 dark:text-gray-300 text-base leading-relaxed">
           Aqui estão todos os acessos às ferramentas e plataformas utilizadas pela empresa {selectedCompany?.nome}. 
           Clique em um card para visualizar as informações completas.
         </p>
       </div>
         
-      <div className="bg-white dark:bg-card rounded-xl shadow-sm p-8">
+      <div className="bg-white dark:bg-card rounded-xl shadow-sm p-6">
         <AccessList 
           items={accessItems}
           onSelectAccess={openAccessDetails}
@@ -164,4 +154,3 @@ const Access = () => {
 };
 
 export default Access;
-
