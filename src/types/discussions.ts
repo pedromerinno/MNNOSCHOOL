@@ -7,7 +7,7 @@ export interface Discussion {
   company_id: string;
   created_at: string;
   updated_at: string;
-  image_url?: string | null;
+  image_url: string | null;
   profiles?: {
     display_name: string | null;
     avatar: string | null;
