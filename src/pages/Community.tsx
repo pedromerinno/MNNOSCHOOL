@@ -58,46 +58,66 @@ const Community = () => {
       <div className="">
         <div className="flex flex-col gap-4 mb-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div className="relative w-full md:w-auto md:flex-1">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-              <Input
-                type="text"
-                placeholder="Buscar discussões..."
-                className="pl-9 w-full"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+            <div className="relative flex-1 max-w-lg">
+              <div className="relative">
+                <Input
+                  type="text"
+                  placeholder="Buscar discussões..."
+                  className="pl-10 w-full bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-full h-11"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              </div>
             </div>
-            <Button onClick={() => setIsDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
+            <Button 
+              onClick={() => setIsDialogOpen(true)}
+              className="rounded-full h-11 px-6 gap-2 bg-primary hover:bg-primary/90"
+            >
+              <Plus className="h-5 w-5" />
               Nova Discussão
             </Button>
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex gap-2 bg-muted p-1.5 rounded-2xl w-fit">
             <Button 
-              variant={statusFilter === 'all' ? "default" : "outline"}
+              variant={statusFilter === 'all' ? "default" : "ghost"}
               className={`rounded-xl py-4 px-6 transition-colors ${
-                statusFilter === 'all' ? `bg-[${companyColor}10]` : ''
+                statusFilter === 'all' ? `bg-background` : ''
               }`}
+              style={{
+                backgroundColor: statusFilter === 'all' ? `${companyColor}10` : undefined,
+                borderColor: statusFilter === 'all' ? companyColor : undefined,
+                color: statusFilter === 'all' ? companyColor : undefined
+              }}
               onClick={() => setStatusFilter('all')}
             >
               Todas
             </Button>
             <Button 
-              variant={statusFilter === 'open' ? "default" : "outline"}
+              variant={statusFilter === 'open' ? "default" : "ghost"}
               className={`rounded-xl py-4 px-6 transition-colors ${
-                statusFilter === 'open' ? `bg-[${companyColor}10]` : ''
+                statusFilter === 'open' ? `bg-background` : ''
               }`}
+              style={{
+                backgroundColor: statusFilter === 'open' ? `${companyColor}10` : undefined,
+                borderColor: statusFilter === 'open' ? companyColor : undefined,
+                color: statusFilter === 'open' ? companyColor : undefined
+              }}
               onClick={() => setStatusFilter('open')}
             >
               Abertas
             </Button>
             <Button 
-              variant={statusFilter === 'closed' ? "default" : "outline"}
+              variant={statusFilter === 'closed' ? "default" : "ghost"}
               className={`rounded-xl py-4 px-6 transition-colors ${
-                statusFilter === 'closed' ? `bg-[${companyColor}10]` : ''
+                statusFilter === 'closed' ? `bg-background` : ''
               }`}
+              style={{
+                backgroundColor: statusFilter === 'closed' ? `${companyColor}10` : undefined,
+                borderColor: statusFilter === 'closed' ? companyColor : undefined,
+                color: statusFilter === 'closed' ? companyColor : undefined
+              }}
               onClick={() => setStatusFilter('closed')}
             >
               Concluídas
@@ -157,4 +177,3 @@ const Community = () => {
 };
 
 export default Community;
-
