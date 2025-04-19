@@ -54,7 +54,6 @@ const Documents = () => {
     }
   };
 
-  // Wrapper function to adapt handleUpload to match the expected return type
   const handleDocumentUpload = async (file: File, documentType: DocumentType, description: string): Promise<boolean> => {
     return await handleUpload(file, documentType, description);
   };
@@ -62,35 +61,68 @@ const Documents = () => {
   return (
     <PageLayout title="Documentos">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full sm:w-auto">
-          <TabsTrigger value="company" className="flex items-center">
-            <FolderOpen className="h-4 w-4 mr-2" />
+        <TabsList className="grid grid-cols-2 w-full rounded-2xl p-1.5 bg-transparent dark:bg-transparent gap-2">
+          <TabsTrigger 
+            value="company" 
+            className="flex items-center gap-2 rounded-xl py-4 px-6 transition-colors"
+            style={{
+              backgroundColor: activeTab === "company" ? `${selectedCompany?.cor_principal}10` : undefined,
+              borderColor: activeTab === "company" ? selectedCompany?.cor_principal : undefined,
+              color: activeTab === "company" ? selectedCompany?.cor_principal : undefined
+            }}
+          >
+            <FolderOpen className="h-4 w-4" />
             Documentos da Empresa
           </TabsTrigger>
-          <TabsTrigger value="personal" className="flex items-center">
-            <File className="h-4 w-4 mr-2" />
+          <TabsTrigger 
+            value="personal" 
+            className="flex items-center gap-2 rounded-xl py-4 px-6 transition-colors"
+            style={{
+              backgroundColor: activeTab === "personal" ? `${selectedCompany?.cor_principal}10` : undefined,
+              borderColor: activeTab === "personal" ? selectedCompany?.cor_principal : undefined,
+              color: activeTab === "personal" ? selectedCompany?.cor_principal : undefined
+            }}
+          >
+            <File className="h-4 w-4" />
             Meus Documentos
           </TabsTrigger>
         </TabsList>
         
-        <Separator className="my-6" />
-        
-        <TabsContent value="personal" className="mt-6">
-          <DocumentUploadForm
-            open={uploadOpen}
-            onOpenChange={setUploadOpen}
-            onUpload={handleDocumentUpload}
-            isUploading={isUploading}
-          />
+        <div className="mt-10 mb-16 space-y-8">
+          <TabsContent value="company" className="m-0">
+            <DocumentUploadForm
+              open={uploadOpen}
+              onOpenChange={setUploadOpen}
+              onUpload={handleDocumentUpload}
+              isUploading={isUploading}
+            />
+            
+            <DocumentList
+              documents={documents}
+              onDownload={downloadDocument}
+              onPreview={handlePreview}
+              onDelete={handleDelete}
+              canDeleteDocument={canDeleteDocument}
+            />
+          </TabsContent>
           
-          <DocumentList
-            documents={documents}
-            onDownload={downloadDocument}
-            onPreview={handlePreview}
-            onDelete={handleDelete}
-            canDeleteDocument={canDeleteDocument}
-          />
-        </TabsContent>
+          <TabsContent value="personal" className="m-0">
+            <DocumentUploadForm
+              open={uploadOpen}
+              onOpenChange={setUploadOpen}
+              onUpload={handleDocumentUpload}
+              isUploading={isUploading}
+            />
+            
+            <DocumentList
+              documents={documents}
+              onDownload={downloadDocument}
+              onPreview={handlePreview}
+              onDelete={handleDelete}
+              canDeleteDocument={canDeleteDocument}
+            />
+          </TabsContent>
+        </div>
       </Tabs>
 
       <DocumentPreview
