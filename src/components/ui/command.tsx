@@ -30,8 +30,11 @@ const CommandDialog = ({ children, className, ...props }: CommandDialogProps) =>
   return (
     <Dialog {...props}>
       <DialogContent 
-        className={cn("overflow-hidden p-0 shadow-lg", 
-          className === "search-dialog-position" ? "top-[25%] transform-none translate-y-0" : "",
+        className={cn(
+          "overflow-hidden p-0 shadow-lg", 
+          className === "search-dialog-position" 
+            ? "top-[25%] left-[50%] transform -translate-x-1/2 -translate-y-0 w-[95%] max-w-xl" 
+            : "",
           className
         )}
       >
