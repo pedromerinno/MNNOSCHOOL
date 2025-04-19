@@ -87,7 +87,7 @@ export const useDiscussions = () => {
             content: reply.content,
             created_at: reply.created_at,
             author_id: reply.author_id,
-            image_url: reply.image_url,
+            image_url: reply.image_url || null,
             profiles: replyAuthorProfile
           };
         });
