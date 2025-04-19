@@ -20,8 +20,8 @@ export const DashboardLayout = ({ children, fullWidth = false }: DashboardLayout
           {children}
         </div>
       </main>
-      <footer className="py-12 text-center text-sm text-gray-500">
-        <div className="container mx-auto px-4">
+      <footer className="py-16 text-center text-sm text-gray-500">
+        <div className="container mx-auto px-8">
           © {currentYear} {selectedCompany?.nome || "merinno"}. Todos os direitos reservados.
         </div>
       </footer>
