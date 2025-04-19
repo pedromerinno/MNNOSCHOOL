@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { CourseCarousel } from "@/components/courses/CourseCarousel";
@@ -17,6 +16,13 @@ const Courses = () => {
     companyColor
   } = useCoursesPage();
 
+  const [activeCategory, setActiveCategory] = useState("all");
+
+  const filteredCourses = allCompanyCourses?.filter(course => {
+    if (activeCategory === "all") return true;
+    return course.tags?.includes(activeCategory);
+  });
+
   return (
     <DashboardLayout>
       <div className="container mx-auto max-w-screen-2xl space-y-12 px-4 py-6">
@@ -27,7 +33,13 @@ const Courses = () => {
         />
         
         {/* Categories - Right after the carousel */}
-        <CourseCategories />
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">Categorias</h2>
+          <CourseCategories 
+            activeCategory={activeCategory}
+            onCategoryChange={setActiveCategory}
+          />
+        </div>
         
         {/* All Company Courses */}
         <div className="space-y-8">
@@ -43,17 +55,17 @@ const Courses = () => {
                   </div>
                 ))}
               </div>
-            ) : allCompanyCourses?.length === 0 ? (
+            ) : filteredCourses?.length === 0 ? (
               // Empty state
               <div className="py-12 text-center">
                 <p className="text-gray-500 dark:text-gray-400">
-                  Nenhum curso disponível para esta empresa.
+                  Nenhum curso disponível para esta categoria.
                 </p>
               </div>
             ) : (
               // Courses grid
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {allCompanyCourses?.map((course) => (
+                {filteredCourses?.map((course) => (
                   <div 
                     key={course.id} 
                     className="group relative aspect-[4/3] rounded-lg overflow-hidden cursor-pointer"
