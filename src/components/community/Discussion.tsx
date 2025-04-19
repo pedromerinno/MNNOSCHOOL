@@ -20,7 +20,7 @@ export const Discussion: React.FC<DiscussionProps> = ({
 }) => {
   const { userProfile } = useAuth();
   const isAdmin = userProfile?.isAdmin === true;
-  const isAuthor = discussion.author_id === userProfile?.id;
+  const isAuthor = userProfile && discussion.author_id === userProfile.id;
 
   const participantsCount = new Set(
     discussion.discussion_replies.map((reply) => reply.author_id)

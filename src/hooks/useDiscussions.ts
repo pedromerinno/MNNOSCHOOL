@@ -4,9 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCompanies } from '@/hooks/useCompanies';
 import { toast } from "sonner";
 import { Discussion, DiscussionReply } from '@/types/discussions';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useDiscussions = () => {
   const { selectedCompany } = useCompanies();
+  const { user } = useAuth();
   const [discussions, setDiscussions] = useState<Discussion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -38,7 +40,7 @@ export const useDiscussions = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setDiscussions(data || []);
+      setDiscussions(data as Discussion[] || []);
     } catch (error) {
       console.error('Error fetching discussions:', error);
       toast.error('Erro ao carregar discussões');
@@ -48,7 +50,7 @@ export const useDiscussions = () => {
   };
 
   const createDiscussion = async (title: string, content: string) => {
-    if (!selectedCompany?.id) {
+    if (!selectedCompany?.id || !user?.id) {
       toast.error('Nenhuma empresa selecionada');
       return;
     }
@@ -60,7 +62,8 @@ export const useDiscussions = () => {
           {
             title,
             content,
-            company_id: selectedCompany.id
+            company_id: selectedCompany.id,
+            author_id: user.id
           }
         ])
         .select()
@@ -95,13 +98,19 @@ export const useDiscussions = () => {
   };
 
   const addReply = async (discussionId: string, content: string) => {
+    if (!user?.id) {
+      toast.error('Você precisa estar logado para responder');
+      return;
+    }
+    
     try {
       const { error } = await supabase
         .from('discussion_replies')
         .insert([
           {
             discussion_id: discussionId,
-            content
+            content,
+            author_id: user.id
           }
         ]);
 

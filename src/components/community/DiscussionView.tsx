@@ -65,7 +65,7 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
             <div className="space-y-4">
               {discussion.discussion_replies.map((reply) => (
                 <div key={reply.id} className="relative bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                  {(isAdmin || reply.author_id === userProfile?.id) && (
+                  {(isAdmin || (userProfile && reply.author_id === userProfile.id)) && (
                     <Button
                       variant="ghost"
                       size="sm"
