@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, PlayCircle, BriefcaseBusiness } from "lucide-react";
@@ -31,10 +30,10 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
         onValueChange={setActiveTab}
         className="w-full"
       >
-        <TabsList className="grid grid-cols-3 w-full">
+        <TabsList className="grid grid-cols-3 w-full rounded-2xl p-1.5">
           <TabsTrigger 
             value="culture"
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 rounded-xl py-4 px-6"
             style={{
               borderColor: activeTab === "culture" ? companyColor : undefined,
               color: activeTab === "culture" ? companyColor : undefined
@@ -45,7 +44,7 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
           </TabsTrigger>
           <TabsTrigger 
             value="videos"
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 rounded-xl py-4 px-6"
             style={{
               borderColor: activeTab === "videos" ? companyColor : undefined,
               color: activeTab === "videos" ? companyColor : undefined
@@ -56,7 +55,7 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
           </TabsTrigger>
           <TabsTrigger 
             value="role"
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 rounded-xl py-4 px-6"
             style={{
               borderColor: activeTab === "role" ? companyColor : undefined,
               color: activeTab === "role" ? companyColor : undefined
@@ -112,4 +111,3 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
     </div>
   );
 };
-
