@@ -2,42 +2,36 @@
 import { Search } from "lucide-react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { cn } from "@/lib/utils";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { fetchCourses } from "@/services/courseService";
 import { DialogTitle } from "@/components/ui/dialog";
+
+// Definir um tipo para os cursos
+interface Course {
+  id: string;
+  title: string;
+  image_url?: string;
+  tags?: string[];
+}
 
 export const SearchBar = () => {
   const { selectedCompany } = useCompanies();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [open, setOpen] = useState(false);
-  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
-  const [courses, setCourses] = useState<any[]>([]);
   
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      setOpen(false);
-      navigate(`/courses?search=${encodeURIComponent(searchQuery)}`);
-    }
-  };
-  
-  const handleSelect = (courseId: string) => {
-    setOpen(false);
-    navigate(`/courses/${courseId}`);
-  };
-
-  // Fetch all courses once when component mounts or company changes
+  // Carregar cursos quando o componente montar ou a empresa mudar
   useEffect(() => {
-    const loadAllCourses = async () => {
+    const loadCourses = async () => {
       if (!selectedCompany?.id) return;
       
       try {
-        console.log("Fetching courses for company:", selectedCompany.id);
         setLoading(true);
+        console.log("Fetching courses for company:", selectedCompany.id);
         const allCourses = await fetchCourses(selectedCompany.id);
         console.log("Loaded", allCourses.length, "courses for company", selectedCompany.id);
         setCourses(allCourses);
@@ -48,68 +42,45 @@ export const SearchBar = () => {
       }
     };
     
-    loadAllCourses();
+    loadCourses();
   }, [selectedCompany?.id]);
 
-  // This function filters the already loaded courses
-  const performSearch = useCallback(() => {
-    if (!searchQuery.trim()) {
-      setSuggestions([]);
-      return;
-    }
+  // Filtrar cursos baseado na consulta de pesquisa (usando useMemo para performance)
+  const filteredCourses = useMemo(() => {
+    if (!searchQuery.trim()) return [];
     
-    setLoading(true);
-    
-    try {
-      console.log("Filtering courses for:", searchQuery, "from", courses.length, "courses");
-      
-      // Filter courses based on search query
-      const filteredCourses = courses.filter(course => 
-        course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (course.tags && course.tags.some(tag => 
-          tag.toLowerCase().includes(searchQuery.toLowerCase())
-        ))
-      ).slice(0, 5); // Limit to 5 suggestions
-      
-      console.log("Found courses:", filteredCourses.length, "matching courses");
-      setSuggestions(filteredCourses);
-    } catch (error) {
-      console.error("Error filtering courses:", error);
-      setSuggestions([]);
-    } finally {
-      setLoading(false);
-    }
+    const query = searchQuery.toLowerCase();
+    return courses.filter(course => 
+      course.title.toLowerCase().includes(query) ||
+      (course.tags && course.tags.some(tag => tag.toLowerCase().includes(query)))
+    ).slice(0, 5); // Limitando a 5 resultados para melhor performance
   }, [searchQuery, courses]);
 
-  // Handle input change from either search input
-  const handleInputChange = (value: string) => {
-    console.log("Input changed to:", value);
-    setSearchQuery(value);
+  // Navegar para a página do curso quando um resultado for selecionado
+  const handleSelect = (courseId: string) => {
+    setOpen(false);
+    navigate(`/courses/${courseId}`);
   };
 
-  // This useEffect will run the search whenever searchQuery changes
-  useEffect(() => {
-    console.log("Search query changed, running search for:", searchQuery);
-    // Force the search to run with a small timeout to ensure UI updates
-    const timer = setTimeout(() => {
-      performSearch();
-    }, 100);
-    
-    return () => clearTimeout(timer);
-  }, [searchQuery, performSearch]);
-
-  // This effect runs when dialog opens to ensure search is performed
-  useEffect(() => {
-    if (open && searchQuery.trim()) {
-      console.log("Dialog opened, forcing search to run");
-      performSearch();
+  // Enviar o formulário de pesquisa (quando o usuário pressionar Enter)
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      setOpen(false);
+      navigate(`/courses?search=${encodeURIComponent(searchQuery)}`);
     }
-  }, [open, searchQuery, performSearch]);
+  };
+
+  // Atualizar a consulta de pesquisa quando o usuário digitar
+  const handleInputChange = (value: string) => {
+    setSearchQuery(value);
+  };
 
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
   
   return (
     <>
+      {/* Campo de pesquisa visível na interface */}
       <div className="relative w-64">
         <div 
           className={cn(
@@ -132,15 +103,10 @@ export const SearchBar = () => {
         </div>
       </div>
 
+      {/* Dialog de pesquisa que aparece quando o usuário clica no campo */}
       <CommandDialog 
         open={open} 
-        onOpenChange={(newOpen) => {
-          setOpen(newOpen);
-          // Force search to run when dialog opens
-          if (newOpen && searchQuery.trim()) {
-            performSearch();
-          }
-        }}
+        onOpenChange={setOpen}
         className="search-dialog-position"
       >
         <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-lg">
@@ -149,15 +115,13 @@ export const SearchBar = () => {
               <DialogTitle className="sr-only">Pesquisar cursos</DialogTitle>
               <CommandInput 
                 value={searchQuery}
-                onValueChange={(value) => {
-                  handleInputChange(value);
-                  console.log("Command input changed to:", value);
-                }}
+                onValueChange={handleInputChange}
                 placeholder="Digite para pesquisar cursos..."
                 className="border-b border-gray-200 dark:border-gray-700"
+                autoFocus
               />
               <CommandList className="max-h-[300px] overflow-y-auto">
-                {loading ? (
+                {loading && !filteredCourses.length ? (
                   <div className="py-6 text-center text-sm text-gray-500">
                     Buscando cursos...
                   </div>
@@ -165,11 +129,11 @@ export const SearchBar = () => {
                   <div className="py-6 text-center text-sm text-gray-500">
                     Digite para pesquisar cursos
                   </div>
-                ) : searchQuery && suggestions.length === 0 ? (
+                ) : filteredCourses.length === 0 ? (
                   <CommandEmpty>Nenhum curso encontrado.</CommandEmpty>
-                ) : suggestions.length > 0 ? (
+                ) : (
                   <CommandGroup heading="Cursos sugeridos">
-                    {suggestions.map((course) => (
+                    {filteredCourses.map((course) => (
                       <CommandItem
                         key={course.id}
                         onSelect={() => handleSelect(course.id)}
@@ -199,7 +163,7 @@ export const SearchBar = () => {
                       </CommandItem>
                     ))}
                   </CommandGroup>
-                ) : null}
+                )}
               </CommandList>
             </div>
           </Command>
