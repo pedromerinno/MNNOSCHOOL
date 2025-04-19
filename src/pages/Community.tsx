@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageSquare, Users, ExternalLink, Plus, Search, Trash2 } from "lucide-react";
@@ -14,6 +13,7 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import { PageLayout } from "@/components/layout/PageLayout";
 
 // Mock data for discussions - in a real app, this would come from Supabase
 const mockDiscussions = [
@@ -240,133 +240,129 @@ const Community = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6 dark:text-white">Comunidade</h1>
-        
-        <div className="grid md:grid-cols-3 gap-8">
-          <div className="md:col-span-2">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
-              <div className="relative w-full md:w-auto md:flex-1">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                <Input
-                  type="text"
-                  placeholder="Buscar discussões..."
-                  className="pl-9 w-full"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+    <PageLayout title="Comunidade">
+      <div className="grid md:grid-cols-3 gap-8">
+        <div className="md:col-span-2">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+            <div className="relative w-full md:w-auto md:flex-1">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+              <Input
+                type="text"
+                placeholder="Buscar discussões..."
+                className="pl-9 w-full"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="whitespace-nowrap">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nova Discussão
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle>Criar nova discussão</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 mt-4">
+                  <div className="space-y-2">
+                    <label htmlFor="title" className="text-sm font-medium">Título da discussão</label>
+                    <Input
+                      id="title"
+                      value={newDiscussionTitle}
+                      onChange={(e) => setNewDiscussionTitle(e.target.value)}
+                      placeholder="Ex: Dicas para novos integrantes"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="content" className="text-sm font-medium">Conteúdo</label>
+                    <Textarea
+                      id="content"
+                      value={newDiscussionContent}
+                      onChange={(e) => setNewDiscussionContent(e.target.value)}
+                      placeholder="Descreva sua discussão com detalhes..."
+                      rows={5}
+                    />
+                  </div>
+                </div>
+                <DialogFooter className="mt-4">
+                  <DialogClose asChild>
+                    <Button variant="outline">Cancelar</Button>
+                  </DialogClose>
+                  <Button onClick={handleCreateDiscussion}>Criar discussão</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+          
+          {filteredDiscussions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <MessageSquare className="h-12 w-12 text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium mb-2">Nenhuma discussão encontrada</h3>
+              <p className="text-sm text-gray-500 mb-4 max-w-md">
+                {searchQuery 
+                  ? "Tente uma busca diferente ou crie uma nova discussão."
+                  : "Seja o primeiro a iniciar uma conversa na comunidade!"}
+              </p>
+              <Dialog>
                 <DialogTrigger asChild>
-                  <Button className="whitespace-nowrap">
+                  <Button>
                     <Plus className="h-4 w-4 mr-2" />
                     Nova Discussão
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[500px]">
-                  <DialogHeader>
-                    <DialogTitle>Criar nova discussão</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 mt-4">
-                    <div className="space-y-2">
-                      <label htmlFor="title" className="text-sm font-medium">Título da discussão</label>
-                      <Input
-                        id="title"
-                        value={newDiscussionTitle}
-                        onChange={(e) => setNewDiscussionTitle(e.target.value)}
-                        placeholder="Ex: Dicas para novos integrantes"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label htmlFor="content" className="text-sm font-medium">Conteúdo</label>
-                      <Textarea
-                        id="content"
-                        value={newDiscussionContent}
-                        onChange={(e) => setNewDiscussionContent(e.target.value)}
-                        placeholder="Descreva sua discussão com detalhes..."
-                        rows={5}
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter className="mt-4">
-                    <DialogClose asChild>
-                      <Button variant="outline">Cancelar</Button>
-                    </DialogClose>
-                    <Button onClick={handleCreateDiscussion}>Criar discussão</Button>
-                  </DialogFooter>
-                </DialogContent>
+                <DialogContent>{/* Content will be same as above */}</DialogContent>
               </Dialog>
             </div>
-            
-            {filteredDiscussions.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <MessageSquare className="h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium mb-2">Nenhuma discussão encontrada</h3>
-                <p className="text-sm text-gray-500 mb-4 max-w-md">
-                  {searchQuery 
-                    ? "Tente uma busca diferente ou crie uma nova discussão."
-                    : "Seja o primeiro a iniciar uma conversa na comunidade!"}
-                </p>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Nova Discussão
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>{/* Content will be same as above */}</DialogContent>
-                </Dialog>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {filteredDiscussions.map((discussion) => (
-                  <ContextMenu key={discussion.id}>
-                    <ContextMenuTrigger>
-                      <Card className="hover:shadow-md transition-shadow">
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-center">
-                            <h3 className="font-medium text-lg dark:text-white">{discussion.title}</h3>
-                            <div className="flex items-center gap-2">
-                              {isAdmin && (
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteDiscussion(discussion.id);
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              )}
+          ) : (
+            <div className="space-y-4">
+              {filteredDiscussions.map((discussion) => (
+                <ContextMenu key={discussion.id}>
+                  <ContextMenuTrigger>
+                    <Card className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-center">
+                          <h3 className="font-medium text-lg dark:text-white">{discussion.title}</h3>
+                          <div className="flex items-center gap-2">
+                            {isAdmin && (
                               <Button 
                                 variant="ghost" 
                                 size="sm"
-                                onClick={() => handleViewDiscussion(discussion)}
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteDiscussion(discussion.id);
+                                }}
                               >
-                                Ver
+                                <Trash2 className="h-4 w-4" />
                               </Button>
-                            </div>
+                            )}
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleViewDiscussion(discussion)}
+                            >
+                              Ver
+                            </Button>
                           </div>
-                          <p className="text-gray-600 dark:text-gray-300 text-sm mt-2 line-clamp-2">
-                            {discussion.content}
-                          </p>
-                          <div className="flex items-center mt-3 text-xs text-gray-500">
-                            <span className="mr-2">por {discussion.author}</span>
-                            <span className="mx-2">•</span>
-                            <span>{new Date(discussion.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <p className="text-gray-600 dark:text-gray-300 text-sm mt-2 line-clamp-2">
+                          {discussion.content}
+                        </p>
+                        <div className="flex items-center mt-3 text-xs text-gray-500">
+                          <span className="mr-2">por {discussion.author}</span>
+                          <span className="mx-2">•</span>
+                          <span>{new Date(discussion.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex mt-3 text-sm text-gray-500">
+                          <div className="flex items-center mr-4">
+                            <MessageSquare className="h-4 w-4 mr-1" />
+                            <span>{discussion.replies} respostas</span>
                           </div>
-                          <div className="flex mt-3 text-sm text-gray-500">
-                            <div className="flex items-center mr-4">
-                              <MessageSquare className="h-4 w-4 mr-1" />
-                              <span>{discussion.replies} respostas</span>
-                            </div>
-                            <div className="flex items-center">
-                              <Users className="h-4 w-4 mr-1" />
-                              <span>{discussion.participants} participantes</span>
-                            </div>
+                          <div className="flex items-center">
+                            <Users className="h-4 w-4 mr-1" />
+                            <span>{discussion.participants} participantes</span>
                           </div>
                         </CardContent>
                       </Card>
@@ -460,78 +456,77 @@ const Community = () => {
             </Card>
           </div>
         </div>
-      </main>
 
-      {/* View Discussion Dialog */}
-      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="sm:max-w-[700px]">
-          {selectedDiscussion && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="text-xl">{selectedDiscussion.title}</DialogTitle>
-                <div className="flex items-center text-sm text-gray-500 mt-2">
-                  <span className="mr-2">por {selectedDiscussion.author}</span>
-                  <span className="mx-2">•</span>
-                  <span>{new Date(selectedDiscussion.createdAt).toLocaleDateString()}</span>
-                </div>
-              </DialogHeader>
-              <div className="mt-4">
-                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                  {selectedDiscussion.content}
-                </p>
-              </div>
-              <div className="mt-6 pt-6 border-t">
-                <h4 className="font-medium mb-4">Respostas ({selectedDiscussion.replies})</h4>
-                {selectedDiscussion.replyList.length === 0 ? (
-                  <div className="text-center py-6">
-                    <MessageSquare className="h-10 w-10 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-500">Ainda não há respostas para esta discussão.</p>
-                    <p className="text-gray-500 text-sm mt-1">Seja o primeiro a responder!</p>
+        {/* View Discussion Dialog */}
+        <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+          <DialogContent className="sm:max-w-[700px]">
+            {selectedDiscussion && (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="text-xl">{selectedDiscussion.title}</DialogTitle>
+                  <div className="flex items-center text-sm text-gray-500 mt-2">
+                    <span className="mr-2">por {selectedDiscussion.author}</span>
+                    <span className="mx-2">•</span>
+                    <span>{new Date(selectedDiscussion.createdAt).toLocaleDateString()}</span>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {selectedDiscussion.replyList.map((reply) => (
-                      <div key={reply.id} className="relative bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                        {isAdmin && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 p-1 h-auto"
-                            onClick={() => handleDeleteReply(selectedDiscussion.id, reply.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                        <div className="flex items-center text-sm text-gray-500 mb-2">
-                          <span className="font-medium text-gray-700 dark:text-gray-300">{reply.author}</span>
-                          <span className="mx-2">•</span>
-                          <span>{new Date(reply.createdAt).toLocaleDateString()}</span>
+                </DialogHeader>
+                <div className="mt-4">
+                  <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
+                    {selectedDiscussion.content}
+                  </p>
+                </div>
+                <div className="mt-6 pt-6 border-t">
+                  <h4 className="font-medium mb-4">Respostas ({selectedDiscussion.replies})</h4>
+                  {selectedDiscussion.replyList.length === 0 ? (
+                    <div className="text-center py-6">
+                      <MessageSquare className="h-10 w-10 text-gray-400 mx-auto mb-3" />
+                      <p className="text-gray-500">Ainda não há respostas para esta discussão.</p>
+                      <p className="text-gray-500 text-sm mt-1">Seja o primeiro a responder!</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {selectedDiscussion.replyList.map((reply) => (
+                        <div key={reply.id} className="relative bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                          {isAdmin && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 p-1 h-auto"
+                              onClick={() => handleDeleteReply(selectedDiscussion.id, reply.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <div className="flex items-center text-sm text-gray-500 mb-2">
+                            <span className="font-medium text-gray-700 dark:text-gray-300">{reply.author}</span>
+                            <span className="mx-2">•</span>
+                            <span>{new Date(reply.createdAt).toLocaleDateString()}</span>
+                          </div>
+                          <p className="text-gray-700 dark:text-gray-300 pr-6">{reply.content}</p>
                         </div>
-                        <p className="text-gray-700 dark:text-gray-300 pr-6">{reply.content}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div className="mt-4">
-                <Textarea 
-                  placeholder="Escreva sua resposta..." 
-                  className="w-full"
-                  rows={3}
-                  value={newReplyContent}
-                  onChange={(e) => setNewReplyContent(e.target.value)}
-                />
-                <div className="flex justify-end mt-2">
-                  <Button onClick={handleSubmitReply}>Responder</Button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
+                <div className="mt-4">
+                  <Textarea 
+                    placeholder="Escreva sua resposta..." 
+                    className="w-full"
+                    rows={3}
+                    value={newReplyContent}
+                    onChange={(e) => setNewReplyContent(e.target.value)}
+                  />
+                  <div className="flex justify-end mt-2">
+                    <Button onClick={handleSubmitReply}>Responder</Button>
+                  </div>
+                </div>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
+    </PageLayout>
   );
 };
 
 export default Community;
-

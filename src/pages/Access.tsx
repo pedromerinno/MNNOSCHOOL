@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +7,7 @@ import { AccessDetails } from "@/components/access/AccessDetails";
 import { LoadingState } from "@/components/access/LoadingState";
 import { EmptyState } from "@/components/access/EmptyState";
 import { AccessItem } from "@/components/access/types";
+import { PageLayout } from "@/components/layout/PageLayout";
 
 const Access = () => {
   const { selectedCompany, user } = useCompanies();
@@ -116,28 +116,25 @@ const Access = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6 dark:text-white">Acessos</h1>
-        <p className="text-gray-700 dark:text-gray-300 mb-6">
-          Aqui estão todos os acessos às ferramentas e plataformas utilizadas pela empresa {selectedCompany.nome}.
-          Clique em um card para visualizar as informações completas.
-        </p>
+    <PageLayout title="Acessos">
+      <p className="text-gray-700 dark:text-gray-300 mb-6">
+        Aqui estão todos os acessos às ferramentas e plataformas utilizadas pela empresa {selectedCompany?.nome}.
+        Clique em um card para visualizar as informações completas.
+      </p>
         
-        <AccessList 
-          items={accessItems}
-          onSelectAccess={openAccessDetails}
-          companyColor={selectedCompany.cor_principal}
-        />
+      <AccessList 
+        items={accessItems}
+        onSelectAccess={openAccessDetails}
+        companyColor={selectedCompany?.cor_principal}
+      />
 
-        <AccessDetails 
-          access={selectedAccess}
-          isOpen={isDialogOpen}
-          onClose={() => setIsDialogOpen(false)}
-          companyColor={selectedCompany.cor_principal}
-        />
-      </main>
-    </div>
+      <AccessDetails 
+        access={selectedAccess}
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        companyColor={selectedCompany?.cor_principal}
+      />
+    </PageLayout>
   );
 };
 

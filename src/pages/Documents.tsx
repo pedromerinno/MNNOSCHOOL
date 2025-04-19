@@ -1,7 +1,7 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Upload, Download, File, FolderOpen } from "lucide-react";
+import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -36,11 +36,8 @@ const Documents = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6 dark:text-white">Documentos</h1>
-        
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+    <PageLayout title="Documentos">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full sm:w-auto">
             <TabsTrigger value="company" className="flex items-center">
               <FolderOpen className="h-4 w-4 mr-2" />
@@ -169,8 +166,7 @@ const Documents = () => {
             </div>
           </TabsContent>
         </Tabs>
-      </main>
-    </div>
+    </PageLayout>
   );
 };
 
