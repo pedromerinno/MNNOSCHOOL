@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Info, List, Video } from "lucide-react";
@@ -93,8 +92,8 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
         <div>
           <VideoList 
             videos={videos}
-            mainVideo={mainVideo}
-            mainVideoDescription={mainVideoDescription}
+            mainVideo=""
+            mainVideoDescription=""
             isLoading={isLoading}
             selectedVideoIndex={selectedVideoIndex}
             onSelectVideo={handleSelectVideo}

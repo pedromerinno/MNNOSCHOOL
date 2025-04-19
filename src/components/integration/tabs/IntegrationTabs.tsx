@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, PlayCircle, BriefcaseBusiness } from "lucide-react";
@@ -70,7 +69,7 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
           </TabsTrigger>
         </TabsList>
 
-        <div className="mt-6 mb-16 space-y-6"> {/* Increased mb-12 to mb-16 for more spacing */}
+        <div className="mt-10 mb-16 space-y-8">
           <TabsContent value="culture" className="m-0">
             <CultureManual
               companyValues={company?.valores || ""}
@@ -115,4 +114,3 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
     </div>
   );
 };
-
