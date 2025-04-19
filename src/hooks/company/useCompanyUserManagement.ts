@@ -1,4 +1,3 @@
-
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -121,12 +120,12 @@ export const useCompanyUserManagement = () => {
    */
   const getCompanyUsers = useCallback(async (companyId: string): Promise<UserProfile[]> => {
     try {
-      // Check if user is admin using RPC function
-      const { data: isAdmin, error: isAdminError } = await supabase.rpc('is_admin');
+      // Check if user belongs to company using RPC function
+      const { data: canAccess, error: accessError } = await supabase
+        .rpc('user_belongs_to_company', { company_id: companyId });
       
-      if (isAdminError) {
-        console.warn('Error checking admin status:', isAdminError);
-        // Continue trying to fetch users
+      if (accessError) {
+        console.warn('Error checking company access:', accessError);
       }
       
       // First get all user IDs associated with the company

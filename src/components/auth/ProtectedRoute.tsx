@@ -22,7 +22,7 @@ export const ProtectedRoute = () => {
         setInitialLoadDone(true);
         setAuthError("Tempo limite de autenticação excedido. Tente novamente ou faça login novamente.");
       }
-    }, 8000); // Increased from 5000 to 8000 ms to allow more time for auth to complete
+    }, 10000); // Increased to 10000 ms to allow more time for auth to complete
     
     // If loading is completed, mark as done
     if (!loading) {

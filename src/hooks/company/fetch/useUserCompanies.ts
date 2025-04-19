@@ -66,6 +66,9 @@ export const useUserCompanies = ({
         throw new DOMException("Aborted", "AbortError");
       }
       
+      console.log("Fetching user_empresa relations for user:", userId);
+      
+      // Usar a função otimizada para obter as relações de usuário-empresa
       const { data: relations, error: relationsError } = await retryOperation(
         async () => {
           const req = supabase
@@ -81,16 +84,22 @@ export const useUserCompanies = ({
         }
       );
 
-      if (relationsError) throw relationsError;
+      if (relationsError) {
+        console.error("Error in user_empresa relation query:", relationsError);
+        throw relationsError;
+      }
 
       if (!relations || relations.length === 0) {
+        console.log("No company relations found for user:", userId);
         setUserCompanies([]);
         setSelectedCompany(null);
         localStorage.removeItem('userCompanies');
+        setIsLoading(false);
         return [];
       }
 
       const companyIds = relations.map(r => r.empresa_id);
+      console.log("Found company relations:", companyIds.length);
       
       const { data: companies, error: companiesError } = await retryOperation(
         async () => {
@@ -111,6 +120,8 @@ export const useUserCompanies = ({
       if (companiesError) throw companiesError;
 
       const userCompaniesData = companies as Company[];
+      console.log("Successfully fetched companies:", userCompaniesData.length);
+      
       setUserCompanies(userCompaniesData);
       
       if (userCompaniesData.length > 0) {
@@ -122,6 +133,7 @@ export const useUserCompanies = ({
         setSelectedCompany(userCompaniesData[0]);
       }
       
+      setIsLoading(false);
       return userCompaniesData;
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') {
