@@ -70,29 +70,32 @@ export function useUsers() {
         setLoading(true);
       }
       
-      // FIX: Properly get current user ID by waiting for the promise to resolve
+      // Correctly handle session retrieval
       const { data: { session } } = await supabase.auth.getSession();
       const currentUserId = session?.user?.id;
       
-      // Verifique se o usuário atual é um admin antes de buscar os usuários
-      const { data: currentUserData, error: currentUserError } = await supabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('id', currentUserId)
-        .single();
-
-      if (currentUserError) {
-        console.warn('Erro ao verificar se o usuário atual é admin:', currentUserError);
-        // Continue tentando buscar, mas pode falhar por causa das políticas RLS
+      if (!currentUserId) {
+        throw new Error('No user is currently logged in');
       }
       
-      // Uso de uma query simplificada para evitar problemas de recursão
+      // Check if current user is admin using the security definer function
+      const { data: isAdminResult, error: isAdminError } = await supabase.rpc('is_admin');
+      
+      if (isAdminError) {
+        console.warn('Error checking if user is admin:', isAdminError);
+        // Continue trying to fetch, but may fail due to RLS
+      }
+      
+      const isAdmin = !!isAdminResult;
+      console.log('Current user is admin:', isAdmin);
+      
+      // Use a simplified query to avoid recursion problems
       const result = await supabase
         .from('profiles')
         .select('id, display_name, is_admin, email, created_at, avatar, cargo, cargo_id');
         
       if (result.error) {
-        // Tratamento específico para erro de recursão RLS
+        // Specific handling for RLS issues
         if (result.error.code === '42P17') {
           console.warn('Detected RLS recursion issue in result, using mock or cached data');
           throw new Error('Erro de política de segurança. Usando dados em cache se disponíveis.');
@@ -100,10 +103,10 @@ export function useUsers() {
         throw result.error;
       }
 
-      // Se chegamos aqui, temos dados
+      // Format the user data
       const formattedUsers: UserProfile[] = result.data.map((profile: any) => ({
         id: profile.id,
-        email: profile.email || profile.id.toLowerCase() + '@example.com', // Email do DB ou fallback
+        email: profile.email || profile.id.toLowerCase() + '@example.com',
         display_name: profile.display_name || `User ${profile.id.substring(0, 6)}`,
         is_admin: profile.is_admin,
         avatar: profile.avatar,
@@ -120,7 +123,7 @@ export function useUsers() {
     } catch (error: any) {
       console.error('Error fetching users:', error);
       
-      // Somente mostrar toast se não for erro de permissão RLS
+      // Only show toast for non-permission RLS errors
       if (!error.message?.includes('política de segurança') && 
           !error.message?.includes('Erro de permissão')) {
         toast({
@@ -130,13 +133,13 @@ export function useUsers() {
         });
       }
       
+      // Use cached data if available
       const cachedData = getCachedUsers();
       if (cachedData) {
         console.log('Using cached users data due to error');
         setUsers(cachedData);
       } else {
-        // Caso não tenhamos cache, criamos um conjunto mínimo de dados mockados
-        // para o aplicativo não quebrar completamente
+        // Create minimal mock data if no cache is available
         console.log('No cached data, creating mock data');
         const mockUsers: UserProfile[] = [
           {
@@ -188,7 +191,7 @@ export function useUsers() {
     }
   }, [users, toast]);
 
-  // Carregar usuários assim que o componente montar
+  // Load users when component mounts
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);

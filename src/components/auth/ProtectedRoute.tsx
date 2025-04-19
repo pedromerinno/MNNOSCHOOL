@@ -11,20 +11,20 @@ export const ProtectedRoute = () => {
   const [initialLoadDone, setInitialLoadDone] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  // Este efeito garante que não ficaremos presos em um estado de carregamento infinito
+  // Ensure we don't get stuck in an infinite loading state
   useEffect(() => {
     console.log("ProtectedRoute: Verificando autenticação");
     
-    // Definir um tempo limite para o carregamento da autenticação
+    // Set a timeout for authentication loading
     const timeoutId = setTimeout(() => {
       if (loading) {
         console.log("ProtectedRoute: Tempo limite de carregamento atingido");
         setInitialLoadDone(true);
         setAuthError("Tempo limite de autenticação excedido. Tente novamente ou faça login novamente.");
       }
-    }, 5000); // Aumentado para 5 segundos
+    }, 5000);
     
-    // Se o carregamento for concluído, marque como concluído
+    // If loading is completed, mark as done
     if (!loading) {
       console.log("ProtectedRoute: Carregamento concluído");
       setInitialLoadDone(true);
@@ -34,17 +34,22 @@ export const ProtectedRoute = () => {
     return () => clearTimeout(timeoutId);
   }, [loading]);
 
-  // Adicione um novo useEffect para verificar o token de autenticação
+  // Add additional check for token validation
   useEffect(() => {
-    // Verificar se o token é válido
+    // Check if token is valid
     if (session && !loading) {
       console.log("ProtectedRoute: Sessão verificada com sucesso");
+      
+      // Clear any previous auth errors if we have a valid session
+      if (authError) {
+        setAuthError(null);
+      }
     } else if (!loading && initialLoadDone && !user) {
       console.log("ProtectedRoute: Usuário não autenticado após carregamento");
     }
-  }, [session, loading, initialLoadDone, user]);
+  }, [session, loading, initialLoadDone, user, authError]);
 
-  // Componente de erro personalizado para o ErrorBoundary
+  // Custom error component for ErrorBoundary
   const ErrorFallback = (
     <div className="flex flex-col items-center justify-center h-screen p-4">
       <div className="bg-amber-50 border border-amber-200 p-6 rounded-lg max-w-md w-full shadow-md dark:bg-amber-900/30 dark:border-amber-800">
@@ -77,7 +82,7 @@ export const ProtectedRoute = () => {
     </div>
   );
 
-  // Use o estado local para controlar o estado de carregamento
+  // Show loading state
   if (loading && !initialLoadDone) {
     console.log("ProtectedRoute: Mostrando estado de carregamento");
     return (
@@ -88,7 +93,7 @@ export const ProtectedRoute = () => {
     );
   }
 
-  // Se tivermos um erro de autenticação, mostramos a mensagem de erro
+  // Show auth error if we have one
   if (authError) {
     return (
       <div className="flex flex-col items-center justify-center h-screen p-4">
@@ -118,13 +123,13 @@ export const ProtectedRoute = () => {
     );
   }
 
-  // Se não estiver autenticado, redirecione para o login
+  // Redirect to login if not authenticated
   if (!user) {
     console.log("ProtectedRoute: Usuário não autenticado, redirecionando para login");
     return <Navigate to="/login" replace />;
   }
 
-  // Renderizar rotas filhas se autenticado, envolvendo em um ErrorBoundary
+  // Render protected routes if authenticated, wrapped in ErrorBoundary
   console.log("ProtectedRoute: Usuário autenticado, renderizando rotas protegidas");
   return (
     <ErrorBoundary fallback={ErrorFallback}>

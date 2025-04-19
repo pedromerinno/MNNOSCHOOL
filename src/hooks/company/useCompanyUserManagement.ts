@@ -31,24 +31,16 @@ export const useCompanyUserManagement = () => {
         return true;
       }
       
-      // FIX: Properly get current user ID by waiting for the promise to resolve
-      const { data: { session } } = await supabase.auth.getSession();
-      const currentUserId = session?.user?.id;
+      // Check if current user is admin using RPC function
+      const { data: isAdmin, error: isAdminError } = await supabase.rpc('is_admin');
       
-      // Get current user to verify if is admin
-      const { data: currentUserProfile, error: profileError } = await supabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('id', currentUserId)
-        .single();
-        
-      if (profileError) {
-        console.error('Error checking admin status:', profileError);
+      if (isAdminError) {
+        console.error('Error checking admin status:', isAdminError);
         toast.error("Erro ao verificar permissões de administrador");
         return false;
       }
       
-      if (!currentUserProfile?.is_admin) {
+      if (!isAdmin) {
         toast.error("Apenas administradores podem associar usuários a empresas");
         return false;
       }
@@ -85,24 +77,16 @@ export const useCompanyUserManagement = () => {
    */
   const removeUserFromCompany = useCallback(async (userId: string, companyId: string) => {
     try {
-      // FIX: Properly get current user ID by waiting for the promise to resolve
-      const { data: { session } } = await supabase.auth.getSession();
-      const currentUserId = session?.user?.id;
+      // Check if current user is admin using RPC function
+      const { data: isAdmin, error: isAdminError } = await supabase.rpc('is_admin');
       
-      // Get current user to verify if is admin
-      const { data: currentUserProfile, error: profileError } = await supabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('id', currentUserId)
-        .single();
-        
-      if (profileError) {
-        console.error('Error checking admin status:', profileError);
+      if (isAdminError) {
+        console.error('Error checking admin status:', isAdminError);
         toast.error("Erro ao verificar permissões de administrador");
         return false;
       }
       
-      if (!currentUserProfile?.is_admin) {
+      if (!isAdmin) {
         toast.error("Apenas administradores podem remover usuários de empresas");
         return false;
       }
@@ -137,23 +121,15 @@ export const useCompanyUserManagement = () => {
    */
   const getCompanyUsers = useCallback(async (companyId: string): Promise<UserProfile[]> => {
     try {
-      // FIX: Properly get current user ID by waiting for the promise to resolve
-      const { data: { session } } = await supabase.auth.getSession();
-      const currentUserId = session?.user?.id;
+      // Check if user is admin using RPC function
+      const { data: isAdmin, error: isAdminError } = await supabase.rpc('is_admin');
       
-      // Verificar se o usuário atual é administrador
-      const { data: currentUserProfile, error: profileError } = await supabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('id', currentUserId)
-        .single();
-        
-      if (profileError) {
-        console.warn('Error checking admin status:', profileError);
-        // Continuar tentando buscar os usuários
+      if (isAdminError) {
+        console.warn('Error checking admin status:', isAdminError);
+        // Continue trying to fetch users
       }
       
-      // Buscar todos os usuários associados à empresa através da tabela user_empresa
+      // Get all users associated with the company through user_empresa table
       const { data: userCompanyRelations, error: relationError } = await supabase
         .from('user_empresa')
         .select('user_id')
@@ -165,10 +141,10 @@ export const useCompanyUserManagement = () => {
         return [];
       }
       
-      // Pegar os IDs dos usuários
+      // Get user IDs
       const userIds = userCompanyRelations.map(relation => relation.user_id);
       
-      // Buscar os perfis completos dos usuários
+      // Get complete user profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, display_name, email, cargo_id, cargo, is_admin')
