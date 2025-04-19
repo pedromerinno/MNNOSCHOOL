@@ -1,10 +1,11 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { setAdminStatusById } from '@/utils/adminUtils';
 
 export interface UserProfile {
-  id?: string; // Make id optional to handle missing id cases
+  id: string; // Changed from optional to required since we need this field
   email: string | null;
   display_name: string | null;
   is_admin: boolean | null;

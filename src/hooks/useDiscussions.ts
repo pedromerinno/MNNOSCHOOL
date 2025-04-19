@@ -40,7 +40,21 @@ export const useDiscussions = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setDiscussions(data as Discussion[] || []);
+      
+      // Fix the type conversion issue by manually mapping the response
+      const formattedDiscussions = data ? data.map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        content: item.content,
+        author_id: item.author_id,
+        company_id: item.company_id,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+        profiles: item.profiles || { display_name: 'Usuário desconhecido', avatar: null },
+        discussion_replies: item.discussion_replies || []
+      })) : [];
+      
+      setDiscussions(formattedDiscussions);
     } catch (error) {
       console.error('Error fetching discussions:', error);
       toast.error('Erro ao carregar discussões');

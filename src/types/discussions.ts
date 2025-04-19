@@ -8,7 +8,7 @@ export interface Discussion {
   created_at: string;
   updated_at: string;
   profiles?: {
-    display_name: string;
+    display_name: string | null;
     avatar: string | null;
   };
   discussion_replies: DiscussionReply[];
@@ -21,7 +21,7 @@ export interface DiscussionReply {
   content: string;
   created_at: string;
   profiles?: {
-    display_name: string;
+    display_name: string | null;
     avatar: string | null;
   };
 }
