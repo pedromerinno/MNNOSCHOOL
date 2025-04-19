@@ -618,11 +618,11 @@ export type Database = {
     }
     Functions: {
       is_admin: {
-        Args: Record<PropertyKey, never>
+        Args: Record<PropertyKey, never> | { user_id: string }
         Returns: boolean
       }
       user_belongs_to_company: {
-        Args: { company_id: string }
+        Args: { company_id: string } | { user_id: string; company_id: string }
         Returns: boolean
       }
       user_can_access_course: {

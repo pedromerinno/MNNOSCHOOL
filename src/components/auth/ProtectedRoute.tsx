@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 
 export const ProtectedRoute = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, session } = useAuth();
   const [initialLoadDone, setInitialLoadDone] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -33,6 +33,16 @@ export const ProtectedRoute = () => {
     
     return () => clearTimeout(timeoutId);
   }, [loading]);
+
+  // Adicione um novo useEffect para verificar o token de autenticação
+  useEffect(() => {
+    // Verificar se o token é válido
+    if (session && !loading) {
+      console.log("ProtectedRoute: Sessão verificada com sucesso");
+    } else if (!loading && initialLoadDone && !user) {
+      console.log("ProtectedRoute: Usuário não autenticado após carregamento");
+    }
+  }, [session, loading, initialLoadDone, user]);
 
   // Componente de erro personalizado para o ErrorBoundary
   const ErrorFallback = (

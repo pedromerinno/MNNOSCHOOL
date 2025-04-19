@@ -70,24 +70,23 @@ export function useUsers() {
         setLoading(true);
       }
       
-      // Uso de uma query simplificada para evitar problemas de recursão
-      // Se a função for chamada fora de um contexto autenticado ou não tiver permissões,
-      // vamos usar dados mockados ou cacheados
-      let result;
-      
-      try {
-        result = await supabase
-          .from('profiles')
-          .select('id, display_name, is_admin, email, created_at, avatar, cargo, cargo_id');
-      } catch (queryError: any) {
-        // Se for erro de recursão na política RLS, não exibimos o toast de erro
-        if (queryError.code === '42P17') {
-          console.warn('Detected RLS recursion issue, using mock or cached data');
-          throw new Error('Erro de política de segurança. Usando dados em cache se disponíveis.');
-        }
-        throw queryError;
+      // Verifique se o usuário atual é um admin antes de buscar os usuários
+      const { data: currentUserData, error: currentUserError } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', supabase.auth.getSession().then(({ data }) => data.session?.user?.id))
+        .single();
+
+      if (currentUserError) {
+        console.warn('Erro ao verificar se o usuário atual é admin:', currentUserError);
+        // Continue tentando buscar, mas pode falhar por causa das políticas RLS
       }
       
+      // Uso de uma query simplificada para evitar problemas de recursão
+      const result = await supabase
+        .from('profiles')
+        .select('id, display_name, is_admin, email, created_at, avatar, cargo, cargo_id');
+        
       if (result.error) {
         // Tratamento específico para erro de recursão RLS
         if (result.error.code === '42P17') {

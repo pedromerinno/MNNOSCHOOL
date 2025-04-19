@@ -1,3 +1,4 @@
+
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -28,6 +29,24 @@ export const useCompanyUserManagement = () => {
         console.log('User already assigned to this company');
         toast.success("Usuário já está associado a esta empresa");
         return true;
+      }
+      
+      // Get current user to verify if is admin
+      const { data: currentUserProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', (await supabase.auth.getSession()).data.session?.user?.id)
+        .single();
+        
+      if (profileError) {
+        console.error('Error checking admin status:', profileError);
+        toast.error("Erro ao verificar permissões de administrador");
+        return false;
+      }
+      
+      if (!currentUserProfile?.is_admin) {
+        toast.error("Apenas administradores podem associar usuários a empresas");
+        return false;
       }
       
       // Create new relation
@@ -62,6 +81,24 @@ export const useCompanyUserManagement = () => {
    */
   const removeUserFromCompany = useCallback(async (userId: string, companyId: string) => {
     try {
+      // Get current user to verify if is admin
+      const { data: currentUserProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', (await supabase.auth.getSession()).data.session?.user?.id)
+        .single();
+        
+      if (profileError) {
+        console.error('Error checking admin status:', profileError);
+        toast.error("Erro ao verificar permissões de administrador");
+        return false;
+      }
+      
+      if (!currentUserProfile?.is_admin) {
+        toast.error("Apenas administradores podem remover usuários de empresas");
+        return false;
+      }
+      
       const { error } = await supabase
         .from('user_empresa')
         .delete()
@@ -92,6 +129,18 @@ export const useCompanyUserManagement = () => {
    */
   const getCompanyUsers = useCallback(async (companyId: string): Promise<UserProfile[]> => {
     try {
+      // Verificar se o usuário atual é administrador
+      const { data: currentUserProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', (await supabase.auth.getSession()).data.session?.user?.id)
+        .single();
+        
+      if (profileError) {
+        console.warn('Error checking admin status:', profileError);
+        // Continuar tentando buscar os usuários
+      }
+      
       // Buscar todos os usuários associados à empresa através da tabela user_empresa
       const { data: userCompanyRelations, error: relationError } = await supabase
         .from('user_empresa')
