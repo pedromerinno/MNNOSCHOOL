@@ -1,17 +1,15 @@
-
 import React, { useState } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { useNavigate } from "react-router-dom";
-import { Play, Clock, Heart, Users, Search, ChevronRight, ChevronLeft } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FeaturedCourseHero } from "@/components/school/FeaturedCourseHero";
+import { ContinueLearning } from "@/components/school/ContinueLearning";
+import { ForumSection } from "@/components/school/ForumSection";
+import { RecentCourses } from "@/components/school/RecentCourses";
 
 const School = () => {
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("all");
 
-  // Featured course
+  // Featured course data
   const featuredCourse = {
     id: "1",
     title: "Como construir um bom fluxograma",
@@ -20,7 +18,7 @@ const School = () => {
     tags: ["IA", "Ilustração", "Conceitos"]
   };
 
-  // Continue learning courses
+  // Course data
   const continueLearningCourses = [
     {
       id: "2",
@@ -45,7 +43,6 @@ const School = () => {
     }
   ];
 
-  // Forum topics
   const forumTopics = [
     {
       id: "5",
@@ -69,7 +66,6 @@ const School = () => {
     }
   ];
 
-  // Recent courses
   const recentCourses = [
     {
       id: "9",
@@ -109,20 +105,8 @@ const School = () => {
     }
   ];
 
-  // Statistics
-  const statistics = {
-    completedVideos: 2,
-    hoursWatched: 3.5
-  };
-
-  // Suggested topics
-  const suggestedTopics = [
-    { id: "15", name: "UI & UI", icon: "globe" },
-    { id: "16", name: "Motion Designer", icon: "video" }
-  ];
-
   const categories = [
-    { id: "all", name: "Todos os Cursos" }, // Changed from "Todos"
+    { id: "all", name: "Todos os Cursos" },
     { id: "3d", name: "3D" },
     { id: "brand", name: "Brand" },
     { id: "motion", name: "Motion Design" },
@@ -140,45 +124,8 @@ const School = () => {
         <div className="container mx-auto px-4 lg:px-8 flex">
           {/* Main Content */}
           <div className="flex-1 pr-6">
-            {/* Featured Course - Reduced height from h-96 to h-80 */}
-            <div className="mb-12">
-              <div className="relative rounded-xl overflow-hidden">
-                <div className="h-80 bg-gradient-to-r from-gray-800 to-gray-900 relative">
-                  <img 
-                    src={featuredCourse.image}
-                    alt={featuredCourse.title}
-                    className="w-full h-full object-cover opacity-60 mix-blend-overlay"
-                  />
-                  <div className="absolute inset-0 p-8 flex flex-col justify-between">
-                    <div>
-                      <h1 className="text-3xl font-bold text-white mb-2">{featuredCourse.title}</h1>
-                      <div className="flex gap-2 mt-4">
-                        {featuredCourse.tags.map((tag, index) => (
-                          <span 
-                            key={index} 
-                            className="px-3 py-1 text-xs rounded-full bg-black/30 text-white"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center mr-2">
-                          <span className="text-xs">{featuredCourse.instructor.charAt(0)}</span>
-                        </div>
-                        <span className="text-white">{featuredCourse.instructor}</span>
-                      </div>
-                      <Button variant="default" className="rounded-full px-4 bg-white text-black hover:bg-gray-100">
-                        <span>Assistir agora</span>
-                        <Play className="ml-2 h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* Featured Course */}
+            <FeaturedCourseHero course={featuredCourse} />
 
             {/* Categories */}
             <div className="mb-8">
@@ -201,160 +148,14 @@ const School = () => {
               </Tabs>
             </div>
 
-            {/* Continue Learning */}
-            <div className="mb-12">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Continue assistindo</h2>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="icon" className="rounded-full">
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="icon" className="rounded-full">
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {continueLearningCourses.map((course) => (
-                  <Card key={course.id} className="overflow-hidden border-0 shadow-sm">
-                    <div className="relative h-44">
-                      <img 
-                        src={course.image} 
-                        alt={course.title} 
-                        className="w-full h-full object-cover"
-                      />
-                      <Button 
-                        variant="outline" 
-                        size="icon" 
-                        className="absolute top-2 right-2 rounded-full bg-white/80 hover:bg-white"
-                      >
-                        <Heart className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <CardContent className="p-4">
-                      <div className="flex gap-2 mb-2">
-                        {course.tags.map((tag, index) => (
-                          <span 
-                            key={index} 
-                            className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                      <h3 className="font-medium mb-2">{course.title}</h3>
-                      {course.progress > 0 && (
-                        <div className="mt-2">
-                          <div className="w-full bg-gray-200 h-1 rounded-full">
-                            <div 
-                              className="bg-blue-600 h-1 rounded-full" 
-                              style={{ width: `${course.progress}%` }}
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
+            {/* Continue Learning Section */}
+            <ContinueLearning courses={continueLearningCourses} />
 
-            {/* Forum */}
-            <div className="mb-12">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Fórum</h2>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="icon" className="rounded-full">
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="icon" className="rounded-full">
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                {forumTopics.map((topic, index) => (
-                  <Card key={topic.id} className="overflow-hidden border shadow-sm">
-                    <CardContent className="p-4">
-                      <div className="flex gap-2 mb-2">
-                        {topic.tags.map((tag, index) => (
-                          <span 
-                            key={index} 
-                            className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                      <h3 className="font-medium text-sm">{topic.title}</h3>
-                      <div className="flex items-center gap-1 mt-4">
-                        <div className="flex -space-x-2">
-                          {/* Add avatar images */}
-                          <div className="w-6 h-6 bg-gray-300 rounded-full overflow-hidden border border-white">
-                            <img src={`https://i.pravatar.cc/100?img=${index * 3 + 1}`} alt="User avatar" className="w-full h-full object-cover" />
-                          </div>
-                          <div className="w-6 h-6 bg-gray-400 rounded-full overflow-hidden border border-white">
-                            <img src={`https://i.pravatar.cc/100?img=${index * 3 + 2}`} alt="User avatar" className="w-full h-full object-cover" />
-                          </div>
-                          <div className="w-6 h-6 bg-gray-500 rounded-full overflow-hidden border border-white">
-                            <img src={`https://i.pravatar.cc/100?img=${index * 3 + 3}`} alt="User avatar" className="w-full h-full object-cover" />
-                          </div>
-                        </div>
-                        <span className="text-xs text-gray-500">+5</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
+            {/* Forum Section */}
+            <ForumSection topics={forumTopics} />
 
-            {/* Recent Courses */}
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Cursos recentes</h2>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="icon" className="rounded-full">
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="icon" className="rounded-full">
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {recentCourses.slice(0, 6).map((course) => (
-                  <Card key={course.id} className="overflow-hidden border-0 shadow-sm">
-                    <div className="relative h-44">
-                      <img 
-                        src={course.image} 
-                        alt={course.title} 
-                        className="w-full h-full object-cover"
-                      />
-                      <Button 
-                        variant="outline" 
-                        size="icon" 
-                        className="absolute top-2 right-2 rounded-full bg-white/80 hover:bg-white"
-                      >
-                        <Heart className="h-4 w-4" />
-                      </Button>
-                      <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/70 to-transparent">
-                        <div className="flex gap-2 mb-2">
-                          {course.tags.map((tag, index) => (
-                            <span 
-                              key={index} 
-                              className="px-2 py-0.5 text-xs rounded-full bg-black/30 text-white"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                        <h3 className="font-medium text-white">{course.title}</h3>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </div>
+            {/* Recent Courses Section */}
+            <RecentCourses courses={recentCourses} />
           </div>
 
           {/* Sidebar */}
@@ -430,4 +231,3 @@ const School = () => {
 };
 
 export default School;
-
