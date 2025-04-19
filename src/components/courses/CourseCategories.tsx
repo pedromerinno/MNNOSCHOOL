@@ -13,8 +13,11 @@ export const CourseCategories = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {categories.map((category) => (
-        <Card key={category.id} className="p-6 hover:bg-gray-50 transition-colors">
-          <h3 className="font-medium mb-2">{category.name}</h3>
+        <Card 
+          key={category.id} 
+          className="p-8 hover:bg-gray-50 transition-colors rounded-2xl border-none shadow-none"
+        >
+          <h3 className="font-medium text-lg mb-3">{category.name}</h3>
           <p className="text-sm text-gray-500">
             Explore os cursos desta categoria
           </p>
@@ -23,3 +26,4 @@ export const CourseCategories = () => {
     </div>
   );
 };
+
