@@ -24,7 +24,7 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
   jobRoles
 }) => {
   return (
-    <div className="px-10 pb-10">
+    <div className="w-full">
       <Tabs
         defaultValue="culture"
         value={activeTab}
@@ -67,7 +67,7 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
           </TabsTrigger>
         </TabsList>
 
-        <div className="mt-8 space-y-8">
+        <div className="mt-4 space-y-4">
           <TabsContent value="culture" className="m-0">
             <CultureManual
               companyValues={company?.valores || ""}
@@ -112,3 +112,4 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
     </div>
   );
 };
+
