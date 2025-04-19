@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useCompanies } from '@/hooks/useCompanies';
@@ -21,21 +22,13 @@ export const useDiscussions = () => {
         .from('discussions')
         .select(`
           *,
-          profiles (
-            display_name,
-            avatar
-          ),
           discussion_replies (
             id,
             discussion_id,
             content,
             created_at,
             author_id,
-            image_url,
-            profiles (
-              display_name,
-              avatar
-            )
+            image_url
           )
         `)
         .eq('company_id', selectedCompany.id)
@@ -43,7 +36,28 @@ export const useDiscussions = () => {
 
       if (error) throw error;
       
-      setDiscussions(data || []);
+      // Transform the data to match the Discussion type
+      const formattedData = data?.map(item => ({
+        id: item.id,
+        title: item.title,
+        content: item.content,
+        author_id: item.author_id,
+        company_id: item.company_id,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+        image_url: item.image_url || null,
+        status: item.status || 'open',
+        discussion_replies: (item.discussion_replies || []).map((reply: any) => ({
+          id: reply.id,
+          discussion_id: reply.discussion_id,
+          author_id: reply.author_id,
+          content: reply.content,
+          created_at: reply.created_at,
+          image_url: reply.image_url || null,
+        }))
+      })) || [];
+      
+      setDiscussions(formattedData);
     } catch (error: any) {
       console.error('Error fetching discussions:', error);
       toast.error('Erro ao carregar discussões');
@@ -67,7 +81,7 @@ export const useDiscussions = () => {
           company_id: selectedCompany.id,
           author_id: user.id,
           status: 'open',
-          ...(imageUrl && { image_url: imageUrl })
+          image_url: imageUrl || null
         }])
         .select()
         .single();
@@ -128,7 +142,7 @@ export const useDiscussions = () => {
         discussion_id: discussionId,
         content,
         author_id: user.id,
-        ...(imageUrl && { image_url: imageUrl })
+        image_url: imageUrl || null
       };
 
       const { error } = await supabase
