@@ -139,9 +139,9 @@ export const SearchBar = () => {
                   <div className="py-6 text-center text-sm text-gray-500">
                     Buscando cursos...
                   </div>
-                ) : suggestions.length === 0 && searchQuery ? (
+                ) : searchQuery && suggestions.length === 0 ? (
                   <CommandEmpty>Nenhum curso encontrado.</CommandEmpty>
-                ) : (
+                ) : suggestions.length > 0 ? (
                   <CommandGroup heading="Cursos sugeridos">
                     {suggestions.map((course) => (
                       <CommandItem
@@ -173,7 +173,7 @@ export const SearchBar = () => {
                       </CommandItem>
                     ))}
                   </CommandGroup>
-                )}
+                ) : null}
               </CommandList>
             </div>
           </Command>
