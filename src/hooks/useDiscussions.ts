@@ -18,16 +18,17 @@ export const useDiscussions = () => {
     try {
       setIsLoading(true);
       
-      // Fetch discussions without trying to join profiles directly
       const { data, error } = await supabase
         .from('discussions')
         .select(`
           *,
           discussion_replies (
             id,
+            discussion_id,
             content,
             created_at,
-            author_id
+            author_id,
+            image_url
           )
         `)
         .eq('company_id', selectedCompany.id)
@@ -59,29 +60,34 @@ export const useDiscussions = () => {
       if (profilesError) throw profilesError;
       
       // Create a lookup map for profiles
-      const profilesMap = (profilesData || []).reduce((acc, profile) => {
-        acc[profile.id] = {
+      const profilesMap: Record<string, { display_name: string | null; avatar: string | null }> = {};
+      (profilesData || []).forEach(profile => {
+        profilesMap[profile.id] = {
           display_name: profile.display_name,
           avatar: profile.avatar
         };
-        return acc;
-      }, {});
+      });
       
       // Format discussions with profile information
-      const formattedDiscussions = data.map((item) => {
+      const formattedDiscussions: Discussion[] = data.map((item) => {
         const authorProfile = profilesMap[item.author_id] || {
           display_name: 'Usuário desconhecido',
           avatar: null
         };
         
-        const formattedReplies = (item.discussion_replies || []).map((reply) => {
+        const formattedReplies: DiscussionReply[] = (item.discussion_replies || []).map((reply) => {
           const replyAuthorProfile = profilesMap[reply.author_id] || {
             display_name: 'Usuário desconhecido',
             avatar: null
           };
           
           return {
-            ...reply,
+            id: reply.id,
+            discussion_id: item.id,
+            content: reply.content,
+            created_at: reply.created_at,
+            author_id: reply.author_id,
+            image_url: reply.image_url,
             profiles: replyAuthorProfile
           };
         });
@@ -94,6 +100,7 @@ export const useDiscussions = () => {
           company_id: item.company_id,
           created_at: item.created_at,
           updated_at: item.updated_at,
+          image_url: item.image_url,
           profiles: authorProfile,
           discussion_replies: formattedReplies
         };
