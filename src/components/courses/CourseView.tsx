@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCourseData } from '@/hooks/useCourseData';
@@ -124,10 +125,10 @@ export const CourseView: React.FC = () => {
                 Avaliações
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="description" className="mt-6">
+            <TabsContent value="description" className="mt-8">  {/* Increased margin top from mt-6 to mt-8 */}
               <CourseDescription description={course.description} />
             </TabsContent>
-            <TabsContent value="reviews" className="mt-6">
+            <TabsContent value="reviews" className="mt-8">  {/* Increased margin top from mt-6 to mt-8 */}
               <div className="text-center py-8">
                 <Star className="h-8 w-8 text-yellow-400 mx-auto mb-2" />
                 <h3 className="text-lg font-medium mb-1">Sem avaliações ainda</h3>
