@@ -126,7 +126,11 @@ export const SearchBar = () => {
               <DialogTitle className="sr-only">Pesquisar cursos</DialogTitle>
               <CommandInput 
                 value={searchQuery}
-                onValueChange={handleInputChange}
+                onValueChange={(value) => {
+                  handleInputChange(value);
+                  // Ensure immediate search happens here too
+                  performSearch();
+                }}
                 placeholder="Digite para pesquisar cursos..."
                 className="border-b border-gray-200 dark:border-gray-700"
               />
