@@ -10,7 +10,7 @@ interface WelcomeBannerProps {
 
 export const WelcomeBanner = ({ company }: WelcomeBannerProps) => {
   const { userProfile } = useAuth();
-  const userName = userProfile?.displayName || 'Estudante';
+  const userName = userProfile?.display_name || 'Estudante';
 
   return (
     <div className="bg-merinno-blue/10 rounded-lg p-6 mb-6">

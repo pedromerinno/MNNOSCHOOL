@@ -81,8 +81,8 @@ export const UserInfoHeader = () => {
   }, [user?.id, selectedCompany?.id]);
 
   // Get user initials for avatar fallback
-  const userInitials = userProfile?.displayName ? 
-    getInitials(userProfile.displayName) : 
+  const userInitials = userProfile?.display_name ? 
+    getInitials(userProfile.display_name) : 
     user?.email ? getInitials(user.email) : "U";
 
   return (
@@ -90,14 +90,14 @@ export const UserInfoHeader = () => {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
         <div className="flex items-center mb-4 md:mb-0">
           <Avatar className="h-16 w-16 mr-4">
-            <AvatarImage src={userProfile?.avatar || ""} alt={userProfile?.displayName || "User"} />
+            <AvatarImage src={userProfile?.avatar || ""} alt={userProfile?.display_name || "User"} />
             <AvatarFallback className="text-lg font-medium bg-primary/10 text-primary">
               {userInitials}
             </AvatarFallback>
           </Avatar>
           <div>
             <h2 className="text-xl font-semibold">
-              {userProfile?.displayName || user?.email?.split('@')[0] || "Usuário"}
+              {userProfile?.display_name || user?.email?.split('@')[0] || "Usuário"}
             </h2>
             <p className="text-gray-500 dark:text-gray-400">{user?.email}</p>
             

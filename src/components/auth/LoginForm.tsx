@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +18,7 @@ export const LoginForm = () => {
     setIsLoggingIn(true);
     
     try {
-      await signIn(email, password);
+      await signIn(email);
     } finally {
       setIsLoggingIn(false);
     }

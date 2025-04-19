@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -79,7 +78,7 @@ export const WelcomeSection = () => {
     }
   }, [selectedCompany, userCompanies, user, selectCompany, displayCompany]);
 
-  const userName = userProfile?.displayName || user?.email?.split('@')[0] || 'Usuário';
+  const userName = userProfile?.display_name || user?.email?.split('@')[0] || 'Usuário';
 
   const handleLearnMore = () => {
     navigate('/integration'); // Changed from '/manifesto'
@@ -129,4 +128,3 @@ export const WelcomeSection = () => {
     </div>
   );
 };
-

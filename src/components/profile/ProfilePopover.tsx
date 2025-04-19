@@ -42,7 +42,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
   const form = useForm<UserProfileFormValues>({
     resolver: zodResolver(userProfileSchema),
     defaultValues: {
-      name: userProfile.displayName || email?.split('@')[0] || "",
+      name: userProfile.display_name || email?.split('@')[0] || "",
       avatar: userProfile.avatar || "https://i.pravatar.cc/150?img=68",
     },
   });
@@ -50,7 +50,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
   const handleProfileUpdate = async (values: UserProfileFormValues) => {
     try {
       await updateUserProfile({
-        displayName: values.name,
+        display_name: values.name,
         avatar: values.avatar || null
       });
       

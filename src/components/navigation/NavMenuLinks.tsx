@@ -13,7 +13,7 @@ export const NavMenuLinks = () => {
       <Link to="/team" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
         Time
       </Link>
-      {(userProfile?.isAdmin || userProfile?.superAdmin) && (
+      {(userProfile?.is_admin || userProfile?.super_admin) && (
         <Link to="/admin" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
           Admin
         </Link>

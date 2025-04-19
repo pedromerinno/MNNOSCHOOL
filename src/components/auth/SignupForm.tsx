@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,12 +38,8 @@ export const SignupForm = () => {
     setIsRegistering(true);
     
     try {
-      const { error } = await signUp(email, password);
-      
-      if (!error) {
-        // Profile creation is automatic via database trigger
-        console.log("Usuario cadastrado com sucesso! Perfil será criado automaticamente.");
-      }
+      await signUp(email, password, email.split('@')[0]);
+      console.log("Usuario cadastrado com sucesso! Perfil será criado automaticamente.");
     } finally {
       setIsRegistering(false);
     }

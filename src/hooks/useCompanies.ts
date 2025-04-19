@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useCompanyState } from "./company/useCompanyState";
 import { useCompanyFetching } from "./company/useCompanyFetching";
@@ -9,6 +10,7 @@ import { useCompanyUserManagement } from "./company/useCompanyUserManagement";
 import { useCompanyEvents } from "./company/useCompanyEvents";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { Company } from "@/types/company";
 
 export const useCompanies = () => {
   // Get auth context for global access
@@ -103,7 +105,7 @@ export const useCompanies = () => {
               .from('empresas')
               .select('*');
             
-            setUserCompanies(allCompanies || []);
+            setUserCompanies(allCompanies as Company[] || []);
           } else {
             await getUserCompanies(user.id);
           }

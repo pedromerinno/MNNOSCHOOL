@@ -50,7 +50,7 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
   const form = useForm<UserProfileFormValues>({
     resolver: zodResolver(userProfileSchema),
     defaultValues: {
-      name: userProfile.displayName || email?.split('@')[0] || "",
+      name: userProfile.display_name || email?.split('@')[0] || "",
       avatar: userProfile.avatar || "https://i.pravatar.cc/150?img=68",
     },
   });
@@ -59,7 +59,7 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
     try {
       // Update the user profile in Supabase via AuthContext
       await updateUserProfile({
-        displayName: values.name,
+        display_name: values.name,
         avatar: values.avatar || null
       });
       

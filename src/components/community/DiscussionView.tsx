@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,7 +25,6 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
   const { userProfile } = useAuth();
   const [replyContent, setReplyContent] = React.useState("");
   const [replyImageUrl, setReplyImageUrl] = React.useState<string | undefined>(undefined);
-  const isAdmin = userProfile?.isAdmin === true;
 
   const handleSubmitReply = async () => {
     if (!discussion || (!replyContent.trim() && !replyImageUrl)) return;
@@ -90,7 +88,7 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
             <div className="space-y-4">
               {discussion.discussion_replies.map((reply) => (
                 <div key={reply.id} className="relative bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                  {(isAdmin || (userProfile?.id && reply.author_id === userProfile.id)) && (
+                  {(userProfile?.is_admin || (userProfile?.id && reply.author_id === userProfile.id)) && (
                     <Button
                       variant="ghost"
                       size="sm"

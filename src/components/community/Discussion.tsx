@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,7 @@ export const Discussion: React.FC<DiscussionProps> = ({
   const { selectedCompany } = useCompanies();
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
   
-  const isAdmin = userProfile?.isAdmin === true;
+  const isAdmin = userProfile?.is_admin === true;
   const isAuthor = userProfile?.id && discussion.author_id === userProfile.id;
 
   const participantsCount = new Set(
