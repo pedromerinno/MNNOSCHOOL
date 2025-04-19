@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +10,7 @@ type UserProfile = {
   avatar: string | null;
   isAdmin?: boolean;
   cargo?: string | null;
+  cargo_id?: string | null; // Added cargo_id property
 };
 
 type AuthContextType = {
@@ -52,7 +52,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     displayName: null,
     avatar: null,
     isAdmin: false,
-    cargo: null
+    cargo: null,
+    cargo_id: null
   });
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -68,8 +69,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const isAdminColumnExists = !columnCheckError || !columnCheckError.message.includes("column 'is_admin' does not exist");
       
       const columnsToSelect = isAdminColumnExists 
-        ? 'display_name, avatar, is_admin, cargo' 
-        : 'display_name, avatar, cargo';
+        ? 'display_name, avatar, is_admin, cargo, cargo_id' // Added cargo_id to the query
+        : 'display_name, avatar, cargo, cargo_id'; // Added cargo_id to the query
       
       const { data, error } = await supabase
         .from('profiles')
@@ -94,13 +95,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const displayName = profileData.display_name !== undefined ? profileData.display_name : null;
         const avatar = profileData.avatar !== undefined ? profileData.avatar : null;
         const cargo = profileData.cargo !== undefined ? profileData.cargo : null;
+        const cargo_id = profileData.cargo_id !== undefined ? profileData.cargo_id : null; // Added cargo_id
         const isAdmin = isAdminColumnExists && profileData.is_admin === true;
         
         setUserProfile({
           displayName,
           avatar,
           isAdmin,
-          cargo
+          cargo,
+          cargo_id // Added cargo_id
         });
       } else {
         console.error('Invalid data format received from database:', data);
@@ -108,7 +111,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           displayName: null,
           avatar: null,
           isAdmin: false,
-          cargo: null
+          cargo: null,
+          cargo_id: null // Added cargo_id
         });
       }
     } catch (error) {
@@ -133,7 +137,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         id: userId,
         display_name: displayName,
         avatar: null,
-        cargo: null
+        cargo: null,
+        cargo_id: null // Added cargo_id
       };
       
       if (isAdminColumnExists) {
@@ -153,7 +158,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         displayName,
         avatar: null,
         isAdmin: false,
-        cargo: null
+        cargo: null,
+        cargo_id: null // Added cargo_id
       });
       
       console.log('User profile created successfully');
@@ -293,7 +299,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUserProfile({
             displayName: null,
             avatar: null,
-            cargo: null
+            cargo: null,
+            cargo_id: null
           });
         }
       }
