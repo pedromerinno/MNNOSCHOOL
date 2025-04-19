@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Check, UserMinus } from "lucide-react";
+import { Check, UserMinus, FileText } from "lucide-react";
 
 interface User {
   id: string;
@@ -12,11 +12,13 @@ interface User {
 interface AssignedUsersListProps {
   users: User[];
   onRemoveUser: (userId: string) => void;
+  onManageDocuments?: (user: User) => void;
 }
 
 export const AssignedUsersList: React.FC<AssignedUsersListProps> = ({
   users,
-  onRemoveUser
+  onRemoveUser,
+  onManageDocuments
 }) => {
   if (users.length === 0) {
     return (
@@ -38,15 +40,28 @@ export const AssignedUsersList: React.FC<AssignedUsersListProps> = ({
                 <Check className="h-4 w-4 text-green-500 mr-2" />
                 <span>{user.display_name}</span>
               </div>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="text-red-500 hover:text-red-700"
-                onClick={() => onRemoveUser(user.id)}
-              >
-                <UserMinus className="h-4 w-4 mr-1" />
-                <span className="hidden sm:inline">Remover</span>
-              </Button>
+              <div className="flex space-x-2">
+                {onManageDocuments && (
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="text-blue-500 hover:text-blue-700"
+                    onClick={() => onManageDocuments(user)}
+                  >
+                    <FileText className="h-4 w-4 mr-1" />
+                    <span className="hidden sm:inline">Documentos</span>
+                  </Button>
+                )}
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="text-red-500 hover:text-red-700"
+                  onClick={() => onRemoveUser(user.id)}
+                >
+                  <UserMinus className="h-4 w-4 mr-1" />
+                  <span className="hidden sm:inline">Remover</span>
+                </Button>
+              </div>
             </li>
           ))}
         </ul>
