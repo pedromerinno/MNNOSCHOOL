@@ -1,19 +1,30 @@
 
 import { useState } from 'react';
-import { DocumentType } from '@/types/document';
+import { DocumentType, UserDocument } from '@/types/document';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useDocumentPermissions } from './useDocumentPermissions';
+import { useUploadValidation } from './useUploadValidation';
+import { useStorageOperations } from './useStorageOperations';
 import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from './constants';
 
-interface UseDocumentUploadProps {
-  userId: string;
-  companyId: string;
-  onUploadComplete: () => void;
-}
-
-export const useDocumentUpload = ({ userId, companyId, onUploadComplete }: UseDocumentUploadProps) => {
+export const useDocumentUpload = () => {
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const { canDeleteDocument } = useDocumentPermissions(currentUserId);
+  const { validateUpload } = useUploadValidation();
+  const { uploadToStorage } = useStorageOperations();
+
+  // Fetch current user ID
+  useState(() => {
+    const fetchCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUserId(user?.id || null);
+    };
+    fetchCurrentUser();
+  }, []);
 
   const validateFile = (file: File | null): boolean => {
     if (!file) {
@@ -38,23 +49,30 @@ export const useDocumentUpload = ({ userId, companyId, onUploadComplete }: UseDo
   const uploadDocument = async (file: File, documentType: DocumentType, description: string) => {
     if (!validateFile(file)) return false;
 
+    const { data: { user } } = await supabase.auth.getUser();
+    const userId = user?.id;
+    
+    const { data: userData } = await supabase.auth.getUser();
+    const { data: userCompanies } = await supabase
+      .from('user_empresa')
+      .select('empresa_id')
+      .eq('user_id', userData.user?.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+    
+    const companyId = userCompanies?.empresa_id;
+    
+    if (!userId || !companyId) {
+      toast.error('Informações insuficientes para upload');
+      return false;
+    }
+
     setIsUploading(true);
     setFileError(null);
 
     try {
-      const userDir = `user-documents/${userId}`;
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${userDir}/${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = fileName;
-
-      const { error: uploadError } = await supabase.storage
-        .from('documents')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true
-        });
-
-      if (uploadError) throw uploadError;
+      const filePath = await uploadToStorage(userId, file);
 
       const { error } = await supabase
         .from('user_documents')
@@ -66,13 +84,12 @@ export const useDocumentUpload = ({ userId, companyId, onUploadComplete }: UseDo
           file_type: file.type,
           document_type: documentType,
           description: description || null,
-          uploaded_by: (await supabase.auth.getUser()).data.user?.id || userId
+          uploaded_by: userId
         });
 
       if (error) throw error;
 
       toast.success('Documento enviado com sucesso');
-      onUploadComplete();
       return true;
     } catch (error: any) {
       console.error('Erro no upload do documento:', error);
@@ -83,11 +100,19 @@ export const useDocumentUpload = ({ userId, companyId, onUploadComplete }: UseDo
     }
   };
 
+  const handleDocumentUpload = async (file: File, documentType: DocumentType, description: string) => {
+    return await uploadDocument(file, documentType, description);
+  };
+
   return {
     isUploading,
+    uploadOpen,
+    setUploadOpen,
     fileError,
     setFileError,
     uploadDocument,
-    validateFile
+    validateFile,
+    canDeleteDocument,
+    handleDocumentUpload
   };
 };

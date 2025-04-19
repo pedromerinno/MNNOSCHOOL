@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { DocumentType, DOCUMENT_TYPE_LABELS } from "@/types/document";
 import { useState } from "react";
 import { toast } from "sonner";
+import { MAX_FILE_SIZE } from "@/hooks/documents/constants";
 
 interface DocumentUploadFormProps {
   open: boolean;
@@ -31,7 +32,7 @@ export const DocumentUploadForm = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
-      if (selectedFile.size > 10 * 1024 * 1024) {
+      if (selectedFile.size > MAX_FILE_SIZE) {
         toast.error("O tamanho máximo do arquivo é 10MB");
         return;
       }
