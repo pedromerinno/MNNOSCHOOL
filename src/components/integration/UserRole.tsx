@@ -6,9 +6,10 @@ import { BriefcaseBusiness } from "lucide-react";
 interface UserRoleProps {
   role: {
     title: string;
-    description: string;
-    responsibilities: string;
-    requirements: string;
+    description: string | null;
+    responsibilities: string | null;
+    requirements: string | null;
+    expectations: string | null;
   };
   companyColor: string;
 }
@@ -23,26 +24,41 @@ export const UserRole: React.FC<UserRoleProps> = ({ role, companyColor }) => {
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div>
-          <h4 className="font-medium mb-2">Descrição do Cargo</h4>
-          <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line leading-relaxed">
-            {role.description}
-          </p>
-        </div>
+        {role.description && (
+          <div>
+            <h4 className="font-medium mb-2">Descrição do Cargo</h4>
+            <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line leading-relaxed">
+              {role.description}
+            </p>
+          </div>
+        )}
 
-        <div>
-          <h4 className="font-medium mb-2">Responsabilidades</h4>
-          <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line leading-relaxed">
-            {role.responsibilities}
-          </p>
-        </div>
+        {role.responsibilities && (
+          <div>
+            <h4 className="font-medium mb-2">Responsabilidades</h4>
+            <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line leading-relaxed">
+              {role.responsibilities}
+            </p>
+          </div>
+        )}
 
-        <div>
-          <h4 className="font-medium mb-2">Requisitos</h4>
-          <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line leading-relaxed">
-            {role.requirements}
-          </p>
-        </div>
+        {role.requirements && (
+          <div>
+            <h4 className="font-medium mb-2">Requisitos</h4>
+            <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line leading-relaxed">
+              {role.requirements}
+            </p>
+          </div>
+        )}
+
+        {role.expectations && (
+          <div>
+            <h4 className="font-medium mb-2">Expectativas</h4>
+            <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line leading-relaxed">
+              {role.expectations}
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

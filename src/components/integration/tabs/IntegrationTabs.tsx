@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, PlayCircle, BriefcaseBusiness } from "lucide-react";
@@ -32,16 +31,12 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
   useEffect(() => {
     const fetchUserRole = async () => {
       try {
-        // If we don't have a user profile or cargo_id, we can't fetch a role
         if (!userProfile?.id || !userProfile?.cargo_id || !company) {
           console.log('No user cargo_id found or company not selected');
           setUserRole(null);
           return;
         }
 
-        console.log('Fetching role details for cargo_id:', userProfile.cargo_id);
-        
-        // Fetch the role details using the cargo_id from the user profile
         const { data: roleData, error: roleError } = await supabase
           .from('job_roles')
           .select('*')
@@ -54,7 +49,7 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
           setUserRole(null);
           return;
         }
-        
+
         console.log('User role found:', roleData);
         setUserRole(roleData);
       } catch (error) {
