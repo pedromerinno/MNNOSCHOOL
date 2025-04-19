@@ -13,30 +13,6 @@ export const useUserDocumentsViewer = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Verifica se o bucket documents existe
-  const checkBucketExists = useCallback(async () => {
-    try {
-      const { data: buckets, error } = await supabase.storage.listBuckets();
-      
-      if (error) {
-        console.warn("Erro ao verificar buckets:", error);
-        return false;
-      }
-      
-      const documentsBucket = buckets?.find(b => b.name === 'documents');
-      
-      if (!documentsBucket) {
-        console.warn("Bucket 'documents' não encontrado. Verifique se ele foi criado no Supabase.");
-        return false;
-      }
-      
-      return true;
-    } catch (err) {
-      console.error("Erro ao verificar storage bucket:", err);
-      return false;
-    }
-  }, []);
-  
   const fetchUserDocuments = useCallback(async () => {
     if (!user || !selectedCompany?.id) {
       setDocuments([]);
@@ -59,13 +35,6 @@ export const useUserDocumentsViewer = () => {
     setError(null);
     
     try {
-      // First check if the storage bucket exists
-      const bucketReady = await checkBucketExists();
-      
-      if (!bucketReady) {
-        console.warn("Storage bucket não disponível, continuando mesmo assim");
-      }
-      
       const { data, error } = await supabase
         .from('user_documents')
         .select('*')
@@ -82,18 +51,10 @@ export const useUserDocumentsViewer = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [user, selectedCompany, checkBucketExists]);
+  }, [user, selectedCompany]);
   
   const downloadDocument = useCallback(async (document: UserDocument) => {
     try {
-      // Check if the bucket exists before trying to download
-      const bucketExists = await checkBucketExists();
-      
-      if (!bucketExists) {
-        toast.error("Sistema de armazenamento não disponível. Contate o administrador.");
-        return false;
-      }
-      
       const { data, error } = await supabase.storage
         .from('documents')
         .download(document.file_path);
@@ -112,9 +73,7 @@ export const useUserDocumentsViewer = () => {
     } catch (error: any) {
       console.error('Error downloading document:', error);
       
-      if (error.message.includes("storage/bucket-not-found")) {
-        toast.error("Armazenamento não disponível. Contate o administrador.");
-      } else if (error.message.includes("storage/object-not-found")) {
+      if (error.message.includes("storage/object-not-found")) {
         toast.error("Arquivo não encontrado. Pode ter sido excluído.");
       } else {
         toast.error(`Erro ao baixar documento: ${error.message}`);
@@ -122,7 +81,7 @@ export const useUserDocumentsViewer = () => {
       
       return false;
     }
-  }, [checkBucketExists]);
+  }, []);
   
   useEffect(() => {
     fetchUserDocuments();

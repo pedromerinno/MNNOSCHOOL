@@ -67,15 +67,6 @@ const Documents = () => {
     setIsUploading(true);
     
     try {
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const documentsBucket = buckets?.find(b => b.name === 'documents');
-      
-      if (!documentsBucket) {
-        toast.error("Sistema de armazenamento não configurado. Contate o administrador.");
-        setIsUploading(false);
-        return;
-      }
-      
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error("Usuário não autenticado");
@@ -119,8 +110,8 @@ const Documents = () => {
     } catch (error: any) {
       console.error('Error uploading document:', error);
       
-      if (error.message.includes("storage/bucket-not-found")) {
-        toast.error("Armazenamento não configurado. Contate o administrador.");
+      if (error.message.includes("storage/object-not-found")) {
+        toast.error("Arquivo não encontrado. Verifique se o arquivo existe.");
       } else if (error.message.includes("already exists")) {
         toast.error("Um arquivo com este nome já existe. Tente novamente.");
       } else {
