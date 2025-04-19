@@ -22,7 +22,7 @@ export const ProtectedRoute = () => {
         setInitialLoadDone(true);
         setAuthError("Tempo limite de autenticação excedido. Tente novamente ou faça login novamente.");
       }
-    }, 5000);
+    }, 8000); // Increased from 5000 to 8000 ms to allow more time for auth to complete
     
     // If loading is completed, mark as done
     if (!loading) {
@@ -36,8 +36,8 @@ export const ProtectedRoute = () => {
 
   // Add additional check for token validation
   useEffect(() => {
-    // Check if token is valid
-    if (session && !loading) {
+    // Check if token is valid - only if not loading and have a session
+    if (session && !loading && user) {
       console.log("ProtectedRoute: Sessão verificada com sucesso");
       
       // Clear any previous auth errors if we have a valid session

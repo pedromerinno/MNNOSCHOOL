@@ -129,7 +129,7 @@ export const useCompanyUserManagement = () => {
         // Continue trying to fetch users
       }
       
-      // Get all users associated with the company through user_empresa table
+      // First get all user IDs associated with the company
       const { data: userCompanyRelations, error: relationError } = await supabase
         .from('user_empresa')
         .select('user_id')
@@ -144,7 +144,7 @@ export const useCompanyUserManagement = () => {
       // Get user IDs
       const userIds = userCompanyRelations.map(relation => relation.user_id);
       
-      // Get complete user profiles
+      // Get complete user profiles - using a separate query to avoid RLS issues
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, display_name, email, cargo_id, cargo, is_admin')

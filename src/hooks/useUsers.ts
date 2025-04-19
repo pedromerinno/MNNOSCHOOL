@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -39,7 +38,6 @@ export function useUsers() {
   
   const setCachedUsers = (data: UserProfile[]) => {
     try {
-      // Only cache first 5 users to prevent quota issues
       const usersToCache = data.slice(0, 5);
       const expiry = new Date().getTime() + (15 * 60 * 1000); // 15 minutes
       
@@ -49,13 +47,11 @@ export function useUsers() {
           expiry
         }));
       } catch (storageError) {
-        // If quota exceeded, try to clear some space
         console.warn('Storage quota exceeded, clearing cache');
         localStorage.removeItem('cachedUsers');
       }
     } catch (e) {
       console.error('Error caching users', e);
-      // Continue without caching
     }
   };
 
@@ -70,7 +66,6 @@ export function useUsers() {
         setLoading(true);
       }
       
-      // Correctly handle session retrieval
       const { data: { session } } = await supabase.auth.getSession();
       const currentUserId = session?.user?.id;
       
@@ -78,32 +73,24 @@ export function useUsers() {
         throw new Error('No user is currently logged in');
       }
       
-      // Check if current user is admin using the security definer function
       const { data: isAdminResult, error: isAdminError } = await supabase.rpc('is_admin');
       
       if (isAdminError) {
         console.warn('Error checking if user is admin:', isAdminError);
-        // Continue trying to fetch, but may fail due to RLS
       }
       
       const isAdmin = !!isAdminResult;
       console.log('Current user is admin:', isAdmin);
       
-      // Use a simplified query to avoid recursion problems
       const result = await supabase
         .from('profiles')
         .select('id, display_name, is_admin, email, created_at, avatar, cargo, cargo_id');
         
       if (result.error) {
-        // Specific handling for RLS issues
-        if (result.error.code === '42P17') {
-          console.warn('Detected RLS recursion issue in result, using mock or cached data');
-          throw new Error('Erro de política de segurança. Usando dados em cache se disponíveis.');
-        }
+        console.error('Error fetching profiles:', result.error);
         throw result.error;
       }
 
-      // Format the user data
       const formattedUsers: UserProfile[] = result.data.map((profile: any) => ({
         id: profile.id,
         email: profile.email || profile.id.toLowerCase() + '@example.com',
@@ -123,7 +110,6 @@ export function useUsers() {
     } catch (error: any) {
       console.error('Error fetching users:', error);
       
-      // Only show toast for non-permission RLS errors
       if (!error.message?.includes('política de segurança') && 
           !error.message?.includes('Erro de permissão')) {
         toast({
@@ -133,13 +119,11 @@ export function useUsers() {
         });
       }
       
-      // Use cached data if available
       const cachedData = getCachedUsers();
       if (cachedData) {
         console.log('Using cached users data due to error');
         setUsers(cachedData);
       } else {
-        // Create minimal mock data if no cache is available
         console.log('No cached data, creating mock data');
         const mockUsers: UserProfile[] = [
           {
@@ -191,7 +175,6 @@ export function useUsers() {
     }
   }, [users, toast]);
 
-  // Load users when component mounts
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
