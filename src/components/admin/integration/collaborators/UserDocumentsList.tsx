@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,14 +29,6 @@ export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
     setError(null);
     
     try {
-      // Check if the bucket exists first to avoid mysterious errors
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const documentsBucket = buckets?.find(b => b.name === 'documents');
-      
-      if (!documentsBucket) {
-        throw new Error("Armazenamento não configurado. Contate o administrador.");
-      }
-      
       const { data, error } = await supabase.storage
         .from('documents')
         .download(document.file_path);
@@ -45,7 +36,6 @@ export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
       if (error) throw error;
       
       const url = URL.createObjectURL(data);
-      // Use window.document instead of the parameter named 'document'
       const a = window.document.createElement('a');
       a.href = url;
       a.download = document.name;
@@ -57,9 +47,7 @@ export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
       
       let errorMessage = 'Falha ao baixar o documento';
       
-      if (error.message.includes("storage/bucket-not-found")) {
-        errorMessage = "Armazenamento não configurado. Contate o administrador.";
-      } else if (error.message.includes("storage/object-not-found")) {
+      if (error.message.includes("storage/object-not-found")) {
         errorMessage = "Arquivo não encontrado. Pode ter sido excluído.";
       } else {
         errorMessage = `Falha ao baixar o documento: ${error.message}`;
