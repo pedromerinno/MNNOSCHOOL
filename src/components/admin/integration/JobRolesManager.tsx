@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -50,6 +49,7 @@ export const JobRolesManager: React.FC<JobRolesManagerProps> = ({ company }) => 
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [selectedRole, setSelectedRole] = useState<JobRole | null>(null);
   const [assignedUsers, setAssignedUsers] = useState<{ id: string; display_name: string }[]>([]);
+  const [selectedRoleForUsers, setSelectedRoleForUsers] = useState<JobRole | null>(null);
   
   const fetchJobRoles = async () => {
     setIsLoading(true);
@@ -150,7 +150,6 @@ export const JobRolesManager: React.FC<JobRolesManagerProps> = ({ company }) => 
   };
   
   const handleDeleteRole = async (roleId: string) => {
-    // Verificar se existem usuários usando este cargo
     try {
       const { count, error } = await supabase
         .from('profiles')
@@ -191,24 +190,20 @@ export const JobRolesManager: React.FC<JobRolesManagerProps> = ({ company }) => 
     
     if (targetIndex < 0 || targetIndex >= newRoles.length) return;
     
-    // Swap the order_index values
     const temp = newRoles[roleIndex].order_index;
     newRoles[roleIndex].order_index = newRoles[targetIndex].order_index;
     newRoles[targetIndex].order_index = temp;
     
-    // Swap the positions in the array
     [newRoles[roleIndex], newRoles[targetIndex]] = [newRoles[targetIndex], newRoles[roleIndex]];
     
     setJobRoles(newRoles);
     
     try {
-      // Update first role
       await supabase
         .from('job_roles')
         .update({ order_index: newRoles[roleIndex].order_index })
         .eq('id', newRoles[roleIndex].id);
         
-      // Update second role
       await supabase
         .from('job_roles')
         .update({ order_index: newRoles[targetIndex].order_index })
@@ -217,14 +212,13 @@ export const JobRolesManager: React.FC<JobRolesManagerProps> = ({ company }) => 
     } catch (error: any) {
       console.error("Error reordering job roles:", error);
       toast.error(`Erro ao reordenar cargos: ${error.message}`);
-      fetchJobRoles(); // Revert to original order
+      fetchJobRoles();
     }
   };
   
   const showRoleDetails = async (role: JobRole) => {
     setSelectedRole(role);
     
-    // Fetch users with this role
     try {
       const { data, error } = await supabase
         .from('profiles')
