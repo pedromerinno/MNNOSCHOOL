@@ -18,59 +18,98 @@ export const useDiscussions = () => {
     try {
       setIsLoading(true);
       
-      const { data, error } = await supabase
+      // Fetch discussions first
+      const { data: discussionsData, error: discussionsError } = await supabase
         .from('discussions')
-        .select(`
-          *,
-          profiles:author_id (
-            display_name,
-            avatar
-          ),
-          discussion_replies (
-            id,
-            discussion_id,
-            content,
-            created_at,
-            author_id,
-            image_url,
-            profiles:author_id (
-              display_name,
-              avatar
-            )
-          )
-        `)
+        .select('*')
         .eq('company_id', selectedCompany.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (discussionsError) throw discussionsError;
+      
+      if (!discussionsData || discussionsData.length === 0) {
+        setDiscussions([]);
+        return;
+      }
+      
+      // Fetch profiles for authors
+      const authorIds = [...new Set(discussionsData.map(d => d.author_id))];
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar')
+        .in('id', authorIds);
+        
+      if (profilesError) {
+        console.warn('Error fetching profiles:', profilesError);
+      }
+      
+      // Create a map of profiles by id for quick lookup
+      const profilesMap = (profilesData || []).reduce((map, profile) => {
+        map[profile.id] = profile;
+        return map;
+      }, {} as Record<string, any>);
+      
+      // Fetch all replies for these discussions
+      const discussionIds = discussionsData.map(d => d.id);
+      const { data: repliesData, error: repliesError } = await supabase
+        .from('discussion_replies')
+        .select('*')
+        .in('discussion_id', discussionIds)
+        .order('created_at', { ascending: true });
+        
+      if (repliesError) {
+        console.warn('Error fetching replies:', repliesError);
+      }
+      
+      // Fetch profiles for reply authors
+      const replyAuthorIds = [...new Set((repliesData || []).map(r => r.author_id))];
+      const { data: replyProfilesData, error: replyProfilesError } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar')
+        .in('id', replyAuthorIds);
+        
+      if (replyProfilesError) {
+        console.warn('Error fetching reply author profiles:', replyProfilesError);
+      }
+      
+      // Create a map of reply author profiles
+      const replyProfilesMap = (replyProfilesData || []).reduce((map, profile) => {
+        map[profile.id] = profile;
+        return map;
+      }, {} as Record<string, any>);
+      
+      // Group replies by discussion_id
+      const repliesByDiscussionId = (repliesData || []).reduce((map, reply) => {
+        if (!map[reply.discussion_id]) {
+          map[reply.discussion_id] = [];
+        }
+        map[reply.discussion_id].push({
+          ...reply,
+          profiles: replyProfilesMap[reply.author_id] || { display_name: 'Usuário', avatar: null }
+        });
+        return map;
+      }, {} as Record<string, any[]>);
       
       // Transform the data to match the Discussion type
-      const formattedData = data?.map(item => {
-        // Create the basic discussion object with properties from the database
-        const discussion: Discussion = {
-          id: item.id,
-          title: item.title,
-          content: item.content,
-          author_id: item.author_id,
-          company_id: item.company_id,
-          created_at: item.created_at,
-          updated_at: item.updated_at,
-          image_url: item.image_url || null, 
-          status: item.status || 'open' as const,
-          profiles: item.profiles || { display_name: 'Usuário', avatar: null },
-          discussion_replies: (item.discussion_replies || []).map((reply: any) => ({
-            id: reply.id,
-            discussion_id: reply.discussion_id,
-            author_id: reply.author_id,
-            content: reply.content,
-            created_at: reply.created_at,
-            image_url: reply.image_url || null,
-            profiles: reply.profiles || { display_name: 'Usuário', avatar: null }
-          }))
-        };
-        
-        return discussion;
-      }) || [];
+      const formattedData = discussionsData.map(discussion => {
+        return {
+          id: discussion.id,
+          title: discussion.title,
+          content: discussion.content,
+          author_id: discussion.author_id,
+          company_id: discussion.company_id,
+          created_at: discussion.created_at,
+          updated_at: discussion.updated_at,
+          // Use null for image_url if it doesn't exist yet in the database
+          image_url: discussion.image_url || null,
+          // Use 'open' as default status if it doesn't exist yet in the database
+          status: discussion.status || 'open' as const,
+          // Use the profile from our map, or a default if not found
+          profiles: profilesMap[discussion.author_id] || { display_name: 'Usuário', avatar: null },
+          // Use the grouped replies or an empty array
+          discussion_replies: (repliesByDiscussionId[discussion.id] || []) as DiscussionReply[]
+        } as Discussion;
+      });
       
       setDiscussions(formattedData);
     } catch (error: any) {
@@ -88,16 +127,18 @@ export const useDiscussions = () => {
     }
 
     try {
-      // Only include fields that exist in the database
+      const discussionData = {
+        title,
+        content,
+        company_id: selectedCompany.id,
+        author_id: user.id,
+        image_url: imageUrl || null,
+        status: 'open' as const
+      };
+
       const { data, error } = await supabase
         .from('discussions')
-        .insert([{
-          title,
-          content,
-          company_id: selectedCompany.id,
-          author_id: user.id
-          // Note: status and image_url are removed as they don't exist in the database
-        }])
+        .insert([discussionData])
         .select()
         .single();
 
@@ -114,8 +155,15 @@ export const useDiscussions = () => {
 
   const toggleDiscussionStatus = async (discussionId: string, newStatus: 'open' | 'closed') => {
     try {
-      // Instead of directly updating the status in database (which doesn't exist yet),
-      // we can update the local state until the database is updated
+      // Update the status in the database
+      const { error } = await supabase
+        .from('discussions')
+        .update({ status: newStatus })
+        .eq('id', discussionId);
+        
+      if (error) throw error;
+      
+      // Update local state
       setDiscussions(discussions.map(discussion => 
         discussion.id === discussionId 
           ? {...discussion, status: newStatus} 
@@ -123,10 +171,6 @@ export const useDiscussions = () => {
       ));
       
       toast.success(`Discussão ${newStatus === 'closed' ? 'concluída' : 'reaberta'} com sucesso!`);
-      
-      // For now, we'll just log this instead of making a database update
-      console.log(`Discussion status would be updated to ${newStatus} for ID: ${discussionId}`);
-      
     } catch (error: any) {
       console.error('Error updating discussion status:', error);
       toast.error('Erro ao atualizar status da discussão');
