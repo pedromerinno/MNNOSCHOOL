@@ -8,7 +8,7 @@ import { useCompanyDelete } from "./company/useCompanyDelete";
 import { useCompanyUserManagement } from "./company/useCompanyUserManagement";
 import { useCompanyEvents } from "./company/useCompanyEvents";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useCompanies = () => {
   // Get auth context for global access

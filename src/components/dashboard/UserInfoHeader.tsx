@@ -101,11 +101,11 @@ export const UserInfoHeader = () => {
             </h2>
             <p className="text-gray-500 dark:text-gray-400">{user?.email}</p>
             
-            {userProfile?.cargo && (
+            {userProfile?.cargo_id && (
               <div className="flex items-center mt-1">
                 <Badge variant="outline" className="flex items-center gap-1 text-xs font-normal">
                   <Briefcase className="h-3 w-3" />
-                  {userProfile.cargo}
+                  {userProfile.cargo_id}
                 </Badge>
               </div>
             )}
