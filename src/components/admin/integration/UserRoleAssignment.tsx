@@ -14,8 +14,6 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfile } from "@/hooks/useUsers";
 import { JobRole } from "@/types/job-roles";
-import { AlertTriangle } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface UserRoleAssignmentProps {
   user: UserProfile;
@@ -34,12 +32,11 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
   const [currentRoleTitle, setCurrentRoleTitle] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   
+  // Buscar cargos disponíveis e cargo atual do usuário
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
-      setError(null);
       try {
         // Buscar cargos da empresa
         const { data: roleData, error: roleError } = await supabase
@@ -50,28 +47,40 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
           
         if (roleError) throw roleError;
         
+        // Aqui garantimos que o tipo retornado seja compatível com JobRole
         if (roleData) {
           setRoles(roleData as JobRole[]);
         }
         
-        // Buscar cargo atual do usuário - garantindo que cargo_id existe
-        if (user.cargo_id) {
-          setCurrentRoleId(user.cargo_id);
-          setSelectedRoleId(user.cargo_id);
+        // Buscar cargo atual do usuário
+        const { data: userData, error: userError } = await supabase
+          .from('profiles')
+          .select('cargo_id')
+          .eq('id', user.id)
+          .single();
           
+        if (userError && userError.code !== 'PGRST116') throw userError;
+        
+        if (userData?.cargo_id) {
+          setCurrentRoleId(userData.cargo_id);
+          setSelectedRoleId(userData.cargo_id);
+          
+          // Buscar nome do cargo atual
           const { data: currentRoleData, error: currentRoleError } = await supabase
             .from('job_roles')
-            .select('title')
-            .eq('id', user.cargo_id)
+            .select('*')
+            .eq('id', userData.cargo_id)
             .single();
             
-          if (!currentRoleError && currentRoleData) {
+          if (currentRoleError && currentRoleError.code !== 'PGRST116') throw currentRoleError;
+          
+          if (currentRoleData) {
             setCurrentRoleTitle(currentRoleData.title);
           }
         }
       } catch (error: any) {
         console.error("Error fetching role data:", error);
-        setError(`Erro ao carregar dados: ${error.message}`);
+        toast.error(`Erro ao carregar dados: ${error.message}`);
       } finally {
         setIsLoading(false);
       }
@@ -89,32 +98,31 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
     }
     
     setIsSaving(true);
-    setError(null);
     
     try {
-      const updates = {
-        cargo_id: selectedRoleId,
-        updated_at: new Date().toISOString()
-      };
-
       const { error } = await supabase
         .from('profiles')
-        .update(updates)
+        .update({ 
+          cargo_id: selectedRoleId,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', user.id);
         
       if (error) throw error;
       
-      // Atualizar estado local
+      // Atualizar o estado local
       setCurrentRoleId(selectedRoleId);
       
-      // Buscar título do cargo atualizado
+      // Buscar nome do cargo atualizado
       const { data: updatedRoleData, error: updatedRoleError } = await supabase
         .from('job_roles')
         .select('title')
         .eq('id', selectedRoleId)
         .single();
         
-      if (!updatedRoleError && updatedRoleData) {
+      if (updatedRoleError) throw updatedRoleError;
+      
+      if (updatedRoleData) {
         setCurrentRoleTitle(updatedRoleData.title);
       }
       
@@ -126,7 +134,6 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
       
     } catch (error: any) {
       console.error("Error updating role:", error);
-      setError(`Erro ao atualizar cargo: ${error.message}`);
       toast.error(`Erro ao atualizar cargo: ${error.message}`);
     } finally {
       setIsSaving(false);
@@ -137,12 +144,11 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
     if (!confirm("Tem certeza que deseja remover o cargo deste usuário?")) return;
     
     setIsSaving(true);
-    setError(null);
     
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({
+        .update({ 
           cargo_id: null,
           updated_at: new Date().toISOString()
         })
@@ -150,6 +156,7 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
         
       if (error) throw error;
       
+      // Atualizar o estado local
       setCurrentRoleId(null);
       setCurrentRoleTitle(null);
       setSelectedRoleId(null);
@@ -162,7 +169,6 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
       
     } catch (error: any) {
       console.error("Error removing role:", error);
-      setError(`Erro ao remover cargo: ${error.message}`);
       toast.error(`Erro ao remover cargo: ${error.message}`);
     } finally {
       setIsSaving(false);
@@ -172,10 +178,9 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
   if (isLoading) {
     return (
       <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-center p-4">
-            <div className="animate-spin h-6 w-6 border-t-2 border-blue-500 border-r-2 rounded-full" />
-          </div>
+        <CardContent className="p-4 text-center">
+          <div className="animate-spin h-6 w-6 border-t-2 border-blue-500 border-r-2 rounded-full mx-auto"></div>
+          <p className="mt-2 text-sm text-gray-500">Carregando informações de cargo...</p>
         </CardContent>
       </Card>
     );
@@ -185,21 +190,14 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
     <Card>
       <CardContent className="p-4">
         <div className="space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          
           <div>
             <Label className="text-sm font-medium">Usuário</Label>
-            <p className="text-sm text-gray-600 dark:text-gray-400">{user.display_name || user.email}</p>
+            <p className="text-sm text-gray-600">{user.display_name || user.email}</p>
           </div>
           
           <div>
             <Label className="text-sm font-medium">Cargo Atual</Label>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-gray-600">
               {currentRoleTitle || "Nenhum cargo atribuído"}
             </p>
           </div>
@@ -244,11 +242,9 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
               </div>
             </>
           ) : (
-            <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded p-3">
-              <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                Não há cargos disponíveis. Adicione cargos na aba "Cargos" antes de fazer atribuições.
-              </p>
-            </div>
+            <p className="text-sm text-yellow-600 bg-yellow-50 p-3 rounded">
+              Não há cargos disponíveis. Adicione cargos na aba "Cargos" antes de fazer atribuições.
+            </p>
           )}
         </div>
       </CardContent>
