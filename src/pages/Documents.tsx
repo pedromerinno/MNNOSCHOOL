@@ -54,6 +54,11 @@ const Documents = () => {
     }
   };
 
+  // Wrapper function to adapt handleUpload to match the expected void return type
+  const handleDocumentUpload = async (file: File, documentType: DocumentType, description: string): Promise<boolean> => {
+    return await handleUpload(file, documentType, description);
+  };
+
   return (
     <PageLayout title="Documentos">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -74,7 +79,7 @@ const Documents = () => {
           <DocumentUploadForm
             open={uploadOpen}
             onOpenChange={setUploadOpen}
-            onUpload={handleUpload}
+            onUpload={handleDocumentUpload}
             isUploading={isUploading}
           />
           
