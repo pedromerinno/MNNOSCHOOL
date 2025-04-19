@@ -17,6 +17,17 @@ const categories = [
   { id: "shader", name: "Shaders", icon: CircleDot },
 ];
 
+const bgColors = [
+  'bg-blue-50',
+  'bg-green-50',
+  'bg-purple-50',
+  'bg-orange-50',
+  'bg-pink-50',
+  'bg-teal-50',
+  'bg-indigo-50',
+  'bg-cyan-50',
+];
+
 interface CourseCategoriesProps {
   activeCategory: string;
   onCategoryChange: (category: string) => void;
@@ -27,24 +38,25 @@ export const CourseCategories: React.FC<CourseCategoriesProps> = ({
   onCategoryChange
 }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-      {categories.map((category) => {
+    <div className="flex flex-wrap gap-3">
+      {categories.map((category, index) => {
         const Icon = category.icon;
         const isActive = activeCategory === category.id;
+        const randomBg = bgColors[index % bgColors.length];
         
         return (
           <Card 
             key={category.id} 
-            className={`flex items-center gap-3 p-4 cursor-pointer transition-all rounded-full
+            className={`inline-flex items-center gap-2 px-4 py-2 cursor-pointer transition-all rounded-lg
               ${isActive 
                 ? 'bg-black text-white' 
-                : 'bg-gray-50 hover:bg-gray-100'
+                : `${randomBg} hover:bg-gray-100`
               }`}
             onClick={() => onCategoryChange(category.id)}
           >
-            <div className={`p-2 rounded-full ${isActive ? 'bg-white/20' : 'bg-white'}`}>
+            <div className={`p-1.5 rounded-full ${isActive ? 'bg-white/20' : 'bg-white'}`}>
               <Icon 
-                size={20}
+                size={18}
                 className={isActive ? 'text-white' : 'text-black'}
               />
             </div>
