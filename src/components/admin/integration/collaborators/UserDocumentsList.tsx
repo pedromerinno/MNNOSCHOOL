@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Download, Trash2, Upload, AlertCircle, Eye } from "lucide-react";
@@ -26,6 +27,17 @@ export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  // Get current user ID once on component mount
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const { data } = await supabase.auth.getUser();
+      setCurrentUserId(data.user?.id || null);
+    };
+    
+    fetchUserId();
+  }, []);
 
   const handleDownload = async (document: UserDocument) => {
     setDownloadingId(document.id);
@@ -80,7 +92,7 @@ export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
   };
 
   const canDeleteDocument = (document: UserDocument) => {
-    return document.uploaded_by === (supabase.auth.getUser())?.data?.user?.id;
+    return document.uploaded_by === currentUserId;
   };
 
   const confirmDelete = async (document: UserDocument) => {
