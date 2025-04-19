@@ -48,12 +48,12 @@ export const useCompanyModification = ({
     window.dispatchEvent(event);
   }, [setSelectedCompany]);
 
-  const createCompany = useCallback(async (data: Partial<Company>) => {
+  const createCompany = useCallback(async (data: Partial<Company> & { nome: string }) => {
     setIsLoading(true);
     try {
       const { data: newCompany, error } = await supabase
         .from('empresas')
-        .insert([data])
+        .insert(data)
         .select()
         .single();
   
