@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { fetchCourses } from "@/services/courseService";
+import { DialogTitle } from "@/components/ui/dialog";
 
 export const SearchBar = () => {
   const { selectedCompany } = useCompanies();
@@ -14,6 +15,7 @@ export const SearchBar = () => {
   const [open, setOpen] = useState(false);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [courses, setCourses] = useState<any[]>([]);
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,9 +30,27 @@ export const SearchBar = () => {
     navigate(`/courses/${courseId}`);
   };
 
-  // Create a memoized fetch suggestions function that can be called directly
-  const performSearch = useCallback(async () => {
-    if (!searchQuery.trim() || !selectedCompany?.id) {
+  // Fetch all courses once when component mounts or company changes
+  useEffect(() => {
+    const loadAllCourses = async () => {
+      if (!selectedCompany?.id) return;
+      
+      try {
+        console.log("Fetching courses for company:", selectedCompany.id);
+        const allCourses = await fetchCourses(selectedCompany.id);
+        console.log("Loaded", allCourses.length, "courses for company", selectedCompany.id);
+        setCourses(allCourses);
+      } catch (error) {
+        console.error("Error fetching courses:", error);
+      }
+    };
+    
+    loadAllCourses();
+  }, [selectedCompany?.id]);
+
+  // This function filters the already loaded courses
+  const performSearch = useCallback(() => {
+    if (!searchQuery.trim() || courses.length === 0) {
       setSuggestions([]);
       return;
     }
@@ -38,12 +58,10 @@ export const SearchBar = () => {
     setLoading(true);
     
     try {
-      console.log("Performing search for:", searchQuery);
-      // Get all courses available to this company
-      const allCourses = await fetchCourses(selectedCompany.id);
+      console.log("Filtering courses for:", searchQuery);
       
       // Filter courses based on search query
-      const filteredCourses = allCourses.filter(course => 
+      const filteredCourses = courses.filter(course => 
         course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (course.tags && course.tags.some(tag => 
           tag.toLowerCase().includes(searchQuery.toLowerCase())
@@ -53,12 +71,12 @@ export const SearchBar = () => {
       console.log("Found courses:", filteredCourses.length);
       setSuggestions(filteredCourses);
     } catch (error) {
-      console.error("Error fetching search suggestions:", error);
+      console.error("Error filtering courses:", error);
       setSuggestions([]);
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, selectedCompany?.id]);
+  }, [searchQuery, courses]);
 
   // Handle input change from either search input
   const handleInputChange = (value: string) => {
@@ -68,11 +86,8 @@ export const SearchBar = () => {
 
   // This useEffect will run the search whenever searchQuery changes
   useEffect(() => {
-    const debounceTimer = setTimeout(() => {
-      performSearch();
-    }, 300);
-
-    return () => clearTimeout(debounceTimer);
+    // Immediate search for better responsiveness
+    performSearch();
   }, [searchQuery, performSearch]);
 
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
@@ -101,56 +116,65 @@ export const SearchBar = () => {
         </div>
       </div>
 
-      <CommandDialog open={open} onOpenChange={setOpen}>
-        <Command>
-          <CommandInput 
-            value={searchQuery}
-            onValueChange={handleInputChange}
-            placeholder="Digite para pesquisar cursos..."
-          />
-          <CommandList>
-            {loading ? (
-              <div className="py-6 text-center text-sm text-gray-500">
-                Buscando cursos...
-              </div>
-            ) : suggestions.length === 0 && searchQuery ? (
-              <CommandEmpty>Nenhum curso encontrado.</CommandEmpty>
-            ) : (
-              <CommandGroup heading="Cursos sugeridos">
-                {suggestions.map((course) => (
-                  <CommandItem
-                    key={course.id}
-                    onSelect={() => handleSelect(course.id)}
-                    className="flex items-center gap-3 cursor-pointer"
-                  >
-                    {/* Course thumbnail */}
-                    <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
-                      {course.image_url ? (
-                        <img 
-                          src={course.image_url} 
-                          alt={course.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gray-200 dark:bg-gray-700" />
-                      )}
-                    </div>
-                    
-                    <div className="min-w-0 flex-1">
-                      <div className="font-medium truncate">{course.title}</div>
-                      {course.tags && (
-                        <div className="text-sm text-gray-500 truncate">
-                          {course.tags.join(' • ')}
-                        </div>
-                      )}
-                    </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            )}
-          </CommandList>
+      <CommandDialog 
+        open={open} 
+        onOpenChange={setOpen}
+        className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border border-gray-200 dark:border-gray-700"
+      >
+        <Command className="rounded-lg border-none bg-transparent">
+          <div className="flex flex-col">
+            <DialogTitle className="sr-only">Pesquisar cursos</DialogTitle>
+            <CommandInput 
+              value={searchQuery}
+              onValueChange={handleInputChange}
+              placeholder="Digite para pesquisar cursos..."
+              className="border-b border-gray-200 dark:border-gray-700"
+            />
+            <CommandList className="max-h-[300px] overflow-y-auto">
+              {loading ? (
+                <div className="py-6 text-center text-sm text-gray-500">
+                  Buscando cursos...
+                </div>
+              ) : suggestions.length === 0 && searchQuery ? (
+                <CommandEmpty>Nenhum curso encontrado.</CommandEmpty>
+              ) : (
+                <CommandGroup heading="Cursos sugeridos">
+                  {suggestions.map((course) => (
+                    <CommandItem
+                      key={course.id}
+                      onSelect={() => handleSelect(course.id)}
+                      className="flex items-center gap-3 cursor-pointer p-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    >
+                      {/* Course thumbnail */}
+                      <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                        {course.image_url ? (
+                          <img 
+                            src={course.image_url} 
+                            alt={course.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-200 dark:bg-gray-700" />
+                        )}
+                      </div>
+                      
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium truncate">{course.title}</div>
+                        {course.tags && (
+                          <div className="text-sm text-gray-500 truncate">
+                            {course.tags.join(' • ')}
+                          </div>
+                        )}
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
+            </CommandList>
+          </div>
         </Command>
       </CommandDialog>
     </>
   );
 };
+
