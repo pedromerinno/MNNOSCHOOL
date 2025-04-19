@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Upload, Download, File, FolderOpen, Eye, Trash2 } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -32,6 +33,16 @@ const Documents = () => {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<UserDocument | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
+
+  // Fetch current user to check permissions
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      const { data } = await supabase.auth.getUser();
+      setUserProfile(data.user);
+    };
+    
+    fetchUserProfile();
+  }, []);
 
   const documentsByType = documents.reduce((acc, doc) => {
     if (!acc[doc.document_type]) {
@@ -252,6 +263,17 @@ const Documents = () => {
                               >
                                 <Download className="h-4 w-4" />
                               </Button>
+                              {canDeleteDocument(doc) && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  onClick={() => handleDeleteDocument(doc)}
+                                  title="Excluir documento"
+                                  className="text-red-500 hover:text-red-600"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
                             </div>
                           </div>
                         ))}

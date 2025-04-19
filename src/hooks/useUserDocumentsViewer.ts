@@ -39,7 +39,8 @@ export const useUserDocumentsViewer = () => {
         .from('user_documents')
         .select('*')
         .eq('user_id', userId)
-        .eq('company_id', selectedCompany.id);
+        .eq('company_id', selectedCompany.id)
+        .order('uploaded_at', { ascending: false });
         
       if (error) throw error;
       
@@ -62,7 +63,6 @@ export const useUserDocumentsViewer = () => {
       if (error) throw error;
       
       const url = URL.createObjectURL(data);
-      // Use window.document instead of 'document' parameter
       const a = window.document.createElement('a');
       a.href = url;
       a.download = document.name;
@@ -82,6 +82,68 @@ export const useUserDocumentsViewer = () => {
       return false;
     }
   }, []);
+
+  const deleteDocument = useCallback(async (documentId: string): Promise<boolean> => {
+    if (!documentId) {
+      toast.error("ID do documento não fornecido");
+      return false;
+    }
+
+    try {
+      // Get current user to verify permissions
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) {
+        toast.error("Usuário não autenticado");
+        return false;
+      }
+
+      // Fetch document details to verify ownership
+      const { data: document, error: fetchError } = await supabase
+        .from('user_documents')
+        .select('file_path, uploaded_by')
+        .eq('id', documentId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      if (!document) {
+        toast.error("Documento não encontrado");
+        return false;
+      }
+
+      // Check if user owns the document
+      if (document.uploaded_by !== currentUser.id) {
+        toast.error("Você só pode excluir documentos que você mesmo enviou");
+        return false;
+      }
+
+      // Delete the file from storage
+      const { error: storageError } = await supabase.storage
+        .from('documents')
+        .remove([document.file_path]);
+
+      if (storageError) {
+        console.warn("Erro ao remover arquivo do storage:", storageError);
+      }
+
+      // Delete the document record from the database
+      const { error: deleteError } = await supabase
+        .from('user_documents')
+        .delete()
+        .eq('id', documentId);
+
+      if (deleteError) throw deleteError;
+
+      // Update local state
+      setDocuments(prev => prev.filter(doc => doc.id !== documentId));
+      toast.success('Documento excluído com sucesso');
+      return true;
+    } catch (error: any) {
+      console.error('Error deleting document:', error);
+      toast.error(`Erro ao excluir documento: ${error.message}`);
+      return false;
+    }
+  }, []);
   
   useEffect(() => {
     fetchUserDocuments();
@@ -92,6 +154,7 @@ export const useUserDocumentsViewer = () => {
     isLoading,
     error,
     downloadDocument,
+    deleteDocument,
     refreshDocuments: fetchUserDocuments
   };
 };
