@@ -27,8 +27,8 @@ export const useCourseCompanies = (course: Course) => {
 
         const companiesWithDefaults = companiesData?.map(company => ({
           ...company,
-          descricao: company.descricao || null,
-          responsavel: company.responsavel || null,
+          descricao: null,
+          responsavel: null,
           cor_principal: company.cor_principal || null,
           logo: company.logo || null,
           frase_institucional: company.frase_institucional || null,
