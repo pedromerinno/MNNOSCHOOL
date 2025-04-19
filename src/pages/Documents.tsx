@@ -5,6 +5,7 @@ import { DocumentPreview } from "@/components/documents/DocumentPreview";
 import { DocumentTabs } from "@/components/documents/DocumentTabs";
 import { useDocumentManager } from "@/hooks/useDocumentManager";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { DocumentType } from "@/types/document";
 
 const Documents = () => {
   const [activeTab, setActiveTab] = useState("todos");

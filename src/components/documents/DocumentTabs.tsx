@@ -10,7 +10,7 @@ interface DocumentTabsProps {
   uploadOpen: boolean;
   setUploadOpen: (open: boolean) => void;
   isUploading: boolean;
-  onUpload: (file: File, documentType: DocumentType, description: string) => Promise<void>;
+  onUpload: (file: File, documentType: DocumentType, description: string) => Promise<boolean>;
   onDownload: (document: UserDocument) => Promise<void>;
   onPreview: (document: UserDocument) => Promise<void>;
   onDelete: (document: UserDocument) => Promise<void>;
