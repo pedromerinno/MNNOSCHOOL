@@ -53,7 +53,7 @@ export const useJobRoles = (company: Company) => {
             responsibilities: role.responsibilities || null,
             requirements: role.requirements || null,
             expectations: role.expectations || null,
-            order_index: role.order_index
+            order_index: jobRoles.length
           })
           .select();
           
@@ -77,6 +77,7 @@ export const useJobRoles = (company: Company) => {
         toast.success("Cargo atualizado com sucesso");
       }
       
+      // Resetar estados e buscar dados atualizados
       setEditingRole(null);
       setNewRole(null);
       setIsFormOpen(false);

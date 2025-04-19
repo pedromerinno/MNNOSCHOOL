@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useEffect, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, PlayCircle, BriefcaseBusiness } from "lucide-react";
 import { CultureManual } from '@/components/integration/CultureManual';
@@ -6,13 +7,15 @@ import { VideoPlaylist } from '@/components/integration/video-playlist';
 import { UserRole } from '@/components/integration/UserRole';
 import { Card, CardContent } from "@/components/ui/card";
 import { Company } from "@/types/company";
+import { supabase } from "@/integrations/supabase/client";
+import { JobRole } from "@/types/job-roles";
 
 interface IntegrationTabsProps {
   activeTab: string;
   setActiveTab: (value: string) => void;
   company: Company | null;
   companyColor: string;
-  jobRoles: any[];
+  jobRoles: JobRole[];
 }
 
 export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
@@ -22,6 +25,43 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
   companyColor,
   jobRoles
 }) => {
+  const [userRole, setUserRole] = useState<JobRole | null>(null);
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      try {
+        // Primeiro, buscar o cargo_id do usuário
+        const { data: userData, error: userError } = await supabase
+          .from('profiles')
+          .select('cargo_id')
+          .single();
+
+        if (userError) throw userError;
+
+        if (userData?.cargo_id && company) {
+          // Depois, buscar os detalhes do cargo específico
+          const { data: roleData, error: roleError } = await supabase
+            .from('job_roles')
+            .select('*')
+            .eq('id', userData.cargo_id)
+            .eq('company_id', company.id)
+            .single();
+
+          if (roleError) throw roleError;
+          
+          setUserRole(roleData);
+        }
+      } catch (error) {
+        console.error('Error fetching user role:', error);
+        setUserRole(null);
+      }
+    };
+
+    if (company) {
+      fetchUserRole();
+    }
+  }, [company]);
+
   return (
     <div className="w-full">
       <Tabs
@@ -91,19 +131,18 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
           </TabsContent>
 
           <TabsContent value="role" className="m-0">
-            {jobRoles.map((role) => (
+            {userRole ? (
               <UserRole
-                key={role.id}
-                role={role}
+                key={userRole.id}
+                role={userRole}
                 companyColor={companyColor}
               />
-            ))}
-            {jobRoles.length === 0 && (
+            ) : (
               <Card>
                 <CardContent className="p-6 text-center">
                   <BriefcaseBusiness className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                   <p className="text-gray-500 dark:text-gray-400">
-                    Informações sobre o cargo não disponíveis
+                    Nenhum cargo atribuído para você nesta empresa
                   </p>
                 </CardContent>
               </Card>

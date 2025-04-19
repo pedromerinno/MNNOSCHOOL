@@ -7,11 +7,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { X, Save } from "lucide-react";
+import { toast } from "sonner";
 
 interface JobRoleFormProps {
   role: Partial<JobRole>;
   isNew: boolean;
-  onSave: () => void;
+  onSave: (roleData: Partial<JobRole>) => void;
   onCancel: () => void;
 }
 
@@ -46,8 +47,42 @@ export const JobRoleForm = ({
     }));
   };
 
+  const formatBulletPoints = (text: string) => {
+    if (!text) return '';
+    
+    // Split by new lines and filter empty lines
+    const lines = text.split('\n').filter(line => line.trim());
+    
+    // Add bullet points if not present
+    return lines.map(line => {
+      const trimmedLine = line.trim();
+      return trimmedLine.startsWith('•') ? trimmedLine : `• ${trimmedLine}`;
+    }).join('\n');
+  };
+
   const handleSaveValues = () => {
-    onSave();
+    if (!formValues.title.trim()) {
+      toast.error("O título do cargo é obrigatório");
+      return;
+    }
+
+    const formattedValues = {
+      ...formValues,
+      responsibilities: formatBulletPoints(formValues.responsibilities),
+      requirements: formatBulletPoints(formValues.requirements),
+      expectations: formatBulletPoints(formValues.expectations)
+    };
+
+    onSave(formattedValues);
+  };
+
+  const getPlaceholder = (field: string) => {
+    const placeholders = {
+      responsibilities: "• Gerenciar projetos\n• Liderar equipe\n• Desenvolver estratégias",
+      requirements: "• Experiência em gestão\n• Conhecimento em metodologias ágeis\n• Inglês avançado",
+      expectations: "• Capacidade de liderança\n• Comunicação efetiva\n• Pensamento estratégico"
+    };
+    return placeholders[field as keyof typeof placeholders] || "";
   };
 
   return (
@@ -81,40 +116,40 @@ export const JobRoleForm = ({
 
           <div>
             <Label htmlFor={isNew ? "new-responsibilities" : `edit-responsibilities-${role.id}`}>
-              Responsabilidades
+              Responsabilidades (uma por linha)
             </Label>
             <Textarea
               id={isNew ? "new-responsibilities" : `edit-responsibilities-${role.id}`}
               value={formValues.responsibilities}
               onChange={(e) => handleChange('responsibilities', e.target.value)}
-              placeholder="Responsabilidades do cargo"
-              rows={3}
+              placeholder={getPlaceholder('responsibilities')}
+              rows={5}
             />
           </div>
 
           <div>
             <Label htmlFor={isNew ? "new-requirements" : `edit-requirements-${role.id}`}>
-              Requisitos
+              Requisitos (um por linha)
             </Label>
             <Textarea
               id={isNew ? "new-requirements" : `edit-requirements-${role.id}`}
               value={formValues.requirements}
               onChange={(e) => handleChange('requirements', e.target.value)}
-              placeholder="Requisitos e habilidades necessárias"
-              rows={3}
+              placeholder={getPlaceholder('requirements')}
+              rows={5}
             />
           </div>
 
           <div>
             <Label htmlFor={isNew ? "new-expectations" : `edit-expectations-${role.id}`}>
-              Expectativas
+              Expectativas (uma por linha)
             </Label>
             <Textarea
               id={isNew ? "new-expectations" : `edit-expectations-${role.id}`}
               value={formValues.expectations}
               onChange={(e) => handleChange('expectations', e.target.value)}
-              placeholder="Expectativas do cargo"
-              rows={3}
+              placeholder={getPlaceholder('expectations')}
+              rows={5}
             />
           </div>
 
