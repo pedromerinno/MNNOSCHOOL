@@ -138,16 +138,20 @@ const Access = () => {
 
   return (
     <PageLayout title="Acessos">
-      <p className="text-gray-700 dark:text-gray-300 mb-6">
-        Aqui estão todos os acessos às ferramentas e plataformas utilizadas pela empresa {selectedCompany?.nome}.
-        Clique em um card para visualizar as informações completas.
-      </p>
+      <div className="bg-white dark:bg-card rounded-xl shadow-sm p-8 mb-6">
+        <p className="text-gray-700 dark:text-gray-300 text-base leading-relaxed">
+          Aqui estão todos os acessos às ferramentas e plataformas utilizadas pela empresa {selectedCompany?.nome}. 
+          Clique em um card para visualizar as informações completas.
+        </p>
+      </div>
         
-      <AccessList 
-        items={accessItems}
-        onSelectAccess={openAccessDetails}
-        companyColor={selectedCompany?.cor_principal}
-      />
+      <div className="bg-white dark:bg-card rounded-xl shadow-sm p-8">
+        <AccessList 
+          items={accessItems}
+          onSelectAccess={openAccessDetails}
+          companyColor={selectedCompany?.cor_principal}
+        />
+      </div>
 
       <AccessDetails 
         access={selectedAccess}
@@ -160,3 +164,4 @@ const Access = () => {
 };
 
 export default Access;
+
