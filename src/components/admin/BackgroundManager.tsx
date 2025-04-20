@@ -24,7 +24,7 @@ export const BackgroundManager = () => {
           .from('settings')
           .select('value, media_type')
           .eq('key', 'login_background')
-          .single();
+          .maybeSingle();
 
         console.log("Admin: Background data:", data, "Error:", error);
 
@@ -51,7 +51,7 @@ export const BackgroundManager = () => {
         .from('settings')
         .select('id')
         .eq('key', 'login_background')
-        .single();
+        .maybeSingle();
       
       // Use upsert with the correct ID if it exists
       const { error } = await supabase
@@ -106,7 +106,7 @@ export const BackgroundManager = () => {
           .from('settings')
           .select('id')
           .eq('key', 'login_background')
-          .single();
+          .maybeSingle();
         
         // Use upsert with the correct ID if it exists
         const { error } = await supabase
