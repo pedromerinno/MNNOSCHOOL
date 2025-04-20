@@ -8,7 +8,7 @@ import { CompanyManagement } from '@/components/admin/CompanyManagement';
 import { SettingsManagement } from '@/components/admin/integration/SettingsManagement';
 import { BackgroundManager } from '@/components/admin/BackgroundManager';
 import { useAuth } from '@/contexts/AuthContext';
-import { Users, Building, Settings, Book, Image } from 'lucide-react';
+import { Building, Users, Book, Settings, LayoutDashboard } from 'lucide-react';
 import { CourseManagement } from '@/components/admin/CourseManagement';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
@@ -19,7 +19,9 @@ const getLighterAdminColor = (opacity = 0.1) =>
 
 const AdminPage = () => {
   const { userProfile, loading: authLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState("users");
+  const [activeTab, setActiveTab] = useState(
+    userProfile?.super_admin ? "platform" : "companies"
+  );
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
@@ -40,6 +42,40 @@ const AdminPage = () => {
     return <Navigate to="/" replace />;
   }
 
+  // Tabs definition (order and label)
+  const tabs = [
+    ...(userProfile?.super_admin ? [{
+      value: "platform",
+      label: "Plataforma",
+      icon: LayoutDashboard,
+      content: <BackgroundManager />,
+    }] : []),
+    {
+      value: "companies",
+      label: "Empresas",
+      icon: Building,
+      content: <CompanyManagement />
+    },
+    {
+      value: "users",
+      label: "Usuários",
+      icon: Users,
+      content: <UserManagement />
+    },
+    {
+      value: "allcourses",
+      label: "Cursos",
+      icon: Book,
+      content: <CourseManagement />
+    },
+    {
+      value: "settings",
+      label: "Configurações da Empresa",
+      icon: Settings,
+      content: <SettingsManagement />
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-6 py-12">
@@ -48,124 +84,42 @@ const AdminPage = () => {
           <h1 className="text-3xl md:text-4xl font-bold dark:text-white text-gray-900 tracking-tight">
             Painel Administrativo
           </h1>
-          {/* Espaço para badge ou complemento futuro */}
         </div>
 
         <Card className="mb-8 shadow-sm border border-gray-100 dark:border-gray-800">
-          <CardContent className="p-10"> {/* aumento do padding aqui */}
+          <CardContent className="p-12"> {/* Padding aumentado */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              {/* Novo estilo das abas, igual da Comunidade */}
               <div className="border-b border-gray-100 dark:border-gray-800 py-2 px-2 bg-transparent">
                 <TabsList className="flex gap-2 rounded-2xl p-1.5 bg-transparent dark:bg-transparent w-full justify-start">
-                  <TabsTrigger 
-                    value="users"
-                    className={`flex items-center gap-2 rounded-xl py-3 px-6 transition-colors border border-transparent 
-                      ${activeTab === "users" 
-                        ? "bg-black text-white"
-                        : "text-gray-600 dark:text-gray-300 hover:bg-[rgba(30,174,219,0.05)]"
-                      }
-                    `}
-                    style={{
-                      backgroundColor: activeTab === "users" ? 'black' : undefined,
-                      borderColor: "transparent",
-                      color: activeTab === "users" ? 'white' : undefined,
-                    }}
-                  >
-                    <Users className={`h-4 w-4 mr-2 ${activeTab === "users" ? "text-white" : ""}`} />
-                    Usuários
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="companies"
-                    className={`flex items-center gap-2 rounded-xl py-3 px-6 transition-colors border border-transparent 
-                      ${activeTab === "companies" 
-                        ? "bg-black text-white"
-                        : "text-gray-600 dark:text-gray-300 hover:bg-[rgba(30,174,219,0.05)]"
-                      }
-                    `}
-                    style={{
-                      backgroundColor: activeTab === "companies" ? 'black' : undefined,
-                      borderColor: "transparent",
-                      color: activeTab === "companies" ? 'white' : undefined,
-                    }}
-                  >
-                    <Building className={`h-4 w-4 mr-2 ${activeTab === "companies" ? "text-white" : ""}`} />
-                    Empresas
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="allcourses"
-                    className={`flex items-center gap-2 rounded-xl py-3 px-6 transition-colors border border-transparent 
-                      ${activeTab === "allcourses" 
-                        ? "bg-black text-white"
-                        : "text-gray-600 dark:text-gray-300 hover:bg-[rgba(30,174,219,0.05)]"
-                      }
-                    `}
-                    style={{
-                      backgroundColor: activeTab === "allcourses" ? 'black' : undefined,
-                      borderColor: "transparent",
-                      color: activeTab === "allcourses" ? 'white' : undefined,
-                    }}
-                  >
-                    <Book className={`h-4 w-4 mr-2 ${activeTab === "allcourses" ? "text-white" : ""}`} />
-                    Todos os Cursos
-                  </TabsTrigger>
-                  {userProfile?.super_admin && (
+                  {tabs.map(tab => (
                     <TabsTrigger
-                      value="background"
+                      key={tab.value}
+                      value={tab.value}
                       className={`flex items-center gap-2 rounded-xl py-3 px-6 transition-colors border border-transparent 
-                        ${activeTab === "background" 
+                        ${activeTab === tab.value
                           ? "bg-black text-white"
                           : "text-gray-600 dark:text-gray-300 hover:bg-[rgba(30,174,219,0.05)]"
                         }
                       `}
                       style={{
-                        backgroundColor: activeTab === "background" ? 'black' : undefined,
+                        backgroundColor: activeTab === tab.value ? 'black' : undefined,
                         borderColor: "transparent",
-                        color: activeTab === "background" ? 'white' : undefined,
+                        color: activeTab === tab.value ? 'white' : undefined,
                       }}
                     >
-                      <Image className={`h-4 w-4 mr-2 ${activeTab === "background" ? "text-white" : ""}`} />
-                      Background
+                      <tab.icon className={`h-4 w-4 mr-2 ${activeTab === tab.value ? "text-white" : ""}`} />
+                      {tab.label}
                     </TabsTrigger>
-                  )}
-                  <TabsTrigger 
-                    value="settings"
-                    className={`flex items-center gap-2 rounded-xl py-3 px-6 transition-colors border border-transparent 
-                      ${activeTab === "settings" 
-                        ? "bg-black text-white"
-                        : "text-gray-600 dark:text-gray-300 hover:bg-[rgba(30,174,219,0.05)]"
-                      }
-                    `}
-                    style={{
-                      backgroundColor: activeTab === "settings" ? 'black' : undefined,
-                      borderColor: "transparent",
-                      color: activeTab === "settings" ? 'white' : undefined,
-                    }}
-                  >
-                    <Settings className={`h-4 w-4 mr-2 ${activeTab === "settings" ? "text-white" : ""}`} />
-                    Settings
-                  </TabsTrigger>
+                  ))}
                 </TabsList>
               </div>
-              
               <div className="p-6">
                 <ErrorBoundary>
-                  <TabsContent value="users" className="m-0">
-                    <UserManagement />
-                  </TabsContent>
-                  <TabsContent value="companies" className="m-0">
-                    <CompanyManagement />
-                  </TabsContent>
-                  <TabsContent value="allcourses" className="m-0">
-                    <CourseManagement />
-                  </TabsContent>
-                  {userProfile?.super_admin && (
-                    <TabsContent value="background" className="m-0">
-                      <BackgroundManager />
+                  {tabs.map(tab => (
+                    <TabsContent key={tab.value} value={tab.value} className="m-0">
+                      {tab.content}
                     </TabsContent>
-                  )}
-                  <TabsContent value="settings" className="m-0">
-                    <SettingsManagement />
-                  </TabsContent>
+                  ))}
                 </ErrorBoundary>
               </div>
             </Tabs>
