@@ -6,16 +6,41 @@ interface UseCompanySelectionProps {
   setSelectedCompany: (company: Company | null) => void;
 }
 
+// Cache expiration time in ms (30 minutes)
+const CACHE_EXPIRATION = 30 * 60 * 1000;
+
 export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionProps) => {
+  /**
+   * Check if the company cache is valid
+   */
+  const isCacheValid = useCallback((): boolean => {
+    const cachedTimestamp = localStorage.getItem('selectedCompanyTimestamp');
+    if (!cachedTimestamp) return false;
+    
+    try {
+      const timestamp = parseInt(cachedTimestamp, 10);
+      const now = Date.now();
+      return (now - timestamp) < CACHE_EXPIRATION;
+    } catch (e) {
+      return false;
+    }
+  }, []);
+
   /**
    * Store the selected company in local storage for persistence
    */
   const persistCompanySelection = useCallback((company: Company) => {
     try {
+      if (!company || !company.id) {
+        console.error('Attempted to persist invalid company', company);
+        return;
+      }
+      
       localStorage.setItem('selectedCompanyId', company.id);
       localStorage.setItem('selectedCompany', JSON.stringify(company));
+      localStorage.setItem('selectedCompanyTimestamp', Date.now().toString());
       
-      // We remove this dispatch since it will be done in selectCompany
+      console.log(`Company persisted: ${company.nome} (${company.id})`);
     } catch (e) {
       console.error('Failed to persist company selection', e);
     }
@@ -30,18 +55,33 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
 
   /**
    * Retrieve the stored company object from local storage
+   * Only returns the company if the cache is still valid
    */
   const getStoredCompany = useCallback((): Company | null => {
     const storedCompany = localStorage.getItem('selectedCompany');
     if (!storedCompany) return null;
     
+    // Check if cache is still valid
+    if (!isCacheValid()) {
+      console.log('Company cache expired, will reload from server');
+      return null;
+    }
+    
     try {
-      return JSON.parse(storedCompany) as Company;
+      const company = JSON.parse(storedCompany) as Company;
+      
+      // Validate the company has required fields
+      if (!company.id || !company.nome) {
+        console.error('Invalid company data in cache, missing required fields');
+        return null;
+      }
+      
+      return company;
     } catch (e) {
       console.error('Error parsing stored company', e);
       return null;
     }
-  }, []);
+  }, [isCacheValid]);
 
   /**
    * Select a company and update all necessary state
@@ -81,6 +121,7 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
   return {
     selectCompany,
     getStoredCompanyId,
-    getStoredCompany
+    getStoredCompany,
+    persistCompanySelection
   };
 };

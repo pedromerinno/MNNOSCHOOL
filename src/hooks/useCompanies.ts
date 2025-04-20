@@ -54,7 +54,10 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
   });
   
   // Import functionality from individual hooks
-  const { fetchCompanies } = useCompanyCreate({ 
+  const { 
+    createCompany,
+    fetchCompanies
+  } = useCompanyCreate({ 
     setIsLoading, 
     setCompanies 
   });
@@ -65,11 +68,6 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     getStoredCompany 
   } = useCompanySelection({ 
     setSelectedCompany 
-  });
-  
-  const { createCompany } = useCompanyCreate({ 
-    setIsLoading, 
-    setCompanies 
   });
   
   const { updateCompany } = useCompanyUpdate({ 

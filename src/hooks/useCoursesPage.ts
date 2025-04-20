@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 type FilterOption = 'all' | 'newest' | 'popular';
 
@@ -14,17 +15,42 @@ export const useCoursesPage = () => {
   const [allCoursesLoading, setAllCoursesLoading] = useState(true);
   const [lastSelectedCompanyId, setLastSelectedCompanyId] = useState<string | null>(null);
   const initialLoadDone = useRef(false);
+  const fetchAttempts = useRef(0);
+  const maxRetries = 3;
 
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
 
   // Memoized fetch function to prevent unnecessary re-renders
-  const fetchCourseData = useCallback(async () => {
-    if (!selectedCompany) return;
+  const fetchCourseData = useCallback(async (retry = false) => {
+    if (!selectedCompany) {
+      // If we don't have a selected company yet, but we haven't tried many times,
+      // we can schedule another attempt
+      if (fetchAttempts.current < maxRetries && retry) {
+        fetchAttempts.current += 1;
+        console.log(`No company selected yet, scheduling retry attempt ${fetchAttempts.current}/${maxRetries}`);
+        setTimeout(() => fetchCourseData(true), 1000);
+        return;
+      } else if (fetchAttempts.current >= maxRetries) {
+        console.log("Max retry attempts reached without a selected company");
+        setLoading(false);
+        setAllCoursesLoading(false);
+        initialLoadDone.current = true;
+        return;
+      }
+      return;
+    }
+    
+    // Reset retry counter when we have a company
+    fetchAttempts.current = 0;
     
     // Skip if already fetched for this company
-    if (lastSelectedCompanyId === selectedCompany.id) return;
+    if (lastSelectedCompanyId === selectedCompany.id && initialLoadDone.current) {
+      console.log(`Already fetched data for company ${selectedCompany.id}`);
+      return;
+    }
     
     try {
+      console.log(`Fetching course data for company: ${selectedCompany.nome}`);
       setLoading(true);
       setAllCoursesLoading(true);
       setLastSelectedCompanyId(selectedCompany.id);
@@ -32,12 +58,19 @@ export const useCoursesPage = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
       
-      const { data: companyAccess } = await supabase
+      const { data: companyAccess, error: accessError } = await supabase
         .from('company_courses')
         .select('course_id')
         .eq('empresa_id', selectedCompany.id);
       
+      if (accessError) {
+        console.error("Error fetching company access:", accessError);
+        toast.error("Erro ao carregar acesso aos cursos");
+        throw accessError;
+      }
+      
       if (!companyAccess || companyAccess.length === 0) {
+        console.log(`No courses found for company ${selectedCompany.nome}`);
         setFeaturedCourses([]);
         setAllCompanyCourses([]);
         setLoading(false);
@@ -49,26 +82,40 @@ export const useCoursesPage = () => {
       const courseIds = companyAccess.map(access => access.course_id);
       
       // Featured courses (for carousel)
-      const { data: featuredCoursesData } = await supabase
+      const { data: featuredCoursesData, error: featuredError } = await supabase
         .from('courses')
         .select('*')
         .in('id', courseIds)
         .limit(5);
       
+      if (featuredError) {
+        console.error("Error fetching featured courses:", featuredError);
+        toast.error("Erro ao carregar cursos em destaque");
+        throw featuredError;
+      }
+      
       if (featuredCoursesData && featuredCoursesData.length > 0) {
+        console.log(`Fetched ${featuredCoursesData.length} featured courses`);
         setFeaturedCourses(featuredCoursesData);
       } else {
         setFeaturedCourses([]);
       }
       
       // All company courses
-      const { data: allCoursesData } = await supabase
+      const { data: allCoursesData, error: allCoursesError } = await supabase
         .from('courses')
         .select('*')
         .in('id', courseIds)
         .order('created_at', { ascending: false });
       
+      if (allCoursesError) {
+        console.error("Error fetching all courses:", allCoursesError);
+        toast.error("Erro ao carregar todos os cursos");
+        throw allCoursesError;
+      }
+      
       if (allCoursesData && allCoursesData.length > 0) {
+        console.log(`Fetched ${allCoursesData.length} total courses`);
         setAllCompanyCourses(allCoursesData);
       } else {
         setAllCompanyCourses([]);
@@ -84,12 +131,32 @@ export const useCoursesPage = () => {
     }
   }, [selectedCompany, lastSelectedCompanyId]);
 
-  // Run the fetch only when selectedCompany changes
+  // Run the fetch only when selectedCompany changes or on component mount
   useEffect(() => {
-    if (selectedCompany && selectedCompany.id !== lastSelectedCompanyId) {
+    if (selectedCompany) {
       fetchCourseData();
+    } else if (!initialLoadDone.current) {
+      // If no company is selected yet, but it's our first load
+      // Try to fetch with retries
+      fetchCourseData(true);
     }
-  }, [selectedCompany, fetchCourseData, lastSelectedCompanyId]);
+  }, [selectedCompany, fetchCourseData]);
+
+  // Listen for company selection events to refresh data
+  useEffect(() => {
+    const handleCompanySelected = () => {
+      if (selectedCompany) {
+        console.log("Company selection event detected in useCoursesPage, refreshing data");
+        fetchCourseData();
+      }
+    };
+    
+    window.addEventListener('company-selected', handleCompanySelected);
+    
+    return () => {
+      window.removeEventListener('company-selected', handleCompanySelected);
+    };
+  }, [selectedCompany, fetchCourseData]);
 
   const getTitle = () => {
     return selectedCompany 

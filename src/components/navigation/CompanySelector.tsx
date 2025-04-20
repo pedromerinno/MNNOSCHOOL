@@ -26,8 +26,11 @@ export const CompanySelector = () => {
     if (selectedCompany) {
       console.log('CompanySelector: Empresa selecionada:', {
         nome: selectedCompany.nome,
+        id: selectedCompany.id,
         frase: selectedCompany.frase_institucional
       });
+    } else {
+      console.log('CompanySelector: Nenhuma empresa selecionada');
     }
   }, [selectedCompany]);
 
@@ -47,8 +50,21 @@ export const CompanySelector = () => {
     };
   }, [user, forceGetUserCompanies]);
 
+  // Auto-select first company if none is selected
+  useEffect(() => {
+    if (!selectedCompany && userCompanies.length > 0 && user?.id && !isLoading) {
+      console.log('CompanySelector: Auto-selecting first company because none is selected yet');
+      selectCompany(user.id, userCompanies[0]);
+    }
+  }, [userCompanies, selectedCompany, user, selectCompany, isLoading]);
+
   const handleCompanyChange = (company) => {
     if (company && user?.id) {
+      if (selectedCompany?.id === company.id) {
+        console.log('CompanySelector: Company already selected, skipping change');
+        return;
+      }
+      
       console.log('CompanySelector: Selecionando empresa:', company.nome);
       
       // Certifique-se de que a empresa está completa antes de selecioná-la
@@ -84,7 +100,7 @@ export const CompanySelector = () => {
           <DropdownMenuItem 
             key={company.id} 
             onClick={() => handleCompanyChange(company)}
-            className="cursor-pointer"
+            className={`cursor-pointer ${selectedCompany?.id === company.id ? 'bg-gray-100 dark:bg-gray-700' : ''}`}
           >
             <div className="flex items-center">
               {company.logo && (

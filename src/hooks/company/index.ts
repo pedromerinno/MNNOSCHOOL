@@ -1,5 +1,5 @@
 
-export { useCompaniesProvider as useCompanies } from './useCompaniesProvider';
+export { useCompanies } from '@/hooks/useCompanies';
 export { useCompanyState } from './useCompanyState';
 export { useCompanyFetching } from './useCompanyFetching';
 export { useCompanyModification } from './useCompanyModification';
