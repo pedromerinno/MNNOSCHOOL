@@ -699,6 +699,38 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_all_companies_for_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          cor_principal: string | null
+          created_at: string
+          descricao_video: string | null
+          frase_institucional: string | null
+          historia: string | null
+          id: string
+          logo: string | null
+          missao: string | null
+          nome: string
+          updated_at: string
+          valores: string | null
+          video_institucional: string | null
+        }[]
+      }
+      get_all_users_secure: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          avatar: string | null
+          cargo_id: string | null
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+          interesses: string[] | null
+          is_admin: boolean | null
+          super_admin: boolean | null
+          updated_at: string
+        }[]
+      }
       get_is_admin_secure: {
         Args: { user_id: string }
         Returns: boolean
@@ -706,6 +738,23 @@ export type Database = {
       get_is_super_admin_secure: {
         Args: { user_id: string }
         Returns: boolean
+      }
+      get_user_companies: {
+        Args: { user_id: string }
+        Returns: {
+          cor_principal: string | null
+          created_at: string
+          descricao_video: string | null
+          frase_institucional: string | null
+          historia: string | null
+          id: string
+          logo: string | null
+          missao: string | null
+          nome: string
+          updated_at: string
+          valores: string | null
+          video_institucional: string | null
+        }[]
       }
       is_admin: {
         Args: Record<PropertyKey, never> | { user_id: string }

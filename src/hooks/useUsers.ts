@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -45,15 +44,6 @@ export function useUsers() {
 
   const fetchUsers = useCallback(async () => {
     try {
-      const cachedData = getCachedUsers();
-      if (cachedData) {
-        console.log('Using cached users data while fetching updates');
-        setUsers(cachedData);
-        setLoading(false);
-      } else {
-        setLoading(true);
-      }
-      
       const { data: { session } } = await supabase.auth.getSession();
       const currentUserId = session?.user?.id;
       
@@ -61,7 +51,6 @@ export function useUsers() {
         throw new Error('No user is currently logged in');
       }
       
-      // Use RPC functions to check admin status and avoid recursion
       let isAdmin = false;
       let isSuperAdmin = false;
       
@@ -71,73 +60,26 @@ export function useUsers() {
         console.log('Current user is admin:', isAdmin, 'and super admin:', isSuperAdmin);
       } catch (e) {
         console.error('Error checking admin status:', e);
-        
-        // Fallback if RPC functions fail
-        if (cachedData && cachedData.length > 0) {
-          const currentUserCache = cachedData.find(u => u.id === currentUserId);
-          if (currentUserCache) {
-            isAdmin = !!currentUserCache.is_admin;
-            isSuperAdmin = !!currentUserCache.super_admin;
-            console.log('Using cached admin status:', isAdmin, isSuperAdmin);
-          }
-        }
       }
       
-      // Fetch profiles based on admin status
-      let profiles = [];
+      let profiles: UserProfile[] = [];
       
       if (isAdmin || isSuperAdmin) {
-        // For admins, try to get all profiles
-        try {
-          const result = await supabase
-            .from('profiles')
-            .select('id, display_name, is_admin, super_admin, email, created_at, avatar, cargo_id');
-            
-          if (result.error) {
-            console.error('Error fetching profiles:', result.error);
-            
-            // If regular fetch fails, try RPC function
-            const { data: allUsers, error: rpcError } = await supabase
-              .rpc('get_all_users_secure');
-              
-            if (rpcError) {
-              console.error('Error using all users RPC:', rpcError);
-              throw rpcError;
-            }
-            
-            profiles = allUsers;
-          } else {
-            profiles = result.data;
-          }
-        } catch (error) {
-          console.error('Error fetching all profiles:', error);
-          
-          // If both methods fail, at least try to get current user's profile
-          const result = await supabase
-            .from('profiles')
-            .select('id, display_name, is_admin, super_admin, email, created_at, avatar, cargo_id')
-            .eq('id', currentUserId);
-            
-          if (result.error) {
-            console.error('Error fetching own profile as fallback:', result.error);
-            throw result.error;
-          }
-          
-          profiles = result.data;
-        }
+        const { data: allUsers, error } = await supabase
+          .from('profiles')
+          .select('id, display_name, is_admin, super_admin, email, created_at, avatar, cargo_id');
+        
+        if (error) throw error;
+        profiles = allUsers;
       } else {
-        // For non-admin users, just get their own profile
-        const result = await supabase
+        const { data: ownProfile, error } = await supabase
           .from('profiles')
           .select('id, display_name, is_admin, super_admin, email, created_at, avatar, cargo_id')
-          .eq('id', currentUserId);
-          
-        if (result.error) {
-          console.error('Error fetching own profile:', result.error);
-          throw result.error;
-        }
+          .eq('id', currentUserId)
+          .single();
         
-        profiles = result.data;
+        if (error) throw error;
+        profiles = [ownProfile];
       }
 
       const formattedUsers: UserProfile[] = profiles.map((profile: any) => ({
