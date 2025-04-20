@@ -28,6 +28,14 @@ export const CompanySelector = () => {
   
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [errorType, setErrorType] = useState<'resource' | 'connection' | null>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  // Detect when companies are loaded for the first time
+  useEffect(() => {
+    if (userCompanies.length > 0 && !isLoading) {
+      console.log("CompanySelector: Companies loaded:", userCompanies.length);
+    }
+  }, [userCompanies.length, isLoading]);
 
   useEffect(() => {
     if (error) {
@@ -67,21 +75,34 @@ export const CompanySelector = () => {
 
   const handleCompanyChange = (company) => {
     if (company && user?.id) {
+      // Don't perform change if already on the same company
+      if (selectedCompany?.id === company.id) {
+        console.log('CompanySelector: Already on company:', company.nome);
+        setDropdownOpen(false); // Close the dropdown
+        return;
+      }
+      
       console.log('CompanySelector: Mudando para empresa:', company.nome);
       
-      // Show loading toast
-      toast.info(`Carregando empresa ${company.nome}...`, {
-        id: "company-loading",
-        duration: 3000
-      });
+      // Close dropdown first
+      setDropdownOpen(false);
       
-      // Trigger company change event before selection
-      // This ensures all components clean up their state before new data loads
-      window.dispatchEvent(new Event('company-changing'));
-      
-      // Small delay to allow cleanup to process
+      // Add a small delay before selecting to prevent duplicate selections
       setTimeout(() => {
-        selectCompany(user.id, company);
+        // Show loading toast
+        toast.info(`Carregando empresa ${company.nome}...`, {
+          id: "company-loading",
+          duration: 3000
+        });
+        
+        // Trigger company change event before selection
+        // This ensures all components clean up their state before new data loads
+        window.dispatchEvent(new Event('company-changing'));
+        
+        // Small delay to allow cleanup to process
+        setTimeout(() => {
+          selectCompany(user.id, company);
+        }, 300);
       }, 100);
     }
   };
@@ -157,7 +178,7 @@ export const CompanySelector = () => {
   }
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center text-lg font-bold text-merinno-dark focus:outline-none">
           {isLoading && fetchCount <= 1 ? (
@@ -179,6 +200,7 @@ export const CompanySelector = () => {
             key={company.id} 
             onClick={() => handleCompanyChange(company)}
             className="cursor-pointer"
+            disabled={isRefreshing || isLoading}
           >
             <div className="flex items-center">
               {company.logo && (

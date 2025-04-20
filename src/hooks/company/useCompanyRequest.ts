@@ -24,7 +24,7 @@ export const useCompanyRequest = () => {
   ): boolean => {
     const now = Date.now();
     const timeSinceLastRequest = now - lastRequestTimeRef.current;
-    const THROTTLE_MS = 1000; // 1 second
+    const THROTTLE_MS = 5000; // 5 seconds throttle - significantly increased
     
     // Always make request if forced
     if (forceRefresh) return true;

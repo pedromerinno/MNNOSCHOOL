@@ -62,10 +62,10 @@ export const useCompanyFetching = ({
   
   // Função direta para buscar empresas do usuário usando RPC
   const fetchUserCompaniesDirectly = async (userId: string, signal?: AbortSignal): Promise<Company[]> => {
-    // Implement request throttling - at least 2 seconds between requests
+    // Implement request throttling - at least 5 seconds between requests
     const now = Date.now();
     const timeSinceLastRequest = now - lastRequestTimestampRef.current;
-    const MIN_REQUEST_INTERVAL = 2000; // 2 seconds minimum between requests
+    const MIN_REQUEST_INTERVAL = 5000; // 5 seconds minimum between requests
     
     if (timeSinceLastRequest < MIN_REQUEST_INTERVAL && lastRequestTimestampRef.current > 0) {
       const waitTime = MIN_REQUEST_INTERVAL - timeSinceLastRequest;
@@ -100,13 +100,13 @@ export const useCompanyFetching = ({
   ): Promise<Company[]> => {
     const now = Date.now();
     const timeSinceLastSuccess = now - lastSuccessfulFetchRef.current;
-    const THROTTLE = 10000; // 10 seconds
+    const THROTTLE = 30000; // 30 seconds - greatly increased cache time
     
     // Logs para diagnóstico
     console.log(`Iniciando getUserCompanies para usuário ${userId}, forceRefresh=${forceRefresh}`);
     console.log(`userCompanies.length=${userCompanies.length}`);
     
-    // Use cached data if available and not forcing refresh
+    // Use cached data if available and not forcing refresh with a longer throttle window
     if (!forceRefresh && lastSuccessfulFetchRef.current > 0 && 
         timeSinceLastSuccess < THROTTLE && userCompanies.length > 0) {
       console.log(`[useCompanyFetching] Last successful fetch was ${Math.round(timeSinceLastSuccess/1000)}s ago. Using cached data.`);
@@ -160,9 +160,9 @@ export const useCompanyFetching = ({
       }
       
       // Implement exponential backoff strategy with increased max retries and delay
-      const initialRetryDelay = 1000 * (1 + (consecutiveErrorsRef.current * 0.5)); // Gradually increase initial delay
-      const maxRetryDelay = 30000; // 30 seconds max delay
-      const maxRetries = consecutiveErrorsRef.current > 3 ? 7 : 4; // More retries if we've had issues
+      const initialRetryDelay = 2000 * (1 + (consecutiveErrorsRef.current * 0.5)); // Gradually increase initial delay
+      const maxRetryDelay = 60000; // 60 seconds max delay - doubled
+      const maxRetries = consecutiveErrorsRef.current > 3 ? 3 : 2; // Reduced max retries to avoid overwhelming
       
       // Chamar a função RPC diretamente com retries
       const result = await retryOperation(
@@ -225,7 +225,8 @@ export const useCompanyFetching = ({
         setUserCompanies(cachedData);
         
         // Agendar nova tentativa automaticamente com maior atraso proporcional ao número de falhas
-        const retryDelay = 5000 + (Math.min(consecutiveErrorsRef.current, 5) * 2000);
+        // Extended retry delay period significantly
+        const retryDelay = 10000 + (Math.min(consecutiveErrorsRef.current, 5) * 5000);
         console.log(`Scheduling retry after ${retryDelay}ms due to ${consecutiveErrorsRef.current} consecutive errors`);
         
         retryTimeoutRef.current = setTimeout(() => {

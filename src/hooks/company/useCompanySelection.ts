@@ -10,6 +10,17 @@ interface UseCompanySelectionProps {
 export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionProps) => {
   const persistCompanySelection = useCallback((company: Company) => {
     try {
+      // Prevent multiple selection events in quick succession
+      const lastSelectionTime = localStorage.getItem('lastCompanySelectionTime');
+      const now = Date.now();
+      
+      if (lastSelectionTime && (now - parseInt(lastSelectionTime, 10)) < 5000) {
+        console.log("Ignoring company selection, too soon after previous selection");
+        return;
+      }
+      
+      localStorage.setItem('lastCompanySelectionTime', now.toString());
+      
       // Clear all cached data first
       localStorage.removeItem('userCompanies');
       localStorage.removeItem('userCompaniesTimestamp');
@@ -63,18 +74,17 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
             detail: { companyId: company.id }
           }));
           
-          // Force page reload after a short delay to ensure clean state
+          // Notify success with a brief delay
           setTimeout(() => {
             toast.success(`Empresa ${company.nome} selecionada`, {
               description: "Conteúdo atualizado para a empresa selecionada"
             });
             
             console.log(`Content reload events dispatched for ${company.nome}`);
-            window.location.reload();
           }, 500);
           
-        }, 300);
-      }, 200);
+        }, 500);
+      }, 300);
     } catch (e) {
       console.error('Failed to persist company selection', e);
       toast.error("Erro ao selecionar empresa", {

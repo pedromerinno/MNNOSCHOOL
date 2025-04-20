@@ -34,7 +34,8 @@ export const retryOperation = async <T>(
         errorMessage.includes('NetworkError') ||
         errorMessage.includes('Network request failed') ||
         errorMessage.includes('ERR_CONNECTION_CLOSED') ||
-        errorMessage.includes('AbortError');
+        errorMessage.includes('AbortError') ||
+        errorMessage.includes('ERR_INSUFFICIENT_RESOURCES');
       
       // Detectar erros de política/recursão
       const isPolicyError =
@@ -54,9 +55,9 @@ export const retryOperation = async <T>(
                    isServerError ? 'Server error' : 'Unknown error');
       
       if (i < maxRetries - 1) {
-        // Usar backoff exponencial com jitter para retries
-        const jitter = Math.random() * 300;
-        delay = Math.min(delay * 1.5 + jitter, maxDelay);
+        // Use a larger jitter and significantly longer delays
+        const jitter = Math.random() * 500;
+        delay = Math.min(delay * 2 + jitter, maxDelay);
         console.log(`Retrying in ${Math.round(delay/1000)}s...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }

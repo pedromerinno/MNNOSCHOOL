@@ -1,46 +1,34 @@
 
 import { useCallback } from 'react';
 import { Company } from '@/types/company';
+import { useCache } from '@/hooks/useCache';
+
+const COMPANY_CACHE_KEY = 'userCompanies';
+const COMPANY_CACHE_EXPIRATION = 60; // 60 minutes cache expiration - significantly increased
 
 export const useCompanyCache = () => {
-  /**
-   * Get cached user companies from localStorage
-   */
+  const { setCache, getCache, clearCache } = useCache();
+  
   const getCachedUserCompanies = useCallback((): Company[] | null => {
-    try {
-      const cachedData = localStorage.getItem('userCompanies');
-      if (!cachedData) return null;
-      
-      return JSON.parse(cachedData) as Company[];
-    } catch (e) {
-      console.error("Error parsing cached companies", e);
-      return null;
-    }
-  }, []);
+    return getCache<Company[]>({
+      key: COMPANY_CACHE_KEY,
+      expirationMinutes: COMPANY_CACHE_EXPIRATION
+    });
+  }, [getCache]);
   
-  /**
-   * Cache user companies to localStorage
-   */
-  const cacheUserCompanies = useCallback((companies: Company[]): void => {
-    try {
-      localStorage.setItem('userCompanies', JSON.stringify(companies));
-      localStorage.setItem('userCompaniesTimestamp', Date.now().toString());
-    } catch (e) {
-      console.error("Error caching companies", e);
-    }
-  }, []);
+  const cacheUserCompanies = useCallback((companies: Company[]) => {
+    setCache<Company[]>(
+      {
+        key: COMPANY_CACHE_KEY,
+        expirationMinutes: COMPANY_CACHE_EXPIRATION
+      },
+      companies
+    );
+  }, [setCache]);
   
-  /**
-   * Clear cached user companies from localStorage
-   */
-  const clearCachedUserCompanies = useCallback((): void => {
-    try {
-      localStorage.removeItem('userCompanies');
-      localStorage.removeItem('userCompaniesTimestamp');
-    } catch (e) {
-      console.error("Error clearing cached companies", e);
-    }
-  }, []);
+  const clearCachedUserCompanies = useCallback(() => {
+    clearCache(COMPANY_CACHE_KEY);
+  }, [clearCache]);
   
   return {
     getCachedUserCompanies,
