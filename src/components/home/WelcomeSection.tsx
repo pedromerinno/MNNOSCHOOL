@@ -2,63 +2,53 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
-import { toast } from "sonner";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Company } from "@/types/company";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export const WelcomeSection = () => {
   const { user, userProfile } = useAuth();
-  const { getUserCompanies, selectedCompany, userCompanies, selectCompany, isLoading } = useCompanies();
+  const { getUserCompanies, selectedCompany, userCompanies, selectCompany } = useCompanies();
   const navigate = useNavigate();
   const [displayCompany, setDisplayCompany] = useState<Company | null>(null);
-  const [isLoadingLocal, setIsLoadingLocal] = useState(true);
-  const [fetchAttempted, setFetchAttempted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
-  // Try to load from localStorage immediately for a smoother experience
+  // Tentar carregar do cache imediatamente
   useEffect(() => {
-    const cachedCompany = localStorage.getItem('selectedCompany');
-    if (cachedCompany) {
-      try {
-        const parsedCompany = JSON.parse(cachedCompany) as Company;
-        console.log('Using cached company for initial display:', parsedCompany.nome);
-        setDisplayCompany(parsedCompany);
-        setIsLoadingLocal(false);
-      } catch (e) {
-        console.error('Error parsing cached company', e);
+    try {
+      const cachedCompany = localStorage.getItem('selectedCompany');
+      if (cachedCompany) {
+        const company = JSON.parse(cachedCompany);
+        if (company?.nome) {
+          console.log('Using cached company for initial display:', company.nome);
+          setDisplayCompany(company);
+        }
       }
+    } catch (e) {
+      console.error('Error parsing cached company', e);
     }
   }, []);
   
-  // Then try to fetch fresh data
+  // Buscar dados atualizados das empresas
   useEffect(() => {
     const fetchUserCompanies = async () => {
-      if (user?.id) {
+      if (user?.id && userCompanies.length === 0 && !isLoading) {
         try {
-          setFetchAttempted(true);
+          setIsLoading(true);
           await getUserCompanies(user.id, false);
         } catch (error) {
           console.error('Erro na busca da empresa:', error);
-          toast.error("Não foi possível carregar os dados da empresa. Usando dados em cache se disponíveis.");
         } finally {
-          // Always finish loading after a reasonable timeout
-          setTimeout(() => setIsLoadingLocal(false), 500);
+          setIsLoading(false);
         }
-      } else {
-        setIsLoadingLocal(false);
       }
     };
 
-    if (!fetchAttempted) {
-      fetchUserCompanies();
-    } else if (!isLoading) {
-      setIsLoadingLocal(false);
-    }
-  }, [user, getUserCompanies, fetchAttempted, isLoading]);
+    fetchUserCompanies();
+  }, [user, getUserCompanies, userCompanies.length, isLoading]);
 
-  // Update display company whenever selected company changes
+  // Atualizar empresa exibida quando a seleção mudar
   useEffect(() => {
     if (selectedCompany) {
       setDisplayCompany(selectedCompany);
@@ -79,6 +69,7 @@ export const WelcomeSection = () => {
   };
 
   const defaultPhrase = "Juntos, estamos desenhando o futuro de grandes empresas";
+  const companyPhrase = displayCompany?.frase_institucional || defaultPhrase;
 
   return (
     <div className="mb-16 mt-10">
@@ -89,35 +80,23 @@ export const WelcomeSection = () => {
           Olá, {userName}
         </p>
         
-        {isLoadingLocal && !displayCompany ? (
-          <div className="flex flex-col items-center space-y-4 w-full">
-            <Skeleton className="h-[40px] w-[80%] max-w-[600px] rounded-lg mb-1" />
-            <Skeleton className="h-[40px] w-[60%] max-w-[500px] rounded-lg mb-5" />
-            <Skeleton className="h-10 w-40 rounded-full" />
-          </div>
-        ) : (
-          <>
-            <p 
-              className="text-[#000000] text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-5"
-            >
-              {displayCompany?.frase_institucional || defaultPhrase}
-            </p>
-            
-            {!isLoadingLocal && displayCompany && (
-              <Button 
-                onClick={handleLearnMore} 
-                className="mt-1 flex items-center gap-2 text-white rounded-full text-sm"
-                variant="default"
-                style={{ 
-                  backgroundColor: '#000000' 
-                }}
-              >
-                Saiba mais
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            )}
-          </>
-        )}
+        <p 
+          className="text-[#000000] text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-5"
+        >
+          {companyPhrase}
+        </p>
+        
+        <Button 
+          onClick={handleLearnMore} 
+          className="mt-1 flex items-center gap-2 text-white rounded-full text-sm"
+          variant="default"
+          style={{ 
+            backgroundColor: '#000000' 
+          }}
+        >
+          Saiba mais
+          <ArrowRight className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );

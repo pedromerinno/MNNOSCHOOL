@@ -22,32 +22,22 @@ export const CompanySelector = () => {
     forceGetUserCompanies
   } = useCompanies();
   
-  // Estado local para evitar flickering do nome da empresa
-  const [displayName, setDisplayName] = useState<string>("merinno");
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-
-  // Atualiza o nome de exibição imediatamente de cache se disponível
-  useEffect(() => {
-    // Tenta carregar do cache primeiro para evitar flickering
+  // Estado local para nome da empresa com inicialização imediata de cache
+  const [displayName, setDisplayName] = useState<string>(() => {
     try {
       const cachedCompany = localStorage.getItem('selectedCompany');
       if (cachedCompany) {
         const company = JSON.parse(cachedCompany);
-        if (company && company.nome) {
-          setDisplayName(company.nome);
-          setIsInitialLoad(false);
-        }
+        return company?.nome || "merinno";
       }
-    } catch (e) {
-      console.error('Erro ao ler empresa do cache:', e);
-    }
-  }, []);
-
-  // Atualiza quando a empresa selecionada mudar
+    } catch (e) {}
+    return "merinno";
+  });
+  
+  // Atualizar o nome da empresa quando mudar a seleção
   useEffect(() => {
     if (selectedCompany?.nome) {
       setDisplayName(selectedCompany.nome);
-      setIsInitialLoad(false);
     }
   }, [selectedCompany]);
 
@@ -67,7 +57,7 @@ export const CompanySelector = () => {
     };
   }, [user, forceGetUserCompanies]);
 
-  // Auto-selecionar a primeira empresa se nenhuma for selecionada
+  // Auto-selecionar a primeira empresa
   useEffect(() => {
     if (!selectedCompany && userCompanies.length > 0 && user?.id && !isLoading) {
       console.log('CompanySelector: Auto-selecting first company because none is selected yet');
@@ -88,9 +78,9 @@ export const CompanySelector = () => {
     }
   };
 
-  // Mostrar um skeleton mais compacto durante o carregamento 
-  if (isLoading && isInitialLoad) {
-    return <Skeleton className="h-6 w-24" />;
+  // Mostrar apenas o nome durante carregamento, sem skeleton
+  if (isLoading && !selectedCompany) {
+    return <span className="text-lg font-bold text-merinno-dark">{displayName}</span>;
   }
 
   // Se usuário não tiver empresas ou não estiver logado, mostrar texto padrão

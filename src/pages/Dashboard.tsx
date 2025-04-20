@@ -14,12 +14,11 @@ const Dashboard = () => {
   const { user, userProfile } = useAuth();
   const { getUserCompanies, selectedCompany, isLoading, userCompanies } = useCompanies();
   const [isPageLoading, setIsPageLoading] = useState(true);
-  const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
 
-  // Fetch user's companies
+  // Buscar empresas do usuário apenas se necessário
   useEffect(() => {
     const fetchUserCompanies = async () => {
-      if (user?.id) {
+      if (user?.id && userCompanies.length === 0) {
         try {
           await getUserCompanies(user.id, false);
         } catch (error) {
@@ -29,23 +28,17 @@ const Dashboard = () => {
     };
 
     fetchUserCompanies();
-  }, [user, getUserCompanies]);
+  }, [user, getUserCompanies, userCompanies.length]);
 
-  // Reduced loading time with shorter minimum delay
+  // Atualizar estado de carregamento com base no estado real dos dados
   useEffect(() => {
-    // Set a shorter minimum loading time
-    const minLoadTime = isAdmin ? 1200 : 800;
-    
-    const timer = setTimeout(() => {
-      if (selectedCompany || !isLoading) {
-        setIsPageLoading(false);
-      }
-    }, minLoadTime);
-    
-    return () => clearTimeout(timer);
-  }, [isLoading, selectedCompany, isAdmin]);
+    // Se temos empresa selecionada ou os dados já foram carregados, não estamos mais carregando
+    if (selectedCompany || !isLoading) {
+      setIsPageLoading(false);
+    }
+  }, [isLoading, selectedCompany]);
 
-  // If still loading, show simplified loading state
+  // Melhorado o skeleton para mostrar estrutura similar à página final
   if (isPageLoading || isLoading) {
     return (
       <DashboardLayout>
@@ -67,7 +60,7 @@ const Dashboard = () => {
     );
   }
 
-  // If user has no companies, show no companies screen
+  // Se usuário não tem empresas, mostrar tela sem empresas
   if (!isLoading && user && userCompanies.length === 0) {
     return <NoCompaniesAvailable />;
   }

@@ -21,11 +21,11 @@ export const ProtectedRoute = () => {
   const [initialLoadDone, setInitialLoadDone] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  // Verificação de estado de autenticação com timeout de segurança
+  // Verificação de estado de autenticação com timeout mais curto
   useEffect(() => {
     console.log("ProtectedRoute: Verificando autenticação");
     
-    // Define um timeout maior para o carregamento da autenticação
+    // Define um timeout mais curto para o carregamento da autenticação (5 segundos)
     const timeoutId = setTimeout(() => {
       if (loading) {
         console.log("ProtectedRoute: Tempo limite de carregamento atingido");
@@ -33,7 +33,7 @@ export const ProtectedRoute = () => {
         setAuthError("Tempo limite de autenticação excedido. Por favor, recarregue a página ou faça login novamente.");
         toast.error("Tempo limite de autenticação excedido. Tente recarregar a página.");
       }
-    }, 10000); // Reduzido para 10 segundos (era 20 segundos)
+    }, 5000);
     
     // Se o carregamento for concluído, marca como pronto
     if (!loading) {
@@ -59,11 +59,11 @@ export const ProtectedRoute = () => {
     }
   }, [session, loading, initialLoadDone, user, authError]);
 
-  // Mostra estado de carregamento apenas se demorar mais de 800ms
-  if (loading || (!isOnboarding && user && companiesLoading)) {
+  // Mostrar um loading mais simplificado e rápido
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
@@ -117,7 +117,8 @@ export const ProtectedRoute = () => {
     return <Navigate to="/onboarding" replace />;
   }
 
-  // Renderiza rotas protegidas se autenticado
+  // Renderiza rotas protegidas se autenticado, ignorando loading de empresas
+  // para evitar redirecionamento desnecessário
   console.log("ProtectedRoute: Usuário autenticado, renderizando rotas protegidas");
   return (
     <ErrorBoundary fallback={ErrorFallback}>

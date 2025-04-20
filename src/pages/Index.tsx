@@ -12,21 +12,15 @@ const Index = () => {
   const { user, userProfile } = useAuth();
   const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
 
-  // Reduzida a duração mínima do carregamento para minimizar flickering
+  // Removida a verificação baseada em tempo, usando apenas estado real
   useEffect(() => {
-    // Definir um tempo mínimo de carregamento mais curto para reduzir a espera
-    const minLoadTime = isAdmin ? 1200 : 800;
-    
-    const timer = setTimeout(() => {
-      if (selectedCompany || fetchCount > 0 || !isLoading) {
-        setIsPageLoading(false);
-      }
-    }, minLoadTime);
-    
-    return () => clearTimeout(timer);
-  }, [isLoading, fetchCount, selectedCompany, isAdmin]);
+    // Se temos empresa selecionada ou os dados já foram carregados, não estamos mais carregando
+    if (selectedCompany || (fetchCount > 0 && !isLoading)) {
+      setIsPageLoading(false);
+    }
+  }, [isLoading, fetchCount, selectedCompany]);
 
-  // Show a simpler loading state
+  // Mostrar apenas um skeleton simples durante carregamento
   if (isPageLoading || (user && isLoading)) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
@@ -45,7 +39,7 @@ const Index = () => {
     );
   }
 
-  // Only show NoCompaniesAvailable if we've finished loading AND there are no companies
+  // Mostrar NoCompaniesAvailable apenas quando terminamos de carregar E não há empresas
   if (user && !isLoading && userCompanies.length === 0) {
     return <NoCompaniesAvailable />;
   }
