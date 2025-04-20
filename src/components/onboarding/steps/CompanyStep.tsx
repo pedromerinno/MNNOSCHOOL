@@ -49,7 +49,7 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack }) => {
         <button
           type="button"
           onClick={() => setCompanyType('existing')}
-          className={`flex items-center p-6 border-solid border-2 rounded-[100px] transition-all ${
+          className={`flex items-center p-6 border-2 rounded-xl transition-all ${
             companyType === 'existing'
               ? 'border-merinno-dark bg-gray-50'
               : 'border-gray-200 hover:border-gray-300'
@@ -73,7 +73,7 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack }) => {
         <button
           type="button"
           onClick={() => setCompanyType('new')}
-          className={`flex items-center p-6 border-solid border-2 rounded-[100px] transition-all ${
+          className={`flex items-center p-6 border-2 rounded-xl transition-all ${
             companyType === 'new'
               ? 'border-merinno-dark bg-gray-50'
               : 'border-gray-200 hover:border-gray-300'
