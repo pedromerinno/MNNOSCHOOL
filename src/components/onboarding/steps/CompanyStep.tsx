@@ -36,6 +36,7 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
     descricao_video: "",
     cor_principal: "#000000"
   });
+  const [error, setError] = useState("");
 
   const handleInitialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
