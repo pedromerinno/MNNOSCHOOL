@@ -12,7 +12,7 @@ const Onboarding = () => {
   return (
     <OnboardingProvider>
       <OnboardingLayout>
-        <div className="w-full max-w-xl mx-auto relative">
+        <div className="w-full max-w-3xl mx-auto relative">
           <OnboardingContent />
         </div>
       </OnboardingLayout>
