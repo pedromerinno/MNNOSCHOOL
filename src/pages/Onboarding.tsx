@@ -16,11 +16,11 @@ const Onboarding = () => {
   return (
     <OnboardingProvider>
       <OnboardingLayout>
-        <div className="min-h-[calc(100vh-120px)] flex flex-col items-center justify-center relative max-w-xl mx-auto">
+        <div className="w-full max-w-xl mx-auto relative">
           <Button 
             variant="ghost" 
             size="sm" 
-            className="absolute top-0 right-0 text-gray-500 hover:text-gray-900 transition-colors"
+            className="absolute -top-12 right-0 text-gray-500 hover:text-gray-900 transition-colors text-sm"
             onClick={signOut}
           >
             <LogOut className="h-4 w-4 mr-2" /> 
@@ -54,21 +54,21 @@ const OnboardingContent = () => {
   };
 
   return (
-    <div className="w-full bg-white rounded-2xl shadow-xl p-8 transition-all duration-300 hover:shadow-2xl">
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 transition-all duration-300">
+      <div className="mb-10">
+        <div className="flex flex-col gap-2 mb-8">
+          <h1 className="text-2xl font-medium text-gray-900 tracking-tight">
             {isUpdate ? "Atualizar Perfil" : "Complete seu perfil"}
           </h1>
-          <div className="text-sm font-medium text-gray-500">
+          <p className="text-sm text-gray-500">
             Passo {currentStep} de {totalSteps}
-          </div>
+          </p>
         </div>
-        <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+        <div className="w-full h-1 rounded-full bg-gray-100 overflow-hidden">
           <div 
-            className="bg-black h-full rounded-full transition-all duration-500 ease-out"
+            className="h-full rounded-full bg-black transition-all duration-500 ease-out"
             style={{ width: `${(currentStep / totalSteps) * 100}%` }}
-          ></div>
+          />
         </div>
       </div>
 
