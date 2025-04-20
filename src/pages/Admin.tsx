@@ -12,21 +12,22 @@ import { Users, Building, Settings, Book, Image } from 'lucide-react';
 import { CourseManagement } from '@/components/admin/CourseManagement';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
+// Helper para cor principal (azul padrão caso não tenha)
+const ADMIN_MAIN_COLOR = "#1EAEDB";
+const getLighterAdminColor = (opacity = 0.1) =>
+  `rgba(30, 174, 219, ${opacity})`; // azul #1EAEDB
+
 const AdminPage = () => {
   const { userProfile, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState("users");
-  
-  // Add a loading state
   const [isReady, setIsReady] = useState(false);
-  
-  // Wait for auth to complete before making decisions
+
   useEffect(() => {
     if (!authLoading) {
       setIsReady(true);
     }
   }, [authLoading]);
-  
-  // Show nothing until we're ready to render
+
   if (!isReady) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -34,58 +35,111 @@ const AdminPage = () => {
       </div>
     );
   }
-  
-  // Corrigido: redirecionar para a página inicial '/' em vez de '/dashboard'
+
   if (!userProfile?.is_admin && !userProfile?.super_admin) {
     return <Navigate to="/" replace />;
   }
-  
+
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6 dark:text-white">Painel Administrativo</h1>
-        
+      <main className="container mx-auto px-6 py-12">
+        {/* Novo título com visual idêntico às outras páginas */}
+        <div className="flex items-center gap-4 mb-12">
+          <h1 className="text-3xl md:text-4xl font-bold dark:text-white text-gray-900 tracking-tight">
+            Painel Administrativo
+          </h1>
+          {/* Espaço para badge ou complemento futuro */}
+        </div>
+
         <Card className="mb-8 shadow-sm border border-gray-100 dark:border-gray-800">
           <CardContent className="p-0">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <div className="border-b border-gray-100 dark:border-gray-800">
-                <TabsList className="bg-gray-50 dark:bg-gray-900 w-full justify-start rounded-none p-0 h-auto">
+              {/* Novo estilo das abas, igual da Comunidade */}
+              <div className="border-b border-gray-100 dark:border-gray-800 py-2 px-2 bg-transparent">
+                <TabsList className="flex gap-2 rounded-2xl p-1.5 bg-transparent dark:bg-transparent w-full justify-start">
                   <TabsTrigger 
-                    value="users" 
-                    className="flex items-center py-3 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 text-gray-600 dark:text-gray-300 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400"
+                    value="users"
+                    className={`flex items-center gap-2 rounded-xl py-3 px-6 transition-colors border border-transparent text-gray-600 dark:text-gray-300
+                      ${activeTab === "users" 
+                        ? "bg-[rgba(30,174,219,0.1)] text-[#1EAEDB] border-[#1EAEDB]"
+                        : "hover:bg-[rgba(30,174,219,0.05)]"
+                      }
+                    `}
+                    style={{
+                      backgroundColor: activeTab === "users" ? getLighterAdminColor(0.15) : undefined,
+                      borderColor: activeTab === "users" ? ADMIN_MAIN_COLOR : "transparent",
+                      color: activeTab === "users" ? ADMIN_MAIN_COLOR : undefined
+                    }}
                   >
                     <Users className="h-4 w-4 mr-2" />
                     Usuários
                   </TabsTrigger>
                   <TabsTrigger 
-                    value="companies" 
-                    className="flex items-center py-3 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 text-gray-600 dark:text-gray-300 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400"
+                    value="companies"
+                    className={`flex items-center gap-2 rounded-xl py-3 px-6 transition-colors border border-transparent text-gray-600 dark:text-gray-300
+                      ${activeTab === "companies" 
+                        ? "bg-[rgba(30,174,219,0.1)] text-[#1EAEDB] border-[#1EAEDB]"
+                        : "hover:bg-[rgba(30,174,219,0.05)]"
+                      }
+                    `}
+                    style={{
+                      backgroundColor: activeTab === "companies" ? getLighterAdminColor(0.15) : undefined,
+                      borderColor: activeTab === "companies" ? ADMIN_MAIN_COLOR : "transparent",
+                      color: activeTab === "companies" ? ADMIN_MAIN_COLOR : undefined
+                    }}
                   >
                     <Building className="h-4 w-4 mr-2" />
                     Empresas
                   </TabsTrigger>
                   <TabsTrigger 
-                    value="allcourses" 
-                    className="flex items-center py-3 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 text-gray-600 dark:text-gray-300 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400"
+                    value="allcourses"
+                    className={`flex items-center gap-2 rounded-xl py-3 px-6 transition-colors border border-transparent text-gray-600 dark:text-gray-300
+                      ${activeTab === "allcourses" 
+                        ? "bg-[rgba(30,174,219,0.1)] text-[#1EAEDB] border-[#1EAEDB]"
+                        : "hover:bg-[rgba(30,174,219,0.05)]"
+                      }
+                    `}
+                    style={{
+                      backgroundColor: activeTab === "allcourses" ? getLighterAdminColor(0.15) : undefined,
+                      borderColor: activeTab === "allcourses" ? ADMIN_MAIN_COLOR : "transparent",
+                      color: activeTab === "allcourses" ? ADMIN_MAIN_COLOR : undefined
+                    }}
                   >
                     <Book className="h-4 w-4 mr-2" />
                     Todos os Cursos
                   </TabsTrigger>
-                  
-                  {/* Only show Background tab for super_admin */}
                   {userProfile?.super_admin && (
-                    <TabsTrigger 
-                      value="background" 
-                      className="flex items-center py-3 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 text-gray-600 dark:text-gray-300 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400"
+                    <TabsTrigger
+                      value="background"
+                      className={`flex items-center gap-2 rounded-xl py-3 px-6 transition-colors border border-transparent text-gray-600 dark:text-gray-300
+                        ${activeTab === "background" 
+                          ? "bg-[rgba(30,174,219,0.1)] text-[#1EAEDB] border-[#1EAEDB]"
+                          : "hover:bg-[rgba(30,174,219,0.05)]"
+                        }
+                      `}
+                      style={{
+                        backgroundColor: activeTab === "background" ? getLighterAdminColor(0.15) : undefined,
+                        borderColor: activeTab === "background" ? ADMIN_MAIN_COLOR : "transparent",
+                        color: activeTab === "background" ? ADMIN_MAIN_COLOR : undefined
+                      }}
                     >
                       <Image className="h-4 w-4 mr-2" />
                       Background
                     </TabsTrigger>
                   )}
-                  
                   <TabsTrigger 
-                    value="settings" 
-                    className="flex items-center py-3 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 text-gray-600 dark:text-gray-300 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400"
+                    value="settings"
+                    className={`flex items-center gap-2 rounded-xl py-3 px-6 transition-colors border border-transparent text-gray-600 dark:text-gray-300
+                      ${activeTab === "settings" 
+                        ? "bg-[rgba(30,174,219,0.1)] text-[#1EAEDB] border-[#1EAEDB]"
+                        : "hover:bg-[rgba(30,174,219,0.05)]"
+                      }
+                    `}
+                    style={{
+                      backgroundColor: activeTab === "settings" ? getLighterAdminColor(0.15) : undefined,
+                      borderColor: activeTab === "settings" ? ADMIN_MAIN_COLOR : "transparent",
+                      color: activeTab === "settings" ? ADMIN_MAIN_COLOR : undefined
+                    }}
                   >
                     <Settings className="h-4 w-4 mr-2" />
                     Settings
@@ -104,14 +158,11 @@ const AdminPage = () => {
                   <TabsContent value="allcourses" className="m-0">
                     <CourseManagement />
                   </TabsContent>
-                  
-                  {/* Only render Background content if user is super_admin */}
                   {userProfile?.super_admin && (
                     <TabsContent value="background" className="m-0">
                       <BackgroundManager />
                     </TabsContent>
                   )}
-                  
                   <TabsContent value="settings" className="m-0">
                     <SettingsManagement />
                   </TabsContent>
