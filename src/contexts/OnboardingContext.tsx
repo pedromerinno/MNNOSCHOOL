@@ -80,7 +80,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       });
       
       toast.success("Perfil atualizado com sucesso!");
-      navigate("/");
+      navigate("/"); // Navigate to home page after successful update
       
     } catch (error) {
       console.error("Erro ao salvar perfil:", error);
