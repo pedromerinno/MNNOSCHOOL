@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCompanies } from "@/hooks/useCompanies";
+import { useCompanyContext } from "@/contexts/CompanyContext";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -10,7 +10,7 @@ import { useCompanyCache } from "@/hooks/company/useCompanyCache";
 
 export const WelcomeSection = () => {
   const { user, userProfile } = useAuth();
-  const { getUserCompanies, selectedCompany, userCompanies } = useCompanies();
+  const { selectedCompany } = useCompanyContext();
   const { getInitialSelectedCompany } = useCompanyCache();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -32,25 +32,7 @@ export const WelcomeSection = () => {
     return cachedCompany?.cor_principal || '#000000';
   });
   
-  // Buscar dados atualizados das empresas sem forçar seleção
-  useEffect(() => {
-    const fetchUserCompanies = async () => {
-      if (user?.id && userCompanies.length === 0 && !isLoading) {
-        try {
-          setIsLoading(true);
-          await getUserCompanies(user.id, false);
-        } catch (error) {
-          console.error('Erro na busca da empresa:', error);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    fetchUserCompanies();
-  }, [user, getUserCompanies, userCompanies.length, isLoading]);
-
-  // Atualizar empresa exibida quando a seleção mudar, mas NÃO forçar seleção
+  // Atualizar empresa exibida quando a seleção mudar
   useEffect(() => {
     if (selectedCompany) {
       setDisplayCompany(selectedCompany);

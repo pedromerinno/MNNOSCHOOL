@@ -2,6 +2,7 @@
 import { useEffect, useState, memo, useCallback } from "react";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCompanyContext } from "@/contexts/CompanyContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { toast } from "sonner";
 import {
@@ -14,12 +15,12 @@ import {
 // Usar memo para evitar renderizações desnecessárias
 export const CompanySelector = memo(() => {
   const { user } = useAuth();
+  const { selectedCompany, setSelectedCompany } = useCompanyContext();
   const { 
     userCompanies, 
-    selectedCompany, 
-    selectCompany,
     isLoading,
-    forceGetUserCompanies
+    forceGetUserCompanies,
+    selectCompany 
   } = useCompanies();
   
   // Estado local para nome da empresa com inicialização imediata de cache
@@ -58,8 +59,6 @@ export const CompanySelector = memo(() => {
     };
   }, [handleCompanyRelationChange]);
 
-  // Removido o auto-select da primeira empresa para evitar resetar a seleção durante navegação
-
   const handleCompanyChange = useCallback((company) => {
     if (!company || !user?.id) return;
     
@@ -78,8 +77,9 @@ export const CompanySelector = memo(() => {
     
     console.log('CompanySelector: Selecionando empresa:', company.nome);
     selectCompany(user.id, company);
+    setSelectedCompany(company);
     toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
-  }, [user?.id, selectedCompany?.id, selectCompany, userCompanies]);
+  }, [user?.id, selectedCompany?.id, selectCompany, userCompanies, setSelectedCompany]);
 
   // Mostrar apenas o nome durante carregamento, sem skeleton
   if (isLoading && !selectedCompany) {

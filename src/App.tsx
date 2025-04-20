@@ -1,3 +1,4 @@
+
 import React, { Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -5,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { CompanyProvider } from "@/contexts/CompanyContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
@@ -63,35 +65,37 @@ const App = () => {
         <ErrorBoundary>
           <BrowserRouter>
             <AuthProvider>
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
-                
-                <Route element={<ProtectedRoute />}>
-                  <Route path="/onboarding" element={<Onboarding />} />
-                  <Route path="/" element={<PageWithNavigation><Index /></PageWithNavigation>} />
+              <CompanyProvider>
+                <Routes>
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<Signup />} />
                   
-                  <Route path="/courses" element={<PageWithNavigation><Courses /></PageWithNavigation>} />
-                  <Route path="/my-courses" element={<PageWithNavigation><MyCourses /></PageWithNavigation>} />
-                  <Route path="/courses/:courseId" element={<PageWithNavigation><CourseDetails /></PageWithNavigation>} />
-                  <Route path="/courses/:courseId/lessons/:lessonId" element={
-                    <PageWithNavigation><LessonPage /></PageWithNavigation>
-                  } />
+                  <Route element={<ProtectedRoute />}>
+                    <Route path="/onboarding" element={<Onboarding />} />
+                    <Route path="/" element={<PageWithNavigation><Index /></PageWithNavigation>} />
+                    
+                    <Route path="/courses" element={<PageWithNavigation><Courses /></PageWithNavigation>} />
+                    <Route path="/my-courses" element={<PageWithNavigation><MyCourses /></PageWithNavigation>} />
+                    <Route path="/courses/:courseId" element={<PageWithNavigation><CourseDetails /></PageWithNavigation>} />
+                    <Route path="/courses/:courseId/lessons/:lessonId" element={
+                      <PageWithNavigation><LessonPage /></PageWithNavigation>
+                    } />
+                    
+                    <Route path="/integration" element={<PageWithNavigation><Integration /></PageWithNavigation>} />
+                    <Route path="/access" element={<PageWithNavigation><Access /></PageWithNavigation>} />
+                    <Route path="/documents" element={<PageWithNavigation><Documents /></PageWithNavigation>} />
+                    <Route path="/school" element={<PageWithNavigation><School /></PageWithNavigation>} />
+                    <Route path="/community" element={<PageWithNavigation><Community /></PageWithNavigation>} />
+                    <Route path="/notes" element={<PageWithNavigation><Notes /></PageWithNavigation>} />
+                    <Route path="/manifesto" element={<PageWithNavigation><Manifesto /></PageWithNavigation>} />
+                    <Route path="/admin" element={<PageWithNavigation><Admin /></PageWithNavigation>} />
+                    <Route path="/team" element={<PageWithNavigation><Team /></PageWithNavigation>} />
+                    <Route path="/team/:memberId" element={<PageWithNavigation><TeamMemberProfile /></PageWithNavigation>} />
+                  </Route>
                   
-                  <Route path="/integration" element={<PageWithNavigation><Integration /></PageWithNavigation>} />
-                  <Route path="/access" element={<PageWithNavigation><Access /></PageWithNavigation>} />
-                  <Route path="/documents" element={<PageWithNavigation><Documents /></PageWithNavigation>} />
-                  <Route path="/school" element={<PageWithNavigation><School /></PageWithNavigation>} />
-                  <Route path="/community" element={<PageWithNavigation><Community /></PageWithNavigation>} />
-                  <Route path="/notes" element={<PageWithNavigation><Notes /></PageWithNavigation>} />
-                  <Route path="/manifesto" element={<PageWithNavigation><Manifesto /></PageWithNavigation>} />
-                  <Route path="/admin" element={<PageWithNavigation><Admin /></PageWithNavigation>} />
-                  <Route path="/team" element={<PageWithNavigation><Team /></PageWithNavigation>} />
-                  <Route path="/team/:memberId" element={<PageWithNavigation><TeamMemberProfile /></PageWithNavigation>} />
-                </Route>
-                
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </CompanyProvider>
             </AuthProvider>
           </BrowserRouter>
         </ErrorBoundary>

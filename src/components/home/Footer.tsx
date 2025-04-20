@@ -1,10 +1,10 @@
 
-import { useCompanies } from "@/hooks/useCompanies";
+import { useCurrentCompany } from "@/hooks/useCurrentCompany";
 import { useCompanyCache } from "@/hooks/company/useCompanyCache";
 import { useState, useEffect } from "react";
 
 export const Footer = () => {
-  const { selectedCompany } = useCompanies();
+  const { selectedCompany } = useCurrentCompany();
   const { getInitialSelectedCompany } = useCompanyCache();
   
   // Inicializar com valor do cache

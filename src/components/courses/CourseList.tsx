@@ -3,8 +3,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import { CourseCard } from './CourseCard';
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCompanies } from '@/hooks/useCompanies';
-import { useToast } from '@/hooks/use-toast';
+import { useCompanyContext } from '@/contexts/CompanyContext';
+import { toast } from "sonner";
 import { AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -28,8 +28,8 @@ type CourseListProps = {
 export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' }) => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
-  const { selectedCompany, isLoading: companyLoading } = useCompanies();
-  const { toast } = useToast();
+  const { selectedCompany, isLoading: companyLoading } = useCompanyContext();
+  const { user } = useAuth();
   const initialLoadComplete = useRef(false);
   const currentCompanyId = useRef<string | null>(null);
 
@@ -55,11 +55,7 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
         
         // Buscar dados de modo otimizado
         const doFetch = async () => {
-          // Get user ID
-          const { data: { user } } = await supabase.auth.getUser();
-          const userId = user?.id || '';
-          
-          if (!userId) {
+          if (!user?.id) {
             throw new Error('User not authenticated');
           }
           
@@ -103,7 +99,7 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
           const { data: progressData, error: progressError } = await supabase
             .from('user_course_progress')
             .select('course_id, progress, completed, favorite')
-            .eq('user_id', userId);
+            .eq('user_id', user.id);
             
           if (progressError) {
             console.error('Error fetching progress:', progressError);
@@ -158,7 +154,7 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
     };
     
     fetchCourses();
-  }, [selectedCompany, filter, toast, companyLoading, loading]);
+  }, [selectedCompany, filter, companyLoading, loading, user]);
 
   // Mostrar um skeleton mais elegante e consistente com a UI final
   if (companyLoading || (loading && !initialLoadComplete.current)) {
