@@ -17,7 +17,7 @@ export const LoginForm = () => {
   const [isResetMode, setIsResetMode] = useState(false);
   const { signInWithPassword } = useAuth();
   const navigate = useNavigate();
-  const { getUserCompanies, selectCompany } = useCompanies();
+  const { getUserCompanies, selectCompany, forceGetUserCompanies } = useCompanies();
   const { clearCache } = useCache();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -25,6 +25,7 @@ export const LoginForm = () => {
     setIsLoggingIn(true);
     
     try {
+      // Clear all cached company data before login attempt
       clearCache('userCompanies');
       clearCache('selectedCompany');
       clearCache('selectedCompanyId');
@@ -33,20 +34,36 @@ export const LoginForm = () => {
       if (error) throw error;
 
       if (data && data.session && data.session.user) {
-        const companies = await getUserCompanies(data.session.user.id, true);
+        console.log("Login successful, fetching companies...");
         
-        // If companies exist but no company is currently selected
+        // Force a fresh fetch of companies to ensure we have the latest data
+        const companies = await forceGetUserCompanies(data.session.user.id);
+        console.log("Companies fetched:", companies);
+        
+        // If companies exist, ensure we select the first one
         if (companies && companies.length > 0) {
-          // This will handle the case of selecting the first company if none is selected
-          await selectCompany(data.session.user.id, companies[0]);
-          toast.success("Login realizado com sucesso!");
+          console.log("Selecting first company:", companies[0].nome);
+          
+          try {
+            // Ensure we wait for the selection to complete
+            await selectCompany(data.session.user.id, companies[0]);
+            console.log("Company selected successfully");
+            toast.success("Login realizado com sucesso!");
+            
+            // Short timeout to ensure state updates complete before navigation
+            setTimeout(() => {
+              navigate('/');
+            }, 100);
+          } catch (selectionError) {
+            console.error("Error selecting company:", selectionError);
+            toast.error("Erro ao selecionar empresa");
+          }
         } else {
+          console.error("No companies available for user");
           toast.error("Nenhuma empresa disponível para este usuário");
           return;
         }
       }
-
-      navigate('/');
     } catch (error: any) {
       console.error("Erro no login:", error);
       toast.error(error.message || "Falha ao fazer login");
