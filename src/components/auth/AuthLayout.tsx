@@ -67,7 +67,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
   return (
     <div className="min-h-screen flex">
       {/* Left side - Login Form */}
-      <div className="w-full max-w-xl mx-auto px-12 py-12 flex items-center justify-center bg-white">
+      <div className="w-full max-w-2xl mx-auto px-16 py-12 flex items-center justify-center bg-white">
         {children}
       </div>
       
