@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -143,7 +142,7 @@ export const ProtectedRoute = () => {
   }
 
   // Verificar se precisa fazer onboarding inicial
-  const needsOnboarding = userProfile?.interesses?.includes("onboarding_incomplete") || 
+  const needsOnboarding = userProfile?.interesses?.includes("onboarding_incomplete") && 
                          (!userCompanies || userCompanies.length === 0);
                          
   // Redirecionar para onboarding apenas se for necessário o onboarding inicial
