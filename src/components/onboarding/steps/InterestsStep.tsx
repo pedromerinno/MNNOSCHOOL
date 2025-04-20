@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Button } from "@/components/ui/button";
@@ -141,7 +142,7 @@ const InterestsStep: React.FC<InterestsStepProps> = ({ onBack }) => {
           className="w-full rounded-md bg-merinno-dark hover:bg-black text-white"
           disabled={isLoading || isLoadingTags}
         >
-          {isLoading ? "Salvando..." : "Concluir"}
+          {isLoading ? "Salvando..." : "Atualizar Perfil"}
         </Button>
         
         <Button 
