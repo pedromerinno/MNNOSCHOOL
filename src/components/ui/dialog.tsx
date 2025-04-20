@@ -58,12 +58,20 @@ const DialogContent = React.forwardRef<
         "fixed left-[50%] top-[50%] z-50 grid w-full max-w-xl translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg sm:rounded-lg pointer-events-auto",
         className
       )}
-      onInteractOutside={(e) => {
-        // Reset pointer-events when clicking outside the dialog
+      onOpenAutoFocus={(e) => {
+        // Reset pointer-events when dialog opens
         document.body.style.pointerEvents = '';
-        // Call original onInteractOutside if provided
-        if (props.onInteractOutside) {
-          props.onInteractOutside(e);
+        // Call original onOpenAutoFocus if provided
+        if (props.onOpenAutoFocus) {
+          props.onOpenAutoFocus(e);
+        }
+      }}
+      onCloseAutoFocus={(e) => {
+        // Reset pointer-events when dialog closes
+        document.body.style.pointerEvents = '';
+        // Call original onCloseAutoFocus if provided
+        if (props.onCloseAutoFocus) {
+          props.onCloseAutoFocus(e);
         }
       }}
       {...props}

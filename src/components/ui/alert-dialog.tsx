@@ -57,12 +57,20 @@ const AlertDialogContent = React.forwardRef<
         className
       )}
       {...props}
-      onInteractOutside={(e) => {
-        // Reset pointer-events when clicking outside the dialog
+      onOpenAutoFocus={(e) => {
+        // Reset pointer-events when dialog opens
         document.body.style.pointerEvents = '';
-        // Call original onInteractOutside if provided
-        if (props.onInteractOutside) {
-          props.onInteractOutside(e);
+        // Call original onOpenAutoFocus if provided
+        if (props.onOpenAutoFocus) {
+          props.onOpenAutoFocus(e);
+        }
+      }}
+      onCloseAutoFocus={(e) => {
+        // Reset pointer-events when dialog closes
+        document.body.style.pointerEvents = '';
+        // Call original onCloseAutoFocus if provided
+        if (props.onCloseAutoFocus) {
+          props.onCloseAutoFocus(e);
         }
       }}
     />
