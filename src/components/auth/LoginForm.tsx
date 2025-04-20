@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,11 +34,14 @@ export const LoginForm = () => {
 
       if (data && data.session && data.session.user) {
         const companies = await getUserCompanies(data.session.user.id, true);
+        
+        // Ensure we select the first company if there are companies available
         if (companies && companies.length > 0) {
           await selectCompany(data.session.user.id, companies[0]);
           toast.success("Login realizado com sucesso!");
         } else {
           toast.error("Nenhuma empresa disponível para este usuário");
+          return;
         }
       }
 
