@@ -45,12 +45,13 @@ export const setAdminStatusById = async (
   isSuperAdmin: boolean = false
 ): Promise<void> => {
   try {
+    const updateData = isSuperAdmin 
+      ? { super_admin: isAdmin }
+      : { is_admin: isAdmin };
+      
     const { error } = await supabase
       .from('profiles')
-      .update({ 
-        is_admin: isAdmin,
-        super_admin: isSuperAdmin 
-      })
+      .update(updateData)
       .eq('id', userId);
 
     if (error) {
@@ -62,7 +63,7 @@ export const setAdminStatusById = async (
   }
 };
 
-// Added safe RPC functions to avoid recursion issues
+// Secure RPC functions to avoid recursion
 export const checkIfUserIsAdmin = async (userId: string): Promise<boolean> => {
   try {
     const { data, error } = await supabase
@@ -70,7 +71,25 @@ export const checkIfUserIsAdmin = async (userId: string): Promise<boolean> => {
       
     if (error) {
       console.warn("Error checking admin status via RPC:", error);
-      return false;
+      
+      // Fallback to direct query with error handling
+      try {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', userId)
+          .single();
+          
+        if (profileError) {
+          console.warn("Error in admin status fallback query:", profileError);
+          return false;
+        }
+        
+        return !!profile.is_admin;
+      } catch (fallbackError) {
+        console.error("Error in admin status fallback:", fallbackError);
+        return false;
+      }
     }
     
     return data === true;
@@ -87,7 +106,25 @@ export const checkIfUserIsSuperAdmin = async (userId: string): Promise<boolean> 
       
     if (error) {
       console.warn("Error checking super admin status via RPC:", error);
-      return false;
+      
+      // Fallback to direct query with error handling
+      try {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('super_admin')
+          .eq('id', userId)
+          .single();
+          
+        if (profileError) {
+          console.warn("Error in super admin status fallback query:", profileError);
+          return false;
+        }
+        
+        return !!profile.super_admin;
+      } catch (fallbackError) {
+        console.error("Error in super admin status fallback:", fallbackError);
+        return false;
+      }
     }
     
     return data === true;

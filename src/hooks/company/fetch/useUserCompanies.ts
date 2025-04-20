@@ -66,103 +66,122 @@ export const useUserCompanies = ({
         throw new DOMException("Aborted", "AbortError");
       }
 
-      // Enhanced error handling for the recursion issue
-      // First try directly fetching user's role
-      const { data: userProfile, error: userError } = await supabase
-        .rpc('get_is_admin_secure', { user_id: userId });
-        
-      if (userError) {
-        console.warn("Could not fetch user admin status, falling back to normal query", userError);
-      }
-      
-      // Check if user is admin directly without using RLS
-      const isAdmin = userProfile === true;
-      const isSuperAdmin = await checkIfUserIsSuperAdmin(userId);
-      
+      // Use alternative approaches to avoid the recursive RLS issue
       let companies: Company[] = [];
+      let fetchingMethod = 'direct';
       
-      // If admin, fetch all companies
-      if (isAdmin || isSuperAdmin) {
-        const { data: allCompanies, error: companyError } = await supabase
-          .from('empresas')
-          .select('*')
-          .order('nome');
-          
-        if (companyError) {
-          console.error("Error fetching all companies for admin:", companyError);
-          throw companyError;
-        }
+      try {
+        // Try using the RPC function approach first
+        const isAdmin = await checkIfUserIsAdmin(userId);
+        const isSuperAdmin = await checkIfUserIsSuperAdmin(userId);
         
-        companies = allCompanies as Company[];
-      } else {
-        // Try the normal relation query with proper error handling
-        try {
-          // First, buscar as relações de empresa do usuário
+        if (isAdmin || isSuperAdmin) {
+          // For admins, try direct fetch with error handling
+          fetchingMethod = 'admin-direct';
+          const { data: allCompanies, error: companyError } = await supabase
+            .from('empresas')
+            .select('*')
+            .order('nome');
+            
+          if (companyError) {
+            console.error("Error fetching all companies for admin:", companyError);
+            
+            // If this fails, try the special admin function
+            fetchingMethod = 'admin-fallback';
+            const { data: adminCompanies, error: adminError } = await supabase
+              .rpc('get_all_companies_for_admin');
+              
+            if (adminError) {
+              console.error("Error using admin company RPC:", adminError);
+              throw adminError;
+            }
+            
+            companies = adminCompanies as Company[];
+          } else {
+            companies = allCompanies as Company[];
+          }
+        } else {
+          // For regular users, try fetching their companies
+          fetchingMethod = 'user-relations';
+          
+          // Get user-company relations directly with error handling
           const { data: relations, error: relationsError } = await supabase
             .from('user_empresa')
             .select('empresa_id')
             .eq('user_id', userId);
-    
+  
           if (relationsError) {
             console.error("Error fetching user-company relations:", relationsError);
-            throw relationsError;
-          }
-    
-          if (!relations || relations.length === 0) {
+            
+            // If direct approach fails, try the RPC function
+            fetchingMethod = 'user-fallback';
+            const { data: userCompanies, error: userCompaniesError } = await supabase
+              .rpc('get_user_companies', { user_id: userId });
+              
+            if (userCompaniesError) {
+              console.error("Error using user companies RPC:", userCompaniesError);
+              throw userCompaniesError;
+            }
+            
+            companies = userCompanies as Company[];
+          } else if (!relations || relations.length === 0) {
             console.log("No companies found for user:", userId);
             setUserCompanies([]);
             setSelectedCompany(null);
             localStorage.removeItem('userCompanies');
             setIsLoading(false);
             return [];
-          }
-    
-          // Buscar os detalhes das empresas
-          const companyIds = relations.map(r => r.empresa_id);
-          console.log(`Found ${companyIds.length} company relations`);
-    
-          const { data: companiesData, error: companiesError } = await supabase
-            .from('empresas')
-            .select('*')
-            .in('id', companyIds)
-            .order('nome');
-    
-          if (companiesError) {
-            console.error("Error fetching companies:", companiesError);
-            throw companiesError;
-          }
-    
-          companies = companiesData as Company[];
-        } catch (error) {
-          console.error("Error in regular company fetching:", error);
-          
-          // If we have a recursion error specifically, try an alternative approach
-          if (error && typeof error === 'object' && 'code' in error && error.code === '42P17') {
-            console.log("Detected recursion error, trying alternative company fetch");
-            
-            // Direct SQL query without RLS as a last resort
-            const { data: directCompanies, error: directError } = await supabase
+          } else {
+            // If we got relations, fetch the companies
+            const companyIds = relations.map(r => r.empresa_id);
+            console.log(`Found ${companyIds.length} company relations`);
+  
+            const { data: companiesData, error: companiesError } = await supabase
               .from('empresas')
               .select('*')
+              .in('id', companyIds)
+              .order('nome');
+  
+            if (companiesError) {
+              console.error("Error fetching companies:", companiesError);
+              throw companiesError;
+            }
+  
+            companies = companiesData as Company[];
+          }
+        }
+      } catch (error) {
+        console.error(`Error in ${fetchingMethod} company fetching approach:`, error);
+        
+        // Final fallback: Try a more direct way to fetch companies without going through profiles
+        if (cachedData.length === 0) {
+          fetchingMethod = 'final-fallback';
+          try {
+            // This is a last resort approach
+            const { data: allAvailableCompanies, error: finalError } = await supabase
+              .from('empresas')
+              .select('*')
+              .limit(10)
               .order('nome');
               
-            if (directError) {
-              console.error("Error in direct company fetch:", directError);
-              throw directError;
+            if (finalError) {
+              console.error("Error in final fallback company fetch:", finalError);
+              throw finalError;
             }
             
-            companies = directCompanies as Company[];
-          } else {
-            throw error;
+            companies = allAvailableCompanies as Company[];
+            console.log(`Retrieved ${companies.length} companies using fallback method`);
+          } catch (fallbackError) {
+            console.error("All company fetch approaches failed:", fallbackError);
+            // We'll use cached data below or return empty array
           }
         }
       }
-
-      console.log(`Successfully fetched ${companies.length} companies`);
-
-      setUserCompanies(companies);
+      
+      console.log(`Successfully fetched ${companies.length} companies using ${fetchingMethod} method`);
 
       if (companies.length > 0) {
+        setUserCompanies(companies);
         localStorage.setItem('userCompanies', JSON.stringify(companies));
         localStorage.setItem('userCompaniesTimestamp', Date.now().toString());
 
@@ -184,6 +203,24 @@ export const useUserCompanies = ({
       
       setIsLoading(false);
       return [];
+    }
+  };
+  
+  // Helper function to check if user is admin
+  const checkIfUserIsAdmin = async (userId: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .rpc('get_is_admin_secure', { user_id: userId });
+        
+      if (error) {
+        console.warn("Error checking admin status:", error);
+        return false;
+      }
+      
+      return data === true;
+    } catch (e) {
+      console.error("Exception checking admin status:", e);
+      return false;
     }
   };
   

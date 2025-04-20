@@ -49,9 +49,9 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
     };
   }, []);
 
-  // Update display name and avatar
+  // Update display name and avatar - with null checks to prevent errors
   useEffect(() => {
-    // Use the displayName from userProfile if available, otherwise use the email
+    // Use the displayName from userProfile if available, otherwise use the email or default
     setDisplayName(
       userProfile?.display_name || 
       user?.email?.split('@')[0] || 
