@@ -1,18 +1,29 @@
 
-import { useEffect } from "react";
-import { Company } from "@/types/company";
+import { useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
-export const useCompanyEvents = (setSelectedCompany: (company: Company | null) => void) => {
+interface UseCompanyEventsProps {
+  forceGetUserCompanies: (userId: string) => Promise<any>;
+}
+
+export const useCompanyEvents = ({ forceGetUserCompanies }: UseCompanyEventsProps) => {
+  const { user } = useAuth();
+  
   useEffect(() => {
-    const handleCompanySelected = (event: CustomEvent) => {
-      const { company } = event.detail;
-      setSelectedCompany(company);
+    const handleCompanyRelationChange = async () => {
+      if (user?.id) {
+        console.log('Company relation change detected, refreshing data');
+        await forceGetUserCompanies(user.id);
+      }
     };
-
-    window.addEventListener('company-selected', handleCompanySelected as EventListener);
+    
+    // Listen for company relation changes (like when a user is added to or removed from a company)
+    window.addEventListener('company-relation-changed', handleCompanyRelationChange);
     
     return () => {
-      window.removeEventListener('company-selected', handleCompanySelected as EventListener);
+      window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
     };
-  }, [setSelectedCompany]);
+  }, [user, forceGetUserCompanies]);
+  
+  return {};
 };

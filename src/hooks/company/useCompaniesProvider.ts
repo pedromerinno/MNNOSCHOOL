@@ -1,80 +1,60 @@
 
-import { useAuth } from "@/contexts/AuthContext";
-import { useCompanyState } from "./useCompanyState";
-import { useCompanyFetching } from "./useCompanyFetching";
-import { useCompanyModification } from "./useCompanyModification";
-import { useCompanyEvents } from "./useCompanyEvents";
-import { useEffect } from "react";
+import { useCallback } from 'react';
+import { useCompanyState } from './useCompanyState';
+import { useCompanyFetching } from './useCompanyFetching';
+import { useCompanyModification } from './useCompanyModification';
+import { useCompanyEvents } from './useCompanyEvents';
+import { Company } from '@/types/company';
 
 export const useCompaniesProvider = () => {
-  const { user } = useAuth();
+  const companyState = useCompanyState();
   
   const {
-    isLoading,
-    companies,
-    userCompanies,
-    selectedCompany,
-    error,
-    fetchCount,
-    ...stateActions
-  } = useCompanyState();
-  
-  const { 
     getUserCompanies,
     forceGetUserCompanies,
     getCompanyById
   } = useCompanyFetching({
-    userCompanies,
-    ...stateActions
+    userCompanies: companyState.userCompanies,
+    setUserCompanies: companyState.setUserCompanies,
+    setSelectedCompany: companyState.setSelectedCompany,
+    setIsLoading: companyState.setIsLoading,
+    setError: companyState.setError,
+    incrementFetchCount: companyState.incrementFetchCount
   });
   
   const {
-    fetchCompanies,
-    selectCompany,
     createCompany,
     updateCompany,
     deleteCompany,
-    assignUserToCompany,
-    removeUserFromCompany
+    fetchCompanies,
+    selectCompany
   } = useCompanyModification({
-    ...stateActions
+    companies: companyState.companies,
+    setCompanies: companyState.setCompanies,
+    userCompanies: companyState.userCompanies,
+    setSelectedCompany: companyState.setSelectedCompany,
+    setIsLoading: companyState.setIsLoading,
+    setError: companyState.setError
   });
-
-  // Listen for selected company events
-  useCompanyEvents(stateActions.setSelectedCompany);
-
-  // Global data loading - load user companies only when user is logged in
-  useEffect(() => {
-    const loadInitialData = async () => {
-      if (user?.id && userCompanies.length === 0 && !isLoading) {
-        try {
-          await getUserCompanies(user.id);
-        } catch (error) {
-          console.error('[useCompanies] Error loading initial company data:', error);
-        }
-      }
-    };
-    
-    loadInitialData();
-  }, [user?.id, userCompanies.length, isLoading, getUserCompanies]);
-
+  
+  useCompanyEvents({
+    forceGetUserCompanies
+  });
+  
   return {
-    isLoading,
-    companies,
-    userCompanies,
-    selectedCompany,
-    error,
-    fetchCount,
+    // State
+    ...companyState,
+    
+    // Fetching methods
     getUserCompanies,
     forceGetUserCompanies,
     getCompanyById,
-    fetchCompanies,
-    selectCompany,
+    
+    // Modification methods
     createCompany,
     updateCompany,
     deleteCompany,
-    assignUserToCompany,
-    removeUserFromCompany,
-    user
+    fetchCompanies,
+    selectCompany
   };
 };
