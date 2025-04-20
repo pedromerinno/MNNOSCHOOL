@@ -8,9 +8,10 @@ import { CompanyManagement } from '@/components/admin/CompanyManagement';
 import { SettingsManagement } from '@/components/admin/integration/SettingsManagement';
 import { BackgroundManager } from '@/components/admin/BackgroundManager';
 import { useAuth } from '@/contexts/AuthContext';
-import { Building, Users, Book, Settings, LayoutDashboard } from 'lucide-react';
+import { Building, Users, Book, Settings, LayoutDashboard, ArrowLeft } from 'lucide-react';
 import { CourseManagement } from '@/components/admin/CourseManagement';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
+import { Button } from '@/components/ui/button';
 
 // Helper para cor principal (azul padrão caso não tenha)
 const ADMIN_MAIN_COLOR = "#1EAEDB";
@@ -81,6 +82,14 @@ const AdminPage = () => {
       <main className="container mx-auto px-6 py-12">
         {/* Novo título com visual idêntico às outras páginas */}
         <div className="flex items-center gap-4 mb-12">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="p-0 hover:bg-transparent" 
+            onClick={() => window.history.back()}
+          >
+            <ArrowLeft className="h-5 w-5 text-gray-500" />
+          </Button>
           <h1 className="text-3xl md:text-4xl font-bold dark:text-white text-gray-900 tracking-tight">
             Painel Administrativo
           </h1>
