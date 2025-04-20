@@ -4,6 +4,7 @@ import { UseCompanyFetchProps } from "./types/fetchTypes";
 import { useCompanyList } from "./fetch/useCompanyList";
 import { useUserCompanies } from "./fetch/useUserCompanies";
 import { useCompanyDetails } from "./fetch/useCompanyDetails";
+import { retryOperation } from "./utils/retryUtils";
 
 export const useCompanyFetch = (props: UseCompanyFetchProps) => {
   const { fetchCompanies: _fetchCompanies } = useCompanyList(props);
@@ -23,7 +24,12 @@ export const useCompanyFetch = (props: UseCompanyFetchProps) => {
 
   const getUserCompanies = useCallback(async (userId: string, signal?: AbortSignal) => {
     try {
-      return await _getUserCompanies(userId, signal);
+      return await retryOperation(
+        () => _getUserCompanies(userId, signal),
+        3,  // 3 tentativas
+        1000, // 1s de delay inicial
+        10000 // 10s de delay máximo
+      );
     } catch (error) {
       console.error("Erro ao buscar empresas do usuário:", error);
       // Tentar novamente após um curto intervalo em caso de erro
