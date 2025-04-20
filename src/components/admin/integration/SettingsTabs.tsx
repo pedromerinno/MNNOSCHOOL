@@ -5,6 +5,7 @@ import { Building, Video, FileText, Users, Key, Book, Image } from "lucide-react
 import { SettingsTabTrigger } from './settings/SettingsTabTrigger';
 import { SettingsTabContent } from './settings/SettingsTabContent';
 import { SettingsTabsProps } from './settings/types';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const SettingsTabs: React.FC<SettingsTabsProps> = ({
   company,
@@ -13,15 +14,22 @@ export const SettingsTabs: React.FC<SettingsTabsProps> = ({
   handleFormSubmit,
   isSaving
 }) => {
-  const tabs = [
+  const { userProfile } = useAuth();
+  
+  // Define base tabs that all admins can see
+  const baseTabs = [
     { value: "info", label: "Informações da Empresa", icon: Building },
     { value: "videos", label: "Vídeos", icon: Video },
     { value: "cargo", label: "Cargos", icon: FileText },
     { value: "access", label: "Acessos", icon: Key },
     { value: "collaborators", label: "Colaboradores", icon: Users },
     { value: "courses", label: "Cursos", icon: Book },
-    { value: "background", label: "Background", icon: Image },
   ];
+  
+  // Add Background tab only for super_admin
+  const tabs = userProfile?.super_admin 
+    ? [...baseTabs, { value: "background", label: "Background", icon: Image }]
+    : baseTabs;
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

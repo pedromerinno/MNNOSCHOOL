@@ -70,13 +70,18 @@ const AdminPage = () => {
                     <Book className="h-4 w-4 mr-2" />
                     Todos os Cursos
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="background" 
-                    className="flex items-center py-3 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 text-gray-600 dark:text-gray-300 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400"
-                  >
-                    <Image className="h-4 w-4 mr-2" />
-                    Background
-                  </TabsTrigger>
+                  
+                  {/* Only show Background tab for super_admin */}
+                  {userProfile?.super_admin && (
+                    <TabsTrigger 
+                      value="background" 
+                      className="flex items-center py-3 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 text-gray-600 dark:text-gray-300 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400"
+                    >
+                      <Image className="h-4 w-4 mr-2" />
+                      Background
+                    </TabsTrigger>
+                  )}
+                  
                   <TabsTrigger 
                     value="settings" 
                     className="flex items-center py-3 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 text-gray-600 dark:text-gray-300 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400"
@@ -98,9 +103,14 @@ const AdminPage = () => {
                   <TabsContent value="allcourses" className="m-0">
                     <CourseManagement />
                   </TabsContent>
-                  <TabsContent value="background" className="m-0">
-                    <BackgroundManager />
-                  </TabsContent>
+                  
+                  {/* Only render Background content if user is super_admin */}
+                  {userProfile?.super_admin && (
+                    <TabsContent value="background" className="m-0">
+                      <BackgroundManager />
+                    </TabsContent>
+                  )}
+                  
                   <TabsContent value="settings" className="m-0">
                     <SettingsManagement />
                   </TabsContent>
