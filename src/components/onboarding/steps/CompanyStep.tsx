@@ -33,9 +33,9 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
     valores: "",
     frase_institucional: "",
     video_institucional: "",
-    descricao_video: ""
+    descricao_video: "",
+    cor_principal: "#000000"
   });
-  const [error, setError] = useState("");
 
   const handleInitialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +57,7 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
           return;
         }
 
+        // Criar nova empresa
         const { data: newCompany, error: companyError } = await supabase
           .from('empresas')
           .insert({
@@ -66,13 +67,15 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
             valores: companyDetails.valores,
             frase_institucional: companyDetails.frase_institucional,
             video_institucional: companyDetails.video_institucional,
-            descricao_video: companyDetails.descricao_video
+            descricao_video: companyDetails.descricao_video,
+            cor_principal: companyDetails.cor_principal
           })
           .select()
           .single();
 
         if (companyError) throw companyError;
 
+        // Associar usuário à empresa como admin
         const { error: relationError } = await supabase
           .from('user_empresa')
           .insert({
@@ -83,15 +86,18 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
 
         if (relationError) throw relationError;
 
-        toast.success("Empresa criada com sucesso!");
-        
-        const newInterests = (profileData.interests || []).filter(i => i !== 'onboarding_incomplete');
-        
-        await supabase
+        // Atualizar perfil do usuário como admin
+        const { error: profileError } = await supabase
           .from('profiles')
-          .update({ interesses: newInterests })
+          .update({ 
+            is_admin: true,
+            interesses: (profileData.interests || []).filter(i => i !== 'onboarding_incomplete')
+          })
           .eq('id', user.id);
 
+        if (profileError) throw profileError;
+
+        toast.success("Empresa criada com sucesso!");
         navigate("/");
       } else {
         updateProfileData({ 
@@ -104,7 +110,7 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
       }
     } catch (error: any) {
       console.error('Error:', error);
-      toast.error("Erro ao criar empresa: " + error.message);
+      toast.error("Erro ao processar operação: " + error.message);
     }
   };
 

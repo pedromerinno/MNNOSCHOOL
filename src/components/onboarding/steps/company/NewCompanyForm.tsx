@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Input } from "@/components/ui/input";
 
@@ -11,6 +10,7 @@ interface CompanyDetails {
   frase_institucional: string;
   video_institucional: string;
   descricao_video: string;
+  cor_principal: string;
 }
 
 interface NewCompanyFormProps {
@@ -120,6 +120,19 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
           onChange={(e) => handleChange('descricao_video', e.target.value)}
           className="w-full border border-gray-300 rounded-md px-3 py-2 focus-visible:ring-merinno-dark min-h-[100px]"
           placeholder="Descreva o conteúdo do vídeo institucional"
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <label htmlFor="corPrincipal" className="text-sm text-gray-500">
+          Cor principal
+        </label>
+        <Input
+          id="corPrincipal"
+          type="color"
+          value={companyDetails.cor_principal || "#000000"}
+          onChange={(e) => handleChange('cor_principal', e.target.value)}
+          className="h-12 w-full cursor-pointer"
         />
       </div>
     </div>
