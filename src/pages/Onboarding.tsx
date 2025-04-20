@@ -9,13 +9,6 @@ import InterestsStep from "@/components/onboarding/steps/InterestsStep";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
 
 const Onboarding = () => {
-  const { user } = useAuth();
-
-  // If there's no user, ProtectedRoute will handle the redirect to login
-  if (!user) {
-    return null;
-  }
-
   return (
     <OnboardingProvider>
       <OnboardingLayout>

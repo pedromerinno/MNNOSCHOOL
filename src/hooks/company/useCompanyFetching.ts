@@ -1,4 +1,5 @@
-import React, { useCallback, useRef } from "react";
+
+import React, { useCallback, useRef, useMemo } from "react";
 import { Company } from "@/types/company";
 import { useCompanyRequest } from "./useCompanyRequest";
 import { useCompanyCache } from "./useCompanyCache";
@@ -55,11 +56,19 @@ export const useCompanyFetching = ({
   const abortControllerRef = useRef<AbortController | null>(null);
   // Track last successful fetch time for this specific hook instance
   const lastSuccessfulFetchRef = useRef<number>(0);
+  // Track if there was a fetch on this page load
+  const didFetchOnPageLoadRef = useRef<boolean>(false);
   
   const getUserCompanies = useCallback(async (
     userId: string, 
     forceRefresh: boolean = false
   ): Promise<Company[]> => {
+    // Skip fetch if already fetched during this page load and not forcing refresh
+    if (didFetchOnPageLoadRef.current && !forceRefresh && userCompanies.length > 0) {
+      console.log('Already fetched companies during this page load. Using cached data.');
+      return userCompanies;
+    }
+    
     // Implement a specific throttling for this component - minimum 30 seconds between fetches
     // unless forced refresh is explicitly requested
     const now = Date.now();
@@ -121,6 +130,7 @@ export const useCompanyFetching = ({
       
       // Record the timestamp of the successful fetch for this instance
       lastSuccessfulFetchRef.current = Date.now();
+      didFetchOnPageLoadRef.current = true;
       
       // Cache the companies when we successfully fetch them
       if (result && result.length > 0) {

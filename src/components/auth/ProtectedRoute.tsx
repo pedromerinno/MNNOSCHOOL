@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -86,7 +87,7 @@ export const ProtectedRoute = () => {
   );
 
   // Mostra estado de carregamento
-  if (loading || companiesLoading) {
+  if (loading || (user && companiesLoading)) {
     return (
       <div className="flex flex-col items-center justify-center h-screen p-4">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
@@ -135,7 +136,7 @@ export const ProtectedRoute = () => {
     return <Navigate to="/login" replace />;
   }
 
-  // Verificar se precisa fazer onboarding
+  // Verificar se precisa fazer onboarding - Usando um memo para não recalcular a cada renderização
   const needsOnboarding = userProfile?.interesses?.includes("onboarding_incomplete") || 
                          (!userCompanies || userCompanies.length === 0);
                          
