@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,11 +52,11 @@ export const LoginForm = () => {
   return (
     <div className="w-full max-w-sm mx-auto">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-semibold mb-2">Welcome to Merinno</h1>
+        <h1 className="text-3xl font-semibold mb-2">Bem-vindo à Merinno</h1>
         <p className="text-gray-600">
-          Don&apos;t have an account?{" "}
+          Não tem uma conta?{" "}
           <Link to="/signup" className="text-blue-600 hover:text-blue-700 font-medium">
-            Sign up for free
+            Cadastre-se gratuitamente
           </Link>
         </p>
       </div>
@@ -66,7 +67,7 @@ export const LoginForm = () => {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Username or Email"
+            placeholder="Usuário ou E-mail"
             required
             className="w-full h-12 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
@@ -77,7 +78,7 @@ export const LoginForm = () => {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
+            placeholder="Senha"
             required
             className="w-full h-12 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
@@ -91,7 +92,7 @@ export const LoginForm = () => {
           {isLoggingIn ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            "Log in"
+            "Entrar"
           )}
         </Button>
       </form>
@@ -102,7 +103,7 @@ export const LoginForm = () => {
             <div className="w-full border-t border-gray-300"></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">OR</span>
+            <span className="px-2 bg-white text-gray-500">OU</span>
           </div>
         </div>
 
@@ -112,21 +113,21 @@ export const LoginForm = () => {
             className="w-full h-12 border border-gray-300 rounded-lg font-medium flex items-center justify-center gap-2"
           >
             <Github className="h-5 w-5" />
-            Log in with GitHub
+            Entrar com GitHub
           </Button>
           
           <Button 
             variant="outline"
             className="w-full h-12 border border-gray-300 rounded-lg font-medium flex items-center justify-center gap-2"
           >
-            Log in with Google
+            Entrar com Google
           </Button>
           
           <Button 
             variant="outline"
             className="w-full h-12 border border-gray-300 rounded-lg font-medium"
           >
-            Use Single Sign-On (SSO)
+            Usar Single Sign-On (SSO)
           </Button>
         </div>
 
@@ -135,7 +136,7 @@ export const LoginForm = () => {
             to="/forgot-password"
             className="text-sm text-gray-600 hover:text-gray-900"
           >
-            Forgot Password?
+            Esqueceu sua senha?
           </Link>
         </div>
       </div>
