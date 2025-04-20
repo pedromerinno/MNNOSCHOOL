@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Company } from "@/types/company";
 import { toast } from "sonner";
@@ -65,7 +66,45 @@ export const useUserCompanies = ({
         throw new DOMException("Aborted", "AbortError");
       }
 
-      // Primeiro, buscar as relações de empresa do usuário
+      // Verificar se o usuário é super admin
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('super_admin, is_admin')
+        .eq('id', userId)
+        .single();
+      
+      if (profileError) throw profileError;
+      
+      const isSuperAdmin = profileData?.super_admin === true;
+      const isAdmin = profileData?.is_admin === true;
+      
+      // Super admin vê todas as empresas
+      if (isSuperAdmin) {
+        const { data: allCompanies, error: allCompaniesError } = await supabase
+          .from('empresas')
+          .select('*')
+          .order('nome');
+          
+        if (allCompaniesError) throw allCompaniesError;
+        
+        const userCompaniesData = allCompanies as Company[];
+        
+        if (setUserCompanies) {
+          setUserCompanies(userCompaniesData);
+        }
+        
+        if (userCompaniesData.length === 1 && setSelectedCompany) {
+          setSelectedCompany(userCompaniesData[0]);
+        }
+        
+        localStorage.setItem('userCompanies', JSON.stringify(userCompaniesData));
+        localStorage.setItem('userCompaniesTimestamp', Date.now().toString());
+        
+        setIsLoading(false);
+        return userCompaniesData;
+      }
+      
+      // Admin ou usuário padrão - buscar relações de empresa do usuário
       const { data: relations, error: relationsError } = await supabase
         .from('user_empresa')
         .select('empresa_id')

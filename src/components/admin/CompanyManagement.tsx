@@ -14,16 +14,22 @@ import { CompanyForm } from './CompanyForm';
 import { useCompanies } from '@/hooks/useCompanies';
 import { Company } from '@/types/company';
 import { UserCompanyManager } from './UserCompanyManager';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 export const CompanyManagement: React.FC = () => {
   const { 
     companies, 
+    userCompanies,
     isLoading, 
     fetchCompanies, 
     createCompany, 
     updateCompany, 
-    deleteCompany 
+    deleteCompany,
+    isSuperAdmin
   } = useCompanies();
+  
+  const { userProfile } = useAuth();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isUserManagerOpen, setIsUserManagerOpen] = useState(false);
@@ -32,31 +38,59 @@ export const CompanyManagement: React.FC = () => {
 
   // Fetch companies on mount
   useEffect(() => {
-    fetchCompanies();
-  }, [fetchCompanies]);
+    // Se for super admin ou não tiver acesso a empresas específicas, buscar todas
+    if (isSuperAdmin) {
+      fetchCompanies();
+    }
+  }, [fetchCompanies, isSuperAdmin]);
 
   const handleCreateCompany = () => {
+    if (!userProfile?.is_admin && !userProfile?.super_admin) {
+      toast.error("Você não tem permissão para criar empresas");
+      return;
+    }
+    
     setSelectedCompany(undefined);
     setIsFormOpen(true);
   };
 
   const handleEditCompany = (company: Company) => {
+    if (!userProfile?.is_admin && !userProfile?.super_admin) {
+      toast.error("Você não tem permissão para editar empresas");
+      return;
+    }
+    
     setSelectedCompany(company);
     setIsFormOpen(true);
   };
 
   const handleDeleteCompany = async (companyId: string) => {
+    if (!userProfile?.is_admin && !userProfile?.super_admin) {
+      toast.error("Você não tem permissão para excluir empresas");
+      return;
+    }
+    
     if (confirm('Tem certeza que deseja excluir esta empresa? Esta ação não pode ser desfeita.')) {
       await deleteCompany(companyId);
     }
   };
 
   const handleManageUsers = (company: Company) => {
+    if (!userProfile?.is_admin && !userProfile?.super_admin) {
+      toast.error("Você não tem permissão para gerenciar usuários da empresa");
+      return;
+    }
+    
     setSelectedCompany(company);
     setIsUserManagerOpen(true);
   };
 
   const handleFormSubmit = async (data: Omit<Company, 'id' | 'created_at' | 'updated_at'>) => {
+    if (!userProfile?.is_admin && !userProfile?.super_admin) {
+      toast.error("Você não tem permissão para realizar esta ação");
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
       if (selectedCompany) {
@@ -72,6 +106,9 @@ export const CompanyManagement: React.FC = () => {
     }
   };
 
+  // Determinar quais empresas mostrar baseado no perfil do usuário
+  const displayCompanies = isSuperAdmin ? companies : userCompanies;
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -83,7 +120,7 @@ export const CompanyManagement: React.FC = () => {
       </div>
       
       <CompanyTable 
-        companies={companies} 
+        companies={displayCompanies} 
         loading={isLoading} 
         onEdit={handleEditCompany}
         onDelete={handleDeleteCompany}
