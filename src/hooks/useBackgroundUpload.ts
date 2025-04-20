@@ -31,16 +31,15 @@ export const useBackgroundUpload = () => {
         .single();
 
       // Update settings table with new background
+      // Make sure to use the correct upsert approach to avoid duplicate keys
       const { error: updateError } = await supabase
         .from('settings')
         .upsert({
-          id: existingSettings?.id, // Include the ID if the record exists
+          id: existingSettings?.id || undefined, // Only include ID if it exists
           key: 'login_background',
           value: publicUrl,
           media_type: type,
           updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'key' // Specify which column has the conflict
         });
 
       if (updateError) throw updateError;
