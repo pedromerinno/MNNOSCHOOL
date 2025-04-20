@@ -1,3 +1,4 @@
+
 import { ReactNode, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -66,7 +67,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
   return (
     <div className="min-h-screen flex">
       {/* Left side - Login Form */}
-      <div className="w-full max-w-lg mx-auto px-8 py-12 flex items-center justify-center bg-white">
+      <div className="w-full max-w-xl mx-auto px-12 py-12 flex items-center justify-center bg-white">
         {children}
       </div>
       
