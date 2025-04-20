@@ -1,14 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Camera, Video, Upload } from "lucide-react";
 import { useBackgroundUpload } from '@/hooks/useBackgroundUpload';
+import { MediaTypeSelector } from './background/MediaTypeSelector';
+import { FileUpload } from './background/FileUpload';
+import { UrlInput } from './background/UrlInput';
+import { MediaPreview } from './background/MediaPreview';
 
 export const BackgroundManager = () => {
   const [mediaUrl, setMediaUrl] = useState("");
@@ -19,19 +19,15 @@ export const BackgroundManager = () => {
   useEffect(() => {
     const fetchCurrentBackground = async () => {
       try {
-        console.log("Admin: Fetching current background");
         const { data, error } = await supabase
           .from('settings')
           .select('value, media_type')
           .eq('key', 'login_background')
           .maybeSingle();
 
-        console.log("Admin: Background data:", data, "Error:", error);
-
         if (!error && data) {
           setMediaUrl(data.value || "");
           setMediaType((data.media_type as "video" | "image") || "video");
-          console.log("Admin: Set background to:", data.value, data.media_type);
         }
       } catch (error) {
         console.error("Error fetching background settings:", error);
@@ -46,14 +42,12 @@ export const BackgroundManager = () => {
     setIsSaving(true);
 
     try {
-      // First check if the record already exists
       const { data: existingRecord } = await supabase
         .from('settings')
         .select('id')
         .eq('key', 'login_background')
         .maybeSingle();
       
-      // Use upsert with the correct ID if it exists
       const { error } = await supabase
         .from('settings')
         .upsert({ 
@@ -67,10 +61,7 @@ export const BackgroundManager = () => {
       if (error) throw error;
 
       toast.success(`Background ${mediaType === 'video' ? 'vídeo' : 'imagem'} atualizado com sucesso`);
-      
-      // Dispatch event to update other components
       window.dispatchEvent(new Event('background-updated'));
-      console.log("Background update event dispatched");
     } catch (error: any) {
       console.error(`Erro ao salvar ${mediaType} de background:`, error);
       toast.error(`Erro ao salvar: ${error.message}`);
@@ -83,7 +74,6 @@ export const BackgroundManager = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validar o tipo do arquivo
     if (mediaType === 'video' && !file.type.startsWith('video/')) {
       toast.error('Por favor, selecione um arquivo de vídeo');
       return;
@@ -96,42 +86,7 @@ export const BackgroundManager = () => {
     const url = await uploadFile(file, mediaType);
     if (url) {
       setMediaUrl(url);
-      // Automatically save after upload
-      toast.success('Arquivo enviado com sucesso. Salvando...');
-      setIsSaving(true);
-      
-      try {
-        // First check if the record already exists
-        const { data: existingRecord } = await supabase
-          .from('settings')
-          .select('id')
-          .eq('key', 'login_background')
-          .maybeSingle();
-        
-        // Use upsert with the correct ID if it exists
-        const { error } = await supabase
-          .from('settings')
-          .upsert({ 
-            id: existingRecord?.id || undefined,
-            key: 'login_background', 
-            value: url,
-            media_type: mediaType,
-            updated_at: new Date().toISOString()
-          });
-
-        if (error) throw error;
-
-        toast.success(`Background atualizado com sucesso`);
-        
-        // Dispatch event to update other components
-        window.dispatchEvent(new Event('background-updated'));
-        console.log("Background update event dispatched");
-      } catch (error: any) {
-        console.error(`Erro ao salvar ${mediaType} de background:`, error);
-        toast.error(`Erro ao salvar: ${error.message}`);
-      } finally {
-        setIsSaving(false);
-      }
+      handleSubmit(new Event('submit') as any);
     }
   };
 
@@ -147,62 +102,22 @@ export const BackgroundManager = () => {
       <Card>
         <CardContent className="p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label>Tipo de Background</Label>
-              <Select 
-                value={mediaType} 
-                onValueChange={(value: "video" | "image") => setMediaType(value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo de mídia" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="video">
-                    <div className="flex items-center">
-                      <Video className="h-4 w-4 mr-2" /> Vídeo
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="image">
-                    <div className="flex items-center">
-                      <Camera className="h-4 w-4 mr-2" /> Imagem
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <MediaTypeSelector
+              mediaType={mediaType}
+              onMediaTypeChange={setMediaType}
+            />
 
-            <div className="space-y-2">
-              <Label>Upload de Arquivo</Label>
-              <div className="flex items-center gap-4">
-                <Input
-                  type="file"
-                  accept={mediaType === 'video' ? 'video/*' : 'image/*'}
-                  onChange={handleFileUpload}
-                  className="flex-1"
-                />
-                {isUploading && (
-                  <div className="text-sm text-gray-500">Enviando...</div>
-                )}
-              </div>
-            </div>
+            <FileUpload
+              mediaType={mediaType}
+              onFileUpload={handleFileUpload}
+              isUploading={isUploading}
+            />
 
-            <div className="space-y-2">
-              <Label htmlFor="mediaUrl">Ou insira uma URL</Label>
-              <Input
-                id="mediaUrl"
-                type="url"
-                value={mediaUrl}
-                onChange={(e) => setMediaUrl(e.target.value)}
-                placeholder={mediaType === 'video' 
-                  ? "https://exemplo.com/video.mp4" 
-                  : "https://exemplo.com/imagem.jpg"}
-              />
-              <p className="text-sm text-gray-500">
-                {mediaType === 'video' 
-                  ? 'Insira a URL de um vídeo MP4 ou faça upload' 
-                  : 'Insira a URL de uma imagem ou faça upload'}
-              </p>
-            </div>
+            <UrlInput
+              mediaUrl={mediaUrl}
+              mediaType={mediaType}
+              onUrlChange={setMediaUrl}
+            />
 
             <div className="flex justify-end">
               <Button 
@@ -217,26 +132,7 @@ export const BackgroundManager = () => {
         </CardContent>
       </Card>
 
-      {mediaUrl && (
-        <div className="mt-6">
-          <h4 className="text-md font-medium mb-3">Pré-visualização:</h4>
-          <div className="border border-gray-200 rounded-md h-64 relative overflow-hidden">
-            {mediaType === 'video' ? (
-              <video 
-                src={mediaUrl} 
-                controls 
-                className="w-full h-full object-contain" 
-              />
-            ) : (
-              <img 
-                src={mediaUrl} 
-                alt="Preview" 
-                className="w-full h-full object-contain" 
-              />
-            )}
-          </div>
-        </div>
-      )}
+      <MediaPreview mediaUrl={mediaUrl} mediaType={mediaType} />
     </div>
   );
 };
