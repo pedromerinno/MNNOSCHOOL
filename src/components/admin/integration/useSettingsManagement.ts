@@ -6,31 +6,31 @@ import { Company } from "@/types/company";
 import { useCompanies } from "@/hooks/company";
 
 export const useSettingsManagement = () => {
-  const { companies, isLoading, fetchCompanies } = useCompanies();
+  const { companies: allCompanies, isLoading: isLoadingCompanies, fetchCompanies, userCompanies } = useCompanies();
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("info");
   const hasLoadedCompanies = useRef(false);
 
-  // Fetch companies only once on mount
+  // Use userCompanies instead of all companies for admins
+  const companies = userCompanies;
+
   useEffect(() => {
     const loadCompanies = async () => {
-      if (!hasLoadedCompanies.current && !isLoading) {
+      if (!hasLoadedCompanies.current && !isLoadingCompanies) {
         console.log("Loading companies in SettingsManagement - Initial Load");
         hasLoadedCompanies.current = true;
         await fetchCompanies();
       }
     };
     loadCompanies();
-  }, [fetchCompanies, isLoading]);
+  }, [fetchCompanies, isLoadingCompanies]);
 
-  // Set the first company as selected if none is selected yet
   useEffect(() => {
     if (companies.length > 0 && !selectedCompany) {
       console.log("Setting initial selected company:", companies[0].nome);
       setSelectedCompany(companies[0]);
       
-      // Broadcast company selection for other components
       window.dispatchEvent(new CustomEvent('settings-company-changed', { 
         detail: { company: companies[0] } 
       }));
@@ -52,23 +52,6 @@ export const useSettingsManagement = () => {
       }));
     }
   };
-
-  // Listen for company-updated events to update the selected company
-  useEffect(() => {
-    const handleCompanyUpdated = (event: CustomEvent<{company: Company}>) => {
-      const updatedCompany = event.detail.company;
-      if (selectedCompany && updatedCompany.id === selectedCompany.id) {
-        console.log("Updating selected company with latest data:", updatedCompany.nome);
-        setSelectedCompany(updatedCompany);
-      }
-    };
-    
-    window.addEventListener('company-updated', handleCompanyUpdated as EventListener);
-    
-    return () => {
-      window.removeEventListener('company-updated', handleCompanyUpdated as EventListener);
-    };
-  }, [selectedCompany]);
 
   const handleFormSubmit = async (formData: any) => {
     if (!selectedCompany) {
@@ -126,7 +109,7 @@ export const useSettingsManagement = () => {
 
   return {
     companies,
-    isLoading,
+    isLoading: isLoadingCompanies,
     selectedCompany,
     isSaving,
     activeTab,
