@@ -1,11 +1,12 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { useSettingsManagement } from './useSettingsManagement';
 import { CompanySelector } from '@/components/admin/integration/CompanySelector';
 import { SettingsTabs } from './SettingsTabs';
 import { NoCompanySelected } from './NoCompanySelected';
 import { LoadingState } from './LoadingState';
+import { BackgroundManager } from '../BackgroundManager';
 import { toast } from 'sonner';
 
 export const SettingsManagement: React.FC = () => {
@@ -19,33 +20,6 @@ export const SettingsManagement: React.FC = () => {
     handleCompanyChange,
     handleFormSubmit
   } = useSettingsManagement();
-
-  // Log debugging info
-  useEffect(() => {
-    console.log("SettingsManagement:", {
-      companiesCount: companies.length,
-      isLoading,
-      selectedCompanyId: selectedCompany?.id,
-      selectedCompanyName: selectedCompany?.nome
-    });
-    
-    if (companies.length > 0 && !selectedCompany) {
-      console.log("Companies available but none selected");
-    }
-  }, [companies, isLoading, selectedCompany]);
-
-  // Notify user if companies loaded but none selected
-  useEffect(() => {
-    if (!isLoading && companies.length > 0 && !selectedCompany) {
-      toast.info("Selecione uma empresa para gerenciar configurações", {
-        id: "select-company-toast"
-      });
-    }
-  }, [isLoading, companies.length, selectedCompany]);
-
-  if (isLoading && companies.length === 0) {
-    return <LoadingState />;
-  }
 
   return (
     <div className="space-y-6">
@@ -80,6 +54,12 @@ export const SettingsManagement: React.FC = () => {
       ) : (
         <NoCompanySelected />
       )}
+
+      <Card>
+        <CardContent>
+          <BackgroundManager />
+        </CardContent>
+      </Card>
     </div>
   );
 };

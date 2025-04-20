@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Tabs, TabsList } from "@/components/ui/tabs";
 import { Building, Video, FileText, Users, Key, Book } from "lucide-react";
 import { SettingsTabTrigger } from './settings/SettingsTabTrigger';
@@ -13,10 +13,6 @@ export const SettingsTabs: React.FC<SettingsTabsProps> = ({
   handleFormSubmit,
   isSaving
 }) => {
-  useEffect(() => {
-    console.log(`SettingsTabs: Company changed to ${company.nome}, ID: ${company.id}`);
-  }, [company.id]);
-
   const tabs = [
     { value: "info", label: "Informações da Empresa", icon: Building },
     { value: "videos", label: "Vídeos", icon: Video },
@@ -24,7 +20,6 @@ export const SettingsTabs: React.FC<SettingsTabsProps> = ({
     { value: "access", label: "Acessos", icon: Key },
     { value: "collaborators", label: "Colaboradores", icon: Users },
     { value: "courses", label: "Cursos", icon: Book },
-    { value: "background", label: "Background Login", icon: Video },
   ];
 
   return (
@@ -38,7 +33,7 @@ export const SettingsTabs: React.FC<SettingsTabsProps> = ({
               icon={tab.icon}
               label={tab.label}
               activeTab={activeTab}
-              companyColor={tab.value === "background" ? undefined : company?.cor_principal}
+              companyColor={company?.cor_principal}
             />
           ))}
         </TabsList>

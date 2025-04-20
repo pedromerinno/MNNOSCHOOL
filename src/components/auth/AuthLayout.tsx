@@ -7,22 +7,38 @@ interface AuthLayoutProps {
 }
 
 export const AuthLayout = ({ children }: AuthLayoutProps) => {
-  const [videoUrl, setVideoUrl] = useState<string>("/lovable-uploads/background-video.mp4");
+  const [backgroundMedia, setBackgroundMedia] = useState<{
+    url: string;
+    type: 'video' | 'image';
+  }>({
+    url: "/lovable-uploads/background-video.mp4",
+    type: 'video'
+  });
 
   useEffect(() => {
-    const fetchVideoUrl = async () => {
+    const fetchBackgroundMedia = async () => {
       const { data, error } = await supabase
         .from('settings')
-        .select('value')
-        .eq('key', 'login_background_video')
+        .select('value, media_type')
+        .eq('key', 'login_background')
         .single();
 
       if (!error && data?.value) {
-        setVideoUrl(data.value);
+        setBackgroundMedia({
+          url: data.value,
+          type: data.media_type || 'video'
+        });
       }
     };
 
-    fetchVideoUrl();
+    fetchBackgroundMedia();
+
+    // Listen for updates from other components
+    window.addEventListener('background-updated', fetchBackgroundMedia);
+
+    return () => {
+      window.removeEventListener('background-updated', fetchBackgroundMedia);
+    };
   }, []);
 
   return (
@@ -37,17 +53,25 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
         </div>
       </div>
       
-      {/* Right side - Video Background */}
+      {/* Right side - Background Media */}
       <div className="w-full md:w-1/2 bg-merinno-blue relative overflow-hidden hidden md:block">
-        <video 
-          autoPlay 
-          muted 
-          loop 
-          className="absolute w-full h-full object-cover"
-        >
-          <source src={videoUrl} type="video/mp4" />
-          Seu navegador não suporta vídeos.
-        </video>
+        {backgroundMedia.type === 'video' ? (
+          <video 
+            autoPlay 
+            muted 
+            loop 
+            className="absolute w-full h-full object-cover"
+          >
+            <source src={backgroundMedia.url} type="video/mp4" />
+            Seu navegador não suporta vídeos.
+          </video>
+        ) : (
+          <img 
+            src={backgroundMedia.url} 
+            alt="Login Background" 
+            className="absolute w-full h-full object-cover"
+          />
+        )}
         
         <div className="absolute inset-0 bg-black/30 z-10" />
       </div>
