@@ -33,7 +33,7 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
     if (company) {
       console.log(`IntegrationTabs: Showing data for company ${company.nome} (${company.id})`);
       console.log(`IntegrationTabs: Company has roles: ${jobRoles?.length || 0}`);
-      console.log(`IntegrationTabs: User role: ${userRole?.name || 'None'}`);
+      console.log(`IntegrationTabs: User role: ${userRole?.title || 'None'}`);
     }
   }, [company, jobRoles, userRole]);
 

@@ -53,7 +53,7 @@ export const useCompanies = (): UseCompaniesReturn => {
     fetchCompanies,
     createCompany,
     updateCompany,
-    deleteCompany,
+    deleteCompany: deleteCompanyBase,
     selectCompany: selectCompanyBase
   } = useCompanyModification({
     companies,
@@ -63,6 +63,17 @@ export const useCompanies = (): UseCompaniesReturn => {
     setIsLoading,
     setError
   });
+  
+  // Wrap deleteCompany to ensure it returns a boolean
+  const deleteCompany = async (companyId: string): Promise<boolean> => {
+    try {
+      await deleteCompanyBase(companyId);
+      return true;
+    } catch (err) {
+      console.error("Error in deleteCompany wrapper:", err);
+      return false;
+    }
+  };
   
   // Company selection operations
   const {
