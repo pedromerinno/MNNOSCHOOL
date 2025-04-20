@@ -11,7 +11,8 @@ export const useUserCompanies = ({
   setIsLoading,
   setUserCompanies,
   setSelectedCompany,
-  setError
+  setError,
+  incrementFetchCount
 }: UseCompanyFetchProps) => {
   
   /**
@@ -31,7 +32,7 @@ export const useUserCompanies = ({
   };
 
   /**
-   * Gets all companies a user is related to using the new database function
+   * Gets all companies a user is related to using the database function
    */
   const getUserCompanies = async (userId: string, signal?: AbortSignal): Promise<Company[]> => {
     // First check if we already have cached data
@@ -60,13 +61,16 @@ export const useUserCompanies = ({
     }
 
     setIsLoading(true);
+    if (incrementFetchCount) {
+      incrementFetchCount();
+    }
 
     try {
       if (signal?.aborted) {
         throw new DOMException("Aborted", "AbortError");
       }
       
-      // Verificar primeiro se o usuário é admin - isso ajudará a determinar qual função usar
+      // First check if the user is admin - this helps determine which function to use
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('is_admin, super_admin')
@@ -82,17 +86,18 @@ export const useUserCompanies = ({
       
       let companiesData;
       
+      // Using retryOperation to add automatic retries for database queries
       if (isAdmin) {
-        // Admin: usar a função que retorna todas as empresas para admins
-        const { data, error } = await supabase
-          .rpc('get_user_companies_for_admin', { current_user_id: userId });
+        // Admin: use the function that returns all companies for admins
+        const { data, error } = await retryOperation(() => supabase
+          .rpc('get_user_companies_for_admin', { current_user_id: userId }), 3);
         
         if (error) throw error;
         companiesData = data;
       } else {
-        // Usuário normal: buscar apenas empresas vinculadas
-        const { data, error } = await supabase
-          .rpc('get_user_companies', { user_id: userId });
+        // Normal user: fetch only linked companies
+        const { data, error } = await retryOperation(() => supabase
+          .rpc('get_user_companies', { user_id: userId }), 3);
         
         if (error) throw error;
         companiesData = data;
@@ -133,6 +138,7 @@ export const useUserCompanies = ({
         }
       }
       
+      setIsLoading(false);
       return [];
     }
   };

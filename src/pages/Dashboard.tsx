@@ -10,13 +10,23 @@ import { UserInfoHeader } from "@/components/dashboard/UserInfoHeader";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NoCompaniesAvailable } from "@/components/home/NoCompaniesAvailable";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const [isUserAdmin, setIsUserAdmin] = useState(false);
-  const { getUserCompanies, selectedCompany, isLoading, userCompanies } = useCompanies();
+  const { getUserCompanies, selectedCompany, isLoading, userCompanies, error } = useCompanies();
 
-  // Verificar se o usuário é admin
+  // Alert on fetch errors
+  useEffect(() => {
+    if (error) {
+      toast.error("Erro ao carregar dados da empresa", {
+        description: "Por favor, tente novamente em alguns instantes",
+      });
+    }
+  }, [error]);
+
+  // Check if user is admin
   useEffect(() => {
     const checkUserAdmin = async () => {
       if (user?.id) {
@@ -56,7 +66,7 @@ const Dashboard = () => {
     fetchUserCompanies();
   }, [user, getUserCompanies]);
 
-  // Para admins, sempre mostrar o dashboard mesmo sem empresas
+  // For admins, always show the dashboard even without companies
   if (isUserAdmin) {
     return (
       <DashboardLayout>
@@ -88,7 +98,7 @@ const Dashboard = () => {
     );
   }
 
-  // If user has no companies, show no companies screen
+  // If user has no companies and is not an admin, show no companies screen
   if (!isLoading && user && userCompanies.length === 0) {
     return <NoCompaniesAvailable />;
   }

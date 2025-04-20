@@ -6,14 +6,24 @@ import { useCompanies } from "@/hooks/useCompanies";
 import { useAuth } from "@/contexts/AuthContext";
 import { NoCompaniesAvailable } from "@/components/home/NoCompaniesAvailable";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Index = () => {
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [isUserAdmin, setIsUserAdmin] = useState(false);
-  const { userCompanies, isLoading, fetchCount, selectedCompany } = useCompanies();
+  const { userCompanies, isLoading, fetchCount, selectedCompany, error } = useCompanies();
   const { user } = useAuth();
 
-  // Verificar se o usuário é admin
+  // Check for fetch errors and show toast
+  useEffect(() => {
+    if (error) {
+      toast.error("Erro ao buscar empresas", {
+        description: "Tentaremos novamente em alguns segundos",
+      });
+    }
+  }, [error]);
+
+  // Check if user is admin
   useEffect(() => {
     const checkUserAdmin = async () => {
       if (user?.id) {
@@ -49,7 +59,7 @@ const Index = () => {
       if (selectedCompany || fetchCount > 0 || !isLoading) {
         setIsPageLoading(false);
       }
-    }, 2000); // Increase minimum loading time to give cache a chance to load
+    }, 2000); // Minimum loading time to give cache a chance to load
     
     return () => clearTimeout(timer);
   }, [isLoading, fetchCount, selectedCompany]);
@@ -79,8 +89,8 @@ const Index = () => {
     );
   }
 
-  // Se o usuário for admin, mostramos a página principal mesmo sem empresas vinculadas
-  // Se o usuário for admin e não tiver empresas, ele pode criar empresas
+  // For admin users, always show the main page even without linked companies
+  // Admin users can create companies if they don't have any
   if (isUserAdmin) {
     return (
       <div className="min-h-screen bg-background">
@@ -89,7 +99,7 @@ const Index = () => {
     );
   }
 
-  // Para usuários regulares, só mostrar No Companies se realmente não houver empresas
+  // For regular users, only show NoCompanies if there are actually no companies
   if (user && !isLoading && userCompanies.length === 0) {
     return <NoCompaniesAvailable />;
   }
