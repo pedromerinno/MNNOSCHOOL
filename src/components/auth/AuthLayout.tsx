@@ -17,27 +17,35 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
 
   useEffect(() => {
     const fetchBackgroundMedia = async () => {
-      const { data, error } = await supabase
-        .from('settings')
-        .select('value, media_type')
-        .eq('key', 'login_background')
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from('settings')
+          .select('value, media_type')
+          .eq('key', 'login_background')
+          .single();
 
-      if (!error && data?.value) {
-        setBackgroundMedia({
-          url: data.value,
-          type: (data.media_type as 'video' | 'image') || 'video'
-        });
+        if (!error && data?.value) {
+          setBackgroundMedia({
+            url: data.value,
+            type: (data.media_type as 'video' | 'image') || 'video'
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching background media:', error);
       }
     };
 
     fetchBackgroundMedia();
 
     // Listen for updates from other components
-    window.addEventListener('background-updated', fetchBackgroundMedia);
+    const handleBackgroundUpdate = () => {
+      fetchBackgroundMedia();
+    };
+    
+    window.addEventListener('background-updated', handleBackgroundUpdate);
 
     return () => {
-      window.removeEventListener('background-updated', fetchBackgroundMedia);
+      window.removeEventListener('background-updated', handleBackgroundUpdate);
     };
   }, []);
 

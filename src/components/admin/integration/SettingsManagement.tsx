@@ -6,7 +6,6 @@ import { CompanySelector } from '@/components/admin/integration/CompanySelector'
 import { SettingsTabs } from './SettingsTabs';
 import { NoCompanySelected } from './NoCompanySelected';
 import { LoadingState } from './LoadingState';
-import { BackgroundManager } from '../BackgroundManager';
 import { toast } from 'sonner';
 
 export const SettingsManagement: React.FC = () => {
@@ -54,12 +53,6 @@ export const SettingsManagement: React.FC = () => {
       ) : (
         <NoCompanySelected />
       )}
-
-      <Card>
-        <CardContent>
-          <BackgroundManager />
-        </CardContent>
-      </Card>
     </div>
   );
 };

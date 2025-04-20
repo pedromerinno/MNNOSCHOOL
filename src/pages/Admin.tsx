@@ -6,8 +6,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { UserManagement } from '@/components/admin/UserManagement';
 import { CompanyManagement } from '@/components/admin/CompanyManagement';
 import { SettingsManagement } from '@/components/admin/integration/SettingsManagement';
+import { BackgroundManager } from '@/components/admin/BackgroundManager';
 import { useAuth } from '@/contexts/AuthContext';
-import { Users, Building, Settings, Book } from 'lucide-react';
+import { Users, Building, Settings, Book, Image } from 'lucide-react';
 import { CourseManagement } from '@/components/admin/CourseManagement';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
@@ -70,6 +71,13 @@ const AdminPage = () => {
                     Todos os Cursos
                   </TabsTrigger>
                   <TabsTrigger 
+                    value="background" 
+                    className="flex items-center py-3 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 text-gray-600 dark:text-gray-300 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400"
+                  >
+                    <Image className="h-4 w-4 mr-2" />
+                    Background
+                  </TabsTrigger>
+                  <TabsTrigger 
                     value="settings" 
                     className="flex items-center py-3 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 text-gray-600 dark:text-gray-300 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400"
                   >
@@ -89,6 +97,9 @@ const AdminPage = () => {
                   </TabsContent>
                   <TabsContent value="allcourses" className="m-0">
                     <CourseManagement />
+                  </TabsContent>
+                  <TabsContent value="background" className="m-0">
+                    <BackgroundManager />
                   </TabsContent>
                   <TabsContent value="settings" className="m-0">
                     <SettingsManagement />

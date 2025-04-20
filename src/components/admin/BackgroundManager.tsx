@@ -16,15 +16,19 @@ export const BackgroundManager = () => {
 
   useEffect(() => {
     const fetchCurrentBackground = async () => {
-      const { data, error } = await supabase
-        .from('settings')
-        .select('value, media_type')
-        .eq('key', 'login_background')
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from('settings')
+          .select('value, media_type')
+          .eq('key', 'login_background')
+          .single();
 
-      if (!error && data) {
-        setMediaUrl(data.value || "");
-        setMediaType((data.media_type as "video" | "image") || "video");
+        if (!error && data) {
+          setMediaUrl(data.value || "");
+          setMediaType((data.media_type as "video" | "image") || "video");
+        }
+      } catch (error) {
+        console.error("Error fetching background settings:", error);
       }
     };
 
