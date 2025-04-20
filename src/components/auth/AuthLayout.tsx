@@ -26,7 +26,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
       if (!error && data?.value) {
         setBackgroundMedia({
           url: data.value,
-          type: data.media_type || 'video'
+          type: (data.media_type as 'video' | 'image') || 'video'
         });
       }
     };

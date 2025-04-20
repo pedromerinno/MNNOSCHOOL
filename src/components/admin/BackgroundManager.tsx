@@ -24,7 +24,7 @@ export const BackgroundManager = () => {
 
       if (!error && data) {
         setMediaUrl(data.value || "");
-        setMediaType(data.media_type || "video");
+        setMediaType((data.media_type as "video" | "image") || "video");
       }
     };
 
