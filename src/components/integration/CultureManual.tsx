@@ -30,7 +30,14 @@ export const CultureManual: React.FC<CultureManualProps> = ({
     
     if (typeof companyValues === 'string') {
       try {
-        return JSON.parse(companyValues);
+        // Try to parse as JSON
+        const parsed = JSON.parse(companyValues);
+        // If parsed is an array, return it
+        if (Array.isArray(parsed)) {
+          return parsed;
+        }
+        // If parsed is an object but not array, wrap it
+        return [parsed];
       } catch (error) {
         console.error('Error parsing company values:', error);
         // If it's not valid JSON, check if it might be a single value
@@ -41,7 +48,17 @@ export const CultureManual: React.FC<CultureManualProps> = ({
       }
     }
     
-    return Array.isArray(companyValues) ? companyValues : [];
+    // Handle array values
+    if (Array.isArray(companyValues)) {
+      return companyValues;
+    }
+    
+    // Handle object values by wrapping them in an array
+    if (typeof companyValues === 'object' && companyValues !== null) {
+      return [companyValues];
+    }
+    
+    return [];
   };
   
   const values = getValues();
@@ -68,28 +85,34 @@ export const CultureManual: React.FC<CultureManualProps> = ({
           </CardHeader>
           <CardContent>
             <div className="grid gap-6 md:grid-cols-5">
-              {values.map((value: { title: string; description: string }, index: number) => (
-                <div
-                  key={index}
-                  className="p-8 rounded-xl border bg-card text-card-foreground transition-colors hover:border-primary/20"
-                >
-                  <div className="mb-4" style={{ color: companyColor }}>
-                    <span 
-                      className="inline-flex items-center justify-center w-10 h-10 text-sm font-semibold rounded-full" 
-                      style={{ 
-                        backgroundColor: `${companyColor}20`, 
-                        color: companyColor 
-                      }}
-                    >
-                      {index + 1}
-                    </span>
+              {values.length > 0 ? (
+                values.map((value: { title: string; description: string }, index: number) => (
+                  <div
+                    key={index}
+                    className="p-8 rounded-xl border bg-card text-card-foreground transition-colors hover:border-primary/20"
+                  >
+                    <div className="mb-4" style={{ color: companyColor }}>
+                      <span 
+                        className="inline-flex items-center justify-center w-10 h-10 text-sm font-semibold rounded-full" 
+                        style={{ 
+                          backgroundColor: `${companyColor}20`, 
+                          color: companyColor 
+                        }}
+                      >
+                        {index + 1}
+                      </span>
+                    </div>
+                    <h3 className="font-medium mb-2">{value.title || 'Valor'}</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {value.description || ''}
+                    </p>
                   </div>
-                  <h3 className="font-medium mb-2">{value.title}</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {value.description}
-                  </p>
+                ))
+              ) : (
+                <div className="md:col-span-5 text-center py-6">
+                  <p className="text-gray-500">Nenhum valor definido para esta empresa ainda.</p>
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
@@ -150,4 +173,3 @@ export const CultureManual: React.FC<CultureManualProps> = ({
     </div>
   );
 };
-
