@@ -1,7 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Company } from "@/types/company";
-import { retryOperation } from "../utils/retryUtils";
 import { UseCompanyFetchProps } from "../types/fetchTypes";
 import { toast } from "sonner";
 
@@ -61,68 +60,13 @@ export const useUserCompanies = ({
 
       console.log("Buscando empresas para o usuário:", userId);
 
-      // Usar a RPC function que contém uma política de segurança correta
+      // Usar a nova função RPC que criamos
       const { data: companies, error: companiesError } = await supabase
         .rpc('get_user_companies', { user_id: userId });
 
       if (companiesError) {
         console.error("Erro ao buscar empresas via RPC:", companiesError);
-        
-        if (companiesError.message?.includes('recursion') || 
-            companiesError.message?.includes('policy') ||
-            companiesError.code === 'PGRST301') {
-          // Tentar abordagem alternativa se o erro for relacionado a políticas/RLS
-          console.log("Tentando abordagem alternativa para buscar empresas");
-          
-          const { data: userEmpresa, error: relationError } = await supabase
-            .from('user_empresa')
-            .select('empresa_id')
-            .eq('user_id', userId);
-            
-          if (relationError) {
-            console.error("Erro ao buscar relações empresa-usuário:", relationError);
-            throw relationError;
-          }
-          
-          if (!userEmpresa || userEmpresa.length === 0) {
-            console.log("Usuário não possui empresas associadas");
-            setUserCompanies([]);
-            setIsLoading(false);
-            return [];
-          }
-          
-          const empresaIds = userEmpresa.map(ue => ue.empresa_id);
-          
-          const { data: empresas, error: empresasError } = await supabase
-            .from('empresas')
-            .select('*')
-            .in('id', empresaIds);
-            
-          if (empresasError) {
-            console.error("Erro ao buscar empresas por ID:", empresasError);
-            throw empresasError;
-          }
-          
-          if (empresas && empresas.length > 0) {
-            console.log(`Encontradas ${empresas.length} empresas para o usuário via método alternativo`);
-            setUserCompanies(empresas);
-            
-            // Cache os resultados
-            localStorage.setItem('userCompanies', JSON.stringify(empresas));
-            localStorage.setItem('userCompaniesTimestamp', Date.now().toString());
-            
-            // Se apenas uma empresa, automaticamente seleciona
-            if (empresas.length === 1) {
-              setSelectedCompany(empresas[0]);
-            }
-            
-            return empresas;
-          }
-          
-          return [];
-        } else {
-          throw companiesError;
-        }
+        throw companiesError;
       }
 
       if (companies && Array.isArray(companies)) {
