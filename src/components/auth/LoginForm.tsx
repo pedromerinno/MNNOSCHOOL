@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, Apple, Google } from "lucide-react";
+import { Loader2, Github } from "lucide-react";
 import { toast } from "sonner";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useCache } from "@/hooks/useCache";
@@ -23,7 +22,6 @@ export const LoginForm = () => {
     setIsLoggingIn(true);
     
     try {
-      // Clear all cache before attempting login
       clearCache('userCompanies');
       clearCache('selectedCompany');
       clearCache('selectedCompanyId');
@@ -31,10 +29,8 @@ export const LoginForm = () => {
       const { data, error } = await signInWithPassword(email, password);
       if (error) throw error;
 
-      // Fetch fresh data after login
       if (data && data.session && data.session.user) {
-        const companies = await getUserCompanies(data.session.user.id, true); // Force refresh
-        // If user has companies, select the first one
+        const companies = await getUserCompanies(data.session.user.id, true);
         if (companies && companies.length > 0) {
           await selectCompany(data.session.user.id, companies[0]);
           toast.success("Login realizado com sucesso!");
@@ -115,16 +111,15 @@ export const LoginForm = () => {
             variant="outline" 
             className="w-full h-12 border border-gray-300 rounded-lg font-medium flex items-center justify-center gap-2"
           >
-            <Google className="h-5 w-5" />
-            Log in with Google
+            <Github className="h-5 w-5" />
+            Log in with GitHub
           </Button>
           
           <Button 
             variant="outline"
             className="w-full h-12 border border-gray-300 rounded-lg font-medium flex items-center justify-center gap-2"
           >
-            <Apple className="h-5 w-5" />
-            Log in with Apple
+            Log in with Google
           </Button>
           
           <Button 
