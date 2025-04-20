@@ -1,7 +1,6 @@
 
 import { ReactNode, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 interface AuthLayoutProps {
   children: ReactNode;
