@@ -42,7 +42,7 @@ const OnboardingContent = () => {
   return (
     <>
       <div className="mb-10 w-full max-w-3xl text-center">
-        <h1 className="text-2xl font-medium text-gray-900 tracking-tight mb-4">
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-4">
           {isUpdate ? "Atualizar Perfil" : "Complete seu perfil"}
         </h1>
         <p className="text-sm text-gray-500 mb-4">
@@ -56,7 +56,7 @@ const OnboardingContent = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 w-full max-w-3xl transition-all duration-300">
+      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-12 w-full max-w-3xl transition-all duration-300">
         {currentStep === 1 && <ProfileStep onNext={nextStep} />}
         {currentStep === 2 && <PhotoStep onNext={nextStep} onBack={prevStep} />}
         {currentStep === 3 && <CompanyStep onNext={nextStep} onBack={prevStep} />}
