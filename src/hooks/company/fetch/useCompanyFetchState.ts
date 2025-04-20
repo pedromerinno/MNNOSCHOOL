@@ -1,5 +1,6 @@
 
 import { useRef } from "react";
+import { Company } from "@/types/company";
 
 export const useCompanyFetchState = () => {
   const fetchInProgressRef = useRef(false);
