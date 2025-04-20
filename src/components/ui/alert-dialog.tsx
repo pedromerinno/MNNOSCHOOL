@@ -57,9 +57,13 @@ const AlertDialogContent = React.forwardRef<
         className
       )}
       {...props}
-      onInteractOutside={() => {
+      onInteractOutside={(e) => {
         // Reset pointer-events when clicking outside the dialog
         document.body.style.pointerEvents = '';
+        // Call original onInteractOutside if provided
+        if (props.onInteractOutside) {
+          props.onInteractOutside(e);
+        }
       }}
     />
   </AlertDialogPortal>

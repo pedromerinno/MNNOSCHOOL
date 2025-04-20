@@ -1,22 +1,34 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { CourseCarousel } from "@/components/courses/CourseCarousel";
 import { CourseCategories } from "@/components/courses/CourseCategories";
 import { useCoursesPage } from "@/hooks/useCoursesPage";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCompanies } from "@/hooks/useCompanies";
 
 const Courses = () => {
   const navigate = useNavigate();
+  const { selectedCompany, isLoading: companyLoading } = useCompanies();
   const {
     featuredCourses,
     allCompanyCourses,
     loading,
     allCoursesLoading,
-    companyColor
+    companyColor,
+    isDataReady
   } = useCoursesPage();
 
   const [activeCategory, setActiveCategory] = useState("all");
+  const [showContent, setShowContent] = useState(false);
+
+  // Controle de exibição do conteúdo para evitar "piscar"
+  useEffect(() => {
+    if (!companyLoading && selectedCompany && isDataReady) {
+      setShowContent(true);
+    }
+  }, [companyLoading, selectedCompany, isDataReady]);
 
   // Extract unique categories from all courses
   const availableCategories = React.useMemo(() => {
@@ -35,6 +47,36 @@ const Courses = () => {
     return course.tags?.includes(activeCategory);
   });
 
+  // Se estiver carregando a empresa ou não houver empresa selecionada, mostrar skeleton
+  if (companyLoading || !selectedCompany) {
+    return (
+      <DashboardLayout>
+        <div className="container mx-auto max-w-screen-2xl space-y-12 px-4 py-6">
+          <div className="w-full h-64">
+            <Skeleton className="w-full h-full rounded-xl" />
+          </div>
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-40" />
+            <div className="flex gap-2">
+              {[1, 2, 3, 4].map((i) => (
+                <Skeleton key={i} className="h-10 w-24 rounded-full" />
+              ))}
+            </div>
+          </div>
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-40" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Skeleton key={i} className="aspect-[4/3] rounded-lg" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Conteúdo real só é mostrado quando dados estão prontos
   return (
     <DashboardLayout>
       <div className="container mx-auto max-w-screen-2xl space-y-12 px-4 py-6">

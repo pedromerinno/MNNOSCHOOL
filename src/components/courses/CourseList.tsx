@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { CourseCard } from './CourseCard';
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,11 +27,26 @@ type CourseListProps = {
 export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' }) => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
-  const { selectedCompany } = useCompanies();
+  const { selectedCompany, isLoading: companyLoading } = useCompanies();
   const { toast } = useToast();
+  const initialLoadComplete = useRef(false);
+  const currentCompanyId = useRef<string | null>(null);
 
   useEffect(() => {
+    // Se a empresa mudou, resetamos o estado
+    if (selectedCompany?.id !== currentCompanyId.current) {
+      setCourses([]);
+      initialLoadComplete.current = false;
+      currentCompanyId.current = selectedCompany?.id || null;
+    }
+
     const fetchCourses = async () => {
+      // Se não temos uma empresa selecionada ou se estamos carregando, não fazemos nada
+      if (!selectedCompany || companyLoading) return;
+
+      // Evita várias requisições ao mesmo tempo
+      if (loading && initialLoadComplete.current && currentCompanyId.current === selectedCompany.id) return;
+
       try {
         setLoading(true);
         console.log("Fetching courses with filter:", filter);
@@ -43,14 +58,6 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
         
         if (!userId) {
           throw new Error('User not authenticated');
-        }
-        
-        // Se não há empresa selecionada, não carregamos nenhum curso
-        if (!selectedCompany) {
-          console.log("No company selected, not loading any courses");
-          setCourses([]);
-          setLoading(false);
-          return;
         }
         
         console.log("Fetching courses for company:", selectedCompany.id);
@@ -69,7 +76,7 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
         if (!companyAccess || companyAccess.length === 0) {
           console.log("No courses found for this company");
           setCourses([]);
-          setLoading(false);
+          initialLoadComplete.current = true;
           return;
         }
         
@@ -129,6 +136,7 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
         
         console.log(`Displaying ${finalCourses.length} courses after filtering`);
         setCourses(finalCourses);
+        initialLoadComplete.current = true;
       } catch (error: any) {
         console.error('Error fetching courses:', error);
         toast({
@@ -142,7 +150,18 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
     };
     
     fetchCourses();
-  }, [selectedCompany, filter, toast]);
+  }, [selectedCompany, filter, toast, companyLoading, loading]);
+
+  // Exibir skeleton durante o carregamento da empresa
+  if (companyLoading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        {[...Array(8)].map((_, i) => (
+          <Skeleton key={i} className="h-[300px] w-full rounded-lg" />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
