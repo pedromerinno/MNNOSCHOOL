@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Upload } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -91,7 +90,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
       </div>
       
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="w-full max-w-sm sm:max-w-md">
+        <DialogContent className="w-full max-w-sm sm:max-w-md" style={{ pointerEvents: 'auto' }}>
           <DialogHeader>
             <DialogTitle className="text-center">Editar Perfil</DialogTitle>
             <DialogDescription className="text-center">

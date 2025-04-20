@@ -5,7 +5,25 @@ import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 
-const AlertDialog = AlertDialogPrimitive.Root
+const AlertDialog = ({
+  children,
+  ...props
+}: AlertDialogPrimitive.AlertDialogProps) => {
+  // Reset pointer-events when dialog closes
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      document.body.style.pointerEvents = '';
+    }
+    // Call the original onOpenChange if provided
+    props.onOpenChange?.(open);
+  };
+
+  return (
+    <AlertDialogPrimitive.Root {...props} onOpenChange={handleOpenChange}>
+      {children}
+    </AlertDialogPrimitive.Root>
+  );
+};
 
 const AlertDialogTrigger = AlertDialogPrimitive.Trigger
 
@@ -39,6 +57,10 @@ const AlertDialogContent = React.forwardRef<
         className
       )}
       {...props}
+      onInteractOutside={() => {
+        // Reset pointer-events when clicking outside the dialog
+        document.body.style.pointerEvents = '';
+      }}
     />
   </AlertDialogPortal>
 ))
