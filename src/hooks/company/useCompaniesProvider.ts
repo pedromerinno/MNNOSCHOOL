@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect } from 'react';
 import { useCompanyState } from './useCompanyState';
 import { useCompanyFetching } from './useCompanyFetching';
@@ -5,6 +6,7 @@ import { useCompanyModification } from './useCompanyModification';
 import { useCompanyEvents } from './useCompanyEvents';
 import { Company } from '@/types/company';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCompanySelection } from './useCompanySelection';
 
 export const useCompaniesProvider = () => {
   const { user } = useAuth();
@@ -28,7 +30,7 @@ export const useCompaniesProvider = () => {
     updateCompany,
     deleteCompany,
     fetchCompanies,
-    selectCompany
+    selectCompany: modificationSelectCompany
   } = useCompanyModification({
     companies: companyState.companies,
     setCompanies: companyState.setCompanies,
@@ -38,10 +40,22 @@ export const useCompaniesProvider = () => {
     setError: companyState.setError
   });
   
+  const { selectCompany: selectionSelectCompany, persistCompanySelection } = useCompanySelection({
+    setSelectedCompany: companyState.setSelectedCompany
+  });
+  
   useCompanyEvents({
     forceGetUserCompanies
   });
   
+  // Unified selectCompany function that ensures proper event propagation
+  const selectCompany = useCallback((userId: string, company: Company) => {
+    if (!company) return;
+    console.log(`useCompaniesProvider: Selecting company ${company.nome}`);
+    selectionSelectCompany(userId, company);
+  }, [selectionSelectCompany]);
+  
+  // Initialize on load
   useEffect(() => {
     const initialLoad = async () => {
       if (user?.id && !companyState.initialFetchDone.current) {
@@ -49,12 +63,31 @@ export const useCompaniesProvider = () => {
         companyState.initialFetchDone.current = true;
         
         try {
-          await getUserCompanies(user.id);
+          const companies = await getUserCompanies(user.id);
           
-          window.dispatchEvent(new Event('reload-company-videos'));
-          window.dispatchEvent(new Event('reload-company-documents'));
-          window.dispatchEvent(new Event('reload-company-roles'));
-          window.dispatchEvent(new Event('reload-company-courses'));
+          if (companies && companies.length > 0) {
+            // If we have a stored company ID, try to select it
+            const storedCompanyId = localStorage.getItem('selectedCompanyId');
+            
+            if (storedCompanyId) {
+              const matchingCompany = companies.find(c => c.id === storedCompanyId);
+              if (matchingCompany) {
+                console.log(`Found stored company selection: ${matchingCompany.nome}`);
+                companyState.setSelectedCompany(matchingCompany);
+                persistCompanySelection(matchingCompany);
+              } else {
+                // If stored company not found, select first
+                console.log(`Stored company not found, selecting first: ${companies[0].nome}`);
+                companyState.setSelectedCompany(companies[0]);
+                persistCompanySelection(companies[0]);
+              }
+            } else {
+              // No stored selection, select first
+              console.log(`No stored company, selecting first: ${companies[0].nome}`);
+              companyState.setSelectedCompany(companies[0]);
+              persistCompanySelection(companies[0]);
+            }
+          }
         } catch (error) {
           console.error('Error in initial load of user companies:', error);
           try {
@@ -68,18 +101,16 @@ export const useCompaniesProvider = () => {
     };
     
     initialLoad();
-  }, [user?.id, getUserCompanies, forceGetUserCompanies, companyState.initialFetchDone]);
+  }, [user?.id, getUserCompanies, forceGetUserCompanies, companyState.initialFetchDone, companyState.setSelectedCompany, persistCompanySelection]);
   
+  // Ensure we have a company selected when userCompanies changes
   useEffect(() => {
     if (companyState.userCompanies.length > 0 && !companyState.selectedCompany) {
       console.log('No company selected, selecting first company:', companyState.userCompanies[0].nome);
       companyState.setSelectedCompany(companyState.userCompanies[0]);
-      
-      window.dispatchEvent(new CustomEvent('company-selected', {
-        detail: { company: companyState.userCompanies[0] }
-      }));
+      persistCompanySelection(companyState.userCompanies[0]);
     }
-  }, [companyState.userCompanies, companyState.selectedCompany, companyState.setSelectedCompany]);
+  }, [companyState.userCompanies, companyState.selectedCompany, companyState.setSelectedCompany, persistCompanySelection]);
   
   return {
     ...companyState,

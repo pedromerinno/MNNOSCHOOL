@@ -9,35 +9,38 @@ interface UseCompanySelectionProps {
 export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionProps) => {
   const persistCompanySelection = useCallback((company: Company) => {
     try {
+      // First update local storage with company info
       localStorage.setItem('selectedCompanyId', company.id);
       localStorage.setItem('selectedCompany', JSON.stringify(company));
       
-      // Disparar eventos para atualizar diferentes partes da aplicação
+      console.log(`Company selection being persisted for ${company.nome} (${company.id})`);
+      
+      // Dispatch primary event for general app updates
       window.dispatchEvent(new CustomEvent('company-selected', { 
         detail: { company } 
       }));
       
-      // Evento específico para forçar recarregamento dos vídeos
-      window.dispatchEvent(new CustomEvent('reload-company-videos', {
-        detail: { companyId: company.id }
-      }));
-      
-      // Evento para recarregar documentos da empresa
-      window.dispatchEvent(new CustomEvent('reload-company-documents', {
-        detail: { companyId: company.id }
-      }));
-      
-      // Evento para recarregar cargos da empresa
-      window.dispatchEvent(new CustomEvent('reload-company-roles', {
-        detail: { companyId: company.id }
-      }));
-      
-      // Evento para recarregar cursos da empresa
-      window.dispatchEvent(new CustomEvent('reload-company-courses', {
-        detail: { companyId: company.id }
-      }));
-      
-      console.log(`Company selection persisted and events dispatched for ${company.nome}`);
+      // Dispatch specific content reload events with slight delay to ensure main event is processed first
+      setTimeout(() => {
+        // Dispatch specific content reload events
+        window.dispatchEvent(new CustomEvent('reload-company-videos', {
+          detail: { companyId: company.id }
+        }));
+        
+        window.dispatchEvent(new CustomEvent('reload-company-documents', {
+          detail: { companyId: company.id }
+        }));
+        
+        window.dispatchEvent(new CustomEvent('reload-company-roles', {
+          detail: { companyId: company.id }
+        }));
+        
+        window.dispatchEvent(new CustomEvent('reload-company-courses', {
+          detail: { companyId: company.id }
+        }));
+        
+        console.log(`Content reload events dispatched for ${company.nome}`);
+      }, 100);
     } catch (e) {
       console.error('Failed to persist company selection', e);
     }
@@ -58,8 +61,6 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
       return null;
     }
   }, []);
-
-  let lastSelectedCompanyId: string | null = null;
   
   const selectCompany = useCallback((userId: string, company: Company) => {
     if (!company) {
@@ -67,18 +68,9 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
       return;
     }
     
-    // Evitar seleções duplicadas
-    if (lastSelectedCompanyId === company.id) {
-      console.log(`Company ${company.nome} already selected, skipping`);
-      return;
-    }
-    
     console.log(`Selecting company: ${company.nome} (${company.id})`);
     
-    // Atualizar último ID selecionado
-    lastSelectedCompanyId = company.id;
-    
-    // Atualizar estado e persistir seleção
+    // IMPORTANT: Always update state AND persist selection for every selection
     setSelectedCompany(company);
     persistCompanySelection(company);
   }, [setSelectedCompany, persistCompanySelection]);
@@ -86,6 +78,7 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
   return {
     selectCompany,
     getStoredCompanyId,
-    getStoredCompany
+    getStoredCompany,
+    persistCompanySelection
   };
 };

@@ -44,10 +44,18 @@ export const useCompanyEvents = ({
       }
     };
     
+    // Handle the cleanup event to reset UI state before company changes
+    const handleCompanyChanging = () => {
+      console.log('Company is changing, cleaning up state...');
+      // The event itself serves as a notification to components to clean up
+    };
+    
     window.addEventListener('force-reload-companies', handleForceReload);
+    window.addEventListener('company-changing', handleCompanyChanging);
     
     return () => {
       window.removeEventListener('force-reload-companies', handleForceReload);
+      window.removeEventListener('company-changing', handleCompanyChanging);
     };
   }, [forceGetUserCompanies, user]);
 };

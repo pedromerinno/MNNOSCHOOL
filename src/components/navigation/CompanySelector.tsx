@@ -43,9 +43,16 @@ export const CompanySelector = () => {
 
   const handleCompanyChange = (company) => {
     if (company && user?.id) {
-      console.log('CompanySelector: Selecionando empresa:', company.nome);
-      selectCompany(user.id, company);
-      toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
+      console.log('CompanySelector: Mudando para empresa:', company.nome);
+      
+      // Force clean up any previous company state
+      window.dispatchEvent(new Event('company-changing'));
+      
+      // Short delay to allow cleanup
+      setTimeout(() => {
+        selectCompany(user.id, company);
+        toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
+      }, 50);
     }
   };
 

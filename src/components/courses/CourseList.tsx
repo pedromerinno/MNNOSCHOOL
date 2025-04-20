@@ -30,119 +30,144 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
   const { selectedCompany } = useCompanies();
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        setLoading(true);
-        console.log("Fetching courses with filter:", filter);
-        console.log("Selected company:", selectedCompany?.nome || "None");
-        
-        // Get user ID
-        const { data: { user } } = await supabase.auth.getUser();
-        const userId = user?.id || '';
-        
-        if (!userId) {
-          throw new Error('User not authenticated');
-        }
-        
-        // Se não há empresa selecionada, não carregamos nenhum curso
-        if (!selectedCompany) {
-          console.log("No company selected, not loading any courses");
-          setCourses([]);
-          setLoading(false);
-          return;
-        }
-        
-        console.log("Fetching courses for company:", selectedCompany.id);
-        
-        // Buscar IDs dos cursos da empresa selecionada
-        const { data: companyAccess, error: accessError } = await supabase
-          .from('company_courses')
-          .select('course_id')
-          .eq('empresa_id', selectedCompany.id);
-        
-        if (accessError) {
-          throw accessError;
-        }
-        
-        // Se não há cursos para esta empresa
-        if (!companyAccess || companyAccess.length === 0) {
-          console.log("No courses found for this company");
-          setCourses([]);
-          setLoading(false);
-          return;
-        }
-        
-        const accessibleCourseIds = companyAccess.map(access => access.course_id);
-        console.log(`Found ${accessibleCourseIds.length} course IDs for company`);
-        
-        // Buscar os cursos com base nos IDs
-        const { data: coursesData, error: coursesError } = await supabase
-          .from('courses')
-          .select('*')
-          .in('id', accessibleCourseIds);
-          
-        if (coursesError) {
-          throw coursesError;
-        }
-        
-        let availableCourses = coursesData || [];
-        console.log(`Loaded ${availableCourses.length} courses`);
-        
-        // Get user's course progress
-        const { data: progressData, error: progressError } = await supabase
-          .from('user_course_progress')
-          .select('course_id, progress, completed, favorite')
-          .eq('user_id', userId);
-          
-        if (progressError) {
-          console.error('Error fetching progress:', progressError);
-        }
-        
-        // Add progress information to the courses
-        const coursesWithProgress = availableCourses.map(course => {
-          const userProgress = progressData?.find(progress => progress.course_id === course.id);
-          return {
-            ...course,
-            progress: userProgress?.progress || 0,
-            completed: userProgress?.completed || false,
-            favorite: userProgress?.favorite || false
-          };
-        });
-        
-        // Apply the filter if specified
-        let finalCourses = coursesWithProgress;
-        
-        if (filter === 'in-progress') {
-          finalCourses = coursesWithProgress.filter(course => 
-            (course.progress || 0) > 0 && !(course.completed || false)
-          );
-        } else if (filter === 'completed') {
-          finalCourses = coursesWithProgress.filter(course => 
-            course.completed || false
-          );
-        } else if (filter === 'not-started') {
-          finalCourses = coursesWithProgress.filter(course => 
-            (course.progress || 0) === 0
-          );
-        }
-        
-        console.log(`Displaying ${finalCourses.length} courses after filtering`);
-        setCourses(finalCourses);
-      } catch (error: any) {
-        console.error('Error fetching courses:', error);
-        toast({
-          title: 'Erro ao carregar cursos',
-          description: error.message || 'Ocorreu um erro ao buscar os cursos',
-          variant: 'destructive',
-        });
-      } finally {
+  // Function to fetch courses based on company and filter
+  const fetchCourses = async () => {
+    try {
+      if (!selectedCompany?.id) {
+        setCourses([]);
         setLoading(false);
+        return;
+      }
+      
+      setLoading(true);
+      console.log(`CourseList: Fetching courses for ${selectedCompany.nome} with filter: ${filter}`);
+      
+      // Get user ID
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id || '';
+      
+      if (!userId) {
+        throw new Error('User not authenticated');
+      }
+      
+      // Buscar IDs dos cursos da empresa selecionada
+      const { data: companyAccess, error: accessError } = await supabase
+        .from('company_courses')
+        .select('course_id')
+        .eq('empresa_id', selectedCompany.id);
+      
+      if (accessError) {
+        throw accessError;
+      }
+      
+      // Se não há cursos para esta empresa
+      if (!companyAccess || companyAccess.length === 0) {
+        console.log("No courses found for this company");
+        setCourses([]);
+        setLoading(false);
+        return;
+      }
+      
+      const accessibleCourseIds = companyAccess.map(access => access.course_id);
+      console.log(`Found ${accessibleCourseIds.length} course IDs for company`);
+      
+      // Buscar os cursos com base nos IDs
+      const { data: coursesData, error: coursesError } = await supabase
+        .from('courses')
+        .select('*')
+        .in('id', accessibleCourseIds);
+        
+      if (coursesError) {
+        throw coursesError;
+      }
+      
+      let availableCourses = coursesData || [];
+      console.log(`Loaded ${availableCourses.length} courses`);
+      
+      // Get user's course progress
+      const { data: progressData, error: progressError } = await supabase
+        .from('user_course_progress')
+        .select('course_id, progress, completed, favorite')
+        .eq('user_id', userId);
+        
+      if (progressError) {
+        console.error('Error fetching progress:', progressError);
+      }
+      
+      // Add progress information to the courses
+      const coursesWithProgress = availableCourses.map(course => {
+        const userProgress = progressData?.find(progress => progress.course_id === course.id);
+        return {
+          ...course,
+          progress: userProgress?.progress || 0,
+          completed: userProgress?.completed || false,
+          favorite: userProgress?.favorite || false
+        };
+      });
+      
+      // Apply the filter if specified
+      let finalCourses = coursesWithProgress;
+      
+      if (filter === 'in-progress') {
+        finalCourses = coursesWithProgress.filter(course => 
+          (course.progress || 0) > 0 && !(course.completed || false)
+        );
+      } else if (filter === 'completed') {
+        finalCourses = coursesWithProgress.filter(course => 
+          course.completed || false
+        );
+      } else if (filter === 'not-started') {
+        finalCourses = coursesWithProgress.filter(course => 
+          (course.progress || 0) === 0
+        );
+      }
+      
+      console.log(`Displaying ${finalCourses.length} courses after filtering`);
+      setCourses(finalCourses);
+    } catch (error: any) {
+      console.error('Error fetching courses:', error);
+      toast({
+        title: 'Erro ao carregar cursos',
+        description: error.message || 'Ocorreu um erro ao buscar os cursos',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch courses when company changes or filter changes
+  useEffect(() => {
+    fetchCourses();
+  }, [selectedCompany?.id, filter]);
+  
+  // Listen for company selection and course reload events
+  useEffect(() => {
+    const handleCompanySelected = () => {
+      console.log("CourseList: Company selection changed, reloading courses");
+      fetchCourses();
+    };
+    
+    const handleReloadCourses = (event: CustomEvent) => {
+      if (!selectedCompany) return;
+      
+      const eventCompanyId = event.detail?.companyId;
+      console.log(`CourseList: Reload courses event received for company: ${eventCompanyId}`);
+      
+      if (eventCompanyId && eventCompanyId === selectedCompany.id) {
+        console.log("CourseList: Reloading courses for current company");
+        fetchCourses();
       }
     };
     
-    fetchCourses();
-  }, [selectedCompany, filter, toast]);
+    window.addEventListener('company-selected', handleCompanySelected);
+    window.addEventListener('reload-company-courses', handleReloadCourses as EventListener);
+    
+    return () => {
+      window.removeEventListener('company-selected', handleCompanySelected);
+      window.removeEventListener('reload-company-courses', handleReloadCourses as EventListener);
+    };
+  }, [selectedCompany]);
 
   return (
     <div className="space-y-6">
