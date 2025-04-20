@@ -1,6 +1,7 @@
 
 import { ReactNode, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -26,7 +27,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
           .from('settings')
           .select('value, media_type')
           .eq('key', 'login_background')
-          .single();
+          .maybeSingle();
 
         console.log("Background data:", data, "Error:", error);
 
@@ -38,6 +39,11 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
           console.log("Set background to:", data.value, data.media_type);
         } else {
           console.error("Error or no data:", error);
+          // Set default empty state
+          setBackgroundMedia({
+            url: "",
+            type: 'image'
+          });
         }
       } catch (error) {
         console.error('Error fetching background media:', error);
@@ -74,14 +80,14 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
       </div>
       
       {/* Right side - Background Media */}
-      <div className="w-full md:w-1/2 bg-merinno-blue relative overflow-hidden hidden md:block">
+      <div className="w-full md:w-1/2 relative overflow-hidden hidden md:block">
         {isLoading ? (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-merinno-dark"></div>
           </div>
-        ) : (
-          backgroundMedia.url && (
-            backgroundMedia.type === 'video' ? (
+        ) : backgroundMedia.url ? (
+          <>
+            {backgroundMedia.type === 'video' ? (
               <video 
                 autoPlay 
                 muted 
@@ -98,11 +104,14 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
                 alt="Login Background" 
                 className="absolute w-full h-full object-cover"
               />
-            )
-          )
+            )}
+            <div className="absolute inset-0 bg-black/30 z-10" />
+          </>
+        ) : (
+          <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
+            <p className="text-gray-500">No background media set</p>
+          </div>
         )}
-        
-        <div className="absolute inset-0 bg-black/30 z-10" />
       </div>
     </div>
   );
