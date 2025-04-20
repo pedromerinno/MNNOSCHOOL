@@ -5,14 +5,26 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useAuth } from "@/contexts/AuthContext";
 import { NoCompaniesAvailable } from "@/components/home/NoCompaniesAvailable";
+import { useCompanyCache } from "@/hooks/company/useCompanyCache";
 
 const Index = () => {
   const [isPageLoading, setIsPageLoading] = useState(true);
   const { userCompanies, isLoading, fetchCount, selectedCompany } = useCompanies();
   const { user, userProfile } = useAuth();
-
+  const { getInitialSelectedCompany } = useCompanyCache();
+  
+  // Verificação imediata do cache para evitar o skeleton se já temos dados
+  const hasCachedCompany = getInitialSelectedCompany() !== null;
+  
   // Melhor controle do estado de carregamento da página
   useEffect(() => {
+    // Se já temos empresa em cache, reduzir tempo de loading ou até pular
+    if (hasCachedCompany) {
+      // Definir um timeout mais curto para dar tempo de transição
+      setTimeout(() => setIsPageLoading(false), 300);
+      return;
+    }
+    
     // Finaliza o carregamento quando temos uma empresa selecionada ou os dados já foram carregados
     if (selectedCompany || (fetchCount > 0 && !isLoading)) {
       setIsPageLoading(false);
@@ -24,13 +36,13 @@ const Index = () => {
         console.log("[Index] Finalizando loading por timeout de segurança");
         setIsPageLoading(false);
       }
-    }, 3000); // 3 segundos
+    }, 2000); // 2 segundos
     
     return () => clearTimeout(timeoutId);
-  }, [isLoading, fetchCount, selectedCompany, isPageLoading]);
+  }, [isLoading, fetchCount, selectedCompany, isPageLoading, hasCachedCompany]);
 
-  // Mostrar skeleton durante carregamento
-  if (isPageLoading || (user && isLoading)) {
+  // Mostrar skeleton durante carregamento, mas pular se já temos dados em cache
+  if ((isPageLoading && !hasCachedCompany) || (user && isLoading && !hasCachedCompany)) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-3xl space-y-8">

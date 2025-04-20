@@ -6,29 +6,25 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Company } from "@/types/company";
+import { useCompanyCache } from "@/hooks/company/useCompanyCache";
 
 export const WelcomeSection = () => {
   const { user, userProfile } = useAuth();
   const { getUserCompanies, selectedCompany, userCompanies, selectCompany } = useCompanies();
+  const { getInitialSelectedCompany } = useCompanyCache();
   const navigate = useNavigate();
-  const [displayCompany, setDisplayCompany] = useState<Company | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Tentar carregar do cache imediatamente
-  useEffect(() => {
-    try {
-      const cachedCompany = localStorage.getItem('selectedCompany');
-      if (cachedCompany) {
-        const company = JSON.parse(cachedCompany);
-        if (company?.nome) {
-          console.log('Using cached company for initial display:', company.nome);
-          setDisplayCompany(company);
-        }
-      }
-    } catch (e) {
-      console.error('Error parsing cached company', e);
+  // Usar cache para renderização inicial
+  const [displayCompany, setDisplayCompany] = useState<Company | null>(() => {
+    // Tentar obter a empresa do cache imediatamente
+    const cachedCompany = getInitialSelectedCompany();
+    if (cachedCompany) {
+      console.log('Usando empresa em cache para exibição inicial:', cachedCompany.nome);
+      return cachedCompany;
     }
-  }, []);
+    return null;
+  });
   
   // Buscar dados atualizados das empresas
   useEffect(() => {
@@ -91,7 +87,7 @@ export const WelcomeSection = () => {
           className="mt-1 flex items-center gap-2 text-white rounded-full text-sm"
           variant="default"
           style={{ 
-            backgroundColor: '#000000' 
+            backgroundColor: displayCompany?.cor_principal || '#000000' 
           }}
         >
           Saiba mais

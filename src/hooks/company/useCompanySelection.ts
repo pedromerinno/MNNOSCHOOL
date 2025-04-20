@@ -6,8 +6,8 @@ interface UseCompanySelectionProps {
   setSelectedCompany: (company: Company | null) => void;
 }
 
-// Cache expiration time in ms (30 minutes)
-const CACHE_EXPIRATION = 30 * 60 * 1000;
+// Cache expiration time in ms (24 hours)
+const CACHE_EXPIRATION = 24 * 60 * 60 * 1000;
 
 export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionProps) => {
   /**
@@ -28,6 +28,7 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
 
   /**
    * Store the selected company in local storage for persistence
+   * Armazena tanto no localStorage quanto em um Cache otimizado
    */
   const persistCompanySelection = useCallback((company: Company) => {
     try {
@@ -39,6 +40,17 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
       localStorage.setItem('selectedCompanyId', company.id);
       localStorage.setItem('selectedCompany', JSON.stringify(company));
       localStorage.setItem('selectedCompanyTimestamp', Date.now().toString());
+      
+      // Armazenar também no cache local storage usando o formato do hook useCache
+      try {
+        const cacheData = {
+          data: company,
+          timestamp: Date.now()
+        };
+        localStorage.setItem('selectedCompany', JSON.stringify(cacheData));
+      } catch (e) {
+        console.error('Erro ao armazenar no cache formatado:', e);
+      }
       
       console.log(`Company persisted: ${company.nome} (${company.id})`);
     } catch (e) {
@@ -58,16 +70,33 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
    * Only returns the company if the cache is still valid
    */
   const getStoredCompany = useCallback((): Company | null => {
-    const storedCompany = localStorage.getItem('selectedCompany');
-    if (!storedCompany) return null;
-    
-    // Check if cache is still valid
-    if (!isCacheValid()) {
-      console.log('Company cache expired, will reload from server');
-      return null;
-    }
-    
     try {
+      // Primeiro tentar o formato de cache
+      const storedCompany = localStorage.getItem('selectedCompany');
+      if (!storedCompany) return null;
+      
+      // Tentar primeiro o formato do useCache
+      try {
+        const parsed = JSON.parse(storedCompany);
+        if (parsed.data && parsed.timestamp) {
+          const { data, timestamp } = parsed;
+          
+          // Verificar se o cache ainda é válido
+          const now = Date.now();
+          if ((now - timestamp) < CACHE_EXPIRATION) {
+            return data as Company;
+          }
+        }
+      } catch (e) {
+        console.log('Formato de cache não encontrado, tentando formato antigo');
+      }
+      
+      // Formato antigo / fallback
+      if (!isCacheValid()) {
+        console.log('Company cache expired, will reload from server');
+        return null;
+      }
+      
       const company = JSON.parse(storedCompany) as Company;
       
       // Validate the company has required fields

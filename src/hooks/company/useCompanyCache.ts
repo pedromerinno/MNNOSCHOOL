@@ -2,8 +2,8 @@
 import { Company } from "@/types/company";
 import { useCache } from "@/hooks/useCache";
 
-// Aumento drástico do tempo de cache para 12 horas para sessões de um dia
-const CACHE_EXPIRATION_MINUTES = 720; // 12 horas de cache
+// Aumento drástico do tempo de cache para 24 horas para garantir persistência entre sessões
+const CACHE_EXPIRATION_MINUTES = 1440; // 24 horas de cache
 
 /**
  * Hook para caching de dados de empresas para reduzir chamadas à API
@@ -24,7 +24,7 @@ export const useCompanyCache = () => {
   };
   
   /**
-   * Obtém empresas do usuário do cache
+   * Obtém empresas do usuário do cache de forma síncrona
    */
   const getCachedUserCompanies = (): Company[] | null => {
     return getCache<Company[]>({
@@ -34,13 +34,40 @@ export const useCompanyCache = () => {
   };
   
   /**
-   * Obtém empresa selecionada do cache
+   * Obtém empresa selecionada do cache de forma síncrona
    */
   const getCachedSelectedCompany = (): Company | null => {
     return getCache<Company>({
       key: SELECTED_COMPANY_KEY,
       expirationMinutes: CACHE_EXPIRATION_MINUTES
     });
+  };
+  
+  /**
+   * Obtém empresa selecionada do LocalStorage diretamente (mais rápido)
+   * Útil para carregamento inicial da UI
+   */
+  const getInitialSelectedCompany = (): Company | null => {
+    try {
+      const storedCompany = localStorage.getItem(SELECTED_COMPANY_KEY);
+      if (!storedCompany) return null;
+      
+      const { data, timestamp } = JSON.parse(storedCompany);
+      if (!data || !data.id || !data.nome) return null;
+      
+      // Verificar expiração
+      const now = Date.now();
+      const minutesSinceCache = (now - timestamp) / (1000 * 60);
+      
+      if (minutesSinceCache > CACHE_EXPIRATION_MINUTES) {
+        return null;
+      }
+      
+      return data as Company;
+    } catch (e) {
+      console.error('[Company Cache] Erro ao obter empresa inicial:', e);
+      return null;
+    }
   };
   
   /**
@@ -121,6 +148,7 @@ export const useCompanyCache = () => {
   return {
     getCachedUserCompanies,
     getCachedSelectedCompany,
+    getInitialSelectedCompany,
     cacheUserCompanies,
     cacheSelectedCompany,
     clearCachedUserCompanies,

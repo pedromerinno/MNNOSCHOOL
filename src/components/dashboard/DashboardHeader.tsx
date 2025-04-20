@@ -1,11 +1,34 @@
 
 import { useCompanies } from "@/hooks/useCompanies";
+import { useCompanyCache } from "@/hooks/company/useCompanyCache";
+import { useState, useEffect } from "react";
 
 export const DashboardHeader = () => {
   const { selectedCompany } = useCompanies();
+  const { getInitialSelectedCompany } = useCompanyCache();
   
-  // Use company color with very low opacity or transparent background
-  const headerBgColor = "transparent"; // Changed to transparent
+  // Estado local para cor com inicialização imediata do cache
+  const [headerBgColor, setHeaderBgColor] = useState<string>("transparent");
+  
+  // Tentar obter a cor na inicialização
+  useEffect(() => {
+    try {
+      const cachedCompany = getInitialSelectedCompany();
+      if (cachedCompany?.cor_principal) {
+        // Usar a cor com opacidade muito baixa
+        setHeaderBgColor(`${cachedCompany.cor_principal}05`); // 5% de opacidade
+      }
+    } catch (e) {
+      console.error("Erro ao obter cor inicial:", e);
+    }
+  }, []);
+  
+  // Atualizar a cor quando a empresa selecionada mudar
+  useEffect(() => {
+    if (selectedCompany?.cor_principal) {
+      setHeaderBgColor(`${selectedCompany.cor_principal}05`); // 5% de opacidade
+    }
+  }, [selectedCompany]);
   
   return (
     <div 
