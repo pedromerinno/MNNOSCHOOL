@@ -81,7 +81,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
           .select('*')
           .eq('user_id', user.id)
           .eq('empresa_id', finalCompanyId)
-          .single();
+          .maybeSingle(); // Usando maybeSingle em vez de single para evitar erro quando não encontrar
           
         // Se não existe vínculo, criar (sem verificação de admin)
         if (!existingRelation) {
@@ -101,10 +101,10 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       }
       
       // Dados a atualizar no perfil do usuário
+      // Removendo a configuração de cargo_id para evitar erros, já que provavelmente não há um campo cargo_id na tabela
       const profileUpdate = {
         display_name: profileData.displayName,
         avatar: profileData.avatarUrl,
-        cargo_id: null, // removendo a configuração de "usuario" que causava erro
         interesses: profileData.interests.filter(i => i !== "onboarding_incomplete")
       };
       
