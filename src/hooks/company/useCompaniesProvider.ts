@@ -111,7 +111,7 @@ export const useCompaniesProvider = () => {
   
   return {
     ...companyState,
-    user,
+    user, // Explicitly pass the user from useAuth
     getUserCompanies,
     forceGetUserCompanies,
     getCompanyById,

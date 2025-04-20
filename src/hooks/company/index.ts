@@ -147,6 +147,7 @@ export const useCompanies = () => {
     isLoading,
     error,
     fetchCount,
+    user, // Now explicitly including the user in the return object
     
     // Fetch operations
     getUserCompanies,
