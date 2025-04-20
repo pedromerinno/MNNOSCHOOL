@@ -4,9 +4,6 @@ import { toast } from "sonner";
 import { UserProfile } from "@/types/user";
 
 export const useCompanyUserManagement = () => {
-  /**
-   * Assign a user to a company
-   */
   const assignUserToCompany = useCallback(async (userId: string, companyId: string) => {
     try {
       // Check if relation already exists
@@ -23,25 +20,10 @@ export const useCompanyUserManagement = () => {
         return false;
       }
       
-      // If relation already exists, no need to create it again
       if (existingRelation) {
         console.log('User already assigned to this company');
         toast.success("Usuário já está associado a esta empresa");
         return true;
-      }
-      
-      // Check if current user is admin using RPC function
-      const { data: isAdmin, error: isAdminError } = await supabase.rpc('is_admin');
-      
-      if (isAdminError) {
-        console.error('Error checking admin status:', isAdminError);
-        toast.error("Erro ao verificar permissões de administrador");
-        return false;
-      }
-      
-      if (!isAdmin) {
-        toast.error("Apenas administradores podem associar usuários a empresas");
-        return false;
       }
       
       // Create new relation
@@ -71,25 +53,8 @@ export const useCompanyUserManagement = () => {
     }
   }, []);
   
-  /**
-   * Remove a user from a company
-   */
   const removeUserFromCompany = useCallback(async (userId: string, companyId: string) => {
     try {
-      // Check if current user is admin using RPC function
-      const { data: isAdmin, error: isAdminError } = await supabase.rpc('is_admin');
-      
-      if (isAdminError) {
-        console.error('Error checking admin status:', isAdminError);
-        toast.error("Erro ao verificar permissões de administrador");
-        return false;
-      }
-      
-      if (!isAdmin) {
-        toast.error("Apenas administradores podem remover usuários de empresas");
-        return false;
-      }
-      
       const { error } = await supabase
         .from('user_empresa')
         .delete()
@@ -115,9 +80,6 @@ export const useCompanyUserManagement = () => {
     }
   }, []);
   
-  /**
-   * Get all users associated with a company
-   */
   const getCompanyUsers = useCallback(async (companyId: string): Promise<UserProfile[]> => {
     try {
       // Check if user belongs to company using RPC function
@@ -144,7 +106,6 @@ export const useCompanyUserManagement = () => {
       const userIds = userCompanyRelations.map(relation => relation.user_id);
       
       // Get complete user profiles - using a separate query to avoid RLS issues
-      // Updated to remove 'cargo' which doesn't exist in the database
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, display_name, email, cargo_id, is_admin, avatar')
@@ -160,9 +121,6 @@ export const useCompanyUserManagement = () => {
     }
   }, []);
   
-  /**
-   * Check if a user belongs to a company
-   */
   const checkUserCompanyRelation = useCallback(async (userId: string, companyId: string): Promise<boolean> => {
     try {
       const { data, error } = await supabase
