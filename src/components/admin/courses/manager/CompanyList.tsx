@@ -14,7 +14,10 @@ export const CompanyList: React.FC<CompanyListProps> = ({
   selectedCompanies,
   onToggleCompany
 }) => {
-  if (companies.length === 0) {
+  // Make sure companies is an array
+  const companiesList = Array.isArray(companies) ? companies : [];
+  
+  if (companiesList.length === 0) {
     return (
       <div className="text-center py-4 text-muted-foreground">
         Nenhuma empresa encontrada
@@ -24,7 +27,7 @@ export const CompanyList: React.FC<CompanyListProps> = ({
 
   return (
     <div className="max-h-96 overflow-y-auto space-y-2 border rounded-md p-4">
-      {companies.map(company => (
+      {companiesList.map(company => (
         <div key={company.id} className="flex items-center space-x-2 py-2">
           <Checkbox 
             id={`company-${company.id}`}

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,10 +9,30 @@ import { SettingsManagement } from '@/components/admin/integration/SettingsManag
 import { useAuth } from '@/contexts/AuthContext';
 import { Users, Building, Settings, Book } from 'lucide-react';
 import { CourseManagement } from '@/components/admin/CourseManagement';
+import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
 const AdminPage = () => {
-  const { userProfile } = useAuth();
+  const { userProfile, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState("users");
+  
+  // Add a loading state
+  const [isReady, setIsReady] = useState(false);
+  
+  // Wait for auth to complete before making decisions
+  useEffect(() => {
+    if (!authLoading) {
+      setIsReady(true);
+    }
+  }, [authLoading]);
+  
+  // Show nothing until we're ready to render
+  if (!isReady) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
   
   if (!userProfile?.is_admin && !userProfile?.super_admin) {
     return <Navigate to="/dashboard" replace />;
@@ -60,18 +80,20 @@ const AdminPage = () => {
               </div>
               
               <div className="p-6">
-                <TabsContent value="users" className="m-0">
-                  <UserManagement />
-                </TabsContent>
-                <TabsContent value="companies" className="m-0">
-                  <CompanyManagement />
-                </TabsContent>
-                <TabsContent value="allcourses" className="m-0">
-                  <CourseManagement />
-                </TabsContent>
-                <TabsContent value="settings" className="m-0">
-                  <SettingsManagement />
-                </TabsContent>
+                <ErrorBoundary>
+                  <TabsContent value="users" className="m-0">
+                    <UserManagement />
+                  </TabsContent>
+                  <TabsContent value="companies" className="m-0">
+                    <CompanyManagement />
+                  </TabsContent>
+                  <TabsContent value="allcourses" className="m-0">
+                    <CourseManagement />
+                  </TabsContent>
+                  <TabsContent value="settings" className="m-0">
+                    <SettingsManagement />
+                  </TabsContent>
+                </ErrorBoundary>
               </div>
             </Tabs>
           </CardContent>

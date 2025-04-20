@@ -38,10 +38,20 @@ export const CompanyManagement: React.FC = () => {
 
   // Fetch companies on mount
   useEffect(() => {
-    // Se for super admin ou não tiver acesso a empresas específicas, buscar todas
-    if (isSuperAdmin) {
-      fetchCompanies();
-    }
+    const loadCompanies = async () => {
+      // Se for super admin ou não tiver acesso a empresas específicas, buscar todas
+      if (isSuperAdmin) {
+        try {
+          console.log('CompanyManagement: Loading all companies for super admin');
+          await fetchCompanies();
+        } catch (error) {
+          console.error('Error fetching companies:', error);
+          toast.error("Erro ao carregar empresas");
+        }
+      }
+    };
+    
+    loadCompanies();
   }, [fetchCompanies, isSuperAdmin]);
 
   const handleCreateCompany = () => {
@@ -107,7 +117,9 @@ export const CompanyManagement: React.FC = () => {
   };
 
   // Determinar quais empresas mostrar baseado no perfil do usuário
-  const displayCompanies = isSuperAdmin ? companies : userCompanies;
+  const displayCompanies = isSuperAdmin 
+    ? (Array.isArray(companies) ? companies : []) 
+    : (Array.isArray(userCompanies) ? userCompanies : []);
 
   return (
     <div className="space-y-4">

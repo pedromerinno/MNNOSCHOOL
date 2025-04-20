@@ -56,8 +56,8 @@ export const useCourseCompanies = (course: Course) => {
           setSelectedCompanies([]);
         }
 
-        setCompanies(companiesWithDefaults || []);
-        console.log(`Found ${companiesData?.length || 0} companies`);
+        setCompanies(Array.isArray(companiesWithDefaults) ? companiesWithDefaults : []);
+        console.log(`Found ${Array.isArray(companiesData) ? companiesData.length : 0} companies`);
       } catch (error: any) {
         console.error("Error fetching data:", error);
         toast({
@@ -65,6 +65,8 @@ export const useCourseCompanies = (course: Course) => {
           description: error.message,
           variant: 'destructive',
         });
+        // Set empty array in case of error
+        setCompanies([]);
       } finally {
         setIsLoading(false);
       }
