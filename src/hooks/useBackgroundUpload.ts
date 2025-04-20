@@ -15,6 +15,22 @@ export const useBackgroundUpload = () => {
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${fileName}`;
 
+      // First check if the bucket exists
+      const { data: buckets } = await supabase.storage.listBuckets();
+      
+      // If the bucket doesn't exist yet, create it
+      if (!buckets?.find(bucket => bucket.name === 'background-media')) {
+        console.log("Creating background-media bucket");
+        const { error: bucketError } = await supabase.storage.createBucket('background-media', {
+          public: true
+        });
+        
+        if (bucketError) {
+          console.error("Error creating bucket:", bucketError);
+          throw bucketError;
+        }
+      }
+
       const { error: uploadError } = await supabase.storage
         .from('background-media')
         .upload(filePath, file);

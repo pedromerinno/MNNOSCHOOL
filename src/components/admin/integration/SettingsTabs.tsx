@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Tabs, TabsList } from "@/components/ui/tabs";
-import { Building, Video, FileText, Users, Key, Book } from "lucide-react";
+import { Building, Video, FileText, Users, Key, Book, Image } from "lucide-react";
 import { SettingsTabTrigger } from './settings/SettingsTabTrigger';
 import { SettingsTabContent } from './settings/SettingsTabContent';
 import { SettingsTabsProps } from './settings/types';
@@ -20,6 +20,7 @@ export const SettingsTabs: React.FC<SettingsTabsProps> = ({
     { value: "access", label: "Acessos", icon: Key },
     { value: "collaborators", label: "Colaboradores", icon: Users },
     { value: "courses", label: "Cursos", icon: Book },
+    { value: "background", label: "Background", icon: Image },
   ];
 
   return (
