@@ -63,9 +63,9 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
         
         // Vincular usuário à empresa
         await supabase
-          .from('usuario_empresa')
+          .from('user_empresa')
           .insert([{ 
-            usuario_id: user.id,
+            user_id: user.id,
             empresa_id: finalCompanyId,
             is_admin: true
           }]);

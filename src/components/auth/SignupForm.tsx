@@ -39,7 +39,10 @@ export const SignupForm = () => {
     setIsRegistering(true);
     
     try {
-      await signUp(email, password, email.split('@')[0], { isNewUser: true });
+      // Set interesses array with onboarding_incomplete flag to indicate that onboarding process is needed
+      await signUp(email, password, email.split('@')[0], { 
+        interests: ["onboarding_incomplete"] 
+      });
       console.log("Usuario cadastrado com sucesso! Perfil será criado automaticamente.");
     } catch (error) {
       console.error("Erro no cadastro:", error);
@@ -134,3 +137,4 @@ export const SignupForm = () => {
     </div>
   );
 };
+
