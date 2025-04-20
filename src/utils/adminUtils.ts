@@ -13,7 +13,7 @@ export const isAdmin = (userProfile: UserProfile | null): boolean => {
 
 export const makeUserAdmin = async (email: string): Promise<void> => {
   try {
-    // Primeiro busca o usuário pelo email
+    // First busca o usuário pelo email
     const { data: userData, error: userError } = await supabase
       .from('profiles')
       .select('id')
@@ -59,5 +59,40 @@ export const setAdminStatusById = async (
   } catch (error: any) {
     console.error('Erro ao definir status de admin:', error);
     throw error;
+  }
+};
+
+// Added safe RPC functions to avoid recursion issues
+export const checkIfUserIsAdmin = async (userId: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .rpc('get_is_admin_secure', { user_id: userId });
+      
+    if (error) {
+      console.warn("Error checking admin status via RPC:", error);
+      return false;
+    }
+    
+    return data === true;
+  } catch (e) {
+    console.error("Exception checking admin status:", e);
+    return false;
+  }
+};
+
+export const checkIfUserIsSuperAdmin = async (userId: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .rpc('get_is_super_admin_secure', { user_id: userId });
+      
+    if (error) {
+      console.warn("Error checking super admin status via RPC:", error);
+      return false;
+    }
+    
+    return data === true;
+  } catch (e) {
+    console.error("Exception checking super admin status:", e);
+    return false;
   }
 };

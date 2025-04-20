@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogOut, User, ChevronDown, Building } from "lucide-react";
@@ -51,9 +52,17 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
   // Update display name and avatar
   useEffect(() => {
     // Use the displayName from userProfile if available, otherwise use the email
-    setDisplayName(userProfile.display_name || user?.email?.split('@')[0] || "Usuário");
+    setDisplayName(
+      userProfile?.display_name || 
+      user?.email?.split('@')[0] || 
+      "Usuário"
+    );
+    
     // Use the avatar from userProfile if available, otherwise use the provided avatarUrl
-    setDisplayAvatar(userProfile.avatar || avatarUrl);
+    setDisplayAvatar(
+      userProfile?.avatar || 
+      avatarUrl
+    );
   }, [userProfile, user, avatarUrl]);
 
   const handleProfileUpdate = (values: UserProfileFormValues) => {

@@ -1,7 +1,8 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { setAdminStatusById } from '@/utils/adminUtils';
+import { setAdminStatusById, checkIfUserIsAdmin, checkIfUserIsSuperAdmin } from '@/utils/adminUtils';
 import { useCache } from '@/hooks/useCache';
 
 export interface UserProfile {
@@ -60,25 +61,41 @@ export function useUsers() {
         throw new Error('No user is currently logged in');
       }
       
-      const { data: isAdminResult, error: isAdminError } = await supabase.rpc('is_admin');
+      // Use our new secure functions to check admin status
+      const isAdmin = await checkIfUserIsAdmin(currentUserId);
+      const isSuperAdmin = await checkIfUserIsSuperAdmin(currentUserId);
       
-      if (isAdminError) {
-        console.warn('Error checking if user is admin:', isAdminError);
-      }
+      console.log('Current user is admin:', isAdmin, 'and super admin:', isSuperAdmin);
       
-      const isAdmin = !!isAdminResult;
-      console.log('Current user is admin:', isAdmin);
-      
-      const result = await supabase
-        .from('profiles')
-        .select('id, display_name, is_admin, super_admin, email, created_at, avatar, cargo_id');
+      // Handle potential infinite recursion by using direct query if user is admin
+      let profiles = [];
+      if (isAdmin || isSuperAdmin) {
+        const result = await supabase
+          .from('profiles')
+          .select('id, display_name, is_admin, super_admin, email, created_at, avatar, cargo_id');
+          
+        if (result.error) {
+          console.error('Error fetching profiles:', result.error);
+          throw result.error;
+        }
         
-      if (result.error) {
-        console.error('Error fetching profiles:', result.error);
-        throw result.error;
+        profiles = result.data;
+      } else {
+        // For non-admin users, just get their own profile
+        const result = await supabase
+          .from('profiles')
+          .select('id, display_name, is_admin, super_admin, email, created_at, avatar, cargo_id')
+          .eq('id', currentUserId);
+          
+        if (result.error) {
+          console.error('Error fetching own profile:', result.error);
+          throw result.error;
+        }
+        
+        profiles = result.data;
       }
 
-      const formattedUsers: UserProfile[] = result.data.map((profile: any) => ({
+      const formattedUsers: UserProfile[] = profiles.map((profile: any) => ({
         id: profile.id,
         email: profile.email || profile.id.toLowerCase() + '@example.com',
         display_name: profile.display_name || `User ${profile.id.substring(0, 6)}`,
