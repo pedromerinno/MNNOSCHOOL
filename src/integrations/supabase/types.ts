@@ -554,18 +554,21 @@ export type Database = {
           created_at: string
           empresa_id: string
           id: string
+          is_admin: boolean | null
           user_id: string
         }
         Insert: {
           created_at?: string
           empresa_id: string
           id?: string
+          is_admin?: boolean | null
           user_id: string
         }
         Update: {
           created_at?: string
           empresa_id?: string
           id?: string
+          is_admin?: boolean | null
           user_id?: string
         }
         Relationships: [
