@@ -7,7 +7,7 @@ import { useCompanyFetching } from "./useCompanyFetching";
 import { useCompanyModification } from "./useCompanyModification";
 import { useCompanySelection } from "./useCompanySelection";
 import { useCompanyEvents } from "./useCompanyEvents";
-import { UseCompaniesReturn } from "./types";
+import { UseCompaniesReturn, ErrorState } from "./types";
 
 export const useCompanies = (): UseCompaniesReturn => {
   const { user } = useAuth();

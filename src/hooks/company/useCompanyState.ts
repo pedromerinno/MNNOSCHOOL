@@ -1,18 +1,13 @@
 
 import { useState, useRef } from 'react';
 import { Company } from "@/types/company";
+import { ErrorState } from './types';
 
 export type LoadingState = {
   isLoading: boolean;
   isFetchingCompanies: boolean;
   isUpdatingCompany: boolean;
   isRefreshing: boolean;
-};
-
-export type ErrorState = {
-  message: string | null;
-  code?: string;
-  timestamp: number;
 };
 
 export const useCompanyState = () => {
@@ -95,4 +90,3 @@ export const useCompanyState = () => {
     initialFetchDone,
   };
 };
-

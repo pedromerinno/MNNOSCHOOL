@@ -2,9 +2,10 @@
 import { Company } from "@/types/company";
 import { User } from "@supabase/supabase-js";
 
-export interface ErrorState extends Error {
+export interface ErrorState {
   message: string;
-  name: string;
+  code?: string;
+  timestamp?: number;
 }
 
 export interface UseCompaniesReturn {
