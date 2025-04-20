@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -16,6 +17,7 @@ export const WelcomeSection = () => {
   const [isLoadingLocal, setIsLoadingLocal] = useState(true);
   const [fetchAttempted, setFetchAttempted] = useState(false);
   
+  // Try to load from localStorage immediately for a smoother experience
   useEffect(() => {
     const cachedCompany = localStorage.getItem('selectedCompany');
     if (cachedCompany) {
@@ -30,6 +32,7 @@ export const WelcomeSection = () => {
     }
   }, []);
   
+  // Then try to fetch fresh data
   useEffect(() => {
     const fetchUserCompanies = async () => {
       if (user?.id) {
@@ -40,7 +43,8 @@ export const WelcomeSection = () => {
           console.error('Erro na busca da empresa:', error);
           toast.error("Não foi possível carregar os dados da empresa. Usando dados em cache se disponíveis.");
         } finally {
-          setTimeout(() => setIsLoadingLocal(false), 100);
+          // Always finish loading after a reasonable timeout
+          setTimeout(() => setIsLoadingLocal(false), 500);
         }
       } else {
         setIsLoadingLocal(false);
@@ -54,6 +58,7 @@ export const WelcomeSection = () => {
     }
   }, [user, getUserCompanies, fetchAttempted, isLoading]);
 
+  // Update display company whenever selected company changes
   useEffect(() => {
     if (selectedCompany) {
       setDisplayCompany(selectedCompany);
@@ -64,24 +69,13 @@ export const WelcomeSection = () => {
       if (user?.id) {
         selectCompany(user.id, userCompanies[0]);
       }
-    } else if (!displayCompany) {
-      const cachedCompany = localStorage.getItem('selectedCompany');
-      if (cachedCompany) {
-        try {
-          const parsedCompany = JSON.parse(cachedCompany) as Company;
-          console.log('Using cached company for display:', parsedCompany.nome);
-          setDisplayCompany(parsedCompany);
-        } catch (e) {
-          console.error('Error parsing cached company', e);
-        }
-      }
     }
-  }, [selectedCompany, userCompanies, user, selectCompany, displayCompany]);
+  }, [selectedCompany, userCompanies, user, selectCompany]);
 
   const userName = userProfile?.display_name || user?.email?.split('@')[0] || 'Usuário';
 
   const handleLearnMore = () => {
-    navigate('/integration'); // Changed from '/manifesto'
+    navigate('/integration');
   };
 
   const defaultPhrase = "Juntos, estamos desenhando o futuro de grandes empresas";
