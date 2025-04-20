@@ -1,4 +1,3 @@
-
 import React, { Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -35,7 +34,6 @@ const queryClient = new QueryClient({
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
-      suspense: false, // Disable React Query's suspense mode
     },
   },
 });
