@@ -1,4 +1,3 @@
-
 import { useCallback, useRef } from "react";
 import { Company } from "@/types/company";
 import { useCompanyRequest } from "./fetch/useCompanyRequest";
@@ -40,7 +39,6 @@ export const useCompanyFetching = ({
   
   const { getCompanyById, getUserCompanies: getCompanies } = useCompanyFetch(companyFetchProps);
   
-  // State for tracking requests
   const fetchInProgressRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const lastSuccessfulFetchRef = useRef<number>(0);
@@ -65,8 +63,6 @@ export const useCompanyFetching = ({
     
     if (cachedData && cachedData.length > 0 && !forceRefresh) {
       if (JSON.stringify(userCompanies) !== JSON.stringify(cachedData)) {
-        // Important: Only set the cachedData if it belongs to the current user
-        // This prevents showing companies from a previous user after login
         setUserCompanies(cachedData);
       }
       
@@ -117,6 +113,7 @@ export const useCompanyFetching = ({
         }
       }
       
+      console.log(`[${hookInstanceIdRef.current}] Fetching companies for user ${userId}`);
       const result = await executeWithRetry(() => getCompanies(userId, abortControllerRef.current?.signal));
       
       completeRequest();
@@ -129,8 +126,11 @@ export const useCompanyFetching = ({
       };
       
       if (result && result.length > 0) {
+        console.log(`[${hookInstanceIdRef.current}] Received ${result.length} companies for user ${userId}`);
         cacheUserCompanies(result);
         result.forEach(company => fetchedCompaniesRef.current.add(company.id));
+      } else {
+        console.log(`[${hookInstanceIdRef.current}] No companies found for user ${userId}`);
       }
       
       setIsLoading(false);

@@ -151,7 +151,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       // Pequeno atraso para garantir que os eventos sejam processados
       setTimeout(() => {
         navigate("/"); // Redirecionar para a página inicial
-      }, 500);
+      }, 1500); // Aumentar o tempo de espera para 1.5 segundos
       
     } catch (error) {
       console.error("Erro ao salvar perfil:", error);
