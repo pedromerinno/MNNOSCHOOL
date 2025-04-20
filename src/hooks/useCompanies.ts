@@ -19,7 +19,13 @@ export const useCompanies = () => {
   // Use specialized hooks for state management
   const {
     isLoading,
+    isFetchingCompanies,
+    isUpdatingCompany,
+    isRefreshing,
     setIsLoading,
+    setIsFetchingCompanies,
+    setIsUpdatingCompany,
+    setIsRefreshing,
     companies,
     setCompanies,
     userCompanies,
@@ -30,7 +36,8 @@ export const useCompanies = () => {
     setError,
     fetchCount,
     incrementFetchCount,
-    resetError
+    resetError,
+    initialFetchDone
   } = useCompanyState();
   
   // Hook for company fetching operations
@@ -42,14 +49,14 @@ export const useCompanies = () => {
     userCompanies,
     setUserCompanies,
     setSelectedCompany,
-    setIsLoading,
+    setIsLoading: setIsFetchingCompanies, // Update to use more specific loading state
     setError,
     incrementFetchCount
   });
   
   // Import functionality from individual hooks
   const { fetchCompanies } = useCompanyCreate({ 
-    setIsLoading, 
+    setIsLoading: setIsFetchingCompanies, // Update loading state
     setCompanies 
   });
   
@@ -62,19 +69,19 @@ export const useCompanies = () => {
   });
   
   const { createCompany } = useCompanyCreate({ 
-    setIsLoading, 
+    setIsLoading: setIsUpdatingCompany, // Update loading state
     setCompanies 
   });
   
   const { updateCompany } = useCompanyUpdate({ 
-    setIsLoading, 
+    setIsLoading: setIsUpdatingCompany, // Update loading state
     setCompanies, 
     selectedCompany, 
     setSelectedCompany 
   });
   
   const { deleteCompany } = useCompanyDelete({ 
-    setIsLoading, 
+    setIsLoading: setIsUpdatingCompany, // Update loading state
     setCompanies, 
     selectedCompany, 
     setSelectedCompany 
@@ -91,7 +98,7 @@ export const useCompanies = () => {
   // Global data loading - load user companies only when user is logged in
   useEffect(() => {
     const loadInitialData = async () => {
-      if (user?.id && userCompanies.length === 0 && !isLoading) {
+      if (user?.id && userCompanies.length === 0 && !isLoading && !initialFetchDone.current) {
         try {
           // If user is super admin, fetch all companies
           const { data: profileData } = await supabase
@@ -101,16 +108,20 @@ export const useCompanies = () => {
             .single();
           
           if (profileData?.super_admin) {
+            setIsFetchingCompanies(true);
             const { data: allCompanies } = await supabase
               .from('empresas')
               .select('*');
             
             setUserCompanies(allCompanies as Company[] || []);
+            setIsFetchingCompanies(false);
           } else {
             await getUserCompanies(user.id);
           }
+          initialFetchDone.current = true;
         } catch (error) {
           console.error('[useCompanies] Error loading initial company data:', error);
+          setError(error instanceof Error ? error : new Error('Failed to load companies'));
         }
       }
     };
@@ -123,9 +134,13 @@ export const useCompanies = () => {
     const handleCompanyRelationChange = async () => {
       if (user?.id) {
         try {
+          setIsRefreshing(true);
           await forceGetUserCompanies(user.id);
         } catch (error) {
           console.error('[useCompanies] Error refreshing companies after relation change:', error);
+          setError(error instanceof Error ? error : new Error('Failed to refresh companies'));
+        } finally {
+          setIsRefreshing(false);
         }
       }
     };
@@ -136,17 +151,25 @@ export const useCompanies = () => {
     const handleForceReload = async () => {
       if (user?.id) {
         try {
+          setIsRefreshing(true);
           console.log('[useCompanies] Force reloading companies due to user request');
           await forceGetUserCompanies(user.id);
         } catch (error) {
           console.error('[useCompanies] Error force reloading companies:', error);
+          setError(error instanceof Error ? error : new Error('Failed to force reload companies'));
+        } finally {
+          setIsRefreshing(false);
         }
       } else {
         try {
+          setIsRefreshing(true);
           console.log('[useCompanies] Force reloading all companies due to user request');
           await fetchCompanies();
         } catch (error) {
           console.error('[useCompanies] Error force reloading all companies:', error);
+          setError(error instanceof Error ? error : new Error('Failed to force reload all companies'));
+        } finally {
+          setIsRefreshing(false);
         }
       }
     };
@@ -175,6 +198,7 @@ export const useCompanies = () => {
       
       // If we have userCompanies but no selected company yet
       if (userCompanies.length > 0) {
+        setIsLoading(true);
         const storedCompanyId = getStoredCompanyId();
         
         if (storedCompanyId) {
@@ -195,6 +219,7 @@ export const useCompanies = () => {
             } catch (error) {
               console.error('[useCompanies] Failed to restore company from localStorage', error);
               localStorage.removeItem('selectedCompanyId');
+              setError(error instanceof Error ? error : new Error('Failed to restore company'));
               
               // If fetch failed but we have userCompanies, select the first one
               if (userCompanies.length > 0) {
@@ -208,6 +233,7 @@ export const useCompanies = () => {
           setSelectedCompany(userCompanies[0]);
           console.log('[useCompanies] Auto-selected the only available company:', userCompanies[0].nome);
         }
+        setIsLoading(false);
       }
     };
 
@@ -216,6 +242,9 @@ export const useCompanies = () => {
   
   return {
     isLoading,
+    isFetchingCompanies,
+    isUpdatingCompany,
+    isRefreshing,
     companies,
     userCompanies,
     selectedCompany,
