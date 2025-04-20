@@ -1,42 +1,32 @@
 
+import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Company } from "@/types/company";
-import { toast } from "sonner";
-import { retryOperation } from "../utils/retryUtils";
 import { UseCompanyFetchProps } from "../types/fetchTypes";
 
-export const useCompanyDetails = ({
-  setIsLoading
-}: Pick<UseCompanyFetchProps, 'setIsLoading'>) => {
-  /**
-   * Gets a specific company by ID
-   */
-  const getCompanyById = async (companyId: string): Promise<Company | null> => {
+export const useCompanyDetails = ({ 
+  setIsLoading, 
+  setError 
+}: UseCompanyFetchProps) => {
+  const getCompanyById = useCallback(async (companyId: string): Promise<Company | null> => {
     setIsLoading(true);
     try {
-      const { data, error } = await retryOperation(
-        async () => await supabase.from('empresas').select('*').eq('id', companyId).single()
-      );
+      const { data, error } = await supabase
+        .from('empresas')
+        .select('*')
+        .eq('id', companyId)
+        .single();
 
-      if (error) {
-        console.error("Error fetching company:", error);
-        toast("Erro ao buscar empresa", {
-          description: error.message,
-        });
-        return null;
-      }
-
+      if (error) throw error;
       return data as Company;
     } catch (error) {
-      console.error("Unexpected error:", error);
-      toast("Erro inesperado", {
-        description: "Ocorreu um erro ao buscar a empresa",
-      });
+      console.error('Error fetching company by ID:', error);
+      setError(error instanceof Error ? error : new Error('Failed to fetch company'));
       return null;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [setIsLoading, setError]);
 
   return { getCompanyById };
 };

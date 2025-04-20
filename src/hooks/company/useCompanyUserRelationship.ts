@@ -16,16 +16,16 @@ export const useCompanyUserRelationship = ({
     setIsLoading(true);
     try {
       const { error } = await supabase
-        .from('user_empresa')
-        .insert([{ user_id: userId, empresa_id: companyId }]);
-  
+        .from('user_company')
+        .insert({ user_id: userId, company_id: companyId });
+
       if (error) throw error;
       
+      toast.success("Usuário associado à empresa com sucesso");
       window.dispatchEvent(new Event('company-relation-changed'));
-      toast.success("Usuário associado à empresa com sucesso!");
     } catch (error) {
-      console.error(error);
-      setError(error instanceof Error ? error : new Error('Failed to assign user to company'));
+      console.error('Error assigning user to company:', error);
+      setError(error instanceof Error ? error : new Error('Failed to assign user'));
       toast.error("Erro ao associar usuário à empresa");
     } finally {
       setIsLoading(false);
@@ -36,18 +36,18 @@ export const useCompanyUserRelationship = ({
     setIsLoading(true);
     try {
       const { error } = await supabase
-        .from('user_empresa')
+        .from('user_company')
         .delete()
         .eq('user_id', userId)
-        .eq('empresa_id', companyId);
-  
+        .eq('company_id', companyId);
+
       if (error) throw error;
       
+      toast.success("Usuário removido da empresa com sucesso");
       window.dispatchEvent(new Event('company-relation-changed'));
-      toast.success("Usuário removido da empresa com sucesso!");
     } catch (error) {
-      console.error(error);
-      setError(error instanceof Error ? error : new Error('Failed to remove user from company'));
+      console.error('Error removing user from company:', error);
+      setError(error instanceof Error ? error : new Error('Failed to remove user'));
       toast.error("Erro ao remover usuário da empresa");
     } finally {
       setIsLoading(false);
