@@ -6,6 +6,7 @@ import { useCompanyCache } from "./useCompanyCache";
 import { useCompanyRetry } from "./useCompanyRetry";
 import { useCompanyFetch } from "./useCompanyFetch";
 import { retryOperation } from "./utils/retryUtils";
+import { toast } from "sonner";
 
 interface UseCompanyFetchingProps {
   userCompanies: Company[];
@@ -44,7 +45,8 @@ export const useCompanyFetching = ({
     setCompanies: setUserCompanies,
     setUserCompanies,
     setSelectedCompany,
-    setError
+    setError,
+    incrementFetchCount
   };
   
   const { getCompanyById, getUserCompanies: getCompanies } = useCompanyFetch(companyFetchProps);
@@ -54,6 +56,7 @@ export const useCompanyFetching = ({
   const abortControllerRef = useRef<AbortController | null>(null);
   const lastSuccessfulFetchRef = useRef<number>(0);
   const consecutiveErrorsRef = useRef<number>(0);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const getUserCompanies = useCallback(async (
     userId: string, 
@@ -86,6 +89,12 @@ export const useCompanyFetching = ({
       return userCompanies;
     }
     
+    // Limpe qualquer timeout de retry anterior
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
+    
     fetchInProgressRef.current = true;
     startRequest();
     setIsLoading(true);
@@ -103,25 +112,29 @@ export const useCompanyFetching = ({
         }
       }
       
-      // Using retryOperation directly with more retries for network issues
+      // Usando retryOperation diretamente
       const fetchWithRetry = async () => {
         return await getCompanies(userId, abortControllerRef.current?.signal);
       };
       
       const result = await retryOperation(
         fetchWithRetry, 
-        consecutiveErrorsRef.current > 2 ? 5 : 3, // Increase retries after multiple failures
+        consecutiveErrorsRef.current > 2 ? 5 : 3, // Aumenta retries após múltiplas falhas
         1000,
         15000
       );
       
       completeRequest();
       lastSuccessfulFetchRef.current = Date.now();
-      consecutiveErrorsRef.current = 0; // Reset error counter on success
+      consecutiveErrorsRef.current = 0; // Reseta contador de erros no sucesso
       
       if (result && result.length > 0) {
         cacheUserCompanies(result);
         console.log("Successfully fetched and cached", result.length, "companies");
+      } else if (result.length === 0) {
+        console.log("Usuário não tem empresas associadas");
+        // Limpar seleção se não houver empresas
+        setSelectedCompany(null);
       }
       
       setIsLoading(false);
@@ -136,15 +149,27 @@ export const useCompanyFetching = ({
         return userCompanies;
       }
       
-      consecutiveErrorsRef.current += 1; // Track consecutive errors
+      consecutiveErrorsRef.current += 1; // Rastreia erros consecutivos
       
       setError(error);
       console.error("Error fetching companies:", error);
+      
+      // Mostrar toast para feedback visual
+      toast.error("Erro ao buscar empresas", {
+        description: "Tentaremos novamente automaticamente"
+      });
       
       const cachedData = getCachedUserCompanies();
       if (cachedData && cachedData.length > 0) {
         console.log("Using cached companies after all retries failed");
         setUserCompanies(cachedData);
+        
+        // Agendar nova tentativa automaticamente
+        retryTimeoutRef.current = setTimeout(() => {
+          console.log("Tentando novamente após falha anterior...");
+          getUserCompanies(userId, true);
+        }, 5000 + (Math.random() * 5000)); // 5-10s delay
+        
         return cachedData;
       }
       
@@ -169,7 +194,8 @@ export const useCompanyFetching = ({
     setUserCompanies,
     pendingRequestsRef,
     cacheUserCompanies,
-    setIsLoading
+    setIsLoading,
+    setSelectedCompany
   ]);
   
   const forceGetUserCompanies = useCallback(async (userId: string): Promise<Company[]> => {

@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Company } from "@/types/company";
 import { retryOperation } from "../utils/retryUtils";
 import { UseCompanyFetchProps } from "../types/fetchTypes";
+import { toast } from "sonner";
 
 // Cache expiration time in ms (30 minutes)
 const CACHE_EXPIRATION = 30 * 60 * 1000;
@@ -35,24 +36,104 @@ export const useUserCompanies = ({
         incrementFetchCount();
       }
 
-      // First try to use the RPC function to get user companies
+      // Primeiro, verifica se há cache válido
+      if (isCacheValid()) {
+        const cachedData = localStorage.getItem('userCompanies');
+        if (cachedData) {
+          try {
+            const companies = JSON.parse(cachedData) as Company[];
+            if (companies && companies.length > 0) {
+              console.log("Utilizando empresas em cache", companies.length);
+              setUserCompanies(companies);
+              
+              // Se existir apenas uma empresa, automaticamente seleciona-a
+              if (companies.length === 1) {
+                setSelectedCompany(companies[0]);
+              }
+              
+              return companies;
+            }
+          } catch (e) {
+            console.error("Erro ao analisar empresas em cache", e);
+          }
+        }
+      }
+
+      console.log("Buscando empresas para o usuário:", userId);
+
+      // Usar a RPC function que contém uma política de segurança correta
       const { data: companies, error: companiesError } = await supabase
         .rpc('get_user_companies', { user_id: userId });
 
       if (companiesError) {
-        console.error("Error fetching companies via RPC:", companiesError);
-        throw companiesError;
+        console.error("Erro ao buscar empresas via RPC:", companiesError);
+        
+        if (companiesError.message?.includes('recursion') || 
+            companiesError.message?.includes('policy') ||
+            companiesError.code === 'PGRST301') {
+          // Tentar abordagem alternativa se o erro for relacionado a políticas/RLS
+          console.log("Tentando abordagem alternativa para buscar empresas");
+          
+          const { data: userEmpresa, error: relationError } = await supabase
+            .from('user_empresa')
+            .select('empresa_id')
+            .eq('user_id', userId);
+            
+          if (relationError) {
+            console.error("Erro ao buscar relações empresa-usuário:", relationError);
+            throw relationError;
+          }
+          
+          if (!userEmpresa || userEmpresa.length === 0) {
+            console.log("Usuário não possui empresas associadas");
+            setUserCompanies([]);
+            setIsLoading(false);
+            return [];
+          }
+          
+          const empresaIds = userEmpresa.map(ue => ue.empresa_id);
+          
+          const { data: empresas, error: empresasError } = await supabase
+            .from('empresas')
+            .select('*')
+            .in('id', empresaIds);
+            
+          if (empresasError) {
+            console.error("Erro ao buscar empresas por ID:", empresasError);
+            throw empresasError;
+          }
+          
+          if (empresas && empresas.length > 0) {
+            console.log(`Encontradas ${empresas.length} empresas para o usuário via método alternativo`);
+            setUserCompanies(empresas);
+            
+            // Cache os resultados
+            localStorage.setItem('userCompanies', JSON.stringify(empresas));
+            localStorage.setItem('userCompaniesTimestamp', Date.now().toString());
+            
+            // Se apenas uma empresa, automaticamente seleciona
+            if (empresas.length === 1) {
+              setSelectedCompany(empresas[0]);
+            }
+            
+            return empresas;
+          }
+          
+          return [];
+        } else {
+          throw companiesError;
+        }
       }
 
       if (companies && Array.isArray(companies)) {
-        console.log(`Found ${companies.length} companies for user`);
+        console.log(`Encontradas ${companies.length} empresas para o usuário via RPC`);
         setUserCompanies(companies);
         
-        // Cache the results
+        // Cache os resultados
         localStorage.setItem('userCompanies', JSON.stringify(companies));
         localStorage.setItem('userCompaniesTimestamp', Date.now().toString());
 
-        // If only one company, automatically select it
+        // Se apenas uma empresa, automaticamente seleciona
         if (companies.length === 1) {
           setSelectedCompany(companies[0]);
         }
@@ -62,21 +143,27 @@ export const useUserCompanies = ({
 
       return [];
     } catch (error: any) {
-      console.error("Error in getUserCompanies:", error);
-      setError(error instanceof Error ? error : new Error("Failed to fetch companies"));
+      console.error("Erro em getUserCompanies:", error);
       
-      // Try to load from cache as last resort
+      // Notifica o usuário sobre o erro
+      toast.error("Erro ao carregar empresas", {
+        description: "Tentando novamente em alguns segundos..."
+      });
+      
+      setError(error instanceof Error ? error : new Error("Falha ao buscar empresas"));
+      
+      // Tenta usar cache como último recurso
       const cachedData = localStorage.getItem('userCompanies');
       if (cachedData) {
         try {
           const cachedCompanies = JSON.parse(cachedData) as Company[];
           if (cachedCompanies && cachedCompanies.length > 0) {
-            console.log("Using cached companies after error");
+            console.log("Usando empresas em cache após erro");
             setUserCompanies(cachedCompanies);
             return cachedCompanies;
           }
         } catch (e) {
-          console.error("Error parsing cached companies", e);
+          console.error("Erro ao analisar empresas em cache", e);
         }
       }
       

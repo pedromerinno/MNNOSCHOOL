@@ -11,15 +11,36 @@ export const useCompanyFetch = (props: UseCompanyFetchProps) => {
   const { getCompanyById: _getCompanyById } = useCompanyDetails(props);
 
   const fetchCompanies = useCallback(async () => {
-    return await _fetchCompanies();
+    try {
+      return await _fetchCompanies();
+    } catch (error) {
+      console.error("Erro ao buscar empresas:", error);
+      // Tentar novamente após um curto intervalo em caso de erro
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      return await _fetchCompanies();
+    }
   }, [_fetchCompanies]);
 
   const getUserCompanies = useCallback(async (userId: string, signal?: AbortSignal) => {
-    return await _getUserCompanies(userId, signal);
+    try {
+      return await _getUserCompanies(userId, signal);
+    } catch (error) {
+      console.error("Erro ao buscar empresas do usuário:", error);
+      // Tentar novamente após um curto intervalo em caso de erro
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      return await _getUserCompanies(userId, signal);
+    }
   }, [_getUserCompanies]);
 
   const getCompanyById = useCallback(async (companyId: string) => {
-    return await _getCompanyById(companyId);
+    try {
+      return await _getCompanyById(companyId);
+    } catch (error) {
+      console.error("Erro ao buscar empresa por ID:", error);
+      // Tentar novamente após um curto intervalo em caso de erro
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      return await _getCompanyById(companyId);
+    }
   }, [_getCompanyById]);
 
   return {

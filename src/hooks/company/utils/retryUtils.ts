@@ -22,9 +22,10 @@ export const retryOperation = async <T>(
     } catch (error) {
       console.error(`Operation failed, attempt ${i + 1} of ${maxRetries}`, error);
       
+      // Detectar erros específicos que podem indicar problemas temporários
       const errorMessage = error instanceof Error ? error.message : String(error);
       
-      // Check if it's a connection/network error
+      // Detectar erros de rede/conexão
       const isNetworkError = 
         errorMessage.includes('Failed to fetch') || 
         errorMessage.includes('NetworkError') ||
@@ -32,12 +33,19 @@ export const retryOperation = async <T>(
         errorMessage.includes('ERR_CONNECTION_CLOSED') ||
         errorMessage.includes('AbortError');
       
+      // Detectar erros de política/recursão
+      const isPolicyError =
+        errorMessage.includes('recursion detected in policy') ||
+        errorMessage.includes('PGRST301') ||
+        errorMessage.includes('policy for relation');
+      
       lastError = error instanceof Error 
         ? error 
-        : new Error(isNetworkError ? 'Network connection error' : 'Unknown error');
+        : new Error(isNetworkError ? 'Network connection error' : 
+                   isPolicyError ? 'Database policy error' : 'Unknown error');
       
       if (i < maxRetries - 1) {
-        // Use exponential backoff with jitter for retries
+        // Usar backoff exponencial com jitter para retries
         const jitter = Math.random() * 300;
         delay = Math.min(delay * 1.5 + jitter, maxDelay);
         console.log(`Retrying in ${Math.round(delay/1000)}s...`);
