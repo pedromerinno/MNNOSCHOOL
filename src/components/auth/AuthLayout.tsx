@@ -11,7 +11,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
     url: string;
     type: 'video' | 'image';
   }>({
-    url: "/lovable-uploads/background-video.mp4",
+    url: "",
     type: 'video'
   });
 
@@ -63,22 +63,24 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
       
       {/* Right side - Background Media */}
       <div className="w-full md:w-1/2 bg-merinno-blue relative overflow-hidden hidden md:block">
-        {backgroundMedia.type === 'video' ? (
-          <video 
-            autoPlay 
-            muted 
-            loop 
-            className="absolute w-full h-full object-cover"
-          >
-            <source src={backgroundMedia.url} type="video/mp4" />
-            Seu navegador não suporta vídeos.
-          </video>
-        ) : (
-          <img 
-            src={backgroundMedia.url} 
-            alt="Login Background" 
-            className="absolute w-full h-full object-cover"
-          />
+        {backgroundMedia.url && (
+          backgroundMedia.type === 'video' ? (
+            <video 
+              autoPlay 
+              muted 
+              loop 
+              className="absolute w-full h-full object-cover"
+            >
+              <source src={backgroundMedia.url} type="video/mp4" />
+              Seu navegador não suporta vídeos.
+            </video>
+          ) : (
+            <img 
+              src={backgroundMedia.url} 
+              alt="Login Background" 
+              className="absolute w-full h-full object-cover"
+            />
+          )
         )}
         
         <div className="absolute inset-0 bg-black/30 z-10" />
