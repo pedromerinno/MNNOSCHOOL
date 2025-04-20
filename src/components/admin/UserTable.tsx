@@ -18,7 +18,7 @@ interface UserTableProps {
   users: UserProfile[];
   loading: boolean;
   onToggle: (userId: string, currentStatus: boolean | null, isSuperAdmin: boolean) => Promise<void>;
-  isSuperAdmin: boolean; // Adicionada a propriedade que faltava
+  isSuperAdmin: boolean;
 }
 
 export const UserTable: React.FC<UserTableProps> = ({ users, loading, onToggle, isSuperAdmin }) => {
