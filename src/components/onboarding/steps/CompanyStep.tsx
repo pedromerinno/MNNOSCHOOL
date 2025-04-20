@@ -1,9 +1,11 @@
-
 import React, { useState } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Building, Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CompanyStepProps {
   onNext: () => void;
@@ -13,6 +15,7 @@ interface CompanyStepProps {
 
 const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyTypeSelect }) => {
   const { profileData, updateProfileData } = useOnboarding();
+  const navigate = useNavigate();
   const [companyType, setCompanyType] = useState<'existing' | 'new'>(
     profileData.companyId ? 'existing' : 'new'
   );
@@ -29,7 +32,7 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
   });
   const [error, setError] = useState("");
 
-  const handleInitialSubmit = (e: React.FormEvent) => {
+  const handleInitialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (companyType === 'existing' && !companyId) {
@@ -42,14 +45,57 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
       return;
     }
     
-    updateProfileData({ 
-      companyId: companyType === 'existing' ? companyId : null,
-      newCompanyName: companyType === 'new' ? companyDetails.name : null,
-      companyDetails: companyType === 'new' ? companyDetails : null
-    });
+    try {
+      if (companyType === 'new') {
+        const { data: newCompany, error: companyError } = await supabase
+          .from('empresas')
+          .insert({
+            nome: companyDetails.name,
+            historia: companyDetails.historia,
+            missao: companyDetails.missao,
+            valores: companyDetails.valores,
+            frase_institucional: companyDetails.frase_institucional,
+            video_institucional: companyDetails.video_institucional,
+            descricao_video: companyDetails.descricao_video
+          })
+          .select()
+          .single();
 
-    onCompanyTypeSelect(companyType === 'existing');
-    onNext();
+        if (companyError) throw companyError;
+
+        const { error: relationError } = await supabase
+          .from('user_empresa')
+          .insert({
+            user_id: profileData.userId,
+            empresa_id: newCompany.id,
+            is_admin: true
+          });
+
+        if (relationError) throw relationError;
+
+        toast.success("Empresa criada com sucesso!");
+        
+        const newInterests = (profileData.interests || []).filter(i => i !== 'onboarding_incomplete');
+        
+        await supabase
+          .from('profiles')
+          .update({ interesses: newInterests })
+          .eq('id', profileData.userId);
+
+        navigate("/");
+      } else {
+        updateProfileData({ 
+          companyId: companyId,
+          newCompanyName: null,
+          companyDetails: null
+        });
+        onCompanyTypeSelect(true);
+        onNext();
+      }
+    } catch (error: any) {
+      console.error('Error:', error);
+      toast.error("Erro ao criar empresa: " + error.message);
+    }
   };
 
   const handleCompanyTypeChange = (type: 'existing' | 'new') => {
