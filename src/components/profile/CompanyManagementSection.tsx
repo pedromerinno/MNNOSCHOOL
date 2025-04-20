@@ -1,5 +1,6 @@
 
-import { AlertTriangle, Building, X } from "lucide-react";
+import { AlertTriangle, Building, Link, X } from "lucide-react";
+import { useState } from "react";
 import { Company } from "@/types/company";
 import { useCompanyUserManagement } from "@/hooks/company/useCompanyUserManagement";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -14,7 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface CompanyManagementSectionProps {
@@ -23,7 +24,8 @@ interface CompanyManagementSectionProps {
 
 export const CompanyManagementSection = ({ userCompanies }: CompanyManagementSectionProps) => {
   const [companyToRemove, setCompanyToRemove] = useState<Company | null>(null);
-  const { removeUserFromCompany } = useCompanyUserManagement();
+  const [companyId, setCompanyId] = useState("");
+  const { removeUserFromCompany, assignUserToCompany } = useCompanyUserManagement();
   const { user } = useAuth();
   const { forceGetUserCompanies } = useCompanies();
   
@@ -33,7 +35,17 @@ export const CompanyManagementSection = ({ userCompanies }: CompanyManagementSec
     await removeUserFromCompany(user.id, companyToRemove.id);
     setCompanyToRemove(null);
     
-    // Refresh companies list
+    if (user?.id) {
+      await forceGetUserCompanies(user.id);
+    }
+  };
+
+  const handleLinkCompany = async () => {
+    if (!user?.id || !companyId.trim()) return;
+    
+    await assignUserToCompany(user.id, companyId.trim());
+    setCompanyId("");
+    
     if (user?.id) {
       await forceGetUserCompanies(user.id);
     }
@@ -44,6 +56,24 @@ export const CompanyManagementSection = ({ userCompanies }: CompanyManagementSec
       <div className="flex items-center gap-2 mb-4">
         <Building className="h-4 w-4" />
         <h3 className="text-sm font-medium">Empresas Vinculadas</h3>
+      </div>
+      
+      <div className="flex items-center gap-2">
+        <Input
+          placeholder="ID da empresa"
+          value={companyId}
+          onChange={(e) => setCompanyId(e.target.value)}
+          className="flex-1"
+        />
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={handleLinkCompany}
+          className="shrink-0"
+        >
+          <Link className="h-4 w-4 mr-2" />
+          Vincular
+        </Button>
       </div>
       
       {userCompanies.length === 0 ? (

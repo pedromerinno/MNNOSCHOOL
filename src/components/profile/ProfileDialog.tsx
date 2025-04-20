@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Upload } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -96,7 +95,10 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent 
+        className="sm:max-w-[425px] overflow-y-auto max-h-[85vh]"
+        style={{ pointerEvents: 'auto' }}
+      >
         <DialogHeader>
           <DialogTitle>Editar Perfil</DialogTitle>
           <DialogDescription>
