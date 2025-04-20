@@ -9,6 +9,8 @@ export const useBackgroundUpload = () => {
   const uploadFile = async (file: File, type: 'video' | 'image') => {
     setIsUploading(true);
     try {
+      console.log(`Uploading ${type} file:`, file.name);
+      
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${fileName}`;
@@ -17,38 +19,22 @@ export const useBackgroundUpload = () => {
         .from('background-media')
         .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw uploadError;
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('background-media')
         .getPublicUrl(filePath);
 
-      // Check if the settings entry already exists
-      const { data: existingSettings } = await supabase
-        .from('settings')
-        .select('*')
-        .eq('key', 'login_background')
-        .single();
+      console.log("File uploaded, public URL:", publicUrl);
 
-      // Update settings table with new background
-      const { error: updateError } = await supabase
-        .from('settings')
-        .upsert({
-          id: existingSettings?.id || undefined,
-          key: 'login_background',
-          value: publicUrl,
-          media_type: type,
-          updated_at: new Date().toISOString()
-        });
-
-      if (updateError) throw updateError;
-
-      toast.success('Background atualizado com sucesso');
-      window.dispatchEvent(new Event('background-updated'));
       return publicUrl;
     } catch (error: any) {
       toast.error(`Erro ao fazer upload: ${error.message}`);
       console.error('Erro no upload:', error);
+      return null;
     } finally {
       setIsUploading(false);
     }

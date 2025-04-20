@@ -19,15 +19,19 @@ export const BackgroundManager = () => {
   useEffect(() => {
     const fetchCurrentBackground = async () => {
       try {
+        console.log("Admin: Fetching current background");
         const { data, error } = await supabase
           .from('settings')
           .select('value, media_type')
           .eq('key', 'login_background')
           .single();
 
+        console.log("Admin: Background data:", data, "Error:", error);
+
         if (!error && data) {
           setMediaUrl(data.value || "");
           setMediaType((data.media_type as "video" | "image") || "video");
+          console.log("Admin: Set background to:", data.value, data.media_type);
         }
       } catch (error) {
         console.error("Error fetching background settings:", error);
@@ -66,6 +70,7 @@ export const BackgroundManager = () => {
       
       // Dispatch event to update other components
       window.dispatchEvent(new Event('background-updated'));
+      console.log("Background update event dispatched");
     } catch (error: any) {
       console.error(`Erro ao salvar ${mediaType} de background:`, error);
       toast.error(`Erro ao salvar: ${error.message}`);
@@ -91,6 +96,42 @@ export const BackgroundManager = () => {
     const url = await uploadFile(file, mediaType);
     if (url) {
       setMediaUrl(url);
+      // Automatically save after upload
+      toast.success('Arquivo enviado com sucesso. Salvando...');
+      setIsSaving(true);
+      
+      try {
+        // First check if the record already exists
+        const { data: existingRecord } = await supabase
+          .from('settings')
+          .select('id')
+          .eq('key', 'login_background')
+          .single();
+        
+        // Use upsert with the correct ID if it exists
+        const { error } = await supabase
+          .from('settings')
+          .upsert({ 
+            id: existingRecord?.id || undefined,
+            key: 'login_background', 
+            value: url,
+            media_type: mediaType,
+            updated_at: new Date().toISOString()
+          });
+
+        if (error) throw error;
+
+        toast.success(`Background atualizado com sucesso`);
+        
+        // Dispatch event to update other components
+        window.dispatchEvent(new Event('background-updated'));
+        console.log("Background update event dispatched");
+      } catch (error: any) {
+        console.error(`Erro ao salvar ${mediaType} de background:`, error);
+        toast.error(`Erro ao salvar: ${error.message}`);
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
@@ -175,6 +216,27 @@ export const BackgroundManager = () => {
           </form>
         </CardContent>
       </Card>
+
+      {mediaUrl && (
+        <div className="mt-6">
+          <h4 className="text-md font-medium mb-3">Pré-visualização:</h4>
+          <div className="border border-gray-200 rounded-md h-64 relative overflow-hidden">
+            {mediaType === 'video' ? (
+              <video 
+                src={mediaUrl} 
+                controls 
+                className="w-full h-full object-contain" 
+              />
+            ) : (
+              <img 
+                src={mediaUrl} 
+                alt="Preview" 
+                className="w-full h-full object-contain" 
+              />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

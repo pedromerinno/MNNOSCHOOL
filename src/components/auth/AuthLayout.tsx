@@ -14,24 +14,35 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
     url: "",
     type: 'video'
   });
+  
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchBackgroundMedia = async () => {
+      setIsLoading(true);
       try {
+        console.log("Fetching background media...");
         const { data, error } = await supabase
           .from('settings')
           .select('value, media_type')
           .eq('key', 'login_background')
           .single();
 
+        console.log("Background data:", data, "Error:", error);
+
         if (!error && data?.value) {
           setBackgroundMedia({
             url: data.value,
             type: (data.media_type as 'video' | 'image') || 'video'
           });
+          console.log("Set background to:", data.value, data.media_type);
+        } else {
+          console.error("Error or no data:", error);
         }
       } catch (error) {
         console.error('Error fetching background media:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -39,6 +50,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
 
     // Listen for updates from other components
     const handleBackgroundUpdate = () => {
+      console.log("Background update event received");
       fetchBackgroundMedia();
     };
     
@@ -63,23 +75,30 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
       
       {/* Right side - Background Media */}
       <div className="w-full md:w-1/2 bg-merinno-blue relative overflow-hidden hidden md:block">
-        {backgroundMedia.url && (
-          backgroundMedia.type === 'video' ? (
-            <video 
-              autoPlay 
-              muted 
-              loop 
-              className="absolute w-full h-full object-cover"
-            >
-              <source src={backgroundMedia.url} type="video/mp4" />
-              Seu navegador não suporta vídeos.
-            </video>
-          ) : (
-            <img 
-              src={backgroundMedia.url} 
-              alt="Login Background" 
-              className="absolute w-full h-full object-cover"
-            />
+        {isLoading ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+          </div>
+        ) : (
+          backgroundMedia.url && (
+            backgroundMedia.type === 'video' ? (
+              <video 
+                autoPlay 
+                muted 
+                loop 
+                playsInline
+                className="absolute w-full h-full object-cover"
+              >
+                <source src={backgroundMedia.url} type="video/mp4" />
+                Your browser does not support videos.
+              </video>
+            ) : (
+              <img 
+                src={backgroundMedia.url} 
+                alt="Login Background" 
+                className="absolute w-full h-full object-cover"
+              />
+            )
           )
         )}
         
