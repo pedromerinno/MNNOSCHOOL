@@ -28,7 +28,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
           .eq('key', 'login_background')
           .maybeSingle();
 
-        console.log("Background data:", data);
+        console.log("Background data fetched:", { data, error });
 
         if (!error && data?.value) {
           setBackgroundMedia({
@@ -37,14 +37,14 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
           });
           console.log("Set background to:", data.value, data.media_type);
         } else {
-          console.error("Error or no data:", error);
+          console.error("Error fetching background media:", error);
           setBackgroundMedia({
             url: "",
             type: 'image'
           });
         }
       } catch (error) {
-        console.error('Error fetching background media:', error);
+        console.error('Unexpected error fetching background media:', error);
       } finally {
         setIsLoading(false);
       }
