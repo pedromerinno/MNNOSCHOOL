@@ -16,8 +16,11 @@ export const useCompanyUserRelationship = ({
     setIsLoading(true);
     try {
       const { error } = await supabase
-        .from('user_company')
-        .insert({ user_id: userId, company_id: companyId });
+        .from('user_empresa')
+        .insert({ 
+          user_id: userId, 
+          empresa_id: companyId 
+        });
 
       if (error) throw error;
       
@@ -36,10 +39,10 @@ export const useCompanyUserRelationship = ({
     setIsLoading(true);
     try {
       const { error } = await supabase
-        .from('user_company')
+        .from('user_empresa')
         .delete()
         .eq('user_id', userId)
-        .eq('company_id', companyId);
+        .eq('empresa_id', companyId);
 
       if (error) throw error;
       

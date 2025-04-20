@@ -12,8 +12,8 @@ export const useUserCompanies = ({
   const getUserCompanies = useCallback(async (userId: string, signal?: AbortSignal) => {
     try {
       const { data: relations, error: relationsError } = await supabase
-        .from('user_company')
-        .select('company_id')
+        .from('user_empresa')
+        .select('empresa_id')
         .eq('user_id', userId);
 
       if (relationsError) throw relationsError;
@@ -25,7 +25,7 @@ export const useUserCompanies = ({
         return [];
       }
 
-      const companyIds = relations.map(rel => rel.company_id);
+      const companyIds = relations.map(rel => rel.empresa_id);
       
       const { data: companies, error: companiesError } = await supabase
         .from('empresas')
