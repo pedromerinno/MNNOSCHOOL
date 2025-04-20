@@ -12,12 +12,19 @@ export const useCourseCompanies = (course: Course) => {
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
+  // Usar useEffect com dependência course.id para evitar carregamentos desnecessários
   useEffect(() => {
     const fetchData = async () => {
+      if (!course?.id) {
+        setIsLoading(false);
+        return;
+      }
+      
       setIsLoading(true);
       try {
-        console.log("Fetching companies for course:", course.title);
+        console.log("Buscando empresas para o curso:", course.title);
         
+        // Buscar todas as empresas
         const { data: companiesData, error: companiesError } = await supabase
           .from('empresas')
           .select('*')
@@ -25,7 +32,8 @@ export const useCourseCompanies = (course: Course) => {
 
         if (companiesError) throw companiesError;
 
-        const companiesWithDefaults = companiesData?.map(company => ({
+        // Garantir que temos um array válido com valores padrão
+        const companiesWithDefaults = Array.isArray(companiesData) ? companiesData.map(company => ({
           ...company,
           descricao: null,
           responsavel: null,
@@ -37,35 +45,36 @@ export const useCourseCompanies = (course: Course) => {
           valores: company.valores || null,
           video_institucional: company.video_institucional || null,
           descricao_video: company.descricao_video || null
-        })) as Company[];
+        })) as Company[] : [];
 
+        // Buscar relações de curso para empresas
         const { data: courseCompaniesData, error: courseCompaniesError } = await supabase
           .from('company_courses')
           .select('empresa_id')
           .eq('course_id', course.id);
 
         if (courseCompaniesError) {
-          console.error("Error fetching company course relationships:", courseCompaniesError);
+          console.error("Erro ao buscar relações empresa-curso:", courseCompaniesError);
           setSelectedCompanies([]);
         } else if (courseCompaniesData && courseCompaniesData.length > 0) {
           const companyIds = courseCompaniesData.map(item => item.empresa_id);
           setSelectedCompanies(companyIds);
-          console.log("Found companies with access:", companyIds.length);
+          console.log("Empresas com acesso encontradas:", companyIds.length);
         } else {
-          console.log("No companies have access to this course yet");
+          console.log("Nenhuma empresa tem acesso a este curso ainda");
           setSelectedCompanies([]);
         }
 
-        setCompanies(Array.isArray(companiesWithDefaults) ? companiesWithDefaults : []);
-        console.log(`Found ${Array.isArray(companiesData) ? companiesData.length : 0} companies`);
+        setCompanies(companiesWithDefaults);
+        console.log(`Encontradas ${companiesWithDefaults.length} empresas`);
       } catch (error: any) {
-        console.error("Error fetching data:", error);
+        console.error("Erro ao buscar dados:", error);
         toast({
           title: 'Erro ao carregar dados',
           description: error.message,
           variant: 'destructive',
         });
-        // Set empty array in case of error
+        // Garantir array vazio em caso de erro
         setCompanies([]);
       } finally {
         setIsLoading(false);
@@ -78,9 +87,10 @@ export const useCourseCompanies = (course: Course) => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      console.log("Saving course access for:", course.title);
-      console.log("Selected companies:", selectedCompanies.length);
+      console.log("Salvando acesso ao curso para:", course.title);
+      console.log("Empresas selecionadas:", selectedCompanies.length);
       
+      // Excluir todas as relações existentes para este curso
       const { error: deleteError } = await supabase
         .from('company_courses')
         .delete()
@@ -88,6 +98,7 @@ export const useCourseCompanies = (course: Course) => {
 
       if (deleteError) throw deleteError;
 
+      // Se houver empresas selecionadas, criar novas relações
       if (selectedCompanies.length > 0) {
         const newRelationships = selectedCompanies.map(companyId => ({
           course_id: course.id,
@@ -108,7 +119,7 @@ export const useCourseCompanies = (course: Course) => {
 
       return true;
     } catch (error: any) {
-      console.error("Save error:", error);
+      console.error("Erro ao salvar:", error);
       toast({
         title: 'Erro ao salvar alterações',
         description: error.message,

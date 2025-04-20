@@ -1,8 +1,8 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo, useCallback } from "react";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCompanies } from "@/hooks/company";
+import { useCompanies } from "@/hooks/useCompanies";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -10,9 +10,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
 
-export const CompanySelector = () => {
+// Usar memo para evitar renderizações desnecessárias
+export const CompanySelector = memo(() => {
   const { user } = useAuth();
   const { 
     userCompanies, 
@@ -41,42 +41,46 @@ export const CompanySelector = () => {
     }
   }, [selectedCompany]);
 
-  // Listener para mudanças nas relações de empresa
+  // Listener para mudanças nas relações de empresa - usando useCallback para evitar recriações
+  const handleCompanyRelationChange = useCallback(async () => {
+    if (user?.id) {
+      console.log('CompanySelector: Detectada mudança na relação de empresa, atualizando dados');
+      await forceGetUserCompanies(user.id);
+    }
+  }, [user, forceGetUserCompanies]);
+  
+  // Configurar ouvinte de eventos apenas uma vez
   useEffect(() => {
-    const handleCompanyRelationChange = async () => {
-      if (user?.id) {
-        console.log('CompanySelector: Detected company relation change, refreshing data');
-        await forceGetUserCompanies(user.id);
-      }
-    };
-    
     window.addEventListener('company-relation-changed', handleCompanyRelationChange);
     
     return () => {
       window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
     };
-  }, [user, forceGetUserCompanies]);
+  }, [handleCompanyRelationChange]);
 
-  // Auto-selecionar a primeira empresa
+  // Auto-selecionar a primeira empresa - com dependências mínimas para evitar execuções desnecessárias
   useEffect(() => {
-    if (!selectedCompany && userCompanies.length > 0 && user?.id && !isLoading) {
-      console.log('CompanySelector: Auto-selecting first company because none is selected yet');
+    // Verificar condições claras para evitar execução desnecessária
+    const needsToSelectCompany = !selectedCompany && userCompanies.length > 0 && user?.id && !isLoading;
+    
+    if (needsToSelectCompany) {
+      console.log('CompanySelector: Auto-selecionando primeira empresa porque nenhuma está selecionada');
       selectCompany(user.id, userCompanies[0]);
     }
-  }, [userCompanies, selectedCompany, user, selectCompany, isLoading]);
+  }, [userCompanies.length, selectedCompany, user?.id, isLoading]); // Reduzindo dependências
 
-  const handleCompanyChange = (company) => {
-    if (company && user?.id) {
-      if (selectedCompany?.id === company.id) {
-        console.log('CompanySelector: Company already selected, skipping change');
-        return;
-      }
-      
-      console.log('CompanySelector: Selecionando empresa:', company.nome);
-      selectCompany(user.id, company);
-      toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
+  const handleCompanyChange = useCallback((company) => {
+    if (!company || !user?.id) return;
+    
+    if (selectedCompany?.id === company.id) {
+      console.log('CompanySelector: Empresa já selecionada, pulando mudança');
+      return;
     }
-  };
+    
+    console.log('CompanySelector: Selecionando empresa:', company.nome);
+    selectCompany(user.id, company);
+    toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
+  }, [user?.id, selectedCompany?.id, selectCompany]);
 
   // Mostrar apenas o nome durante carregamento, sem skeleton
   if (isLoading && !selectedCompany) {
@@ -114,6 +118,11 @@ export const CompanySelector = () => {
                   src={company.logo}
                   alt={company.nome}
                   className="h-4 w-4 mr-2 object-contain rounded-lg"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = "/placeholder.svg";
+                    target.onerror = null;
+                  }}
                 />
               )}
               <span>{company.nome}</span>
@@ -123,4 +132,7 @@ export const CompanySelector = () => {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-};
+});
+
+// Definir displayName para melhorar depuração
+CompanySelector.displayName = 'CompanySelector';

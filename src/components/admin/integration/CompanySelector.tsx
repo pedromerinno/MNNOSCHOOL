@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, memo } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Company } from "@/types/company";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -13,7 +13,8 @@ interface CompanySelectorProps {
   disabled?: boolean;
 }
 
-export const CompanySelector: React.FC<CompanySelectorProps> = ({
+// Usar memo para evitar renderizações desnecessárias
+export const CompanySelector: React.FC<CompanySelectorProps> = memo(({
   companies,
   selectedCompany,
   onCompanyChange,
@@ -22,24 +23,27 @@ export const CompanySelector: React.FC<CompanySelectorProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
-  // Handle fetch error display
+  // Verificar se companies é um array e não está vazio
+  const hasCompanies = Array.isArray(companies) && companies.length > 0;
+
+  // Manipular exibição de erro
   useEffect(() => {
-    if (!companies || !Array.isArray(companies) || (Array.isArray(companies) && companies.length === 0) && !disabled) {
+    if (!hasCompanies && !disabled) {
       setError("Não foi possível carregar a lista de empresas");
     } else {
       setError(null);
     }
-  }, [companies, disabled]);
+  }, [companies, disabled, hasCompanies]);
 
   const handleRetry = () => {
     setRetryCount(prev => prev + 1);
-    // Dispatch an event that will be caught by components that need to reload
+    // Despachar evento que será capturado pelos componentes que precisam recarregar
     window.dispatchEvent(new CustomEvent('force-reload-companies'));
     setError("Tentando novamente...");
     
-    // Reset error after 3 seconds
+    // Resetar erro após 3 segundos
     setTimeout(() => {
-      if (!companies || !Array.isArray(companies) || (Array.isArray(companies) && companies.length === 0)) {
+      if (!hasCompanies) {
         setError("Não foi possível carregar a lista de empresas");
       } else {
         setError(null);
@@ -72,13 +76,13 @@ export const CompanySelector: React.FC<CompanySelectorProps> = ({
       <Select 
         value={selectedCompany?.id} 
         onValueChange={onCompanyChange}
-        disabled={disabled || !companies || !Array.isArray(companies) || (Array.isArray(companies) && companies.length === 0)}
+        disabled={disabled || !hasCompanies}
       >
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Selecione uma empresa" />
         </SelectTrigger>
         <SelectContent>
-          {Array.isArray(companies) && companies.map(company => (
+          {hasCompanies && companies.map(company => (
             <SelectItem key={company.id} value={company.id}>
               <div className="flex items-center">
                 {company.logo && (
@@ -101,4 +105,7 @@ export const CompanySelector: React.FC<CompanySelectorProps> = ({
       </Select>
     </div>
   );
-};
+});
+
+// Definir displayName para melhorar depuração
+CompanySelector.displayName = 'CompanySelector';

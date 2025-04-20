@@ -1,8 +1,8 @@
 
 import { useRef } from "react";
 
-// Aumentando para 30 segundos para reduzir drasticamente a frequência de chamadas API
-export const MIN_REQUEST_INTERVAL = 30000; // 30 segundos 
+// Aumentando para 60 segundos para reduzir ainda mais a frequência de chamadas API
+export const MIN_REQUEST_INTERVAL = 60000; // 60 segundos 
 
 export const useCompanyRequest = () => {
   // Timestamp da última requisição
@@ -26,13 +26,19 @@ export const useCompanyRequest = () => {
     
     // Se houver muitas requisições pendentes, bloqueia novas
     if (pendingRequestsRef.current >= MAX_CONCURRENT_REQUESTS) {
-      console.log(`[Company Request] Muitas requisições concorrentes (${pendingRequestsRef.current}). Limitando.`);
+      console.log(`[Company Request] Bloqueando requisição - já existe ${pendingRequestsRef.current} requisição ativa`);
+      return false;
+    }
+    
+    // Se estiver já buscando, não permite nova requisição
+    if (isFetchingRef.current && !forceRefresh) {
+      console.log('[Company Request] Já existe uma requisição em andamento, bloqueando nova requisição');
       return false;
     }
     
     // Se forçar atualização, sempre permite (mas ainda respeita o limite de requisições concorrentes)
     if (forceRefresh) {
-      console.log('[Company Request] Forçando atualização de dados conforme solicitado.');
+      console.log('[Company Request] Forçando atualização de dados conforme solicitado');
       return true;
     }
     
@@ -48,38 +54,44 @@ export const useCompanyRequest = () => {
   };
   
   /**
-   * Marks the beginning of a request
+   * Marca o início de uma requisição
    */
   const startRequest = (): void => {
+    // Se já estiver buscando, não inicia nova requisição
+    if (isFetchingRef.current) {
+      console.log('[Company Request] Já existe uma requisição em andamento, ignorando');
+      return;
+    }
+    
     isFetchingRef.current = true;
     pendingRequestsRef.current += 1;
-    console.log(`[Company Request] Starting request. Total pending: ${pendingRequestsRef.current}`);
+    console.log(`[Company Request] Iniciando requisição. Total pendente: ${pendingRequestsRef.current}`);
   };
   
   /**
-   * Updates the timestamp of the last successful request
+   * Atualiza o timestamp da última requisição bem-sucedida
    */
   const completeRequest = (): void => {
     lastFetchTimeRef.current = Date.now();
     isFetchingRef.current = false;
-    // Decrement pending requests counter
+    // Decrementa o contador de requisições pendentes
     if (pendingRequestsRef.current > 0) {
       pendingRequestsRef.current -= 1;
     }
-    console.log(`[Company Request] Request completed. Total pending: ${pendingRequestsRef.current}`);
+    console.log(`[Company Request] Requisição completada. Total pendente: ${pendingRequestsRef.current}`);
   };
   
   /**
-   * Marks request as finished but without updating the timestamp
-   * (used for failed requests)
+   * Marca requisição como finalizada mas sem atualizar o timestamp
+   * (usado para requisições falhas)
    */
   const resetRequestState = (): void => {
     isFetchingRef.current = false;
-    // Decrement pending requests counter
+    // Decrementa o contador de requisições pendentes
     if (pendingRequestsRef.current > 0) {
       pendingRequestsRef.current -= 1;
     }
-    console.log(`[Company Request] Request reset. Total pending: ${pendingRequestsRef.current}`);
+    console.log(`[Company Request] Estado de requisição resetado. Total pendente: ${pendingRequestsRef.current}`);
   };
   
   return {

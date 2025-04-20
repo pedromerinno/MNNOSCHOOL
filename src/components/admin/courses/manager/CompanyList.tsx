@@ -14,7 +14,7 @@ export const CompanyList: React.FC<CompanyListProps> = ({
   selectedCompanies,
   onToggleCompany
 }) => {
-  // Make sure companies is an array
+  // Garantir que companies é um array
   const companiesList = Array.isArray(companies) ? companies : [];
   
   if (companiesList.length === 0) {

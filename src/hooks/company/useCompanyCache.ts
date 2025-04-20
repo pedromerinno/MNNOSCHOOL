@@ -2,21 +2,21 @@
 import { Company } from "@/types/company";
 import { useCache } from "@/hooks/useCache";
 
-// Increase cache time to reduce API calls
-const CACHE_EXPIRATION_MINUTES = 180; // 3 hours cache
+// Aumento significativo do tempo de cache para 4 horas
+const CACHE_EXPIRATION_MINUTES = 240; // 4 horas de cache
 
 /**
- * Hook for caching company data to reduce API calls
+ * Hook para caching de dados de empresas para reduzir chamadas à API
  */
 export const useCompanyCache = () => {
   const { setCache, getCache, clearCache } = useCache();
   
-  // Cache keys
+  // Chaves de cache
   const USER_COMPANIES_KEY = 'userCompanies';
   const SELECTED_COMPANY_KEY = 'selectedCompany';
   
   /**
-   * Check if the cache has expired
+   * Verifica se o cache expirou
    */
   const isCacheExpired = (): boolean => {
     const companies = getCachedUserCompanies();
@@ -24,7 +24,7 @@ export const useCompanyCache = () => {
   };
   
   /**
-   * Get cached user companies
+   * Obtém empresas do usuário do cache
    */
   const getCachedUserCompanies = (): Company[] | null => {
     return getCache<Company[]>({
@@ -34,7 +34,7 @@ export const useCompanyCache = () => {
   };
   
   /**
-   * Get cached selected company
+   * Obtém empresa selecionada do cache
    */
   const getCachedSelectedCompany = (): Company | null => {
     return getCache<Company>({
@@ -44,11 +44,11 @@ export const useCompanyCache = () => {
   };
   
   /**
-   * Cache user companies
+   * Armazena empresas do usuário em cache
    */
   const cacheUserCompanies = (companies: Company[]): void => {
     if (!companies || companies.length === 0) {
-      console.log("[Company Cache] No companies to cache, skipping");
+      console.log("[Company Cache] Nenhuma empresa para armazenar em cache, pulando");
       return;
     }
     
@@ -59,11 +59,11 @@ export const useCompanyCache = () => {
   };
   
   /**
-   * Cache selected company
+   * Armazena empresa selecionada em cache
    */
   const cacheSelectedCompany = (company: Company): void => {
     if (!company) {
-      console.log("[Company Cache] No company to cache, skipping");
+      console.log("[Company Cache] Nenhuma empresa para armazenar em cache, pulando");
       return;
     }
     
@@ -74,21 +74,21 @@ export const useCompanyCache = () => {
   };
   
   /**
-   * Clear cached user companies
+   * Limpa cache de empresas do usuário
    */
   const clearCachedUserCompanies = (): void => {
     clearCache(USER_COMPANIES_KEY);
   };
   
   /**
-   * Clear cached selected company
+   * Limpa cache da empresa selecionada
    */
   const clearCachedSelectedCompany = (): void => {
     clearCache(SELECTED_COMPANY_KEY);
   };
   
   /**
-   * Clear all company caches
+   * Limpa todos os caches de empresa
    */
   const clearAllCompanyCache = (): void => {
     clearCachedUserCompanies();
@@ -96,7 +96,7 @@ export const useCompanyCache = () => {
   };
   
   /**
-   * Remove a company from cache
+   * Remove uma empresa do cache
    */
   const removeCachedCompany = (companyId: string): void => {
     try {
@@ -106,15 +106,15 @@ export const useCompanyCache = () => {
       const updatedCompanies = companies.filter(company => company.id !== companyId);
       cacheUserCompanies(updatedCompanies);
       
-      // If the removed company is the selected one, clear selected company cache
+      // Se a empresa removida é a selecionada, limpa o cache da empresa selecionada
       const selectedCompany = getCachedSelectedCompany();
       if (selectedCompany && selectedCompany.id === companyId) {
         clearCachedSelectedCompany();
       }
       
-      console.log(`[Company Cache] Removed company ${companyId} from cache`);
+      console.log(`[Company Cache] Empresa ${companyId} removida do cache`);
     } catch (e) {
-      console.error("[Company Cache] Error removing company from cache:", e);
+      console.error("[Company Cache] Erro ao remover empresa do cache:", e);
     }
   };
   

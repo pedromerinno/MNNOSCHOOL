@@ -8,19 +8,11 @@ import { NotificationButton } from "@/components/navigation/NotificationButton";
 import { UserNavigation } from "@/components/navigation/UserNavigation";
 import { AuthButtons } from "@/components/navigation/AuthButtons";
 import { CompanySelector } from "@/components/navigation/CompanySelector";
-import { useEffect } from "react";
-import { useCompanies } from "@/hooks/useCompanies";
+import { memo } from "react";
 
-export const MainNavigationMenu = () => {
+// Usando memo para evitar renderizações desnecessárias do menu
+export const MainNavigationMenu = memo(() => {
   const { user, userProfile } = useAuth();
-  const { userCompanies, selectedCompany } = useCompanies();
-
-  // Log para debug do número de empresas carregadas
-  useEffect(() => {
-    if (userCompanies.length > 0) {
-      console.log(`MainNavigationMenu: ${userCompanies.length} empresas carregadas`);
-    }
-  }, [userCompanies.length]);
 
   // Determinar o rótulo do Admin com base no tipo de usuário
   const getAdminLabel = () => {
@@ -59,4 +51,7 @@ export const MainNavigationMenu = () => {
       </div>
     </header>
   );
-};
+});
+
+// Definir displayName para melhorar depuração
+MainNavigationMenu.displayName = 'MainNavigationMenu';
