@@ -13,7 +13,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -25,6 +24,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { CompanyManagementSection } from "./CompanyManagementSection";
+import { useCompanies } from "@/hooks/useCompanies";
 
 const userProfileSchema = z.object({
   name: z.string().min(2, {
@@ -44,6 +45,7 @@ interface ProfileDialogProps {
 
 export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialogProps) => {
   const { userProfile, updateUserProfile } = useAuth();
+  const { userCompanies } = useCompanies();
   const [avatarPreview, setAvatarPreview] = useState(userProfile.avatar || "https://i.pravatar.cc/150?img=68");
   const { toast } = useToast();
 
@@ -57,22 +59,18 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
 
   const handleProfileUpdate = async (values: UserProfileFormValues) => {
     try {
-      // Update the user profile in Supabase via AuthContext
       await updateUserProfile({
         display_name: values.name,
         avatar: values.avatar || null
       });
       
-      // Call the parent handler
       onSave(values);
       
-      // Show success toast
       toast({
         title: "Perfil atualizado",
         description: "Suas alterações foram salvas com sucesso.",
       });
       
-      // Close the dialog
       setIsOpen(false);
     } catch (error: any) {
       toast({
@@ -107,7 +105,7 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
         </DialogHeader>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleProfileUpdate)} className="space-y-6 py-4">
+          <form onSubmit={form.handleSubmit(handleProfileUpdate)} className="space-y-6">
             <div className="flex flex-col items-center gap-4 mb-4">
               <Avatar className="h-24 w-24">
                 <AvatarImage src={avatarPreview} alt="Avatar preview" />
@@ -115,13 +113,13 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
               </Avatar>
               
               <div className="flex items-center gap-2">
-                <label htmlFor="avatar-upload-home" className="cursor-pointer">
-                  <div className="flex items-center gap-2 text-sm text-merinno-blue hover:underline">
+                <label htmlFor="avatar-upload" className="cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-blue-600 hover:underline">
                     <Upload className="h-4 w-4" />
                     <span>Alterar foto</span>
                   </div>
                   <input
-                    id="avatar-upload-home"
+                    id="avatar-upload"
                     type="file"
                     accept="image/*"
                     className="hidden"
@@ -144,8 +142,12 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
                 </FormItem>
               )}
             />
+
+            <div className="border-t pt-4">
+              <CompanyManagementSection userCompanies={userCompanies} />
+            </div>
             
-            <DialogFooter>
+            <div className="flex justify-end gap-2 pt-4 border-t">
               <Button 
                 type="button" 
                 variant="outline" 
@@ -154,7 +156,7 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
                 Cancelar
               </Button>
               <Button type="submit">Salvar alterações</Button>
-            </DialogFooter>
+            </div>
           </form>
         </Form>
       </DialogContent>

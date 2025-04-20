@@ -1,8 +1,7 @@
-
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { UserProfile } from "@/hooks/useUsers";
+import { UserProfile } from "@/types/user";
 
 export const useCompanyUserManagement = () => {
   /**
@@ -103,7 +102,7 @@ export const useCompanyUserManagement = () => {
         return false;
       }
       
-      toast.success("Usuário removido da empresa com sucesso");
+      toast.success("Removido da empresa com sucesso");
       
       // Trigger company relation change event
       window.dispatchEvent(new Event('company-relation-changed'));
