@@ -24,32 +24,6 @@ export const CompanySelector = () => {
     error
   } = useCompanies();
 
-  // Debug log to check selected company
-  useEffect(() => {
-    if (selectedCompany) {
-      console.log('CompanySelector: Empresa selecionada:', {
-        nome: selectedCompany.nome,
-        frase: selectedCompany.frase_institucional
-      });
-    }
-  }, [selectedCompany]);
-
-  // Listen for company-relation-changed events
-  useEffect(() => {
-    const handleCompanyRelationChange = async () => {
-      if (user?.id) {
-        console.log('CompanySelector: Detected company relation change, refreshing data');
-        await forceGetUserCompanies(user.id);
-      }
-    };
-    
-    window.addEventListener('company-relation-changed', handleCompanyRelationChange);
-    
-    return () => {
-      window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
-    };
-  }, [user, forceGetUserCompanies]);
-
   // Handle manual refresh when connection issues occur
   const handleManualRefresh = async () => {
     if (user?.id) {
@@ -70,12 +44,6 @@ export const CompanySelector = () => {
   const handleCompanyChange = (company) => {
     if (company && user?.id) {
       console.log('CompanySelector: Selecionando empresa:', company.nome);
-      
-      // Certifique-se de que a empresa está completa antes de selecioná-la
-      if (!company.frase_institucional) {
-        console.log('CompanySelector: Frase institucional não encontrada na empresa selecionada');
-      }
-      
       selectCompany(user.id, company);
       toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
     }
