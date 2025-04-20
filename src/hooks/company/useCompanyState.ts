@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Company } from "@/types/company";
 
@@ -10,6 +9,7 @@ export const useCompanyState = () => {
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [fetchCount, setFetchCount] = useState(0);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   
   // Function to increment request counter
   const incrementFetchCount = () => setFetchCount(prevCount => prevCount + 1);
@@ -30,6 +30,8 @@ export const useCompanyState = () => {
     setError,
     fetchCount,
     incrementFetchCount,
-    resetError
+    resetError,
+    isSuperAdmin,
+    setIsSuperAdmin
   };
 };

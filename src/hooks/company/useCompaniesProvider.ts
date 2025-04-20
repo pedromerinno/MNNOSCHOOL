@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanyState } from "./useCompanyState";
 import { useCompanyFetching } from "./useCompanyFetching";
@@ -10,7 +9,6 @@ import { supabase } from "@/integrations/supabase/client";
 export const useCompaniesProvider = () => {
   const { user } = useAuth();
   const [hasCheckedUserRole, setHasCheckedUserRole] = useState(false);
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   
   const {
     isLoading,
@@ -19,6 +17,8 @@ export const useCompaniesProvider = () => {
     selectedCompany,
     error,
     fetchCount,
+    isSuperAdmin,
+    setIsSuperAdmin,
     ...stateActions
   } = useCompanyState();
   
@@ -69,7 +69,7 @@ export const useCompaniesProvider = () => {
     };
     
     checkUserRole();
-  }, [user?.id, hasCheckedUserRole]);
+  }, [user?.id, hasCheckedUserRole, setIsSuperAdmin]);
 
   // Global data loading - load user companies only when user is logged in
   useEffect(() => {
