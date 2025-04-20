@@ -12,10 +12,9 @@ import { Users, Building, Settings, Book, Image } from 'lucide-react';
 import { CourseManagement } from '@/components/admin/CourseManagement';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
-// Helper para cor principal (azul padrão caso não tenha)
-const ADMIN_MAIN_COLOR = "#1EAEDB";
-const getLighterAdminColor = (opacity = 0.1) =>
-  `rgba(30, 174, 219, ${opacity})`; // azul #1EAEDB
+// Novo esquema de cores para contraste e estilo sem bordas para a aba ativa
+const ADMIN_PRIMARY_COLOR = "#9b87f5";  // purple principal para active tab
+const ADMIN_ACTIVE_BG = "#1A1F2C";       // fundo escuro para aba ativa
 
 const AdminPage = () => {
   const { userProfile, loading: authLoading } = useAuth();
@@ -43,111 +42,100 @@ const AdminPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-6 py-12">
-        {/* Novo título com visual idêntico às outras páginas */}
+        {/* Título com estilo uniforme das páginas integração, documentos e comunidade */}
         <div className="flex items-center gap-4 mb-12">
-          <h1 className="text-3xl md:text-4xl font-bold dark:text-white text-gray-900 tracking-tight">
+          <h1 className="text-4xl font-extrabold dark:text-white text-black tracking-tight">
             Painel Administrativo
           </h1>
-          {/* Espaço para badge ou complemento futuro */}
         </div>
 
-        <Card className="mb-8 shadow-sm border border-gray-100 dark:border-gray-800">
-          <CardContent className="p-0">
+        <Card className="mb-8 shadow-md border border-gray-100 dark:border-gray-800">
+          <CardContent className="p-8"> {/* Aumentado padding para 8 */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              {/* Novo estilo das abas, igual da Comunidade */}
-              <div className="border-b border-gray-100 dark:border-gray-800 py-2 px-2 bg-transparent">
+              {/* Novo estilo abas similar ao da comunidade */}
+              <div className="border-b border-gray-100 dark:border-gray-800 py-3 px-2 bg-transparent">
                 <TabsList className="flex gap-2 rounded-2xl p-1.5 bg-transparent dark:bg-transparent w-full justify-start">
                   <TabsTrigger 
                     value="users"
-                    className={`flex items-center gap-2 rounded-xl py-3 px-6 transition-colors border border-transparent text-gray-600 dark:text-gray-300
-                      ${activeTab === "users" 
-                        ? "bg-[rgba(30,174,219,0.1)] text-[#1EAEDB] border-[#1EAEDB]"
-                        : "hover:bg-[rgba(30,174,219,0.05)]"
+                    className={`flex items-center gap-2 rounded-xl py-4 px-8 transition-colors text-lg
+                      ${activeTab === "users"
+                        ? "bg-[#1A1F2C] text-[#9b87f5] shadow-md" 
+                        : "text-gray-500 dark:text-gray-400 hover:text-[#9b87f5]"
                       }
                     `}
                     style={{
-                      backgroundColor: activeTab === "users" ? getLighterAdminColor(0.15) : undefined,
-                      borderColor: activeTab === "users" ? ADMIN_MAIN_COLOR : "transparent",
-                      color: activeTab === "users" ? ADMIN_MAIN_COLOR : undefined
+                      border: "none",
                     }}
                   >
-                    <Users className="h-4 w-4 mr-2" />
+                    <Users className="h-5 w-5" />
                     Usuários
                   </TabsTrigger>
                   <TabsTrigger 
                     value="companies"
-                    className={`flex items-center gap-2 rounded-xl py-3 px-6 transition-colors border border-transparent text-gray-600 dark:text-gray-300
-                      ${activeTab === "companies" 
-                        ? "bg-[rgba(30,174,219,0.1)] text-[#1EAEDB] border-[#1EAEDB]"
-                        : "hover:bg-[rgba(30,174,219,0.05)]"
+                    className={`flex items-center gap-2 rounded-xl py-4 px-8 transition-colors text-lg
+                      ${activeTab === "companies"
+                        ? "bg-[#1A1F2C] text-[#9b87f5] shadow-md" 
+                        : "text-gray-500 dark:text-gray-400 hover:text-[#9b87f5]"
                       }
                     `}
                     style={{
-                      backgroundColor: activeTab === "companies" ? getLighterAdminColor(0.15) : undefined,
-                      borderColor: activeTab === "companies" ? ADMIN_MAIN_COLOR : "transparent",
-                      color: activeTab === "companies" ? ADMIN_MAIN_COLOR : undefined
+                      border: "none",
                     }}
                   >
-                    <Building className="h-4 w-4 mr-2" />
+                    <Building className="h-5 w-5" />
                     Empresas
                   </TabsTrigger>
                   <TabsTrigger 
                     value="allcourses"
-                    className={`flex items-center gap-2 rounded-xl py-3 px-6 transition-colors border border-transparent text-gray-600 dark:text-gray-300
-                      ${activeTab === "allcourses" 
-                        ? "bg-[rgba(30,174,219,0.1)] text-[#1EAEDB] border-[#1EAEDB]"
-                        : "hover:bg-[rgba(30,174,219,0.05)]"
+                    className={`flex items-center gap-2 rounded-xl py-4 px-8 transition-colors text-lg
+                      ${activeTab === "allcourses"
+                        ? "bg-[#1A1F2C] text-[#9b87f5] shadow-md" 
+                        : "text-gray-500 dark:text-gray-400 hover:text-[#9b87f5]"
                       }
                     `}
                     style={{
-                      backgroundColor: activeTab === "allcourses" ? getLighterAdminColor(0.15) : undefined,
-                      borderColor: activeTab === "allcourses" ? ADMIN_MAIN_COLOR : "transparent",
-                      color: activeTab === "allcourses" ? ADMIN_MAIN_COLOR : undefined
+                      border: "none",
                     }}
                   >
-                    <Book className="h-4 w-4 mr-2" />
+                    <Book className="h-5 w-5" />
                     Todos os Cursos
                   </TabsTrigger>
                   {userProfile?.super_admin && (
                     <TabsTrigger
                       value="background"
-                      className={`flex items-center gap-2 rounded-xl py-3 px-6 transition-colors border border-transparent text-gray-600 dark:text-gray-300
-                        ${activeTab === "background" 
-                          ? "bg-[rgba(30,174,219,0.1)] text-[#1EAEDB] border-[#1EAEDB]"
-                          : "hover:bg-[rgba(30,174,219,0.05)]"
+                      className={`flex items-center gap-2 rounded-xl py-4 px-8 transition-colors text-lg
+                        ${activeTab === "background"
+                          ? "bg-[#1A1F2C] text-[#9b87f5] shadow-md" 
+                          : "text-gray-500 dark:text-gray-400 hover:text-[#9b87f5]"
                         }
                       `}
                       style={{
-                        backgroundColor: activeTab === "background" ? getLighterAdminColor(0.15) : undefined,
-                        borderColor: activeTab === "background" ? ADMIN_MAIN_COLOR : "transparent",
-                        color: activeTab === "background" ? ADMIN_MAIN_COLOR : undefined
+                        border: "none",
                       }}
                     >
-                      <Image className="h-4 w-4 mr-2" />
+                      <Image className="h-5 w-5" />
                       Background
                     </TabsTrigger>
                   )}
                   <TabsTrigger 
                     value="settings"
-                    className={`flex items-center gap-2 rounded-xl py-3 px-6 transition-colors border border-transparent text-gray-600 dark:text-gray-300
-                      ${activeTab === "settings" 
-                        ? "bg-[rgba(30,174,219,0.1)] text-[#1EAEDB] border-[#1EAEDB]"
-                        : "hover:bg-[rgba(30,174,219,0.05)]"
+                    className={`flex items-center gap-2 rounded-xl py-4 px-8 transition-colors text-lg
+                      ${activeTab === "settings"
+                        ? "bg-[#1A1F2C] text-[#9b87f5] shadow-md" 
+                        : "text-gray-500 dark:text-gray-400 hover:text-[#9b87f5]"
                       }
                     `}
                     style={{
-                      backgroundColor: activeTab === "settings" ? getLighterAdminColor(0.15) : undefined,
-                      borderColor: activeTab === "settings" ? ADMIN_MAIN_COLOR : "transparent",
-                      color: activeTab === "settings" ? ADMIN_MAIN_COLOR : undefined
+                      border: "none",
                     }}
                   >
-                    <Settings className="h-4 w-4 mr-2" />
+                    <Settings className="h-5 w-5" />
                     Settings
                   </TabsTrigger>
                 </TabsList>
               </div>
               
-              <div className="p-6">
+              <div className="p-4">
                 <ErrorBoundary>
                   <TabsContent value="users" className="m-0">
                     <UserManagement />
