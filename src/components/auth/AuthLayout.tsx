@@ -66,11 +66,6 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left side - Login Form */}
-      <div className="w-full max-w-2xl mx-auto px-16 py-12 flex items-center justify-center bg-white">
-        {children}
-      </div>
-      
       {/* Right side - Background Media */}
       <div className="flex-1 relative overflow-hidden hidden lg:block">
         {isLoading ? (
@@ -108,6 +103,12 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
           </div>
         )}
       </div>
+
+      {/* Right side - Login Form */}
+      <div className="w-full max-w-[40rem] px-20 py-12 flex items-center justify-center bg-white">
+        {children}
+      </div>
     </div>
   );
 };
+
