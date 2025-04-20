@@ -1,10 +1,8 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Company } from "@/types/company";
-import { toast } from "sonner";
 import { retryOperation } from "../utils/retryUtils";
 import { UseCompanyFetchProps } from "../types/fetchTypes";
-import { checkIfUserIsAdmin, checkIfUserIsSuperAdmin } from "@/utils/adminUtils";
+import { checkIfUserIsAdmin, checkIfUserIsSuperAdmin } from '@/utils/adminUtils';
 
 // Cache expiration time in ms (30 minutes)
 const CACHE_EXPIRATION = 30 * 60 * 1000;
@@ -15,6 +13,7 @@ export const useUserCompanies = ({
   setSelectedCompany,
   setError
 }: UseCompanyFetchProps) => {
+  
   /**
    * Check if the companies cache is valid
    */
@@ -66,85 +65,17 @@ export const useUserCompanies = ({
       if (signal?.aborted) {
         throw new DOMException("Aborted", "AbortError");
       }
-
-      const isAdmin = await checkIfUserIsAdmin(userId);
-      const isSuperAdmin = await checkIfUserIsSuperAdmin(userId);
       
-      let companies: Company[] = [];
-      
-      if (isSuperAdmin) {
-        // Super admin vê todas as empresas
-        const { data, error } = await supabase
-          .from('empresas')
-          .select('*')
-          .order('nome');
-          
-        if (error) {
-          throw error;
-        }
+      // Utilize a nova função do banco de dados para obter as empresas do usuário
+      const { data, error } = await supabase
+        .rpc('get_user_companies_for_admin', { current_user_id: userId });
         
-        companies = data as Company[];
-      } else if (isAdmin) {
-        // Admin vê as empresas a que pertence
-        const { data: userCompanyRelations, error: relationsError } = await supabase
-          .from('user_empresa')
-          .select('empresa_id')
-          .eq('user_id', userId);
-        
-        if (relationsError) {
-          throw relationsError;
-        }
-        
-        if (userCompanyRelations && userCompanyRelations.length > 0) {
-          const companyIds = userCompanyRelations.map(r => r.empresa_id);
-          
-          const { data: adminCompanies, error: companiesError } = await supabase
-            .from('empresas')
-            .select('*')
-            .in('id', companyIds)
-            .order('nome');
-          
-          if (companiesError) {
-            throw companiesError;
-          }
-          
-          companies = adminCompanies as Company[];
-        }
-      } else {
-        // Usuário normal vê apenas suas empresas
-        const { data, error } = await supabase
-          .from('user_empresa')
-          .select('empresa_id')
-          .eq('user_id', userId);
-
-        if (error) {
-          throw error;
-        }
-
-        if (!data || data.length === 0) {
-          console.log("No companies found for user:", userId);
-          setUserCompanies([]);
-          setSelectedCompany(null);
-          localStorage.removeItem('userCompanies');
-          setIsLoading(false);
-          return [];
-        }
-
-        const companyIds = data.map(r => r.empresa_id);
-        console.log(`Found ${companyIds.length} company relations`);
-
-        const { data: companiesData, error: companiesError } = await supabase
-          .from('empresas')
-          .select('*')
-          .in('id', companyIds)
-          .order('nome');
-
-        if (companiesError) {
-          throw companiesError;
-        }
-
-        companies = companiesData as Company[];
+      if (error) {
+        throw error;
       }
+
+      const companies = data as Company[] || [];
+      console.log(`Found ${companies.length} companies for user`);
 
       if (companies.length > 0) {
         setUserCompanies(companies);
@@ -158,6 +89,7 @@ export const useUserCompanies = ({
 
       setIsLoading(false);
       return companies;
+
     } catch (error) {
       console.error("Error in getUserCompanies:", error);
       setError(error instanceof Error ? error : new Error("Failed to fetch companies"));

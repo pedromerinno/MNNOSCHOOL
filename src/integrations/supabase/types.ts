@@ -756,6 +756,23 @@ export type Database = {
           video_institucional: string | null
         }[]
       }
+      get_user_companies_for_admin: {
+        Args: { current_user_id: string }
+        Returns: {
+          cor_principal: string | null
+          created_at: string
+          descricao_video: string | null
+          frase_institucional: string | null
+          historia: string | null
+          id: string
+          logo: string | null
+          missao: string | null
+          nome: string
+          updated_at: string
+          valores: string | null
+          video_institucional: string | null
+        }[]
+      }
       is_admin: {
         Args: Record<PropertyKey, never> | { user_id: string }
         Returns: boolean
@@ -773,6 +790,10 @@ export type Database = {
         Returns: boolean
       }
       is_user_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_user_admin_or_super_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
