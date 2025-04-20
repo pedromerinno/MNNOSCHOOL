@@ -81,9 +81,29 @@ export const useSettingsManagement = () => {
     try {
       console.log("Saving integration info for company:", selectedCompany.nome);
       
+      // Process valores field if it's a string but should be JSON
+      let processedData = { ...formData };
+      
+      // Handle the valores field correctly - ensure it's saved as a valid JSON string
+      if (processedData.valores) {
+        if (typeof processedData.valores === 'string') {
+          try {
+            // Try to parse it to validate it's proper JSON
+            JSON.parse(processedData.valores);
+            // If no error, it's already valid JSON string
+          } catch (e) {
+            // If it's not valid JSON, convert to JSON string
+            processedData.valores = JSON.stringify(processedData.valores);
+          }
+        } else if (Array.isArray(processedData.valores)) {
+          // If it's an array, stringify it
+          processedData.valores = JSON.stringify(processedData.valores);
+        }
+      }
+      
       const { error } = await supabase
         .from('empresas')
-        .update(formData)
+        .update(processedData)
         .eq('id', selectedCompany.id);
         
       if (error) throw error;
@@ -91,7 +111,7 @@ export const useSettingsManagement = () => {
       // Update the selected company locally
       const updatedCompany = {
         ...selectedCompany,
-        ...formData
+        ...processedData
       };
       
       setSelectedCompany(updatedCompany);
