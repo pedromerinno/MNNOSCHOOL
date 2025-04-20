@@ -1,6 +1,7 @@
 
 import { useCallback } from "react";
 import { Company } from "@/types/company";
+import { toast } from "sonner";
 
 interface UseCompanySelectionProps {
   setSelectedCompany: (company: Company | null) => void;
@@ -15,19 +16,22 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
       
       console.log(`Company selection being persisted for ${company.nome} (${company.id})`);
       
-      // Limpar quaisquer dados anteriores antes de mudar a empresa
+      // First clear any existing data before changing company
       window.dispatchEvent(new Event('company-changing'));
       
-      // Pequeno delay para garantir que a limpeza ocorra primeiro
+      // Add a short delay to ensure cleanup happens first
       setTimeout(() => {
-        // Dispatch primary event for general app updates
+        // Then update the app state
+        setSelectedCompany(company);
+        
+        // Dispatch primary event for general app updates with the company in the payload
         window.dispatchEvent(new CustomEvent('company-selected', { 
           detail: { company } 
         }));
         
-        // Dispatch specific content reload events - Aumentar o delay para garantir que o evento principal seja processado primeiro
+        // Increased delay for content reload events to ensure the company selection is processed
         setTimeout(() => {
-          // Dispatch specific content reload events
+          // Force reload all content for the new company
           window.dispatchEvent(new CustomEvent('reload-company-videos', {
             detail: { companyId: company.id }
           }));
@@ -44,13 +48,20 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
             detail: { companyId: company.id }
           }));
           
+          toast.success(`Empresa ${company.nome} selecionada`, {
+            description: "Conteúdo atualizado para a empresa selecionada"
+          });
+          
           console.log(`Content reload events dispatched for ${company.nome}`);
-        }, 200); // Aumentamos de 100ms para 200ms
-      }, 100);
+        }, 300); // Increased from 200ms to 300ms
+      }, 200); // Increased from 100ms to 200ms
     } catch (e) {
       console.error('Failed to persist company selection', e);
+      toast.error("Erro ao selecionar empresa", {
+        description: "Tente novamente em alguns instantes"
+      });
     }
-  }, []);
+  }, [setSelectedCompany]);
 
   const getStoredCompanyId = useCallback((): string | null => {
     return localStorage.getItem('selectedCompanyId');
@@ -76,10 +87,9 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
     
     console.log(`Selecting company: ${company.nome} (${company.id})`);
     
-    // IMPORTANT: Always update state AND persist selection for every selection
-    setSelectedCompany(company);
+    // IMPORTANT: Persist selection first which will handle state updates and events
     persistCompanySelection(company);
-  }, [setSelectedCompany, persistCompanySelection]);
+  }, [persistCompanySelection]);
 
   return {
     selectCompany,

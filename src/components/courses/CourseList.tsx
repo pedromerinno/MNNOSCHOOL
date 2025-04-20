@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useCompanies } from '@/hooks/useCompanies';
 import { useToast } from '@/hooks/use-toast';
 import { AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 export type Course = {
   id: string;
@@ -28,7 +29,7 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const { selectedCompany } = useCompanies();
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
 
   // Function to fetch courses based on company and filter
   const fetchCourses = useCallback(async () => {
@@ -40,7 +41,7 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
       }
       
       setLoading(true);
-      console.log(`CourseList: Fetching courses for ${selectedCompany.nome} with filter: ${filter}`);
+      console.log(`CourseList: Fetching courses for ${selectedCompany.nome} (${selectedCompany.id}) with filter: ${filter}`);
       
       // Get user ID
       const { data: { user } } = await supabase.auth.getUser();
@@ -62,14 +63,14 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
       
       // Se não há cursos para esta empresa
       if (!companyAccess || companyAccess.length === 0) {
-        console.log("No courses found for this company");
+        console.log(`No courses found for company ${selectedCompany.nome}`);
         setCourses([]);
         setLoading(false);
         return;
       }
       
       const accessibleCourseIds = companyAccess.map(access => access.course_id);
-      console.log(`Found ${accessibleCourseIds.length} course IDs for company`);
+      console.log(`Found ${accessibleCourseIds.length} course IDs for company ${selectedCompany.nome}`);
       
       // Buscar os cursos com base nos IDs
       const { data: coursesData, error: coursesError } = await supabase
@@ -82,7 +83,7 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
       }
       
       let availableCourses = coursesData || [];
-      console.log(`Loaded ${availableCourses.length} courses`);
+      console.log(`Loaded ${availableCourses.length} courses for ${selectedCompany.nome}`);
       
       // Get user's course progress
       const { data: progressData, error: progressError } = await supabase
@@ -122,35 +123,27 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
         );
       }
       
-      console.log(`Displaying ${finalCourses.length} courses after filtering`);
+      console.log(`Displaying ${finalCourses.length} courses for ${selectedCompany.nome} after filtering (${filter})`);
       setCourses(finalCourses);
     } catch (error: any) {
       console.error('Error fetching courses:', error);
-      toast({
+      uiToast({
         title: 'Erro ao carregar cursos',
         description: error.message || 'Ocorreu um erro ao buscar os cursos',
         variant: 'destructive',
       });
+      setCourses([]);
     } finally {
       setLoading(false);
     }
-  }, [selectedCompany?.id, filter, toast]);
+  }, [selectedCompany?.id, selectedCompany?.nome, filter, uiToast]);
 
-  // Fetch courses when company or filter changes
-  useEffect(() => {
-    if (selectedCompany?.id) {
-      fetchCourses();
-    } else {
-      setCourses([]);
-      setLoading(false);
-    }
-  }, [selectedCompany?.id, filter, fetchCourses]);
-  
-  // Limpar os cursos quando a empresa está mudando
+  // Clear courses when company is changing
   useEffect(() => {
     const handleCompanyChanging = () => {
       console.log("CourseList: Company is changing, cleaning up courses");
       setCourses([]);
+      setLoading(true);
     };
     
     window.addEventListener('company-changing', handleCompanyChanging);
@@ -159,14 +152,25 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
     };
   }, []);
   
+  // Fetch courses when company or filter changes
+  useEffect(() => {
+    if (selectedCompany?.id) {
+      console.log(`CourseList: Initial load for ${selectedCompany.nome}`);
+      fetchCourses();
+    } else {
+      setCourses([]);
+      setLoading(false);
+    }
+  }, [selectedCompany?.id, filter, fetchCourses]);
+  
   // Listen for company selection and course reload events
   useEffect(() => {
     const handleCompanySelected = (event: CustomEvent) => {
       const company = event.detail?.company;
       if (company) {
         console.log(`CourseList: Company selection changed to ${company.nome}, reloading courses`);
-        // Pequeno delay para garantir que o estado foi atualizado
-        setTimeout(fetchCourses, 150);
+        // Delay to ensure state is updated
+        setTimeout(fetchCourses, 350);
       }
     };
     
@@ -177,8 +181,8 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
       console.log(`CourseList: Reload courses event received for company: ${eventCompanyId}`);
       
       if (eventCompanyId && eventCompanyId === selectedCompany.id) {
-        console.log("CourseList: Reloading courses for current company");
-        setTimeout(fetchCourses, 150);
+        console.log(`CourseList: Reloading courses for ${selectedCompany.nome}`);
+        setTimeout(fetchCourses, 350);
       }
     };
     

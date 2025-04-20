@@ -45,14 +45,14 @@ export const CompanySelector = () => {
     if (company && user?.id) {
       console.log('CompanySelector: Mudando para empresa:', company.nome);
       
-      // Force clean up any previous company state
+      // Trigger company change event before selection
+      // This ensures all components clean up their state before new data loads
       window.dispatchEvent(new Event('company-changing'));
       
-      // Short delay to allow cleanup
+      // Small delay to allow cleanup to process
       setTimeout(() => {
         selectCompany(user.id, company);
-        toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
-      }, 50);
+      }, 100);
     }
   };
 

@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BriefcaseBusiness } from "lucide-react";
 
@@ -15,52 +15,55 @@ interface UserRoleProps {
 }
 
 export const UserRole: React.FC<UserRoleProps> = ({ role, companyColor }) => {
-  // Log para debug quando o componente recebe novos props
+  const [currentRole, setCurrentRole] = useState(role);
+  
+  // Update currentRole when props change
   useEffect(() => {
-    console.log("UserRole component rendered with role:", role.title);
-  }, [role.title]);
+    setCurrentRole(role);
+    console.log("UserRole component updated with role:", role.title);
+  }, [role]);
   
   return (
     <Card className="transition-all duration-200 hover:shadow-md">
       <CardHeader className="flex flex-row items-center gap-4">
         <BriefcaseBusiness style={{ color: companyColor }} className="h-8 w-8" />
         <div>
-          <CardTitle className="text-lg">{role.title}</CardTitle>
+          <CardTitle className="text-lg">{currentRole.title}</CardTitle>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {role.description && (
+        {currentRole.description && (
           <div>
             <h4 className="font-medium mb-2">Descrição do Cargo</h4>
             <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line leading-relaxed">
-              {role.description}
+              {currentRole.description}
             </p>
           </div>
         )}
 
-        {role.responsibilities && (
+        {currentRole.responsibilities && (
           <div>
             <h4 className="font-medium mb-2">Responsabilidades</h4>
             <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line leading-relaxed">
-              {role.responsibilities}
+              {currentRole.responsibilities}
             </p>
           </div>
         )}
 
-        {role.requirements && (
+        {currentRole.requirements && (
           <div>
             <h4 className="font-medium mb-2">Requisitos</h4>
             <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line leading-relaxed">
-              {role.requirements}
+              {currentRole.requirements}
             </p>
           </div>
         )}
 
-        {role.expectations && (
+        {currentRole.expectations && (
           <div>
             <h4 className="font-medium mb-2">Expectativas</h4>
             <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line leading-relaxed">
-              {role.expectations}
+              {currentRole.expectations}
             </p>
           </div>
         )}

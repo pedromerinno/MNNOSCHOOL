@@ -73,18 +73,16 @@ export const useCompaniesProvider = () => {
               const matchingCompany = companies.find(c => c.id === storedCompanyId);
               if (matchingCompany) {
                 console.log(`Found stored company selection: ${matchingCompany.nome}`);
-                companyState.setSelectedCompany(matchingCompany);
+                // Use persistCompanySelection directly to ensure event dispatch
                 persistCompanySelection(matchingCompany);
               } else {
                 // If stored company not found, select first
                 console.log(`Stored company not found, selecting first: ${companies[0].nome}`);
-                companyState.setSelectedCompany(companies[0]);
                 persistCompanySelection(companies[0]);
               }
             } else {
               // No stored selection, select first
               console.log(`No stored company, selecting first: ${companies[0].nome}`);
-              companyState.setSelectedCompany(companies[0]);
               persistCompanySelection(companies[0]);
             }
           }
@@ -101,16 +99,15 @@ export const useCompaniesProvider = () => {
     };
     
     initialLoad();
-  }, [user?.id, getUserCompanies, forceGetUserCompanies, companyState.initialFetchDone, companyState.setSelectedCompany, persistCompanySelection]);
+  }, [user?.id, getUserCompanies, forceGetUserCompanies, companyState.initialFetchDone, persistCompanySelection]);
   
   // Ensure we have a company selected when userCompanies changes
   useEffect(() => {
     if (companyState.userCompanies.length > 0 && !companyState.selectedCompany) {
       console.log('No company selected, selecting first company:', companyState.userCompanies[0].nome);
-      companyState.setSelectedCompany(companyState.userCompanies[0]);
       persistCompanySelection(companyState.userCompanies[0]);
     }
-  }, [companyState.userCompanies, companyState.selectedCompany, companyState.setSelectedCompany, persistCompanySelection]);
+  }, [companyState.userCompanies, companyState.selectedCompany, persistCompanySelection]);
   
   return {
     ...companyState,

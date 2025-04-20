@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Info, List, Video } from "lucide-react";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -8,6 +8,7 @@ import { VideoPlayer } from './VideoPlayer';
 import { VideoList } from './VideoList';
 import { NoVideosAvailable } from './NoVideosAvailable';
 import { CompanyVideo } from './types';
+import { toast } from "sonner";
 
 interface VideoPlaylistProps {
   companyId?: string;
@@ -32,8 +33,12 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
   const activeCompanyId = companyId || selectedCompany?.id;
 
   // Forced refetch function
-  const fetchVideos = async () => {
-    if (!activeCompanyId) return;
+  const fetchVideos = useCallback(async () => {
+    if (!activeCompanyId) {
+      setVideos([]);
+      setIsLoading(false);
+      return;
+    }
     
     setIsLoading(true);
     console.log(`VideoPlaylist: Loading videos for company ID: ${activeCompanyId}`);
@@ -47,7 +52,7 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
         
       if (error) throw error;
       
-      console.log(`VideoPlaylist: Loaded ${data?.length || 0} videos for company`);
+      console.log(`VideoPlaylist: Loaded ${data?.length || 0} videos for company ${activeCompanyId}`);
       setVideos(data || []);
       
       // Determine which video to show first
@@ -62,65 +67,82 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
       } else {
         setCurrentVideo('');
         setCurrentDescription('');
+        setSelectedVideoIndex(null);
       }
     } catch (error) {
       console.error("Error fetching company videos:", error);
       setVideos([]);
+      toast.error("Erro ao carregar vídeos", {
+        description: "Tente selecionar a empresa novamente"
+      });
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [activeCompanyId, mainVideo, mainVideoDescription]);
+  
+  // Clear videos when company is changing
+  useEffect(() => {
+    const handleCompanyChanging = () => {
+      console.log("VideoPlaylist: Company is changing, cleaning up videos");
+      setVideos([]);
+      setCurrentVideo('');
+      setCurrentDescription('');
+      setSelectedVideoIndex(null);
+    };
+    
+    window.addEventListener('company-changing', handleCompanyChanging);
+    return () => {
+      window.removeEventListener('company-changing', handleCompanyChanging);
+    };
+  }, []);
   
   // Load videos when company changes
   useEffect(() => {
     if (activeCompanyId) {
+      console.log(`VideoPlaylist: Company ID changed to ${activeCompanyId}, loading videos`);
       fetchVideos();
+    } else {
+      console.log("VideoPlaylist: No active company ID, clearing videos");
+      setVideos([]);
+      setCurrentVideo('');
+      setCurrentDescription('');
     }
-  }, [activeCompanyId, mainVideo, mainVideoDescription]);
+  }, [activeCompanyId, fetchVideos]);
 
-  // Listen for company selection change and specific reload events
+  // Listen for company selection and specific reload events
   useEffect(() => {
     const handleCompanySelected = (event: CustomEvent) => {
       const company = event.detail?.company;
       if (company) {
         console.log(`VideoPlaylist: Company selection changed to ${company.nome}, reloading videos`);
-        // Pequeno delay para garantir que o estado foi atualizado
-        setTimeout(fetchVideos, 100);
-      } else {
-        console.log("VideoPlaylist: Company selection changed but no company detail provided");
-        fetchVideos();
+        // Delay to ensure state is updated
+        setTimeout(() => {
+          if (company.id === activeCompanyId) {
+            fetchVideos();
+          }
+        }, 300);
       }
     };
     
     // Listen for specific video reload event
     const handleReloadVideos = (event: CustomEvent) => {
       const eventCompanyId = event.detail?.companyId;
-      console.log(`VideoPlaylist: Reload videos event with companyId: ${eventCompanyId}`);
+      console.log(`VideoPlaylist: Reload videos event received for company: ${eventCompanyId}`);
       
       if (eventCompanyId && eventCompanyId === activeCompanyId) {
         console.log("VideoPlaylist: Reloading videos for current company");
-        setTimeout(fetchVideos, 100);
+        setTimeout(fetchVideos, 300);
       }
-    };
-    
-    // Limpar vídeos ao trocar de empresa
-    const handleCompanyChanging = () => {
-      console.log("VideoPlaylist: Company is changing, cleaning up videos");
-      setVideos([]);
-      setCurrentVideo('');
-      setCurrentDescription('');
     };
     
     window.addEventListener('company-selected', handleCompanySelected as EventListener);
     window.addEventListener('reload-company-videos', handleReloadVideos as EventListener);
-    window.addEventListener('company-changing', handleCompanyChanging);
     
     return () => {
       window.removeEventListener('company-selected', handleCompanySelected as EventListener);
       window.removeEventListener('reload-company-videos', handleReloadVideos as EventListener);
-      window.removeEventListener('company-changing', handleCompanyChanging);
     };
-  }, [activeCompanyId]);
+  }, [activeCompanyId, fetchVideos]);
 
   const handleSelectVideo = (video: CompanyVideo, index: number) => {
     setCurrentVideo(video.video_url);
