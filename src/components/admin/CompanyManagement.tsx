@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { 
   Dialog,
@@ -10,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { CompanyTable } from './CompanyTable';
 import { CompanyForm } from './CompanyForm';
-import { useCompanies } from '@/hooks/useCompanies';
+import { useCompanies } from '@/hooks/company';
 import { Company } from '@/types/company';
 import { UserCompanyManager } from './UserCompanyManager';
 import { useAuth } from '@/contexts/AuthContext';
