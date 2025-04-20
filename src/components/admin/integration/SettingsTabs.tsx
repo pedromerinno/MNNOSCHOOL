@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building, Video, FileText, Users, Key, Book } from "lucide-react";
@@ -23,12 +22,10 @@ export const SettingsTabs: React.FC<SettingsTabsProps> = ({
   activeTab,
   setActiveTab,
   handleFormSubmit,
-  isSaving,
+  isSaving
 }) => {
-  // When company changes, force re-render of all tabs
   useEffect(() => {
     console.log(`SettingsTabs: Company changed to ${company.nome}, ID: ${company.id}`);
-    // This effect will ensure all child components re-render with the new company
   }, [company.id]);
 
   return (
@@ -95,6 +92,13 @@ export const SettingsTabs: React.FC<SettingsTabsProps> = ({
             <Book className="h-4 w-4 mr-2" />
             Cursos
           </TabsTrigger>
+          <TabsTrigger 
+            value="background" 
+            className="flex items-center py-3 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500"
+          >
+            <Video className="h-4 w-4 mr-2" />
+            Background Login
+          </TabsTrigger>
         </TabsList>
       </div>
       
@@ -121,6 +125,9 @@ export const SettingsTabs: React.FC<SettingsTabsProps> = ({
         </TabsContent>
         <TabsContent value="courses" className="m-0">
           <CompanyCourseManagement key={`courses-${company.id}`} company={company} />
+        </TabsContent>
+        <TabsContent value="background" className="m-0">
+          <BackgroundVideoManager />
         </TabsContent>
       </div>
     </Tabs>

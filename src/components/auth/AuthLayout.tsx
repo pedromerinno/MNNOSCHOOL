@@ -40,3 +40,4 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
     </div>
   );
 };
+
