@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import OnboardingLayout from "@/components/onboarding/OnboardingLayout";
@@ -7,26 +6,12 @@ import PhotoStep from "@/components/onboarding/steps/PhotoStep";
 import CompanyStep from "@/components/onboarding/steps/CompanyStep";
 import InterestsStep from "@/components/onboarding/steps/InterestsStep";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
-import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
 
 const Onboarding = () => {
-  const { signOut } = useAuth();
-  
   return (
     <OnboardingProvider>
       <OnboardingLayout>
         <div className="w-full max-w-xl mx-auto relative">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="absolute -top-12 right-0 text-gray-500 hover:text-gray-900 transition-colors text-sm"
-            onClick={signOut}
-          >
-            <LogOut className="h-4 w-4 mr-2" /> 
-            Sair
-          </Button>
-          
           <OnboardingContent />
         </div>
       </OnboardingLayout>
