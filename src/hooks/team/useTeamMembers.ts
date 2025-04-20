@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -14,10 +15,10 @@ export const useTeamMembers = () => {
   const { selectedCompany } = useCompanies();
 
   const getCachedMembers = () => {
-    const cached = localStorage.getItem(CACHE_KEY);
-    if (!cached) return null;
-
     try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (!cached) return null;
+
       const { data, timestamp, companyId } = JSON.parse(cached);
       const now = Date.now();
       
@@ -36,13 +37,27 @@ export const useTeamMembers = () => {
 
   const cacheMembers = (data: UserProfile[]) => {
     try {
+      // Only cache essential data, limiting the size
+      const minimalData = data.map(member => ({
+        id: member.id,
+        display_name: member.display_name,
+        email: member.email,
+        is_admin: member.is_admin,
+        cargo_id: member.cargo_id,
+        avatar: member.avatar
+      }));
+
+      // Limit the number of entries to cache if there are too many
+      const dataToCache = minimalData.length > 50 ? minimalData.slice(0, 50) : minimalData;
+      
       localStorage.setItem(CACHE_KEY, JSON.stringify({
-        data,
+        data: dataToCache,
         timestamp: Date.now(),
         companyId: selectedCompany?.id
       }));
     } catch (error) {
       console.error('Erro ao cachear membros:', error);
+      // Don't throw, just log - we can still function without caching
     }
   };
 
@@ -65,6 +80,7 @@ export const useTeamMembers = () => {
           setIsLoading(true);
         }
 
+        // Load data in batches to avoid memory issues
         const { data: userCompanyRelations, error: relationsError } = await supabase
           .from('user_empresa')
           .select('user_id')
@@ -80,14 +96,25 @@ export const useTeamMembers = () => {
 
         const userIds = userCompanyRelations.map(relation => relation.user_id);
 
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, display_name, email, cargo_id, avatar, is_admin')
-          .in('id', userIds);
+        // Fetch profiles in smaller batches if there are many users
+        const batchSize = 20;
+        let allProfiles: UserProfile[] = [];
 
-        if (profilesError) throw profilesError;
+        for (let i = 0; i < userIds.length; i += batchSize) {
+          const batchIds = userIds.slice(i, i + batchSize);
+          const { data: profilesData, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, display_name, email, cargo_id, avatar, is_admin')
+            .in('id', batchIds);
 
-        const teamMembers: UserProfile[] = profilesData.map(profile => ({
+          if (profilesError) throw profilesError;
+          
+          if (profilesData && profilesData.length > 0) {
+            allProfiles = [...allProfiles, ...profilesData];
+          }
+        }
+
+        const teamMembers: UserProfile[] = allProfiles.map(profile => ({
           id: profile.id,
           display_name: profile.display_name,
           email: profile.email,
@@ -97,7 +124,13 @@ export const useTeamMembers = () => {
         }));
 
         setMembers(teamMembers);
-        cacheMembers(teamMembers);
+        
+        // Try to cache, but don't fail if it doesn't work
+        try {
+          cacheMembers(teamMembers);
+        } catch (cacheError) {
+          console.warn('Could not cache team members:', cacheError);
+        }
       } catch (err) {
         console.error('Error fetching team members:', err);
         setError(err as Error);
