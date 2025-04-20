@@ -52,96 +52,96 @@ const AdminPage = () => {
         </div>
 
         <Card className="mb-8 shadow-sm border border-gray-100 dark:border-gray-800">
-          <CardContent className="p-0">
+          <CardContent className="p-10"> {/* aumento do padding aqui */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               {/* Novo estilo das abas, igual da Comunidade */}
               <div className="border-b border-gray-100 dark:border-gray-800 py-2 px-2 bg-transparent">
                 <TabsList className="flex gap-2 rounded-2xl p-1.5 bg-transparent dark:bg-transparent w-full justify-start">
                   <TabsTrigger 
                     value="users"
-                    className={`flex items-center gap-2 rounded-xl py-3 px-6 transition-colors border border-transparent text-gray-600 dark:text-gray-300
+                    className={`flex items-center gap-2 rounded-xl py-3 px-6 transition-colors border border-transparent 
                       ${activeTab === "users" 
-                        ? "bg-[rgba(30,174,219,0.1)] text-[#1EAEDB] border-[#1EAEDB]"
-                        : "hover:bg-[rgba(30,174,219,0.05)]"
+                        ? "bg-black text-white"
+                        : "text-gray-600 dark:text-gray-300 hover:bg-[rgba(30,174,219,0.05)]"
                       }
                     `}
                     style={{
-                      backgroundColor: activeTab === "users" ? getLighterAdminColor(0.15) : undefined,
-                      borderColor: activeTab === "users" ? ADMIN_MAIN_COLOR : "transparent",
-                      color: activeTab === "users" ? ADMIN_MAIN_COLOR : undefined
+                      backgroundColor: activeTab === "users" ? 'black' : undefined,
+                      borderColor: "transparent",
+                      color: activeTab === "users" ? 'white' : undefined,
                     }}
                   >
-                    <Users className="h-4 w-4 mr-2" />
+                    <Users className={`h-4 w-4 mr-2 ${activeTab === "users" ? "text-white" : ""}`} />
                     Usuários
                   </TabsTrigger>
                   <TabsTrigger 
                     value="companies"
-                    className={`flex items-center gap-2 rounded-xl py-3 px-6 transition-colors border border-transparent text-gray-600 dark:text-gray-300
+                    className={`flex items-center gap-2 rounded-xl py-3 px-6 transition-colors border border-transparent 
                       ${activeTab === "companies" 
-                        ? "bg-[rgba(30,174,219,0.1)] text-[#1EAEDB] border-[#1EAEDB]"
-                        : "hover:bg-[rgba(30,174,219,0.05)]"
+                        ? "bg-black text-white"
+                        : "text-gray-600 dark:text-gray-300 hover:bg-[rgba(30,174,219,0.05)]"
                       }
                     `}
                     style={{
-                      backgroundColor: activeTab === "companies" ? getLighterAdminColor(0.15) : undefined,
-                      borderColor: activeTab === "companies" ? ADMIN_MAIN_COLOR : "transparent",
-                      color: activeTab === "companies" ? ADMIN_MAIN_COLOR : undefined
+                      backgroundColor: activeTab === "companies" ? 'black' : undefined,
+                      borderColor: "transparent",
+                      color: activeTab === "companies" ? 'white' : undefined,
                     }}
                   >
-                    <Building className="h-4 w-4 mr-2" />
+                    <Building className={`h-4 w-4 mr-2 ${activeTab === "companies" ? "text-white" : ""}`} />
                     Empresas
                   </TabsTrigger>
                   <TabsTrigger 
                     value="allcourses"
-                    className={`flex items-center gap-2 rounded-xl py-3 px-6 transition-colors border border-transparent text-gray-600 dark:text-gray-300
+                    className={`flex items-center gap-2 rounded-xl py-3 px-6 transition-colors border border-transparent 
                       ${activeTab === "allcourses" 
-                        ? "bg-[rgba(30,174,219,0.1)] text-[#1EAEDB] border-[#1EAEDB]"
-                        : "hover:bg-[rgba(30,174,219,0.05)]"
+                        ? "bg-black text-white"
+                        : "text-gray-600 dark:text-gray-300 hover:bg-[rgba(30,174,219,0.05)]"
                       }
                     `}
                     style={{
-                      backgroundColor: activeTab === "allcourses" ? getLighterAdminColor(0.15) : undefined,
-                      borderColor: activeTab === "allcourses" ? ADMIN_MAIN_COLOR : "transparent",
-                      color: activeTab === "allcourses" ? ADMIN_MAIN_COLOR : undefined
+                      backgroundColor: activeTab === "allcourses" ? 'black' : undefined,
+                      borderColor: "transparent",
+                      color: activeTab === "allcourses" ? 'white' : undefined,
                     }}
                   >
-                    <Book className="h-4 w-4 mr-2" />
+                    <Book className={`h-4 w-4 mr-2 ${activeTab === "allcourses" ? "text-white" : ""}`} />
                     Todos os Cursos
                   </TabsTrigger>
                   {userProfile?.super_admin && (
                     <TabsTrigger
                       value="background"
-                      className={`flex items-center gap-2 rounded-xl py-3 px-6 transition-colors border border-transparent text-gray-600 dark:text-gray-300
+                      className={`flex items-center gap-2 rounded-xl py-3 px-6 transition-colors border border-transparent 
                         ${activeTab === "background" 
-                          ? "bg-[rgba(30,174,219,0.1)] text-[#1EAEDB] border-[#1EAEDB]"
-                          : "hover:bg-[rgba(30,174,219,0.05)]"
+                          ? "bg-black text-white"
+                          : "text-gray-600 dark:text-gray-300 hover:bg-[rgba(30,174,219,0.05)]"
                         }
                       `}
                       style={{
-                        backgroundColor: activeTab === "background" ? getLighterAdminColor(0.15) : undefined,
-                        borderColor: activeTab === "background" ? ADMIN_MAIN_COLOR : "transparent",
-                        color: activeTab === "background" ? ADMIN_MAIN_COLOR : undefined
+                        backgroundColor: activeTab === "background" ? 'black' : undefined,
+                        borderColor: "transparent",
+                        color: activeTab === "background" ? 'white' : undefined,
                       }}
                     >
-                      <Image className="h-4 w-4 mr-2" />
+                      <Image className={`h-4 w-4 mr-2 ${activeTab === "background" ? "text-white" : ""}`} />
                       Background
                     </TabsTrigger>
                   )}
                   <TabsTrigger 
                     value="settings"
-                    className={`flex items-center gap-2 rounded-xl py-3 px-6 transition-colors border border-transparent text-gray-600 dark:text-gray-300
+                    className={`flex items-center gap-2 rounded-xl py-3 px-6 transition-colors border border-transparent 
                       ${activeTab === "settings" 
-                        ? "bg-[rgba(30,174,219,0.1)] text-[#1EAEDB] border-[#1EAEDB]"
-                        : "hover:bg-[rgba(30,174,219,0.05)]"
+                        ? "bg-black text-white"
+                        : "text-gray-600 dark:text-gray-300 hover:bg-[rgba(30,174,219,0.05)]"
                       }
                     `}
                     style={{
-                      backgroundColor: activeTab === "settings" ? getLighterAdminColor(0.15) : undefined,
-                      borderColor: activeTab === "settings" ? ADMIN_MAIN_COLOR : "transparent",
-                      color: activeTab === "settings" ? ADMIN_MAIN_COLOR : undefined
+                      backgroundColor: activeTab === "settings" ? 'black' : undefined,
+                      borderColor: "transparent",
+                      color: activeTab === "settings" ? 'white' : undefined,
                     }}
                   >
-                    <Settings className="h-4 w-4 mr-2" />
+                    <Settings className={`h-4 w-4 mr-2 ${activeTab === "settings" ? "text-white" : ""}`} />
                     Settings
                   </TabsTrigger>
                 </TabsList>
