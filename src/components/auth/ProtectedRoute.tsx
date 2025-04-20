@@ -24,7 +24,7 @@ export const ProtectedRoute = () => {
         setAuthError("Tempo limite de autenticação excedido. Por favor, recarregue a página ou faça login novamente.");
         toast.error("Tempo limite de autenticação excedido. Tente recarregar a página.");
       }
-    }, 20000); // Aumentado para 20 segundos para conexões mais lentas
+    }, 30000); // Aumentado para 30 segundos para conexões mais lentas
     
     // Se o carregamento for concluído, marca como pronto
     if (!loading) {

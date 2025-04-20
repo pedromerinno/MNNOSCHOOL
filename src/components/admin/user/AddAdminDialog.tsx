@@ -1,19 +1,10 @@
-
 import React, { useState } from 'react';
-import { RefreshCw, UserPlus } from 'lucide-react';
-import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { makeUserAdmin } from '@/utils/adminUtils';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogClose
-} from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 interface AddAdminDialogProps {
   isOpen: boolean;
@@ -21,85 +12,51 @@ interface AddAdminDialogProps {
   fetchUsers: () => void;
 }
 
-export const AddAdminDialog: React.FC<AddAdminDialogProps> = ({
-  isOpen,
-  onOpenChange,
-  fetchUsers
-}) => {
-  const { toast } = useToast();
-  const [adminEmail, setAdminEmail] = useState('');
-  const [isAddingAdmin, setIsAddingAdmin] = useState(false);
+export const AddAdminDialog: React.FC<AddAdminDialogProps> = ({ isOpen, onOpenChange, fetchUsers }) => {
+  const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleAddAdmin = async () => {
-    if (!adminEmail.trim()) {
-      toast({
-        title: 'Erro',
-        description: 'Por favor, informe um email válido',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsAddingAdmin(true);
+  const handleSubmit = async () => {
+    setIsLoading(true);
     try {
-      await makeUserAdmin(adminEmail);
-      toast({
-        title: 'Sucesso',
-        description: `${adminEmail} agora é um administrador.`,
-      });
-      setAdminEmail('');
+      await makeUserAdmin(email);
+      toast.success(`${email} agora é um administrador.`);
       onOpenChange(false);
       fetchUsers();
     } catch (error: any) {
-      console.error('Error making user admin:', error);
-      toast({
-        title: 'Erro',
-        description: error.message || 'Ocorreu um erro ao configurar o administrador',
-        variant: 'destructive',
-      });
+      console.error('Erro ao adicionar administrador:', error);
+      toast.error(error.message || 'Falha ao adicionar administrador');
     } finally {
-      setIsAddingAdmin(false);
+      setIsLoading(false);
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Adicionar Administrador</DialogTitle>
           <DialogDescription>
-            Digite o email ou nome de usuário da pessoa que você deseja tornar administrador.
+            Atribua privilégios de administrador a um usuário existente.
           </DialogDescription>
         </DialogHeader>
-        
-        <div className="py-4">
-          <Input
-            placeholder="Email ou nome de usuário"
-            value={adminEmail}
-            onChange={(e) => setAdminEmail(e.target.value)}
-          />
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="email" className="text-right">
+              Email
+            </Label>
+            <Input
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="col-span-3"
+              type="email"
+            />
+          </div>
         </div>
-        
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">Cancelar</Button>
-          </DialogClose>
-          <Button 
-            onClick={handleAddAdmin} 
-            disabled={isAddingAdmin || !adminEmail.trim()}
-            className="gap-2"
-          >
-            {isAddingAdmin ? (
-              <>
-                <RefreshCw className="h-4 w-4 animate-spin" />
-                Processando...
-              </>
-            ) : (
-              <>
-                <UserPlus className="h-4 w-4" />
-                Adicionar Administrador
-              </>
-            )}
+          <Button type="submit" onClick={handleSubmit} disabled={isLoading}>
+            {isLoading ? 'Adicionando...' : 'Adicionar'}
           </Button>
         </DialogFooter>
       </DialogContent>
