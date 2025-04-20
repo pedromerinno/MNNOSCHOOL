@@ -31,10 +31,10 @@ const Dashboard = () => {
     fetchUserCompanies();
   }, [user, getUserCompanies]);
 
-  // Improved loading state with longer minimum delay for admins
+  // Reduced loading time with shorter minimum delay
   useEffect(() => {
-    // Set a longer minimum loading time for admins to prevent flickering
-    const minLoadTime = isAdmin ? 2500 : 1500;
+    // Set a shorter minimum loading time
+    const minLoadTime = isAdmin ? 1200 : 800;
     
     const timer = setTimeout(() => {
       if (selectedCompany || !isLoading) {
@@ -45,7 +45,7 @@ const Dashboard = () => {
     return () => clearTimeout(timer);
   }, [isLoading, selectedCompany, isAdmin]);
 
-  // If still loading, show consistent loading state
+  // If still loading, show simplified loading state
   if (isPageLoading || isLoading) {
     return (
       <DashboardLayout>
@@ -62,10 +62,6 @@ const Dashboard = () => {
               <Skeleton key={i} className="h-28 w-full rounded-lg" />
             ))}
           </div>
-
-          <Skeleton className="h-64 w-full rounded-lg" />
-          
-          <Skeleton className="h-80 w-full rounded-lg" />
         </div>
       </DashboardLayout>
     );

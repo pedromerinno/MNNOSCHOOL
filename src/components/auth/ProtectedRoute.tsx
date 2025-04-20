@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -32,7 +33,7 @@ export const ProtectedRoute = () => {
         setAuthError("Tempo limite de autenticação excedido. Por favor, recarregue a página ou faça login novamente.");
         toast.error("Tempo limite de autenticação excedido. Tente recarregar a página.");
       }
-    }, 20000); // 20 segundos para conexões mais lentas
+    }, 10000); // Reduzido para 10 segundos (era 20 segundos)
     
     // Se o carregamento for concluído, marca como pronto
     if (!loading) {
@@ -58,46 +59,11 @@ export const ProtectedRoute = () => {
     }
   }, [session, loading, initialLoadDone, user, authError]);
 
-  // Componente de erro personalizado para ErrorBoundary
-  const ErrorFallback = (
-    <div className="flex flex-col items-center justify-center h-screen p-4">
-      <div className="bg-amber-50 border border-amber-200 p-6 rounded-lg max-w-md w-full shadow-md dark:bg-amber-900/30 dark:border-amber-800">
-        <div className="flex items-start mb-4">
-          <AlertTriangle className="h-6 w-6 text-amber-600 mr-3 mt-1 dark:text-amber-400" />
-          <div>
-            <h3 className="text-lg font-medium text-amber-800 dark:text-amber-200">Erro na aplicação</h3>
-            <p className="text-amber-700 mt-1 dark:text-amber-300">
-              Ocorreu um erro ao carregar a aplicação. Isso pode ser devido a problemas de conexão ou permissões.
-            </p>
-          </div>
-        </div>
-        <div className="flex justify-end space-x-3 mt-4">
-          <Button
-            variant="outline"
-            onClick={() => window.location.reload()}
-          >
-            Tentar novamente
-          </Button>
-          <Button
-            onClick={() => {
-              localStorage.clear();
-              window.location.reload();
-            }}
-          >
-            Limpar cache e recarregar
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Mostra estado de carregamento
+  // Mostra estado de carregamento apenas se demorar mais de 800ms
   if (loading || (!isOnboarding && user && companiesLoading)) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen p-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
-        <p className="text-lg text-gray-600">Verificando autenticação...</p>
-        <p className="text-sm text-gray-400 mt-2">Isso pode levar alguns segundos</p>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
@@ -159,3 +125,36 @@ export const ProtectedRoute = () => {
     </ErrorBoundary>
   );
 };
+
+// Componente de erro personalizado para ErrorBoundary
+const ErrorFallback = (
+  <div className="flex flex-col items-center justify-center h-screen p-4">
+    <div className="bg-amber-50 border border-amber-200 p-6 rounded-lg max-w-md w-full shadow-md dark:bg-amber-900/30 dark:border-amber-800">
+      <div className="flex items-start mb-4">
+        <AlertTriangle className="h-6 w-6 text-amber-600 mr-3 mt-1 dark:text-amber-400" />
+        <div>
+          <h3 className="text-lg font-medium text-amber-800 dark:text-amber-200">Erro na aplicação</h3>
+          <p className="text-amber-700 mt-1 dark:text-amber-300">
+            Ocorreu um erro ao carregar a aplicação. Isso pode ser devido a problemas de conexão ou permissões.
+          </p>
+        </div>
+      </div>
+      <div className="flex justify-end space-x-3 mt-4">
+        <Button
+          variant="outline"
+          onClick={() => window.location.reload()}
+        >
+          Tentar novamente
+        </Button>
+        <Button
+          onClick={() => {
+            localStorage.clear();
+            window.location.reload();
+          }}
+        >
+          Limpar cache e recarregar
+        </Button>
+      </div>
+    </div>
+  </div>
+);

@@ -26,28 +26,28 @@ export const CompanySelector = () => {
   const [displayName, setDisplayName] = useState<string>("merinno");
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  // Atualiza o nome de exibição apenas quando a empresa selecionada estiver estável
+  // Atualiza o nome de exibição imediatamente de cache se disponível
+  useEffect(() => {
+    // Tenta carregar do cache primeiro para evitar flickering
+    try {
+      const cachedCompany = localStorage.getItem('selectedCompany');
+      if (cachedCompany) {
+        const company = JSON.parse(cachedCompany);
+        if (company && company.nome) {
+          setDisplayName(company.nome);
+          setIsInitialLoad(false);
+        }
+      }
+    } catch (e) {
+      console.error('Erro ao ler empresa do cache:', e);
+    }
+  }, []);
+
+  // Atualiza quando a empresa selecionada mudar
   useEffect(() => {
     if (selectedCompany?.nome) {
-      // Pequeno delay para evitar atualizações muito rápidas
-      const timer = setTimeout(() => {
-        setDisplayName(selectedCompany.nome);
-        setIsInitialLoad(false);
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [selectedCompany]);
-
-  // Debug log para verificar a empresa selecionada
-  useEffect(() => {
-    if (selectedCompany) {
-      console.log('CompanySelector: Empresa selecionada:', {
-        nome: selectedCompany.nome,
-        id: selectedCompany.id,
-        frase: selectedCompany.frase_institucional
-      });
-    } else {
-      console.log('CompanySelector: Nenhuma empresa selecionada');
+      setDisplayName(selectedCompany.nome);
+      setIsInitialLoad(false);
     }
   }, [selectedCompany]);
 
@@ -83,20 +83,14 @@ export const CompanySelector = () => {
       }
       
       console.log('CompanySelector: Selecionando empresa:', company.nome);
-      
-      // Certifique-se de que a empresa está completa antes de selecioná-la
-      if (!company.frase_institucional) {
-        console.log('CompanySelector: Frase institucional não encontrada na empresa selecionada');
-      }
-      
       selectCompany(user.id, company);
       toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
     }
   };
 
-  // Se estiver carregando e for o carregamento inicial, mostrar um skeleton 
+  // Mostrar um skeleton mais compacto durante o carregamento 
   if (isLoading && isInitialLoad) {
-    return <Skeleton className="h-6 w-32" />;
+    return <Skeleton className="h-6 w-24" />;
   }
 
   // Se usuário não tiver empresas ou não estiver logado, mostrar texto padrão

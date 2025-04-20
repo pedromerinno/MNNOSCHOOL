@@ -12,10 +12,10 @@ const Index = () => {
   const { user, userProfile } = useAuth();
   const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
 
-  // Improved loading state with longer minimum delay for admins
+  // Reduzida a duração mínima do carregamento para minimizar flickering
   useEffect(() => {
-    // Set a longer minimum loading time for admins to prevent flickering
-    const minLoadTime = isAdmin ? 2500 : 2000;
+    // Definir um tempo mínimo de carregamento mais curto para reduzir a espera
+    const minLoadTime = isAdmin ? 1200 : 800;
     
     const timer = setTimeout(() => {
       if (selectedCompany || fetchCount > 0 || !isLoading) {
@@ -26,25 +26,19 @@ const Index = () => {
     return () => clearTimeout(timer);
   }, [isLoading, fetchCount, selectedCompany, isAdmin]);
 
-  // Show consistent loading state while checking for companies
+  // Show a simpler loading state
   if (isPageLoading || (user && isLoading)) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-3xl space-y-8">
           <div className="flex justify-center">
-            <Skeleton className="h-8 w-48 rounded-full" />
+            <Skeleton className="h-8 w-36 rounded-full" />
           </div>
           <div className="space-y-4">
-            <Skeleton className="h-16 w-full rounded-lg" />
-            <Skeleton className="h-16 w-3/4 mx-auto rounded-lg" />
-            <div className="flex justify-center mt-6">
-              <Skeleton className="h-10 w-40 rounded-full" />
+            <Skeleton className="h-12 w-full rounded-lg" />
+            <div className="flex justify-center mt-4">
+              <Skeleton className="h-10 w-32 rounded-full" />
             </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-12">
-            <Skeleton className="h-40 rounded-lg" />
-            <Skeleton className="h-40 rounded-lg" />
-            <Skeleton className="h-40 rounded-lg" />
           </div>
         </div>
       </div>

@@ -35,8 +35,8 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
   const currentCompanyId = useRef<string | null>(null);
   const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
 
-  // Guaranteed minimum loading time to prevent flickering, especially for admins
-  const minLoadTime = isAdmin ? 2000 : 800;
+  // Reduced minimum loading time
+  const minLoadTime = isAdmin ? 1000 : 600;
 
   useEffect(() => {
     // Se a empresa mudou, resetamos o estado
@@ -159,7 +159,7 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
             });
           });
 
-          // Set minimum timeout
+          // Set minimum timeout (reduced for quicker loading)
           setTimeout(resolve, minLoadTime);
         });
       } finally {
@@ -170,12 +170,12 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
     fetchCourses();
   }, [selectedCompany, filter, toast, companyLoading, loading, isAdmin, minLoadTime]);
 
-  // Exibir skeleton durante o carregamento da empresa
+  // Mostrar um skeleton mais compacto durante carregamento da empresa
   if (companyLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-        {[...Array(8)].map((_, i) => (
-          <Skeleton key={i} className="h-[300px] w-full rounded-lg" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {[...Array(4)].map((_, i) => (
+          <Skeleton key={i} className="h-[250px] w-full rounded-lg" />
         ))}
       </div>
     );
@@ -184,9 +184,9 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
   return (
     <div className="space-y-6">
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {[...Array(8)].map((_, i) => (
-            <Skeleton key={i} className="h-[300px] w-full rounded-lg" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-[250px] w-full rounded-lg" />
           ))}
         </div>
       ) : courses.length > 0 ? (
@@ -196,8 +196,8 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-10 border border-dashed rounded-lg border-gray-200 dark:border-gray-800 text-center">
-          <AlertCircle className="h-10 w-10 text-gray-400 dark:text-gray-500 mb-3" />
+        <div className="flex flex-col items-center justify-center py-8 border border-dashed rounded-lg border-gray-200 dark:border-gray-800 text-center">
+          <AlertCircle className="h-8 w-8 text-gray-400 dark:text-gray-500 mb-3" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">
             Nenhum curso encontrado
           </h3>
