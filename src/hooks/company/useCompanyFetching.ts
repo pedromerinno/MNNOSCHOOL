@@ -5,6 +5,7 @@ import { useCompanyRequest } from "./useCompanyRequest";
 import { useCompanyCache } from "./useCompanyCache";
 import { useCompanyRetry } from "./useCompanyRetry";
 import { useCompanyFetch } from "./useCompanyFetch";
+import { retryOperation } from "./utils/retryUtils";
 
 interface UseCompanyFetchingProps {
   userCompanies: Company[];
@@ -52,6 +53,7 @@ export const useCompanyFetching = ({
   const fetchInProgressRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const lastSuccessfulFetchRef = useRef<number>(0);
+  const consecutiveErrorsRef = useRef<number>(0);
   
   const getUserCompanies = useCallback(async (
     userId: string, 
@@ -101,10 +103,21 @@ export const useCompanyFetching = ({
         }
       }
       
-      const result = await executeWithRetry(() => getCompanies(userId, abortControllerRef.current?.signal));
+      // Using retryOperation directly with more retries for network issues
+      const fetchWithRetry = async () => {
+        return await getCompanies(userId, abortControllerRef.current?.signal);
+      };
+      
+      const result = await retryOperation(
+        fetchWithRetry, 
+        consecutiveErrorsRef.current > 2 ? 5 : 3, // Increase retries after multiple failures
+        1000,
+        15000
+      );
       
       completeRequest();
       lastSuccessfulFetchRef.current = Date.now();
+      consecutiveErrorsRef.current = 0; // Reset error counter on success
       
       if (result && result.length > 0) {
         cacheUserCompanies(result);
@@ -122,6 +135,8 @@ export const useCompanyFetching = ({
         setIsLoading(false);
         return userCompanies;
       }
+      
+      consecutiveErrorsRef.current += 1; // Track consecutive errors
       
       setError(error);
       console.error("Error fetching companies:", error);

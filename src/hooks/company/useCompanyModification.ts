@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { Company } from '@/types/company';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { retryOperation } from './utils/retryUtils';
 
 interface UseCompanyModificationProps {
   companies: Company[];
@@ -21,44 +22,77 @@ export const useCompanyModification = ({
   setIsLoading,
   setError
 }: UseCompanyModificationProps) => {
-  // Fetch all companies
+  // Improved fetch companies with retry and better error handling
   const fetchCompanies = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     
     try {
-      const { data, error } = await supabase
-        .from('empresas')  // Changed from 'companies' to 'empresas'
-        .select('*')
-        .order('nome');
+      const fetchData = async () => {
+        const { data, error } = await supabase
+          .from('empresas')
+          .select('*')
+          .order('nome');
+          
+        if (error) throw error;
         
-      if (error) throw error;
+        return data || [];
+      };
       
-      setCompanies(data || []);
-      return data || [];
+      // Use retry operation for network resilience
+      const data = await retryOperation(fetchData, 4, 1000);
+      
+      setCompanies(data);
+      return data;
     } catch (err) {
       console.error('Error fetching companies:', err);
-      setError(err instanceof Error ? err : new Error('Failed to fetch companies'));
-      toast.error('Erro ao buscar empresas');
+      
+      const errorMessage = err instanceof Error 
+        ? err.message 
+        : 'Failed to fetch companies';
+        
+      const isNetworkError = 
+        errorMessage.includes('fetch') || 
+        errorMessage.includes('network') ||
+        errorMessage.includes('connection');
+        
+      setError(new Error(
+        isNetworkError 
+          ? 'Erro de conexão ao buscar empresas. Verifique sua conexão com a internet.' 
+          : 'Erro ao buscar empresas'
+      ));
+      
+      toast.error('Erro ao buscar empresas', {
+        description: isNetworkError 
+          ? 'Problemas de conexão detectados. Tente novamente mais tarde.' 
+          : 'Ocorreu um erro ao carregar as empresas',
+      });
+      
       return [];
     } finally {
       setIsLoading(false);
     }
   }, [setCompanies, setIsLoading, setError]);
   
-  // Create a new company
+  // Create a new company with improved error handling
   const createCompany = useCallback(async (companyData: Omit<Company, 'id' | 'created_at' | 'updated_at'>) => {
     setIsLoading(true);
     setError(null);
     
     try {
-      const { data, error } = await supabase
-        .from('empresas')  // Changed from 'companies' to 'empresas'
-        .insert(companyData)
-        .select()
-        .single();
-        
-      if (error) throw error;
+      const createData = async () => {
+        const { data, error } = await supabase
+          .from('empresas')
+          .insert(companyData)
+          .select()
+          .single();
+            
+        if (error) throw error;
+        return data;
+      };
+      
+      // Use retry operation for network resilience
+      const data = await retryOperation(createData, 3, 1000);
       
       setCompanies([...companies, data]);
       toast.success('Empresa criada com sucesso!');
@@ -69,8 +103,22 @@ export const useCompanyModification = ({
       return data;
     } catch (err) {
       console.error('Error creating company:', err);
-      setError(err instanceof Error ? err : new Error('Failed to create company'));
-      toast.error('Erro ao criar empresa');
+      
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      const isNetworkError = errorMessage.includes('fetch') || errorMessage.includes('network');
+      
+      setError(new Error(
+        isNetworkError 
+          ? 'Erro de conexão ao criar empresa. Verifique sua conexão com a internet.' 
+          : 'Erro ao criar empresa'
+      ));
+      
+      toast.error('Erro ao criar empresa', {
+        description: isNetworkError 
+          ? 'Problemas de conexão detectados. Verifique sua internet e tente novamente.' 
+          : 'Ocorreu um erro ao criar a empresa',
+      });
+      
       throw err;
     } finally {
       setIsLoading(false);
@@ -86,14 +134,20 @@ export const useCompanyModification = ({
     setError(null);
     
     try {
-      const { data, error } = await supabase
-        .from('empresas')  // Changed from 'companies' to 'empresas'
-        .update(companyData)
-        .eq('id', companyId)
-        .select()
-        .single();
-        
-      if (error) throw error;
+      const updateData = async () => {
+        const { data, error } = await supabase
+          .from('empresas')
+          .update(companyData)
+          .eq('id', companyId)
+          .select()
+          .single();
+            
+        if (error) throw error;
+        return data;
+      };
+      
+      // Use retry operation for network resilience
+      const data = await retryOperation(updateData, 3, 1000);
       
       const updatedCompanies = companies.map(company => 
         company.id === companyId ? data : company
@@ -111,8 +165,22 @@ export const useCompanyModification = ({
       return data;
     } catch (err) {
       console.error('Error updating company:', err);
-      setError(err instanceof Error ? err : new Error('Failed to update company'));
-      toast.error('Erro ao atualizar empresa');
+      
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      const isNetworkError = errorMessage.includes('fetch') || errorMessage.includes('network');
+      
+      setError(new Error(
+        isNetworkError 
+          ? 'Erro de conexão ao atualizar empresa. Verifique sua conexão com a internet.' 
+          : 'Erro ao atualizar empresa'
+      ));
+      
+      toast.error('Erro ao atualizar empresa', {
+        description: isNetworkError 
+          ? 'Problemas de conexão detectados. Verifique sua internet e tente novamente.' 
+          : 'Ocorreu um erro ao atualizar a empresa',
+      });
+      
       throw err;
     } finally {
       setIsLoading(false);
@@ -125,12 +193,18 @@ export const useCompanyModification = ({
     setError(null);
     
     try {
-      const { error } = await supabase
-        .from('empresas')  // Changed from 'companies' to 'empresas'
-        .delete()
-        .eq('id', companyId);
-        
-      if (error) throw error;
+      const deleteData = async () => {
+        const { error } = await supabase
+          .from('empresas')
+          .delete()
+          .eq('id', companyId);
+            
+        if (error) throw error;
+        return true;
+      };
+      
+      // Use retry operation for network resilience
+      await retryOperation(deleteData, 3, 1000);
       
       const updatedCompanies = companies.filter(company => company.id !== companyId);
       setCompanies(updatedCompanies);
@@ -141,8 +215,22 @@ export const useCompanyModification = ({
       toast.success('Empresa excluída com sucesso!');
     } catch (err) {
       console.error('Error deleting company:', err);
-      setError(err instanceof Error ? err : new Error('Failed to delete company'));
-      toast.error('Erro ao excluir empresa');
+      
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      const isNetworkError = errorMessage.includes('fetch') || errorMessage.includes('network');
+      
+      setError(new Error(
+        isNetworkError 
+          ? 'Erro de conexão ao excluir empresa. Verifique sua conexão com a internet.' 
+          : 'Erro ao excluir empresa'
+      ));
+      
+      toast.error('Erro ao excluir empresa', {
+        description: isNetworkError 
+          ? 'Problemas de conexão detectados. Verifique sua internet e tente novamente.' 
+          : 'Ocorreu um erro ao excluir a empresa',
+      });
+      
       throw err;
     } finally {
       setIsLoading(false);
@@ -151,20 +239,28 @@ export const useCompanyModification = ({
   
   // Select a company
   const selectCompany = useCallback((userId: string, company: Company) => {
-    // Save the selected company to localStorage for persistence
-    localStorage.setItem('selectedCompany', JSON.stringify(company));
-    localStorage.setItem('selectedCompanyId', company.id);
-    
-    // Update the state with the selected company
-    setSelectedCompany(company);
-    
-    // Trigger an event to notify other components
-    const event = new CustomEvent('company-selected', { 
-      detail: { company } 
-    });
-    window.dispatchEvent(event);
-    
-    return company;
+    try {
+      // Save the selected company to localStorage for persistence
+      localStorage.setItem('selectedCompany', JSON.stringify(company));
+      localStorage.setItem('selectedCompanyId', company.id);
+      
+      // Update the state with the selected company
+      setSelectedCompany(company);
+      
+      // Trigger an event to notify other components
+      const event = new CustomEvent('company-selected', { 
+        detail: { company } 
+      });
+      window.dispatchEvent(event);
+      
+      return company;
+    } catch (err) {
+      console.error('Error selecting company:', err);
+      toast.error('Erro ao selecionar empresa', {
+        description: 'Não foi possível selecionar a empresa. Tente novamente.'
+      });
+      return company;
+    }
   }, [setSelectedCompany]);
   
   return {

@@ -1,6 +1,6 @@
 
 import { useEffect } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { toast } from "sonner";
@@ -10,6 +10,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const CompanySelector = () => {
   const { user } = useAuth();
@@ -18,7 +20,8 @@ export const CompanySelector = () => {
     selectedCompany, 
     selectCompany,
     isLoading,
-    forceGetUserCompanies
+    forceGetUserCompanies,
+    error
   } = useCompanies();
 
   // Debug log to check selected company
@@ -47,6 +50,23 @@ export const CompanySelector = () => {
     };
   }, [user, forceGetUserCompanies]);
 
+  // Handle manual refresh when connection issues occur
+  const handleManualRefresh = async () => {
+    if (user?.id) {
+      toast.info('Atualizando lista de empresas...', {
+        description: 'Tentando reconectar ao servidor'
+      });
+      try {
+        await forceGetUserCompanies(user.id);
+        toast.success('Lista de empresas atualizada com sucesso!');
+      } catch (err) {
+        toast.error('Não foi possível atualizar a lista de empresas', {
+          description: 'Verifique sua conexão com a internet e tente novamente'
+        });
+      }
+    }
+  };
+
   const handleCompanyChange = (company) => {
     if (company && user?.id) {
       console.log('CompanySelector: Selecionando empresa:', company.nome);
@@ -60,6 +80,31 @@ export const CompanySelector = () => {
       toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
     }
   };
+
+  // If there are connection errors, show retry button
+  if (error && (!userCompanies || userCompanies.length === 0)) {
+    return (
+      <div className="flex items-center">
+        <span className="text-lg font-bold text-merinno-dark mr-2">merinno</span>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8 w-8 p-0 text-yellow-500"
+              onClick={handleManualRefresh}
+            >
+              <AlertCircle className="h-4 w-4" />
+              <span className="sr-only">Reconectar</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Problemas de conexão. Clique para tentar novamente.</p>
+          </TooltipContent>
+        </Tooltip>
+      </div>
+    );
+  }
 
   // If user has no companies or is not logged in, show default text
   if (!user || !userCompanies || userCompanies.length === 0) {

@@ -32,6 +32,53 @@ export const useUserCompanies = ({
   };
 
   /**
+   * Fetch user profile to determine admin status
+   */
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('is_admin, super_admin')
+        .eq('id', userId)
+        .single();
+        
+      if (error) throw error;
+      
+      return {
+        isAdmin: data?.is_admin || false,
+        isSuperAdmin: data?.super_admin || false
+      };
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      throw error;
+    }
+  };
+
+  /**
+   * Fetch all companies (for super admins)
+   */
+  const fetchAllCompanies = async () => {
+    const { data, error } = await supabase
+      .from('empresas')
+      .select('*')
+      .order('nome');
+      
+    if (error) throw error;
+    return data || [];
+  };
+
+  /**
+   * Fetch companies related to user
+   */
+  const fetchUserRelatedCompanies = async (userId: string) => {
+    const { data, error } = await supabase
+      .rpc('get_user_companies', { user_id: userId });
+      
+    if (error) throw error;
+    return data || [];
+  };
+
+  /**
    * Gets all companies a user is related to using the database function
    */
   const getUserCompanies = async (userId: string, signal?: AbortSignal): Promise<Company[]> => {
@@ -70,68 +117,49 @@ export const useUserCompanies = ({
         throw new DOMException("Aborted", "AbortError");
       }
       
-      // First check if the user is admin or super_admin - this helps determine which function to use
-      const profileResponse = await supabase
-        .from('profiles')
-        .select('is_admin, super_admin')
-        .eq('id', userId)
-        .single();
-        
-      if (profileResponse.error) {
-        console.error("Error fetching user profile:", profileResponse.error);
-        throw profileResponse.error;
+      // Fetch profile to determine admin status
+      let userProfile;
+      try {
+        userProfile = await retryOperation(() => fetchUserProfile(userId), 3, 1000);
+        console.log(`User admin status - isAdmin: ${userProfile.isAdmin}, isSuperAdmin: ${userProfile.isSuperAdmin}`);
+      } catch (error) {
+        console.warn("Error checking admin status, falling back to regular user mode:", error);
+        userProfile = { isAdmin: false, isSuperAdmin: false };
       }
       
-      const profileData = profileResponse.data;
-      const isAdmin = profileData?.is_admin || false;
-      const isSuperAdmin = profileData?.super_admin || false;
-      
-      console.log(`User admin status - isAdmin: ${isAdmin}, isSuperAdmin: ${isSuperAdmin}`);
+      const { isAdmin, isSuperAdmin } = userProfile;
       
       let companiesData;
       
-      // Function to get companies for a super admin (all companies)
-      const getSuperAdminCompanies = async () => {
-        const { data, error } = await supabase
-          .from('empresas')
-          .select('*')
-          .order('nome');
-        if (error) throw error;
-        return { data, error };
-      };
-      
-      // Function to get companies for a regular admin (only related companies)
-      const getAdminCompanies = async () => {
-        const { data, error } = await supabase
-          .rpc('get_user_companies', { user_id: userId });
-        if (error) throw error;
-        return { data, error };
-      };
-      
-      // Function to get companies for a regular user
-      const getUserRelatedCompanies = async () => {
-        const { data, error } = await supabase
-          .rpc('get_user_companies', { user_id: userId });
-        if (error) throw error;
-        return { data, error };
-      };
-      
-      // Using retryOperation to add automatic retries for database queries
-      if (isSuperAdmin) {
-        // Super admin: return all companies
-        const result = await retryOperation(getSuperAdminCompanies, 3);
-        companiesData = result.data;
-        console.log(`Super admin fetched ${companiesData?.length || 0} companies`);
-      } else if (isAdmin) {
-        // Regular admin: return only related companies
-        const result = await retryOperation(getAdminCompanies, 3);
-        companiesData = result.data;
-        console.log(`Admin fetched ${companiesData?.length || 0} related companies`);
-      } else {
-        // Regular user: return only related companies
-        const result = await retryOperation(getUserRelatedCompanies, 3);
-        companiesData = result.data;
-        console.log(`User fetched ${companiesData?.length || 0} related companies`);
+      // Use retryOperation for fetch operations with more retries for network issues
+      try {
+        if (isSuperAdmin) {
+          // Super admin: return all companies
+          companiesData = await retryOperation(
+            () => fetchAllCompanies(), 
+            5, // More retries for network issues
+            1000
+          );
+          console.log(`Super admin fetched ${companiesData?.length || 0} companies`);
+        } else {
+          // Regular user or admin: return only related companies
+          companiesData = await retryOperation(
+            () => fetchUserRelatedCompanies(userId),
+            5, // More retries for network issues
+            1000
+          );
+          console.log(`${isAdmin ? 'Admin' : 'User'} fetched ${companiesData?.length || 0} related companies`);
+        }
+      } catch (error: any) {
+        console.error("Database fetch failed after retries:", error);
+        // If we have cached data, use it as fallback
+        if (cachedData.length > 0) {
+          console.warn("Using cached data after fetch failure");
+          setUserCompanies(cachedData);
+          setIsLoading(false);
+          return cachedData;
+        }
+        throw error;
       }
 
       const companies = companiesData as Company[] || [];
