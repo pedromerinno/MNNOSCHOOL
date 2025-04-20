@@ -54,18 +54,30 @@ export const useCompaniesProvider = () => {
           await getUserCompanies(user.id);
         } catch (error) {
           console.error('Error in initial load of user companies:', error);
+          // Automatically retry once on initial load failure
+          try {
+            console.log('Retrying initial load after failure');
+            await forceGetUserCompanies(user.id);
+          } catch (retryError) {
+            console.error('Retry of initial load also failed:', retryError);
+          }
         }
       }
     };
     
     initialLoad();
-  }, [user?.id, getUserCompanies, companyState.initialFetchDone]);
+  }, [user?.id, getUserCompanies, forceGetUserCompanies, companyState.initialFetchDone]);
   
   // Selecionar a primeira empresa quando as empresas são carregadas e nenhuma está selecionada
   useEffect(() => {
     if (companyState.userCompanies.length > 0 && !companyState.selectedCompany) {
-      console.log('No company selected, displaying first company:', companyState.userCompanies[0].nome);
+      console.log('No company selected, selecting first company:', companyState.userCompanies[0].nome);
       companyState.setSelectedCompany(companyState.userCompanies[0]);
+      
+      // Dispatch an event to notify components that company selection changed
+      window.dispatchEvent(new CustomEvent('company-selected', {
+        detail: { company: companyState.userCompanies[0] }
+      }));
     }
   }, [companyState.userCompanies, companyState.selectedCompany, companyState.setSelectedCompany]);
   

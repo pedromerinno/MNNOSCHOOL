@@ -19,7 +19,9 @@ export const retryOperation = async <T>(
   for (let i = 0; i < maxRetries; i++) {
     try {
       console.log(`Attempt ${i + 1} of ${maxRetries}...`);
-      return await operation();
+      const result = await operation();
+      console.log(`Operation succeeded on attempt ${i + 1}`);
+      return result;
     } catch (error) {
       console.error(`Operation failed, attempt ${i + 1} of ${maxRetries}`, error);
       

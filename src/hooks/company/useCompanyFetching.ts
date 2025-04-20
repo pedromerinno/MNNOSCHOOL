@@ -76,7 +76,7 @@ export const useCompanyFetching = ({
       return [];
     }
     
-    console.log(`RPC retornou ${data.length} empresas`);
+    console.log(`RPC retornou ${data.length} empresas:`, data);
     return data as Company[];
   };
   

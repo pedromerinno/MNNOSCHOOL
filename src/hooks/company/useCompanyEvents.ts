@@ -50,20 +50,4 @@ export const useCompanyEvents = ({
       window.removeEventListener('force-reload-companies', handleForceReload);
     };
   }, [forceGetUserCompanies, user]);
-  
-  // Carrega as empresas na inicialização (apenas uma vez)
-  useEffect(() => {
-    const loadUserCompanies = async () => {
-      if (user?.id) {
-        console.log('Initial load of companies for user', user.id);
-        try {
-          await forceGetUserCompanies(user.id);
-        } catch (error) {
-          console.error('Error during initial load of companies:', error);
-        }
-      }
-    };
-    
-    loadUserCompanies();
-  }, [forceGetUserCompanies, user?.id]);
 };
