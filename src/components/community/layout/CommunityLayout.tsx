@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { CompanyThemedBadge } from "@/components/ui/badge";
@@ -7,32 +7,6 @@ import { useCompanies } from "@/hooks/useCompanies";
 
 export const CommunityLayout: React.FC<React.PropsWithChildren<{}>> = ({ children }) => {
   const { selectedCompany } = useCompanies();
-  const [currentCompany, setCurrentCompany] = useState(selectedCompany);
-  
-  // Update when selectedCompany changes
-  useEffect(() => {
-    if (selectedCompany?.id !== currentCompany?.id) {
-      console.log("CommunityLayout: Company changed to", selectedCompany?.nome);
-      setCurrentCompany(selectedCompany);
-    }
-  }, [selectedCompany, currentCompany?.id]);
-  
-  // Listen for company change events
-  useEffect(() => {
-    const handleCompanySelected = (event: CustomEvent) => {
-      const company = event.detail?.company;
-      if (company) {
-        console.log(`CommunityLayout: Company selection event received: ${company.nome}`);
-        setCurrentCompany(company);
-      }
-    };
-    
-    window.addEventListener('company-selected', handleCompanySelected as EventListener);
-    
-    return () => {
-      window.removeEventListener('company-selected', handleCompanySelected as EventListener);
-    };
-  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -50,11 +24,11 @@ export const CommunityLayout: React.FC<React.PropsWithChildren<{}>> = ({ childre
             <h1 className="text-3xl font-bold dark:text-white">
               Comunidade
             </h1>
-            {currentCompany && (
+            {selectedCompany && (
               <CompanyThemedBadge 
                 variant="beta"
               >
-                {currentCompany.nome}
+                {selectedCompany.nome}
               </CompanyThemedBadge>
             )}
           </div>

@@ -1,53 +1,18 @@
 
 import { useEffect } from "react";
+import { Company } from "@/types/company";
 
-interface UseCompanyEventsProps {
-  forceGetUserCompanies: (userId: string) => Promise<any>;
-}
-
-export const useCompanyEvents = ({ forceGetUserCompanies }: UseCompanyEventsProps) => {
-  // Setup listeners for company-related events
+export const useCompanyEvents = (setSelectedCompany: (company: Company | null) => void) => {
   useEffect(() => {
-    const handleForceReloadCompanies = async (event: CustomEvent) => {
-      const userId = event.detail?.userId;
-      if (userId) {
-        console.log(`useCompanyEvents: Force reload companies for user ${userId}`);
-        try {
-          await forceGetUserCompanies(userId);
-        } catch (err) {
-          console.error("Error handling force-reload-companies event:", err);
-        }
-      } else {
-        console.warn("force-reload-companies event received but no userId provided");
-      }
+    const handleCompanySelected = (event: CustomEvent) => {
+      const { company } = event.detail;
+      setSelectedCompany(company);
     };
 
-    const handleCompanyRelationChanged = async (event: Event) => {
-      try {
-        // Get current user from local storage or other state management
-        const storedUser = localStorage.getItem('supabase.auth.token');
-        if (storedUser) {
-          const userData = JSON.parse(storedUser);
-          const userId = userData?.currentSession?.user?.id;
-          
-          if (userId) {
-            console.log(`useCompanyEvents: Company relation changed, reloading for user ${userId}`);
-            await forceGetUserCompanies(userId);
-          }
-        }
-      } catch (err) {
-        console.error("Error handling company-relation-changed event:", err);
-      }
-    };
-
-    // Register event listeners
-    window.addEventListener('force-reload-companies', handleForceReloadCompanies as EventListener);
-    window.addEventListener('company-relation-changed', handleCompanyRelationChanged);
-
-    // Cleanup event listeners on component unmount
+    window.addEventListener('company-selected', handleCompanySelected as EventListener);
+    
     return () => {
-      window.removeEventListener('force-reload-companies', handleForceReloadCompanies as EventListener);
-      window.removeEventListener('company-relation-changed', handleCompanyRelationChanged);
+      window.removeEventListener('company-selected', handleCompanySelected as EventListener);
     };
-  }, [forceGetUserCompanies]);
+  }, [setSelectedCompany]);
 };

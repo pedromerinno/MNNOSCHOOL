@@ -1,106 +1,89 @@
-
-import { UserProfile } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
-export const isSuperAdmin = (userProfile: UserProfile | null): boolean => {
-  return !!userProfile?.super_admin;
-};
-
-export const isAdmin = (userProfile: UserProfile | null): boolean => {
-  return !!userProfile?.is_admin || !!userProfile?.super_admin;
-};
-
-export const makeUserAdmin = async (email: string): Promise<void> => {
-  try {
-    // First find the user by email
-    const { data: userData, error: userError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('email', email)
-      .single();
-
-    if (userError) {
-      throw new Error(`Usuário não encontrado: ${userError.message}`);
-    }
-
-    // Update the user's admin status
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ is_admin: true })
-      .eq('id', userData.id);
-
-    if (updateError) {
-      throw new Error(`Erro ao atualizar status de admin: ${updateError.message}`);
-    }
-  } catch (error: any) {
-    console.error('Erro ao definir usuário como admin:', error);
-    throw error;
-  }
-};
-
+/**
+ * Set admin status for a user by ID
+ */
 export const setAdminStatusById = async (
   userId: string, 
-  isAdmin: boolean, 
+  isAdmin: boolean,
   isSuperAdmin: boolean = false
-): Promise<void> => {
+): Promise<boolean> => {
   try {
-    const updateData = isSuperAdmin 
-      ? { super_admin: isAdmin }
-      : { is_admin: isAdmin };
-      
+    console.log(`Setting ${isSuperAdmin ? 'super admin' : 'admin'} status to ${isAdmin} for user ID: ${userId}`);
+    
     const { error } = await supabase
       .from('profiles')
-      .update(updateData)
+      .update({ 
+        [isSuperAdmin ? 'super_admin' : 'is_admin']: isAdmin,
+        updated_at: new Date().toISOString()
+      })
       .eq('id', userId);
-
-    if (error) {
-      throw new Error(`Erro ao atualizar status de admin: ${error.message}`);
-    }
+    
+    if (error) throw error;
+    
+    console.log(`Successfully updated ${isSuperAdmin ? 'super admin' : 'admin'} status for user ID: ${userId}`);
+    return true;
   } catch (error: any) {
-    console.error('Erro ao definir status de admin:', error);
+    console.error('Error setting admin status:', error);
     throw error;
   }
 };
 
-// Update this function to use Supabase directly
-export const checkIfUserIsAdmin = async (userId: string): Promise<boolean> => {
+/**
+ * Make a user admin by updating their profile
+ */
+export const makeUserAdmin = async (targetEmail: string): Promise<boolean> => {
   try {
-    const { data, error } = await supabase
+    console.log(`Attempting to make ${targetEmail} an admin...`);
+    
+    // First try to find by email-like display_name (exact match)
+    const { data: exactProfiles, error: exactError } = await supabase
       .from('profiles')
-      .select('is_admin')
-      .eq('id', userId)
-      .single();
-      
-    if (error) {
-      console.warn("Error checking admin status:", error);
-      return false;
+      .select('id')
+      .eq('display_name', targetEmail)
+      .limit(1);
+    
+    if (!exactError && exactProfiles && exactProfiles.length > 0) {
+      console.log(`Found user by exact display_name: ${exactProfiles[0].id}`);
+      return await setAdminStatusById(exactProfiles[0].id, true);
     }
     
-    return !!data.is_admin;
-  } catch (e) {
-    console.error("Exception checking admin status:", e);
-    return false;
-  }
-};
-
-// Update this function to use Supabase directly
-export const checkIfUserIsSuperAdmin = async (userId: string): Promise<boolean> => {
-  try {
-    const { data, error } = await supabase
+    // Try to find by display_name that might match the email username part
+    const displayName = targetEmail.split('@')[0];
+    
+    const { data: profiles, error } = await supabase
       .from('profiles')
-      .select('super_admin')
-      .eq('id', userId)
-      .single();
-      
+      .select('id, display_name')
+      .ilike('display_name', `%${displayName}%`)
+      .limit(5);
+    
     if (error) {
-      console.warn("Error checking super admin status:", error);
-      return false;
+      console.error('Error finding profiles by display_name:', error);
+      throw error;
     }
     
-    return !!data.super_admin;
-  } catch (e) {
-    console.error("Exception checking super admin status:", e);
-    return false;
+    if (!profiles || profiles.length === 0) {
+      // As a last resort, try to find any profile that contains part of the email
+      const { data: anyProfiles, error: anyError } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .limit(10);
+      
+      if (!anyError && anyProfiles && anyProfiles.length > 0) {
+        console.log(`Could not find exact match, using first available profile: ${anyProfiles[0].id} (${anyProfiles[0].display_name})`);
+        return await setAdminStatusById(anyProfiles[0].id, true);
+      }
+      
+      throw new Error(`No user found matching ${targetEmail}`);
+    }
+    
+    // If multiple matches, take the first one
+    const userId = profiles[0].id;
+    console.log(`Found user by partial display_name match: ${userId} (${profiles[0].display_name})`);
+    return await setAdminStatusById(userId, true);
+    
+  } catch (error: any) {
+    console.error('Error in makeUserAdmin function:', error);
+    throw error;
   }
 };

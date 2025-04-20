@@ -4,49 +4,23 @@ import { UseCompanyFetchProps } from "./types/fetchTypes";
 import { useCompanyList } from "./fetch/useCompanyList";
 import { useUserCompanies } from "./fetch/useUserCompanies";
 import { useCompanyDetails } from "./fetch/useCompanyDetails";
-import { retryOperation } from "./utils/retryUtils";
 
 export const useCompanyFetch = (props: UseCompanyFetchProps) => {
   const { fetchCompanies: _fetchCompanies } = useCompanyList(props);
   const { getUserCompanies: _getUserCompanies } = useUserCompanies(props);
   const { getCompanyById: _getCompanyById } = useCompanyDetails(props);
 
+  // Wrap with useCallback to avoid recreating the function
   const fetchCompanies = useCallback(async () => {
-    try {
-      return await _fetchCompanies();
-    } catch (error) {
-      console.error("Erro ao buscar empresas:", error);
-      // Tentar novamente após um curto intervalo em caso de erro
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      return await _fetchCompanies();
-    }
+    return await _fetchCompanies();
   }, [_fetchCompanies]);
 
   const getUserCompanies = useCallback(async (userId: string, signal?: AbortSignal) => {
-    try {
-      return await retryOperation(
-        () => _getUserCompanies(userId, signal),
-        3,  // 3 tentativas
-        1000, // 1s de delay inicial
-        10000 // 10s de delay máximo
-      );
-    } catch (error) {
-      console.error("Erro ao buscar empresas do usuário:", error);
-      // Tentar novamente após um curto intervalo em caso de erro
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      return await _getUserCompanies(userId, signal);
-    }
+    return await _getUserCompanies(userId, signal);
   }, [_getUserCompanies]);
 
   const getCompanyById = useCallback(async (companyId: string) => {
-    try {
-      return await _getCompanyById(companyId);
-    } catch (error) {
-      console.error("Erro ao buscar empresa por ID:", error);
-      // Tentar novamente após um curto intervalo em caso de erro
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      return await _getCompanyById(companyId);
-    }
+    return await _getCompanyById(companyId);
   }, [_getCompanyById]);
 
   return {

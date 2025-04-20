@@ -18,10 +18,9 @@ interface UserTableProps {
   users: UserProfile[];
   loading: boolean;
   onToggle: (userId: string, currentStatus: boolean | null, isSuperAdmin: boolean) => Promise<void>;
-  isSuperAdmin: boolean;
 }
 
-export const UserTable: React.FC<UserTableProps> = ({ users, loading, onToggle, isSuperAdmin }) => {
+export const UserTable: React.FC<UserTableProps> = ({ users, loading, onToggle }) => {
   const getBadgeContent = (user: UserProfile) => {
     if (user.super_admin) {
       return (

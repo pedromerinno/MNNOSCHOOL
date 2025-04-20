@@ -699,90 +699,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_all_companies_for_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          cor_principal: string | null
-          created_at: string
-          descricao_video: string | null
-          frase_institucional: string | null
-          historia: string | null
-          id: string
-          logo: string | null
-          missao: string | null
-          nome: string
-          updated_at: string
-          valores: string | null
-          video_institucional: string | null
-        }[]
-      }
-      get_all_users_secure: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          avatar: string | null
-          cargo_id: string | null
-          created_at: string
-          display_name: string | null
-          email: string | null
-          id: string
-          interesses: string[] | null
-          is_admin: boolean | null
-          super_admin: boolean | null
-          updated_at: string
-        }[]
-      }
-      get_is_admin_secure: {
-        Args: { user_id: string }
-        Returns: boolean
-      }
-      get_is_super_admin_secure: {
-        Args: { user_id: string }
-        Returns: boolean
-      }
-      get_user_companies: {
-        Args: { user_id: string }
-        Returns: {
-          cor_principal: string | null
-          created_at: string
-          descricao_video: string | null
-          frase_institucional: string | null
-          historia: string | null
-          id: string
-          logo: string | null
-          missao: string | null
-          nome: string
-          updated_at: string
-          valores: string | null
-          video_institucional: string | null
-        }[]
-      }
-      get_user_companies_for_admin: {
-        Args: { current_user_id: string }
-        Returns: {
-          cor_principal: string | null
-          created_at: string
-          descricao_video: string | null
-          frase_institucional: string | null
-          historia: string | null
-          id: string
-          logo: string | null
-          missao: string | null
-          nome: string
-          updated_at: string
-          valores: string | null
-          video_institucional: string | null
-        }[]
-      }
       is_admin: {
         Args: Record<PropertyKey, never> | { user_id: string }
-        Returns: boolean
-      }
-      is_current_user_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_current_user_super_admin: {
-        Args: Record<PropertyKey, never>
         Returns: boolean
       }
       is_super_admin: {
@@ -793,16 +711,8 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
-      is_user_admin_or_super_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
       user_belongs_to_company: {
         Args: { company_id: string } | { user_id: string; company_id: string }
-        Returns: boolean
-      }
-      user_belongs_to_company_of_profile: {
-        Args: { profile_id: string }
         Returns: boolean
       }
       user_can_access_course: {

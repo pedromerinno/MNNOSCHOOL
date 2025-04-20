@@ -1,41 +1,65 @@
 
-import { useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Company } from '@/types/company';
-import { UseCompanyFetchProps } from '../types/fetchTypes';
+import { supabase } from "@/integrations/supabase/client";
+import { Company } from "@/types/company";
+import { toast } from "sonner";
+import { retryOperation } from "../utils/retryUtils";
+import { UseCompanyFetchProps } from "../types/fetchTypes";
 
 export const useCompanyList = ({
   setIsLoading,
-  setCompanies,
-  setError
-}: UseCompanyFetchProps) => {
-  
-  const fetchCompanies = useCallback(async (): Promise<Company[]> => {
-    if (!setCompanies) {
-      console.error('setCompanies not provided');
-      return [];
+  setCompanies
+}: Pick<UseCompanyFetchProps, 'setIsLoading' | 'setCompanies'>) => {
+  /**
+   * Fetches all companies from the database
+   */
+  const fetchCompanies = async (): Promise<void> => {
+    // If already loading, don't start new request
+    if (setIsLoading) {
+      setIsLoading(true);
     }
-    
-    setIsLoading(true);
     
     try {
-      const { data, error } = await supabase
-        .from('empresas')
-        .select('*')
-        .order('nome');
-        
-      if (error) throw error;
+      // Add a small delay before fetching to avoid rapid consecutive requests
+      await new Promise(resolve => setTimeout(resolve, 300));
       
-      setCompanies(data || []);
-      return data || [];
-    } catch (err) {
-      console.error('Error fetching companies:', err);
-      setError(err instanceof Error ? err : new Error('Failed to fetch companies'));
-      return [];
+      const { data, error } = await retryOperation(
+        async () => {
+          console.log('[Company List] Fetching companies from Supabase');
+          // Limit the columns we select to reduce data transfer
+          return await supabase
+            .from('empresas')
+            .select('id, nome, logo, cor_principal, frase_institucional')
+            .order('nome');
+        }
+      );
+
+      if (error) {
+        console.error("[Company List] Error fetching companies:", error);
+        toast("Erro ao buscar empresas", {
+          description: error.message,
+        });
+        return;
+      }
+
+      if (data) {
+        console.log(`[Company List] Fetched ${data.length} companies successfully`);
+        if (setCompanies) {
+          setCompanies(data as Company[]);
+        }
+      }
+    } catch (error: any) {
+      console.error("[Company List] Unexpected error:", error);
+      
+      // Show a more helpful message about connection issues
+      toast("Erro ao conectar", {
+        description: "Não foi possível conectar ao servidor. Verifique sua conexão.",
+      });
     } finally {
-      setIsLoading(false);
+      if (setIsLoading) {
+        setIsLoading(false);
+      }
     }
-  }, [setIsLoading, setCompanies, setError]);
-  
+  };
+
   return { fetchCompanies };
 };

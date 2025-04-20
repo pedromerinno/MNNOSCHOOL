@@ -1,8 +1,7 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { setAdminStatusById, checkIfUserIsAdmin, checkIfUserIsSuperAdmin } from '@/utils/adminUtils';
+import { setAdminStatusById } from '@/utils/adminUtils';
 import { useCache } from '@/hooks/useCache';
 
 export interface UserProfile {
@@ -45,6 +44,15 @@ export function useUsers() {
 
   const fetchUsers = useCallback(async () => {
     try {
+      const cachedData = getCachedUsers();
+      if (cachedData) {
+        console.log('Using cached users data while fetching updates');
+        setUsers(cachedData);
+        setLoading(false);
+      } else {
+        setLoading(true);
+      }
+      
       const { data: { session } } = await supabase.auth.getSession();
       const currentUserId = session?.user?.id;
       
@@ -52,40 +60,25 @@ export function useUsers() {
         throw new Error('No user is currently logged in');
       }
       
-      let isAdmin = false;
-      let isSuperAdmin = false;
+      const { data: isAdminResult, error: isAdminError } = await supabase.rpc('is_admin');
       
-      try {
-        isAdmin = await checkIfUserIsAdmin(currentUserId);
-        isSuperAdmin = await checkIfUserIsSuperAdmin(currentUserId);
-        console.log('Current user is admin:', isAdmin, 'and super admin:', isSuperAdmin);
-      } catch (e) {
-        console.error('Error checking admin status:', e);
+      if (isAdminError) {
+        console.warn('Error checking if user is admin:', isAdminError);
       }
       
-      let profiles: UserProfile[] = [];
+      const isAdmin = !!isAdminResult;
+      console.log('Current user is admin:', isAdmin);
       
-      if (isAdmin || isSuperAdmin) {
-        // Obter usuários disponíveis para o admin atual
-        const { data: allUsers, error } = await supabase
-          .from('profiles')
-          .select('id, display_name, is_admin, super_admin, email, created_at, avatar, cargo_id');
+      const result = await supabase
+        .from('profiles')
+        .select('id, display_name, is_admin, super_admin, email, created_at, avatar, cargo_id');
         
-        if (error) throw error;
-        profiles = allUsers as UserProfile[];
-      } else {
-        // Caso não seja admin, só obtém o próprio perfil
-        const { data: ownProfile, error } = await supabase
-          .from('profiles')
-          .select('id, display_name, is_admin, super_admin, email, created_at, avatar, cargo_id')
-          .eq('id', currentUserId)
-          .single();
-        
-        if (error) throw error;
-        profiles = [ownProfile];
+      if (result.error) {
+        console.error('Error fetching profiles:', result.error);
+        throw result.error;
       }
 
-      const formattedUsers: UserProfile[] = profiles.map((profile: any) => ({
+      const formattedUsers: UserProfile[] = result.data.map((profile: any) => ({
         id: profile.id,
         email: profile.email || profile.id.toLowerCase() + '@example.com',
         display_name: profile.display_name || `User ${profile.id.substring(0, 6)}`,

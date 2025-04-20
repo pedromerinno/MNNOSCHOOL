@@ -5,61 +5,23 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useAuth } from "@/contexts/AuthContext";
 import { NoCompaniesAvailable } from "@/components/home/NoCompaniesAvailable";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 const Index = () => {
   const [isPageLoading, setIsPageLoading] = useState(true);
-  const [isUserAdmin, setIsUserAdmin] = useState(false);
-  const { userCompanies, isLoading, fetchCount, selectedCompany, error } = useCompanies();
+  const { userCompanies, isLoading, fetchCount, selectedCompany } = useCompanies();
   const { user } = useAuth();
-
-  // Check for fetch errors and show toast
-  useEffect(() => {
-    if (error) {
-      toast.error("Erro ao buscar empresas", {
-        description: "Tentaremos novamente em alguns segundos",
-      });
-    }
-  }, [error]);
-
-  // Check if user is admin
-  useEffect(() => {
-    const checkUserAdmin = async () => {
-      if (user?.id) {
-        try {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('is_admin, super_admin')
-            .eq('id', user.id)
-            .single();
-            
-          if (error) {
-            console.error("Error checking admin status:", error);
-          } else {
-            setIsUserAdmin(data?.is_admin || data?.super_admin || false);
-            console.log("User is admin:", data?.is_admin || data?.super_admin || false);
-          }
-        } catch (err) {
-          console.error("Error checking admin status:", err);
-        }
-      }
-    };
-    
-    checkUserAdmin();
-  }, [user]);
 
   // Improved loading state to ensure we don't show "no companies" too early
   useEffect(() => {
     // Only stop showing loading state when:
     // 1. We've attempted to fetch companies at least once (fetchCount > 0)
-    // 2. We have a selected company already 
+    // 2. We have a selected company already
     // 3. Or, we've finished loading and confirmed there are no companies
     const timer = setTimeout(() => {
       if (selectedCompany || fetchCount > 0 || !isLoading) {
         setIsPageLoading(false);
       }
-    }, 2000); // Minimum loading time to give cache a chance to load
+    }, 2000); // Increase minimum loading time to give cache a chance to load
     
     return () => clearTimeout(timer);
   }, [isLoading, fetchCount, selectedCompany]);
@@ -89,17 +51,7 @@ const Index = () => {
     );
   }
 
-  // For admin users, always show the main page even without linked companies
-  // Admin users can create companies if they don't have any
-  if (isUserAdmin) {
-    return (
-      <div className="min-h-screen bg-background">
-        <UserHome />
-      </div>
-    );
-  }
-
-  // For regular users, only show NoCompanies if there are actually no companies
+  // Only show NoCompaniesAvailable if we've finished loading AND there are no companies
   if (user && !isLoading && userCompanies.length === 0) {
     return <NoCompaniesAvailable />;
   }

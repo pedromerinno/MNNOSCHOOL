@@ -1,8 +1,8 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Company } from "@/types/company";
-import { UseCompanyFetchProps } from "../types/fetchTypes";
 import { toast } from "sonner";
+import { retryOperation } from "../utils/retryUtils";
+import { UseCompanyFetchProps } from "../types/fetchTypes";
 
 // Cache expiration time in ms (30 minutes)
 const CACHE_EXPIRATION = 30 * 60 * 1000;
@@ -11,10 +11,11 @@ export const useUserCompanies = ({
   setIsLoading,
   setUserCompanies,
   setSelectedCompany,
-  setError,
-  incrementFetchCount
+  setError
 }: UseCompanyFetchProps) => {
-  
+  /**
+   * Check if the companies cache is valid
+   */
   const isCacheValid = (): boolean => {
     const cachedData = localStorage.getItem('userCompaniesTimestamp');
     if (!cachedData) return false;
@@ -28,92 +29,104 @@ export const useUserCompanies = ({
     }
   };
 
+  /**
+   * Gets all companies a user is related to
+   */
   const getUserCompanies = async (userId: string, signal?: AbortSignal): Promise<Company[]> => {
-    try {
-      setIsLoading(true);
-      if (incrementFetchCount) {
-        incrementFetchCount();
-      }
-
-      // Primeiro, verifica se há cache válido
-      if (isCacheValid()) {
-        const cachedData = localStorage.getItem('userCompanies');
-        if (cachedData) {
-          try {
-            const companies = JSON.parse(cachedData) as Company[];
-            if (companies && companies.length > 0) {
-              console.log("Utilizando empresas em cache", companies.length);
-              setUserCompanies(companies);
-              
-              // Se existir apenas uma empresa, automaticamente seleciona-a
-              if (companies.length === 1) {
-                setSelectedCompany(companies[0]);
-              }
-              
-              return companies;
-            }
-          } catch (e) {
-            console.error("Erro ao analisar empresas em cache", e);
-          }
+    // First check if we already have cached data
+    const cachedCompanies = localStorage.getItem('userCompanies');
+    let cachedData: Company[] = [];
+    
+    if (cachedCompanies) {
+      try {
+        cachedData = JSON.parse(cachedCompanies) as Company[];
+        
+        if (setUserCompanies) {
+          setUserCompanies(cachedData);
         }
+        
+        if (cachedData.length === 1 && setSelectedCompany) {
+          setSelectedCompany(cachedData[0]);
+        }
+        
+        if (isCacheValid() && cachedData.length > 0) {
+          setIsLoading(false);
+          return cachedData;
+        }
+      } catch (e) {
+        console.error("Error parsing cached companies", e);
+      }
+    }
+
+    setIsLoading(true);
+
+    try {
+      if (signal?.aborted) {
+        throw new DOMException("Aborted", "AbortError");
       }
 
-      console.log("Buscando empresas para o usuário:", userId);
+      // Primeiro, buscar as relações de empresa do usuário
+      const { data: relations, error: relationsError } = await supabase
+        .from('user_empresa')
+        .select('empresa_id')
+        .eq('user_id', userId);
 
-      // Usar a nova função RPC que criamos
+      if (relationsError) {
+        console.error("Error fetching user-company relations:", relationsError);
+        throw relationsError;
+      }
+
+      if (!relations || relations.length === 0) {
+        console.log("No companies found for user:", userId);
+        setUserCompanies([]);
+        setSelectedCompany(null);
+        localStorage.removeItem('userCompanies');
+        setIsLoading(false);
+        return [];
+      }
+
+      // Buscar os detalhes das empresas
+      const companyIds = relations.map(r => r.empresa_id);
+      console.log(`Found ${companyIds.length} company relations`);
+
       const { data: companies, error: companiesError } = await supabase
-        .rpc('get_user_companies', { user_id: userId });
+        .from('empresas')
+        .select('*')
+        .in('id', companyIds)
+        .order('nome');
 
       if (companiesError) {
-        console.error("Erro ao buscar empresas via RPC:", companiesError);
+        console.error("Error fetching companies:", companiesError);
         throw companiesError;
       }
 
-      if (companies && Array.isArray(companies)) {
-        console.log(`Encontradas ${companies.length} empresas para o usuário via RPC`);
-        setUserCompanies(companies);
-        
-        // Cache os resultados
-        localStorage.setItem('userCompanies', JSON.stringify(companies));
+      const userCompaniesData = companies as Company[];
+      console.log(`Successfully fetched ${userCompaniesData.length} companies`);
+
+      setUserCompanies(userCompaniesData);
+
+      if (userCompaniesData.length > 0) {
+        localStorage.setItem('userCompanies', JSON.stringify(userCompaniesData));
         localStorage.setItem('userCompaniesTimestamp', Date.now().toString());
 
-        // Se apenas uma empresa, automaticamente seleciona
-        if (companies.length === 1) {
-          setSelectedCompany(companies[0]);
+        if (userCompaniesData.length === 1) {
+          setSelectedCompany(userCompaniesData[0]);
         }
-        
-        return companies;
       }
 
-      return [];
-    } catch (error: any) {
-      console.error("Erro em getUserCompanies:", error);
+      setIsLoading(false);
+      return userCompaniesData;
+    } catch (error) {
+      console.error("Error in getUserCompanies:", error);
+      setError(error instanceof Error ? error : new Error("Failed to fetch companies"));
       
-      // Notifica o usuário sobre o erro
-      toast.error("Erro ao carregar empresas", {
-        description: "Tentando novamente em alguns segundos..."
-      });
-      
-      setError(error instanceof Error ? error : new Error("Falha ao buscar empresas"));
-      
-      // Tenta usar cache como último recurso
-      const cachedData = localStorage.getItem('userCompanies');
-      if (cachedData) {
-        try {
-          const cachedCompanies = JSON.parse(cachedData) as Company[];
-          if (cachedCompanies && cachedCompanies.length > 0) {
-            console.log("Usando empresas em cache após erro");
-            setUserCompanies(cachedCompanies);
-            return cachedCompanies;
-          }
-        } catch (e) {
-          console.error("Erro ao analisar empresas em cache", e);
-        }
+      if (cachedData.length > 0) {
+        console.log("Using cached data due to error");
+        return cachedData;
       }
       
-      return [];
-    } finally {
       setIsLoading(false);
+      return [];
     }
   };
 
