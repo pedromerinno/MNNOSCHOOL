@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Session } from '@supabase/supabase-js';
@@ -11,7 +10,7 @@ interface AuthContextType {
   session: Session | null;
   userProfile: UserProfile | null;
   loading: boolean;
-  signIn: (email: string) => Promise<void>;
+  signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   signUp: (email: string, password: string, displayName: string, metadata?: { interests?: string[] }) => Promise<void>;
   updateUserProfile: (userData: Partial<UserProfile>) => Promise<void>;
@@ -32,16 +31,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         setLoading(true);
         
-        // Configurar o listener de eventos de autenticação PRIMEIRO
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
           async (event, newSession) => {
             console.log(`Auth event: ${event}`);
             
-            // Atualizações síncronas primeiro
             setSession(newSession);
             setUser(newSession?.user || null);
             
-            // Depois, usar setTimeout para operações assíncronas adicionais
             if (newSession?.user) {
               setTimeout(async () => {
                 await fetchUserProfile(newSession.user.id);
@@ -52,7 +48,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         );
         
-        // DEPOIS verificar sessão existente
         const { data } = await supabase.auth.getSession();
         
         if (data.session) {
@@ -110,23 +105,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signIn = async (email: string) => {
+  const signInWithPassword = async (email: string, password: string) => {
     try {
-      setLoading(true);
-      const { error } = await supabase.auth.signInWithOtp({ 
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        options: {
-          emailRedirectTo: window.location.origin
-        }
+        password,
       });
-      
+
       if (error) throw error;
-      toast.success('Verifique seu email para o link de login.');
+
+      if (data.session) {
+        setSession(data.session);
+        setUser(data.session.user);
+        await fetchUserProfile(data.session.user.id);
+        navigate('/');
+      }
+
+      return { error: null };
     } catch (error: any) {
       console.error('Erro no login:', error);
-      toast.error(error.error_description || error.message || 'Falha ao fazer login');
-    } finally {
-      setLoading(false);
+      return { error };
     }
   };
 
@@ -135,12 +133,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(true);
       await supabase.auth.signOut();
       
-      // Limpar todos os estados relacionados ao usuário
       setUser(null);
       setSession(null);
       setUserProfile(null);
       
-      // Redirecionar para a página inicial
       navigate('/');
       toast.success('Você saiu da sua conta');
     } catch (error: any) {
@@ -238,7 +234,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     session,
     userProfile,
     loading,
-    signIn,
+    signInWithPassword,
     signOut,
     signUp,
     updateUserProfile,
