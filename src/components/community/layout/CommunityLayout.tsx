@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { CompanyThemedBadge } from "@/components/ui/badge";
 import { useCompanies } from "@/hooks/useCompanies";
+import { AdminFloatingActionButton } from "@/components/admin/AdminFloatingActionButton";
 
 export const CommunityLayout: React.FC<React.PropsWithChildren<{}>> = ({ children }) => {
   const { selectedCompany } = useCompanies();
@@ -38,6 +39,7 @@ export const CommunityLayout: React.FC<React.PropsWithChildren<{}>> = ({ childre
           {children}
         </div>
       </main>
+      <AdminFloatingActionButton />
     </div>
   );
 };

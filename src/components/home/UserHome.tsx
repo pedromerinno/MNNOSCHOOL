@@ -6,21 +6,18 @@ import { WelcomeSection } from "./WelcomeSection";
 import { QuickLinks } from "./QuickLinks";
 import { DashboardWidgets } from "./DashboardWidgets";
 import { Footer } from "./Footer";
-import { HelpButton } from "./HelpButton";
 import { NoCompaniesAvailable } from "./NoCompaniesAvailable";
+import { AdminFloatingActionButton } from "../admin/AdminFloatingActionButton";
 
 export const UserHome = () => {
   const { user } = useAuth();
   const { getUserCompanies, selectedCompany, userCompanies } = useCompanies();
   
-  // Apenas carregar as empresas do usuário, sem forçar seleção
   useEffect(() => {
     const fetchUserCompanies = async () => {
       if (user?.id) {
         try {
           console.log("[UserHome] Buscando empresas do usuário sem forçar seleção");
-          // Usar false como segundo parâmetro para não mostrar loading
-          // e não forçar seleção de empresa
           await getUserCompanies(user.id, false);
         } catch (error) {
           console.error('Error fetching user companies on home page:', error);
@@ -31,8 +28,6 @@ export const UserHome = () => {
     fetchUserCompanies();
   }, [user, getUserCompanies]);
   
-  // The no companies check is already handled at the Index.tsx level,
-  // but we'll add it here as a fallback just in case
   if (user && userCompanies.length === 0) {
     console.log("[UserHome] Nenhuma empresa disponível, mostrando NoCompaniesAvailable");
     return <NoCompaniesAvailable />;
@@ -45,9 +40,8 @@ export const UserHome = () => {
         <QuickLinks />
         <DashboardWidgets />
       </main>
-
       <Footer />
-      <HelpButton />
+      <AdminFloatingActionButton />
     </div>
   );
 };

@@ -2,6 +2,7 @@
 import { ReactNode } from "react";
 import { DashboardHeader } from "./DashboardHeader";
 import { useCompanies } from "@/hooks/useCompanies";
+import { AdminFloatingActionButton } from "../admin/AdminFloatingActionButton";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -25,6 +26,7 @@ export const DashboardLayout = ({ children, fullWidth = false }: DashboardLayout
           © {currentYear} {selectedCompany?.nome || "merinno"}. Todos os direitos reservados.
         </div>
       </footer>
+      <AdminFloatingActionButton />
     </div>
   );
 };
