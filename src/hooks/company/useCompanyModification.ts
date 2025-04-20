@@ -28,7 +28,7 @@ export const useCompanyModification = ({
     
     try {
       const { data, error } = await supabase
-        .from('empresas')
+        .from('empresas')  // Changed from 'companies' to 'empresas'
         .select('*')
         .order('nome');
         
@@ -53,7 +53,7 @@ export const useCompanyModification = ({
     
     try {
       const { data, error } = await supabase
-        .from('empresas')
+        .from('empresas')  // Changed from 'companies' to 'empresas'
         .insert(companyData)
         .select()
         .single();
@@ -87,7 +87,7 @@ export const useCompanyModification = ({
     
     try {
       const { data, error } = await supabase
-        .from('empresas')
+        .from('empresas')  // Changed from 'companies' to 'empresas'
         .update(companyData)
         .eq('id', companyId)
         .select()
@@ -126,7 +126,7 @@ export const useCompanyModification = ({
     
     try {
       const { error } = await supabase
-        .from('empresas')
+        .from('empresas')  // Changed from 'companies' to 'empresas'
         .delete()
         .eq('id', companyId);
         
