@@ -112,15 +112,15 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
   // Listen for company selection and specific reload events
   useEffect(() => {
     const handleCompanySelected = (event: CustomEvent) => {
+      console.log("VideoPlaylist: company-selected event received");
       const company = event.detail?.company;
       if (company) {
-        console.log(`VideoPlaylist: Company selection changed to ${company.nome}, reloading videos`);
-        // Delay to ensure state is updated
-        setTimeout(() => {
-          if (company.id === activeCompanyId) {
-            fetchVideos();
-          }
-        }, 300);
+        console.log(`VideoPlaylist: Company selection changed to ${company.nome}`);
+        
+        if (company.id === activeCompanyId) {
+          console.log("VideoPlaylist: Reloading videos for current company");
+          fetchVideos();
+        }
       }
     };
     
@@ -131,7 +131,7 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
       
       if (eventCompanyId && eventCompanyId === activeCompanyId) {
         console.log("VideoPlaylist: Reloading videos for current company");
-        setTimeout(fetchVideos, 300);
+        fetchVideos();
       }
     };
     

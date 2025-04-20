@@ -1,61 +1,53 @@
 
-import { useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useEffect } from "react";
 
 interface UseCompanyEventsProps {
   forceGetUserCompanies: (userId: string) => Promise<any>;
 }
 
-export const useCompanyEvents = ({
-  forceGetUserCompanies
-}: UseCompanyEventsProps) => {
-  const { user } = useAuth();
-  
-  // Atualiza as empresas quando uma relação de empresa é alterada
+export const useCompanyEvents = ({ forceGetUserCompanies }: UseCompanyEventsProps) => {
+  // Setup listeners for company-related events
   useEffect(() => {
-    const handleCompanyRelationChange = async () => {
-      if (user?.id) {
-        console.log('Detected company relation change, reloading companies');
+    const handleForceReloadCompanies = async (event: CustomEvent) => {
+      const userId = event.detail?.userId;
+      if (userId) {
+        console.log(`useCompanyEvents: Force reload companies for user ${userId}`);
         try {
-          await forceGetUserCompanies(user.id);
-        } catch (error) {
-          console.error('Error reloading companies after relation change:', error);
+          await forceGetUserCompanies(userId);
+        } catch (err) {
+          console.error("Error handling force-reload-companies event:", err);
         }
+      } else {
+        console.warn("force-reload-companies event received but no userId provided");
       }
     };
-    
-    window.addEventListener('company-relation-changed', handleCompanyRelationChange);
-    
-    return () => {
-      window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
-    };
-  }, [forceGetUserCompanies, user]);
-  
-  // Força o carregamento de empresas quando solicitado explicitamente
-  useEffect(() => {
-    const handleForceReload = async () => {
-      if (user?.id) {
-        console.log('Force reload companies event detected');
-        try {
-          await forceGetUserCompanies(user.id);
-        } catch (error) {
-          console.error('Error during forced reload of companies:', error);
+
+    const handleCompanyRelationChanged = async (event: Event) => {
+      try {
+        // Get current user from local storage or other state management
+        const storedUser = localStorage.getItem('supabase.auth.token');
+        if (storedUser) {
+          const userData = JSON.parse(storedUser);
+          const userId = userData?.currentSession?.user?.id;
+          
+          if (userId) {
+            console.log(`useCompanyEvents: Company relation changed, reloading for user ${userId}`);
+            await forceGetUserCompanies(userId);
+          }
         }
+      } catch (err) {
+        console.error("Error handling company-relation-changed event:", err);
       }
     };
-    
-    // Handle the cleanup event to reset UI state before company changes
-    const handleCompanyChanging = () => {
-      console.log('Company is changing, cleaning up state...');
-      // The event itself serves as a notification to components to clean up
-    };
-    
-    window.addEventListener('force-reload-companies', handleForceReload);
-    window.addEventListener('company-changing', handleCompanyChanging);
-    
+
+    // Register event listeners
+    window.addEventListener('force-reload-companies', handleForceReloadCompanies as EventListener);
+    window.addEventListener('company-relation-changed', handleCompanyRelationChanged);
+
+    // Cleanup event listeners on component unmount
     return () => {
-      window.removeEventListener('force-reload-companies', handleForceReload);
-      window.removeEventListener('company-changing', handleCompanyChanging);
+      window.removeEventListener('force-reload-companies', handleForceReloadCompanies as EventListener);
+      window.removeEventListener('company-relation-changed', handleCompanyRelationChanged);
     };
-  }, [forceGetUserCompanies, user]);
+  }, [forceGetUserCompanies]);
 };

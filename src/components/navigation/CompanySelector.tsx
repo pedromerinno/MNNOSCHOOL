@@ -30,16 +30,9 @@ export const CompanySelector = () => {
   const [errorType, setErrorType] = useState<'resource' | 'connection' | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // Detect when companies are loaded for the first time
-  useEffect(() => {
-    if (userCompanies.length > 0 && !isLoading) {
-      console.log("CompanySelector: Companies loaded:", userCompanies.length);
-    }
-  }, [userCompanies.length, isLoading]);
-
+  // Detectar quando há erro e classificá-lo
   useEffect(() => {
     if (error) {
-      // Check if it's a resource error
       if (error.message?.includes('insufficient') || error.message?.includes('resource')) {
         setErrorType('resource');
       } else {
@@ -87,22 +80,18 @@ export const CompanySelector = () => {
       // Close dropdown first
       setDropdownOpen(false);
       
-      // Add a small delay before selecting to prevent duplicate selections
+      // IMPORTANTE: Forçar um limpar do state antes da seleção
+      window.dispatchEvent(new Event('company-changing'));
+      
+      // Mostrar loading imediatamente
+      toast.info(`Carregando empresa ${company.nome}...`, {
+        id: "company-loading",
+        duration: 3000
+      });
+      
+      // Pequeno atraso para seleção
       setTimeout(() => {
-        // Show loading toast
-        toast.info(`Carregando empresa ${company.nome}...`, {
-          id: "company-loading",
-          duration: 3000
-        });
-        
-        // Trigger company change event before selection
-        // This ensures all components clean up their state before new data loads
-        window.dispatchEvent(new Event('company-changing'));
-        
-        // Small delay to allow cleanup to process
-        setTimeout(() => {
-          selectCompany(user.id, company);
-        }, 300);
+        selectCompany(user.id, company);
       }, 100);
     }
   };

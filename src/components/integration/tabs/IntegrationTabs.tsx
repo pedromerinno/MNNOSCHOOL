@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, PlayCircle, BriefcaseBusiness } from "lucide-react";
@@ -27,6 +28,18 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
   isLoadingRoles = false,
   userRole
 }) => {
+  // Log company data for debugging
+  useEffect(() => {
+    if (company) {
+      console.log(`IntegrationTabs: Showing data for company ${company.nome} (${company.id})`);
+      console.log(`IntegrationTabs: Company has roles: ${jobRoles?.length || 0}`);
+      console.log(`IntegrationTabs: User role: ${userRole?.name || 'None'}`);
+    }
+  }, [company, jobRoles, userRole]);
+
+  // Fallback for undefined/null values
+  const safeCompany = company || { id: '', nome: '', valores: '', missao: '', historia: '', video_institucional: '', descricao_video: '' };
+  
   return (
     <div className="w-full">
       <Tabs
@@ -77,21 +90,21 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
         <div className="mt-10 mb-16 space-y-8">
           <TabsContent value="culture" className="m-0">
             <CultureManual
-              companyValues={company?.valores || ""}
-              companyMission={company?.missao || ""}
-              companyHistory={company?.historia || ""}
+              companyValues={safeCompany.valores || ""}
+              companyMission={safeCompany.missao || ""}
+              companyHistory={safeCompany.historia || ""}
               companyColor={companyColor}
-              videoUrl={company?.video_institucional}
-              videoDescription={company?.descricao_video}
+              videoUrl={safeCompany.video_institucional}
+              videoDescription={safeCompany.descricao_video}
             />
           </TabsContent>
 
           <TabsContent value="videos" className="m-0">
             <VideoPlaylist 
-              key={`videos-${company?.id}`}
-              companyId={company?.id} 
-              mainVideo={company?.video_institucional || ""}
-              mainVideoDescription={company?.descricao_video || ""}
+              key={`videos-${safeCompany.id}`}
+              companyId={safeCompany.id} 
+              mainVideo={safeCompany.video_institucional || ""}
+              mainVideoDescription={safeCompany.descricao_video || ""}
             />
           </TabsContent>
 

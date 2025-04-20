@@ -7,8 +7,9 @@ import { useCompanyFetching } from "./useCompanyFetching";
 import { useCompanyModification } from "./useCompanyModification";
 import { useCompanySelection } from "./useCompanySelection";
 import { useCompanyEvents } from "./useCompanyEvents";
+import { UseCompaniesReturn } from "./types";
 
-export const useCompanies = () => {
+export const useCompanies = (): UseCompaniesReturn => {
   const { user } = useAuth();
   
   const {
@@ -93,9 +94,13 @@ export const useCompanies = () => {
       if (!user?.id || initialFetchDone.current) return;
       
       try {
+        console.log("Initializing companies for user:", user.id);
+        
         // First check if there's a stored company
         const foundStoredCompany = getStoredCompany();
-        console.log("Found stored company selection:", foundStoredCompany?.nome);
+        if (foundStoredCompany) {
+          console.log("Found stored company selection:", foundStoredCompany.nome);
+        }
         
         // Fetch companies for the user
         resetError();
@@ -105,6 +110,7 @@ export const useCompanies = () => {
         
         // If there's a stored company ID, try to restore selected company
         if (foundStoredCompany) {
+          console.log("Restoring stored company selection:", foundStoredCompany.nome);
           persistCompanySelection(foundStoredCompany);
         } else if (userCompanies.length > 0) {
           // If no stored company, select the first one from the list
@@ -147,7 +153,7 @@ export const useCompanies = () => {
     isLoading,
     error,
     fetchCount,
-    user, // Now explicitly including the user in the return object
+    user, // Explicitly including the user in the return object
     
     // Fetch operations
     getUserCompanies,

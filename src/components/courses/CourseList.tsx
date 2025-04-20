@@ -58,6 +58,7 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
         .eq('empresa_id', selectedCompany.id);
       
       if (accessError) {
+        console.error("Error fetching company courses:", accessError);
         throw accessError;
       }
       
@@ -166,11 +167,11 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
   // Listen for company selection and course reload events
   useEffect(() => {
     const handleCompanySelected = (event: CustomEvent) => {
+      console.log("CourseList: company-selected event received");
       const company = event.detail?.company;
       if (company) {
-        console.log(`CourseList: Company selection changed to ${company.nome}, reloading courses`);
-        // Delay to ensure state is updated
-        setTimeout(fetchCourses, 350);
+        console.log(`CourseList: Company selection changed to ${company.nome}`);
+        fetchCourses();
       }
     };
     
@@ -182,7 +183,7 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
       
       if (eventCompanyId && eventCompanyId === selectedCompany.id) {
         console.log(`CourseList: Reloading courses for ${selectedCompany.nome}`);
-        setTimeout(fetchCourses, 350);
+        fetchCourses();
       }
     };
     

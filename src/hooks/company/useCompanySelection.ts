@@ -14,7 +14,7 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
       const lastSelectionTime = localStorage.getItem('lastCompanySelectionTime');
       const now = Date.now();
       
-      if (lastSelectionTime && (now - parseInt(lastSelectionTime, 10)) < 5000) {
+      if (lastSelectionTime && (now - parseInt(lastSelectionTime, 10)) < 2000) {
         console.log("Ignoring company selection, too soon after previous selection");
         return;
       }
@@ -42,49 +42,48 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
       
       // Short delay to ensure cleanup happens first
       setTimeout(() => {
-        // Update the app state
+        // IMPORTANTE: Primeiro atualizar o state antes de disparar eventos
         setSelectedCompany(company);
         
         // Dispatch primary event for general app updates
-        window.dispatchEvent(new CustomEvent('company-selected', { 
+        const companySelectedEvent = new CustomEvent('company-selected', { 
           detail: { company } 
-        }));
+        });
+        window.dispatchEvent(companySelectedEvent);
+        console.log('Event company-selected dispatched with company:', company.nome);
         
         // Show feedback to user that company is changing
         toast.info(`Carregando empresa ${company.nome}...`, {
           duration: 2000
         });
         
-        // Increased delay for content reload events
+        // IMPORTANTE: Reduzir atraso para eventos de conteúdo
         setTimeout(() => {
           // Force reload all content for the new company
-          window.dispatchEvent(new CustomEvent('reload-company-videos', {
-            detail: { companyId: company.id }
-          }));
+          const eventTypes = [
+            'reload-company-videos',
+            'reload-company-documents',
+            'reload-company-roles',
+            'reload-company-courses'
+          ];
           
-          window.dispatchEvent(new CustomEvent('reload-company-documents', {
-            detail: { companyId: company.id }
-          }));
-          
-          window.dispatchEvent(new CustomEvent('reload-company-roles', {
-            detail: { companyId: company.id }
-          }));
-          
-          window.dispatchEvent(new CustomEvent('reload-company-courses', {
-            detail: { companyId: company.id }
-          }));
+          eventTypes.forEach(eventType => {
+            const event = new CustomEvent(eventType, {
+              detail: { companyId: company.id }
+            });
+            window.dispatchEvent(event);
+            console.log(`Event ${eventType} dispatched for company ${company.nome}`);
+          });
           
           // Notify success with a brief delay
           setTimeout(() => {
             toast.success(`Empresa ${company.nome} selecionada`, {
               description: "Conteúdo atualizado para a empresa selecionada"
             });
-            
-            console.log(`Content reload events dispatched for ${company.nome}`);
-          }, 500);
+          }, 300);
           
-        }, 500);
-      }, 300);
+        }, 300); // Reduzido de 500ms para 300ms
+      }, 100); // Reduzido de 300ms para 100ms
     } catch (e) {
       console.error('Failed to persist company selection', e);
       toast.error("Erro ao selecionar empresa", {
