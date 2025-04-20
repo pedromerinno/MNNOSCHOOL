@@ -10,7 +10,11 @@ interface UseCompanySelectionProps {
 export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionProps) => {
   const persistCompanySelection = useCallback((company: Company) => {
     try {
-      // First update local storage with company info
+      // Clear all cached data first
+      localStorage.removeItem('userCompanies');
+      localStorage.removeItem('userCompaniesTimestamp');
+      
+      // Then update local storage with new company info
       localStorage.setItem('selectedCompanyId', company.id);
       localStorage.setItem('selectedCompany', JSON.stringify(company));
       
@@ -19,17 +23,17 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
       // First clear any existing data before changing company
       window.dispatchEvent(new Event('company-changing'));
       
-      // Add a short delay to ensure cleanup happens first
+      // Short delay to ensure cleanup happens first
       setTimeout(() => {
-        // Then update the app state
+        // Update the app state
         setSelectedCompany(company);
         
-        // Dispatch primary event for general app updates with the company in the payload
+        // Dispatch primary event for general app updates
         window.dispatchEvent(new CustomEvent('company-selected', { 
           detail: { company } 
         }));
         
-        // Increased delay for content reload events to ensure the company selection is processed
+        // Increased delay for content reload events
         setTimeout(() => {
           // Force reload all content for the new company
           window.dispatchEvent(new CustomEvent('reload-company-videos', {
@@ -48,13 +52,22 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
             detail: { companyId: company.id }
           }));
           
+          // Clear company related caches
+          localStorage.removeItem('companyVideos');
+          localStorage.removeItem('companyDocuments');
+          localStorage.removeItem('companyCourses');
+          localStorage.removeItem('companyRoles');
+          
+          // Force page reload to ensure clean state
+          window.location.reload();
+          
           toast.success(`Empresa ${company.nome} selecionada`, {
             description: "Conteúdo atualizado para a empresa selecionada"
           });
           
           console.log(`Content reload events dispatched for ${company.nome}`);
-        }, 300); // Increased from 200ms to 300ms
-      }, 200); // Increased from 100ms to 200ms
+        }, 300);
+      }, 200);
     } catch (e) {
       console.error('Failed to persist company selection', e);
       toast.error("Erro ao selecionar empresa", {
@@ -86,8 +99,6 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
     }
     
     console.log(`Selecting company: ${company.nome} (${company.id})`);
-    
-    // IMPORTANT: Persist selection first which will handle state updates and events
     persistCompanySelection(company);
   }, [persistCompanySelection]);
 
