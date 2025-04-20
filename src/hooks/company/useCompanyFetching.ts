@@ -1,19 +1,11 @@
 
-import { useCallback, useRef, useMemo } from "react";
+import { useCallback, useRef } from "react";
 import { Company } from "@/types/company";
-import { useCompanyRequest } from "./useCompanyRequest";
+import { useCompanyRequest } from "./fetch/useCompanyRequest";
 import { useCompanyCache } from "./useCompanyCache";
-import { useCompanyRetry } from "./useCompanyRetry";
+import { useCompanyRetry } from "./fetch/useCompanyRetry";
 import { useCompanyFetch } from "./useCompanyFetch";
-
-interface UseCompanyFetchingProps {
-  userCompanies: Company[];
-  setUserCompanies: (companies: Company[]) => void;
-  setSelectedCompany: (company: Company | null) => void;
-  setIsLoading: (isLoading: boolean) => void;
-  setError: (error: Error | null) => void;
-  incrementFetchCount: () => void;
-}
+import { UseCompanyFetchingProps } from "./types/fetchTypes";
 
 export const useCompanyFetching = ({
   userCompanies,
@@ -32,17 +24,15 @@ export const useCompanyFetching = ({
   } = useCompanyRequest();
   
   const { executeWithRetry } = useCompanyRetry();
+  
   const { 
     getCachedUserCompanies, 
     cacheUserCompanies, 
-    clearCachedUserCompanies,
-    removeCachedCompany,
-    isCacheExpired 
+    clearCachedUserCompanies 
   } = useCompanyCache();
   
   const companyFetchProps = {
     setIsLoading,
-    setCompanies: setUserCompanies,
     setUserCompanies,
     setSelectedCompany,
     setError
@@ -50,156 +40,121 @@ export const useCompanyFetching = ({
   
   const { getCompanyById, getUserCompanies: getCompanies } = useCompanyFetch(companyFetchProps);
   
-  // Estado para rastrear requisições e evitar duplicidades
+  // State for tracking requests
   const fetchInProgressRef = useRef(false);
-  // Controladores para abortar requisições ativas
   const abortControllerRef = useRef<AbortController | null>(null);
-  // Timestamp da última requisição bem-sucedida
   const lastSuccessfulFetchRef = useRef<number>(0);
-  // Flag para verificar se houve fetch nesta carga de página
   const didFetchOnPageLoadRef = useRef<boolean>(false);
-  // ID único para este hook
   const hookInstanceIdRef = useRef<string>(`fetch-${Math.random().toString(36).substring(2, 9)}`);
-  
-  // Cache em memória para evitar requisições desnecessárias
+  const fetchedCompaniesRef = useRef<Set<string>>(new Set());
   const memoryCache = useRef<{ 
     companies: Company[] | null, 
     timestamp: number 
   }>({ companies: null, timestamp: 0 });
-  
-  // Lista de IDs de empresas que já foram carregadas nesta sessão
-  const fetchedCompaniesRef = useRef<Set<string>>(new Set());
-  
+
   const getUserCompanies = useCallback(async (
     userId: string, 
     forceRefresh: boolean = false
   ): Promise<Company[]> => {
-    // Se temos dados em cache e não estamos forçando atualização, use-os primeiro
     const cachedData = getCachedUserCompanies();
     
-    // Verificar se já carregou nesta sessão
     if (didFetchOnPageLoadRef.current && !forceRefresh && userCompanies.length > 0) {
-      console.log(`[${hookInstanceIdRef.current}] Já carregou empresas durante esta sessão. Usando dados em cache.`);
+      console.log(`[${hookInstanceIdRef.current}] Already loaded companies this session. Using cached data.`);
       return userCompanies;
     }
     
     if (cachedData && cachedData.length > 0 && !forceRefresh) {
-      // Atualize o estado se os dados forem diferentes
       if (JSON.stringify(userCompanies) !== JSON.stringify(cachedData)) {
         setUserCompanies(cachedData);
       }
       
-      // Se já temos dados em memória e já carregamos nesta sessão, retorne o cache
       if (memoryCache.current.companies && !forceRefresh) {
-        console.log(`[${hookInstanceIdRef.current}] Usando cache em memória para evitar re-renderização.`);
+        console.log(`[${hookInstanceIdRef.current}] Using memory cache to prevent re-rendering.`);
         return cachedData;
       }
     }
-    
-    // Throttling específico para este componente - mínimo 120 segundos entre requisições (2 minutos)
+
     const now = Date.now();
     const timeSinceLastSuccess = now - lastSuccessfulFetchRef.current;
-    const COMPONENT_SPECIFIC_THROTTLE = 120000; // 2 minutos
+    const COMPONENT_SPECIFIC_THROTTLE = 120000;
     
     if (!forceRefresh && lastSuccessfulFetchRef.current > 0 && 
         timeSinceLastSuccess < COMPONENT_SPECIFIC_THROTTLE && userCompanies.length > 0) {
-      console.log(`[${hookInstanceIdRef.current}] Última requisição bem-sucedida foi há ${Math.round(timeSinceLastSuccess/1000)}s. Usando dados em cache.`);
+      console.log(`[${hookInstanceIdRef.current}] Last successful request was ${Math.round(timeSinceLastSuccess/1000)}s ago. Using cached data.`);
       return userCompanies;
     }
     
-    // Cancelar requisições existentes se forçando atualização
     if (forceRefresh && abortControllerRef.current) {
-      console.log(`[${hookInstanceIdRef.current}] Cancelando requisição anterior devido à atualização forçada`);
+      console.log(`[${hookInstanceIdRef.current}] Cancelling previous request due to forced refresh`);
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
     
-    // Se já houver uma requisição em andamento e não estamos forçando, retorne dados atuais
     if (fetchInProgressRef.current && !forceRefresh) {
-      console.log(`[${hookInstanceIdRef.current}] Uma operação de busca já está em andamento. Pulando requisição duplicada.`);
+      console.log(`[${hookInstanceIdRef.current}] A fetch operation is already in progress. Skipping duplicate request.`);
       return userCompanies;
     }
     
-    // Verificar requisições pendentes
-    console.log(`[${hookInstanceIdRef.current}] Requisições ativas: ${pendingRequestsRef.current}`);
-    
-    // Verificar se devemos fazer requisição
     if (!shouldMakeRequest(forceRefresh, userCompanies.length > 0)) {
       return userCompanies;
     }
-    
-    // Marcar início da requisição
+
     fetchInProgressRef.current = true;
     startRequest();
     setIsLoading(true);
     setError(null);
     incrementFetchCount();
     
-    // Criar controlador para esta requisição
     abortControllerRef.current = new AbortController();
     
     try {
-      // Usar dados em cache para atualização imediata da UI
       if (!forceRefresh) {
         const cachedData = getCachedUserCompanies();
         if (cachedData && cachedData.length > 0) {
           setUserCompanies(cachedData);
-          console.log(`[${hookInstanceIdRef.current}] Usando dados em cache enquanto busca dados atualizados:`, cachedData.length, "empresas");
         }
       }
       
-      // Realizar requisição para obter dados atualizados
       const result = await executeWithRetry(() => getCompanies(userId, abortControllerRef.current?.signal));
       
-      // Marcar fim da requisição bem-sucedida
       completeRequest();
-      
-      // Registrar timestamp da requisição bem-sucedida
       lastSuccessfulFetchRef.current = Date.now();
       didFetchOnPageLoadRef.current = true;
       
-      // Atualizar cache em memória
       memoryCache.current = { 
         companies: result, 
         timestamp: Date.now() 
       };
       
-      // Armazenar empresas em cache quando buscadas com sucesso
       if (result && result.length > 0) {
         cacheUserCompanies(result);
-        // Atualizar lista de empresas já carregadas
         result.forEach(company => fetchedCompaniesRef.current.add(company.id));
-        console.log(`[${hookInstanceIdRef.current}] Empresas buscadas e armazenadas com sucesso:`, result.length);
       }
       
-      // Finalizar estado de carregamento
       setIsLoading(false);
       
       return result;
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('Erro desconhecido');
+      const error = err instanceof Error ? err : new Error('Unknown error');
       
-      // Não mostrar erros para requisições abortadas
       if (error.name === 'AbortError') {
-        console.log(`[${hookInstanceIdRef.current}] Requisição foi abortada`);
+        console.log(`[${hookInstanceIdRef.current}] Request was aborted`);
         setIsLoading(false);
         return userCompanies;
       }
       
       setError(error);
-      console.error(`[${hookInstanceIdRef.current}] Erro ao buscar empresas:`, error);
+      console.error(`[${hookInstanceIdRef.current}] Error fetching companies:`, error);
       
-      // Tentar usar cache como último recurso
       const cachedData = getCachedUserCompanies();
       if (cachedData && cachedData.length > 0) {
-        console.log(`[${hookInstanceIdRef.current}] Usando empresas em cache após falha`);
+        console.log(`[${hookInstanceIdRef.current}] Using cached companies after failure`);
         setUserCompanies(cachedData);
         return cachedData;
       }
       
       return [];
     } finally {
-      // Garantir que o estado seja resetado
       fetchInProgressRef.current = false;
       setIsLoading(false);
       resetRequestState();
@@ -223,31 +178,28 @@ export const useCompanyFetching = ({
   ]);
   
   const getCompanyByIdOptimized = useCallback(async (companyId: string): Promise<Company | null> => {
-    // Se já carregamos esta empresa antes, buscar pelo ID nos dados já carregados
     if (fetchedCompaniesRef.current.has(companyId) && userCompanies.length > 0) {
       const existingCompany = userCompanies.find(company => company.id === companyId);
       if (existingCompany) {
-        console.log(`[${hookInstanceIdRef.current}] Empresa ${companyId} encontrada no cache em memória`);
+        console.log(`[${hookInstanceIdRef.current}] Company ${companyId} found in memory cache`);
         return existingCompany;
       }
     }
     
-    // Caso contrário, chamar a função original
     try {
       const company = await getCompanyById(companyId);
       if (company) {
-        // Adicionar à lista de empresas já carregadas
         fetchedCompaniesRef.current.add(companyId);
       }
       return company;
     } catch (error) {
-      console.error(`[${hookInstanceIdRef.current}] Erro ao buscar empresa por ID:`, error);
+      console.error(`[${hookInstanceIdRef.current}] Error fetching company by ID:`, error);
       return null;
     }
   }, [getCompanyById, userCompanies]);
   
   const forceGetUserCompanies = useCallback(async (userId: string): Promise<Company[]> => {
-    console.log(`[${hookInstanceIdRef.current}] Forçando busca de empresas do usuário e limpando cache primeiro`);
+    console.log(`[${hookInstanceIdRef.current}] Forcing user companies fetch and clearing cache first`);
     clearCachedUserCompanies();
     return getUserCompanies(userId, true);
   }, [getUserCompanies, clearCachedUserCompanies]);
@@ -255,7 +207,6 @@ export const useCompanyFetching = ({
   return {
     getUserCompanies,
     forceGetUserCompanies,
-    getCompanyById: getCompanyByIdOptimized,
-    removeCachedCompany
+    getCompanyById: getCompanyByIdOptimized
   };
 };

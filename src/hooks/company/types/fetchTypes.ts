@@ -8,3 +8,12 @@ export interface UseCompanyFetchProps {
   setSelectedCompany: (company: Company | null) => void;
   setError: (error: Error | null) => void;
 }
+
+export interface UseCompanyFetchingProps {
+  userCompanies: Company[];
+  setUserCompanies: (companies: Company[]) => void;
+  setSelectedCompany: (company: Company | null) => void;
+  setIsLoading: (isLoading: boolean) => void;
+  setError: (error: Error | null) => void;
+  incrementFetchCount: () => void;
+}
