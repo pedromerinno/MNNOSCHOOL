@@ -2,16 +2,19 @@
 import React, { useState } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Button } from "@/components/ui/button";
-import { CompanyTypeSelector } from "./company/CompanyTypeSelector";
-import { ExistingCompanyForm } from "./company/ExistingCompanyForm";
-import { NewCompanyForm } from "./company/NewCompanyForm";
+import CompanyTypeSelector from "./company/CompanyTypeSelector";
+import ExistingCompanyForm from "./company/ExistingCompanyForm";
+import NewCompanyForm from "./company/NewCompanyForm";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CompanyStepProps {
   onBack: () => void;
+  onNext: () => void;
   onCompanyTypeSelect: (isExisting: boolean) => void;
 }
 
-const CompanyStep: React.FC<CompanyStepProps> = ({ onBack, onCompanyTypeSelect }) => {
+const CompanyStep: React.FC<CompanyStepProps> = ({ onBack, onNext, onCompanyTypeSelect }) => {
+  const { user } = useAuth();
   const { profileData, updateProfileData, saveProfileData, isLoading } = useOnboarding();
   const [companyType, setCompanyType] = useState<'existing' | 'new'>('existing');
   const [companyId, setCompanyId] = useState("");
@@ -34,6 +37,10 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onBack, onCompanyTypeSelect }
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!user) {
+      return;
+    }
+    
     if (companyType === 'existing') {
       if (!companyId.trim()) {
         return;
@@ -50,6 +57,7 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onBack, onCompanyTypeSelect }
     }
     
     await saveProfileData();
+    onNext();
   };
 
   return (
