@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, Github } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 export const SignupForm = () => {
   const [email, setEmail] = useState("");
@@ -39,7 +39,6 @@ export const SignupForm = () => {
     setIsRegistering(true);
     
     try {
-      // Se um ID de empresa foi fornecido, incluímos nos dados de onboarding
       const metadataWithCompany = companyId 
         ? { interests: ["onboarding_incomplete"], companyId } 
         : { interests: ["onboarding_incomplete"] };
@@ -136,14 +135,6 @@ export const SignupForm = () => {
         </div>
 
         <div className="mt-6 space-y-4">
-          <Button 
-            variant="outline" 
-            className="w-full h-12 border border-gray-300 rounded-lg font-medium flex items-center justify-center gap-2"
-          >
-            <Github className="h-5 w-5" />
-            Entrar com GitHub
-          </Button>
-          
           <Button 
             variant="outline"
             className="w-full h-12 border border-gray-300 rounded-lg font-medium flex items-center justify-center gap-2"

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, Github } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useCache } from "@/hooks/useCache";
@@ -129,14 +129,6 @@ export const LoginForm = () => {
         </div>
 
         <div className="mt-6 space-y-4">
-          <Button 
-            variant="outline" 
-            className="w-full h-12 border border-gray-300 rounded-lg font-medium flex items-center justify-center gap-2"
-          >
-            <Github className="h-5 w-5" />
-            Entrar com GitHub
-          </Button>
-          
           <Button 
             variant="outline"
             className="w-full h-12 border border-gray-300 rounded-lg font-medium flex items-center justify-center gap-2"
