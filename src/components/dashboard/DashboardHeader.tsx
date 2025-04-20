@@ -8,20 +8,18 @@ export const DashboardHeader = () => {
   const { getInitialSelectedCompany } = useCompanyCache();
   
   // Estado local para cor com inicialização imediata do cache
-  const [headerBgColor, setHeaderBgColor] = useState<string>("transparent");
-  
-  // Tentar obter a cor na inicialização
-  useEffect(() => {
+  const [headerBgColor, setHeaderBgColor] = useState<string>(() => {
     try {
       const cachedCompany = getInitialSelectedCompany();
       if (cachedCompany?.cor_principal) {
         // Usar a cor com opacidade muito baixa
-        setHeaderBgColor(`${cachedCompany.cor_principal}05`); // 5% de opacidade
+        return `${cachedCompany.cor_principal}05`; // 5% de opacidade
       }
     } catch (e) {
       console.error("Erro ao obter cor inicial:", e);
     }
-  }, []);
+    return "transparent";
+  });
   
   // Atualizar a cor quando a empresa selecionada mudar
   useEffect(() => {
@@ -32,7 +30,7 @@ export const DashboardHeader = () => {
   
   return (
     <div 
-      className="container mx-auto px-4 py-4 border-b border-gray-100 dark:border-gray-800 bg-background"
+      className="container mx-auto px-4 py-4 border-b border-gray-100 dark:border-gray-800 bg-background transition-colors duration-300"
       style={{ 
         backgroundColor: headerBgColor 
       }}

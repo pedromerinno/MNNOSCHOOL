@@ -3,6 +3,8 @@ import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 import { useCompanies } from "@/hooks/useCompanies"
+import { useCompanyCache } from "@/hooks/company/useCompanyCache" 
+import { useState, useEffect } from "react"
 
 const badgeVariants = cva(
   "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
@@ -42,10 +44,25 @@ function CompanyThemedBadge({
   ...props 
 }: BadgeProps) {
   const { selectedCompany } = useCompanies();
-  const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
+  const { getInitialSelectedCompany } = useCompanyCache();
+  
+  // Inicializar com cor do cache
+  const [companyColor, setCompanyColor] = useState<string>(() => {
+    const cachedCompany = getInitialSelectedCompany();
+    return cachedCompany?.cor_principal || "#1EAEDB";
+  });
+  
+  // Atualizar quando a seleção mudar
+  useEffect(() => {
+    if (selectedCompany?.cor_principal) {
+      setCompanyColor(selectedCompany.cor_principal);
+    }
+  }, [selectedCompany]);
   
   // Set custom styles for company colors
-  const style: React.CSSProperties = {};
+  const style: React.CSSProperties = {
+    transition: 'all 0.3s ease'
+  };
   
   if (variant === "default" || variant === "beta") {
     // For default and beta variants, apply company colors
@@ -56,7 +73,7 @@ function CompanyThemedBadge({
   
   return (
     <div 
-      className={cn(badgeVariants({ variant }), className)} 
+      className={cn(badgeVariants({ variant }), className, "transition-colors duration-300")} 
       style={style}
       {...props} 
     />

@@ -26,6 +26,12 @@ export const WelcomeSection = () => {
     return null;
   });
   
+  // Inicializar cor do botão com o valor em cache se disponível 
+  const [buttonColor, setButtonColor] = useState<string>(() => {
+    const cachedCompany = getInitialSelectedCompany();
+    return cachedCompany?.cor_principal || '#000000';
+  });
+  
   // Buscar dados atualizados das empresas sem forçar seleção
   useEffect(() => {
     const fetchUserCompanies = async () => {
@@ -48,6 +54,8 @@ export const WelcomeSection = () => {
   useEffect(() => {
     if (selectedCompany) {
       setDisplayCompany(selectedCompany);
+      // Atualizar cor do botão apenas quando a empresa mudar
+      setButtonColor(selectedCompany.cor_principal || '#000000');
     }
   }, [selectedCompany]);
 
@@ -77,10 +85,10 @@ export const WelcomeSection = () => {
         
         <Button 
           onClick={handleLearnMore} 
-          className="mt-1 flex items-center gap-2 text-white rounded-full text-sm"
+          className="mt-1 flex items-center gap-2 text-white rounded-full text-sm transition-colors duration-300"
           variant="default"
           style={{ 
-            backgroundColor: displayCompany?.cor_principal || '#000000' 
+            backgroundColor: buttonColor 
           }}
         >
           Saiba mais
