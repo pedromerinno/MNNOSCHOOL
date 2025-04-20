@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCompanies } from "@/hooks/useCompanies";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
@@ -8,6 +9,7 @@ import { toast } from "sonner";
 
 export const ProtectedRoute = () => {
   const { user, loading, session, userProfile } = useAuth();
+  const { userCompanies, isLoading: companiesLoading } = useCompanies();
   const [initialLoadDone, setInitialLoadDone] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const location = useLocation();
@@ -84,7 +86,7 @@ export const ProtectedRoute = () => {
   );
 
   // Mostra estado de carregamento
-  if (loading && !initialLoadDone) {
+  if (loading || companiesLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen p-4">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
@@ -134,13 +136,16 @@ export const ProtectedRoute = () => {
   }
 
   // Verificar se precisa fazer onboarding
-  if (userProfile?.interesses?.includes("onboarding_incomplete") && location.pathname !== "/onboarding") {
+  const needsOnboarding = userProfile?.interesses?.includes("onboarding_incomplete") || 
+                         (!userCompanies || userCompanies.length === 0);
+                         
+  if (needsOnboarding && location.pathname !== "/onboarding") {
     console.log("ProtectedRoute: Usuário precisa completar onboarding");
     return <Navigate to="/onboarding" replace />;
   }
 
-  // Impedir acesso à página de onboarding se já completou
-  if (!userProfile?.interesses?.includes("onboarding_incomplete") && location.pathname === "/onboarding") {
+  // Impedir acesso à página de onboarding se já completou e tem empresa
+  if (!needsOnboarding && location.pathname === "/onboarding") {
     console.log("ProtectedRoute: Usuário já completou onboarding");
     return <Navigate to="/" replace />;
   }
