@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -5,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -18,7 +20,14 @@ export const LoginForm = () => {
     setIsLoggingIn(true);
     
     try {
-      await signIn(email);
+      const { error } = await signIn(email, password);
+      if (error) {
+        throw error;
+      }
+      toast.success("Login realizado com sucesso!");
+    } catch (error: any) {
+      console.error('Erro no login:', error);
+      toast.error(error.message || 'Falha ao fazer login');
     } finally {
       setIsLoggingIn(false);
     }
