@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +27,7 @@ export const SignupForm = () => {
     setPasswordError("");
     return true;
   };
-
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -137,4 +136,3 @@ export const SignupForm = () => {
     </div>
   );
 };
-
