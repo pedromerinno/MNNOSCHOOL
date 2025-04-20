@@ -91,18 +91,26 @@ export const useUserCompanies = ({
       // Using retryOperation to add automatic retries for database queries
       if (isAdmin) {
         // Admin: use the function that returns all companies for admins
-        const response = await retryOperation(() => 
-          supabase.rpc('get_user_companies_for_admin', { current_user_id: userId }), 3);
+        // Explicitly type and await the result to fix TypeScript errors
+        const rpcFunction = async () => {
+          const { data, error } = await supabase.rpc('get_user_companies_for_admin', { current_user_id: userId });
+          if (error) throw error;
+          return { data, error };
+        };
         
-        if (response.error) throw response.error;
-        companiesData = response.data;
+        const result = await retryOperation(rpcFunction, 3);
+        companiesData = result.data;
       } else {
         // Normal user: fetch only linked companies
-        const response = await retryOperation(() => 
-          supabase.rpc('get_user_companies', { user_id: userId }), 3);
+        // Explicitly type and await the result to fix TypeScript errors
+        const rpcFunction = async () => {
+          const { data, error } = await supabase.rpc('get_user_companies', { user_id: userId });
+          if (error) throw error;
+          return { data, error };
+        };
         
-        if (response.error) throw response.error;
-        companiesData = response.data;
+        const result = await retryOperation(rpcFunction, 3);
+        companiesData = result.data;
       }
 
       const companies = companiesData as Company[] || [];
