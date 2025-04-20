@@ -1,116 +1,164 @@
+
 import React, { useState } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import CompanyTypeSelector from "./company/CompanyTypeSelector";
 import ExistingCompanyForm from "./company/ExistingCompanyForm";
 import NewCompanyForm from "./company/NewCompanyForm";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
 
 interface CompanyStepProps {
-  onBack: () => void;
   onNext: () => void;
+  onBack: () => void;
   onCompanyTypeSelect: (isExisting: boolean) => void;
 }
 
-const CompanyStep: React.FC<CompanyStepProps> = ({ onBack, onNext, onCompanyTypeSelect }) => {
+const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyTypeSelect }) => {
+  const { profileData, updateProfileData } = useOnboarding();
   const { user } = useAuth();
-  const { profileData, updateProfileData, saveProfileData, isLoading } = useOnboarding();
-  const [companyType, setCompanyType] = useState<'existing' | 'new'>('existing');
-  const [companyId, setCompanyId] = useState("");
+  const navigate = useNavigate();
+  const [companyType, setCompanyType] = useState<'existing' | 'new'>(
+    profileData.companyId ? 'existing' : 'new'
+  );
+  const [companyId, setCompanyId] = useState(profileData.companyId || "");
   const [companyDetails, setCompanyDetails] = useState({
-    name: "",
+    name: profileData.newCompanyName || "",
     description: "",
     historia: "",
     missao: "",
     valores: "",
     frase_institucional: "",
     video_institucional: "",
-    descricao_video: "",
+    descricao_video: ""
   });
+  const [error, setError] = useState("");
 
-  const handleTypeChange = (type: 'existing' | 'new') => {
-    setCompanyType(type);
-    onCompanyTypeSelect(type === 'existing');
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleInitialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user) {
-      toast.error("Você precisa estar autenticado para continuar");
+    if (companyType === 'existing' && !companyId) {
+      setError("Por favor, informe o ID da empresa");
+      return;
+    }
+
+    if (companyType === 'new' && !companyDetails.name) {
+      setError("Por favor, informe o nome da empresa");
       return;
     }
     
-    if (companyType === 'existing') {
-      if (!companyId.trim()) {
-        toast.error("Por favor, insira o ID da empresa");
-        return;
-      }
-      updateProfileData({ companyId });
-    } else {
-      if (!companyDetails.name.trim()) {
-        toast.error("Por favor, insira o nome da empresa");
-        return;
-      }
-      updateProfileData({ 
-        newCompanyName: companyDetails.name,
-        companyDetails
-      });
-    }
-    
     try {
-      await saveProfileData();
-      // O redirecionamento agora é feito no contexto para garantir que todos os dados sejam salvos primeiro
-    } catch (error) {
-      console.error("Erro ao salvar dados do perfil:", error);
-      toast.error("Ocorreu um erro ao salvar seu perfil");
+      if (companyType === 'new') {
+        if (!user) {
+          toast.error("Usuário não autenticado");
+          return;
+        }
+
+        const { data: newCompany, error: companyError } = await supabase
+          .from('empresas')
+          .insert({
+            nome: companyDetails.name,
+            historia: companyDetails.historia,
+            missao: companyDetails.missao,
+            valores: companyDetails.valores,
+            frase_institucional: companyDetails.frase_institucional,
+            video_institucional: companyDetails.video_institucional,
+            descricao_video: companyDetails.descricao_video
+          })
+          .select()
+          .single();
+
+        if (companyError) throw companyError;
+
+        const { error: relationError } = await supabase
+          .from('user_empresa')
+          .insert({
+            user_id: user.id,
+            empresa_id: newCompany.id,
+            is_admin: true
+          });
+
+        if (relationError) throw relationError;
+
+        toast.success("Empresa criada com sucesso!");
+        
+        const newInterests = (profileData.interests || []).filter(i => i !== 'onboarding_incomplete');
+        
+        await supabase
+          .from('profiles')
+          .update({ interesses: newInterests })
+          .eq('id', user.id);
+
+        navigate("/");
+      } else {
+        updateProfileData({ 
+          companyId: companyId,
+          newCompanyName: null,
+          companyDetails: null
+        });
+        onCompanyTypeSelect(true);
+        onNext();
+      }
+    } catch (error: any) {
+      console.error('Error:', error);
+      toast.error("Erro ao criar empresa: " + error.message);
     }
   };
 
+  const handleCompanyTypeChange = (type: 'existing' | 'new') => {
+    setCompanyType(type);
+    setError("");
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleInitialSubmit} className="space-y-8">
       <div className="space-y-2">
         <h2 className="text-xl font-medium">Sobre sua empresa</h2>
         <p className="text-gray-500 text-sm">
-          Nos conte um pouco sobre a empresa que você trabalha
+          Você faz parte de uma empresa existente ou deseja criar uma nova?
         </p>
       </div>
-
-      <CompanyTypeSelector 
-        companyType={companyType} 
-        onTypeChange={handleTypeChange} 
+      
+      <CompanyTypeSelector
+        companyType={companyType}
+        onTypeChange={handleCompanyTypeChange}
       />
-
-      <div className="mt-6">
+      
+      <div className="pt-2">
         {companyType === 'existing' ? (
-          <ExistingCompanyForm 
+          <ExistingCompanyForm
             companyId={companyId}
             onCompanyIdChange={setCompanyId}
           />
         ) : (
-          <NewCompanyForm 
+          <NewCompanyForm
             companyDetails={companyDetails}
             onCompanyDetailsChange={setCompanyDetails}
           />
         )}
       </div>
-
-      <div className="flex justify-between pt-6 space-x-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onBack}
-          className="flex-1"
+      
+      {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+      
+      <div className="pt-4 flex flex-col gap-3">
+        <Button 
+          type="submit" 
+          className="w-full rounded-md bg-merinno-dark hover:bg-black text-white"
         >
-          Voltar
+          Continuar
         </Button>
-        <Button
-          type="submit"
-          className="flex-1 bg-merinno-dark hover:bg-black text-white"
-          disabled={isLoading}
+        
+        <Button 
+          type="button" 
+          variant="ghost"
+          className="flex items-center justify-center gap-2 text-gray-500 mt-2"
+          onClick={onBack}
         >
-          {isLoading ? "Carregando..." : "Atualizar perfil"}
+          <ArrowLeft className="h-4 w-4" />
+          Voltar
         </Button>
       </div>
     </form>

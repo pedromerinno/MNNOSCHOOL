@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -41,10 +40,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
   };
 
   const saveProfileData = async () => {
-    if (!user) {
-      toast.error("Usuário não autenticado");
-      return;
-    }
+    if (!user) return;
     
     setIsLoading(true);
     
@@ -73,85 +69,75 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
         if (companyError) throw companyError;
         finalCompanyId = companyData.id;
         
-        console.log("Nova empresa criada com ID:", finalCompanyId);
-        
-        // Adicionar relação entre usuário e empresa com privilégio de admin
+        // Vincular usuário à empresa como admin (criador da empresa)
         const { error: relationError } = await supabase
           .from('user_empresa')
           .insert([{ 
             user_id: user.id,
             empresa_id: finalCompanyId,
-            is_admin: true // Define o usuário como admin da empresa que ele criou
+            is_admin: true
           }]);
           
-        if (relationError) throw relationError;
-        
-        // Atualizar o usuário para ter privilégio admin geral na plataforma
-        const { error: adminUpdateError } = await supabase
-          .from('profiles')
-          .update({ is_admin: true })
-          .eq('id', user.id);
-          
-        if (adminUpdateError) throw adminUpdateError;
-        
+        if (relationError) {
+          console.error("Erro ao vincular usuário à empresa:", relationError);
+          throw relationError;
+        }
       } else if (finalCompanyId) {
-        // Verificar se a relação já existe para evitar duplicatas
-        const { data: existingRelation, error: checkError } = await supabase
+        // Se empresa já existe, verificar se já existe vínculo
+        const { data: existingRelation } = await supabase
           .from('user_empresa')
-          .select('id')
+          .select('*')
           .eq('user_id', user.id)
           .eq('empresa_id', finalCompanyId)
-          .maybeSingle();
+          .maybeSingle(); // Usando maybeSingle em vez de single para evitar erro quando não encontrar
           
-        if (checkError) throw checkError;
-        
-        // Se a relação não existir, criar
+        // Se não existe vínculo, criar (sem verificação de admin)
         if (!existingRelation) {
           const { error: relationError } = await supabase
             .from('user_empresa')
             .insert([{ 
               user_id: user.id,
               empresa_id: finalCompanyId,
-              is_admin: false
+              is_admin: false // Usuário não é admin por padrão quando se associa a empresa existente
             }]);
             
-          if (relationError) throw relationError;
+          if (relationError) {
+            console.error("Erro ao vincular usuário à empresa existente:", relationError);
+            throw relationError;
+          }
         }
       }
       
-      // Atualizar perfil do usuário
+      // Dados a atualizar no perfil do usuário
+      // Removendo a configuração de cargo_id para evitar erros, já que provavelmente não há um campo cargo_id na tabela
       const profileUpdate = {
         display_name: profileData.displayName,
         avatar: profileData.avatarUrl,
         interesses: profileData.interests.filter(i => i !== "onboarding_incomplete")
       };
       
+      // Atualizar perfil do usuário no banco de dados
       const { error: updateError } = await supabase
         .from('profiles')
         .update(profileUpdate)
         .eq('id', user.id);
         
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Erro ao atualizar perfil no banco de dados:", updateError);
+        throw updateError;
+      }
       
-      // Atualizar contexto local
+      // Atualizar perfil do usuário no contexto local
       await updateUserProfile(profileUpdate);
-      await updateUserData({
-        ...profileUpdate,
-        is_admin: true // Garantir que o status de admin seja refletido no contexto local
-      });
       
-      // Disparar evento para atualizar a lista de empresas
+      // Atualizar estado global
+      await updateUserData(profileUpdate);
+      
+      // Disparar evento para atualizar relacionamentos de empresa
       window.dispatchEvent(new Event('company-relation-changed'));
       
       toast.success("Perfil atualizado com sucesso!");
-      
-      // Forçar recarregamento de empresas antes de redirecionar
-      window.dispatchEvent(new Event('force-reload-companies'));
-      
-      // Pequeno atraso para garantir que os eventos sejam processados
-      setTimeout(() => {
-        navigate("/"); // Redirecionar para a página inicial
-      }, 1500); // Aumentar o tempo de espera para 1.5 segundos
+      navigate("/"); // Navigate to home page after successful update
       
     } catch (error) {
       console.error("Erro ao salvar perfil:", error);

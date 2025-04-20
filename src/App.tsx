@@ -1,15 +1,12 @@
-
-import React, { Suspense } from 'react';
+import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { CompanyProvider } from "@/contexts/CompanyContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
-import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -40,20 +37,6 @@ const queryClient = new QueryClient({
   },
 });
 
-// Simple loading fallback
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
-  </div>
-);
-
-const PageWithNavigation = ({ children }: { children: React.ReactNode }) => (
-  <ErrorBoundary>
-    <MainNavigationMenu />
-    {children}
-  </ErrorBoundary>
-);
-
 const App = () => {
   console.log("App component rendering");
   
@@ -62,43 +45,89 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <ErrorBoundary>
-          <BrowserRouter>
-            <AuthProvider>
-              <CompanyProvider>
-                <Routes>
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/signup" element={<Signup />} />
-                  
-                  <Route element={<ProtectedRoute />}>
-                    <Route path="/onboarding" element={<Onboarding />} />
-                    <Route path="/" element={<PageWithNavigation><Index /></PageWithNavigation>} />
-                    
-                    <Route path="/courses" element={<PageWithNavigation><Courses /></PageWithNavigation>} />
-                    <Route path="/my-courses" element={<PageWithNavigation><MyCourses /></PageWithNavigation>} />
-                    <Route path="/courses/:courseId" element={<PageWithNavigation><CourseDetails /></PageWithNavigation>} />
-                    <Route path="/courses/:courseId/lessons/:lessonId" element={
-                      <PageWithNavigation><LessonPage /></PageWithNavigation>
-                    } />
-                    
-                    <Route path="/integration" element={<PageWithNavigation><Integration /></PageWithNavigation>} />
-                    <Route path="/access" element={<PageWithNavigation><Access /></PageWithNavigation>} />
-                    <Route path="/documents" element={<PageWithNavigation><Documents /></PageWithNavigation>} />
-                    <Route path="/school" element={<PageWithNavigation><School /></PageWithNavigation>} />
-                    <Route path="/community" element={<PageWithNavigation><Community /></PageWithNavigation>} />
-                    <Route path="/notes" element={<PageWithNavigation><Notes /></PageWithNavigation>} />
-                    <Route path="/manifesto" element={<PageWithNavigation><Manifesto /></PageWithNavigation>} />
-                    <Route path="/admin" element={<PageWithNavigation><Admin /></PageWithNavigation>} />
-                    <Route path="/team" element={<PageWithNavigation><Team /></PageWithNavigation>} />
-                    <Route path="/team/:memberId" element={<PageWithNavigation><TeamMemberProfile /></PageWithNavigation>} />
-                  </Route>
-                  
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </CompanyProvider>
-            </AuthProvider>
-          </BrowserRouter>
-        </ErrorBoundary>
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              
+              <Route element={<ProtectedRoute />}>
+                <Route path="/onboarding" element={<Onboarding />} />
+                <Route path="/" element={<>
+                  <MainNavigationMenu />
+                  <Index />
+                </>} />
+                
+                <Route path="/courses" element={<>
+                  <MainNavigationMenu />
+                  <Courses />
+                </>} />
+                <Route path="/my-courses" element={<>
+                  <MainNavigationMenu />
+                  <MyCourses />
+                </>} />
+                <Route path="/courses/:courseId" element={<>
+                  <MainNavigationMenu />
+                  <CourseDetails />
+                </>} />
+                <Route path="/courses/:courseId/lessons/:lessonId" element={<>
+                  <MainNavigationMenu />
+                  <LessonPage />
+                </>} />
+                
+                <Route path="/integration" element={<>
+                  <MainNavigationMenu />
+                  <Integration />
+                </>} />
+                <Route path="/access" element={<>
+                  <MainNavigationMenu />
+                  <Access />
+                </>} />
+                <Route path="/documents" element={<>
+                  <MainNavigationMenu />
+                  <Documents />
+                </>} />
+                <Route path="/school" element={<>
+                  <MainNavigationMenu />
+                  <School />
+                </>} />
+                <Route path="/community" element={<>
+                  <MainNavigationMenu />
+                  <Community />
+                </>} />
+                <Route path="/notes" element={<>
+                  <MainNavigationMenu />
+                  <Notes />
+                </>} />
+                <Route path="/manifesto" element={<>
+                  <MainNavigationMenu />
+                  <Manifesto />
+                </>} />
+                
+                <Route 
+                  path="/admin" 
+                  element={<>
+                    <MainNavigationMenu />
+                    <Admin />
+                  </>} 
+                />
+
+                <Route path="/team" element={<>
+                  <MainNavigationMenu />
+                  <Team />
+                </>} />
+                
+                <Route path="/team/:memberId" element={<>
+                  <MainNavigationMenu />
+                  <TeamMemberProfile />
+                </>} />
+              
+              </Route>
+              
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
   );
