@@ -10,7 +10,7 @@ interface AuthContextType {
   session: Session | null;
   userProfile: UserProfile | null;
   loading: boolean;
-  signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signInWithPassword: (email: string, password: string) => Promise<{ data: any, error: Error | null }>;
   signOut: () => Promise<void>;
   signUp: (email: string, password: string, displayName: string, metadata?: { interests?: string[] }) => Promise<void>;
   updateUserProfile: (userData: Partial<UserProfile>) => Promise<void>;
@@ -121,10 +121,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         navigate('/');
       }
 
-      return { error: null };
+      return { data, error: null };
     } catch (error: any) {
       console.error('Erro no login:', error);
-      return { error };
+      return { data: null, error };
     }
   };
 

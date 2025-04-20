@@ -23,15 +23,15 @@ export const LoginForm = () => {
     setIsLoggingIn(true);
     
     try {
-      const { data: authData, error: authError } = await signInWithPassword(email, password);
-      if (authError) throw authError;
+      const { data, error } = await signInWithPassword(email, password);
+      if (error) throw error;
 
       // Fetch user companies immediately after successful login
-      if (authData.user) {
-        const companies = await getUserCompanies(authData.user.id, true);
+      if (data && data.session && data.session.user) {
+        const companies = await getUserCompanies(data.session.user.id, true);
         // If user has companies, select the first one
         if (companies && companies.length > 0) {
-          await selectCompany(authData.user.id, companies[0]);
+          await selectCompany(data.session.user.id, companies[0]);
           toast.success("Login realizado com sucesso!");
         } else {
           toast.error("Nenhuma empresa disponível para este usuário");
