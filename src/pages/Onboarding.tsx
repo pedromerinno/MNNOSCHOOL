@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import OnboardingLayout from "@/components/onboarding/OnboardingLayout";
@@ -15,14 +16,15 @@ const Onboarding = () => {
   return (
     <OnboardingProvider>
       <OnboardingLayout>
-        <div className="min-h-screen flex flex-col items-center justify-center py-10 px-4 relative">
+        <div className="min-h-[calc(100vh-120px)] flex flex-col items-center justify-center relative max-w-xl mx-auto">
           <Button 
             variant="ghost" 
             size="sm" 
-            className="absolute top-4 right-4 text-gray-500 hover:text-black flex items-center gap-2"
+            className="absolute top-0 right-0 text-gray-500 hover:text-gray-900 transition-colors"
             onClick={signOut}
           >
-            <LogOut className="h-4 w-4" /> Sair
+            <LogOut className="h-4 w-4 mr-2" /> 
+            Sair
           </Button>
           
           <OnboardingContent />
@@ -52,19 +54,19 @@ const OnboardingContent = () => {
   };
 
   return (
-    <div className="w-full max-w-xl bg-white rounded-xl shadow-lg p-8">
+    <div className="w-full bg-white rounded-2xl shadow-xl p-8 transition-all duration-300 hover:shadow-2xl">
       <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900">
             {isUpdate ? "Atualizar Perfil" : "Complete seu perfil"}
           </h1>
-          <div className="text-sm text-gray-500">
+          <div className="text-sm font-medium text-gray-500">
             Passo {currentStep} de {totalSteps}
           </div>
         </div>
-        <div className="w-full bg-gray-200 h-2 rounded-full">
+        <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
           <div 
-            className="bg-merinno-dark h-full rounded-full transition-all duration-300"
+            className="bg-black h-full rounded-full transition-all duration-500 ease-out"
             style={{ width: `${(currentStep / totalSteps) * 100}%` }}
           ></div>
         </div>
