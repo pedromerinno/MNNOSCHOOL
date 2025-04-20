@@ -71,16 +71,18 @@ export const useUserCompanies = ({
       }
       
       // First check if the user is admin - this helps determine which function to use
-      const { data: profileData, error: profileError } = await supabase
+      const profileResponse = await supabase
         .from('profiles')
         .select('is_admin, super_admin')
         .eq('id', userId)
         .single();
         
-      if (profileError) {
-        console.error("Error fetching user profile:", profileError);
+      if (profileResponse.error) {
+        console.error("Error fetching user profile:", profileResponse.error);
+        throw profileResponse.error;
       }
       
+      const profileData = profileResponse.data;
       const isAdmin = profileData?.is_admin || profileData?.super_admin || false;
       console.log(`User is admin: ${isAdmin}`);
       
@@ -89,18 +91,18 @@ export const useUserCompanies = ({
       // Using retryOperation to add automatic retries for database queries
       if (isAdmin) {
         // Admin: use the function that returns all companies for admins
-        const { data, error } = await retryOperation(() => supabase
-          .rpc('get_user_companies_for_admin', { current_user_id: userId }), 3);
+        const response = await retryOperation(() => 
+          supabase.rpc('get_user_companies_for_admin', { current_user_id: userId }), 3);
         
-        if (error) throw error;
-        companiesData = data;
+        if (response.error) throw response.error;
+        companiesData = response.data;
       } else {
         // Normal user: fetch only linked companies
-        const { data, error } = await retryOperation(() => supabase
-          .rpc('get_user_companies', { user_id: userId }), 3);
+        const response = await retryOperation(() => 
+          supabase.rpc('get_user_companies', { user_id: userId }), 3);
         
-        if (error) throw error;
-        companiesData = data;
+        if (response.error) throw response.error;
+        companiesData = response.data;
       }
 
       const companies = companiesData as Company[] || [];
