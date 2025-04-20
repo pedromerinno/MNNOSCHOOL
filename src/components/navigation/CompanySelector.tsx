@@ -68,10 +68,18 @@ export const CompanySelector = memo(() => {
       return;
     }
     
+    // Verificar se o usuário tem acesso a esta empresa
+    const hasAccess = userCompanies.some(c => c.id === company.id);
+    if (!hasAccess) {
+      console.error('CompanySelector: Usuário não tem acesso a esta empresa:', company.nome);
+      toast.error(`Você não tem acesso à empresa ${company.nome}`);
+      return;
+    }
+    
     console.log('CompanySelector: Selecionando empresa:', company.nome);
     selectCompany(user.id, company);
     toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
-  }, [user?.id, selectedCompany?.id, selectCompany]);
+  }, [user?.id, selectedCompany?.id, selectCompany, userCompanies]);
 
   // Mostrar apenas o nome durante carregamento, sem skeleton
   if (isLoading && !selectedCompany) {

@@ -93,6 +93,28 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
   // Listen for company selection events
   useCompanyEvents(setSelectedCompany);
   
+  // Clear cached company data on user change
+  useEffect(() => {
+    if (user?.id) {
+      // This is a user change or initial login
+      const checkUserChange = async () => {
+        // Reset data for new user
+        initialDataLoaded.current = false;
+        
+        // Clear cache if we already have data loaded (which means this is a user change)
+        if (userCompanies.length > 0) {
+          localStorage.removeItem('userCompanies');
+          localStorage.removeItem('selectedCompany');
+          localStorage.removeItem('selectedCompanyId');
+          setUserCompanies([]);
+          setSelectedCompany(null);
+        }
+      };
+      
+      checkUserChange();
+    }
+  }, [user?.id, setUserCompanies, setSelectedCompany]);
+  
   // Carregamento de dados global com memoização do callback para reduzir recriações
   const loadInitialData = useCallback(async () => {
     // Se já carregamos os dados iniciais, não carregue novamente
@@ -223,9 +245,18 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     // Primeiro tentar obter o objeto completo de empresa do localStorage
     const cachedCompany = getStoredCompany();
     if (cachedCompany) {
-      console.log('[useCompanies] Empresa selecionada restaurada do cache:', cachedCompany.nome);
-      setSelectedCompany(cachedCompany);
-      return;
+      // Verificar se o usuário tem acesso a esta empresa
+      const hasAccess = userCompanies.some(company => company.id === cachedCompany.id);
+      
+      if (hasAccess) {
+        console.log('[useCompanies] Empresa selecionada restaurada do cache:', cachedCompany.nome);
+        setSelectedCompany(cachedCompany);
+        return;
+      } else {
+        console.log('[useCompanies] Usuário não tem acesso à empresa em cache, selecionando outra');
+        localStorage.removeItem('selectedCompany');
+        localStorage.removeItem('selectedCompanyId');
+      }
     }
     
     // Se temos empresas de usuário mas nenhuma selecionada ainda
@@ -244,8 +275,23 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
           try {
             const company = await getCompanyById(storedCompanyId);
             if (company) {
-              setSelectedCompany(company);
-              console.log('[useCompanies] Empresa selecionada restaurada do banco de dados:', company.nome);
+              // Verificar se o usuário tem acesso a esta empresa
+              const hasAccess = userCompanies.some(c => c.id === company.id);
+              
+              if (hasAccess) {
+                setSelectedCompany(company);
+                console.log('[useCompanies] Empresa selecionada restaurada do banco de dados:', company.nome);
+              } else {
+                localStorage.removeItem('selectedCompanyId');
+                // Selecionar a primeira empresa disponível
+                setSelectedCompany(userCompanies[0]);
+                console.log('[useCompanies] Selecionando primeira empresa disponível após verificação de acesso:', userCompanies[0].nome);
+              }
+            } else {
+              // Se não encontrada, selecionar a primeira empresa
+              localStorage.removeItem('selectedCompanyId');
+              setSelectedCompany(userCompanies[0]);
+              console.log('[useCompanies] Primeira empresa disponível selecionada após busca:', userCompanies[0].nome);
             }
           } catch (error) {
             console.error('[useCompanies] Falha ao restaurar empresa do localStorage', error);

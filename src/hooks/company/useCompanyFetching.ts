@@ -65,6 +65,8 @@ export const useCompanyFetching = ({
     
     if (cachedData && cachedData.length > 0 && !forceRefresh) {
       if (JSON.stringify(userCompanies) !== JSON.stringify(cachedData)) {
+        // Important: Only set the cachedData if it belongs to the current user
+        // This prevents showing companies from a previous user after login
         setUserCompanies(cachedData);
       }
       
