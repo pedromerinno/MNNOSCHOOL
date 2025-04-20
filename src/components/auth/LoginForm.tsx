@@ -1,9 +1,10 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useCache } from "@/hooks/useCache";
@@ -13,6 +14,7 @@ export const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isResetMode, setIsResetMode] = useState(false);
   const { signInWithPassword } = useAuth();
   const navigate = useNavigate();
   const { getUserCompanies, selectCompany } = useCompanies();
@@ -69,6 +71,52 @@ export const LoginForm = () => {
       toast.error(error.message || "Falha ao enviar e-mail de redefinição");
     }
   };
+
+  if (isResetMode) {
+    return (
+      <div className="w-full max-w-sm mx-auto">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-semibold mb-2">Redefinir senha</h1>
+          <p className="text-gray-600">
+            Digite seu e-mail para receber as instruções de redefinição de senha
+          </p>
+        </div>
+
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          handleForgotPassword(e as any);
+        }} className="space-y-6">
+          <div>
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="E-mail"
+              required
+              className="w-full h-12 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full h-12 bg-black hover:bg-black/90 text-white rounded-lg font-medium"
+          >
+            Enviar e-mail de redefinição
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setIsResetMode(false)}
+            className="w-full flex items-center justify-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar para o login
+          </Button>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-sm mx-auto">
@@ -146,7 +194,7 @@ export const LoginForm = () => {
 
         <div className="mt-6 text-center">
           <button 
-            onClick={handleForgotPassword}
+            onClick={() => setIsResetMode(true)}
             className="text-sm text-gray-600 hover:text-gray-900"
           >
             Esqueceu sua senha?
@@ -156,3 +204,4 @@ export const LoginForm = () => {
     </div>
   );
 };
+
