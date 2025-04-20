@@ -58,16 +58,7 @@ export const CompanySelector = memo(() => {
     };
   }, [handleCompanyRelationChange]);
 
-  // Auto-selecionar a primeira empresa - com dependências mínimas para evitar execuções desnecessárias
-  useEffect(() => {
-    // Verificar condições claras para evitar execução desnecessária
-    const needsToSelectCompany = !selectedCompany && userCompanies.length > 0 && user?.id && !isLoading;
-    
-    if (needsToSelectCompany) {
-      console.log('CompanySelector: Auto-selecionando primeira empresa porque nenhuma está selecionada');
-      selectCompany(user.id, userCompanies[0]);
-    }
-  }, [userCompanies.length, selectedCompany, user?.id, isLoading]); // Reduzindo dependências
+  // Removido o auto-select da primeira empresa para evitar resetar a seleção durante navegação
 
   const handleCompanyChange = useCallback((company) => {
     if (!company || !user?.id) return;

@@ -15,11 +15,13 @@ export const UserHome = () => {
   const { user } = useAuth();
   const { getUserCompanies, selectedCompany, userCompanies } = useCompanies();
   
-  // Ensure user companies are loaded when navigating to home
+  // Apenas carregar as empresas do usuário, sem forçar seleção
   useEffect(() => {
     const fetchUserCompanies = async () => {
       if (user?.id) {
         try {
+          // Usar false como segundo parâmetro para não mostrar loading
+          // e não forçar seleção de empresa
           await getUserCompanies(user.id, false);
         } catch (error) {
           console.error('Error fetching user companies on home page:', error);

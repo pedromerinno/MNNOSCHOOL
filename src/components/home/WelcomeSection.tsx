@@ -10,7 +10,7 @@ import { useCompanyCache } from "@/hooks/company/useCompanyCache";
 
 export const WelcomeSection = () => {
   const { user, userProfile } = useAuth();
-  const { getUserCompanies, selectedCompany, userCompanies, selectCompany } = useCompanies();
+  const { getUserCompanies, selectedCompany, userCompanies } = useCompanies();
   const { getInitialSelectedCompany } = useCompanyCache();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -26,7 +26,7 @@ export const WelcomeSection = () => {
     return null;
   });
   
-  // Buscar dados atualizados das empresas
+  // Buscar dados atualizados das empresas sem forçar seleção
   useEffect(() => {
     const fetchUserCompanies = async () => {
       if (user?.id && userCompanies.length === 0 && !isLoading) {
@@ -44,19 +44,12 @@ export const WelcomeSection = () => {
     fetchUserCompanies();
   }, [user, getUserCompanies, userCompanies.length, isLoading]);
 
-  // Atualizar empresa exibida quando a seleção mudar
+  // Atualizar empresa exibida quando a seleção mudar, mas NÃO forçar seleção
   useEffect(() => {
     if (selectedCompany) {
       setDisplayCompany(selectedCompany);
-    } else if (userCompanies && userCompanies.length > 0) {
-      console.log('No company selected, displaying first company:', userCompanies[0].nome);
-      setDisplayCompany(userCompanies[0]);
-      
-      if (user?.id) {
-        selectCompany(user.id, userCompanies[0]);
-      }
     }
-  }, [selectedCompany, userCompanies, user, selectCompany]);
+  }, [selectedCompany]);
 
   const userName = userProfile?.display_name || user?.email?.split('@')[0] || 'Usuário';
 
