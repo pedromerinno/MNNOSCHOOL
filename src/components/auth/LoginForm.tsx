@@ -35,8 +35,9 @@ export const LoginForm = () => {
       if (data && data.session && data.session.user) {
         const companies = await getUserCompanies(data.session.user.id, true);
         
-        // Ensure we select the first company if there are companies available
+        // If companies exist but no company is currently selected
         if (companies && companies.length > 0) {
+          // This will handle the case of selecting the first company if none is selected
           await selectCompany(data.session.user.id, companies[0]);
           toast.success("Login realizado com sucesso!");
         } else {
