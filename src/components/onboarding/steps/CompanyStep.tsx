@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,43 +13,13 @@ interface CompanyStepProps {
   onBack: () => void;
 }
 
-type Company = {
-  id: string;
-  nome: string;
-};
-
 const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack }) => {
   const { profileData, updateProfileData } = useOnboarding();
   const [companyType, setCompanyType] = useState<'existing' | 'new'>(
-    profileData.newCompanyName ? 'new' : 'existing'
+    profileData.companyId ? 'existing' : 'new'
   );
   const [companyId, setCompanyId] = useState(profileData.companyId || "");
-  const [newCompanyName, setNewCompanyName] = useState(profileData.newCompanyName || "");
-  const [companies, setCompanies] = useState<Company[]>([]);
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    // Carregar lista de empresas para autocomplete
-    const fetchCompanies = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('empresas')
-          .select('id, nome')
-          .order('nome');
-          
-        if (error) throw error;
-        setCompanies(data || []);
-      } catch (error) {
-        console.error("Erro ao carregar empresas:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchCompanies();
-  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,14 +29,9 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack }) => {
       return;
     }
     
-    if (companyType === 'new' && !newCompanyName.trim()) {
-      setError("Por favor, informe o nome da nova empresa");
-      return;
-    }
-    
     updateProfileData({ 
       companyId: companyType === 'existing' ? companyId : null,
-      newCompanyName: companyType === 'new' ? newCompanyName : null
+      newCompanyName: companyType === 'new' ? 'new_company' : null
     });
     
     onNext();
@@ -109,41 +74,17 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack }) => {
               onChange={(e) => setCompanyId(e.target.value)}
               className="border-b border-gray-300 rounded-md px-3 py-2 focus-visible:ring-merinno-dark"
               placeholder="Digite o ID da empresa"
-              list="company-options"
-            />
-            <datalist id="company-options">
-              {companies.map(company => (
-                <option key={company.id} value={company.id}>
-                  {company.nome}
-                </option>
-              ))}
-            </datalist>
-          </div>
-        )}
-        
-        {companyType === 'new' && (
-          <div className="space-y-3">
-            <label htmlFor="companyName" className="text-sm text-gray-500">
-              Nome da nova empresa
-            </label>
-            <Input
-              id="companyName"
-              value={newCompanyName}
-              onChange={(e) => setNewCompanyName(e.target.value)}
-              className="border-b border-gray-300 rounded-md px-3 py-2 focus-visible:ring-merinno-dark"
-              placeholder="Digite o nome da empresa"
             />
           </div>
         )}
-        
-        {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
       </div>
+      
+      {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
       
       <div className="pt-4 flex flex-col gap-3">
         <Button 
           type="submit" 
           className="w-full rounded-md bg-merinno-dark hover:bg-black text-white"
-          disabled={isLoading}
         >
           Continuar
         </Button>
