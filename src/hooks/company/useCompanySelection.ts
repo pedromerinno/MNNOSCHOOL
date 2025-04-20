@@ -14,6 +14,12 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
       localStorage.removeItem('userCompanies');
       localStorage.removeItem('userCompaniesTimestamp');
       
+      // Clear all company related caches
+      localStorage.removeItem('companyVideos');
+      localStorage.removeItem('companyDocuments');
+      localStorage.removeItem('companyCourses');
+      localStorage.removeItem('companyRoles');
+      
       // Then update local storage with new company info
       localStorage.setItem('selectedCompanyId', company.id);
       localStorage.setItem('selectedCompany', JSON.stringify(company));
@@ -32,6 +38,11 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
         window.dispatchEvent(new CustomEvent('company-selected', { 
           detail: { company } 
         }));
+        
+        // Show feedback to user that company is changing
+        toast.info(`Carregando empresa ${company.nome}...`, {
+          duration: 2000
+        });
         
         // Increased delay for content reload events
         setTimeout(() => {
@@ -52,20 +63,16 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
             detail: { companyId: company.id }
           }));
           
-          // Clear company related caches
-          localStorage.removeItem('companyVideos');
-          localStorage.removeItem('companyDocuments');
-          localStorage.removeItem('companyCourses');
-          localStorage.removeItem('companyRoles');
+          // Force page reload after a short delay to ensure clean state
+          setTimeout(() => {
+            toast.success(`Empresa ${company.nome} selecionada`, {
+              description: "Conteúdo atualizado para a empresa selecionada"
+            });
+            
+            console.log(`Content reload events dispatched for ${company.nome}`);
+            window.location.reload();
+          }, 500);
           
-          // Force page reload to ensure clean state
-          window.location.reload();
-          
-          toast.success(`Empresa ${company.nome} selecionada`, {
-            description: "Conteúdo atualizado para a empresa selecionada"
-          });
-          
-          console.log(`Content reload events dispatched for ${company.nome}`);
         }, 300);
       }, 200);
     } catch (e) {

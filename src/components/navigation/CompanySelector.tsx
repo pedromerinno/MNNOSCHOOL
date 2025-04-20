@@ -1,6 +1,6 @@
 
-import { useEffect } from "react";
-import { ChevronDown, AlertCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronDown, AlertCircle, RefreshCw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { toast } from "sonner";
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Spinner } from "@/components/ui/spinner";
 
 export const CompanySelector = () => {
   const { user } = useAuth();
@@ -21,29 +22,58 @@ export const CompanySelector = () => {
     selectCompany,
     isLoading,
     forceGetUserCompanies,
-    error
+    error,
+    fetchCount
   } = useCompanies();
+  
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [errorType, setErrorType] = useState<'resource' | 'connection' | null>(null);
+
+  useEffect(() => {
+    if (error) {
+      // Check if it's a resource error
+      if (error.message?.includes('insufficient') || error.message?.includes('resource')) {
+        setErrorType('resource');
+      } else {
+        setErrorType('connection');
+      }
+    } else {
+      setErrorType(null);
+    }
+  }, [error]);
 
   // Handle manual refresh when connection issues occur
   const handleManualRefresh = async () => {
-    if (user?.id) {
-      toast.info('Atualizando lista de empresas...', {
-        description: 'Tentando reconectar ao servidor'
+    if (!user?.id) return;
+    
+    setIsRefreshing(true);
+    
+    toast.info('Atualizando lista de empresas...', {
+      description: 'Tentando reconectar ao servidor'
+    });
+    
+    try {
+      await forceGetUserCompanies(user.id);
+      toast.success('Lista de empresas atualizada com sucesso!');
+      setErrorType(null);
+    } catch (err) {
+      toast.error('Não foi possível atualizar a lista de empresas', {
+        description: 'Aguarde um momento e tente novamente'
       });
-      try {
-        await forceGetUserCompanies(user.id);
-        toast.success('Lista de empresas atualizada com sucesso!');
-      } catch (err) {
-        toast.error('Não foi possível atualizar a lista de empresas', {
-          description: 'Verifique sua conexão com a internet e tente novamente'
-        });
-      }
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
   const handleCompanyChange = (company) => {
     if (company && user?.id) {
       console.log('CompanySelector: Mudando para empresa:', company.nome);
+      
+      // Show loading toast
+      toast.info(`Carregando empresa ${company.nome}...`, {
+        id: "company-loading",
+        duration: 3000
+      });
       
       // Trigger company change event before selection
       // This ensures all components clean up their state before new data loads
@@ -56,8 +86,38 @@ export const CompanySelector = () => {
     }
   };
 
+  // If there are resource errors, show special message
+  if (errorType === 'resource') {
+    return (
+      <div className="flex items-center">
+        <span className="text-lg font-bold text-merinno-dark mr-2">merinno</span>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8 w-8 p-0 text-amber-500"
+              onClick={handleManualRefresh}
+              disabled={isRefreshing}
+            >
+              {isRefreshing ? (
+                <Spinner className="h-4 w-4" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+              <span className="sr-only">Tentar novamente</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Servidor sobrecarregado. Aguarde ou clique para tentar novamente.</p>
+          </TooltipContent>
+        </Tooltip>
+      </div>
+    );
+  }
+
   // If there are connection errors, show retry button
-  if (error && (!userCompanies || userCompanies.length === 0)) {
+  if (errorType === 'connection' && (!userCompanies || userCompanies.length === 0)) {
     return (
       <div className="flex items-center">
         <span className="text-lg font-bold text-merinno-dark mr-2">merinno</span>
@@ -68,8 +128,13 @@ export const CompanySelector = () => {
               size="sm" 
               className="h-8 w-8 p-0 text-yellow-500"
               onClick={handleManualRefresh}
+              disabled={isRefreshing}
             >
-              <AlertCircle className="h-4 w-4" />
+              {isRefreshing ? (
+                <Spinner className="h-4 w-4" />
+              ) : (
+                <AlertCircle className="h-4 w-4" />
+              )}
               <span className="sr-only">Reconectar</span>
             </Button>
           </TooltipTrigger>
@@ -95,8 +160,17 @@ export const CompanySelector = () => {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center text-lg font-bold text-merinno-dark focus:outline-none">
-          {selectedCompany?.nome || userCompanies[0]?.nome || "merinno"}
-          <ChevronDown className="ml-1 h-4 w-4" />
+          {isLoading && fetchCount <= 1 ? (
+            <>
+              <span>Carregando...</span>
+              <Spinner className="ml-2 h-4 w-4" />
+            </>
+          ) : (
+            <>
+              {selectedCompany?.nome || userCompanies[0]?.nome || "merinno"}
+              <ChevronDown className="ml-1 h-4 w-4" />
+            </>
+          )}
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="bg-white dark:bg-gray-800 z-50">
@@ -123,6 +197,22 @@ export const CompanySelector = () => {
             </div>
           </DropdownMenuItem>
         ))}
+        
+        {/* Add refresh option if we have companies */}
+        <DropdownMenuItem 
+          onClick={handleManualRefresh}
+          disabled={isRefreshing}
+          className="cursor-pointer border-t mt-1 pt-1"
+        >
+          <div className="flex items-center text-gray-500">
+            {isRefreshing ? (
+              <Spinner className="h-4 w-4 mr-2" />
+            ) : (
+              <RefreshCw className="h-4 w-4 mr-2" />
+            )}
+            <span>Atualizar lista</span>
+          </div>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

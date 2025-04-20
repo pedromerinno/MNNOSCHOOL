@@ -58,16 +58,30 @@ export const useCompanyFetching = ({
   const lastSuccessfulFetchRef = useRef<number>(0);
   const consecutiveErrorsRef = useRef<number>(0);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastRequestTimestampRef = useRef<number>(0);
   
   // Função direta para buscar empresas do usuário usando RPC
   const fetchUserCompaniesDirectly = async (userId: string, signal?: AbortSignal): Promise<Company[]> => {
+    // Implement request throttling - at least 2 seconds between requests
+    const now = Date.now();
+    const timeSinceLastRequest = now - lastRequestTimestampRef.current;
+    const MIN_REQUEST_INTERVAL = 2000; // 2 seconds minimum between requests
+    
+    if (timeSinceLastRequest < MIN_REQUEST_INTERVAL && lastRequestTimestampRef.current > 0) {
+      const waitTime = MIN_REQUEST_INTERVAL - timeSinceLastRequest;
+      console.log(`Throttling request, waiting ${waitTime}ms before making another request`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+    
     console.log("Chamando RPC diretamente para buscar empresas do usuário:", userId);
+    lastRequestTimestampRef.current = Date.now();
     
     const { data, error } = await supabase
       .rpc('get_user_companies', { user_id: userId });
       
     if (error) {
       console.error("Erro na chamada RPC:", error);
+      consecutiveErrorsRef.current++;
       throw error;
     }
     
@@ -86,14 +100,15 @@ export const useCompanyFetching = ({
   ): Promise<Company[]> => {
     const now = Date.now();
     const timeSinceLastSuccess = now - lastSuccessfulFetchRef.current;
-    const COMPONENT_SPECIFIC_THROTTLE = 30000; // 30 seconds
+    const THROTTLE = 10000; // 10 seconds
     
     // Logs para diagnóstico
     console.log(`Iniciando getUserCompanies para usuário ${userId}, forceRefresh=${forceRefresh}`);
     console.log(`userCompanies.length=${userCompanies.length}`);
     
+    // Use cached data if available and not forcing refresh
     if (!forceRefresh && lastSuccessfulFetchRef.current > 0 && 
-        timeSinceLastSuccess < COMPONENT_SPECIFIC_THROTTLE && userCompanies.length > 0) {
+        timeSinceLastSuccess < THROTTLE && userCompanies.length > 0) {
       console.log(`[useCompanyFetching] Last successful fetch was ${Math.round(timeSinceLastSuccess/1000)}s ago. Using cached data.`);
       return userCompanies;
     }
@@ -144,12 +159,17 @@ export const useCompanyFetching = ({
         }
       }
       
-      // Chamar a função RPC diretamente
+      // Implement exponential backoff strategy with increased max retries and delay
+      const initialRetryDelay = 1000 * (1 + (consecutiveErrorsRef.current * 0.5)); // Gradually increase initial delay
+      const maxRetryDelay = 30000; // 30 seconds max delay
+      const maxRetries = consecutiveErrorsRef.current > 3 ? 7 : 4; // More retries if we've had issues
+      
+      // Chamar a função RPC diretamente com retries
       const result = await retryOperation(
         () => fetchUserCompaniesDirectly(userId, abortControllerRef.current?.signal),
-        consecutiveErrorsRef.current > 2 ? 5 : 3, // Aumenta retries após múltiplas falhas
-        1000,
-        15000
+        maxRetries,
+        initialRetryDelay,
+        maxRetryDelay
       );
       
       completeRequest();
@@ -188,21 +208,30 @@ export const useCompanyFetching = ({
       setError(error);
       console.error("Error fetching companies:", error);
       
-      // Mostrar toast para feedback visual
-      toast.error("Erro ao buscar empresas", {
-        description: "Tentaremos novamente automaticamente"
-      });
+      // Add user feedback about resource error
+      if (error.message.includes('insufficient') || error.message.includes('resource')) {
+        toast.error("Servidor sobrecarregado", {
+          description: "Muitas solicitações simultâneas. Aguarde um momento e tente novamente."
+        });
+      } else {
+        toast.error("Erro ao buscar empresas", {
+          description: "Tentaremos novamente automaticamente"
+        });
+      }
       
       const cachedData = getCachedUserCompanies();
       if (cachedData && cachedData.length > 0) {
         console.log("Using cached companies after all retries failed");
         setUserCompanies(cachedData);
         
-        // Agendar nova tentativa automaticamente
+        // Agendar nova tentativa automaticamente com maior atraso proporcional ao número de falhas
+        const retryDelay = 5000 + (Math.min(consecutiveErrorsRef.current, 5) * 2000);
+        console.log(`Scheduling retry after ${retryDelay}ms due to ${consecutiveErrorsRef.current} consecutive errors`);
+        
         retryTimeoutRef.current = setTimeout(() => {
           console.log("Tentando novamente após falha anterior...");
           getUserCompanies(userId, true);
-        }, 5000 + (Math.random() * 5000)); // 5-10s delay
+        }, retryDelay);
         
         return cachedData;
       }
@@ -234,6 +263,8 @@ export const useCompanyFetching = ({
   const forceGetUserCompanies = useCallback(async (userId: string): Promise<Company[]> => {
     console.log('Forcing user companies fetch and clearing cache first');
     clearCachedUserCompanies();
+    // Reset error counter on manual refresh
+    consecutiveErrorsRef.current = 0;
     return getUserCompanies(userId, true);
   }, [getUserCompanies, clearCachedUserCompanies]);
   
