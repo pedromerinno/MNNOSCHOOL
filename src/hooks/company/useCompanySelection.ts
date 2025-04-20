@@ -7,30 +7,46 @@ interface UseCompanySelectionProps {
 }
 
 export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionProps) => {
-  /**
-   * Store the selected company in local storage for persistence
-   */
   const persistCompanySelection = useCallback((company: Company) => {
     try {
       localStorage.setItem('selectedCompanyId', company.id);
       localStorage.setItem('selectedCompany', JSON.stringify(company));
       
-      // We remove this dispatch since it will be done in selectCompany
+      // Disparar eventos para atualizar diferentes partes da aplicação
+      window.dispatchEvent(new CustomEvent('company-selected', { 
+        detail: { company } 
+      }));
+      
+      // Evento específico para forçar recarregamento dos vídeos
+      window.dispatchEvent(new CustomEvent('reload-company-videos', {
+        detail: { companyId: company.id }
+      }));
+      
+      // Evento para recarregar documentos da empresa
+      window.dispatchEvent(new CustomEvent('reload-company-documents', {
+        detail: { companyId: company.id }
+      }));
+      
+      // Evento para recarregar cargos da empresa
+      window.dispatchEvent(new CustomEvent('reload-company-roles', {
+        detail: { companyId: company.id }
+      }));
+      
+      // Evento para recarregar cursos da empresa
+      window.dispatchEvent(new CustomEvent('reload-company-courses', {
+        detail: { companyId: company.id }
+      }));
+      
+      console.log(`Company selection persisted and events dispatched for ${company.nome}`);
     } catch (e) {
       console.error('Failed to persist company selection', e);
     }
   }, []);
 
-  /**
-   * Retrieve the stored company ID from local storage
-   */
   const getStoredCompanyId = useCallback((): string | null => {
     return localStorage.getItem('selectedCompanyId');
   }, []);
 
-  /**
-   * Retrieve the stored company object from local storage
-   */
   const getStoredCompany = useCallback((): Company | null => {
     const storedCompany = localStorage.getItem('selectedCompany');
     if (!storedCompany) return null;
@@ -43,10 +59,6 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
     }
   }, []);
 
-  /**
-   * Select a company and update all necessary state
-   * We use a debounce flag to prevent duplicate events
-   */
   let lastSelectedCompanyId: string | null = null;
   
   const selectCompany = useCallback((userId: string, company: Company) => {
@@ -55,27 +67,20 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
       return;
     }
     
-    // Skip if the company has already been selected
+    // Evitar seleções duplicadas
     if (lastSelectedCompanyId === company.id) {
-      console.log(`Company ${company.nome} already selected, skipping event`);
+      console.log(`Company ${company.nome} already selected, skipping`);
       return;
     }
     
-    // Update the last selected company to prevent duplicate selections
+    console.log(`Selecting company: ${company.nome} (${company.id})`);
+    
+    // Atualizar último ID selecionado
     lastSelectedCompanyId = company.id;
     
-    console.log(`Selecting company: ${company.nome} (${company.id})`);
+    // Atualizar estado e persistir seleção
     setSelectedCompany(company);
-    
-    // Store selection in local storage
     persistCompanySelection(company);
-    
-    // Trigger event for components listening for company changes
-    // But only do it once per company selection
-    const navEvent = new CustomEvent('company-selected', { 
-      detail: { userId, company } 
-    });
-    window.dispatchEvent(navEvent);
   }, [setSelectedCompany, persistCompanySelection]);
 
   return {
