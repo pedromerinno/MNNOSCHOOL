@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import OnboardingLayout from "@/components/onboarding/OnboardingLayout";
@@ -39,7 +40,7 @@ const OnboardingContent = () => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 transition-all duration-300">
+    <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-16 transition-all duration-300">
       <div className="mb-10">
         <div className="flex flex-col gap-2 mb-8">
           <h1 className="text-2xl font-medium text-gray-900 tracking-tight">
