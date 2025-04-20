@@ -1,21 +1,21 @@
 
 import { useRef } from "react";
 
-// Increasing to 10 seconds to reduce frequency of API calls during errors
-export const MIN_REQUEST_INTERVAL = 10000; // 10 seconds 
+// Aumentando para 30 segundos para reduzir drasticamente a frequência de chamadas API
+export const MIN_REQUEST_INTERVAL = 30000; // 30 segundos 
 
 export const useCompanyRequest = () => {
-  // Timestamp of the last request
+  // Timestamp da última requisição
   const lastFetchTimeRef = useRef<number>(0);
-  // Flag to control ongoing requests
+  // Flag para controlar requisições em andamento
   const isFetchingRef = useRef<boolean>(false);
-  // Request queue to manage concurrent requests
+  // Fila de requisições para gerenciar requisições concorrentes
   const pendingRequestsRef = useRef<number>(0);
-  // Maximum number of concurrent requests to prevent resource exhaustion
-  const MAX_CONCURRENT_REQUESTS = 1; // Reduzido para 1 para limitar ainda mais as requisições simultâneas
+  // Número máximo de requisições concorrentes para prevenir esgotamento de recursos
+  const MAX_CONCURRENT_REQUESTS = 1;
   
   /**
-   * Checks if a new request should be made based on timing and current state
+   * Verifica se uma nova requisição deve ser feita com base no tempo e estado atual
    */
   const shouldMakeRequest = (
     forceRefresh: boolean, 
@@ -24,23 +24,23 @@ export const useCompanyRequest = () => {
   ): boolean => {
     const now = Date.now();
     
-    // If there are too many pending requests, block new ones
+    // Se houver muitas requisições pendentes, bloqueia novas
     if (pendingRequestsRef.current >= MAX_CONCURRENT_REQUESTS) {
-      console.log(`[Company Request] Too many concurrent requests (${pendingRequestsRef.current}). Throttling.`);
+      console.log(`[Company Request] Muitas requisições concorrentes (${pendingRequestsRef.current}). Limitando.`);
       return false;
     }
     
-    // If forced update, always allow (but still respect concurrent request limit)
+    // Se forçar atualização, sempre permite (mas ainda respeita o limite de requisições concorrentes)
     if (forceRefresh) {
-      console.log('[Company Request] Forcing data refresh as requested.');
+      console.log('[Company Request] Forçando atualização de dados conforme solicitado.');
       return true;
     }
     
-    // Check if enough time has passed since last request
+    // Verifica se passou tempo suficiente desde a última requisição
     const interval = customInterval || MIN_REQUEST_INTERVAL;
     const timeSinceLastFetch = now - lastFetchTimeRef.current;
     if (timeSinceLastFetch < interval && hasLocalData) {
-      console.log(`[Company Request] Last request ${Math.round(timeSinceLastFetch/1000)}s ago. Using cached data (min interval: ${interval/1000}s).`);
+      console.log(`[Company Request] Última requisição há ${Math.round(timeSinceLastFetch/1000)}s. Usando dados em cache (intervalo mín: ${interval/1000}s).`);
       return false;
     }
     

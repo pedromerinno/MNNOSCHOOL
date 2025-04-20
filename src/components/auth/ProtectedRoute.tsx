@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -10,10 +10,17 @@ import { toast } from "sonner";
 
 export const ProtectedRoute = () => {
   const { user, loading, session, userProfile } = useAuth();
-  const { userCompanies, isLoading: companiesLoading } = useCompanies();
+  const location = useLocation();
+  const isOnboarding = location.pathname === "/onboarding";
+  
+  // Só carrega os dados de empresas se não estiver na página de onboarding
+  // Isso evita requisições desnecessárias durante o processo de onboarding
+  const { userCompanies, isLoading: companiesLoading } = useCompanies({
+    skipLoadingInOnboarding: isOnboarding
+  });
+  
   const [initialLoadDone, setInitialLoadDone] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const location = useLocation();
 
   // Verificação de estado de autenticação com timeout de segurança
   useEffect(() => {
@@ -27,7 +34,7 @@ export const ProtectedRoute = () => {
         setAuthError("Tempo limite de autenticação excedido. Por favor, recarregue a página ou faça login novamente.");
         toast.error("Tempo limite de autenticação excedido. Tente recarregar a página.");
       }
-    }, 20000); // Aumentado para 20 segundos para conexões mais lentas
+    }, 20000); // 20 segundos para conexões mais lentas
     
     // Se o carregamento for concluído, marca como pronto
     if (!loading) {
@@ -87,7 +94,7 @@ export const ProtectedRoute = () => {
   );
 
   // Mostra estado de carregamento
-  if (loading || (user && companiesLoading)) {
+  if (loading || (!isOnboarding && user && companiesLoading)) {
     return (
       <div className="flex flex-col items-center justify-center h-screen p-4">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
@@ -136,17 +143,22 @@ export const ProtectedRoute = () => {
     return <Navigate to="/login" replace />;
   }
 
-  // Verificar se precisa fazer onboarding - Usando um memo para não recalcular a cada renderização
-  const needsOnboarding = userProfile?.interesses?.includes("onboarding_incomplete") || 
-                         (!userCompanies || userCompanies.length === 0);
+  // Verificar se precisa fazer onboarding - Usando um useMemo para não recalcular a cada renderização
+  const needsOnboarding = useMemo(() => {
+    // Se já estamos na página de onboarding, não precisamos checar novamente
+    if (isOnboarding) return true;
+    
+    return userProfile?.interesses?.includes("onboarding_incomplete") || 
+           (!userCompanies || userCompanies.length === 0);
+  }, [userProfile?.interesses, userCompanies, isOnboarding]);
                          
-  if (needsOnboarding && location.pathname !== "/onboarding") {
+  if (needsOnboarding && !isOnboarding) {
     console.log("ProtectedRoute: Usuário precisa completar onboarding");
     return <Navigate to="/onboarding" replace />;
   }
 
   // Impedir acesso à página de onboarding se já completou e tem empresa
-  if (!needsOnboarding && location.pathname === "/onboarding") {
+  if (!needsOnboarding && isOnboarding) {
     console.log("ProtectedRoute: Usuário já completou onboarding");
     return <Navigate to="/" replace />;
   }

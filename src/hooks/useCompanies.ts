@@ -12,7 +12,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Company } from "@/types/company";
 
-export const useCompanies = () => {
+interface UseCompaniesOptions {
+  skipLoadingInOnboarding?: boolean;
+}
+
+export const useCompanies = (options: UseCompaniesOptions = {}) => {
+  const { skipLoadingInOnboarding = false } = options;
+  
   // Get auth context for global access
   const { user } = useAuth();
   
@@ -89,7 +95,14 @@ export const useCompanies = () => {
   useCompanyEvents(setSelectedCompany);
   
   // Global data loading - load user companies only when user is logged in
+  // e quando não estamos pulando o carregamento (para página de onboarding)
   useEffect(() => {
+    // Se estamos pulando o carregamento na página de onboarding, não fazemos nada
+    if (skipLoadingInOnboarding) {
+      console.log("[useCompanies] Pulando carregamento de empresas durante onboarding");
+      return;
+    }
+    
     const loadInitialData = async () => {
       if (user?.id && userCompanies.length === 0 && !isLoading) {
         try {
@@ -116,10 +129,15 @@ export const useCompanies = () => {
     };
     
     loadInitialData();
-  }, [user?.id, userCompanies.length, isLoading, getUserCompanies]);
+  }, [user?.id, userCompanies.length, isLoading, getUserCompanies, skipLoadingInOnboarding]);
   
   // Listen for company-relation-changed events to refresh data
   useEffect(() => {
+    // Se estamos pulando o carregamento na página de onboarding, não configuramos listeners
+    if (skipLoadingInOnboarding) {
+      return;
+    }
+    
     const handleCompanyRelationChange = async () => {
       if (user?.id) {
         try {
@@ -157,10 +175,15 @@ export const useCompanies = () => {
       window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
       window.removeEventListener('force-reload-companies', handleForceReload);
     };
-  }, [user?.id, forceGetUserCompanies, fetchCompanies]);
+  }, [user?.id, forceGetUserCompanies, fetchCompanies, skipLoadingInOnboarding]);
   
   // Try to restore previously selected company on hook initialization
   useEffect(() => {
+    // Se estamos pulando o carregamento na página de onboarding, não restauramos empresa
+    if (skipLoadingInOnboarding) {
+      return;
+    }
+    
     const restoreSelectedCompany = async () => {
       // Skip if we already have a selected company
       if (selectedCompany) return;
@@ -212,7 +235,7 @@ export const useCompanies = () => {
     };
 
     restoreSelectedCompany();
-  }, [userCompanies, selectedCompany, getCompanyById, getStoredCompanyId, getStoredCompany, setSelectedCompany]);
+  }, [userCompanies, selectedCompany, getCompanyById, getStoredCompanyId, getStoredCompany, setSelectedCompany, skipLoadingInOnboarding]);
   
   return {
     isLoading,

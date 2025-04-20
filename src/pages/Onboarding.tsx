@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import OnboardingLayout from "@/components/onboarding/OnboardingLayout";
 import ProfileStep from "@/components/onboarding/steps/ProfileStep";
@@ -10,8 +10,13 @@ import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 
+// Componente principal de Onboarding - renderiza apenas uma vez e não inicia requisições
 const Onboarding = () => {
   const { signOut } = useAuth();
+  
+  // Desabilitamos intencionalmente o useCompanies aqui para evitar múltiplas requisições
+  // Isso é seguro porque a página de onboarding não precisa dos dados de empresas para funcionar
+  // As empresas serão verificadas apenas na navegação através do ProtectedRoute
   
   return (
     <OnboardingProvider>
