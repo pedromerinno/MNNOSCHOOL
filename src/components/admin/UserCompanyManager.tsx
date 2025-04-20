@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useUsers } from '@/hooks/useUsers';
 import { Company } from '@/types/company';
@@ -87,18 +86,16 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
     if (!selectedUserId || !company.id) return;
     
     try {
-      const success = await assignUserToCompany(selectedUserId, company.id);
-      if (success) {
-        // Refresh the list
-        await fetchCompanyUsers();
-        // Reset selection
-        setSelectedUserId('');
-        
-        // Dispatch event to notify components to refresh their company data
-        window.dispatchEvent(new CustomEvent('company-relation-changed'));
-        
-        toast.success("Usuário adicionado com sucesso");
-      }
+      await assignUserToCompany(selectedUserId, company.id);
+      
+      // Refresh the list
+      await fetchCompanyUsers();
+      // Reset selection
+      setSelectedUserId('');
+      
+      // Dispatch event to notify components to refresh their company data
+      window.dispatchEvent(new CustomEvent('company-relation-changed'));
+      
     } catch (error: any) {
       console.error('Error adding user to company:', error);
       toast.error("Erro ao adicionar usuário", {
@@ -111,16 +108,14 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
     if (!company.id) return;
     
     try {
-      const success = await removeUserFromCompany(userId, company.id);
-      if (success) {
-        // Refresh the list
-        await fetchCompanyUsers();
-        
-        // Dispatch a custom event to notify components to refresh their company data
-        window.dispatchEvent(new CustomEvent('company-relation-changed'));
-        
-        toast.success("Usuário removido com sucesso");
-      }
+      await removeUserFromCompany(userId, company.id);
+      
+      // Refresh the list
+      await fetchCompanyUsers();
+      
+      // Dispatch a custom event to notify components to refresh their company data
+      window.dispatchEvent(new CustomEvent('company-relation-changed'));
+      
     } catch (error: any) {
       console.error('Error removing user from company:', error);
       toast.error("Erro ao remover usuário", {
