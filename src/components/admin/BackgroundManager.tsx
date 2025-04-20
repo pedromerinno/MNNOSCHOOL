@@ -62,7 +62,7 @@ export const BackgroundManager = () => {
 
       if (error) throw error;
 
-      toast.success(`Background ${mediaType} atualizado com sucesso`);
+      toast.success(`Background ${mediaType === 'video' ? 'vídeo' : 'imagem'} atualizado com sucesso`);
       
       // Dispatch event to update other components
       window.dispatchEvent(new Event('background-updated'));
@@ -169,7 +169,7 @@ export const BackgroundManager = () => {
                 disabled={isSaving || isUploading}
                 className="bg-merinno-dark hover:bg-black text-white"
               >
-                {isSaving ? "Salvando..." : "Salvar URL"}
+                {isSaving ? "Salvando..." : "Salvar"}
               </Button>
             </div>
           </form>

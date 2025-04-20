@@ -8,7 +8,7 @@ import { JobRolesManager } from '../JobRolesManager';
 import { AccessManagement } from '../AccessManagement';
 import { CollaboratorsManagement } from '../CollaboratorsManagement';
 import { CompanyCourseManagement } from '../CompanyCourseManagement';
-import { BackgroundVideoManager } from '../BackgroundVideoManager';
+import { BackgroundManager } from '../../BackgroundManager';
 
 interface SettingsTabContentProps {
   value: string;
@@ -45,7 +45,7 @@ export const SettingsTabContent: React.FC<SettingsTabContentProps> = ({
       case "courses":
         return <CompanyCourseManagement key={`courses-${company.id}`} company={company} />;
       case "background":
-        return <BackgroundVideoManager />;
+        return <BackgroundManager />;
       default:
         return null;
     }
