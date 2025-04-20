@@ -1,35 +1,98 @@
 
-import { useState } from "react";
+import { useState, useRef } from 'react';
 import { Company } from "@/types/company";
 
+export type LoadingState = {
+  isLoading: boolean;
+  isFetchingCompanies: boolean;
+  isUpdatingCompany: boolean;
+  isRefreshing: boolean;
+};
+
+export type ErrorState = {
+  message: string | null;
+  code?: string;
+  timestamp: number;
+};
+
 export const useCompanyState = () => {
-  // Basic company management states
-  const [isLoading, setIsLoading] = useState(false);
+  // Loading states
+  const [loadingState, setLoadingState] = useState<LoadingState>({
+    isLoading: false,
+    isFetchingCompanies: false,
+    isUpdatingCompany: false,
+    isRefreshing: false,
+  });
+
+  // Company related states
   const [companies, setCompanies] = useState<Company[]>([]);
   const [userCompanies, setUserCompanies] = useState<Company[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
-  const [error, setError] = useState<Error | null>(null);
-  const [fetchCount, setFetchCount] = useState(0);
   
+  // Error handling
+  const [error, setError] = useState<ErrorState | null>(null);
+  const [fetchCount, setFetchCount] = useState(0);
+  const initialFetchDone = useRef(false);
+
+  // Loading state setters
+  const setIsLoading = (loading: boolean) => {
+    setLoadingState(prev => ({ ...prev, isLoading: loading }));
+  };
+
+  const setIsFetchingCompanies = (fetching: boolean) => {
+    setLoadingState(prev => ({ ...prev, isFetchingCompanies: fetching }));
+  };
+
+  const setIsUpdatingCompany = (updating: boolean) => {
+    setLoadingState(prev => ({ ...prev, isUpdatingCompany: updating }));
+  };
+
+  const setIsRefreshing = (refreshing: boolean) => {
+    setLoadingState(prev => ({ ...prev, isRefreshing: refreshing }));
+  };
+
+  // Error handling
+  const setErrorWithContext = (error: Error | null) => {
+    if (error) {
+      setError({
+        message: error.message,
+        code: error instanceof Error ? error.name : 'UnknownError',
+        timestamp: Date.now(),
+      });
+    } else {
+      setError(null);
+    }
+  };
+
   // Function to increment request counter
   const incrementFetchCount = () => setFetchCount(prevCount => prevCount + 1);
   
   // Function to reset error
   const resetError = () => setError(null);
-  
+
   return {
-    isLoading,
+    // Loading states
+    ...loadingState,
     setIsLoading,
+    setIsFetchingCompanies,
+    setIsUpdatingCompany,
+    setIsRefreshing,
+    
+    // Company states
     companies,
     setCompanies,
     userCompanies,
     setUserCompanies,
     selectedCompany,
     setSelectedCompany,
+    
+    // Error and fetch states
     error,
-    setError,
+    setError: setErrorWithContext,
     fetchCount,
     incrementFetchCount,
-    resetError
+    resetError,
+    initialFetchDone,
   };
 };
+
