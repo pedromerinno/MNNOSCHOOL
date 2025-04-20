@@ -1,8 +1,8 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Company } from "@/types/company";
 import { retryOperation } from "../utils/retryUtils";
 import { UseCompanyFetchProps } from "../types/fetchTypes";
-import { checkIfUserIsAdmin, checkIfUserIsSuperAdmin } from '@/utils/adminUtils';
 
 // Cache expiration time in ms (30 minutes)
 const CACHE_EXPIRATION = 30 * 60 * 1000;
@@ -31,7 +31,7 @@ export const useUserCompanies = ({
   };
 
   /**
-   * Gets all companies a user is related to
+   * Gets all companies a user is related to using the new database function
    */
   const getUserCompanies = async (userId: string, signal?: AbortSignal): Promise<Company[]> => {
     // First check if we already have cached data
