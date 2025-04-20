@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Upload } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -45,14 +46,14 @@ interface ProfileDialogProps {
 export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialogProps) => {
   const { userProfile, updateUserProfile } = useAuth();
   const { userCompanies } = useCompanies();
-  const [avatarPreview, setAvatarPreview] = useState(userProfile.avatar || "https://i.pravatar.cc/150?img=68");
+  const [avatarPreview, setAvatarPreview] = useState(userProfile?.avatar || "https://i.pravatar.cc/150?img=68");
   const { toast } = useToast();
 
   const form = useForm<UserProfileFormValues>({
     resolver: zodResolver(userProfileSchema),
     defaultValues: {
-      name: userProfile.display_name || email?.split('@')[0] || "",
-      avatar: userProfile.avatar || "https://i.pravatar.cc/150?img=68",
+      name: userProfile?.display_name || email?.split('@')[0] || "",
+      avatar: userProfile?.avatar || "https://i.pravatar.cc/150?img=68",
     },
   });
 

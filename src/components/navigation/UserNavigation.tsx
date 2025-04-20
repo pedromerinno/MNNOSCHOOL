@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react"; // Add useEffect to the import
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogOut, User, ChevronDown, Building } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ interface UserNavigationProps {
 export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" }: UserNavigationProps) => {
   const { user, signOut, userProfile } = useAuth();
   const [displayName, setDisplayName] = useState<string>("");
-  const [displayAvatar, setDisplayAvatar] = useState<string>("");
+  const [displayAvatar, setDisplayAvatar] = useState<string>(avatarUrl);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const navigate = useNavigate();
   const { 
@@ -49,8 +49,8 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
   }, []);
 
   useEffect(() => {
-    setDisplayName(userProfile.display_name || user?.email?.split('@')[0] || "Usuário");
-    setDisplayAvatar(userProfile.avatar || avatarUrl);
+    setDisplayName(userProfile?.display_name || user?.email?.split('@')[0] || "Usuário");
+    setDisplayAvatar(userProfile?.avatar || avatarUrl);
   }, [userProfile, user, avatarUrl]);
 
   const handleProfileUpdate = (values: any) => {
