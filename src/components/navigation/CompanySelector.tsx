@@ -62,7 +62,7 @@ export const CompanySelector = () => {
   };
 
   // If user has no companies or is not logged in, show default text
-  if (!user || userCompanies.length === 0) {
+  if (!user || !userCompanies || userCompanies.length === 0) {
     return <span className="text-lg font-bold text-merinno-dark">merinno</span>;
   }
 
@@ -80,7 +80,7 @@ export const CompanySelector = () => {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="bg-white dark:bg-gray-800 z-50">
-        {userCompanies.map((company) => (
+        {Array.isArray(userCompanies) && userCompanies.map((company) => (
           <DropdownMenuItem 
             key={company.id} 
             onClick={() => handleCompanyChange(company)}
@@ -91,7 +91,12 @@ export const CompanySelector = () => {
                 <img
                   src={company.logo}
                   alt={company.nome}
-                  className="h-4 w-4 mr-2 object-contain rounded-lg"  // Added rounded-lg for 8px border-radius
+                  className="h-4 w-4 mr-2 object-contain rounded-lg"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = "/placeholder.svg";
+                    target.onerror = null;
+                  }}
                 />
               )}
               <span>{company.nome}</span>

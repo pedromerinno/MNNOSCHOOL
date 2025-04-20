@@ -24,17 +24,17 @@ export const ProtectedRoute = () => {
         setAuthError("Tempo limite de autenticação excedido. Por favor, recarregue a página ou faça login novamente.");
         toast.error("Tempo limite de autenticação excedido. Tente recarregar a página.");
       }
-    }, 30000); // Aumentado para 30 segundos para conexões mais lentas
+    }, 30000); // 30 segundos para conexões mais lentas
     
     // Se o carregamento for concluído, marca como pronto
     if (!loading) {
-      console.log("ProtectedRoute: Carregamento concluído");
+      console.log("ProtectedRoute: Carregamento concluído", user ? "Usuário autenticado" : "Usuário não autenticado");
       setInitialLoadDone(true);
       clearTimeout(timeoutId);
     }
     
     return () => clearTimeout(timeoutId);
-  }, [loading]);
+  }, [loading, user]);
 
   // Verificação adicional de token
   useEffect(() => {

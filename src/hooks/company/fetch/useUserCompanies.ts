@@ -72,8 +72,8 @@ export const useUserCompanies = ({
       
       let companies: Company[] = [];
       
-      if (isAdmin || isSuperAdmin) {
-        // Instead of using RPC, use a direct query for admin users
+      if (isSuperAdmin) {
+        // Super admin vê todas as empresas
         const { data, error } = await supabase
           .from('empresas')
           .select('*')
@@ -84,8 +84,34 @@ export const useUserCompanies = ({
         }
         
         companies = data as Company[];
+      } else if (isAdmin) {
+        // Admin vê as empresas a que pertence
+        const { data: userCompanyRelations, error: relationsError } = await supabase
+          .from('user_empresa')
+          .select('empresa_id')
+          .eq('user_id', userId);
+        
+        if (relationsError) {
+          throw relationsError;
+        }
+        
+        if (userCompanyRelations && userCompanyRelations.length > 0) {
+          const companyIds = userCompanyRelations.map(r => r.empresa_id);
+          
+          const { data: adminCompanies, error: companiesError } = await supabase
+            .from('empresas')
+            .select('*')
+            .in('id', companyIds)
+            .order('nome');
+          
+          if (companiesError) {
+            throw companiesError;
+          }
+          
+          companies = adminCompanies as Company[];
+        }
       } else {
-        // Use a regular query instead of RPC
+        // Usuário normal vê apenas suas empresas
         const { data, error } = await supabase
           .from('user_empresa')
           .select('empresa_id')

@@ -66,7 +66,7 @@ export function useUsers() {
       let profiles: UserProfile[] = [];
       
       if (isAdmin || isSuperAdmin) {
-        // Using direct query instead of RPC
+        // Obter usuários disponíveis para o admin atual
         const { data: allUsers, error } = await supabase
           .from('profiles')
           .select('id, display_name, is_admin, super_admin, email, created_at, avatar, cargo_id');
@@ -74,6 +74,7 @@ export function useUsers() {
         if (error) throw error;
         profiles = allUsers as UserProfile[];
       } else {
+        // Caso não seja admin, só obtém o próprio perfil
         const { data: ownProfile, error } = await supabase
           .from('profiles')
           .select('id, display_name, is_admin, super_admin, email, created_at, avatar, cargo_id')
