@@ -54,7 +54,7 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
           setRoles(roleData as JobRole[]);
         }
         
-        // Buscar cargo atual do usuário - garantindo que cargo_id existe
+        // Buscar cargo atual do usuário
         if (user.cargo_id) {
           setCurrentRoleId(user.cargo_id);
           setSelectedRoleId(user.cargo_id);
@@ -81,6 +81,14 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
       fetchData();
     }
   }, [user, companyId]);
+  
+  // Atualizamos para manter o cargo atual como opção padrão na lista
+  useEffect(() => {
+    if (user?.cargo_id) {
+      setSelectedRoleId(user.cargo_id);
+      setCurrentRoleId(user.cargo_id);
+    }
+  }, [user]);
   
   const handleSaveRole = async () => {
     if (!selectedRoleId) {
