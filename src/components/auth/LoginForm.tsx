@@ -3,10 +3,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useCompanies } from "@/hooks/useCompanies";
 
 export const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -14,15 +15,30 @@ export const LoginForm = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const { signInWithPassword } = useAuth();
+  const navigate = useNavigate();
+  const { getUserCompanies, selectCompany } = useCompanies();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoggingIn(true);
     
     try {
-      const { error } = await signInWithPassword(email, password);
-      if (error) throw error;
-      toast.success("Login realizado com sucesso!");
+      const { data: authData, error: authError } = await signInWithPassword(email, password);
+      if (authError) throw authError;
+
+      // Fetch user companies immediately after successful login
+      if (authData.user) {
+        const companies = await getUserCompanies(authData.user.id, true);
+        // If user has companies, select the first one
+        if (companies && companies.length > 0) {
+          await selectCompany(authData.user.id, companies[0]);
+          toast.success("Login realizado com sucesso!");
+        } else {
+          toast.error("Nenhuma empresa disponível para este usuário");
+        }
+      }
+
+      navigate('/');
     } catch (error: any) {
       console.error("Erro no login:", error);
       toast.error(error.message || "Falha ao fazer login");
