@@ -7,8 +7,13 @@ import { PermissionError } from './user/PermissionError';
 import { AddAdminDialog } from './user/AddAdminDialog';
 import { UserManagementHeader } from './user/UserManagementHeader';
 import { UserManagementSkeleton } from './user/UserManagementSkeleton';
+import { useAuth } from "@/contexts/AuthContext";
+import { isSuperAdmin } from '@/utils/adminUtils';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { InfoIcon } from 'lucide-react';
 
 export const UserManagement = () => {
+  const { userProfile } = useAuth();
   const { users, loading, fetchUsers, toggleAdminStatus } = useUsers();
   const [initialSetupDone, setInitialSetupDone] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -32,11 +37,22 @@ export const UserManagement = () => {
 
   return (
     <div className="space-y-4">
+      {!isSuperAdmin(userProfile) && (
+        <Alert>
+          <InfoIcon className="h-4 w-4" />
+          <AlertTitle>Acesso limitado</AlertTitle>
+          <AlertDescription>
+            Como administrador regular, você só pode ver e gerenciar usuários das suas empresas.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <UserManagementHeader 
         onAddAdminClick={() => setIsDialogOpen(true)}
         onRefreshClick={handleRefresh}
         loading={loading}
         isRefreshing={isRefreshing}
+        isSuperAdmin={isSuperAdmin(userProfile)}
       />
       
       <AdminSetup
@@ -56,6 +72,7 @@ export const UserManagement = () => {
           users={users} 
           loading={loading} 
           onToggle={toggleAdminStatus} 
+          isSuperAdmin={isSuperAdmin(userProfile)}
         />
       )}
 
