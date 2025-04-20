@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { setAdminStatusById } from '@/utils/adminUtils';
+import { useCache } from '@/hooks/useCache';
 
 export interface UserProfile {
   id: string; 
@@ -17,39 +18,25 @@ export function useUsers() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { setCache, getCache, clearCache } = useCache();
+  
+  const USERS_CACHE_KEY = 'cachedUsers';
+  const USERS_CACHE_EXPIRATION = 15; // 15 minutes
   
   const getCachedUsers = (): UserProfile[] | null => {
-    try {
-      const cachedUsers = localStorage.getItem('cachedUsers');
-      if (!cachedUsers) return null;
-      
-      const parsed = JSON.parse(cachedUsers);
-      const now = new Date().getTime();
-      if (parsed.expiry > now) {
-        return parsed.data;
-      }
-      localStorage.removeItem('cachedUsers');
-      return null;
-    } catch (e) {
-      console.error('Error parsing cached users', e);
-      return null;
-    }
+    return getCache<UserProfile[]>({
+      key: USERS_CACHE_KEY,
+      expirationMinutes: USERS_CACHE_EXPIRATION
+    });
   };
   
   const setCachedUsers = (data: UserProfile[]) => {
     try {
       const usersToCache = data.slice(0, 5);
-      const expiry = new Date().getTime() + (15 * 60 * 1000); // 15 minutes
-      
-      try {
-        localStorage.setItem('cachedUsers', JSON.stringify({
-          data: usersToCache,
-          expiry
-        }));
-      } catch (storageError) {
-        console.warn('Storage quota exceeded, clearing cache');
-        localStorage.removeItem('cachedUsers');
-      }
+      setCache({
+        key: USERS_CACHE_KEY,
+        expirationMinutes: USERS_CACHE_EXPIRATION
+      }, usersToCache);
     } catch (e) {
       console.error('Error caching users', e);
     }

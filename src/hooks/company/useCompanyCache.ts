@@ -1,5 +1,6 @@
 
 import { Company } from "@/types/company";
+import { useCache } from "@/hooks/useCache";
 
 // Increase cache time to reduce API calls
 const CACHE_EXPIRATION_MINUTES = 120; // 2 hours cache
@@ -8,45 +9,27 @@ const CACHE_EXPIRATION_MINUTES = 120; // 2 hours cache
  * Hook for caching company data to reduce API calls
  */
 export const useCompanyCache = () => {
+  const { setCache, getCache, clearCache } = useCache();
+  
   // Cache keys
   const USER_COMPANIES_KEY = 'userCompanies';
-  const USER_COMPANIES_TIMESTAMP_KEY = 'userCompaniesTimestamp';
   
   /**
    * Check if the cache has expired
    */
   const isCacheExpired = (): boolean => {
-    try {
-      const timestampStr = localStorage.getItem(USER_COMPANIES_TIMESTAMP_KEY);
-      if (!timestampStr) return true;
-      
-      const timestamp = parseInt(timestampStr, 10);
-      const now = Date.now();
-      const minutesSinceLastCache = (now - timestamp) / (1000 * 60);
-      
-      return minutesSinceLastCache > CACHE_EXPIRATION_MINUTES;
-    } catch (e) {
-      console.error("[Company Cache] Error checking cache expiration:", e);
-      return true;
-    }
+    const companies = getCachedUserCompanies();
+    return !companies;
   };
   
   /**
    * Get cached user companies
    */
   const getCachedUserCompanies = (): Company[] | null => {
-    try {
-      const cachedData = localStorage.getItem(USER_COMPANIES_KEY);
-      if (!cachedData) return null;
-      
-      const companies = JSON.parse(cachedData) as Company[];
-      console.log(`[Company Cache] Retrieved ${companies.length} companies from cache`);
-      return companies;
-    } catch (e) {
-      console.error("[Company Cache] Error retrieving companies from cache:", e);
-      clearCachedUserCompanies(); // Clear corrupted cache data
-      return null;
-    }
+    return getCache<Company[]>({
+      key: USER_COMPANIES_KEY,
+      expirationMinutes: CACHE_EXPIRATION_MINUTES
+    });
   };
   
   /**
@@ -58,35 +41,17 @@ export const useCompanyCache = () => {
       return;
     }
     
-    try {
-      localStorage.setItem(USER_COMPANIES_KEY, JSON.stringify(companies));
-      localStorage.setItem(USER_COMPANIES_TIMESTAMP_KEY, Date.now().toString());
-      console.log(`[Company Cache] Cached ${companies.length} companies`);
-    } catch (e) {
-      console.error("[Company Cache] Error caching companies:", e);
-      try {
-        // If failed to store, it might be because of quota exceeded, try clearing and storing again
-        localStorage.clear();
-        localStorage.setItem(USER_COMPANIES_KEY, JSON.stringify(companies));
-        localStorage.setItem(USER_COMPANIES_TIMESTAMP_KEY, Date.now().toString());
-        console.log(`[Company Cache] Cleared cache and successfully cached ${companies.length} companies`);
-      } catch (e2) {
-        console.error("[Company Cache] Failed to cache companies even after clearing storage:", e2);
-      }
-    }
+    setCache({
+      key: USER_COMPANIES_KEY,
+      expirationMinutes: CACHE_EXPIRATION_MINUTES
+    }, companies);
   };
   
   /**
    * Clear cached user companies
    */
   const clearCachedUserCompanies = (): void => {
-    try {
-      localStorage.removeItem(USER_COMPANIES_KEY);
-      localStorage.removeItem(USER_COMPANIES_TIMESTAMP_KEY);
-      console.log("[Company Cache] Cleared companies cache");
-    } catch (e) {
-      console.error("[Company Cache] Error clearing cache:", e);
-    }
+    clearCache(USER_COMPANIES_KEY);
   };
   
   /**

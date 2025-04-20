@@ -1,5 +1,4 @@
-
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { 
   NavigationMenu, 
   NavigationMenuList, 
@@ -12,18 +11,29 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export const NavMenuLinks = () => {
   const { userProfile } = useAuth();
+  const location = useLocation();
+  
+  const isCurrentPath = (path: string) => {
+    return location.pathname === path;
+  };
+  
+  const menuLinkClass = (path: string) => {
+    return `text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm px-4 py-2 ${
+      isCurrentPath(path) ? 'font-bold' : 'font-medium'
+    }`;
+  };
   
   return (
     <NavigationMenu>
-      <NavigationMenuList className="flex items-center space-x-6">
+      <NavigationMenuList className="flex items-center space-x-8">
         <NavigationMenuItem>
-          <Link to="/" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm font-medium">
+          <Link to="/" className={menuLinkClass('/')}>
             Home
           </Link>
         </NavigationMenuItem>
         
         <NavigationMenuItem>
-          <NavigationMenuTrigger className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm font-medium bg-transparent hover:bg-transparent">
+          <NavigationMenuTrigger className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm font-medium bg-transparent hover:bg-transparent px-4 py-2">
             School
           </NavigationMenuTrigger>
           <NavigationMenuContent className="min-w-[520px] bg-white dark:bg-gray-950 p-4 rounded-lg shadow-lg">
@@ -69,20 +79,20 @@ export const NavMenuLinks = () => {
         </NavigationMenuItem>
         
         <NavigationMenuItem>
-          <Link to="/community" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm font-medium">
+          <Link to="/community" className={menuLinkClass('/community')}>
             Comunidade
           </Link>
         </NavigationMenuItem>
         
         <NavigationMenuItem>
-          <Link to="/team" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm font-medium">
+          <Link to="/team" className={menuLinkClass('/team')}>
             Equipe
           </Link>
         </NavigationMenuItem>
         
         {(userProfile?.is_admin || userProfile?.super_admin) && (
           <NavigationMenuItem>
-            <Link to="/admin" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm font-medium">
+            <Link to="/admin" className={menuLinkClass('/admin')}>
               Admin
             </Link>
           </NavigationMenuItem>
@@ -91,4 +101,3 @@ export const NavMenuLinks = () => {
     </NavigationMenu>
   );
 };
-
