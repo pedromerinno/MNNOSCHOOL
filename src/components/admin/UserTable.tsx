@@ -17,10 +17,35 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface UserTableProps {
   users: UserProfile[];
   loading: boolean;
-  onToggleAdmin: (userId: string, currentStatus: boolean | null) => Promise<void>;
+  onToggle: (userId: string, currentStatus: boolean | null, isSuperAdmin: boolean) => Promise<void>;
 }
 
-export const UserTable: React.FC<UserTableProps> = ({ users, loading, onToggleAdmin }) => {
+export const UserTable: React.FC<UserTableProps> = ({ users, loading, onToggle }) => {
+  const getBadgeContent = (user: UserProfile) => {
+    if (user.super_admin) {
+      return (
+        <Badge variant="default" className="bg-purple-500 hover:bg-purple-600 text-white">
+          <CheckCircle className="h-3.5 w-3.5 mr-1" />
+          Super Admin
+        </Badge>
+      );
+    }
+    if (user.is_admin) {
+      return (
+        <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white">
+          <CheckCircle className="h-3.5 w-3.5 mr-1" />
+          Admin
+        </Badge>
+      );
+    }
+    return (
+      <Badge variant="outline" className="text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700">
+        <XCircle className="h-3.5 w-3.5 mr-1" />
+        Usuário
+      </Badge>
+    );
+  };
+
   return (
     <div className="rounded-md border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-gray-800">
       <Table>
@@ -60,17 +85,7 @@ export const UserTable: React.FC<UserTableProps> = ({ users, loading, onToggleAd
                   {loading ? (
                     <Skeleton className="h-6 w-16" />
                   ) : (
-                    user.is_admin ? (
-                      <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white">
-                        <CheckCircle className="h-3.5 w-3.5 mr-1" />
-                        Admin
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700">
-                        <XCircle className="h-3.5 w-3.5 mr-1" />
-                        Usuário
-                      </Badge>
-                    )
+                    getBadgeContent(user)
                   )}
                 </TableCell>
                 <TableCell className="text-right">
@@ -80,7 +95,8 @@ export const UserTable: React.FC<UserTableProps> = ({ users, loading, onToggleAd
                     <UserAdminToggle 
                       userId={user.id} 
                       isAdmin={user.is_admin} 
-                      onToggle={onToggleAdmin} 
+                      isSuperAdmin={user.super_admin}
+                      onToggle={onToggle}
                     />
                   )}
                 </TableCell>

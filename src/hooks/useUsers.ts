@@ -128,13 +128,20 @@ export function useUsers() {
     }
   }, [toast]);
 
-  const toggleAdminStatus = useCallback(async (userId: string, currentStatus: boolean | null) => {
+  const toggleAdminStatus = useCallback(async (
+    userId: string, 
+    currentStatus: boolean | null, 
+    isSuperAdmin: boolean = false
+  ) => {
     try {
-      await setAdminStatusById(userId, !(currentStatus || false));
+      await setAdminStatusById(userId, !(currentStatus || false), isSuperAdmin);
       
       setUsers(users.map(user => 
         user.id === userId 
-          ? { ...user, is_admin: !(currentStatus || false) } 
+          ? { 
+              ...user, 
+              [isSuperAdmin ? 'super_admin' : 'is_admin']: !(currentStatus || false)
+            } 
           : user
       ));
       
@@ -142,7 +149,10 @@ export function useUsers() {
       if (cachedData) {
         const updatedCache = cachedData.map(user => 
           user.id === userId 
-            ? { ...user, is_admin: !(currentStatus || false) } 
+            ? { 
+                ...user, 
+                [isSuperAdmin ? 'super_admin' : 'is_admin']: !(currentStatus || false)
+              } 
             : user
         );
         setCachedUsers(updatedCache);
@@ -150,7 +160,7 @@ export function useUsers() {
       
       toast({
         title: 'Sucesso',
-        description: `Status de administrador atualizado com sucesso.`,
+        description: `Status de ${isSuperAdmin ? 'super admin' : 'admin'} atualizado com sucesso.`,
       });
     } catch (error: any) {
       console.error('Error toggling admin status:', error);

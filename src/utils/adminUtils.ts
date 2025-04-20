@@ -1,24 +1,27 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Set admin status for a user by ID
  */
-export const setAdminStatusById = async (userId: string, isAdmin: boolean): Promise<boolean> => {
+export const setAdminStatusById = async (
+  userId: string, 
+  isAdmin: boolean,
+  isSuperAdmin: boolean = false
+): Promise<boolean> => {
   try {
-    console.log(`Setting admin status to ${isAdmin} for user ID: ${userId}`);
+    console.log(`Setting ${isSuperAdmin ? 'super admin' : 'admin'} status to ${isAdmin} for user ID: ${userId}`);
     
     const { error } = await supabase
       .from('profiles')
       .update({ 
-        is_admin: isAdmin,
+        [isSuperAdmin ? 'super_admin' : 'is_admin']: isAdmin,
         updated_at: new Date().toISOString()
       })
       .eq('id', userId);
     
     if (error) throw error;
     
-    console.log(`Successfully updated admin status for user ID: ${userId}`);
+    console.log(`Successfully updated ${isSuperAdmin ? 'super admin' : 'admin'} status for user ID: ${userId}`);
     return true;
   } catch (error: any) {
     console.error('Error setting admin status:', error);

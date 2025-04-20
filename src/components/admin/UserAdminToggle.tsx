@@ -2,26 +2,49 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { UserCog } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { useAuth } from '@/contexts/AuthContext';
 
 interface UserAdminToggleProps {
   userId: string;
   isAdmin: boolean | null;
-  onToggle: (userId: string, currentStatus: boolean | null) => Promise<void>;
+  isSuperAdmin: boolean | null;
+  onToggle: (userId: string, currentStatus: boolean | null, isSuperAdmin: boolean) => Promise<void>;
 }
 
 export const UserAdminToggle: React.FC<UserAdminToggleProps> = ({ 
   userId, 
-  isAdmin, 
+  isAdmin,
+  isSuperAdmin,
   onToggle 
 }) => {
+  const { userProfile } = useAuth();
+  const canToggleSuperAdmin = userProfile?.super_admin;
+  const canToggleAdmin = userProfile?.super_admin || userProfile?.is_admin;
+
+  if (!canToggleAdmin) return null;
+
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={() => onToggle(userId, isAdmin)}
-    >
-      <UserCog className="h-4 w-4 mr-1" />
-      {isAdmin ? "Remover Admin" : "Tornar Admin"}
-    </Button>
+    <div className="flex items-center gap-4">
+      {canToggleSuperAdmin && (
+        <div className="flex items-center gap-2">
+          <Switch
+            checked={!!isSuperAdmin}
+            onCheckedChange={() => onToggle(userId, isSuperAdmin, true)}
+            disabled={!canToggleSuperAdmin}
+          />
+          <span className="text-sm">Super Admin</span>
+        </div>
+      )}
+      <div className="flex items-center gap-2">
+        <Switch
+          checked={!!isAdmin}
+          onCheckedChange={() => onToggle(userId, isAdmin, false)}
+          disabled={!canToggleAdmin || !!isSuperAdmin}
+        />
+        <span className="text-sm">Admin</span>
+      </div>
+    </div>
   );
 };
+
