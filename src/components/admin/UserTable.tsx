@@ -18,9 +18,10 @@ interface UserTableProps {
   users: UserProfile[];
   loading: boolean;
   onToggle: (userId: string, currentStatus: boolean | null, isSuperAdmin: boolean) => Promise<void>;
+  isSuperAdmin: boolean; // Adicionada a propriedade que faltava
 }
 
-export const UserTable: React.FC<UserTableProps> = ({ users, loading, onToggle }) => {
+export const UserTable: React.FC<UserTableProps> = ({ users, loading, onToggle, isSuperAdmin }) => {
   const getBadgeContent = (user: UserProfile) => {
     if (user.super_admin) {
       return (
