@@ -14,7 +14,7 @@ const CompanyContext = createContext<CompanyContextType | undefined>(undefined);
 export const CompanyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { 
     selectedCompany: hookSelectedCompany, 
-    setSelectedCompany: hookSetSelectedCompany,
+    selectCompany, // This is the method we need to use
     isLoading 
   } = useCompanies();
 
@@ -31,7 +31,13 @@ export const CompanyProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Função para atualizar a empresa selecionada
   const updateSelectedCompany = (company: Company | null) => {
-    hookSetSelectedCompany(company);
+    if (company) {
+      // Use the selectCompany method from useCompanies
+      const { user } = useCompanies();
+      if (user?.id) {
+        selectCompany(user.id, company);
+      }
+    }
     setCompanyState(company);
   };
 
