@@ -1,6 +1,5 @@
-
 import React, { useEffect, useState } from "react";
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,9 +7,10 @@ import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 import { toast } from "sonner";
 
 export const ProtectedRoute = () => {
-  const { user, loading, session } = useAuth();
+  const { user, loading, session, userProfile } = useAuth();
   const [initialLoadDone, setInitialLoadDone] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const location = useLocation();
 
   // Verificação de estado de autenticação com timeout de segurança
   useEffect(() => {
@@ -127,10 +127,22 @@ export const ProtectedRoute = () => {
     );
   }
 
-  // Redireciona para login se não autenticado
+  // Redirecionar para login se não autenticado
   if (!user) {
     console.log("ProtectedRoute: Usuário não autenticado, redirecionando para login");
     return <Navigate to="/login" replace />;
+  }
+
+  // Verificar se precisa fazer onboarding
+  if (userProfile?.interesses?.includes("onboarding_incomplete") && location.pathname !== "/onboarding") {
+    console.log("ProtectedRoute: Usuário precisa completar onboarding");
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  // Impedir acesso à página de onboarding se já completou
+  if (!userProfile?.interesses?.includes("onboarding_incomplete") && location.pathname === "/onboarding") {
+    console.log("ProtectedRoute: Usuário já completou onboarding");
+    return <Navigate to="/" replace />;
   }
 
   // Renderiza rotas protegidas se autenticado

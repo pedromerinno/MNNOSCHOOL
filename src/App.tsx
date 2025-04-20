@@ -1,5 +1,4 @@
-
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -29,18 +28,16 @@ import Manifesto from "./pages/Manifesto";
 import Team from "./pages/Team";
 import TeamMemberProfile from "./pages/TeamMemberProfile";
 
-// Crie um cliente de consulta com configurações padrão
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
-      refetchOnWindowFocus: false, // Reduzir solicitações de rede
+      refetchOnWindowFocus: false,
     },
   },
 });
 
 const App = () => {
-  // Registre quando o App é carregado para depuração
   console.log("App component rendering");
   
   return (
@@ -53,16 +50,13 @@ const App = () => {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
-              <Route path="/onboarding" element={<Onboarding />} />
               
               <Route element={<ProtectedRoute />}>
+                <Route path="/onboarding" element={<Onboarding />} />
                 <Route path="/" element={<>
                   <MainNavigationMenu />
                   <Index />
                 </>} />
-                
-                {/* Redirect /dashboard to / */}
-                <Route path="/dashboard" element={<Navigate to="/" replace />} />
                 
                 <Route path="/courses" element={<>
                   <MainNavigationMenu />
