@@ -9,24 +9,24 @@ import { NoCompaniesAvailable } from "@/components/home/NoCompaniesAvailable";
 const Index = () => {
   const [isPageLoading, setIsPageLoading] = useState(true);
   const { userCompanies, isLoading, fetchCount, selectedCompany } = useCompanies();
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
+  const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
 
-  // Improved loading state to ensure we don't show "no companies" too early
+  // Improved loading state with longer minimum delay for admins
   useEffect(() => {
-    // Only stop showing loading state when:
-    // 1. We've attempted to fetch companies at least once (fetchCount > 0)
-    // 2. We have a selected company already
-    // 3. Or, we've finished loading and confirmed there are no companies
+    // Set a longer minimum loading time for admins to prevent flickering
+    const minLoadTime = isAdmin ? 2500 : 2000;
+    
     const timer = setTimeout(() => {
       if (selectedCompany || fetchCount > 0 || !isLoading) {
         setIsPageLoading(false);
       }
-    }, 2000); // Increase minimum loading time to give cache a chance to load
+    }, minLoadTime);
     
     return () => clearTimeout(timer);
-  }, [isLoading, fetchCount, selectedCompany]);
+  }, [isLoading, fetchCount, selectedCompany, isAdmin]);
 
-  // Show loading state while we're checking for companies
+  // Show consistent loading state while checking for companies
   if (isPageLoading || (user && isLoading)) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">

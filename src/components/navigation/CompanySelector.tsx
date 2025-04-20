@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/company";
@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const CompanySelector = () => {
   const { user } = useAuth();
@@ -20,8 +21,24 @@ export const CompanySelector = () => {
     isLoading,
     forceGetUserCompanies
   } = useCompanies();
+  
+  // Estado local para evitar flickering do nome da empresa
+  const [displayName, setDisplayName] = useState<string>("merinno");
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  // Debug log to check selected company
+  // Atualiza o nome de exibição apenas quando a empresa selecionada estiver estável
+  useEffect(() => {
+    if (selectedCompany?.nome) {
+      // Pequeno delay para evitar atualizações muito rápidas
+      const timer = setTimeout(() => {
+        setDisplayName(selectedCompany.nome);
+        setIsInitialLoad(false);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedCompany]);
+
+  // Debug log para verificar a empresa selecionada
   useEffect(() => {
     if (selectedCompany) {
       console.log('CompanySelector: Empresa selecionada:', {
@@ -34,7 +51,7 @@ export const CompanySelector = () => {
     }
   }, [selectedCompany]);
 
-  // Listen for company-relation-changed events
+  // Listener para mudanças nas relações de empresa
   useEffect(() => {
     const handleCompanyRelationChange = async () => {
       if (user?.id) {
@@ -50,7 +67,7 @@ export const CompanySelector = () => {
     };
   }, [user, forceGetUserCompanies]);
 
-  // Auto-select first company if none is selected
+  // Auto-selecionar a primeira empresa se nenhuma for selecionada
   useEffect(() => {
     if (!selectedCompany && userCompanies.length > 0 && user?.id && !isLoading) {
       console.log('CompanySelector: Auto-selecting first company because none is selected yet');
@@ -77,21 +94,26 @@ export const CompanySelector = () => {
     }
   };
 
-  // If user has no companies or is not logged in, show default text
+  // Se estiver carregando e for o carregamento inicial, mostrar um skeleton 
+  if (isLoading && isInitialLoad) {
+    return <Skeleton className="h-6 w-32" />;
+  }
+
+  // Se usuário não tiver empresas ou não estiver logado, mostrar texto padrão
   if (!user || !userCompanies || userCompanies.length === 0) {
     return <span className="text-lg font-bold text-merinno-dark">merinno</span>;
   }
 
-  // If user has only one company, just show the name without dropdown
+  // Se usuário tiver apenas uma empresa, apenas mostrar o nome sem dropdown
   if (userCompanies.length === 1) {
-    return <span className="text-lg font-bold text-merinno-dark">{userCompanies[0].nome}</span>;
+    return <span className="text-lg font-bold text-merinno-dark">{displayName}</span>;
   }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center text-lg font-bold text-merinno-dark focus:outline-none">
-          {selectedCompany?.nome || (userCompanies[0] && userCompanies[0].nome) || "merinno"}
+          {displayName}
           <ChevronDown className="ml-1 h-4 w-4" />
         </button>
       </DropdownMenuTrigger>
