@@ -3,7 +3,7 @@ import { z } from "zod";
 
 export const integrationFormSchema = z.object({
   nome: z.string().min(1, "Nome da empresa é obrigatório"),
-  descricao: z.string().optional().nullable(),
+  // Remove descricao field as it doesn't exist in the database
   frase_institucional: z.string().optional().nullable(),
   missao: z.string().optional().nullable(),
   valores: z.array(z.object({

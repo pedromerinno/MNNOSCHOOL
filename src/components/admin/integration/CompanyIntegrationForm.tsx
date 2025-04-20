@@ -44,7 +44,7 @@ export const CompanyIntegrationForm: React.FC<CompanyIntegrationFormProps> = ({
     resolver: zodResolver(integrationFormSchema),
     defaultValues: {
       nome: company.nome || "",
-      descricao: company.descricao || "",
+      // Remove descricao field
       frase_institucional: company.frase_institucional || "",
       missao: company.missao || "",
       valores: parsedValores,
@@ -69,12 +69,7 @@ export const CompanyIntegrationForm: React.FC<CompanyIntegrationFormProps> = ({
               placeholder="Digite o nome da empresa"
             />
             
-            <TextareaField
-              control={form.control}
-              name="descricao"
-              label="Descrição"
-              placeholder="Breve descrição sobre a empresa"
-            />
+            {/* Remove Descrição field */}
             
             <TextareaField
               control={form.control}

@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Company } from "@/types/company";
-import { useCompanies } from "@/hooks/useCompanies";
+import { useCompanies } from "@/hooks/company";
 
 export const useSettingsManagement = () => {
   const { companies, isLoading, fetchCompanies } = useCompanies();
@@ -81,22 +81,12 @@ export const useSettingsManagement = () => {
     try {
       console.log("Saving integration info for company:", selectedCompany.nome);
       
-      // Process valores field if it's a string but should be JSON
+      // Process valores field if it's an array (always stringify arrays for storage)
       let processedData = { ...formData };
       
-      // Handle the valores field correctly - ensure it's saved as a valid JSON string
+      // Handle the valores field correctly - always stringify arrays before saving
       if (processedData.valores) {
-        if (typeof processedData.valores === 'string') {
-          try {
-            // Try to parse it to validate it's proper JSON
-            JSON.parse(processedData.valores);
-            // If no error, it's already valid JSON string
-          } catch (e) {
-            // If it's not valid JSON, convert to JSON string
-            processedData.valores = JSON.stringify(processedData.valores);
-          }
-        } else if (Array.isArray(processedData.valores)) {
-          // If it's an array, stringify it
+        if (Array.isArray(processedData.valores)) {
           processedData.valores = JSON.stringify(processedData.valores);
         }
       }
