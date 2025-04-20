@@ -12,7 +12,7 @@ const Onboarding = () => {
   return (
     <OnboardingProvider>
       <OnboardingLayout>
-        <div className="w-full max-w-3xl mx-auto relative">
+        <div className="w-full max-w-4xl mx-auto relative flex flex-col items-center">
           <OnboardingContent />
         </div>
       </OnboardingLayout>
@@ -40,16 +40,14 @@ const OnboardingContent = () => {
   };
 
   return (
-    <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-16 transition-all duration-300">
-      <div className="mb-10">
-        <div className="flex flex-col gap-2 mb-8">
-          <h1 className="text-2xl font-medium text-gray-900 tracking-tight">
-            {isUpdate ? "Atualizar Perfil" : "Complete seu perfil"}
-          </h1>
-          <p className="text-sm text-gray-500">
-            Passo {currentStep} de {totalSteps}
-          </p>
-        </div>
+    <>
+      <div className="mb-10 w-full max-w-3xl text-center">
+        <h1 className="text-2xl font-medium text-gray-900 tracking-tight mb-4">
+          {isUpdate ? "Atualizar Perfil" : "Complete seu perfil"}
+        </h1>
+        <p className="text-sm text-gray-500 mb-4">
+          Passo {currentStep} de {totalSteps}
+        </p>
         <div className="w-full h-1 rounded-full bg-gray-100 overflow-hidden">
           <div 
             className="h-full rounded-full bg-black transition-all duration-500 ease-out"
@@ -58,11 +56,13 @@ const OnboardingContent = () => {
         </div>
       </div>
 
-      {currentStep === 1 && <ProfileStep onNext={nextStep} />}
-      {currentStep === 2 && <PhotoStep onNext={nextStep} onBack={prevStep} />}
-      {currentStep === 3 && <CompanyStep onNext={nextStep} onBack={prevStep} />}
-      {currentStep === 4 && <InterestsStep onBack={prevStep} />}
-    </div>
+      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 w-full max-w-3xl transition-all duration-300">
+        {currentStep === 1 && <ProfileStep onNext={nextStep} />}
+        {currentStep === 2 && <PhotoStep onNext={nextStep} onBack={prevStep} />}
+        {currentStep === 3 && <CompanyStep onNext={nextStep} onBack={prevStep} />}
+        {currentStep === 4 && <InterestsStep onBack={prevStep} />}
+      </div>
+    </>
   );
 };
 
