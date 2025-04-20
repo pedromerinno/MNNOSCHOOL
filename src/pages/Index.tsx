@@ -8,18 +8,24 @@ import { NoCompaniesAvailable } from "@/components/home/NoCompaniesAvailable";
 
 const Index = () => {
   const [isPageLoading, setIsPageLoading] = useState(true);
-  const { userCompanies, isLoading } = useCompanies();
+  const { userCompanies, isLoading, fetchCount } = useCompanies();
   const { user } = useAuth();
 
-  // Simular um carregamento mínimo para garantir que a UI não pisque
+  // Simular um carregamento mínimo para garantir que a UI não pisque,
+  // mas também garantir que esperamos pelo menos uma tentativa de carregamento
   useEffect(() => {
     const timer = setTimeout(() => {
-      setIsPageLoading(false);
-    }, 500);
+      // Only set isPageLoading to false if companies have been fetched at least once
+      // or if there was an error (to avoid infinite loading)
+      if (fetchCount > 0 || !isLoading) {
+        setIsPageLoading(false);
+      }
+    }, 1500); // Increased from 500ms to 1500ms to ensure companies have time to load
     
     return () => clearTimeout(timer);
-  }, []);
+  }, [isLoading, fetchCount]);
 
+  // Force a minimum loading time to avoid flicker
   if (isPageLoading || (user && isLoading)) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
@@ -44,8 +50,9 @@ const Index = () => {
     );
   }
 
-  // Check if user is logged in and has no companies
-  if (user && userCompanies.length === 0) {
+  // Only show NoCompaniesAvailable if we've finished loading AND there are no companies
+  // This prevents the "no companies" message from showing during initial loading
+  if (user && !isLoading && userCompanies.length === 0) {
     return <NoCompaniesAvailable />;
   }
 
