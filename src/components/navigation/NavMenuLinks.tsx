@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { useAuth } from "@/contexts/AuthContext";
 
-export const NavMenuLinks = () => {
+export const NavMenuLinks = ({ adminLabel = "Admin" }) => {
   const { userProfile } = useAuth();
   const location = useLocation();
   
@@ -94,7 +94,7 @@ export const NavMenuLinks = () => {
         {(userProfile?.is_admin || userProfile?.super_admin) && (
           <NavigationMenuItem>
             <Link to="/admin" className={menuLinkClass('/admin')}>
-              Admin
+              {adminLabel}
             </Link>
           </NavigationMenuItem>
         )}

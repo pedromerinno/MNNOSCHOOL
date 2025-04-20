@@ -12,7 +12,7 @@ import { useEffect } from "react";
 import { useCompanies } from "@/hooks/useCompanies";
 
 export const MainNavigationMenu = () => {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const { userCompanies, selectedCompany } = useCompanies();
 
   // Log para debug do número de empresas carregadas
@@ -22,8 +22,13 @@ export const MainNavigationMenu = () => {
     }
   }, [userCompanies.length]);
 
-  // Usando background transparente para combinar com a página
-  const headerBgColor = "transparent"; 
+  // Determinar o rótulo do Admin com base no tipo de usuário
+  const getAdminLabel = () => {
+    if (userProfile?.super_admin) {
+      return "Super Admin";
+    }
+    return "Admin";
+  };
 
   return (
     <header 
@@ -35,7 +40,7 @@ export const MainNavigationMenu = () => {
             <CompanySelector />
           </div>
           
-          <NavMenuLinks />
+          <NavMenuLinks adminLabel={getAdminLabel()} />
         </div>
         
         <div className="flex items-center space-x-3">

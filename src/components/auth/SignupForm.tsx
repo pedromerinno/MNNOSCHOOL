@@ -1,17 +1,16 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
-import { InterestsSelector } from "./InterestsSelector";
 
 export const SignupForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
-  const [interests, setInterests] = useState<string[]>([]);
   const [isRegistering, setIsRegistering] = useState(false);
   const { signUp } = useAuth();
 
@@ -40,7 +39,7 @@ export const SignupForm = () => {
     setIsRegistering(true);
     
     try {
-      await signUp(email, password, email.split('@')[0], { interests });
+      await signUp(email, password, email.split('@')[0], { isNewUser: true });
       console.log("Usuario cadastrado com sucesso! Perfil será criado automaticamente.");
     } catch (error) {
       console.error("Erro no cadastro:", error);
@@ -50,14 +49,14 @@ export const SignupForm = () => {
   };
 
   return (
-    <div className="w-full max-w-md">
-      <h2 className="text-3xl font-medium mb-1">Criar conta</h2>
+    <div className="w-full max-w-md px-6 py-8 md:px-10">
+      <h2 className="text-3xl font-medium mb-2">Criar conta</h2>
       <p className="text-sm text-gray-500 mb-8">
         Preencha os campos abaixo para começar sua jornada conosco.
       </p>
       
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-2">
+      <form onSubmit={handleSubmit} className="space-y-8">
+        <div className="space-y-3">
           <label htmlFor="email" className="text-sm text-gray-500">
             Seu e-mail
           </label>
@@ -71,7 +70,7 @@ export const SignupForm = () => {
           />
         </div>
         
-        <div className="space-y-2">
+        <div className="space-y-3">
           <label htmlFor="password" className="text-sm text-gray-500">
             Sua senha
           </label>
@@ -85,7 +84,7 @@ export const SignupForm = () => {
           />
         </div>
         
-        <div className="space-y-2">
+        <div className="space-y-3">
           <label htmlFor="confirmPassword" className="text-sm text-gray-500">
             Confirme sua senha
           </label>
@@ -102,11 +101,6 @@ export const SignupForm = () => {
           )}
         </div>
         
-        <InterestsSelector 
-          selectedInterests={interests}
-          onInterestsChange={setInterests}
-        />
-        
         <Button
           type="submit"
           disabled={isRegistering}
@@ -120,7 +114,7 @@ export const SignupForm = () => {
         </Button>
       </form>
       
-      <div className="mt-6 text-center">
+      <div className="mt-8 text-center">
         <p className="text-sm text-gray-500">
           Já tem uma conta?{" "}
           <Link to="/login" className="text-merinno-dark hover:underline">

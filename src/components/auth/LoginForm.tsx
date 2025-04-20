@@ -32,14 +32,14 @@ export const LoginForm = () => {
   };
 
   return (
-    <div className="w-full max-w-md">
-      <h2 className="text-3xl font-medium mb-1">Bem-vindo(a)</h2>
+    <div className="w-full max-w-md px-6 py-8 md:px-10">
+      <h2 className="text-3xl font-medium mb-2">Bem-vindo(a)</h2>
       <p className="text-sm text-gray-500 mb-8">
-        Preencha os campos a baixo para entrar no universo que construímos cuidadosamente para você.
+        Preencha os campos abaixo para entrar no universo que construímos cuidadosamente para você.
       </p>
       
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-2">
+      <form onSubmit={handleSubmit} className="space-y-8">
+        <div className="space-y-3">
           <label htmlFor="email" className="text-sm text-gray-500">
             Seu e-mail
           </label>
@@ -53,7 +53,7 @@ export const LoginForm = () => {
           />
         </div>
         
-        <div className="space-y-2">
+        <div className="space-y-3">
           <label htmlFor="password" className="text-sm text-gray-500">
             Sua senha
           </label>
@@ -103,7 +103,7 @@ export const LoginForm = () => {
         </Button>
       </form>
       
-      <div className="mt-6 text-center">
+      <div className="mt-8 text-center">
         <p className="text-sm text-gray-500">
           Não tem uma conta?{" "}
           <Link to="/signup" className="text-merinno-dark hover:underline">

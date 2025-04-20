@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +12,7 @@ import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import Onboarding from "./pages/Onboarding";
 import Courses from "./pages/Courses";
 import MyCourses from "./pages/MyCourses";
 import CourseDetails from "./pages/CourseDetails";
@@ -52,6 +53,7 @@ const App = () => {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/onboarding" element={<Onboarding />} />
               
               <Route element={<ProtectedRoute />}>
                 <Route path="/" element={<>
