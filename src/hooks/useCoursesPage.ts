@@ -2,11 +2,12 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 type FilterOption = 'all' | 'newest' | 'popular';
 
 export const useCoursesPage = () => {
-  const { selectedCompany } = useCompanies();
+  const { selectedCompany, isLoading: companyLoading } = useCompanies();
   const [activeFilter, setActiveFilter] = useState<FilterOption>('all');
   const [featuredCourses, setFeaturedCourses] = useState<any[]>([]);
   const [allCompanyCourses, setAllCompanyCourses] = useState<any[]>([]);
@@ -18,11 +19,11 @@ export const useCoursesPage = () => {
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
 
   // Memoized fetch function to prevent unnecessary re-renders
-  const fetchCourseData = useCallback(async () => {
+  const fetchCourseData = useCallback(async (forceRefresh = false) => {
     if (!selectedCompany) return;
     
-    // Skip if already fetched for this company
-    if (lastSelectedCompanyId === selectedCompany.id) return;
+    // Skip if already fetched for this company and not forcing refresh
+    if (lastSelectedCompanyId === selectedCompany.id && !forceRefresh) return;
     
     try {
       setLoading(true);
@@ -75,6 +76,7 @@ export const useCoursesPage = () => {
       }
     } catch (error) {
       console.error('Error fetching courses:', error);
+      toast.error('Erro ao carregar cursos. Por favor, tente novamente.');
       setFeaturedCourses([]);
       setAllCompanyCourses([]);
     } finally {
@@ -86,7 +88,7 @@ export const useCoursesPage = () => {
 
   // Run the fetch only when selectedCompany changes
   useEffect(() => {
-    if (selectedCompany && selectedCompany.id !== lastSelectedCompanyId) {
+    if (selectedCompany && (!initialLoadDone.current || selectedCompany.id !== lastSelectedCompanyId)) {
       fetchCourseData();
     }
   }, [selectedCompany, fetchCourseData, lastSelectedCompanyId]);
@@ -97,15 +99,23 @@ export const useCoursesPage = () => {
       : "Todos os Cursos";
   };
 
+  // Este método permite atualizar forçadamente os dados
+  const refreshCourses = () => {
+    if (selectedCompany) {
+      fetchCourseData(true);
+    }
+  };
+
   return {
     activeFilter,
     setActiveFilter,
     featuredCourses,
     allCompanyCourses,
-    loading,
-    allCoursesLoading,
+    loading: loading || companyLoading, // Incluir o loading da empresa
+    allCoursesLoading: allCoursesLoading || companyLoading, // Incluir o loading da empresa
     companyColor,
     getTitle,
+    refreshCourses,
     isDataReady: initialLoadDone.current
   };
 };

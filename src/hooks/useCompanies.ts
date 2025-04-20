@@ -106,6 +106,13 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     const loadInitialData = async () => {
       if (user?.id && userCompanies.length === 0 && !isLoading) {
         try {
+          // Try to restore from localStorage first for immediate UI update
+          const cachedCompany = getStoredCompany();
+          if (cachedCompany) {
+            console.log('[useCompanies] Using cached company while loading:', cachedCompany.nome);
+            setSelectedCompany(cachedCompany);
+          }
+          
           // If user is super admin, fetch all companies
           const { data: profileData } = await supabase
             .from('profiles')
@@ -129,7 +136,7 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     };
     
     loadInitialData();
-  }, [user?.id, userCompanies.length, isLoading, getUserCompanies, skipLoadingInOnboarding]);
+  }, [user?.id, userCompanies.length, isLoading, getUserCompanies, getStoredCompany, setSelectedCompany, skipLoadingInOnboarding]);
   
   // Listen for company-relation-changed events to refresh data
   useEffect(() => {
@@ -206,7 +213,7 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
           
           if (storedCompany) {
             setSelectedCompany(storedCompany);
-            console.log('[useCompanies] Restored selected company from localStorage ID:', storedCompany.nome);
+            console.log('[useCompanies] Restored selected company from userCompanies:', storedCompany.nome);
           } else {
             // If not found, try to fetch it
             try {

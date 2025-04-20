@@ -12,8 +12,10 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
    */
   const persistCompanySelection = useCallback((company: Company) => {
     try {
+      // Store full company object for better persistence across page loads
       localStorage.setItem('selectedCompanyId', company.id);
       localStorage.setItem('selectedCompany', JSON.stringify(company));
+      localStorage.setItem('selectedCompanyTimestamp', Date.now().toString());
       
       // We remove this dispatch since it will be done in selectCompany
     } catch (e) {
