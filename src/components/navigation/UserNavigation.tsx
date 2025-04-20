@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogOut, User, ChevronDown, Building } from "lucide-react";
@@ -63,10 +62,6 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
 
   const handleSignOut = () => {
     signOut();
-  };
-
-  const handleHomeClick = () => {
-    navigate('/');
   };
 
   const handleCompanySelect = (company) => {
@@ -150,13 +145,6 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
           </DropdownMenuItem>
           
           <DropdownMenuSeparator />
-          
-          <DropdownMenuItem 
-            onClick={handleHomeClick}
-            className="cursor-pointer flex items-center gap-2"
-          >
-            <span>Início</span>
-          </DropdownMenuItem>
           
           <DropdownMenuItem 
             onClick={handleSignOut}
