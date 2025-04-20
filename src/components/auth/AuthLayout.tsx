@@ -69,7 +69,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
       {/* Left side - Background Media */}
       <div className="flex-1 relative overflow-hidden hidden lg:block">
         <div className="absolute top-8 left-8 z-10">
-          <h1 className="text-5xl font-bold text-white">MNNO</h1>
+          <h1 className="text-4xl font-bold text-white">MNNO</h1>
         </div>
         
         {isLoading ? (
