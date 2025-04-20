@@ -6,6 +6,7 @@ import { Camera, Upload, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { toast } from "sonner";
 
 interface PhotoStepProps {
   onNext: () => void;
@@ -30,7 +31,7 @@ const PhotoStep: React.FC<PhotoStepProps> = ({ onNext, onBack }) => {
       const fileName = `avatar-${user.id}-${Math.random().toString(36).substring(2)}`;
       const filePath = `${fileName}.${fileExt}`;
       
-      // Upload para o storage do Supabase
+      // Upload para o storage do Supabase no bucket 'avatars'
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file);
@@ -45,9 +46,13 @@ const PhotoStep: React.FC<PhotoStepProps> = ({ onNext, onBack }) => {
       setAvatarUrl(publicUrl);
       updateProfileData({ avatarUrl: publicUrl });
       
+      toast.success("Foto de perfil carregada com sucesso!");
+      
     } catch (error: any) {
       console.error("Erro ao fazer upload:", error);
-      setError(error.message || "Erro ao fazer upload da imagem");
+      const errorMessage = error.message || "Erro ao fazer upload da imagem";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsUploading(false);
     }
@@ -62,12 +67,14 @@ const PhotoStep: React.FC<PhotoStepProps> = ({ onNext, onBack }) => {
     
     // Validação de tamanho (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 5MB");
       setError("A imagem deve ter no máximo 5MB");
       return;
     }
     
     // Validação de tipo
     if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
+      toast.error("O arquivo deve ser uma imagem (JPEG ou PNG)");
       setError("O arquivo deve ser uma imagem (JPEG ou PNG)");
       return;
     }
