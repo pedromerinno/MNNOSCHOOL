@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Company } from "@/types/company";
 import { toast } from "sonner";
@@ -72,6 +73,7 @@ export const useUserCompanies = ({
       let companies: Company[] = [];
       
       if (isAdmin || isSuperAdmin) {
+        // Instead of using RPC, use a direct query for admin users
         const { data, error } = await supabase
           .from('empresas')
           .select('*')
@@ -83,6 +85,7 @@ export const useUserCompanies = ({
         
         companies = data as Company[];
       } else {
+        // Use a regular query instead of RPC
         const { data, error } = await supabase
           .from('user_empresa')
           .select('empresa_id')

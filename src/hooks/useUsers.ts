@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -65,12 +66,13 @@ export function useUsers() {
       let profiles: UserProfile[] = [];
       
       if (isAdmin || isSuperAdmin) {
+        // Using direct query instead of RPC
         const { data: allUsers, error } = await supabase
           .from('profiles')
           .select('id, display_name, is_admin, super_admin, email, created_at, avatar, cargo_id');
         
         if (error) throw error;
-        profiles = allUsers;
+        profiles = allUsers as UserProfile[];
       } else {
         const { data: ownProfile, error } = await supabase
           .from('profiles')
