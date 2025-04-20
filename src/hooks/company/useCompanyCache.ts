@@ -1,132 +1,50 @@
 
-import { Company } from "@/types/company";
-import { useCache } from "@/hooks/useCache";
+import { useCallback } from 'react';
+import { Company } from '@/types/company';
 
-// Increase cache time to reduce API calls
-const CACHE_EXPIRATION_MINUTES = 180; // 3 hours cache
-
-/**
- * Hook for caching company data to reduce API calls
- */
 export const useCompanyCache = () => {
-  const { setCache, getCache, clearCache } = useCache();
-  
-  // Cache keys
-  const USER_COMPANIES_KEY = 'userCompanies';
-  const SELECTED_COMPANY_KEY = 'selectedCompany';
-  
   /**
-   * Check if the cache has expired
+   * Get cached user companies from localStorage
    */
-  const isCacheExpired = (): boolean => {
-    const companies = getCachedUserCompanies();
-    return !companies;
-  };
-  
-  /**
-   * Get cached user companies
-   */
-  const getCachedUserCompanies = (): Company[] | null => {
-    return getCache<Company[]>({
-      key: USER_COMPANIES_KEY,
-      expirationMinutes: CACHE_EXPIRATION_MINUTES
-    });
-  };
-  
-  /**
-   * Get cached selected company
-   */
-  const getCachedSelectedCompany = (): Company | null => {
-    return getCache<Company>({
-      key: SELECTED_COMPANY_KEY,
-      expirationMinutes: CACHE_EXPIRATION_MINUTES
-    });
-  };
-  
-  /**
-   * Cache user companies
-   */
-  const cacheUserCompanies = (companies: Company[]): void => {
-    if (!companies || companies.length === 0) {
-      console.log("[Company Cache] No companies to cache, skipping");
-      return;
-    }
-    
-    setCache({
-      key: USER_COMPANIES_KEY,
-      expirationMinutes: CACHE_EXPIRATION_MINUTES
-    }, companies);
-  };
-  
-  /**
-   * Cache selected company
-   */
-  const cacheSelectedCompany = (company: Company): void => {
-    if (!company) {
-      console.log("[Company Cache] No company to cache, skipping");
-      return;
-    }
-    
-    setCache({
-      key: SELECTED_COMPANY_KEY,
-      expirationMinutes: CACHE_EXPIRATION_MINUTES
-    }, company);
-  };
-  
-  /**
-   * Clear cached user companies
-   */
-  const clearCachedUserCompanies = (): void => {
-    clearCache(USER_COMPANIES_KEY);
-  };
-  
-  /**
-   * Clear cached selected company
-   */
-  const clearCachedSelectedCompany = (): void => {
-    clearCache(SELECTED_COMPANY_KEY);
-  };
-  
-  /**
-   * Clear all company caches
-   */
-  const clearAllCompanyCache = (): void => {
-    clearCachedUserCompanies();
-    clearCachedSelectedCompany();
-  };
-  
-  /**
-   * Remove a company from cache
-   */
-  const removeCachedCompany = (companyId: string): void => {
+  const getCachedUserCompanies = useCallback((): Company[] | null => {
     try {
-      const companies = getCachedUserCompanies();
-      if (!companies) return;
+      const cachedData = localStorage.getItem('userCompanies');
+      if (!cachedData) return null;
       
-      const updatedCompanies = companies.filter(company => company.id !== companyId);
-      cacheUserCompanies(updatedCompanies);
-      
-      // If the removed company is the selected one, clear selected company cache
-      const selectedCompany = getCachedSelectedCompany();
-      if (selectedCompany && selectedCompany.id === companyId) {
-        clearCachedSelectedCompany();
-      }
-      
-      console.log(`[Company Cache] Removed company ${companyId} from cache`);
+      return JSON.parse(cachedData) as Company[];
     } catch (e) {
-      console.error("[Company Cache] Error removing company from cache:", e);
+      console.error("Error parsing cached companies", e);
+      return null;
     }
-  };
+  }, []);
+  
+  /**
+   * Cache user companies to localStorage
+   */
+  const cacheUserCompanies = useCallback((companies: Company[]): void => {
+    try {
+      localStorage.setItem('userCompanies', JSON.stringify(companies));
+      localStorage.setItem('userCompaniesTimestamp', Date.now().toString());
+    } catch (e) {
+      console.error("Error caching companies", e);
+    }
+  }, []);
+  
+  /**
+   * Clear cached user companies from localStorage
+   */
+  const clearCachedUserCompanies = useCallback((): void => {
+    try {
+      localStorage.removeItem('userCompanies');
+      localStorage.removeItem('userCompaniesTimestamp');
+    } catch (e) {
+      console.error("Error clearing cached companies", e);
+    }
+  }, []);
   
   return {
     getCachedUserCompanies,
-    getCachedSelectedCompany,
     cacheUserCompanies,
-    cacheSelectedCompany,
-    clearCachedUserCompanies,
-    clearCachedSelectedCompany,
-    clearAllCompanyCache,
-    removeCachedCompany,
-    isCacheExpired
+    clearCachedUserCompanies
   };
 };

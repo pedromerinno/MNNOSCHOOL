@@ -5,8 +5,10 @@ import { useCompanyFetching } from './useCompanyFetching';
 import { useCompanyModification } from './useCompanyModification';
 import { useCompanyEvents } from './useCompanyEvents';
 import { Company } from '@/types/company';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useCompaniesProvider = () => {
+  const { user } = useAuth();
   const companyState = useCompanyState();
   
   const {
@@ -44,6 +46,9 @@ export const useCompaniesProvider = () => {
   return {
     // State
     ...companyState,
+    
+    // User from auth context
+    user,
     
     // Fetching methods
     getUserCompanies,
