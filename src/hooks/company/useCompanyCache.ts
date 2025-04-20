@@ -40,10 +40,35 @@ export const useCompanyCache = () => {
     }
   };
 
+  // Add the missing functions that are used in useSelectedCompanyManagement
+  const getStoredCompany = (): Company | null => {
+    try {
+      const companyData = localStorage.getItem('selectedCompany');
+      if (companyData) {
+        return JSON.parse(companyData);
+      }
+      return null;
+    } catch (error) {
+      console.error('[CompanyCache] Erro ao recuperar empresa do localStorage:', error);
+      return null;
+    }
+  };
+
+  const getStoredCompanyId = (): string | null => {
+    try {
+      return localStorage.getItem('selectedCompanyId');
+    } catch (error) {
+      console.error('[CompanyCache] Erro ao recuperar ID da empresa do localStorage:', error);
+      return null;
+    }
+  };
+
   return {
     cacheUserCompanies,
     getCachedUserCompanies,
     clearCachedUserCompanies,
-    getInitialSelectedCompany
+    getInitialSelectedCompany,
+    getStoredCompany,
+    getStoredCompanyId
   };
 };
