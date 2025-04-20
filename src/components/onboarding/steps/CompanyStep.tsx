@@ -117,9 +117,10 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack }) => {
       <div className="pt-4 flex flex-col gap-3">
         <Button 
           type="submit" 
-          className="w-full rounded-md bg-merinno-dark hover:bg-black text-white"
+          className="w-full rounded-md bg-merinno-dark hover:bg-black text-white relative overflow-hidden transition-all duration-200 group"
         >
           Continuar
+          <span className="absolute inset-0 h-full w-full bg-white/10 opacity-0 transition-opacity group-hover:opacity-100" />
         </Button>
         
         <Button 
