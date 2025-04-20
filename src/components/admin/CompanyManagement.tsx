@@ -25,11 +25,11 @@ export const CompanyManagement: React.FC = () => {
     fetchCompanies, 
     createCompany, 
     updateCompany, 
-    deleteCompany,
-    isSuperAdmin
+    deleteCompany 
   } = useCompanies();
   
   const { userProfile } = useAuth();
+  const isSuperAdmin = userProfile?.super_admin === true;
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isUserManagerOpen, setIsUserManagerOpen] = useState(false);
