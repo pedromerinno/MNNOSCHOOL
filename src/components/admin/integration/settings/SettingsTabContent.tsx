@@ -8,8 +8,6 @@ import { JobRolesManager } from '../JobRolesManager';
 import { AccessManagement } from '../AccessManagement';
 import { CollaboratorsManagement } from '../CollaboratorsManagement';
 import { CompanyCourseManagement } from '../CompanyCourseManagement';
-import { BackgroundManager } from '../../BackgroundManager';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface SettingsTabContentProps {
   value: string;
@@ -24,8 +22,6 @@ export const SettingsTabContent: React.FC<SettingsTabContentProps> = ({
   onSubmit,
   isSaving
 }) => {
-  const { userProfile } = useAuth();
-  
   const getContent = () => {
     switch (value) {
       case "info":
@@ -47,9 +43,6 @@ export const SettingsTabContent: React.FC<SettingsTabContentProps> = ({
         return <CollaboratorsManagement key={`collaborators-${company.id}`} company={company} />;
       case "courses":
         return <CompanyCourseManagement key={`courses-${company.id}`} company={company} />;
-      case "background":
-        // Only show Background tab content if user is super_admin
-        return userProfile?.super_admin ? <BackgroundManager /> : null;
       default:
         return null;
     }

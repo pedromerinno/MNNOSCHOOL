@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Tabs, TabsList } from "@/components/ui/tabs";
-import { Building, Video, FileText, Users, Key, Book, Image } from "lucide-react";
+import { Book, Briefcase, Key, Users, Video, Building } from "lucide-react";
 import { SettingsTabTrigger } from './settings/SettingsTabTrigger';
 import { SettingsTabContent } from './settings/SettingsTabContent';
 import { SettingsTabsProps } from './settings/types';
@@ -14,27 +14,20 @@ export const SettingsTabs: React.FC<SettingsTabsProps> = ({
   handleFormSubmit,
   isSaving
 }) => {
-  const { userProfile } = useAuth();
-  
-  // Define base tabs that all admins can see
-  const baseTabs = [
-    { value: "info", label: "Informações da Empresa", icon: Building },
+  // Tab definitions seguindo a ordem e nomes passados, com ícones do padrão do painel admin
+  const tabs = [
+    { value: "info", label: "Informações", icon: Building },
     { value: "videos", label: "Vídeos", icon: Video },
-    { value: "cargo", label: "Cargos", icon: FileText },
-    { value: "access", label: "Acessos", icon: Key },
-    { value: "collaborators", label: "Colaboradores", icon: Users },
     { value: "courses", label: "Cursos", icon: Book },
+    { value: "cargo", label: "Cargos", icon: Briefcase },
+    { value: "access", label: "Senhas e Acessos", icon: Key },
+    { value: "collaborators", label: "Colaboradores", icon: Users },
   ];
-  
-  // Add Background tab only for super_admin
-  const tabs = userProfile?.super_admin 
-    ? [...baseTabs, { value: "background", label: "Background", icon: Image }]
-    : baseTabs;
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <div className="border-b">
-        <TabsList className="bg-gray-50 dark:bg-gray-900 w-full justify-start rounded-none p-0 h-auto">
+      <div className="border-b border-gray-100 dark:border-gray-800 py-2 px-2 bg-transparent">
+        <TabsList className="flex gap-2 rounded-2xl p-1.5 bg-transparent dark:bg-transparent w-full justify-start">
           {tabs.map((tab) => (
             <SettingsTabTrigger
               key={tab.value}
@@ -47,8 +40,7 @@ export const SettingsTabs: React.FC<SettingsTabsProps> = ({
           ))}
         </TabsList>
       </div>
-      
-      <div className="p-6">
+      <div className="p-4">
         {tabs.map((tab) => (
           <SettingsTabContent
             key={tab.value}
