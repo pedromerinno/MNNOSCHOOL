@@ -6,34 +6,51 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft } from "lucide-react";
 import { Building, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Form } from "@/components/ui/form";
 
 interface CompanyStepProps {
   onNext: () => void;
   onBack: () => void;
+  onCompanyTypeSelect: (isExisting: boolean) => void;
 }
 
-const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack }) => {
+const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyTypeSelect }) => {
   const { profileData, updateProfileData } = useOnboarding();
   const [companyType, setCompanyType] = useState<'existing' | 'new'>(
     profileData.companyId ? 'existing' : 'new'
   );
   const [companyId, setCompanyId] = useState(profileData.companyId || "");
+  const [companyDetails, setCompanyDetails] = useState({
+    name: "",
+    description: ""
+  });
   const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (companyType === 'existing' && !companyId) {
       setError("Por favor, informe o ID da empresa");
       return;
     }
+
+    if (companyType === 'new' && !companyDetails.name) {
+      setError("Por favor, informe o nome da empresa");
+      return;
+    }
     
     updateProfileData({ 
       companyId: companyType === 'existing' ? companyId : null,
-      newCompanyName: companyType === 'new' ? 'new_company' : null
+      newCompanyName: companyType === 'new' ? companyDetails.name : null
     });
-    
+
+    onCompanyTypeSelect(companyType === 'existing');
     onNext();
+  };
+
+  const handleCompanyTypeChange = (type: 'existing' | 'new') => {
+    setCompanyType(type);
+    setError("");
   };
 
   return (
@@ -48,7 +65,7 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack }) => {
       <div className="grid grid-cols-1 gap-4 mt-4">
         <button
           type="button"
-          onClick={() => setCompanyType('existing')}
+          onClick={() => handleCompanyTypeChange('existing')}
           className={`flex items-center p-6 border-2 rounded-xl transition-all ${
             companyType === 'existing'
               ? 'border-merinno-dark bg-gray-50'
@@ -72,7 +89,7 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack }) => {
 
         <button
           type="button"
-          onClick={() => setCompanyType('new')}
+          onClick={() => handleCompanyTypeChange('new')}
           className={`flex items-center p-6 border-2 rounded-xl transition-all ${
             companyType === 'new'
               ? 'border-merinno-dark bg-gray-50'
@@ -96,7 +113,7 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack }) => {
       </div>
       
       <div className="pt-2">
-        {companyType === 'existing' && (
+        {companyType === 'existing' ? (
           <div className="space-y-3">
             <label htmlFor="companyId" className="text-sm text-gray-500">
               ID da empresa
@@ -108,6 +125,33 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack }) => {
               className="border-b border-gray-300 rounded-md px-3 py-2 focus-visible:ring-merinno-dark"
               placeholder="Digite o ID da empresa"
             />
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="companyName" className="text-sm text-gray-500">
+                Nome da empresa
+              </label>
+              <Input
+                id="companyName"
+                value={companyDetails.name}
+                onChange={(e) => setCompanyDetails(prev => ({ ...prev, name: e.target.value }))}
+                className="border-b border-gray-300 rounded-md px-3 py-2 focus-visible:ring-merinno-dark"
+                placeholder="Digite o nome da empresa"
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="companyDescription" className="text-sm text-gray-500">
+                Descrição da empresa
+              </label>
+              <textarea
+                id="companyDescription"
+                value={companyDetails.description}
+                onChange={(e) => setCompanyDetails(prev => ({ ...prev, description: e.target.value }))}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus-visible:ring-merinno-dark min-h-[100px]"
+                placeholder="Descreva sua empresa"
+              />
+            </div>
           </div>
         )}
       </div>

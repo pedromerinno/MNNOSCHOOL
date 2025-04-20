@@ -22,10 +22,12 @@ const Onboarding = () => {
 
 const OnboardingContent = () => {
   const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 4;
   const { userProfile } = useAuth();
+  const [isExistingCompany, setIsExistingCompany] = useState<boolean | null>(null);
   
   const isUpdate = !userProfile?.interesses?.includes("onboarding_incomplete");
+
+  const totalSteps = isExistingCompany ? 4 : 3;
 
   const nextStep = () => {
     if (currentStep < totalSteps) {
@@ -37,6 +39,10 @@ const OnboardingContent = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
+  };
+
+  const handleCompanyChoice = (isExisting: boolean) => {
+    setIsExistingCompany(isExisting);
   };
 
   return (
@@ -59,8 +65,16 @@ const OnboardingContent = () => {
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-12 w-full max-w-3xl transition-all duration-300">
         {currentStep === 1 && <ProfileStep onNext={nextStep} />}
         {currentStep === 2 && <PhotoStep onNext={nextStep} onBack={prevStep} />}
-        {currentStep === 3 && <CompanyStep onNext={nextStep} onBack={prevStep} />}
-        {currentStep === 4 && <InterestsStep onBack={prevStep} />}
+        {currentStep === 3 && (
+          <CompanyStep 
+            onNext={nextStep} 
+            onBack={prevStep} 
+            onCompanyTypeSelect={handleCompanyChoice}
+          />
+        )}
+        {currentStep === 4 && isExistingCompany && (
+          <InterestsStep onBack={prevStep} />
+        )}
       </div>
     </>
   );

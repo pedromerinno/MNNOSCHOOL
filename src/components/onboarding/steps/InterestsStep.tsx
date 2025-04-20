@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Button } from "@/components/ui/button";
@@ -134,7 +133,7 @@ const InterestsStep: React.FC<InterestsStepProps> = ({ onBack }) => {
         </div>
       )}
       
-      {error && <p className="text-red-500 text-sm">{error}</p>}
+      {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
       
       <div className="pt-4 flex flex-col gap-3">
         <Button 
