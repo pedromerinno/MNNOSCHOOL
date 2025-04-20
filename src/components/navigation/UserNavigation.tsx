@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react"; // Add useEffect to the import
 import { useNavigate } from "react-router-dom";
 import { LogOut, User, ChevronDown, Building } from "lucide-react";
 import { Button } from "@/components/ui/button";
