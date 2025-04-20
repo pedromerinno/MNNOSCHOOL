@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -13,6 +13,7 @@ export const useCoursesPage = () => {
   const [loading, setLoading] = useState(true);
   const [allCoursesLoading, setAllCoursesLoading] = useState(true);
   const [lastSelectedCompanyId, setLastSelectedCompanyId] = useState<string | null>(null);
+  const initialLoadDone = useRef(false);
 
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
 
@@ -41,6 +42,7 @@ export const useCoursesPage = () => {
         setAllCompanyCourses([]);
         setLoading(false);
         setAllCoursesLoading(false);
+        initialLoadDone.current = true;
         return;
       }
       
@@ -78,6 +80,7 @@ export const useCoursesPage = () => {
     } finally {
       setLoading(false);
       setAllCoursesLoading(false);
+      initialLoadDone.current = true;
     }
   }, [selectedCompany, lastSelectedCompanyId]);
 
@@ -102,6 +105,7 @@ export const useCoursesPage = () => {
     loading,
     allCoursesLoading,
     companyColor,
-    getTitle
+    getTitle,
+    isDataReady: initialLoadDone.current
   };
 };
