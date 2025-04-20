@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,22 @@ export const BackgroundVideoManager = () => {
   const [videoUrl, setVideoUrl] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
+  useEffect(() => {
+    const fetchCurrentVideoUrl = async () => {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('key', 'login_background_video')
+        .single();
+
+      if (!error && data) {
+        setVideoUrl(data.value || "");
+      }
+    };
+
+    fetchCurrentVideoUrl();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
@@ -20,9 +36,8 @@ export const BackgroundVideoManager = () => {
         .from('settings')
         .upsert({ 
           key: 'login_background_video', 
-          value: videoUrl 
-        }, { 
-          onConflict: 'key' 
+          value: videoUrl,
+          updated_at: new Date().toISOString()
         });
 
       if (error) throw error;

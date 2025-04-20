@@ -1,11 +1,30 @@
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AuthLayoutProps {
   children: ReactNode;
 }
 
 export const AuthLayout = ({ children }: AuthLayoutProps) => {
+  const [videoUrl, setVideoUrl] = useState<string>("/lovable-uploads/background-video.mp4");
+
+  useEffect(() => {
+    const fetchVideoUrl = async () => {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('key', 'login_background_video')
+        .single();
+
+      if (!error && data?.value) {
+        setVideoUrl(data.value);
+      }
+    };
+
+    fetchVideoUrl();
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* Left side - Login Form */}
@@ -24,20 +43,14 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
           autoPlay 
           muted 
           loop 
-          className="absolute w-full h-full object-cover opacity-70"
+          className="absolute w-full h-full object-cover"
         >
-          <source src="/lovable-uploads/background-video.mp4" type="video/mp4" />
+          <source src={videoUrl} type="video/mp4" />
           Seu navegador não suporta vídeos.
         </video>
         
-        <div className="absolute inset-0 bg-merinno-blue/50 flex items-center justify-center z-10">
-          <div className="text-center text-white">
-            <h2 className="text-4xl font-light mb-2">criando o</h2>
-            <h1 className="text-5xl font-medium">impossível</h1>
-          </div>
-        </div>
+        <div className="absolute inset-0 bg-black/30 z-10" />
       </div>
     </div>
   );
 };
-

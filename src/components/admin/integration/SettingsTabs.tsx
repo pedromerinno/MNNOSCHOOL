@@ -8,6 +8,7 @@ import { JobRolesManager } from './JobRolesManager';
 import { AccessManagement } from './AccessManagement';
 import { CollaboratorsManagement } from './CollaboratorsManagement';
 import { CompanyCourseManagement } from './CompanyCourseManagement';
+import { BackgroundVideoManager } from './BackgroundVideoManager';
 
 interface SettingsTabsProps {
   company: Company;
