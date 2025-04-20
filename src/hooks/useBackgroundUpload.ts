@@ -23,14 +23,24 @@ export const useBackgroundUpload = () => {
         .from('background-media')
         .getPublicUrl(filePath);
 
+      // Check if the settings entry already exists
+      const { data: existingSettings } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('key', 'login_background')
+        .single();
+
       // Update settings table with new background
       const { error: updateError } = await supabase
         .from('settings')
         .upsert({
+          id: existingSettings?.id, // Include the ID if the record exists
           key: 'login_background',
           value: publicUrl,
           media_type: type,
           updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'key' // Specify which column has the conflict
         });
 
       if (updateError) throw updateError;
