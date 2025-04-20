@@ -105,7 +105,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
       </div>
 
       {/* Right side - Login Form */}
-      <div className="w-full max-w-[40rem] px-20 py-12 flex items-center justify-center bg-white">
+      <div className="w-full max-w-[64rem] px-20 py-12 flex items-center justify-center bg-white">
         {children}
       </div>
     </div>
