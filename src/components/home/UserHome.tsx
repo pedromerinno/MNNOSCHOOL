@@ -1,6 +1,5 @@
 
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { WelcomeSection } from "./WelcomeSection";
@@ -11,7 +10,6 @@ import { HelpButton } from "./HelpButton";
 import { NoCompaniesAvailable } from "./NoCompaniesAvailable";
 
 export const UserHome = () => {
-  const navigate = useNavigate();
   const { user } = useAuth();
   const { getUserCompanies, selectedCompany, userCompanies } = useCompanies();
   
@@ -20,6 +18,7 @@ export const UserHome = () => {
     const fetchUserCompanies = async () => {
       if (user?.id) {
         try {
+          console.log("[UserHome] Buscando empresas do usuário sem forçar seleção");
           // Usar false como segundo parâmetro para não mostrar loading
           // e não forçar seleção de empresa
           await getUserCompanies(user.id, false);
@@ -35,6 +34,7 @@ export const UserHome = () => {
   // The no companies check is already handled at the Index.tsx level,
   // but we'll add it here as a fallback just in case
   if (user && userCompanies.length === 0) {
+    console.log("[UserHome] Nenhuma empresa disponível, mostrando NoCompaniesAvailable");
     return <NoCompaniesAvailable />;
   }
   

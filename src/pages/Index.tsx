@@ -75,8 +75,9 @@ const Index = () => {
     );
   }
 
-  // Mostrar NoCompaniesAvailable apenas quando terminamos de carregar E não há empresas
+  // Mostrar NoCompaniesAvailable quando terminamos de carregar E não há empresas
   if (user && !isLoading && userCompanies.length === 0) {
+    console.log("[Index] Não há empresas disponíveis, mostrando NoCompaniesAvailable");
     return <NoCompaniesAvailable />;
   }
 

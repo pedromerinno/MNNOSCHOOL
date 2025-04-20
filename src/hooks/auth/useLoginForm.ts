@@ -17,6 +17,7 @@ export const useLoginForm = () => {
     setIsLoggingIn(true);
     
     try {
+      // Limpar cache relacionado a empresas para garantir dados frescos
       clearCache('userCompanies');
       clearCache('selectedCompany');
       clearCache('selectedCompanyId');
@@ -25,29 +26,38 @@ export const useLoginForm = () => {
       if (error) throw error;
 
       if (data?.session?.user) {
-        console.log("Login successful, fetching companies...");
+        console.log("Login bem-sucedido, buscando empresas...");
         
+        // Forçar busca atualizada de empresas do usuário
         const companies = await forceGetUserCompanies(data.session.user.id);
-        console.log("Companies fetched:", companies);
+        console.log("Empresas encontradas:", companies?.length || 0);
         
         if (companies?.length > 0) {
-          console.log("Selecting first company:", companies[0].nome);
+          console.log("Selecionando a primeira empresa disponível:", companies[0].nome);
           
           try {
+            // Selecionar a primeira empresa disponível
             await selectCompany(data.session.user.id, companies[0]);
-            console.log("Company selected successfully");
+            console.log("Empresa selecionada com sucesso");
             toast.success("Login realizado com sucesso!");
             
+            // Usar setTimeout para evitar problemas de navegação durante transições de estado
             setTimeout(() => {
               navigate('/');
             }, 100);
           } catch (selectionError) {
-            console.error("Error selecting company:", selectionError);
+            console.error("Erro ao selecionar empresa:", selectionError);
             toast.error("Erro ao selecionar empresa");
           }
         } else {
-          console.error("No companies available for user");
+          console.log("Nenhuma empresa disponível para este usuário");
           toast.error("Nenhuma empresa disponível para este usuário");
+          
+          // Redirecionar para a página inicial mesmo sem empresas
+          // para exibir o componente NoCompaniesAvailable
+          setTimeout(() => {
+            navigate('/');
+          }, 100);
         }
       }
     } catch (error: any) {

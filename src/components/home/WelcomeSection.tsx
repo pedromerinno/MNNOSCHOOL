@@ -50,9 +50,10 @@ export const WelcomeSection = () => {
     fetchUserCompanies();
   }, [user, getUserCompanies, userCompanies.length, isLoading]);
 
-  // Atualizar empresa exibida quando a seleção mudar, mas NÃO forçar seleção
+  // Atualizar empresa exibida quando a seleção mudar
   useEffect(() => {
     if (selectedCompany) {
+      console.log('[WelcomeSection] Empresa selecionada atualizada:', selectedCompany.nome);
       setDisplayCompany(selectedCompany);
       // Atualizar cor do botão apenas quando a empresa mudar
       setButtonColor(selectedCompany.cor_principal || '#000000');
