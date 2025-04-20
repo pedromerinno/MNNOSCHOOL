@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useMemo } from "react";
+
+import React, { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -13,7 +14,6 @@ export const ProtectedRoute = () => {
   const isOnboarding = location.pathname === "/onboarding";
   
   // Só carrega os dados de empresas se não estiver na página de onboarding
-  // Isso evita requisições desnecessárias durante o processo de onboarding
   const { userCompanies, isLoading: companiesLoading } = useCompanies({
     skipLoadingInOnboarding: isOnboarding
   });
@@ -143,13 +143,11 @@ export const ProtectedRoute = () => {
   }
 
   // Verificar se precisa fazer onboarding inicial
-  const needsInitialOnboarding = useMemo(() => {
-    return userProfile?.interesses?.includes("onboarding_incomplete") || 
-           (!userCompanies || userCompanies.length === 0);
-  }, [userProfile?.interesses, userCompanies]);
+  const needsOnboarding = userProfile?.interesses?.includes("onboarding_incomplete") || 
+                         (!userCompanies || userCompanies.length === 0);
                          
   // Redirecionar para onboarding apenas se for necessário o onboarding inicial
-  if (needsInitialOnboarding && !isOnboarding) {
+  if (needsOnboarding && !isOnboarding) {
     console.log("ProtectedRoute: Usuário precisa completar onboarding inicial");
     return <Navigate to="/onboarding" replace />;
   }
