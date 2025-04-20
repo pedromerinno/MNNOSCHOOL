@@ -7,6 +7,7 @@ import { Loader2, Github } from "lucide-react";
 import { toast } from "sonner";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useCache } from "@/hooks/useCache";
+import { supabase } from "@/integrations/supabase/client";
 
 export const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -48,6 +49,27 @@ export const LoginForm = () => {
     }
   };
 
+  const handleForgotPassword = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!email) {
+      toast.error("Digite seu e-mail para redefinir a senha");
+      return;
+    }
+    
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      
+      if (error) throw error;
+      
+      toast.success("Um e-mail de redefinição de senha foi enviado para você");
+    } catch (error: any) {
+      console.error("Erro ao resetar senha:", error);
+      toast.error(error.message || "Falha ao enviar e-mail de redefinição");
+    }
+  };
+
   return (
     <div className="w-full max-w-sm mx-auto">
       <div className="text-center mb-8">
@@ -55,7 +77,7 @@ export const LoginForm = () => {
         <p className="text-gray-600">
           Não tem uma conta?{" "}
           <Link to="/signup" className="text-blue-600 hover:text-blue-700 font-medium">
-            Cadastre-se gratuitamente
+            Cadastre-se
           </Link>
         </p>
       </div>
@@ -131,12 +153,12 @@ export const LoginForm = () => {
         </div>
 
         <div className="mt-6 text-center">
-          <Link 
-            to="/forgot-password"
+          <button 
+            onClick={handleForgotPassword}
             className="text-sm text-gray-600 hover:text-gray-900"
           >
             Esqueceu sua senha?
-          </Link>
+          </button>
         </div>
       </div>
     </div>

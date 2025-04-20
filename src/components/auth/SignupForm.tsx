@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,7 +58,10 @@ export const SignupForm = () => {
       <div className="text-center mb-8">
         <h1 className="text-3xl font-semibold mb-2">Criar conta</h1>
         <p className="text-gray-600">
-          Preencha os campos abaixo para começar sua jornada conosco.
+          Já tem uma conta?{" "}
+          <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
+            Faça login
+          </Link>
         </p>
       </div>
       
