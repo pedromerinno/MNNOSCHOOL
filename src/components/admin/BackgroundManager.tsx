@@ -42,9 +42,18 @@ export const BackgroundManager = () => {
     setIsSaving(true);
 
     try {
+      // First check if the record already exists
+      const { data: existingRecord } = await supabase
+        .from('settings')
+        .select('id')
+        .eq('key', 'login_background')
+        .single();
+      
+      // Use upsert with the correct ID if it exists
       const { error } = await supabase
         .from('settings')
         .upsert({ 
+          id: existingRecord?.id || undefined,
           key: 'login_background', 
           value: mediaUrl,
           media_type: mediaType,
