@@ -13,7 +13,7 @@ export const isAdmin = (userProfile: UserProfile | null): boolean => {
 
 export const makeUserAdmin = async (email: string): Promise<void> => {
   try {
-    // First busca o usuário pelo email
+    // First find the user by email
     const { data: userData, error: userError } = await supabase
       .from('profiles')
       .select('id')
@@ -24,7 +24,7 @@ export const makeUserAdmin = async (email: string): Promise<void> => {
       throw new Error(`Usuário não encontrado: ${userError.message}`);
     }
 
-    // Atualiza o status de admin do usuário
+    // Update the user's admin status
     const { error: updateError } = await supabase
       .from('profiles')
       .update({ is_admin: true })
@@ -63,7 +63,7 @@ export const setAdminStatusById = async (
   }
 };
 
-// Alterando esta função para usar diretamente o supabase.rpc
+// Update this function to use Supabase directly
 export const checkIfUserIsAdmin = async (userId: string): Promise<boolean> => {
   try {
     const { data, error } = await supabase
@@ -84,7 +84,7 @@ export const checkIfUserIsAdmin = async (userId: string): Promise<boolean> => {
   }
 };
 
-// Alterando esta função para usar diretamente o supabase.rpc
+// Update this function to use Supabase directly
 export const checkIfUserIsSuperAdmin = async (userId: string): Promise<boolean> => {
   try {
     const { data, error } = await supabase

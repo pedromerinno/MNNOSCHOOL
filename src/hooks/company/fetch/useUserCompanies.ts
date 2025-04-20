@@ -70,7 +70,7 @@ export const useUserCompanies = ({
         throw new DOMException("Aborted", "AbortError");
       }
       
-      // First check if the user is admin - this helps determine which function to use
+      // First check if the user is admin or super_admin - this helps determine which function to use
       const profileResponse = await supabase
         .from('profiles')
         .select('is_admin, super_admin')
@@ -83,38 +83,59 @@ export const useUserCompanies = ({
       }
       
       const profileData = profileResponse.data;
-      const isAdmin = profileData?.is_admin || profileData?.super_admin || false;
-      console.log(`User is admin: ${isAdmin}`);
+      const isAdmin = profileData?.is_admin || false;
+      const isSuperAdmin = profileData?.super_admin || false;
+      
+      console.log(`User admin status - isAdmin: ${isAdmin}, isSuperAdmin: ${isSuperAdmin}`);
       
       let companiesData;
       
+      // Function to get companies for a super admin (all companies)
+      const getSuperAdminCompanies = async () => {
+        const { data, error } = await supabase
+          .from('empresas')
+          .select('*')
+          .order('nome');
+        if (error) throw error;
+        return { data, error };
+      };
+      
+      // Function to get companies for a regular admin (only related companies)
+      const getAdminCompanies = async () => {
+        const { data, error } = await supabase
+          .rpc('get_user_companies', { user_id: userId });
+        if (error) throw error;
+        return { data, error };
+      };
+      
+      // Function to get companies for a regular user
+      const getUserRelatedCompanies = async () => {
+        const { data, error } = await supabase
+          .rpc('get_user_companies', { user_id: userId });
+        if (error) throw error;
+        return { data, error };
+      };
+      
       // Using retryOperation to add automatic retries for database queries
-      if (isAdmin) {
-        // Admin: use the function that returns all companies for admins
-        // Explicitly type and await the result to fix TypeScript errors
-        const rpcFunction = async () => {
-          const { data, error } = await supabase.rpc('get_user_companies_for_admin', { current_user_id: userId });
-          if (error) throw error;
-          return { data, error };
-        };
-        
-        const result = await retryOperation(rpcFunction, 3);
+      if (isSuperAdmin) {
+        // Super admin: return all companies
+        const result = await retryOperation(getSuperAdminCompanies, 3);
         companiesData = result.data;
+        console.log(`Super admin fetched ${companiesData?.length || 0} companies`);
+      } else if (isAdmin) {
+        // Regular admin: return only related companies
+        const result = await retryOperation(getAdminCompanies, 3);
+        companiesData = result.data;
+        console.log(`Admin fetched ${companiesData?.length || 0} related companies`);
       } else {
-        // Normal user: fetch only linked companies
-        // Explicitly type and await the result to fix TypeScript errors
-        const rpcFunction = async () => {
-          const { data, error } = await supabase.rpc('get_user_companies', { user_id: userId });
-          if (error) throw error;
-          return { data, error };
-        };
-        
-        const result = await retryOperation(rpcFunction, 3);
+        // Regular user: return only related companies
+        const result = await retryOperation(getUserRelatedCompanies, 3);
         companiesData = result.data;
+        console.log(`User fetched ${companiesData?.length || 0} related companies`);
       }
 
       const companies = companiesData as Company[] || [];
-      console.log(`Found ${companies.length} companies for user, isAdmin=${isAdmin}`);
+      console.log(`Found ${companies.length} companies for user, isAdmin=${isAdmin}, isSuperAdmin=${isSuperAdmin}`);
 
       if (companies.length > 0) {
         setUserCompanies(companies);

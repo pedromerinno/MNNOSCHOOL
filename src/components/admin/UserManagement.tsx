@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserTable } from './UserTable';
 import { useUsers } from '@/hooks/useUsers';
 import { AdminSetup } from './user/AdminSetup';
@@ -19,6 +19,17 @@ export const UserManagement = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [permissionError, setPermissionError] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  // Add an effect to log user role for debugging
+  useEffect(() => {
+    if (userProfile) {
+      console.log("UserManagement - User role:", {
+        is_admin: userProfile?.is_admin,
+        super_admin: userProfile?.super_admin,
+        isSuperAdmin: isSuperAdmin(userProfile)
+      });
+    }
+  }, [userProfile]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);

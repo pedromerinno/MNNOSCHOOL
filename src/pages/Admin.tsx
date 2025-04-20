@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,12 +9,39 @@ import { SettingsManagement } from '@/components/admin/integration/SettingsManag
 import { useAuth } from '@/contexts/AuthContext';
 import { Users, Building, Settings, Book } from 'lucide-react';
 import { CourseManagement } from '@/components/admin/CourseManagement';
+import { toast } from 'sonner';
 
 const AdminPage = () => {
   const { userProfile } = useAuth();
   const [activeTab, setActiveTab] = useState("users");
+  const [isLoading, setIsLoading] = useState(true);
   
-  if (!userProfile?.is_admin && !userProfile?.super_admin) {
+  // User must be admin or super_admin to access this page
+  const isAdminUser = userProfile?.is_admin || userProfile?.super_admin;
+  
+  // Log admin status for debugging
+  useEffect(() => {
+    if (userProfile) {
+      console.log("Admin page - User role:", {
+        is_admin: userProfile?.is_admin,
+        super_admin: userProfile?.super_admin
+      });
+    }
+    setIsLoading(false);
+  }, [userProfile]);
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-pulse text-lg">Carregando...</div>
+      </div>
+    );
+  }
+  
+  if (!isAdminUser) {
+    toast.error("Acesso negado", {
+      description: "Você não tem permissão para acessar o painel administrativo."
+    });
     return <Navigate to="/dashboard" replace />;
   }
   

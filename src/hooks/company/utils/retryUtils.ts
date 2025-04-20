@@ -1,23 +1,30 @@
 
 /**
- * Retry an operation with exponential backoff
+ * Retry a function that returns a promise
+ * @param operation Function that returns a promise
+ * @param maxRetries Maximum number of retries
+ * @param delay Delay between retries in ms (default: 1000)
+ * @returns Promise with the result of the operation
  */
 export const retryOperation = async <T>(
   operation: () => Promise<T>,
-  retries = 3,
-  delay = 1000,
-  factor = 2
+  maxRetries: number,
+  delay = 1000
 ): Promise<T> => {
-  try {
-    return await operation();
-  } catch (error) {
-    if (retries === 0) {
-      throw error;
+  let lastError: Error | null = null;
+  
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await operation();
+    } catch (error) {
+      console.error(`Operation failed, attempt ${i + 1} of ${maxRetries}`, error);
+      lastError = error instanceof Error ? error : new Error('Unknown error');
+      
+      if (i < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
     }
-    
-    console.log(`Retrying operation in ${delay}ms, ${retries} retries left`);
-    await new Promise(resolve => setTimeout(resolve, delay));
-    
-    return retryOperation(operation, retries - 1, delay * factor, factor);
   }
+  
+  throw lastError || new Error('Operation failed after multiple retries');
 };
