@@ -32,7 +32,7 @@ export const useCompanyRetry = () => {
     }
     
     throw new Error('Retry failed');
-  });
+  }, []);
 
   return { executeWithRetry };
 };
