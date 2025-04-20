@@ -66,8 +66,12 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
 
   return (
     <div className="min-h-screen flex">
-      {/* Right side - Background Media */}
+      {/* Left side - Background Media */}
       <div className="flex-1 relative overflow-hidden hidden lg:block">
+        <div className="absolute top-8 left-8 z-10">
+          <h1 className="text-5xl font-bold text-white">MNNO</h1>
+        </div>
+        
         {isLoading ? (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-merinno-dark"></div>
@@ -105,10 +109,9 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
       </div>
 
       {/* Right side - Login Form */}
-      <div className="w-full max-w-[64rem] px-20 py-12 flex items-center justify-center bg-white">
+      <div className="w-full max-w-[52rem] px-20 py-12 flex items-center justify-center bg-white">
         {children}
       </div>
     </div>
   );
 };
-
