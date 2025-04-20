@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BriefcaseBusiness } from "lucide-react";
 
@@ -15,6 +15,11 @@ interface UserRoleProps {
 }
 
 export const UserRole: React.FC<UserRoleProps> = ({ role, companyColor }) => {
+  // Log para debug quando o componente recebe novos props
+  useEffect(() => {
+    console.log("UserRole component rendered with role:", role.title);
+  }, [role.title]);
+  
   return (
     <Card className="transition-all duration-200 hover:shadow-md">
       <CardHeader className="flex flex-row items-center gap-4">

@@ -31,53 +31,65 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
   // If companyId is not provided, use selectedCompany?.id
   const activeCompanyId = companyId || selectedCompany?.id;
 
+  // Forced refetch function
+  const fetchVideos = async () => {
+    if (!activeCompanyId) return;
+    
+    setIsLoading(true);
+    console.log(`VideoPlaylist: Loading videos for company ID: ${activeCompanyId}`);
+    
+    try {
+      const { data, error } = await supabase
+        .from('company_videos')
+        .select('*')
+        .eq('company_id', activeCompanyId)
+        .order('order_index');
+        
+      if (error) throw error;
+      
+      console.log(`VideoPlaylist: Loaded ${data?.length || 0} videos for company`);
+      setVideos(data || []);
+      
+      // Determine which video to show first
+      if (mainVideo) {
+        setCurrentVideo(mainVideo);
+        setCurrentDescription(mainVideoDescription || '');
+        setSelectedVideoIndex(null);  // null means main video is selected
+      } else if (data && data.length > 0) {
+        setCurrentVideo(data[0].video_url);
+        setCurrentDescription(data[0].description || '');
+        setSelectedVideoIndex(0);
+      } else {
+        setCurrentVideo('');
+        setCurrentDescription('');
+      }
+    } catch (error) {
+      console.error("Error fetching company videos:", error);
+      setVideos([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   // Load videos when company changes
   useEffect(() => {
-    const fetchVideos = async () => {
-      if (!activeCompanyId) return;
-      
-      setIsLoading(true);
-      console.log(`VideoPlaylist: Loading videos for company ID: ${activeCompanyId}`);
-      
-      try {
-        const { data, error } = await supabase
-          .from('company_videos')
-          .select('*')
-          .eq('company_id', activeCompanyId)
-          .order('order_index');
-          
-        if (error) throw error;
-        
-        console.log(`VideoPlaylist: Loaded ${data?.length || 0} videos for company`);
-        setVideos(data || []);
-        
-        // Determine which video to show first
-        if (mainVideo) {
-          setCurrentVideo(mainVideo);
-          setCurrentDescription(mainVideoDescription || '');
-          setSelectedVideoIndex(null);  // null means main video is selected
-        } else if (data && data.length > 0) {
-          setCurrentVideo(data[0].video_url);
-          setCurrentDescription(data[0].description || '');
-          setSelectedVideoIndex(0);
-        } else {
-          setCurrentVideo('');
-          setCurrentDescription('');
-        }
-      } catch (error) {
-        console.error("Error fetching company videos:", error);
-        setVideos([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchVideos();
-    
-    // Listen for company selection change
-    const handleCompanySelected = () => {
-      console.log("VideoPlaylist: Company selection changed, reloading videos");
+    if (activeCompanyId) {
       fetchVideos();
+    }
+  }, [activeCompanyId, mainVideo, mainVideoDescription]);
+
+  // Listen for company selection change and specific reload events
+  useEffect(() => {
+    const handleCompanySelected = (event: CustomEvent) => {
+      const company = event.detail?.company;
+      if (company) {
+        console.log(`VideoPlaylist: Company selection changed to ${company.nome}, reloading videos`);
+        // Pequeno delay para garantir que o estado foi atualizado
+        setTimeout(fetchVideos, 100);
+      } else {
+        console.log("VideoPlaylist: Company selection changed but no company detail provided");
+        fetchVideos();
+      }
     };
     
     // Listen for specific video reload event
@@ -87,18 +99,28 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
       
       if (eventCompanyId && eventCompanyId === activeCompanyId) {
         console.log("VideoPlaylist: Reloading videos for current company");
-        fetchVideos();
+        setTimeout(fetchVideos, 100);
       }
     };
     
-    window.addEventListener('company-selected', handleCompanySelected);
+    // Limpar vídeos ao trocar de empresa
+    const handleCompanyChanging = () => {
+      console.log("VideoPlaylist: Company is changing, cleaning up videos");
+      setVideos([]);
+      setCurrentVideo('');
+      setCurrentDescription('');
+    };
+    
+    window.addEventListener('company-selected', handleCompanySelected as EventListener);
     window.addEventListener('reload-company-videos', handleReloadVideos as EventListener);
+    window.addEventListener('company-changing', handleCompanyChanging);
     
     return () => {
-      window.removeEventListener('company-selected', handleCompanySelected);
+      window.removeEventListener('company-selected', handleCompanySelected as EventListener);
       window.removeEventListener('reload-company-videos', handleReloadVideos as EventListener);
+      window.removeEventListener('company-changing', handleCompanyChanging);
     };
-  }, [activeCompanyId, mainVideo, mainVideoDescription]);
+  }, [activeCompanyId]);
 
   const handleSelectVideo = (video: CompanyVideo, index: number) => {
     setCurrentVideo(video.video_url);

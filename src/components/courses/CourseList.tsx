@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { CourseCard } from './CourseCard';
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,7 +31,7 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
   const { toast } = useToast();
 
   // Function to fetch courses based on company and filter
-  const fetchCourses = async () => {
+  const fetchCourses = useCallback(async () => {
     try {
       if (!selectedCompany?.id) {
         setCourses([]);
@@ -134,18 +134,40 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedCompany?.id, filter, toast]);
 
-  // Fetch courses when company changes or filter changes
+  // Fetch courses when company or filter changes
   useEffect(() => {
-    fetchCourses();
-  }, [selectedCompany?.id, filter]);
+    if (selectedCompany?.id) {
+      fetchCourses();
+    } else {
+      setCourses([]);
+      setLoading(false);
+    }
+  }, [selectedCompany?.id, filter, fetchCourses]);
+  
+  // Limpar os cursos quando a empresa está mudando
+  useEffect(() => {
+    const handleCompanyChanging = () => {
+      console.log("CourseList: Company is changing, cleaning up courses");
+      setCourses([]);
+    };
+    
+    window.addEventListener('company-changing', handleCompanyChanging);
+    return () => {
+      window.removeEventListener('company-changing', handleCompanyChanging);
+    };
+  }, []);
   
   // Listen for company selection and course reload events
   useEffect(() => {
-    const handleCompanySelected = () => {
-      console.log("CourseList: Company selection changed, reloading courses");
-      fetchCourses();
+    const handleCompanySelected = (event: CustomEvent) => {
+      const company = event.detail?.company;
+      if (company) {
+        console.log(`CourseList: Company selection changed to ${company.nome}, reloading courses`);
+        // Pequeno delay para garantir que o estado foi atualizado
+        setTimeout(fetchCourses, 150);
+      }
     };
     
     const handleReloadCourses = (event: CustomEvent) => {
@@ -156,18 +178,18 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
       
       if (eventCompanyId && eventCompanyId === selectedCompany.id) {
         console.log("CourseList: Reloading courses for current company");
-        fetchCourses();
+        setTimeout(fetchCourses, 150);
       }
     };
     
-    window.addEventListener('company-selected', handleCompanySelected);
+    window.addEventListener('company-selected', handleCompanySelected as EventListener);
     window.addEventListener('reload-company-courses', handleReloadCourses as EventListener);
     
     return () => {
-      window.removeEventListener('company-selected', handleCompanySelected);
+      window.removeEventListener('company-selected', handleCompanySelected as EventListener);
       window.removeEventListener('reload-company-courses', handleReloadCourses as EventListener);
     };
-  }, [selectedCompany]);
+  }, [selectedCompany, fetchCourses]);
 
   return (
     <div className="space-y-6">
