@@ -63,7 +63,11 @@ export class ErrorBoundary extends Component<Props, State> {
               <Button 
                 variant="outline"
                 onClick={() => {
-                  localStorage.clear();
+                  try {
+                    localStorage.clear();
+                  } catch (e) {
+                    console.error("Erro ao limpar o localStorage:", e);
+                  }
                   window.location.reload();
                 }}
               >

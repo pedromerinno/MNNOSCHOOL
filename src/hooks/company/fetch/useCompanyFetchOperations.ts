@@ -70,8 +70,13 @@ export const useCompanyFetchOperations = (props: {
       return userCompanies;
     }
     
+    // Safely abort previous request if exists
     if (forceRefresh && abortControllerRef.current) {
-      abortControllerRef.current.abort();
+      try {
+        abortControllerRef.current.abort();
+      } catch (err) {
+        console.error('Error aborting previous request:', err);
+      }
       abortControllerRef.current = null;
     }
     
