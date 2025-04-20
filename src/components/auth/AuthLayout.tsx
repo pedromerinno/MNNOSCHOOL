@@ -1,4 +1,3 @@
-
 import { ReactNode, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -103,7 +102,6 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
                 className="absolute w-full h-full object-cover"
               />
             )}
-            <div className="absolute inset-0 bg-black/30 z-10" />
           </>
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-merinno-dark to-black flex items-center justify-center">
