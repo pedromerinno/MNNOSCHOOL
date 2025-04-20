@@ -28,7 +28,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
           .eq('key', 'login_background')
           .maybeSingle();
 
-        console.log("Background data:", data, "Error:", error);
+        console.log("Background data:", data);
 
         if (!error && data?.value) {
           setBackgroundMedia({
@@ -38,7 +38,6 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
           console.log("Set background to:", data.value, data.media_type);
         } else {
           console.error("Error or no data:", error);
-          // Set default empty state
           setBackgroundMedia({
             url: "",
             type: 'image'
@@ -53,7 +52,6 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
 
     fetchBackgroundMedia();
 
-    // Listen for updates from other components
     const handleBackgroundUpdate = () => {
       console.log("Background update event received");
       fetchBackgroundMedia();
@@ -88,6 +86,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
           <>
             {backgroundMedia.type === 'video' ? (
               <video 
+                key={backgroundMedia.url}
                 autoPlay 
                 muted 
                 loop 
@@ -95,7 +94,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
                 className="absolute w-full h-full object-cover"
               >
                 <source src={backgroundMedia.url} type="video/mp4" />
-                Your browser does not support videos.
+                Seu navegador não suporta vídeos.
               </video>
             ) : (
               <img 
@@ -107,8 +106,11 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
             <div className="absolute inset-0 bg-black/30 z-10" />
           </>
         ) : (
-          <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
-            <p className="text-gray-500">No background media set</p>
+          <div className="absolute inset-0 bg-gradient-to-br from-merinno-dark to-black flex items-center justify-center">
+            <div className="text-white/70 text-center px-4">
+              <p className="text-lg font-medium">Personalize o background</p>
+              <p className="text-sm mt-2">Configure uma imagem ou vídeo no painel administrativo</p>
+            </div>
           </div>
         )}
       </div>
