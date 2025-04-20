@@ -197,3 +197,4 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
     </div>
   );
 };
+

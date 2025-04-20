@@ -15,7 +15,8 @@ export const CompanyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const { 
     selectedCompany: hookSelectedCompany, 
     selectCompany, // This is the method we need to use
-    isLoading 
+    isLoading,
+    user
   } = useCompanies();
 
   // Usar estado do hook useCompanies
@@ -33,7 +34,6 @@ export const CompanyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const updateSelectedCompany = (company: Company | null) => {
     if (company) {
       // Use the selectCompany method from useCompanies
-      const { user } = useCompanies();
       if (user?.id) {
         selectCompany(user.id, company);
       }
