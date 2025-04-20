@@ -141,8 +141,7 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
         // Executa a busca de dados
         await doFetch().catch(error => {
           console.error('Error fetching courses:', error);
-          toast({
-            title: 'Erro ao carregar cursos',
+          toast('Erro ao carregar cursos', {
             description: error.message || 'Ocorreu um erro ao buscar os cursos',
             variant: 'destructive',
           });
@@ -197,4 +196,3 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
     </div>
   );
 };
-
