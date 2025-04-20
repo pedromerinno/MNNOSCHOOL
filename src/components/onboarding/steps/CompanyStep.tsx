@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,7 @@ import { ArrowLeft, Building, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CompanyStepProps {
   onNext: () => void;
@@ -15,6 +17,7 @@ interface CompanyStepProps {
 
 const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyTypeSelect }) => {
   const { profileData, updateProfileData } = useOnboarding();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [companyType, setCompanyType] = useState<'existing' | 'new'>(
     profileData.companyId ? 'existing' : 'new'
@@ -47,6 +50,11 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
     
     try {
       if (companyType === 'new') {
+        if (!user) {
+          toast.error("Usuário não autenticado");
+          return;
+        }
+
         const { data: newCompany, error: companyError } = await supabase
           .from('empresas')
           .insert({
@@ -66,7 +74,7 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
         const { error: relationError } = await supabase
           .from('user_empresa')
           .insert({
-            user_id: profileData.userId,
+            user_id: user.id,
             empresa_id: newCompany.id,
             is_admin: true
           });
@@ -80,7 +88,7 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
         await supabase
           .from('profiles')
           .update({ interesses: newInterests })
-          .eq('id', profileData.userId);
+          .eq('id', user.id);
 
         navigate("/");
       } else {
