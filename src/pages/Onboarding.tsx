@@ -1,6 +1,5 @@
 
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import OnboardingLayout from "@/components/onboarding/OnboardingLayout";
 import ProfileStep from "@/components/onboarding/steps/ProfileStep";
@@ -10,22 +9,9 @@ import InterestsStep from "@/components/onboarding/steps/InterestsStep";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
 
 const Onboarding = () => {
-  const { user, userProfile } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
 
-  useEffect(() => {
-    // Redirecionar se o usuário não estiver logado
-    if (!user) {
-      navigate("/login");
-      return;
-    }
-
-    // Verificar se o usuário já completou o onboarding
-    if (userProfile && !userProfile.interesses?.includes("onboarding_incomplete")) {
-      navigate("/");
-    }
-  }, [user, userProfile, navigate]);
-
+  // If there's no user, ProtectedRoute will handle the redirect to login
   if (!user) {
     return null;
   }
