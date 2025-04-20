@@ -1,9 +1,9 @@
+
 import React, { useState } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Building, Plus } from "lucide-react";
-import { Form } from "@/components/ui/form";
 
 interface CompanyStepProps {
   onNext: () => void;
@@ -28,18 +28,8 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
     descricao_video: ""
   });
   const [error, setError] = useState("");
-  const [showFullForm, setShowFullForm] = useState(false);
 
   const handleInitialSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (companyType === 'new' && !companyDetails.name) {
-      setError("Por favor, informe o nome da empresa");
-      return;
-    }
-    setShowFullForm(true);
-  };
-
-  const handleFinalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (companyType === 'existing' && !companyId) {
@@ -65,122 +55,7 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
   const handleCompanyTypeChange = (type: 'existing' | 'new') => {
     setCompanyType(type);
     setError("");
-    setShowFullForm(false);
   };
-
-  if (showFullForm && companyType === 'new') {
-    return (
-      <form onSubmit={handleFinalSubmit} className="space-y-6">
-        <div className="space-y-2">
-          <h2 className="text-xl font-medium">Detalhes da empresa</h2>
-          <p className="text-gray-500 text-sm">
-            Complete as informações sobre sua empresa
-          </p>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm text-gray-500 block mb-1">Nome da empresa</label>
-            <Input
-              value={companyDetails.name}
-              onChange={(e) => setCompanyDetails(prev => ({ ...prev, name: e.target.value }))}
-              className="w-full"
-              disabled
-            />
-          </div>
-
-          <div>
-            <label className="text-sm text-gray-500 block mb-1">Descrição</label>
-            <textarea
-              value={companyDetails.description}
-              onChange={(e) => setCompanyDetails(prev => ({ ...prev, description: e.target.value }))}
-              className="w-full min-h-[100px] p-3 border border-gray-200 rounded-md"
-              placeholder="Descreva sua empresa"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm text-gray-500 block mb-1">História</label>
-            <textarea
-              value={companyDetails.historia}
-              onChange={(e) => setCompanyDetails(prev => ({ ...prev, historia: e.target.value }))}
-              className="w-full min-h-[100px] p-3 border border-gray-200 rounded-md"
-              placeholder="Conte a história da sua empresa"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm text-gray-500 block mb-1">Missão</label>
-            <textarea
-              value={companyDetails.missao}
-              onChange={(e) => setCompanyDetails(prev => ({ ...prev, missao: e.target.value }))}
-              className="w-full min-h-[100px] p-3 border border-gray-200 rounded-md"
-              placeholder="Qual é a missão da sua empresa?"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm text-gray-500 block mb-1">Valores</label>
-            <textarea
-              value={companyDetails.valores}
-              onChange={(e) => setCompanyDetails(prev => ({ ...prev, valores: e.target.value }))}
-              className="w-full min-h-[100px] p-3 border border-gray-200 rounded-md"
-              placeholder="Quais são os valores da sua empresa?"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm text-gray-500 block mb-1">Frase Institucional</label>
-            <Input
-              value={companyDetails.frase_institucional}
-              onChange={(e) => setCompanyDetails(prev => ({ ...prev, frase_institucional: e.target.value }))}
-              className="w-full"
-              placeholder="Slogan ou frase que representa sua empresa"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm text-gray-500 block mb-1">Vídeo Institucional (URL)</label>
-            <Input
-              value={companyDetails.video_institucional}
-              onChange={(e) => setCompanyDetails(prev => ({ ...prev, video_institucional: e.target.value }))}
-              className="w-full"
-              placeholder="URL do vídeo institucional"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm text-gray-500 block mb-1">Descrição do Vídeo</label>
-            <textarea
-              value={companyDetails.descricao_video}
-              onChange={(e) => setCompanyDetails(prev => ({ ...prev, descricao_video: e.target.value }))}
-              className="w-full min-h-[100px] p-3 border border-gray-200 rounded-md"
-              placeholder="Descreva o conteúdo do vídeo institucional"
-            />
-          </div>
-        </div>
-
-        <div className="pt-4 flex flex-col gap-3">
-          <Button 
-            type="submit" 
-            className="w-full rounded-md bg-merinno-dark hover:bg-black text-white"
-          >
-            Continuar
-          </Button>
-          
-          <Button 
-            type="button" 
-            variant="ghost"
-            className="flex items-center justify-center gap-2 text-gray-500 mt-2"
-            onClick={() => setShowFullForm(false)}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Voltar
-          </Button>
-        </div>
-      </form>
-    );
-  }
 
   return (
     <form onSubmit={handleInitialSubmit} className="space-y-8">
@@ -259,7 +134,7 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
           <div className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="companyName" className="text-sm text-gray-500">
-                Nome da empresa
+                Nome da empresa*
               </label>
               <Input
                 id="companyName"
@@ -267,18 +142,79 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
                 onChange={(e) => setCompanyDetails(prev => ({ ...prev, name: e.target.value }))}
                 className="border-b border-gray-300 rounded-md px-3 py-2 focus-visible:ring-merinno-dark"
                 placeholder="Digite o nome da empresa"
+                required
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="companyDescription" className="text-sm text-gray-500">
-                Descrição da empresa
+              <label htmlFor="historia" className="text-sm text-gray-500">
+                História
               </label>
               <textarea
-                id="companyDescription"
-                value={companyDetails.description}
-                onChange={(e) => setCompanyDetails(prev => ({ ...prev, description: e.target.value }))}
+                id="historia"
+                value={companyDetails.historia}
+                onChange={(e) => setCompanyDetails(prev => ({ ...prev, historia: e.target.value }))}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus-visible:ring-merinno-dark min-h-[100px]"
-                placeholder="Descreva sua empresa"
+                placeholder="Conte a história da sua empresa"
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="missao" className="text-sm text-gray-500">
+                Missão
+              </label>
+              <textarea
+                id="missao"
+                value={companyDetails.missao}
+                onChange={(e) => setCompanyDetails(prev => ({ ...prev, missao: e.target.value }))}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus-visible:ring-merinno-dark min-h-[100px]"
+                placeholder="Qual é a missão da sua empresa?"
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="valores" className="text-sm text-gray-500">
+                Valores
+              </label>
+              <textarea
+                id="valores"
+                value={companyDetails.valores}
+                onChange={(e) => setCompanyDetails(prev => ({ ...prev, valores: e.target.value }))}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus-visible:ring-merinno-dark min-h-[100px]"
+                placeholder="Quais são os valores da sua empresa?"
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="fraseInstitucional" className="text-sm text-gray-500">
+                Frase Institucional
+              </label>
+              <Input
+                id="fraseInstitucional"
+                value={companyDetails.frase_institucional}
+                onChange={(e) => setCompanyDetails(prev => ({ ...prev, frase_institucional: e.target.value }))}
+                className="border-b border-gray-300 rounded-md px-3 py-2 focus-visible:ring-merinno-dark"
+                placeholder="Digite a frase institucional da empresa"
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="videoInstitucional" className="text-sm text-gray-500">
+                URL do Vídeo Institucional
+              </label>
+              <Input
+                id="videoInstitucional"
+                value={companyDetails.video_institucional}
+                onChange={(e) => setCompanyDetails(prev => ({ ...prev, video_institucional: e.target.value }))}
+                className="border-b border-gray-300 rounded-md px-3 py-2 focus-visible:ring-merinno-dark"
+                placeholder="Digite a URL do vídeo institucional"
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="descricaoVideo" className="text-sm text-gray-500">
+                Descrição do Vídeo
+              </label>
+              <textarea
+                id="descricaoVideo"
+                value={companyDetails.descricao_video}
+                onChange={(e) => setCompanyDetails(prev => ({ ...prev, descricao_video: e.target.value }))}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus-visible:ring-merinno-dark min-h-[100px]"
+                placeholder="Descreva o conteúdo do vídeo institucional"
               />
             </div>
           </div>
@@ -290,10 +226,9 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
       <div className="pt-4 flex flex-col gap-3">
         <Button 
           type="submit" 
-          className="w-full rounded-md bg-merinno-dark hover:bg-black text-white relative overflow-hidden transition-all duration-200 group"
+          className="w-full rounded-md bg-merinno-dark hover:bg-black text-white"
         >
           Continuar
-          <span className="absolute inset-0 h-full w-full bg-white/10 opacity-0 transition-opacity group-hover:opacity-100" />
         </Button>
         
         <Button 
