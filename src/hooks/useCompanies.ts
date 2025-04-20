@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useCompanyState } from "./company/useCompanyState";
 import { useCompanyFetching } from "./company/useCompanyFetching";
@@ -19,10 +18,8 @@ interface UseCompaniesOptions {
 export const useCompanies = (options: UseCompaniesOptions = {}) => {
   const { skipLoadingInOnboarding = false } = options;
   
-  // Get auth context for global access
   const { user } = useAuth();
   
-  // Use specialized hooks for state management
   const {
     isLoading,
     setIsLoading,
@@ -39,7 +36,6 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     resetError
   } = useCompanyState();
   
-  // Hook for company fetching operations
   const {
     getUserCompanies,
     forceGetUserCompanies,
@@ -53,15 +49,10 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     incrementFetchCount
   });
   
-  // Import functionality from individual hooks
-  const { fetchCompanies } = useCompanyCreate({ 
-    setIsLoading, 
-    setCompanies 
-  });
-  
   const { 
-    selectCompany, 
-    getStoredCompanyId, 
+    fetchCompanies,
+    selectCompany,
+    getStoredCompanyId,
     getStoredCompany 
   } = useCompanySelection({ 
     setSelectedCompany 
@@ -91,29 +82,23 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     removeUserFromCompany 
   } = useCompanyUserManagement();
   
-  // Listen for company selection events
   useCompanyEvents(setSelectedCompany);
   
-  // Global data loading - load user companies only when user is logged in
-  // e quando não estamos pulando o carregamento (para página de onboarding)
   useEffect(() => {
-    // Se estamos pulando o carregamento na página de onboarding, não fazemos nada
     if (skipLoadingInOnboarding) {
       console.log("[useCompanies] Pulando carregamento de empresas durante onboarding");
       return;
     }
     
     const loadInitialData = async () => {
-      if (user?.id && userCompanies.length === 0 && !isLoading) {
+      if (user?.id && !isLoading) {
         try {
-          // Try to restore from localStorage first for immediate UI update
           const cachedCompany = getStoredCompany();
           if (cachedCompany) {
             console.log('[useCompanies] Using cached company while loading:', cachedCompany.nome);
             setSelectedCompany(cachedCompany);
           }
           
-          // If user is super admin, fetch all companies
           const { data: profileData } = await supabase
             .from('profiles')
             .select('super_admin')
@@ -123,11 +108,19 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
           if (profileData?.super_admin) {
             const { data: allCompanies } = await supabase
               .from('empresas')
-              .select('*');
+              .select('*')
+              .order('nome');
             
             setUserCompanies(allCompanies as Company[] || []);
+            
+            if (!cachedCompany && allCompanies && allCompanies.length > 0) {
+              selectCompany(user.id, allCompanies[0]);
+            }
           } else {
-            await getUserCompanies(user.id);
+            const companies = await getUserCompanies(user.id);
+            if (!cachedCompany && companies && companies.length > 0) {
+              selectCompany(user.id, companies[0]);
+            }
           }
         } catch (error) {
           console.error('[useCompanies] Error loading initial company data:', error);
@@ -136,11 +129,9 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     };
     
     loadInitialData();
-  }, [user?.id, userCompanies.length, isLoading, getUserCompanies, getStoredCompany, setSelectedCompany, skipLoadingInOnboarding]);
+  }, [user?.id, isLoading, getUserCompanies, getStoredCompany, selectCompany, skipLoadingInOnboarding]);
   
-  // Listen for company-relation-changed events to refresh data
   useEffect(() => {
-    // Se estamos pulando o carregamento na página de onboarding, não configuramos listeners
     if (skipLoadingInOnboarding) {
       return;
     }
@@ -157,7 +148,6 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     
     window.addEventListener('company-relation-changed', handleCompanyRelationChange);
     
-    // Add a new event listener for force-reload-companies
     const handleForceReload = async () => {
       if (user?.id) {
         try {
@@ -184,18 +174,14 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     };
   }, [user?.id, forceGetUserCompanies, fetchCompanies, skipLoadingInOnboarding]);
   
-  // Try to restore previously selected company on hook initialization
   useEffect(() => {
-    // Se estamos pulando o carregamento na página de onboarding, não restauramos empresa
     if (skipLoadingInOnboarding) {
       return;
     }
     
     const restoreSelectedCompany = async () => {
-      // Skip if we already have a selected company
       if (selectedCompany) return;
       
-      // First try to get the full company object from local storage
       const cachedCompany = getStoredCompany();
       if (cachedCompany) {
         console.log('[useCompanies] Restored selected company from cache:', cachedCompany.nome);
@@ -203,19 +189,16 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
         return;
       }
       
-      // If we have userCompanies but no selected company yet
       if (userCompanies.length > 0) {
         const storedCompanyId = getStoredCompanyId();
         
         if (storedCompanyId) {
-          // Try to find in already loaded userCompanies
           const storedCompany = userCompanies.find(company => company.id === storedCompanyId);
           
           if (storedCompany) {
             setSelectedCompany(storedCompany);
             console.log('[useCompanies] Restored selected company from userCompanies:', storedCompany.nome);
           } else {
-            // If not found, try to fetch it
             try {
               const company = await getCompanyById(storedCompanyId);
               if (company) {
@@ -226,7 +209,6 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
               console.error('[useCompanies] Failed to restore company from localStorage', error);
               localStorage.removeItem('selectedCompanyId');
               
-              // If fetch failed but we have userCompanies, select the first one
               if (userCompanies.length > 0) {
                 setSelectedCompany(userCompanies[0]);
                 console.log('[useCompanies] Selected first available company after fetch failure:', userCompanies[0].nome);
@@ -234,7 +216,6 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
             }
           }
         } else if (userCompanies.length === 1) {
-          // Automatically select the only company if there's just one
           setSelectedCompany(userCompanies[0]);
           console.log('[useCompanies] Auto-selected the only available company:', userCompanies[0].nome);
         }

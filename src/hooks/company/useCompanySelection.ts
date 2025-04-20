@@ -16,8 +16,6 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
       localStorage.setItem('selectedCompanyId', company.id);
       localStorage.setItem('selectedCompany', JSON.stringify(company));
       localStorage.setItem('selectedCompanyTimestamp', Date.now().toString());
-      
-      // We remove this dispatch since it will be done in selectCompany
     } catch (e) {
       console.error('Failed to persist company selection', e);
     }
@@ -38,6 +36,19 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
     if (!storedCompany) return null;
     
     try {
+      // Verify timestamp to ensure data isn't too old
+      const timestamp = parseInt(localStorage.getItem('selectedCompanyTimestamp') || '0', 10);
+      const now = Date.now();
+      const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+      
+      if (now - timestamp > CACHE_DURATION) {
+        console.log('Cached company data is too old, clearing...');
+        localStorage.removeItem('selectedCompany');
+        localStorage.removeItem('selectedCompanyId');
+        localStorage.removeItem('selectedCompanyTimestamp');
+        return null;
+      }
+      
       return JSON.parse(storedCompany) as Company;
     } catch (e) {
       console.error('Error parsing stored company', e);
@@ -47,24 +58,12 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
 
   /**
    * Select a company and update all necessary state
-   * We use a debounce flag to prevent duplicate events
    */
-  let lastSelectedCompanyId: string | null = null;
-  
   const selectCompany = useCallback((userId: string, company: Company) => {
     if (!company) {
       console.error('Attempt to select null company');
       return;
     }
-    
-    // Skip if the company has already been selected
-    if (lastSelectedCompanyId === company.id) {
-      console.log(`Company ${company.nome} already selected, skipping event`);
-      return;
-    }
-    
-    // Update the last selected company to prevent duplicate selections
-    lastSelectedCompanyId = company.id;
     
     console.log(`Selecting company: ${company.nome} (${company.id})`);
     setSelectedCompany(company);
@@ -73,7 +72,6 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
     persistCompanySelection(company);
     
     // Trigger event for components listening for company changes
-    // But only do it once per company selection
     const navEvent = new CustomEvent('company-selected', { 
       detail: { userId, company } 
     });
