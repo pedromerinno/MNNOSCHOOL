@@ -1,8 +1,8 @@
 
 import { useRef } from "react";
 
-// Aumentando para 60 segundos para reduzir ainda mais a frequência de chamadas API
-export const MIN_REQUEST_INTERVAL = 60000; // 60 segundos 
+// Aumentando para 120 segundos (2 minutos) para reduzir drasticamente a frequência de chamadas API
+export const MIN_REQUEST_INTERVAL = 120000; // 2 minutos 
 
 export const useCompanyRequest = () => {
   // Timestamp da última requisição

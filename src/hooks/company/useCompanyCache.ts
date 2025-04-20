@@ -2,8 +2,8 @@
 import { Company } from "@/types/company";
 import { useCache } from "@/hooks/useCache";
 
-// Aumento significativo do tempo de cache para 4 horas
-const CACHE_EXPIRATION_MINUTES = 240; // 4 horas de cache
+// Aumento drástico do tempo de cache para 12 horas para sessões de um dia
+const CACHE_EXPIRATION_MINUTES = 720; // 12 horas de cache
 
 /**
  * Hook para caching de dados de empresas para reduzir chamadas à API

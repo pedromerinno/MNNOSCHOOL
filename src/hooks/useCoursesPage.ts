@@ -16,19 +16,26 @@ export const useCoursesPage = () => {
   const [lastSelectedCompanyId, setLastSelectedCompanyId] = useState<string | null>(null);
   const initialLoadDone = useRef(false);
   const fetchAttempts = useRef(0);
-  const maxRetries = 3;
+  const maxRetries = 1; // Reduzido para apenas 1 tentativa
+  const hasActiveRequest = useRef(false);
 
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
 
   // Memoized fetch function to prevent unnecessary re-renders
   const fetchCourseData = useCallback(async (retry = false) => {
+    // Se já tiver uma requisição ativa, não inicia outra
+    if (hasActiveRequest.current) {
+      console.log("Já existe uma requisição ativa para buscar cursos, ignorando.");
+      return;
+    }
+
     if (!selectedCompany) {
       // If we don't have a selected company yet, but we haven't tried many times,
       // we can schedule another attempt
       if (fetchAttempts.current < maxRetries && retry) {
         fetchAttempts.current += 1;
         console.log(`No company selected yet, scheduling retry attempt ${fetchAttempts.current}/${maxRetries}`);
-        setTimeout(() => fetchCourseData(true), 1000);
+        setTimeout(() => fetchCourseData(true), 1500); // Aumentado para 1.5 segundos
         return;
       } else if (fetchAttempts.current >= maxRetries) {
         console.log("Max retry attempts reached without a selected company");
@@ -50,6 +57,7 @@ export const useCoursesPage = () => {
     }
     
     try {
+      hasActiveRequest.current = true;
       console.log(`Fetching course data for company: ${selectedCompany.nome}`);
       setLoading(true);
       setAllCoursesLoading(true);
@@ -65,7 +73,6 @@ export const useCoursesPage = () => {
       
       if (accessError) {
         console.error("Error fetching company access:", accessError);
-        toast.error("Erro ao carregar acesso aos cursos");
         throw accessError;
       }
       
@@ -90,7 +97,6 @@ export const useCoursesPage = () => {
       
       if (featuredError) {
         console.error("Error fetching featured courses:", featuredError);
-        toast.error("Erro ao carregar cursos em destaque");
         throw featuredError;
       }
       
@@ -110,7 +116,6 @@ export const useCoursesPage = () => {
       
       if (allCoursesError) {
         console.error("Error fetching all courses:", allCoursesError);
-        toast.error("Erro ao carregar todos os cursos");
         throw allCoursesError;
       }
       
@@ -128,6 +133,7 @@ export const useCoursesPage = () => {
       setLoading(false);
       setAllCoursesLoading(false);
       initialLoadDone.current = true;
+      hasActiveRequest.current = false;
     }
   }, [selectedCompany, lastSelectedCompanyId]);
 

@@ -1,5 +1,5 @@
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { useCompanyState } from "./company/useCompanyState";
 import { useCompanyFetching } from "./company/useCompanyFetching";
 import { useCompanySelection } from "./company/useCompanySelection";
@@ -21,6 +21,7 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
   
   // Get auth context for global access
   const { user } = useAuth();
+  const initialDataLoaded = useRef(false);
   
   // Use specialized hooks for state management
   const {
@@ -94,16 +95,29 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
   
   // Carregamento de dados global com memoização do callback para reduzir recriações
   const loadInitialData = useCallback(async () => {
+    // Se já carregamos os dados iniciais, não carregue novamente
+    if (initialDataLoaded.current) {
+      return;
+    }
+    
     if (skipLoadingInOnboarding) {
       console.log("[useCompanies] Pulando carregamento de empresas durante onboarding");
       return;
     }
     
-    if (!user?.id || userCompanies.length > 0 || isLoading) {
+    if (!user?.id) {
+      return;
+    }
+    
+    // Se já estamos carregando, não inicie outra requisição
+    if (isLoading) {
       return;
     }
     
     try {
+      initialDataLoaded.current = true;
+      console.log("[useCompanies] Carregando dados iniciais de empresas");
+      
       // Verificar se o usuário já está no cache antes de buscar
       const cachedData = localStorage.getItem('userCompanies');
       if (cachedData) {
@@ -113,7 +127,7 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
             setUserCompanies(companies);
             console.log("[useCompanies] Usando dados em cache durante carregamento inicial");
             
-            // Ainda fazer a busca no fundo para atualizar o cache, mas sem mostrar loading
+            // Iniciar uma busca em segundo plano, sem mostrar loading
             getUserCompanies(user.id, false).catch(err => 
               console.error('[useCompanies] Erro ao atualizar dados de empresas em background:', err)
             );
@@ -123,9 +137,6 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
           console.error('[useCompanies] Erro ao analisar cache de empresas:', e);
         }
       }
-      
-      // Se não tiver cache, buscar normalmente
-      console.log("[useCompanies] Carregando dados iniciais de empresas");
       
       // Verificar se é super admin (uma única vez)
       const { data: profileData } = await supabase
@@ -146,17 +157,20 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     } catch (error) {
       console.error('[useCompanies] Erro ao carregar dados iniciais de empresas:', error);
     }
-  }, [user?.id, userCompanies.length, isLoading, getUserCompanies, skipLoadingInOnboarding]);
+  }, [user?.id, isLoading, getUserCompanies, skipLoadingInOnboarding, setUserCompanies]);
   
   // Carregar dados iniciais apenas quando necessário
   useEffect(() => {
-    loadInitialData();
-  }, [loadInitialData]);
+    if (user?.id && !initialDataLoaded.current) {
+      loadInitialData();
+    }
+  }, [loadInitialData, user?.id]);
   
   // Atualizar dados quando necessário (with better memoization)
   const handleCompanyRelationChange = useCallback(async () => {
     if (user?.id) {
       try {
+        console.log('[useCompanies] Forçando atualização após mudança de relação de empresa');
         await forceGetUserCompanies(user.id);
       } catch (error) {
         console.error('[useCompanies] Erro ao atualizar empresas após mudança de relação:', error);
