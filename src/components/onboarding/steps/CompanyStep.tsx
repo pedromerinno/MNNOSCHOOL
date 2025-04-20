@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,7 @@ import CompanyTypeSelector from "./company/CompanyTypeSelector";
 import ExistingCompanyForm from "./company/ExistingCompanyForm";
 import NewCompanyForm from "./company/NewCompanyForm";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface CompanyStepProps {
   onBack: () => void;
@@ -38,16 +38,19 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onBack, onNext, onCompanyType
     e.preventDefault();
     
     if (!user) {
+      toast.error("Você precisa estar autenticado para continuar");
       return;
     }
     
     if (companyType === 'existing') {
       if (!companyId.trim()) {
+        toast.error("Por favor, insira o ID da empresa");
         return;
       }
       updateProfileData({ companyId });
     } else {
       if (!companyDetails.name.trim()) {
+        toast.error("Por favor, insira o nome da empresa");
         return;
       }
       updateProfileData({ 
@@ -56,8 +59,13 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onBack, onNext, onCompanyType
       });
     }
     
-    await saveProfileData();
-    onNext();
+    try {
+      await saveProfileData();
+      // O redirecionamento agora é feito no contexto para garantir que todos os dados sejam salvos primeiro
+    } catch (error) {
+      console.error("Erro ao salvar dados do perfil:", error);
+      toast.error("Ocorreu um erro ao salvar seu perfil");
+    }
   };
 
   return (

@@ -73,25 +73,50 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
         if (companyError) throw companyError;
         finalCompanyId = companyData.id;
         
+        console.log("Nova empresa criada com ID:", finalCompanyId);
+        
+        // Adicionar relação entre usuário e empresa com privilégio de admin
         const { error: relationError } = await supabase
           .from('user_empresa')
           .insert([{ 
             user_id: user.id,
             empresa_id: finalCompanyId,
-            is_admin: true
+            is_admin: true // Define o usuário como admin da empresa que ele criou
           }]);
           
         if (relationError) throw relationError;
+        
+        // Atualizar o usuário para ter privilégio admin geral na plataforma
+        const { error: adminUpdateError } = await supabase
+          .from('profiles')
+          .update({ is_admin: true })
+          .eq('id', user.id);
+          
+        if (adminUpdateError) throw adminUpdateError;
+        
       } else if (finalCompanyId) {
-        const { error: relationError } = await supabase
+        // Verificar se a relação já existe para evitar duplicatas
+        const { data: existingRelation, error: checkError } = await supabase
           .from('user_empresa')
-          .insert([{ 
-            user_id: user.id,
-            empresa_id: finalCompanyId,
-            is_admin: false
-          }]);
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('empresa_id', finalCompanyId)
+          .maybeSingle();
           
-        if (relationError) throw relationError;
+        if (checkError) throw checkError;
+        
+        // Se a relação não existir, criar
+        if (!existingRelation) {
+          const { error: relationError } = await supabase
+            .from('user_empresa')
+            .insert([{ 
+              user_id: user.id,
+              empresa_id: finalCompanyId,
+              is_admin: false
+            }]);
+            
+          if (relationError) throw relationError;
+        }
       }
       
       // Atualizar perfil do usuário
@@ -110,10 +135,23 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       
       // Atualizar contexto local
       await updateUserProfile(profileUpdate);
-      await updateUserData(profileUpdate);
+      await updateUserData({
+        ...profileUpdate,
+        is_admin: true // Garantir que o status de admin seja refletido no contexto local
+      });
+      
+      // Disparar evento para atualizar a lista de empresas
+      window.dispatchEvent(new Event('company-relation-changed'));
       
       toast.success("Perfil atualizado com sucesso!");
-      navigate("/"); // Redirecionar para a página inicial
+      
+      // Forçar recarregamento de empresas antes de redirecionar
+      window.dispatchEvent(new Event('force-reload-companies'));
+      
+      // Pequeno atraso para garantir que os eventos sejam processados
+      setTimeout(() => {
+        navigate("/"); // Redirecionar para a página inicial
+      }, 500);
       
     } catch (error) {
       console.error("Erro ao salvar perfil:", error);
