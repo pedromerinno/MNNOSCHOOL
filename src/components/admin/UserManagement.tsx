@@ -55,7 +55,7 @@ export const UserManagement = () => {
         <UserTable 
           users={users} 
           loading={loading} 
-          onToggleAdmin={toggleAdminStatus} 
+          onToggle={toggleAdminStatus} 
         />
       )}
 
