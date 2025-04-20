@@ -24,12 +24,12 @@ export const CompanySelector: React.FC<CompanySelectorProps> = ({
 
   // Handle fetch error display
   useEffect(() => {
-    if (companies.length === 0 && !disabled) {
+    if (!companies || (Array.isArray(companies) && companies.length === 0) && !disabled) {
       setError("Não foi possível carregar a lista de empresas");
     } else {
       setError(null);
     }
-  }, [companies.length, disabled]);
+  }, [companies, disabled]);
 
   const handleRetry = () => {
     setRetryCount(prev => prev + 1);
@@ -39,7 +39,7 @@ export const CompanySelector: React.FC<CompanySelectorProps> = ({
     
     // Reset error after 3 seconds
     setTimeout(() => {
-      if (companies.length === 0) {
+      if (!companies || (Array.isArray(companies) && companies.length === 0)) {
         setError("Não foi possível carregar a lista de empresas");
       } else {
         setError(null);
@@ -72,13 +72,13 @@ export const CompanySelector: React.FC<CompanySelectorProps> = ({
       <Select 
         value={selectedCompany?.id} 
         onValueChange={onCompanyChange}
-        disabled={disabled || companies.length === 0}
+        disabled={disabled || !companies || (Array.isArray(companies) && companies.length === 0)}
       >
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Selecione uma empresa" />
         </SelectTrigger>
         <SelectContent>
-          {companies.map(company => (
+          {Array.isArray(companies) && companies.map(company => (
             <SelectItem key={company.id} value={company.id}>
               <div className="flex items-center">
                 {company.logo && (

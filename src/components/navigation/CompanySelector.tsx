@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCompanies } from "@/hooks/useCompanies";
+import { useCompanies } from "@/hooks/company";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -62,7 +62,7 @@ export const CompanySelector = () => {
   };
 
   // If user has no companies or is not logged in, show default text
-  if (!user || userCompanies.length === 0) {
+  if (!user || !userCompanies || userCompanies.length === 0) {
     return <span className="text-lg font-bold text-merinno-dark">merinno</span>;
   }
 
@@ -75,12 +75,12 @@ export const CompanySelector = () => {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center text-lg font-bold text-merinno-dark focus:outline-none">
-          {selectedCompany?.nome || userCompanies[0]?.nome || "merinno"}
+          {selectedCompany?.nome || (userCompanies[0] && userCompanies[0].nome) || "merinno"}
           <ChevronDown className="ml-1 h-4 w-4" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="bg-white dark:bg-gray-800 z-50">
-        {userCompanies.map((company) => (
+        {Array.isArray(userCompanies) && userCompanies.map((company) => (
           <DropdownMenuItem 
             key={company.id} 
             onClick={() => handleCompanyChange(company)}
@@ -91,7 +91,7 @@ export const CompanySelector = () => {
                 <img
                   src={company.logo}
                   alt={company.nome}
-                  className="h-4 w-4 mr-2 object-contain rounded-lg"  // Added rounded-lg for 8px border-radius
+                  className="h-4 w-4 mr-2 object-contain rounded-lg"
                 />
               )}
               <span>{company.nome}</span>

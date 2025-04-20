@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanyState } from "./useCompanyState";
 import { useCompanyFetching } from "./useCompanyFetching";
@@ -74,7 +75,7 @@ export const useCompaniesProvider = () => {
   // Global data loading - load user companies only when user is logged in
   useEffect(() => {
     const loadInitialData = async () => {
-      if (user?.id && userCompanies.length === 0 && !isLoading && hasCheckedUserRole) {
+      if (user?.id && (userCompanies.length === 0) && !isLoading && hasCheckedUserRole) {
         try {
           await getUserCompanies(user.id);
         } catch (error) {
@@ -88,8 +89,8 @@ export const useCompaniesProvider = () => {
 
   return {
     isLoading,
-    companies,
-    userCompanies,
+    companies: Array.isArray(companies) ? companies : [],
+    userCompanies: Array.isArray(userCompanies) ? userCompanies : [],
     selectedCompany,
     error,
     fetchCount,
