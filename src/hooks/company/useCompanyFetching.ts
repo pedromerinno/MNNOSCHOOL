@@ -1,3 +1,4 @@
+
 import React, { useCallback, useRef } from "react";
 import { Company } from "@/types/company";
 import { useCompanyRequest } from "./useCompanyRequest";
@@ -34,9 +35,7 @@ export const useCompanyFetching = ({
   const { 
     getCachedUserCompanies, 
     cacheUserCompanies, 
-    clearCachedUserCompanies,
-    removeCachedCompany,
-    isCacheExpired 
+    clearCachedUserCompanies 
   } = useCompanyCache();
   
   const companyFetchProps = {
@@ -51,17 +50,13 @@ export const useCompanyFetching = ({
   
   // Track fetch state to prevent duplicate calls
   const fetchInProgressRef = useRef(false);
-  // Track abort controllers for active requests
   const abortControllerRef = useRef<AbortController | null>(null);
-  // Track last successful fetch time for this specific hook instance
   const lastSuccessfulFetchRef = useRef<number>(0);
   
   const getUserCompanies = useCallback(async (
     userId: string, 
     forceRefresh: boolean = false
   ): Promise<Company[]> => {
-    // Implement a specific throttling for this component - minimum 30 seconds between fetches
-    // unless forced refresh is explicitly requested
     const now = Date.now();
     const timeSinceLastSuccess = now - lastSuccessfulFetchRef.current;
     const COMPONENT_SPECIFIC_THROTTLE = 30000; // 30 seconds
@@ -72,39 +67,32 @@ export const useCompanyFetching = ({
       return userCompanies;
     }
     
-    // Cancel any existing requests if forcing a refresh
     if (forceRefresh && abortControllerRef.current) {
       console.log('Cancelling previous request due to forced refresh');
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
     
-    // If a fetch is already in progress and not forcing, return current data
     if (fetchInProgressRef.current && !forceRefresh) {
       console.log('A fetch operation is already in progress. Skipping duplicate fetch.');
       return userCompanies;
     }
     
-    // Check pending requests and log current state
     console.log(`Active requests: ${pendingRequestsRef.current}`);
     
-    // If we shouldn't make a request, return cached data
     if (!shouldMakeRequest(forceRefresh, userCompanies.length > 0)) {
       return userCompanies;
     }
     
-    // Mark request start and set loading state
     fetchInProgressRef.current = true;
     startRequest();
-    setIsLoading(true); // Explicitly set loading to true
+    setIsLoading(true);
     setError(null);
     incrementFetchCount();
     
-    // Create a new abort controller for this request
     abortControllerRef.current = new AbortController();
     
     try {
-      // Use cached data for immediate UI update only if not doing a forced refresh
       if (!forceRefresh) {
         const cachedData = getCachedUserCompanies();
         if (cachedData && cachedData.length > 0) {
@@ -113,29 +101,22 @@ export const useCompanyFetching = ({
         }
       }
       
-      // Perform request to get updated data
       const result = await executeWithRetry(() => getCompanies(userId, abortControllerRef.current?.signal));
       
-      // Update timestamp of successful request
       completeRequest();
-      
-      // Record the timestamp of the successful fetch for this instance
       lastSuccessfulFetchRef.current = Date.now();
       
-      // Cache the companies when we successfully fetch them
       if (result && result.length > 0) {
         cacheUserCompanies(result);
         console.log("Successfully fetched and cached", result.length, "companies");
       }
       
-      // Make sure we update loading state with result
       setIsLoading(false);
       
       return result;
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Unknown error');
       
-      // Don't show errors for aborted requests
       if (error.name === 'AbortError') {
         console.log('Request was aborted');
         setIsLoading(false);
@@ -145,7 +126,6 @@ export const useCompanyFetching = ({
       setError(error);
       console.error("Error fetching companies:", error);
       
-      // Try to load from cache as last resort
       const cachedData = getCachedUserCompanies();
       if (cachedData && cachedData.length > 0) {
         console.log("Using cached companies after all retries failed");
@@ -155,9 +135,8 @@ export const useCompanyFetching = ({
       
       return [];
     } finally {
-      // Mark request end and ensure loading state is reset
       fetchInProgressRef.current = false;
-      setIsLoading(false); // Ensure loading is set to false even if there was an error
+      setIsLoading(false);
       resetRequestState();
       abortControllerRef.current = null;
     }
@@ -187,7 +166,6 @@ export const useCompanyFetching = ({
   return {
     getUserCompanies,
     forceGetUserCompanies,
-    getCompanyById,
-    removeCachedCompany
+    getCompanyById
   };
 };

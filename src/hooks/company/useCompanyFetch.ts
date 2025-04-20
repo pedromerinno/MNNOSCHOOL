@@ -10,7 +10,6 @@ export const useCompanyFetch = (props: UseCompanyFetchProps) => {
   const { getUserCompanies: _getUserCompanies } = useUserCompanies(props);
   const { getCompanyById: _getCompanyById } = useCompanyDetails(props);
 
-  // Wrap with useCallback to avoid recreating the function
   const fetchCompanies = useCallback(async () => {
     return await _fetchCompanies();
   }, [_fetchCompanies]);
