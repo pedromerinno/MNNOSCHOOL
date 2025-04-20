@@ -150,10 +150,10 @@ export const SignupForm = () => {
           </Button>
         </div>
 
-        <div className="mt-6 text-center">
-          <Link to="/login" className="text-sm text-gray-600 hover:text-gray-900">
-            Já tem uma conta? Faça login
-          </Link>
+        <div className="mt-4 text-xs text-center text-gray-500 px-4">
+          Ao clicar em "Cadastrar", "Entrar com Google" ou "Usar Single Sign-On (SSO)", 
+          você concorda com nossos <Link to="/termos" className="underline">Termos de Uso</Link> e 
+          reconhece que leu e compreendeu nossa <Link to="/privacidade" className="underline">Política de Privacidade</Link>.
         </div>
       </div>
     </div>
