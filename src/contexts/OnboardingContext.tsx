@@ -61,7 +61,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
         if (companyError) throw companyError;
         finalCompanyId = companyData.id;
         
-        // Vincular usuário à empresa
+        // Vincular usuário à empresa como admin (criador da empresa)
         const { error: relationError } = await supabase
           .from('user_empresa')
           .insert([{ 
@@ -83,14 +83,14 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
           .eq('empresa_id', finalCompanyId)
           .single();
           
-        // Se não existe vínculo, criar
+        // Se não existe vínculo, criar (sem verificação de admin)
         if (!existingRelation) {
           const { error: relationError } = await supabase
             .from('user_empresa')
             .insert([{ 
               user_id: user.id,
               empresa_id: finalCompanyId,
-              is_admin: false
+              is_admin: false // Usuário não é admin por padrão quando se associa a empresa existente
             }]);
             
           if (relationError) {
@@ -104,7 +104,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       const profileUpdate = {
         display_name: profileData.displayName,
         avatar: profileData.avatarUrl,
-        cargo_id: finalCompanyId ? "usuario" : null,
+        cargo_id: null, // removendo a configuração de "usuario" que causava erro
         interesses: profileData.interests.filter(i => i !== "onboarding_incomplete")
       };
       

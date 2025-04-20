@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,7 @@ export const SignupForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [companyId, setCompanyId] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
   const { signUp } = useAuth();
@@ -38,10 +40,12 @@ export const SignupForm = () => {
     setIsRegistering(true);
     
     try {
-      // Set interesses array with onboarding_incomplete flag to indicate that onboarding process is needed
-      await signUp(email, password, email.split('@')[0], { 
-        interests: ["onboarding_incomplete"] 
-      });
+      // Se um ID de empresa foi fornecido, incluímos nos dados de onboarding
+      const metadataWithCompany = companyId 
+        ? { interests: ["onboarding_incomplete"], companyId } 
+        : { interests: ["onboarding_incomplete"] };
+      
+      await signUp(email, password, email.split('@')[0], metadataWithCompany);
       console.log("Usuario cadastrado com sucesso! Perfil será criado automaticamente.");
     } catch (error) {
       console.error("Erro no cadastro:", error);
@@ -101,6 +105,23 @@ export const SignupForm = () => {
           {passwordError && (
             <p className="text-sm text-red-500 mt-1">{passwordError}</p>
           )}
+        </div>
+        
+        <div className="space-y-3">
+          <label htmlFor="companyId" className="text-sm text-gray-500">
+            ID da empresa (opcional)
+          </label>
+          <Input
+            id="companyId"
+            type="text"
+            value={companyId}
+            onChange={(e) => setCompanyId(e.target.value)}
+            placeholder="Se você tiver um ID de empresa, insira aqui"
+            className="bg-transparent border-b border-gray-300 rounded-none px-0 h-10 focus-visible:ring-0 focus-visible:border-merinno-dark"
+          />
+          <p className="text-xs text-gray-400">
+            Se você possui um ID de empresa, pode se vincular diretamente a ela.
+          </p>
         </div>
         
         <Button
