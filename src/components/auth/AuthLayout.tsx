@@ -64,19 +64,14 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row">
+    <div className="min-h-screen flex">
       {/* Left side - Login Form */}
-      <div className="w-full md:w-1/2 bg-merinno-light p-4 md:p-8 flex items-center justify-center">
-        <div className="w-full max-w-md">
-          <div className="mb-10">
-            <h1 className="text-2xl font-bold text-merinno-dark">MERINNO</h1>
-          </div>
-          {children}
-        </div>
+      <div className="w-full max-w-lg mx-auto px-8 py-12 flex items-center justify-center bg-white">
+        {children}
       </div>
       
       {/* Right side - Background Media */}
-      <div className="w-full md:w-1/2 relative overflow-hidden hidden md:block">
+      <div className="flex-1 relative overflow-hidden hidden lg:block">
         {isLoading ? (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-merinno-dark"></div>
@@ -93,7 +88,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
                 className="absolute w-full h-full object-cover"
               >
                 <source src={backgroundMedia.url} type="video/mp4" />
-                Seu navegador não suporta vídeos.
+                Your browser does not support video playback.
               </video>
             ) : (
               <img 
@@ -106,7 +101,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-merinno-dark to-black flex items-center justify-center">
             <div className="text-white/70 text-center px-4">
-              <p className="text-lg font-medium">Personalize o background</p>
+              <p className="text-lg font-medium">Customize o background</p>
               <p className="text-sm mt-2">Configure uma imagem ou vídeo no painel administrativo</p>
             </div>
           </div>

@@ -2,10 +2,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2 } from "lucide-react";
+import { Loader2, Apple, Google } from "lucide-react";
 import { toast } from "sonner";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useCache } from "@/hooks/useCache";
@@ -13,7 +12,6 @@ import { useCache } from "@/hooks/useCache";
 export const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const { signInWithPassword } = useAuth();
   const navigate = useNavigate();
@@ -55,93 +53,96 @@ export const LoginForm = () => {
   };
 
   return (
-    <div className="w-full max-w-md px-6 py-8 md:px-10">
-      <h2 className="text-3xl font-medium mb-2">Bem-vindo(a)</h2>
-      <p className="text-sm text-gray-500 mb-8">
-        Preencha os campos abaixo para entrar no universo que construímos cuidadosamente para você.
-      </p>
+    <div className="w-full max-w-sm mx-auto">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-semibold mb-2">Welcome to Merinno</h1>
+        <p className="text-gray-600">
+          Don&apos;t have an account?{" "}
+          <Link to="/signup" className="text-blue-600 hover:text-blue-700 font-medium">
+            Sign up for free
+          </Link>
+        </p>
+      </div>
       
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <div className="space-y-3">
-          <label htmlFor="email" className="text-sm text-gray-500">
-            Seu e-mail
-          </label>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
           <Input
-            id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            placeholder="Username or Email"
             required
-            className="bg-transparent border-b border-gray-300 rounded-none px-0 h-10 focus-visible:ring-0 focus-visible:border-merinno-dark"
+            className="w-full h-12 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
         
-        <div className="space-y-3">
-          <label htmlFor="password" className="text-sm text-gray-500">
-            Sua senha
-          </label>
+        <div>
           <Input
-            id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
             required
-            className="bg-transparent border-b border-gray-300 rounded-none px-0 h-10 focus-visible:ring-0 focus-visible:border-merinno-dark"
+            className="w-full h-12 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
-        </div>
-        
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="remember"
-              checked={rememberMe}
-              onCheckedChange={(checked) => 
-                setRememberMe(checked === true ? true : false)
-              }
-              className="rounded-sm data-[state=checked]:bg-merinno-dark"
-            />
-            <label
-              htmlFor="remember"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              lembrar meu usuário
-            </label>
-          </div>
-          
-          <Link to="/forgot-password" className="text-sm text-gray-500 hover:text-merinno-dark">
-            esqueci minha senha
-          </Link>
         </div>
         
         <Button
           type="submit"
           disabled={isLoggingIn}
-          className="w-32 h-12 rounded-full bg-merinno-dark hover:bg-black text-white"
+          className="w-full h-12 bg-black hover:bg-black/90 text-white rounded-lg font-medium"
         >
           {isLoggingIn ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            "Acessar"
+            "Log in"
           )}
         </Button>
       </form>
-      
-      <div className="mt-8 text-center">
-        <p className="text-sm text-gray-500">
-          Não tem uma conta?{" "}
-          <Link to="/signup" className="text-merinno-dark hover:underline">
-            Cadastre-se
+
+      <div className="mt-6">
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white text-gray-500">OR</span>
+          </div>
+        </div>
+
+        <div className="mt-6 space-y-4">
+          <Button 
+            variant="outline" 
+            className="w-full h-12 border border-gray-300 rounded-lg font-medium flex items-center justify-center gap-2"
+          >
+            <Google className="h-5 w-5" />
+            Log in with Google
+          </Button>
+          
+          <Button 
+            variant="outline"
+            className="w-full h-12 border border-gray-300 rounded-lg font-medium flex items-center justify-center gap-2"
+          >
+            <Apple className="h-5 w-5" />
+            Log in with Apple
+          </Button>
+          
+          <Button 
+            variant="outline"
+            className="w-full h-12 border border-gray-300 rounded-lg font-medium"
+          >
+            Use Single Sign-On (SSO)
+          </Button>
+        </div>
+
+        <div className="mt-6 text-center">
+          <Link 
+            to="/forgot-password"
+            className="text-sm text-gray-600 hover:text-gray-900"
+          >
+            Forgot Password?
           </Link>
-        </p>
-      </div>
-      
-      <div className="mt-8 pt-6 border-t border-gray-200 flex justify-between text-xs text-gray-500">
-        <Link to="/terms" className="hover:text-merinno-dark">
-          Termos de serviço
-        </Link>
-        <Link to="/privacy" className="hover:text-merinno-dark">
-          Política de privacidade
-        </Link>
+        </div>
       </div>
     </div>
   );
