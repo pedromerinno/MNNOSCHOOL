@@ -3,15 +3,15 @@ import { z } from "zod";
 
 export const integrationFormSchema = z.object({
   nome: z.string().min(1, "Nome da empresa é obrigatório"),
-  logo: z.string().optional().nullable(),
-  historia: z.string().optional().nullable(),
+  descricao: z.string().optional().nullable(),
+  frase_institucional: z.string().optional().nullable(),
   missao: z.string().optional().nullable(),
   valores: z.array(z.object({
     title: z.string(),
     description: z.string()
   })).default([]),
-  frase_institucional: z.string().optional().nullable(),
   cor_principal: z.string().min(4, "Cor inválida").default("#1EAEDB"),
+  logo: z.string().optional().nullable(),
 });
 
 export type IntegrationFormValues = z.infer<typeof integrationFormSchema>;

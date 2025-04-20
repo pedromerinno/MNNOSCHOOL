@@ -5,10 +5,11 @@ import { Input } from "@/components/ui/input";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Plus, Trash2 } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
-import { IntegrationFormValues } from './IntegrationFormSchema';
+import { integrationFormSchema } from './IntegrationFormSchema';
+import { z } from 'zod';
 
 interface ValuesFieldProps {
-  form: UseFormReturn<IntegrationFormValues>;
+  form: UseFormReturn<z.infer<typeof integrationFormSchema>>;
 }
 
 export const ValuesField: React.FC<ValuesFieldProps> = ({ form }) => {

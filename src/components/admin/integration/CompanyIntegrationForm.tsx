@@ -12,7 +12,7 @@ import { ColorPickerField } from "./form/ColorPickerField";
 import { LogoUrlField } from "./form/LogoUrlField";
 import { ValuesField } from "./form/ValuesField";
 import { SubmitButton } from "./form/SubmitButton";
-import { IntegrationFormSchema } from "./form/IntegrationFormSchema";
+import { integrationFormSchema } from "./form/IntegrationFormSchema";
 
 interface CompanyIntegrationFormProps {
   company: Company;
@@ -40,22 +40,20 @@ export const CompanyIntegrationForm: React.FC<CompanyIntegrationFormProps> = ({
   }
 
   // Initialize form with company data
-  const form = useForm<z.infer<typeof IntegrationFormSchema>>({
-    resolver: zodResolver(IntegrationFormSchema),
+  const form = useForm<z.infer<typeof integrationFormSchema>>({
+    resolver: zodResolver(integrationFormSchema),
     defaultValues: {
       nome: company.nome || "",
       descricao: company.descricao || "",
       frase_institucional: company.frase_institucional || "",
       missao: company.missao || "",
-      visao: company.visao || "",
       valores: parsedValores,
       cor_principal: company.cor_principal || "#1EAEDB",
-      cor_secundaria: company.cor_secundaria || "#f5f5f5",
       logo: company.logo || "",
     },
   });
 
-  const handleSubmit = async (data: z.infer<typeof IntegrationFormSchema>) => {
+  const handleSubmit = async (data: z.infer<typeof integrationFormSchema>) => {
     await onSubmit(data);
   };
 
@@ -65,21 +63,21 @@ export const CompanyIntegrationForm: React.FC<CompanyIntegrationFormProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-6">
             <TextInputField
-              form={form}
+              control={form.control}
               name="nome"
               label="Nome da Empresa"
               placeholder="Digite o nome da empresa"
             />
             
             <TextareaField
-              form={form}
+              control={form.control}
               name="descricao"
               label="Descrição"
               placeholder="Breve descrição sobre a empresa"
             />
             
             <TextareaField
-              form={form}
+              control={form.control}
               name="frase_institucional"
               label="Frase Institucional"
               placeholder="Slogan ou frase de apresentação da empresa"
@@ -88,47 +86,32 @@ export const CompanyIntegrationForm: React.FC<CompanyIntegrationFormProps> = ({
           
           <div className="space-y-6">
             <TextareaField
-              form={form}
+              control={form.control}
               name="missao"
               label="Missão"
               placeholder="Qual a missão da empresa"
             />
             
-            <TextareaField
-              form={form}
-              name="visao"
-              label="Visão"
-              placeholder="Qual a visão da empresa"
-            />
-            
             <ValuesField
               form={form}
-              name="valores"
-              label="Valores"
-              placeholder="Digite um valor e pressione Enter"
             />
           </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <ColorPickerField
-            form={form}
+            control={form.control}
             name="cor_principal"
             label="Cor Principal"
-          />
-          
-          <ColorPickerField
-            form={form}
-            name="cor_secundaria"
-            label="Cor Secundária"
           />
         </div>
         
         <LogoUrlField
-          form={form}
+          control={form.control}
           name="logo"
           label="URL do Logo"
           placeholder="https://exemplo.com/logo.png"
+          companyId={company.id}
         />
         
         <div className="flex justify-end space-x-2">
