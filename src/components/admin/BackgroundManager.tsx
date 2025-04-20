@@ -7,12 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Camera, Video } from "lucide-react";
+import { Camera, Video, Upload } from "lucide-react";
+import { useBackgroundUpload } from '@/hooks/useBackgroundUpload';
 
 export const BackgroundManager = () => {
   const [mediaUrl, setMediaUrl] = useState("");
   const [mediaType, setMediaType] = useState<"video" | "image">("video");
   const [isSaving, setIsSaving] = useState(false);
+  const { uploadFile, isUploading } = useBackgroundUpload();
 
   useEffect(() => {
     const fetchCurrentBackground = async () => {
@@ -63,6 +65,26 @@ export const BackgroundManager = () => {
     }
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validar o tipo do arquivo
+    if (mediaType === 'video' && !file.type.startsWith('video/')) {
+      toast.error('Por favor, selecione um arquivo de vídeo');
+      return;
+    }
+    if (mediaType === 'image' && !file.type.startsWith('image/')) {
+      toast.error('Por favor, selecione uma imagem');
+      return;
+    }
+
+    const url = await uploadFile(file, mediaType);
+    if (url) {
+      setMediaUrl(url);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -100,9 +122,22 @@ export const BackgroundManager = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="mediaUrl">
-                {mediaType === 'video' ? 'URL do Vídeo' : 'URL da Imagem'}
-              </Label>
+              <Label>Upload de Arquivo</Label>
+              <div className="flex items-center gap-4">
+                <Input
+                  type="file"
+                  accept={mediaType === 'video' ? 'video/*' : 'image/*'}
+                  onChange={handleFileUpload}
+                  className="flex-1"
+                />
+                {isUploading && (
+                  <div className="text-sm text-gray-500">Enviando...</div>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="mediaUrl">Ou insira uma URL</Label>
               <Input
                 id="mediaUrl"
                 type="url"
@@ -111,22 +146,21 @@ export const BackgroundManager = () => {
                 placeholder={mediaType === 'video' 
                   ? "https://exemplo.com/video.mp4" 
                   : "https://exemplo.com/imagem.jpg"}
-                required
               />
               <p className="text-sm text-gray-500">
                 {mediaType === 'video' 
-                  ? 'Insira a URL de um vídeo MP4' 
-                  : 'Insira a URL de uma imagem'}
+                  ? 'Insira a URL de um vídeo MP4 ou faça upload' 
+                  : 'Insira a URL de uma imagem ou faça upload'}
               </p>
             </div>
 
             <div className="flex justify-end">
               <Button 
                 type="submit" 
-                disabled={isSaving}
+                disabled={isSaving || isUploading}
                 className="bg-merinno-dark hover:bg-black text-white"
               >
-                {isSaving ? "Salvando..." : "Salvar"}
+                {isSaving ? "Salvando..." : "Salvar URL"}
               </Button>
             </div>
           </form>
