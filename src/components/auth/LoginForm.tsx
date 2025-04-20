@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,7 +51,7 @@ export const LoginForm = () => {
   return (
     <div className="w-full max-w-sm mx-auto">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-semibold mb-2">Bem-vindo à Merinno</h1>
+        <h1 className="text-3xl font-semibold mb-2">Bem-vindo(a) de volta</h1>
         <p className="text-gray-600">
           Não tem uma conta?{" "}
           <Link to="/signup" className="text-blue-600 hover:text-blue-700 font-medium">
