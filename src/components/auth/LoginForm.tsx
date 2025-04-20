@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useCompanies } from "@/hooks/useCompanies";
+import { useCache } from "@/hooks/useCache";
 
 export const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -17,18 +18,24 @@ export const LoginForm = () => {
   const { signInWithPassword } = useAuth();
   const navigate = useNavigate();
   const { getUserCompanies, selectCompany } = useCompanies();
+  const { clearCache } = useCache();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoggingIn(true);
     
     try {
+      // Clear all cache before attempting login
+      clearCache('userCompanies');
+      clearCache('selectedCompany');
+      clearCache('selectedCompanyId');
+      
       const { data, error } = await signInWithPassword(email, password);
       if (error) throw error;
 
-      // Fetch user companies immediately after successful login
+      // Fetch fresh data after login
       if (data && data.session && data.session.user) {
-        const companies = await getUserCompanies(data.session.user.id, true);
+        const companies = await getUserCompanies(data.session.user.id, true); // Force refresh
         // If user has companies, select the first one
         if (companies && companies.length > 0) {
           await selectCompany(data.session.user.id, companies[0]);
