@@ -58,6 +58,8 @@ export const useCompanyFetching = ({
   const lastSuccessfulFetchRef = useRef<number>(0);
   // Track if there was a fetch on this page load
   const didFetchOnPageLoadRef = useRef<boolean>(false);
+  // Identificador único para esse hook
+  const hookInstanceIdRef = useRef<string>(`fetch-${Math.random().toString(36).substring(2, 9)}`);
   
   const getUserCompanies = useCallback(async (
     userId: string, 
@@ -65,7 +67,7 @@ export const useCompanyFetching = ({
   ): Promise<Company[]> => {
     // Skip fetch if already fetched during this page load and not forcing refresh
     if (didFetchOnPageLoadRef.current && !forceRefresh && userCompanies.length > 0) {
-      console.log('Already fetched companies during this page load. Using cached data.');
+      console.log(`[${hookInstanceIdRef.current}] Already fetched companies during this page load. Using cached data.`);
       return userCompanies;
     }
     
@@ -77,25 +79,25 @@ export const useCompanyFetching = ({
     
     if (!forceRefresh && lastSuccessfulFetchRef.current > 0 && 
         timeSinceLastSuccess < COMPONENT_SPECIFIC_THROTTLE && userCompanies.length > 0) {
-      console.log(`[useCompanyFetching] Last successful fetch was ${Math.round(timeSinceLastSuccess/1000)}s ago. Using cached data.`);
+      console.log(`[${hookInstanceIdRef.current}] Last successful fetch was ${Math.round(timeSinceLastSuccess/1000)}s ago. Using cached data.`);
       return userCompanies;
     }
     
     // Cancel any existing requests if forcing a refresh
     if (forceRefresh && abortControllerRef.current) {
-      console.log('Cancelling previous request due to forced refresh');
+      console.log(`[${hookInstanceIdRef.current}] Cancelling previous request due to forced refresh`);
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
     
     // If a fetch is already in progress and not forcing, return current data
     if (fetchInProgressRef.current && !forceRefresh) {
-      console.log('A fetch operation is already in progress. Skipping duplicate fetch.');
+      console.log(`[${hookInstanceIdRef.current}] A fetch operation is already in progress. Skipping duplicate fetch.`);
       return userCompanies;
     }
     
     // Check pending requests and log current state
-    console.log(`Active requests: ${pendingRequestsRef.current}`);
+    console.log(`[${hookInstanceIdRef.current}] Active requests: ${pendingRequestsRef.current}`);
     
     // If we shouldn't make a request, return cached data
     if (!shouldMakeRequest(forceRefresh, userCompanies.length > 0)) {
@@ -118,7 +120,7 @@ export const useCompanyFetching = ({
         const cachedData = getCachedUserCompanies();
         if (cachedData && cachedData.length > 0) {
           setUserCompanies(cachedData);
-          console.log("Using cached data while fetching fresh data:", cachedData.length, "companies");
+          console.log(`[${hookInstanceIdRef.current}] Using cached data while fetching fresh data:`, cachedData.length, "companies");
         }
       }
       
@@ -135,7 +137,7 @@ export const useCompanyFetching = ({
       // Cache the companies when we successfully fetch them
       if (result && result.length > 0) {
         cacheUserCompanies(result);
-        console.log("Successfully fetched and cached", result.length, "companies");
+        console.log(`[${hookInstanceIdRef.current}] Successfully fetched and cached`, result.length, "companies");
       }
       
       // Make sure we update loading state with result
@@ -147,18 +149,18 @@ export const useCompanyFetching = ({
       
       // Don't show errors for aborted requests
       if (error.name === 'AbortError') {
-        console.log('Request was aborted');
+        console.log(`[${hookInstanceIdRef.current}] Request was aborted`);
         setIsLoading(false);
         return userCompanies;
       }
       
       setError(error);
-      console.error("Error fetching companies:", error);
+      console.error(`[${hookInstanceIdRef.current}] Error fetching companies:`, error);
       
       // Try to load from cache as last resort
       const cachedData = getCachedUserCompanies();
       if (cachedData && cachedData.length > 0) {
-        console.log("Using cached companies after all retries failed");
+        console.log(`[${hookInstanceIdRef.current}] Using cached companies after all retries failed`);
         setUserCompanies(cachedData);
         return cachedData;
       }
@@ -189,7 +191,7 @@ export const useCompanyFetching = ({
   ]);
   
   const forceGetUserCompanies = useCallback(async (userId: string): Promise<Company[]> => {
-    console.log('Forcing user companies fetch and clearing cache first');
+    console.log(`[${hookInstanceIdRef.current}] Forcing user companies fetch and clearing cache first`);
     clearCachedUserCompanies();
     return getUserCompanies(userId, true);
   }, [getUserCompanies, clearCachedUserCompanies]);

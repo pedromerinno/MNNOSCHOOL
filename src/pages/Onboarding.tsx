@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import OnboardingLayout from "@/components/onboarding/OnboardingLayout";
 import ProfileStep from "@/components/onboarding/steps/ProfileStep";
@@ -7,12 +7,26 @@ import PhotoStep from "@/components/onboarding/steps/PhotoStep";
 import CompanyStep from "@/components/onboarding/steps/CompanyStep";
 import InterestsStep from "@/components/onboarding/steps/InterestsStep";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
 
 const Onboarding = () => {
+  const { signOut } = useAuth();
+  
   return (
     <OnboardingProvider>
       <OnboardingLayout>
-        <div className="min-h-screen flex flex-col items-center justify-center py-10 px-4">
+        <div className="min-h-screen flex flex-col items-center justify-center py-10 px-4 relative">
+          {/* Botão de logout no canto superior direito */}
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="absolute top-4 right-4 text-gray-500 hover:text-black flex items-center gap-2"
+            onClick={signOut}
+          >
+            <LogOut className="h-4 w-4" /> Sair
+          </Button>
+          
           <OnboardingContent />
         </div>
       </OnboardingLayout>
@@ -20,6 +34,8 @@ const Onboarding = () => {
   );
 };
 
+// Componente separado para o conteúdo do onboarding
+// evitando re-renderizações desnecessárias
 const OnboardingContent = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 4;

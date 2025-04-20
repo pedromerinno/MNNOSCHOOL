@@ -12,7 +12,7 @@ export const useCompanyRequest = () => {
   // Request queue to manage concurrent requests
   const pendingRequestsRef = useRef<number>(0);
   // Maximum number of concurrent requests to prevent resource exhaustion
-  const MAX_CONCURRENT_REQUESTS = 2;
+  const MAX_CONCURRENT_REQUESTS = 1; // Reduzido para 1 para limitar ainda mais as requisições simultâneas
   
   /**
    * Checks if a new request should be made based on timing and current state
