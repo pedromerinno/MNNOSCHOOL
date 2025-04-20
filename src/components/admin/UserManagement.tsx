@@ -14,6 +14,7 @@ export const UserManagement = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [permissionError, setPermissionError] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false); // Controle do modal de convite
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -30,6 +31,12 @@ export const UserManagement = () => {
     }
   };
 
+  // EXEMPLO DE PLACEHOLDER: aqui abrimos um toast/alerta, mas idealmente seria um Dialog de convite real
+  const handleInviteUser = () => {
+    alert('Função de convite de usuário em breve!'); // Substitua futuramente por Dialog real
+    // setIsInviteDialogOpen(true)
+  };
+
   return (
     <div className="space-y-4">
       <UserManagementHeader 
@@ -37,6 +44,7 @@ export const UserManagement = () => {
         onRefreshClick={handleRefresh}
         loading={loading}
         isRefreshing={isRefreshing}
+        onInviteUser={handleInviteUser}
       />
       
       <AdminSetup

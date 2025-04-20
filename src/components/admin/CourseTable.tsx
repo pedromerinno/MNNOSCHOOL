@@ -9,18 +9,51 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, Building, FileText } from "lucide-react";
+import { Pencil, Trash2, Building, FileText, Image } from "lucide-react";
 import { Course } from './CourseManagement';
 import { Skeleton } from "@/components/ui/skeleton";
 
+// Supondo que cada Course tenha companies?: { logo: string | null, nome: string }[]
+type ExtendedCourse = Course & {
+  companies?: { logo: string | null, nome: string }[];
+};
+
 interface CourseTableProps {
-  courses: Course[];
+  courses: ExtendedCourse[];
   loading: boolean;
   onEdit: (course: Course) => void;
   onDelete: (courseId: string) => void;
   onManageCompanies: (course: Course) => void;
   onViewLessons?: (course: Course) => void;
 }
+
+const CourseCompaniesCell: React.FC<{ companies?: { logo: string | null, nome: string }[] }> = ({ companies }) => {
+  if (!companies || companies.length === 0) return <span className="text-xs text-gray-400">Nenhuma</span>;
+  const maxToShow = 3;
+  const showCompanies = companies.slice(0, maxToShow);
+  const extra = companies.length - maxToShow;
+  return (
+    <div className="flex items-center gap-1">
+      {showCompanies.map((company, idx) =>
+        company.logo ? (
+          <img
+            key={company.nome + idx}
+            src={company.logo}
+            alt={company.nome}
+            className="w-7 h-7 rounded-md object-contain border"
+          />
+        ) : (
+          <span key={company.nome + idx} className="rounded-md bg-gray-100 text-gray-400 flex items-center justify-center w-7 h-7 border">
+            <Image className="w-4 h-4" />
+          </span>
+        )
+      )}
+      {extra > 0 && (
+        <span className="ml-1 text-xs px-2 py-0.5 bg-gray-200 rounded-full text-gray-600">+{extra}</span>
+      )}
+    </div>
+  );
+};
 
 export const CourseTable: React.FC<CourseTableProps> = ({ 
   courses, 
@@ -39,6 +72,7 @@ export const CourseTable: React.FC<CourseTableProps> = ({
               <TableHead>Título</TableHead>
               <TableHead>Descrição</TableHead>
               <TableHead>Instrutor</TableHead>
+              <TableHead>Empresas</TableHead>
               <TableHead>Data de Criação</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -49,6 +83,7 @@ export const CourseTable: React.FC<CourseTableProps> = ({
                 <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
                 <TableCell><Skeleton className="h-5 w-full" /></TableCell>
                 <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
+                <TableCell><Skeleton className="h-7 w-28" /></TableCell>
                 <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end space-x-2">
@@ -73,6 +108,7 @@ export const CourseTable: React.FC<CourseTableProps> = ({
             <TableHead>Título</TableHead>
             <TableHead>Descrição</TableHead>
             <TableHead>Instrutor</TableHead>
+            <TableHead>Empresas</TableHead>
             <TableHead>Data de Criação</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
@@ -80,7 +116,7 @@ export const CourseTable: React.FC<CourseTableProps> = ({
         <TableBody>
           {courses.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
+              <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
                 Nenhum curso encontrado
               </TableCell>
             </TableRow>
@@ -97,6 +133,9 @@ export const CourseTable: React.FC<CourseTableProps> = ({
                   }
                 </TableCell>
                 <TableCell>{course.instructor || '-'}</TableCell>
+                <TableCell>
+                  <CourseCompaniesCell companies={course.companies} />
+                </TableCell>
                 <TableCell>{new Date(course.created_at).toLocaleDateString('pt-BR')}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end space-x-2">
