@@ -13,27 +13,13 @@ export const useBackgroundUpload = () => {
       
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `${fileName}`;
 
-      // First check if the bucket exists
-      const { data: buckets } = await supabase.storage.listBuckets();
-      
-      // If the bucket doesn't exist yet, create it
-      if (!buckets?.find(bucket => bucket.name === 'background-media')) {
-        console.log("Creating background-media bucket");
-        const { error: bucketError } = await supabase.storage.createBucket('background-media', {
-          public: true
-        });
-        
-        if (bucketError) {
-          console.error("Error creating bucket:", bucketError);
-          throw bucketError;
-        }
-      }
-
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError, data } = await supabase.storage
         .from('background-media')
-        .upload(filePath, file);
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
       if (uploadError) {
         console.error("Upload error:", uploadError);
@@ -42,9 +28,9 @@ export const useBackgroundUpload = () => {
 
       const { data: { publicUrl } } = supabase.storage
         .from('background-media')
-        .getPublicUrl(filePath);
+        .getPublicUrl(fileName);
 
-      console.log("File uploaded, public URL:", publicUrl);
+      console.log("File uploaded successfully, public URL:", publicUrl);
 
       return publicUrl;
     } catch (error: any) {
