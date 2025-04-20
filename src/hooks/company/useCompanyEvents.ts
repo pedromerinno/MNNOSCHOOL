@@ -6,24 +6,64 @@ interface UseCompanyEventsProps {
   forceGetUserCompanies: (userId: string) => Promise<any>;
 }
 
-export const useCompanyEvents = ({ forceGetUserCompanies }: UseCompanyEventsProps) => {
+export const useCompanyEvents = ({
+  forceGetUserCompanies
+}: UseCompanyEventsProps) => {
   const { user } = useAuth();
   
+  // Atualiza as empresas quando uma relação de empresa é alterada
   useEffect(() => {
     const handleCompanyRelationChange = async () => {
       if (user?.id) {
-        console.log('Company relation change detected, refreshing data');
-        await forceGetUserCompanies(user.id);
+        console.log('Detected company relation change, reloading companies');
+        try {
+          await forceGetUserCompanies(user.id);
+        } catch (error) {
+          console.error('Error reloading companies after relation change:', error);
+        }
       }
     };
     
-    // Listen for company relation changes (like when a user is added to or removed from a company)
     window.addEventListener('company-relation-changed', handleCompanyRelationChange);
     
     return () => {
       window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
     };
-  }, [user, forceGetUserCompanies]);
+  }, [forceGetUserCompanies, user]);
   
-  return {};
+  // Força o carregamento de empresas quando solicitado explicitamente
+  useEffect(() => {
+    const handleForceReload = async () => {
+      if (user?.id) {
+        console.log('Force reload companies event detected');
+        try {
+          await forceGetUserCompanies(user.id);
+        } catch (error) {
+          console.error('Error during forced reload of companies:', error);
+        }
+      }
+    };
+    
+    window.addEventListener('force-reload-companies', handleForceReload);
+    
+    return () => {
+      window.removeEventListener('force-reload-companies', handleForceReload);
+    };
+  }, [forceGetUserCompanies, user]);
+  
+  // Carrega as empresas na inicialização (apenas uma vez)
+  useEffect(() => {
+    const loadUserCompanies = async () => {
+      if (user?.id) {
+        console.log('Initial load of companies for user', user.id);
+        try {
+          await forceGetUserCompanies(user.id);
+        } catch (error) {
+          console.error('Error during initial load of companies:', error);
+        }
+      }
+    };
+    
+    loadUserCompanies();
+  }, [forceGetUserCompanies, user?.id]);
 };

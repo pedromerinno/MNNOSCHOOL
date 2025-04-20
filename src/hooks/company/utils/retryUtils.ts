@@ -18,6 +18,7 @@ export const retryOperation = async <T>(
   
   for (let i = 0; i < maxRetries; i++) {
     try {
+      console.log(`Attempt ${i + 1} of ${maxRetries}...`);
       return await operation();
     } catch (error) {
       console.error(`Operation failed, attempt ${i + 1} of ${maxRetries}`, error);
@@ -39,10 +40,16 @@ export const retryOperation = async <T>(
         errorMessage.includes('PGRST301') ||
         errorMessage.includes('policy for relation');
       
+      // Detectar erros HTTP 500
+      const isServerError = 
+        errorMessage.includes('500') || 
+        errorMessage.includes('Internal Server Error');
+      
       lastError = error instanceof Error 
         ? error 
         : new Error(isNetworkError ? 'Network connection error' : 
-                   isPolicyError ? 'Database policy error' : 'Unknown error');
+                   isPolicyError ? 'Database policy error' : 
+                   isServerError ? 'Server error' : 'Unknown error');
       
       if (i < maxRetries - 1) {
         // Usar backoff exponencial com jitter para retries
