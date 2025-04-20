@@ -1,11 +1,8 @@
-
 import React, { useState } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft } from "lucide-react";
-import { Building, Plus } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { ArrowLeft, Building, Plus } from "lucide-react";
 import { Form } from "@/components/ui/form";
 
 interface CompanyStepProps {
@@ -21,12 +18,28 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
   );
   const [companyId, setCompanyId] = useState(profileData.companyId || "");
   const [companyDetails, setCompanyDetails] = useState({
-    name: "",
-    description: ""
+    name: profileData.newCompanyName || "",
+    description: "",
+    historia: "",
+    missao: "",
+    valores: "",
+    frase_institucional: "",
+    video_institucional: "",
+    descricao_video: ""
   });
   const [error, setError] = useState("");
+  const [showFullForm, setShowFullForm] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleInitialSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (companyType === 'new' && !companyDetails.name) {
+      setError("Por favor, informe o nome da empresa");
+      return;
+    }
+    setShowFullForm(true);
+  };
+
+  const handleFinalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (companyType === 'existing' && !companyId) {
@@ -41,7 +54,8 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
     
     updateProfileData({ 
       companyId: companyType === 'existing' ? companyId : null,
-      newCompanyName: companyType === 'new' ? companyDetails.name : null
+      newCompanyName: companyType === 'new' ? companyDetails.name : null,
+      companyDetails: companyType === 'new' ? companyDetails : null
     });
 
     onCompanyTypeSelect(companyType === 'existing');
@@ -51,10 +65,125 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
   const handleCompanyTypeChange = (type: 'existing' | 'new') => {
     setCompanyType(type);
     setError("");
+    setShowFullForm(false);
   };
 
+  if (showFullForm && companyType === 'new') {
+    return (
+      <form onSubmit={handleFinalSubmit} className="space-y-6">
+        <div className="space-y-2">
+          <h2 className="text-xl font-medium">Detalhes da empresa</h2>
+          <p className="text-gray-500 text-sm">
+            Complete as informações sobre sua empresa
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm text-gray-500 block mb-1">Nome da empresa</label>
+            <Input
+              value={companyDetails.name}
+              onChange={(e) => setCompanyDetails(prev => ({ ...prev, name: e.target.value }))}
+              className="w-full"
+              disabled
+            />
+          </div>
+
+          <div>
+            <label className="text-sm text-gray-500 block mb-1">Descrição</label>
+            <textarea
+              value={companyDetails.description}
+              onChange={(e) => setCompanyDetails(prev => ({ ...prev, description: e.target.value }))}
+              className="w-full min-h-[100px] p-3 border border-gray-200 rounded-md"
+              placeholder="Descreva sua empresa"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm text-gray-500 block mb-1">História</label>
+            <textarea
+              value={companyDetails.historia}
+              onChange={(e) => setCompanyDetails(prev => ({ ...prev, historia: e.target.value }))}
+              className="w-full min-h-[100px] p-3 border border-gray-200 rounded-md"
+              placeholder="Conte a história da sua empresa"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm text-gray-500 block mb-1">Missão</label>
+            <textarea
+              value={companyDetails.missao}
+              onChange={(e) => setCompanyDetails(prev => ({ ...prev, missao: e.target.value }))}
+              className="w-full min-h-[100px] p-3 border border-gray-200 rounded-md"
+              placeholder="Qual é a missão da sua empresa?"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm text-gray-500 block mb-1">Valores</label>
+            <textarea
+              value={companyDetails.valores}
+              onChange={(e) => setCompanyDetails(prev => ({ ...prev, valores: e.target.value }))}
+              className="w-full min-h-[100px] p-3 border border-gray-200 rounded-md"
+              placeholder="Quais são os valores da sua empresa?"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm text-gray-500 block mb-1">Frase Institucional</label>
+            <Input
+              value={companyDetails.frase_institucional}
+              onChange={(e) => setCompanyDetails(prev => ({ ...prev, frase_institucional: e.target.value }))}
+              className="w-full"
+              placeholder="Slogan ou frase que representa sua empresa"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm text-gray-500 block mb-1">Vídeo Institucional (URL)</label>
+            <Input
+              value={companyDetails.video_institucional}
+              onChange={(e) => setCompanyDetails(prev => ({ ...prev, video_institucional: e.target.value }))}
+              className="w-full"
+              placeholder="URL do vídeo institucional"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm text-gray-500 block mb-1">Descrição do Vídeo</label>
+            <textarea
+              value={companyDetails.descricao_video}
+              onChange={(e) => setCompanyDetails(prev => ({ ...prev, descricao_video: e.target.value }))}
+              className="w-full min-h-[100px] p-3 border border-gray-200 rounded-md"
+              placeholder="Descreva o conteúdo do vídeo institucional"
+            />
+          </div>
+        </div>
+
+        <div className="pt-4 flex flex-col gap-3">
+          <Button 
+            type="submit" 
+            className="w-full rounded-md bg-merinno-dark hover:bg-black text-white"
+          >
+            Continuar
+          </Button>
+          
+          <Button 
+            type="button" 
+            variant="ghost"
+            className="flex items-center justify-center gap-2 text-gray-500 mt-2"
+            onClick={() => setShowFullForm(false)}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar
+          </Button>
+        </div>
+      </form>
+    );
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form onSubmit={handleInitialSubmit} className="space-y-8">
       <div className="space-y-2">
         <h2 className="text-xl font-medium">Sobre sua empresa</h2>
         <p className="text-gray-500 text-sm">

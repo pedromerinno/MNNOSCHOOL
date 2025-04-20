@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import OnboardingLayout from "@/components/onboarding/OnboardingLayout";
@@ -62,7 +61,7 @@ const OnboardingContent = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-12 w-full max-w-3xl transition-all duration-300">
+      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-16 w-full max-w-3xl transition-all duration-300">
         {currentStep === 1 && <ProfileStep onNext={nextStep} />}
         {currentStep === 2 && <PhotoStep onNext={nextStep} onBack={prevStep} />}
         {currentStep === 3 && (

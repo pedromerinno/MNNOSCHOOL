@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,6 +10,7 @@ interface OnboardingContextType {
     avatarUrl: string | null;
     companyId: string | null;
     newCompanyName: string | null;
+    companyDetails: any | null;
     interests: string[];
   };
   updateProfileData: (data: Partial<OnboardingContextType['profileData']>) => void;
@@ -23,6 +23,7 @@ const defaultProfileData = {
   avatarUrl: null,
   companyId: null,
   newCompanyName: null,
+  companyDetails: null,
   interests: []
 };
 
@@ -52,6 +53,13 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
           .from('empresas')
           .insert([{ 
             nome: profileData.newCompanyName,
+            descricao: profileData.companyDetails?.description,
+            historia: profileData.companyDetails?.historia,
+            missao: profileData.companyDetails?.missao,
+            valores: profileData.companyDetails?.valores,
+            frase_institucional: profileData.companyDetails?.frase_institucional,
+            video_institucional: profileData.companyDetails?.video_institucional,
+            descricao_video: profileData.companyDetails?.descricao_video,
             criado_por: user.id,
             admin_id: user.id
           }])
