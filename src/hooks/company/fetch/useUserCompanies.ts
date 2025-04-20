@@ -66,16 +66,40 @@ export const useUserCompanies = ({
         throw new DOMException("Aborted", "AbortError");
       }
       
-      // Utilize a nova função do banco de dados para obter as empresas do usuário
-      const { data, error } = await supabase
-        .rpc('get_user_companies_for_admin', { current_user_id: userId });
+      // Verificar primeiro se o usuário é admin - isso ajudará a determinar qual função usar
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('is_admin, super_admin')
+        .eq('id', userId)
+        .single();
         
-      if (error) {
-        throw error;
+      if (profileError) {
+        console.error("Error fetching user profile:", profileError);
+      }
+      
+      const isAdmin = profileData?.is_admin || profileData?.super_admin || false;
+      console.log(`User is admin: ${isAdmin}`);
+      
+      let companiesData;
+      
+      if (isAdmin) {
+        // Admin: usar a função que retorna todas as empresas para admins
+        const { data, error } = await supabase
+          .rpc('get_user_companies_for_admin', { current_user_id: userId });
+        
+        if (error) throw error;
+        companiesData = data;
+      } else {
+        // Usuário normal: buscar apenas empresas vinculadas
+        const { data, error } = await supabase
+          .rpc('get_user_companies', { user_id: userId });
+        
+        if (error) throw error;
+        companiesData = data;
       }
 
-      const companies = data as Company[] || [];
-      console.log(`Found ${companies.length} companies for user`);
+      const companies = companiesData as Company[] || [];
+      console.log(`Found ${companies.length} companies for user, isAdmin=${isAdmin}`);
 
       if (companies.length > 0) {
         setUserCompanies(companies);

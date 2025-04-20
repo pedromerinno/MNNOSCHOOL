@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
@@ -9,10 +9,37 @@ import { LeaderBoard } from "@/components/dashboard/LeaderBoard";
 import { UserInfoHeader } from "@/components/dashboard/UserInfoHeader";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NoCompaniesAvailable } from "@/components/home/NoCompaniesAvailable";
+import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const [isUserAdmin, setIsUserAdmin] = useState(false);
   const { getUserCompanies, selectedCompany, isLoading, userCompanies } = useCompanies();
+
+  // Verificar se o usuário é admin
+  useEffect(() => {
+    const checkUserAdmin = async () => {
+      if (user?.id) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('is_admin, super_admin')
+            .eq('id', user.id)
+            .single();
+            
+          if (error) {
+            console.error("Error checking admin status:", error);
+          } else {
+            setIsUserAdmin(data?.is_admin || data?.super_admin || false);
+          }
+        } catch (err) {
+          console.error("Error checking admin status:", err);
+        }
+      }
+    };
+    
+    checkUserAdmin();
+  }, [user]);
 
   // Fetch user's companies
   useEffect(() => {
@@ -28,6 +55,38 @@ const Dashboard = () => {
 
     fetchUserCompanies();
   }, [user, getUserCompanies]);
+
+  // Para admins, sempre mostrar o dashboard mesmo sem empresas
+  if (isUserAdmin) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-8">
+          <div>
+            <h1 className="text-2xl font-semibold mb-2">Dashboard</h1>
+            <p className="text-gray-500 dark:text-gray-400">
+              Ready to grow? Discover new tasks and seize the opportunity!
+            </p>
+          </div>
+          
+          <UserInfoHeader />
+
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} className="h-28 w-full rounded-lg" />
+              ))}
+            </div>
+          ) : (
+            <DashboardMetrics />
+          )}
+
+          <DashboardChallenges />
+          
+          <LeaderBoard />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   // If user has no companies, show no companies screen
   if (!isLoading && user && userCompanies.length === 0) {

@@ -5,17 +5,45 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useAuth } from "@/contexts/AuthContext";
 import { NoCompaniesAvailable } from "@/components/home/NoCompaniesAvailable";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [isPageLoading, setIsPageLoading] = useState(true);
+  const [isUserAdmin, setIsUserAdmin] = useState(false);
   const { userCompanies, isLoading, fetchCount, selectedCompany } = useCompanies();
   const { user } = useAuth();
+
+  // Verificar se o usuário é admin
+  useEffect(() => {
+    const checkUserAdmin = async () => {
+      if (user?.id) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('is_admin, super_admin')
+            .eq('id', user.id)
+            .single();
+            
+          if (error) {
+            console.error("Error checking admin status:", error);
+          } else {
+            setIsUserAdmin(data?.is_admin || data?.super_admin || false);
+            console.log("User is admin:", data?.is_admin || data?.super_admin || false);
+          }
+        } catch (err) {
+          console.error("Error checking admin status:", err);
+        }
+      }
+    };
+    
+    checkUserAdmin();
+  }, [user]);
 
   // Improved loading state to ensure we don't show "no companies" too early
   useEffect(() => {
     // Only stop showing loading state when:
     // 1. We've attempted to fetch companies at least once (fetchCount > 0)
-    // 2. We have a selected company already
+    // 2. We have a selected company already 
     // 3. Or, we've finished loading and confirmed there are no companies
     const timer = setTimeout(() => {
       if (selectedCompany || fetchCount > 0 || !isLoading) {
@@ -51,7 +79,17 @@ const Index = () => {
     );
   }
 
-  // Only show NoCompaniesAvailable if we've finished loading AND there are no companies
+  // Se o usuário for admin, mostramos a página principal mesmo sem empresas vinculadas
+  // Se o usuário for admin e não tiver empresas, ele pode criar empresas
+  if (isUserAdmin) {
+    return (
+      <div className="min-h-screen bg-background">
+        <UserHome />
+      </div>
+    );
+  }
+
+  // Para usuários regulares, só mostrar No Companies se realmente não houver empresas
   if (user && !isLoading && userCompanies.length === 0) {
     return <NoCompaniesAvailable />;
   }
