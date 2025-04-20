@@ -35,8 +35,9 @@ const AdminPage = () => {
     );
   }
   
+  // Corrigido: redirecionar para a página inicial '/' em vez de '/dashboard'
   if (!userProfile?.is_admin && !userProfile?.super_admin) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/" replace />;
   }
   
   return (
