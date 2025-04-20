@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Control } from "react-hook-form";
 import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
@@ -11,6 +12,7 @@ export interface LogoUrlFieldProps {
   control: Control<any>;
   name: string;
   label: string;
+  placeholder?: string; // Added placeholder as an optional prop
   companyId?: string;
 }
 
@@ -18,6 +20,7 @@ export const LogoUrlField: React.FC<LogoUrlFieldProps> = ({
   control,
   name,
   label,
+  placeholder = "https://example.com/logo.png", // Default value if not provided
   companyId
 }) => {
   const [isUploading, setIsUploading] = useState(false);
@@ -87,7 +90,7 @@ export const LogoUrlField: React.FC<LogoUrlFieldProps> = ({
                   <Input 
                     type="text" 
                     {...field} 
-                    placeholder="https://example.com/logo.png"
+                    placeholder={placeholder}
                   />
                   <div className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 flex items-center justify-center">
                     <Image className="h-4 w-4 text-gray-400" />
