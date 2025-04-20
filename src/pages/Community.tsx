@@ -10,6 +10,7 @@ import { DiscussionView } from "@/components/community/DiscussionView";
 import { useCompanies } from "@/hooks/useCompanies";
 import { CommunityLayout } from "@/components/community/layout/CommunityLayout";
 import { cn } from "@/lib/utils";
+import { DiscussionSkeleton } from "@/components/community/DiscussionSkeleton";
 
 type FilterStatus = 'all' | 'open' | 'closed';
 
@@ -106,6 +107,101 @@ const Community = () => {
     );
   }
 
+  if (isLoading) {
+    return (
+      <CommunityLayout>
+        <div className="">
+          <div className="flex flex-col gap-4 mb-6">
+            <div className="flex items-center justify-between gap-4 flex-wrap md:flex-nowrap">
+              <div 
+                className="flex gap-2 p-1.5 rounded-2xl order-2 md:order-1 w-full md:w-auto" 
+                style={{ 
+                  backgroundColor: getLighterCompanyColor(companyColor, 0.1),
+                  borderColor: companyColor
+                }}
+              >
+                <Button 
+                  variant={statusFilter === 'all' ? "default" : "ghost"}
+                  className={cn(
+                    "rounded-xl py-4 px-6 transition-colors",
+                    statusFilter === 'all' ? `bg-background` : ''
+                  )}
+                  style={{
+                    backgroundColor: statusFilter === 'all' ? getLighterCompanyColor(companyColor, 0.2) : undefined,
+                    borderColor: statusFilter === 'all' ? companyColor : undefined,
+                    color: statusFilter === 'all' ? companyColor : undefined
+                  }}
+                  onClick={() => setStatusFilter('all')}
+                >
+                  Todas
+                </Button>
+                <Button 
+                  variant={statusFilter === 'open' ? "default" : "ghost"}
+                  className={cn(
+                    "rounded-xl py-4 px-6 transition-colors",
+                    statusFilter === 'open' ? `bg-background` : ''
+                  )}
+                  style={{
+                    backgroundColor: statusFilter === 'open' ? getLighterCompanyColor(companyColor, 0.2) : undefined,
+                    borderColor: statusFilter === 'open' ? companyColor : undefined,
+                    color: statusFilter === 'open' ? companyColor : undefined
+                  }}
+                  onClick={() => setStatusFilter('open')}
+                >
+                  Abertas
+                </Button>
+                <Button 
+                  variant={statusFilter === 'closed' ? "default" : "ghost"}
+                  className={cn(
+                    "rounded-xl py-4 px-6 transition-colors",
+                    statusFilter === 'closed' ? `bg-background` : ''
+                  )}
+                  style={{
+                    backgroundColor: statusFilter === 'closed' ? getLighterCompanyColor(companyColor, 0.2) : undefined,
+                    borderColor: statusFilter === 'closed' ? companyColor : undefined,
+                    color: statusFilter === 'closed' ? companyColor : undefined
+                  }}
+                  onClick={() => setStatusFilter('closed')}
+                >
+                  Resolvidas
+                </Button>
+              </div>
+
+              <div className="flex gap-4 items-center order-1 md:order-2 w-full md:w-auto">
+                <div className="relative flex-1">
+                  <div className="relative">
+                    <Input
+                      type="text"
+                      placeholder="Buscar discussões..."
+                      className="pl-10 w-full bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-full h-11"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  </div>
+                </div>
+                
+                <Button 
+                  onClick={() => setIsDialogOpen(true)}
+                  className="rounded-full h-11 px-6 gap-2 bg-primary hover:bg-primary/90 whitespace-nowrap"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nova Discussão
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-4">
+            {[1, 2, 3].map((n) => (
+              <DiscussionSkeleton key={n} />
+            ))}
+          </div>
+        </div>
+      </CommunityLayout>
+    );
+  }
+
   return (
     <CommunityLayout>
       <div className="">
@@ -190,13 +286,7 @@ const Community = () => {
           </div>
         </div>
 
-        {isLoading ? (
-          <div className="grid gap-4">
-            {[1, 2, 3].map((n) => (
-              <div key={n} className="h-32 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-lg" />
-            ))}
-          </div>
-        ) : filteredDiscussions.length === 0 ? (
+        {filteredDiscussions.length === 0 ? (
           <div className="text-center py-12">
             <h3 className="text-lg font-medium mb-2">Nenhuma discussão encontrada</h3>
             <p className="text-sm text-gray-500 mb-4">
