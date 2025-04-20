@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import OnboardingLayout from "@/components/onboarding/OnboardingLayout";
@@ -10,19 +9,13 @@ import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 
-// Componente principal de Onboarding - renderiza apenas uma vez e não inicia requisições
 const Onboarding = () => {
   const { signOut } = useAuth();
-  
-  // Desabilitamos intencionalmente o useCompanies aqui para evitar múltiplas requisições
-  // Isso é seguro porque a página de onboarding não precisa dos dados de empresas para funcionar
-  // As empresas serão verificadas apenas na navegação através do ProtectedRoute
   
   return (
     <OnboardingProvider>
       <OnboardingLayout>
         <div className="min-h-screen flex flex-col items-center justify-center py-10 px-4 relative">
-          {/* Botão de logout no canto superior direito */}
           <Button 
             variant="ghost" 
             size="sm" 
@@ -39,11 +32,12 @@ const Onboarding = () => {
   );
 };
 
-// Componente separado para o conteúdo do onboarding
-// evitando re-renderizações desnecessárias
 const OnboardingContent = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 4;
+  const { userProfile } = useAuth();
+  
+  const isUpdate = !userProfile?.interesses?.includes("onboarding_incomplete");
 
   const nextStep = () => {
     if (currentStep < totalSteps) {
@@ -61,7 +55,9 @@ const OnboardingContent = () => {
     <div className="w-full max-w-xl bg-white rounded-xl shadow-lg p-8">
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold">Complete seu perfil</h1>
+          <h1 className="text-2xl font-bold">
+            {isUpdate ? "Atualizar Perfil" : "Complete seu perfil"}
+          </h1>
           <div className="text-sm text-gray-500">
             Passo {currentStep} de {totalSteps}
           </div>

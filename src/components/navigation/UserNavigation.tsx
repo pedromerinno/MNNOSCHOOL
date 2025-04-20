@@ -81,6 +81,10 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
   // Only show company selection if user has multiple companies
   const hasMultipleCompanies = userCompanies.length > 1;
 
+  const handleOpenProfile = () => {
+    navigate('/onboarding');
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -142,21 +146,13 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
           </>
         )}
         
-        <ProfilePopover 
-          email={user?.email}
-          onSave={handleProfileUpdate}
+        <DropdownMenuItem
+          className="cursor-pointer flex items-center gap-2"
+          onClick={handleOpenProfile}
         >
-          <DropdownMenuItem
-            className="cursor-pointer flex items-center gap-2"
-            onSelect={(e) => {
-              // Prevent the dropdown from closing
-              e.preventDefault();
-            }}
-          >
-            <User className="h-4 w-4" />
-            <span>Editar Perfil</span>
-          </DropdownMenuItem>
-        </ProfilePopover>
+          <User className="h-4 w-4" />
+          <span>Editar Perfil</span>
+        </DropdownMenuItem>
         
         <DropdownMenuSeparator />
         

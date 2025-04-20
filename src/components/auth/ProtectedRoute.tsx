@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useMemo } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -143,24 +142,16 @@ export const ProtectedRoute = () => {
     return <Navigate to="/login" replace />;
   }
 
-  // Verificar se precisa fazer onboarding - Usando um useMemo para não recalcular a cada renderização
-  const needsOnboarding = useMemo(() => {
-    // Se já estamos na página de onboarding, não precisamos checar novamente
-    if (isOnboarding) return true;
-    
+  // Verificar se precisa fazer onboarding inicial
+  const needsInitialOnboarding = useMemo(() => {
     return userProfile?.interesses?.includes("onboarding_incomplete") || 
            (!userCompanies || userCompanies.length === 0);
-  }, [userProfile?.interesses, userCompanies, isOnboarding]);
+  }, [userProfile?.interesses, userCompanies]);
                          
-  if (needsOnboarding && !isOnboarding) {
-    console.log("ProtectedRoute: Usuário precisa completar onboarding");
+  // Redirecionar para onboarding apenas se for necessário o onboarding inicial
+  if (needsInitialOnboarding && !isOnboarding) {
+    console.log("ProtectedRoute: Usuário precisa completar onboarding inicial");
     return <Navigate to="/onboarding" replace />;
-  }
-
-  // Impedir acesso à página de onboarding se já completou e tem empresa
-  if (!needsOnboarding && isOnboarding) {
-    console.log("ProtectedRoute: Usuário já completou onboarding");
-    return <Navigate to="/" replace />;
   }
 
   // Renderiza rotas protegidas se autenticado
