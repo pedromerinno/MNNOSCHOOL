@@ -60,7 +60,7 @@ const ProfileStep: React.FC<ProfileStepProps> = ({ onNext }) => {
       <div className="pt-4">
         <Button 
           type="submit" 
-          className="w-full rounded-md bg-merinno-dark hover:bg-black text-white"
+          className="w-full rounded-[100px] border-solid border-1 px-8 py-4 bg-merinno-dark hover:bg-black text-white"
         >
           Continuar
         </Button>
@@ -70,3 +70,4 @@ const ProfileStep: React.FC<ProfileStepProps> = ({ onNext }) => {
 };
 
 export default ProfileStep;
+
