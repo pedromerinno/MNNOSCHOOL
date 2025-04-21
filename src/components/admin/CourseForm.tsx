@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import { Course } from './CourseManagement';
-import { courseSchema, CourseFormValues } from './courses/form/CourseFormTypes';
+import { courseSchema, CourseFormValues, CourseFormProps } from './courses/form/CourseFormTypes';
 import { CourseFormFields } from './courses/form/CourseFormFields';
 import { TagsField } from './courses/form/TagsField';
 import { CompanySelectorField } from './courses/form/CompanySelectorField';
