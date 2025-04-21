@@ -33,8 +33,29 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
   const initialLoadComplete = useRef(false);
   const currentCompanyId = useRef<string | null>(null);
 
+  // Listen for company update events
   useEffect(() => {
-    // Se a empresa mudou, resetamos o estado
+    const handleCompanyUpdate = () => {
+      console.log("CourseList: Company update detected, resetting course list");
+      setCourses([]);
+      initialLoadComplete.current = false;
+      currentCompanyId.current = null;
+      setLoading(true);
+    };
+    
+    window.addEventListener('company-updated', handleCompanyUpdate);
+    window.addEventListener('company-selected', handleCompanyUpdate);
+    window.addEventListener('company-relation-changed', handleCompanyUpdate);
+    
+    return () => {
+      window.removeEventListener('company-updated', handleCompanyUpdate);
+      window.removeEventListener('company-selected', handleCompanyUpdate);
+      window.removeEventListener('company-relation-changed', handleCompanyUpdate);
+    };
+  }, []);
+
+  useEffect(() => {
+    // Reset state when company changes
     if (selectedCompany?.id !== currentCompanyId.current) {
       setCourses([]);
       initialLoadComplete.current = false;
@@ -42,10 +63,10 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
     }
 
     const fetchCourses = async () => {
-      // Não fazer nada se não temos empresa selecionada ou se estamos carregando
+      // Don't proceed if no company selected or if company is loading
       if (!selectedCompany || companyLoading) return;
 
-      // Evitar várias requisições ao mesmo tempo
+      // Avoid multiple requests at the same time
       if (loading && initialLoadComplete.current && currentCompanyId.current === selectedCompany.id) return;
 
       try {
@@ -53,7 +74,7 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
         console.log("Fetching courses with filter:", filter);
         console.log("Selected company:", selectedCompany?.nome || "None");
         
-        // Buscar dados de modo otimizado
+        // Fetch data optimized
         const doFetch = async () => {
           // Get user ID
           const { data: { user } } = await supabase.auth.getUser();
@@ -142,17 +163,17 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
           initialLoadComplete.current = true;
         };
 
-        // Executa a busca de dados
+        // Execute data fetch
         await doFetch().catch(error => {
           console.error('Error fetching courses:', error);
           toast({
-            title: 'Erro ao carregar cursos',
-            description: error.message || 'Ocorreu um erro ao buscar os cursos',
+            title: 'Error loading courses',
+            description: error.message || 'An error occurred while fetching courses',
             variant: 'destructive',
           });
         });
       } finally {
-        // Garantir que o estado de loading seja atualizado
+        // Ensure loading state is updated
         setLoading(false);
       }
     };

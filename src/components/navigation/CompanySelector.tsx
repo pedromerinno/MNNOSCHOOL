@@ -1,5 +1,5 @@
 
-import { memo, useCallback } from "react";
+import { memo, useCallback, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -38,24 +38,45 @@ export const CompanySelector = memo(() => {
     setDisplayName
   });
 
+  // Auto-select the first company if there's only one and none selected
+  useEffect(() => {
+    if (user?.id && userCompanies.length === 1 && !selectedCompany) {
+      console.log('CompanySelector: Auto-selecting the only company:', userCompanies[0].nome);
+      selectCompany(user.id, userCompanies[0]);
+      
+      // Dispatch a company selected event
+      const event = new CustomEvent('company-selected', {
+        detail: { company: userCompanies[0] }
+      });
+      window.dispatchEvent(event);
+    }
+  }, [user?.id, userCompanies, selectedCompany, selectCompany]);
+
   const handleCompanyChange = useCallback((company: Company) => {
     if (!company || !user?.id) return;
     
     if (selectedCompany?.id === company.id) {
-      console.log('CompanySelector: Empresa já selecionada, pulando mudança');
+      console.log('CompanySelector: Company already selected, skipping change');
       return;
     }
     
     const hasAccess = userCompanies.some(c => c.id === company.id);
     if (!hasAccess) {
-      console.error('CompanySelector: Usuário não tem acesso a esta empresa:', company.nome);
-      toast.error(`Você não tem acesso à empresa ${company.nome}`);
+      console.error('CompanySelector: User does not have access to this company:', company.nome);
+      toast.error(`You do not have access to company ${company.nome}`);
       return;
     }
     
-    console.log('CompanySelector: Selecionando empresa:', company.nome);
+    console.log('CompanySelector: Selecting company:', company.nome);
     selectCompany(user.id, company);
-    toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
+    
+    // Dispatch a company selected event
+    const event = new CustomEvent('company-selected', {
+      detail: { company }
+    });
+    window.dispatchEvent(event);
+    
+    toast.success(`Company ${company.nome} selected successfully!`);
   }, [user?.id, selectedCompany?.id, selectCompany, userCompanies]);
 
   if (isLoading && !selectedCompany) {

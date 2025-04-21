@@ -1,4 +1,3 @@
-
 import { useState, useEffect, lazy, Suspense, useRef } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -49,38 +48,70 @@ const Index = () => {
   const [showCompanyDialog, setShowCompanyDialog] = useState(false);
   const { userCompanies, isLoading, fetchCount, selectedCompany, getUserCompanies, forceGetUserCompanies } = useCompanies();
   const { user, userProfile } = useAuth();
-  const { getInitialSelectedCompany } = useCompanyCache();
+  const { getInitialSelectedCompany, clearCachedUserCompanies } = useCompanyCache();
   const navigate = useNavigate();
   const hasAttemptedForceLoad = useRef(false);
   const hasRedirectedToOnboarding = useRef(false);
+  const lastCacheCheckTime = useRef(Date.now());
+  const cacheCheckInterval = 5 * 60 * 1000; // 5 minutes
 
   const handleCompanyCreated = () => {
     setShowCompanyDialog(false);
     if (user?.id) {
       forceGetUserCompanies(user.id);
-      toast.success("Empresa criada com sucesso!");
+      toast.success("Company created successfully!");
     }
   };
   
   const handleCompanyTypeSelect = (isExisting: boolean) => {
-    // This is needed for the CompanyStep component
     console.log("[Index] Company type selected:", isExisting ? "existing" : "new");
   };
+  
+  useEffect(() => {
+    const now = Date.now();
+    if (now - lastCacheCheckTime.current > cacheCheckInterval) {
+      console.log("[Index] Cache expired, forcing data refresh");
+      lastCacheCheckTime.current = now;
+      clearCachedUserCompanies();
+      if (user?.id) {
+        forceGetUserCompanies(user.id);
+      }
+    }
+  }, [clearCachedUserCompanies, forceGetUserCompanies, user]);
+  
+  useEffect(() => {
+    const handleCompanyUpdate = () => {
+      console.log("[Index] Received company update event, refreshing data");
+      if (user?.id) {
+        forceGetUserCompanies(user.id);
+      }
+    };
+    
+    window.addEventListener('company-updated', handleCompanyUpdate);
+    window.addEventListener('company-selected', handleCompanyUpdate);
+    window.addEventListener('company-relation-changed', handleCompanyUpdate);
+    
+    return () => {
+      window.removeEventListener('company-updated', handleCompanyUpdate);
+      window.removeEventListener('company-selected', handleCompanyUpdate);
+      window.removeEventListener('company-relation-changed', handleCompanyUpdate);
+    };
+  }, [forceGetUserCompanies, user]);
   
   useEffect(() => {
     if (!user) return;
     
     if (userProfile?.interesses?.includes("onboarding_incomplete")) {
-      console.log("[Index] Usuário precisa completar onboarding, redirecionando...");
+      console.log("[Index] User needs to complete onboarding, redirecting...");
       navigate("/onboarding", { replace: true });
       return;
     }
     
     if (user && !isLoading && userCompanies.length === 0 && fetchCount > 0) {
-      console.log("[Index] Usuário não tem empresas após carregamento. Verificando se precisa de onboarding...");
+      console.log("[Index] User does not have companies after loading. Checking if onboarding is needed...");
       
       if (!userProfile?.interesses?.includes("onboarding_incomplete")) {
-        console.log("[Index] Usuário não tem flag de onboarding incompleto mas não tem empresas. Tentar forçar carregamento...");
+        console.log("[Index] User does not have onboarding incomplete flag but does not have companies. Trying to force load...");
         
         if (!hasAttemptedForceLoad.current && user.id) {
           hasAttemptedForceLoad.current = true;
@@ -88,14 +119,14 @@ const Index = () => {
           forceGetUserCompanies(user.id).then(companies => {
             if (companies.length === 0) {
               if (!hasRedirectedToOnboarding.current) {
-                console.log("[Index] Mesmo após forçar carregamento, não há empresas. Abrindo diálogo de criação de empresa...");
+                console.log("[Index] Even after forcing load, no companies. Opening company creation dialog...");
                 setShowCompanyDialog(true);
               }
             } else {
-              toast.success("Empresas carregadas com sucesso!");
+              toast.success("Companies loaded successfully!");
             }
           }).catch(err => {
-            console.error("[Index] Erro ao tentar forçar carregamento de empresas:", err);
+            console.error("[Index] Error while trying to force load companies:", err);
           });
         }
       }
@@ -122,7 +153,7 @@ const Index = () => {
     
     const timeoutId = setTimeout(() => {
       if (isPageLoading) {
-        console.log("[Index] Finalizando loading por timeout de segurança");
+        console.log("[Index] Finalizing loading by timeout of security");
         setIsPageLoading(false);
       }
     }, 2000);
@@ -132,10 +163,10 @@ const Index = () => {
 
   useEffect(() => {
     if (user?.id && userCompanies.length === 0 && !isLoading && !hasAttemptedForceLoad.current) {
-      console.log("[Index] Forçando carregamento inicial de empresas");
+      console.log("[Index] Forcing initial company load");
       hasAttemptedForceLoad.current = true;
       getUserCompanies(user.id, true).catch(err => {
-        console.error("[Index] Erro no carregamento inicial:", err);
+        console.error("[Index] Error in initial load:", err);
       });
     }
   }, [user?.id, getUserCompanies, userCompanies.length, isLoading]);
@@ -159,7 +190,7 @@ const Index = () => {
       <>
         <Dialog open={showCompanyDialog} onOpenChange={setShowCompanyDialog}>
           <DialogContent className="max-w-2xl p-0 h-[90vh] overflow-hidden flex flex-col">
-            <DialogTitle className="sr-only">Configuração de Empresa</DialogTitle>
+            <DialogTitle className="sr-only">Configuration of Company</DialogTitle>
             <div className="bg-white rounded-t-lg flex-1 overflow-auto">
               <div className="p-6 md:p-8">
                 <OnboardingProvider>
