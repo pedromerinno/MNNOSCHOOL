@@ -72,6 +72,14 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     checkUserRole();
   }, [user?.id, stateActions.setIsSuperAdmin]);
 
+  // Select first company when companies are loaded
+  useEffect(() => {
+    if (userCompanies.length > 0 && !selectedCompany && !isLoading && user?.id) {
+      console.log('[useCompanies] Selecting first company:', userCompanies[0].nome);
+      selectCompany(user.id, userCompanies[0]);
+    }
+  }, [userCompanies, selectedCompany, isLoading, user?.id, selectCompany]);
+
   // Load initial data only when needed
   useEffect(() => {
     const loadInitialData = async () => {
