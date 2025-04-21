@@ -27,6 +27,7 @@ export const useCourseData = (courseId: string | undefined) => {
     const fetchCourse = async () => {
       if (!courseId) {
         setLoading(false);
+        setError(new Error("ID do curso não fornecido"));
         return;
       }
 
@@ -46,10 +47,14 @@ export const useCourseData = (courseId: string | undefined) => {
             tags
           `)
           .eq('id', courseId)
-          .single();
+          .maybeSingle(); // Usando maybeSingle ao invés de single para evitar erros
         
         if (courseError) {
           throw courseError;
+        }
+        
+        if (!courseData) {
+          throw new Error("Curso não encontrado");
         }
         
         // Fetch the lessons
@@ -94,7 +99,7 @@ export const useCourseData = (courseId: string | undefined) => {
         }
         
         // Format the lessons
-        const formattedLessons: Lesson[] = lessonsData.map(lesson => ({
+        const formattedLessons: Lesson[] = lessonsData ? lessonsData.map(lesson => ({
           id: lesson.id,
           title: lesson.title,
           description: lesson.description,
@@ -105,7 +110,7 @@ export const useCourseData = (courseId: string | undefined) => {
           completed: lessonProgressData?.some(progress => 
             progress.lesson_id === lesson.id && progress.completed
           ) || false
-        }));
+        })) : [];
         
         // Calculate progress if not available
         let progress = 0;

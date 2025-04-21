@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCourseData } from '@/hooks/useCourseData';
@@ -23,7 +24,7 @@ import { toast } from 'sonner';
 
 export const CourseView: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
-  const { course, loading } = useCourseData(courseId);
+  const { course, loading, error } = useCourseData(courseId);
   const { startLesson } = useLessonNavigation(courseId);
   const [activeTab, setActiveTab] = useState<string>("description");
   const { selectedCompany } = useCompanies();
@@ -58,6 +59,16 @@ export const CourseView: React.FC = () => {
   };
 
   const { userCompanies } = useCompanies();
+  
+  // Adicionando verificações de segurança
+  if (loading) {
+    return <CourseViewSkeleton />;
+  }
+
+  if (!course || error) {
+    return <CourseNotFound />;
+  }
+
   const courseCompanyIds = userCompanies
     .filter((c) => selectedCompany?.id === c.id)
     .map((c) => c.id);
@@ -70,14 +81,6 @@ export const CourseView: React.FC = () => {
     tags: course.tags || [],
     companyIds: courseCompanyIds,
   };
-
-  if (loading) {
-    return <CourseViewSkeleton />;
-  }
-
-  if (!course) {
-    return <CourseNotFound />;
-  }
 
   const firstLessonId = course.lessons && course.lessons.length > 0 ? course.lessons[0].id : undefined;
 
