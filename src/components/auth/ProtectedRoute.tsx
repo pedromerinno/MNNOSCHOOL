@@ -8,7 +8,7 @@ import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 import { toast } from "sonner";
 
 export const ProtectedRoute = () => {
-  const { user, loading, session, userProfile } = useAuth();
+  const { user, loading, userProfile } = useAuth();
   const location = useLocation();
   const isOnboarding = location.pathname === "/onboarding";
   
@@ -44,7 +44,7 @@ export const ProtectedRoute = () => {
     return () => clearTimeout(timeoutId);
   }, [loading]);
 
-  // Mostrar um loading mais simplificado e rápido
+  // Loading state handling
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -53,7 +53,7 @@ export const ProtectedRoute = () => {
     );
   }
 
-  // Mostra erro de autenticação se houver
+  // Auth error handling
   if (authError) {
     return (
       <div className="flex flex-col items-center justify-center h-screen p-4">
@@ -86,17 +86,15 @@ export const ProtectedRoute = () => {
     );
   }
 
-  // Redirecionar para login se não autenticado
+  // Login redirect
   if (!user) {
     console.log("ProtectedRoute: Usuário não autenticado, redirecionando para login");
     return <Navigate to="/login" replace />;
   }
 
-  // Verificar se precisa fazer onboarding inicial
-  // Consideramos apenas a flag 'onboarding_incomplete' para onboarding
+  // Onboarding check
   const needsOnboarding = userProfile?.interesses?.includes("onboarding_incomplete");
                          
-  // Redirecionar para onboarding se for a primeira vez
   if (needsOnboarding && !isOnboarding) {
     console.log("ProtectedRoute: Usuário precisa completar onboarding inicial", { 
       interesses: userProfile?.interesses
@@ -104,14 +102,19 @@ export const ProtectedRoute = () => {
     return <Navigate to="/onboarding" replace />;
   }
 
-  // Se não precisa de onboarding mas não tem empresas, permitir acesso à home
-  // O componente NoCompaniesAvailable será mostrado na home
-  if (!needsOnboarding && !isOnboarding && (!userCompanies || userCompanies.length === 0) && !companiesLoading) {
-    console.log("ProtectedRoute: Usuário sem empresas mas já fez onboarding");
+  // Check if the current route is allowed when no companies are available
+  const isRestrictedRoute = () => {
+    const allowedPaths = ['/', '/admin'];
+    return !allowedPaths.includes(location.pathname);
+  };
+
+  // Redirect to home if trying to access restricted route with no companies
+  if (!companiesLoading && userCompanies.length === 0 && isRestrictedRoute()) {
+    toast.error("Você precisa ter acesso a uma empresa para acessar esta página");
+    return <Navigate to="/" replace />;
   }
 
-  // Renderiza rotas protegidas se autenticado
-  console.log("ProtectedRoute: Usuário autenticado, renderizando rotas protegidas");
+  // Render protected routes
   return (
     <ErrorBoundary fallback={ErrorFallback}>
       <Outlet />

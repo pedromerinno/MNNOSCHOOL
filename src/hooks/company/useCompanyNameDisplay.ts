@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Company } from '@/types/company';
 
 export const useCompanyNameDisplay = (selectedCompany: Company | null) => {
-  const [displayName, setDisplayName] = useState<string>("merinno");
+  const [displayName, setDisplayName] = useState<string>("MNNO");
 
   useEffect(() => {
     const cachedCompanyName = localStorage.getItem('selectedCompanyName');
