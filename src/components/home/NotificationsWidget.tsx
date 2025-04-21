@@ -6,7 +6,7 @@ import { useCompanyNotices } from "@/hooks/useCompanyNotices";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatDistanceToNow } from "date-fns";
 import { pt } from "date-fns/locale";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import NewNoticeDialog from "../admin/dialogs/NewNoticeDialog";
 import { AllNoticesDialog } from "./AllNoticesDialog";
 
@@ -17,7 +17,8 @@ export const NotificationsWidget = () => {
     isLoading, 
     error, 
     nextNotice, 
-    prevNotice 
+    prevNotice,
+    fetchNotices
   } = useCompanyNotices();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [noticesDialogOpen, setNoticesDialogOpen] = useState(false);
@@ -33,6 +34,24 @@ export const NotificationsWidget = () => {
     } catch (error) {
       console.error("Erro ao formatar data:", error);
       return "data desconhecida";
+    }
+  };
+
+  // Atualizar avisos quando o diálogo de edição é fechado
+  const handleDialogOpenChange = (open: boolean) => {
+    setDialogOpen(open);
+    if (!open) {
+      // Quando o diálogo é fechado, atualizar os avisos
+      fetchNotices();
+    }
+  };
+
+  // Atualizar avisos quando o diálogo de todos os avisos é fechado
+  const handleAllNoticesDialogChange = (open: boolean) => {
+    setNoticesDialogOpen(open);
+    if (!open) {
+      // Quando o diálogo é fechado, atualizar os avisos
+      fetchNotices();
     }
   };
 
@@ -135,9 +154,8 @@ export const NotificationsWidget = () => {
         </div>
       </CardContent>
       
-      <NewNoticeDialog open={dialogOpen} onOpenChange={setDialogOpen} />
-      <AllNoticesDialog open={noticesDialogOpen} onOpenChange={setNoticesDialogOpen} />
+      <NewNoticeDialog open={dialogOpen} onOpenChange={handleDialogOpenChange} />
+      <AllNoticesDialog open={noticesDialogOpen} onOpenChange={handleAllNoticesDialogChange} />
     </Card>
   );
 };
-

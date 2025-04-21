@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -70,6 +69,9 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
       await deleteNotice(noticeIdToDelete);
       // Atualizar a lista após a exclusão
       fetchNotices();
+      // Notificar o componente pai para atualizar o widget de notificações
+      onOpenChange(false);
+      onOpenChange(true);
     }
     setDeleteConfirmOpen(false);
     setNoticeIdToDelete(null);

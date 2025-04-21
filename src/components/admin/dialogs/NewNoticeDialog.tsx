@@ -1,250 +1,242 @@
-
 import React, { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useToast } from "@/components/ui/use-toast";
 import { useCompanyNotices, NoticeFormData } from "@/hooks/useCompanyNotices";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCompanies } from "@/hooks/useCompanies";
-import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useAuth } from "@/contexts/AuthContext";
 
-const formSchema = z.object({
-  title: z.string().min(3, { message: "O título deve ter pelo menos 3 caracteres" }),
-  content: z.string().min(10, { message: "O conteúdo deve ter pelo menos 10 caracteres" }),
-  type: z.string().default("geral"),
-  companies: z.array(z.string()).min(1, { message: "Selecione ao menos uma empresa" })
-});
-
+// Adicionar props para callback após operação bem-sucedida
 interface NewNoticeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  initialData?: Partial<NoticeFormData> & { companies?: string[] };
+  initialData?: any;
   editingNoticeId?: string | null;
 }
 
-const NewNoticeDialog: React.FC<NewNoticeDialogProps> = ({
-  open,
-  onOpenChange,
-  initialData,
-  editingNoticeId
-}) => {
-  const { user } = useAuth();
-  const { createNotice, updateNotice, isLoading } = useCompanyNotices();
-  const { userCompanies, isLoading: loadingCompanies } = useCompanies();
+const NewNoticeDialog = ({ 
+  open, 
+  onOpenChange, 
+  initialData, 
+  editingNoticeId 
+}: NewNoticeDialogProps) => {
+  const { toast } = useToast();
+  const { createNotice, updateNotice } = useCompanyNotices();
+  const { userCompanies } = useCompanies();
+  const [dialogOpen, setDialogOpen] = useState(open);
+  const [submitting, setSubmitting] = useState(false);
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const formSchema = z.object({
+    title: z.string().min(2, {
+      message: "Título deve ter pelo menos 2 caracteres.",
+    }),
+    content: z.string().min(10, {
+      message: "Conteúdo deve ter pelo menos 10 caracteres.",
+    }),
+    type: z.enum(['informativo', 'urgente', 'padrão']),
+    companies: z.array(z.string()).optional(),
+  });
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<NoticeFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: initialData?.title || "",
       content: initialData?.content || "",
-      type: initialData?.type || "geral",
+      type: initialData?.type || "informativo",
       companies: initialData?.companies || [],
-    }
+    },
+    mode: "onChange",
   });
 
+  const { reset, watch, setValue } = form;
+
   useEffect(() => {
-    if (open) {
-      // Log de depuração para verificar os dados iniciais
-      console.log("Abrindo diálogo com dados iniciais:", initialData);
-      
-      form.reset({
+    setDialogOpen(open);
+    if (open && initialData) {
+      Object.keys(initialData).forEach(key => {
+        setValue(key as keyof NoticeFormData, initialData[key]);
+      });
+    }
+  }, [open, initialData, setValue]);
+
+  const selectedCompanies = watch("companies");
+
+  useEffect(() => {
+    if (!dialogOpen) {
+      // Reset form when dialog is closed
+      reset({
         title: initialData?.title || "",
         content: initialData?.content || "",
-        type: initialData?.type || "geral",
+        type: initialData?.type || "informativo",
         companies: initialData?.companies || [],
       });
     }
-  }, [open, initialData, form]);
+  }, [dialogOpen, reset, initialData]);
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!user?.id) {
-      toast.error("Você precisa estar logado para criar ou editar avisos.");
-      return;
-    }
+  // Atualizar o onSubmit para notificar a conclusão bem-sucedida
+  const onSubmit = async (data: NoticeFormData) => {
+    setSubmitting(true);
     
     try {
-      setIsSubmitting(true);
-      console.log("Enviando formulário com valores:", values);
-
-      const noticeData: NoticeFormData = {
-        title: values.title,
-        content: values.content,
-        type: values.type,
-        companies: values.companies
-      };
-
-      let success: boolean = false;
       if (editingNoticeId) {
-        console.log("Editando aviso:", editingNoticeId, "Empresas:", values.companies);
-        success = await updateNotice(editingNoticeId, noticeData);
+        console.log("Editando aviso:", editingNoticeId, "Empresas:", data.companies);
+        const success = await updateNotice(editingNoticeId, data);
+        if (success) {
+          setDialogOpen(false);
+          onOpenChange(false);
+          reset();
+        }
       } else {
-        console.log("Criando novo aviso para empresas:", values.companies);
-        success = await createNotice(noticeData, values.companies);
+        console.log("Enviando formulário com valores:", data);
+        const success = await createNotice(data, data.companies);
+        if (success) {
+          setDialogOpen(false);
+          onOpenChange(false);
+          reset();
+        }
       }
-
-      if (success) {
-        form.reset();
-        onOpenChange(false);
-      }
+    } catch (error) {
+      console.error("Erro ao salvar aviso:", error);
+      toast.error("Erro ao salvar aviso");
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+    <Dialog open={dialogOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
-          <DialogTitle>
-            {editingNoticeId ? "Editar Aviso" : "Criar Novo Aviso"}
-          </DialogTitle>
+          <DialogTitle>{editingNoticeId ? "Editar Aviso" : "Novo Aviso"}</DialogTitle>
           <DialogDescription>
             {editingNoticeId
-              ? "Altere o aviso para as empresas marcadas."
-              : "Crie um novo aviso para todos os membros das empresas escolhidas"}
+              ? "Edite os campos do aviso."
+              : "Adicione um novo aviso para a empresa."}
           </DialogDescription>
         </DialogHeader>
-
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Título</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Título do aviso" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tipo</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <div className="space-y-2">
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Título</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o tipo" />
-                      </SelectTrigger>
+                      <Input placeholder="Título do aviso" {...field} />
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="geral">Geral</SelectItem>
-                      <SelectItem value="recesso">Recesso</SelectItem>
-                      <SelectItem value="feriado">Feriado</SelectItem>
-                      <SelectItem value="evento">Evento</SelectItem>
-                      <SelectItem value="urgente">Urgente</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="content"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Conteúdo</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Conteúdo do aviso"
-                      rows={5}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="companies"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Empresas</FormLabel>
-                  <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
-                    {loadingCompanies ? (
-                      <span>Carregando empresas...</span>
-                    ) : userCompanies.length === 0 ? (
-                      <span className="text-sm text-muted-foreground">Nenhuma empresa disponível</span>
-                    ) : (
-                      userCompanies.map(company => {
-                        // Verificar se a empresa está selecionada
-                        const checked = field.value?.includes(company.id);
-                        return (
-                          <label
-                            key={company.id}
-                            className={`
-                              flex items-center gap-2 cursor-pointer rounded-lg border px-3 py-2 min-w-[110px] transition
-                              text-gray-800 dark:text-gray-100 select-none
-                              ${checked
-                                ? "border-[#9b87f5] bg-[#E5DEFF]/60"
-                                : "border-gray-200 dark:border-gray-800 hover:border-[#9b87f5] bg-white dark:bg-[#1A1F2C]"
-                              }
-                              shadow-sm
-                            `}
-                            style={{ fontSize: '0.98rem' }}
-                          >
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="space-y-2">
+              <FormField
+                control={form.control}
+                name="content"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Conteúdo</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Conteúdo do aviso" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="space-y-2">
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o tipo" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="informativo">Informativo</SelectItem>
+                        <SelectItem value="urgente">Urgente</SelectItem>
+                        <SelectItem value="padrão">Padrão</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <FormLabel>Empresas</FormLabel>
+              <div className="grid gap-2">
+                {userCompanies.map((company) => (
+                  <FormField
+                    key={company.id}
+                    control={form.control}
+                    name="companies"
+                    render={({ field }) => {
+                      return (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border p-3 shadow-sm">
+                          <div className="space-y-0.5">
+                            <FormLabel htmlFor={company.id} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                              {company.nome}
+                            </FormLabel>
+                            <p className="text-sm text-muted-foreground">
+                              {company.email}
+                            </p>
+                          </div>
+                          <FormControl>
                             <Checkbox
-                              checked={checked}
-                              onCheckedChange={(isChecked) => {
-                                if (isChecked) {
-                                  // Adicionar empresa se não estiver selecionada
-                                  field.onChange([...field.value, company.id]);
-                                  console.log("Empresa adicionada:", company.id, "Nova lista:", [...field.value, company.id]);
+                              id={company.id}
+                              checked={field.value?.includes(company.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  field.onChange([...(field.value || []), company.id])
                                 } else {
-                                  // Remover empresa se estiver selecionada
-                                  field.onChange(field.value.filter((id: string) => id !== company.id));
-                                  console.log("Empresa removida:", company.id, "Nova lista:", field.value.filter((id: string) => id !== company.id));
+                                  field.onChange(field.value?.filter((value) => value !== company.id))
                                 }
                               }}
-                              className="mr-2"
                             />
-                            {company.logo && (
-                              <img
-                                src={company.logo}
-                                alt={company.nome}
-                                className="h-5 w-5 rounded-full object-cover border border-gray-200 dark:border-gray-700 ml-1"
-                              />
-                            )}
-                            <span className="text-xs font-semibold ml-1">{company.nome}</span>
-                          </label>
-                        );
-                      })
-                    )}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="flex justify-end gap-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isSubmitting}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? (editingNoticeId ? "Salvando..." : "Criando...") : (editingNoticeId ? "Salvar" : "Criar Aviso")}
-              </Button>
+                          </FormControl>
+                        </FormItem>
+                      )
+                    }}
+                  />
+                ))}
+              </div>
             </div>
+
+            <DialogFooter>
+              <Button type="submit" disabled={submitting}>
+                {submitting ? "Salvando..." : "Salvar"}
+              </Button>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>
