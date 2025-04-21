@@ -19,6 +19,7 @@ interface CompanyStepProps {
   onBack: () => void;
   onCompanyTypeSelect: (isExisting: boolean) => void;
   onCompanyCreated?: () => void;
+  hideBack?: boolean; // Add the hideBack optional property
 }
 
 interface CompanyDetails {
@@ -33,7 +34,13 @@ interface CompanyDetails {
   historia: string;
 }
 
-const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyTypeSelect, onCompanyCreated }) => {
+const CompanyStep: React.FC<CompanyStepProps> = ({ 
+  onNext, 
+  onBack, 
+  onCompanyTypeSelect, 
+  onCompanyCreated,
+  hideBack = false // Add default value of false
+}) => {
   const { profileData, updateProfileData } = useOnboarding();
   const { user, updateUserProfile } = useAuth();
   const navigate = useNavigate();
@@ -263,16 +270,18 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
             : (companyType === 'new' ? "Criar Empresa" : "Continuar")}
         </Button>
         
-        <Button 
-          type="button" 
-          variant="ghost"
-          className="flex items-center justify-center gap-2 text-gray-500 mt-2"
-          onClick={onBack}
-          disabled={isSubmitting}
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
-        </Button>
+        {!hideBack && (
+          <Button 
+            type="button" 
+            variant="ghost"
+            className="flex items-center justify-center gap-2 text-gray-500 mt-2"
+            onClick={onBack}
+            disabled={isSubmitting}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar
+          </Button>
+        )}
       </div>
     </form>
   );
