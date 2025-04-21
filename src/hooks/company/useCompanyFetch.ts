@@ -29,6 +29,7 @@ export const useCompanyFetch = (props: UseCompanyFetchProps) => {
         
       if (profileError) {
         console.error('[useCompanyFetch] Error checking user profile:', profileError);
+        throw profileError;
       }
       
       // If super admin, return all companies
@@ -44,7 +45,9 @@ export const useCompanyFetch = (props: UseCompanyFetchProps) => {
       }
       
       // Otherwise, get user's companies
-      return await _getUserCompanies(userId, signal);
+      const companies = await _getUserCompanies(userId, signal);
+      console.log(`[useCompanyFetch] Returned ${companies.length} companies for user`);
+      return companies;
     } catch (error) {
       console.error('[useCompanyFetch] Error in getUserCompanies:', error);
       throw error;

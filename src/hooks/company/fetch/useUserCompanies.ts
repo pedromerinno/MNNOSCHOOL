@@ -17,11 +17,11 @@ export const useUserCompanies = ({
       console.log(`[useUserCompanies] Buscando empresas para usuário: ${userId}`);
       setIsLoading(true);
       
-      // First try to use the RPC function which handles permissions
+      // First try to use the RPC function which handles permissions correctly
       const { data: rpcData, error: rpcError } = await supabase
         .rpc('get_user_companies', { user_id: userId });
         
-      if (!rpcError && rpcData) {
+      if (!rpcError && rpcData && rpcData.length > 0) {
         console.log(`[useUserCompanies] Encontradas ${rpcData.length} empresas via RPC`);
         setUserCompanies(rpcData as Company[]);
         return rpcData as Company[];
@@ -31,7 +31,7 @@ export const useUserCompanies = ({
         console.warn('[useUserCompanies] Error using RPC, falling back to direct query:', rpcError);
       }
       
-      // Fallback to direct query if RPC not available or failed
+      // Fallback to direct query if RPC not available or failed or returned no data
       const { data: relations, error: relationsError } = await supabase
         .from('user_empresa')
         .select('empresa_id')
@@ -69,6 +69,7 @@ export const useUserCompanies = ({
         // Save to local cache for faster loading next time
         try {
           localStorage.setItem('userCompanies', JSON.stringify(companies));
+          localStorage.setItem('userCompaniesTimestamp', Date.now().toString());
         } catch (e) {
           console.warn('[useUserCompanies] Failed to cache companies to localStorage:', e);
         }
@@ -77,10 +78,13 @@ export const useUserCompanies = ({
         companies.forEach(company => {
           console.log(`[useUserCompanies] Empresa carregada: ${company.nome} (${company.id})`);
         });
+        
+        setUserCompanies(companies as Company[]);
+        return companies as Company[];
+      } else {
+        setUserCompanies([]);
+        return [];
       }
-      
-      setUserCompanies(companies as Company[]);
-      return companies as Company[];
     } catch (error) {
       console.error('[useUserCompanies] Error fetching user companies:', error);
       setError(error instanceof Error ? error : new Error('Failed to fetch user companies'));

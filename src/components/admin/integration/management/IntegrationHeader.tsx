@@ -1,7 +1,8 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Company } from "@/types/company";
+import { toast } from 'sonner';
 
 interface IntegrationHeaderProps {
   companies: Company[];
@@ -16,6 +17,15 @@ export const IntegrationHeader: React.FC<IntegrationHeaderProps> = ({
   onCompanyChange,
   isDisabled
 }) => {
+  // Force reselection if selectedCompany is null but companies are available
+  useEffect(() => {
+    if (!selectedCompany && companies.length > 0 && !isDisabled) {
+      console.log('IntegrationHeader: No company selected, auto-selecting first company');
+      onCompanyChange(companies[0].id);
+      toast.info(`Company ${companies[0].nome} automatically selected`);
+    }
+  }, [selectedCompany, companies, isDisabled, onCompanyChange]);
+
   return (
     <div className="flex flex-col md:flex-row md:items-center gap-4 justify-between">
       <div>

@@ -29,6 +29,7 @@ export const CompanySelector = memo(() => {
   
   // Create a wrapper function with the correct return type
   const handleForceGetUserCompanies = async (userId: string): Promise<any> => {
+    console.log('CompanySelector: Forcing refresh of user companies');
     return await forceGetUserCompanies(userId);
   };
   
@@ -58,6 +59,7 @@ export const CompanySelector = memo(() => {
       console.log('CompanySelector: No companies loaded, forcing initial load');
       forceGetUserCompanies(user.id).catch(err => {
         console.error('Error forcing initial company load:', err);
+        toast.error('Error loading companies. Please refresh the page.');
       });
     }
   }, [user?.id, isLoading, userCompanies.length, forceGetUserCompanies]);
@@ -90,22 +92,22 @@ export const CompanySelector = memo(() => {
   }, [user?.id, selectedCompany?.id, selectCompany, userCompanies]);
 
   if (isLoading && !selectedCompany) {
-    return <CompanyName displayName={displayName} />;
+    return <CompanyName displayName={displayName || "Loading..."} />;
   }
 
   if (!user || !userCompanies || userCompanies.length === 0) {
-    return <CompanyName displayName="merinno" />;
+    return <CompanyName displayName={displayName || "merinno"} />;
   }
 
   if (userCompanies.length === 1) {
-    return <CompanyName displayName={displayName} />;
+    return <CompanyName displayName={displayName || userCompanies[0].nome} />;
   }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center text-lg font-bold text-merinno-dark focus:outline-none">
-          {displayName}
+          {displayName || (selectedCompany?.nome || "Select Company")}
           <ChevronDown className="ml-1 h-4 w-4" />
         </button>
       </DropdownMenuTrigger>
