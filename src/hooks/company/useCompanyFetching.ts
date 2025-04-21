@@ -1,3 +1,4 @@
+
 import { useCallback, useRef } from "react";
 import { Company } from "@/types/company";
 import { useCompanyRequest } from "./useCompanyRequest";
@@ -9,6 +10,7 @@ import { UseCompanyFetchingProps } from "./types/fetchTypes";
 export const useCompanyFetching = ({
   userCompanies,
   setCompanies,
+  setUserCompanies,
   setSelectedCompany,
   setIsLoading,
   setError,
@@ -33,6 +35,7 @@ export const useCompanyFetching = ({
   const companyFetchProps = {
     setIsLoading,
     setCompanies,
+    setUserCompanies,
     setSelectedCompany,
     setError
   };
@@ -183,7 +186,8 @@ export const useCompanyFetching = ({
     setCompanies,
     pendingRequestsRef,
     cacheUserCompanies,
-    setIsLoading
+    setIsLoading,
+    setUserCompanies
   ]);
   
   const getCompanyByIdOptimized = useCallback(async (companyId: string): Promise<Company | null> => {

@@ -7,6 +7,7 @@ import { UseCompanyFetchProps } from "../types/fetchTypes";
 export const useUserCompanies = ({ 
   setIsLoading, 
   setCompanies, 
+  setUserCompanies,
   setError 
 }: UseCompanyFetchProps) => {
   const getUserCompanies = useCallback(async (userId: string, signal?: AbortSignal) => {
@@ -22,6 +23,7 @@ export const useUserCompanies = ({
       
       if (!relations || relations.length === 0) {
         setCompanies([]);
+        if (setUserCompanies) setUserCompanies([]);
         return [];
       }
 
@@ -36,13 +38,14 @@ export const useUserCompanies = ({
       if (companiesError) throw companiesError;
       
       setCompanies(companies as Company[]);
+      if (setUserCompanies) setUserCompanies(companies as Company[]);
       return companies as Company[];
     } catch (error) {
       console.error('Error fetching user companies:', error);
       setError(error instanceof Error ? error : new Error('Failed to fetch user companies'));
       return [];
     }
-  }, [setCompanies, setError]);
+  }, [setCompanies, setUserCompanies, setError]);
 
   return { getUserCompanies };
 };

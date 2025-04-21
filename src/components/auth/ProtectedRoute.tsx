@@ -12,9 +12,7 @@ export const ProtectedRoute = () => {
   const location = useLocation();
   const isOnboarding = location.pathname === "/onboarding";
   
-  const { userCompanies, isLoading: companiesLoading } = useCompanies({
-    skipLoadingInOnboarding: isOnboarding
-  });
+  const { userCompanies, isLoading: companiesLoading } = useCompanies();
   
   const [initialLoadDone, setInitialLoadDone] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);

@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanyState } from "./company/useCompanyState";
 import { useCompanyFetching } from "./company/useCompanyFetching";
@@ -29,6 +28,7 @@ export const useCompanies = () => {
     getCompanyById
   } = useCompanyFetching({
     userCompanies,
+    setUserCompanies: stateActions.setUserCompanies,
     ...stateActions
   });
   
@@ -44,10 +44,8 @@ export const useCompanies = () => {
     ...stateActions
   });
 
-  // Listen for selected company events
   useCompanyEvents(stateActions.setSelectedCompany);
 
-  // Check if user is super admin
   useEffect(() => {
     const checkUserRole = async () => {
       if (user?.id && !hasCheckedUserRole) {
@@ -72,7 +70,6 @@ export const useCompanies = () => {
     checkUserRole();
   }, [user?.id, hasCheckedUserRole, setIsSuperAdmin]);
 
-  // Global data loading - load user companies only when user is logged in
   useEffect(() => {
     const loadInitialData = async () => {
       if (user?.id && (userCompanies.length === 0) && !isLoading && hasCheckedUserRole) {
