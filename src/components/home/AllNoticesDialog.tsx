@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -30,15 +31,21 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
 
   const canManage = userProfile?.is_admin || userProfile?.super_admin;
 
-  // Atualizar avisos quando o diálogo é aberto, com debounce para evitar múltiplas chamadas
+  // Update notices when dialog is opened, with debounce to prevent multiple calls
   useEffect(() => {
-    if (open) {
+    if (open && selectedCompany?.id) {
       if (refreshTimeoutRef.current) {
         clearTimeout(refreshTimeoutRef.current);
       }
       
       refreshTimeoutRef.current = window.setTimeout(() => {
-        fetchNotices(selectedCompany?.id, true);
+        try {
+          fetchNotices(selectedCompany.id, true).catch(err => {
+            console.error("Error fetching notices in dialog:", err);
+          });
+        } catch (err) {
+          console.error("Exception in fetchNotices dialog:", err);
+        }
         refreshTimeoutRef.current = null;
       }, 300);
     }
@@ -66,44 +73,61 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
   };
 
   const handleEdit = (notice: any) => {
-    // Transformar o aviso para incluir o array de companies para o diálogo de edição
-    const noticeToEdit = {
-      ...notice,
-      companies: notice.companies || []
-    };
-    
-    console.log("Preparando para editar aviso:", noticeToEdit);
-    setEditNotice(noticeToEdit);
-    setEditDialogOpen(true);
+    try {
+      // Transform the notice to include the array of companies for the edit dialog
+      const noticeToEdit = {
+        ...notice,
+        companies: notice.companies || []
+      };
+      
+      console.log("Preparando para editar aviso:", noticeToEdit);
+      setEditNotice(noticeToEdit);
+      setEditDialogOpen(true);
+    } catch (err) {
+      console.error("Error preparing notice for edit:", err);
+    }
   };
 
   const handleDelete = (noticeId: string) => {
-    setNoticeIdToDelete(noticeId);
-    setDeleteConfirmOpen(true);
+    try {
+      setNoticeIdToDelete(noticeId);
+      setDeleteConfirmOpen(true);
+    } catch (err) {
+      console.error("Error setting notice for deletion:", err);
+    }
   };
 
   const confirmDelete = async () => {
-    if (noticeIdToDelete) {
+    if (!noticeIdToDelete) return;
+    
+    try {
       await deleteNotice(noticeIdToDelete);
-      // Atualizar a lista após a exclusão
+      // Update the list after deletion
       if (refreshTimeoutRef.current) {
         clearTimeout(refreshTimeoutRef.current);
       }
       
       refreshTimeoutRef.current = window.setTimeout(() => {
-        fetchNotices(selectedCompany?.id, true);
+        if (selectedCompany?.id) {
+          fetchNotices(selectedCompany.id, true).catch(err => {
+            console.error("Error refreshing notices after deletion:", err);
+          });
+        }
         refreshTimeoutRef.current = null;
       }, 300);
       
-      // Notificar o componente pai para atualizar o widget de notificações
+      // Notify the parent component to update the notifications widget
       onOpenChange(false);
       onOpenChange(true);
+    } catch (err) {
+      console.error("Error deleting notice:", err);
+    } finally {
+      setDeleteConfirmOpen(false);
+      setNoticeIdToDelete(null);
     }
-    setDeleteConfirmOpen(false);
-    setNoticeIdToDelete(null);
   };
 
-  // Handler para quando o diálogo de edição é fechado
+  // Handler for when the edit dialog is closed
   const handleEditDialogClose = (open: boolean) => {
     setEditDialogOpen(open);
     if (!open) {
@@ -114,7 +138,11 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
       }
       
       refreshTimeoutRef.current = window.setTimeout(() => {
-        fetchNotices(selectedCompany?.id, true);
+        if (selectedCompany?.id) {
+          fetchNotices(selectedCompany.id, true).catch(err => {
+            console.error("Error refreshing notices after edit dialog close:", err);
+          });
+        }
         refreshTimeoutRef.current = null;
       }, 300);
     }
@@ -126,6 +154,8 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
     setRefreshing(true);
     try {
       await fetchNotices(selectedCompany.id, true);
+    } catch (err) {
+      console.error("Error refreshing notices:", err);
     } finally {
       setTimeout(() => setRefreshing(false), 500);
     }
@@ -225,6 +255,10 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
                             className="rounded-full object-cover h-5 w-5"
                             src={notice.author.avatar}
                             alt="Autor do aviso"
+                            onError={(e) => {
+                              // Fallback for broken images
+                              (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMiIgZmlsbD0iI2UyZThmMCIvPjxwYXRoIGQ9Ik04IDhoOHY4SDh6IiBmaWxsPSIjOTRhM2IzIi8+PC9zdmc+';
+                            }}
                           />
                         </Avatar>
                       ) : (

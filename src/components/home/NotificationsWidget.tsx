@@ -26,7 +26,6 @@ export const NotificationsWidget = memo(() => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [noticesDialogOpen, setNoticesDialogOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  // Evitar múltiplas chamadas em sequência
   const initialFetchDoneRef = useRef(false);
   const fetchTimeoutRef = useRef<number | null>(null);
   
@@ -44,20 +43,27 @@ export const NotificationsWidget = memo(() => {
     }
   }, []);
 
-  // Otimizando useEffect para reduzir chamadas de API e usar menos recursos
+  // Optimized useEffect with error handling
   useEffect(() => {
-    // Verificamos se a empresa está selecionada antes de buscar avisos
+    // Only fetch if we have a selected company
     if (selectedCompany?.id && !initialFetchDoneRef.current) {
       console.log("NotificationsWidget: Primeira busca de avisos");
       initialFetchDoneRef.current = true;
       
-      // Pequeno delay para evitar corrida com outras chamadas
+      // Clean up any existing timeout
       if (fetchTimeoutRef.current) {
         clearTimeout(fetchTimeoutRef.current);
       }
       
+      // Set a short delay to prevent race conditions
       fetchTimeoutRef.current = window.setTimeout(() => {
-        fetchNotices(selectedCompany.id, true); // Forçando um refresh no primeiro carregamento
+        try {
+          fetchNotices(selectedCompany.id, true).catch(err => {
+            console.error("NotificationsWidget: Error fetching notices:", err);
+          });
+        } catch (err) {
+          console.error("NotificationsWidget: Exception in fetchNotices:", err);
+        }
         fetchTimeoutRef.current = null;
       }, 500);
     }
@@ -74,14 +80,20 @@ export const NotificationsWidget = memo(() => {
     setDialogOpen(open);
     if (!open && initialFetchDoneRef.current) {
       console.log("Notice dialog closed, refreshing notices");
-      // Adicionando delay para dar tempo de concluir a operação no servidor
+      // Add delay to allow server operations to complete
       if (fetchTimeoutRef.current) {
         clearTimeout(fetchTimeoutRef.current);
       }
       
       fetchTimeoutRef.current = window.setTimeout(() => {
         if (selectedCompany?.id) {
-          fetchNotices(selectedCompany.id, true); // Forçando refresh
+          try {
+            fetchNotices(selectedCompany.id, true).catch(err => {
+              console.error("Error refreshing notices after dialog close:", err);
+            });
+          } catch (err) {
+            console.error("Exception in fetchNotices after dialog:", err);
+          }
         }
         fetchTimeoutRef.current = null;
       }, 500);
@@ -92,14 +104,20 @@ export const NotificationsWidget = memo(() => {
     setNoticesDialogOpen(open);
     if (!open && initialFetchDoneRef.current) {
       console.log("All notices dialog closed, refreshing notices");
-      // Adicionando delay para dar tempo de concluir a operação no servidor
+      // Add delay to allow server operations to complete
       if (fetchTimeoutRef.current) {
         clearTimeout(fetchTimeoutRef.current);
       }
       
       fetchTimeoutRef.current = window.setTimeout(() => {
         if (selectedCompany?.id) {
-          fetchNotices(selectedCompany.id, true); // Forçando refresh
+          try {
+            fetchNotices(selectedCompany.id, true).catch(err => {
+              console.error("Error refreshing notices after all-notices dialog close:", err);
+            });
+          } catch (err) {
+            console.error("Exception in fetchNotices after all-notices dialog:", err);
+          }
         }
         fetchTimeoutRef.current = null;
       }, 500);
@@ -112,6 +130,8 @@ export const NotificationsWidget = memo(() => {
     setRefreshing(true);
     try {
       await fetchNotices(selectedCompany.id, true);
+    } catch (err) {
+      console.error("Error refreshing notices:", err);
     } finally {
       setTimeout(() => setRefreshing(false), 500);
     }
@@ -210,6 +230,10 @@ export const NotificationsWidget = memo(() => {
                       alt="Autor do aviso" 
                       className="h-6 w-6 rounded-full mr-3 object-cover"
                       loading="lazy"
+                      onError={(e) => {
+                        // Fallback for broken image
+                        (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMiIgZmlsbD0iI2UyZThmMCIvPjxwYXRoIGQ9Ik04IDhoOHY4SDh6IiBmaWxsPSIjOTRhM2IzIi8+PC9zdmc+';
+                      }}
                     />
                   ) : (
                     <div className="h-6 w-6 rounded-full mr-3 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-300">
@@ -243,3 +267,4 @@ export const NotificationsWidget = memo(() => {
     </Card>
   );
 });
+
