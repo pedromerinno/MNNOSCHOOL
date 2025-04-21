@@ -3,7 +3,7 @@ import { useCallback, useEffect } from "react";
 import { Company } from "@/types/company";
 import { toast } from "sonner";
 
-interface UseCompanyEventsProps {
+export interface UseCompanyEventsProps {
   userId: string | undefined;
   forceGetUserCompanies: (userId: string) => Promise<any>;
   setDisplayName?: (name: string) => void;

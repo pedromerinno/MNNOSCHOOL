@@ -54,8 +54,10 @@ export const useCompanyContent = () => {
     if (!companyId) return [];
     
     try {
+      // Use the "from" method with type assertion to avoid the type error
+      // The issue was that tableName was a string variable, not a literal type expected by Supabase
       const { data, error } = await supabase
-        .from(tableName)
+        .from(tableName as any)
         .select('*')
         .eq('company_id', companyId)
         .limit(limit);

@@ -4,7 +4,7 @@ import { useCompanyFetching } from "./useCompanyFetching";
 import { useCompanyModification } from "./useCompanyModification";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useCompanyEvents, UseCompanyEventsProps } from "./useCompanyEvents";
+import { useCompanyEvents } from "./useCompanyEvents";
 
 export const useCompaniesProvider = () => {
   const { user } = useAuth();
@@ -51,7 +51,7 @@ export const useCompaniesProvider = () => {
     stateActions.setSelectedCompany(company);
   };
 
-  const companyEventsProps: UseCompanyEventsProps = {
+  const companyEventsProps = {
     userId: user?.id,
     forceGetUserCompanies: handleForceGetUserCompanies,
     setDisplayName: (name: string) => {
