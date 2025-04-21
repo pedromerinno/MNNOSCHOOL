@@ -43,25 +43,27 @@ export const CourseView: React.FC = () => {
     if (isEditDialogOpen && courseId) {
       const fetchCourseCompanies = async () => {
         try {
+          console.log("Buscando empresas do curso:", courseId);
           const { data, error } = await supabase
             .from('company_courses')
             .select('empresa_id')
             .eq('course_id', courseId);
             
           if (error) {
-            console.error("Error fetching course companies:", error);
+            console.error("Erro ao buscar empresas do curso:", error);
             return;
           }
           
           if (data && data.length > 0) {
             const companyIds = data.map(item => item.empresa_id);
             setCourseCompanyIds(companyIds);
-            console.log("Fetched course company IDs:", companyIds);
+            console.log("IDs das empresas vinculadas:", companyIds);
           } else {
             setCourseCompanyIds([]);
+            console.log("Nenhuma empresa vinculada ao curso");
           }
         } catch (error) {
-          console.error("Error in fetchCourseCompanies:", error);
+          console.error("Erro ao buscar empresas do curso:", error);
         }
       };
       
