@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import CompanyTypeSelector from "./company/CompanyTypeSelector";
 import ExistingCompanyForm from "./company/ExistingCompanyForm";
 import NewCompanyForm from "./company/NewCompanyForm";
+import { useQuickCompanyLookup } from "@/hooks/company/useQuickCompanyLookup";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface CompanyStepProps {
   onNext: () => void;
@@ -39,12 +41,28 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Novo estado para informações da empresa buscada
+  const { companyInfo, loading: companyLoading, error: companyLookupError, fetchCompany } = useQuickCompanyLookup();
+  const [showCompanyInfo, setShowCompanyInfo] = useState(false);
+
+  // Chamada quando campo perde foco ou ID muda
+  const handleCompanyLookup = useCallback(
+    async (info: any, lookupPending: boolean) => {
+      setShowCompanyInfo(false);
+      if (companyId && companyId.length >= 10) {
+        await fetchCompany(companyId);
+        setShowCompanyInfo(true);
+      }
+    },
+    [companyId, fetchCompany]
+  );
+
   const handleInitialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Prevent multiple submissions
     if (isSubmitting) return;
-    
+
     if (companyType === 'existing' && !companyId) {
       setError("Por favor, informe o ID da empresa");
       return;
@@ -54,9 +72,9 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
       setError("Por favor, informe o nome da empresa");
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
       if (companyType === 'new') {
         if (!user) {
@@ -113,26 +131,23 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
           .select('id, nome')
           .eq('id', companyId)
           .maybeSingle();
-          
+
         if (companyCheckError) {
           throw companyCheckError;
         }
-        
+
         if (!company) {
           setError("Empresa não encontrada com este ID");
           setIsSubmitting(false);
           return;
         }
-        
-        console.log("Empresa encontrada:", company.nome);
-        toast.success(`Empresa encontrada: ${company.nome}`);
-        
+
         updateProfileData({ 
           companyId: companyId,
           newCompanyName: null,
           companyDetails: null
         });
-        
+
         onCompanyTypeSelect(true);
         onNext();
       }
@@ -147,6 +162,7 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
   const handleCompanyTypeChange = (type: 'existing' | 'new') => {
     setCompanyType(type);
     setError("");
+    setShowCompanyInfo(false);
   };
 
   return (
@@ -157,18 +173,50 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
           Você faz parte de uma empresa existente ou deseja criar uma nova?
         </p>
       </div>
-      
+
       <CompanyTypeSelector
         companyType={companyType}
         onTypeChange={handleCompanyTypeChange}
       />
-      
+
       <div className="pt-2">
         {companyType === 'existing' ? (
-          <ExistingCompanyForm
-            companyId={companyId}
-            onCompanyIdChange={setCompanyId}
-          />
+          <>
+            <ExistingCompanyForm
+              companyId={companyId}
+              onCompanyIdChange={id => {
+                setCompanyId(id);
+                setShowCompanyInfo(false);
+              }}
+              onCompanyLookup={handleCompanyLookup}
+            />
+            {/* Exibe nome e logo se disponível */}
+            {companyLoading ? (
+              <div className="flex items-center gap-3 mt-3">
+                <Skeleton className="h-9 w-9 rounded-full" />
+                <Skeleton className="h-5 w-24" />
+              </div>
+            ) : showCompanyInfo && companyInfo ? (
+              <div className="flex items-center gap-4 mt-4 px-3 py-2 border rounded-md bg-gray-50">
+                {companyInfo.logo ? (
+                  <img
+                    src={companyInfo.logo}
+                    alt="Logo da empresa"
+                    className="h-9 w-9 rounded-full bg-gray-200 object-contain"
+                  />
+                ) : (
+                  <span className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-gray-200 font-bold text-lg text-gray-500">
+                    {companyInfo.nome ? companyInfo.nome.charAt(0) : "?"}
+                  </span>
+                )}
+                <span className="font-semibold text-gray-800">{companyInfo.nome}</span>
+              </div>
+            ) : showCompanyInfo && !companyInfo && !companyLoading && (
+              <div className="mt-4 px-3 py-2 border rounded-md bg-gray-50 text-gray-500 text-sm">
+                Empresa não encontrada.
+              </div>
+            )}
+          </>
         ) : (
           <NewCompanyForm
             companyDetails={companyDetails}
@@ -176,9 +224,9 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
           />
         )}
       </div>
-      
+
       {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-      
+
       <div className="pt-4 flex flex-col gap-3">
         <Button 
           type="submit" 
