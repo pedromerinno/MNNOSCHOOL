@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Button } from "@/components/ui/button";
 import { Camera, Upload, ArrowLeft } from "lucide-react";
@@ -14,11 +14,19 @@ interface PhotoStepProps {
 }
 
 const PhotoStep: React.FC<PhotoStepProps> = ({ onNext, onBack }) => {
-  const { user, updateUserProfile } = useAuth();
+  const { user, userProfile, updateUserProfile } = useAuth();
   const { profileData, updateProfileData } = useOnboarding();
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(profileData.avatarUrl);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(userProfile?.avatar || profileData.avatarUrl);
+
+  // Set avatar from userProfile if available
+  useEffect(() => {
+    if (userProfile?.avatar) {
+      setAvatarUrl(userProfile.avatar);
+      updateProfileData({ avatarUrl: userProfile.avatar });
+    }
+  }, [userProfile, updateProfileData]);
 
   const uploadAvatar = async (file: File) => {
     if (!user) return;

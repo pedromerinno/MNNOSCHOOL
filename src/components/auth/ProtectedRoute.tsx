@@ -94,16 +94,17 @@ export const ProtectedRoute = () => {
   }
 
   // Verificar se precisa fazer onboarding inicial
+  // Consideramos tanto a flag 'onboarding_incomplete' quanto a ausência de empresas
   const needsOnboarding = userProfile?.interesses?.includes("onboarding_incomplete");
-  const noCompanies = !isOnboarding && (!userCompanies || userCompanies.length === 0) && !companiesLoading;
+  const hasNoCompanies = !isOnboarding && (!userCompanies || userCompanies.length === 0) && !companiesLoading;
                          
   // Redirecionar para onboarding se for necessário e não estiver na página de onboarding
-  if ((needsOnboarding || noCompanies) && !isOnboarding) {
+  if ((needsOnboarding || hasNoCompanies) && !isOnboarding) {
     console.log("ProtectedRoute: Usuário precisa completar onboarding inicial", { 
       interesses: userProfile?.interesses,
       userCompanies: userCompanies?.length,
       needsOnboarding,
-      noCompanies
+      hasNoCompanies
     });
     return <Navigate to="/onboarding" replace />;
   }

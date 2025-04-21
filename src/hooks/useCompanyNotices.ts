@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -78,12 +77,14 @@ export function useCompanyNotices() {
       
       if (relationsError) throw relationsError;
       
+      console.log("Found", relations?.length || 0, "company relations");
+      
       if (!noticeRelations || noticeRelations.length === 0) {
         console.log(`No notices found for company: ${targetCompanyId}`);
         setNotices([]);
         setCurrentNotice(null);
         setIsLoading(false);
-        completeRequest(cacheKey);
+        completeRequest(false);
         fetchingRef.current = false;
         setCache({ key: cacheKey }, []);
         return;
@@ -154,7 +155,7 @@ export function useCompanyNotices() {
         setCurrentNotice(null);
       }
       
-      completeRequest(cacheKey);
+      completeRequest(false);
     } catch (err: any) {
       console.error('Erro ao buscar avisos:', err);
       setError(err.message || 'Erro ao buscar avisos');

@@ -10,12 +10,40 @@ import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const Onboarding = () => {
-  const { userProfile } = useAuth();
+  const { userProfile, user, updateUserData } = useAuth();
   
-  // Se o usuário não precisar de onboarding, redirecionar
-  if (userProfile && !userProfile?.interesses?.includes("onboarding_incomplete")) {
+  // Check if onboarding is actually needed
+  useEffect(() => {
+    const checkIfOnboardingNeeded = async () => {
+      if (user?.id && userProfile) {
+        // Check if user has any companies
+        const { data: relations } = await supabase
+          .from('user_empresa')
+          .select('empresa_id')
+          .eq('user_id', user.id);
+          
+        if (relations && relations.length > 0) {
+          // User has companies, remove onboarding flag if present
+          if (userProfile.interesses?.includes("onboarding_incomplete")) {
+            console.log("User has companies but onboarding flag is still set. Removing flag...");
+            const updatedInterests = userProfile.interesses.filter(i => i !== "onboarding_incomplete");
+            await updateUserData({
+              interesses: updatedInterests
+            });
+          }
+        }
+      }
+    };
+    
+    checkIfOnboardingNeeded();
+  }, [user, userProfile, updateUserData]);
+  
+  // If user doesn't need onboarding, redirect
+  if (userProfile && !userProfile.interesses?.includes("onboarding_incomplete")) {
+    console.log("User doesn't need onboarding, redirecting to home");
     return <Navigate to="/" replace />;
   }
   
@@ -32,7 +60,7 @@ const Onboarding = () => {
 
 const OnboardingContent = () => {
   const [currentStep, setCurrentStep] = useState(1);
-  const { userProfile } = useAuth();
+  const { userProfile, updateUserData } = useAuth();
   const navigate = useNavigate();
   const [isExistingCompany, setIsExistingCompany] = useState<boolean | null>(null);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
@@ -40,7 +68,7 @@ const OnboardingContent = () => {
   const isUpdate = userProfile && !userProfile?.interesses?.includes("onboarding_incomplete");
   const totalSteps = isExistingCompany ? 4 : 3;
 
-  // Garantir que a etapa correta seja exibida quando o usuário escolhe o tipo de empresa
+  // Ensure the correct step is shown when user chooses company type
   useEffect(() => {
     if (isExistingCompany === true && currentStep === 3) {
       setCurrentStep(4);
@@ -66,22 +94,31 @@ const OnboardingContent = () => {
     setIsExistingCompany(isExisting);
   };
 
-  const handleCompanyCreated = () => {
-    console.log("Empresa criada com sucesso, finalizando onboarding");
-    toast.success("Configuração concluída com sucesso!");
+  const handleCompanyCreated = async () => {
+    console.log("Company created successfully, finishing onboarding");
+    
+    // Remove the onboarding flag from user profile
+    if (userProfile?.interesses?.includes("onboarding_incomplete")) {
+      const updatedInterests = userProfile.interesses.filter(i => i !== "onboarding_incomplete");
+      await updateUserData({
+        interesses: updatedInterests
+      });
+    }
+    
+    toast.success("Setup completed successfully!");
     setOnboardingComplete(true);
     
-    // Disparar eventos de atualização
+    // Trigger events to update data
     window.dispatchEvent(new Event('company-relation-changed'));
     window.dispatchEvent(new Event('force-reload-companies'));
     
-    // Redirecionar para a página inicial após um curto intervalo
+    // Redirect to home page after a short delay
     setTimeout(() => {
       navigate("/", { replace: true });
-    }, 300);
+    }, 500);
   };
 
-  // Redirecionamento direto se o onboarding foi completado
+  // Direct redirect if onboarding is complete
   if (onboardingComplete) {
     console.log("Onboarding complete, redirecting to home");
     return <Navigate to="/" replace />;
@@ -91,10 +128,10 @@ const OnboardingContent = () => {
     <>
       <div className="mb-10 w-full max-w-3xl text-center">
         <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-4">
-          {isUpdate ? "Atualizar Perfil" : "Complete seu perfil"}
+          {isUpdate ? "Update Profile" : "Complete Your Profile"}
         </h1>
         <p className="text-sm text-gray-500 mb-4">
-          Passo {currentStep} de {totalSteps}
+          Step {currentStep} of {totalSteps}
         </p>
         <Progress 
           value={(currentStep / totalSteps) * 100} 

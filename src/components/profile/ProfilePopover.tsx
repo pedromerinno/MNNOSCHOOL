@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Upload } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -36,16 +36,30 @@ interface ProfilePopoverProps {
 export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps) => {
   const { userProfile, updateUserProfile } = useAuth();
   const [open, setOpen] = useState(false);
-  const [avatarPreview, setAvatarPreview] = useState(userProfile.avatar || "https://i.pravatar.cc/150?img=68");
+  const [avatarPreview, setAvatarPreview] = useState("https://i.pravatar.cc/150?img=68");
   const { toast } = useToast();
 
   const form = useForm<UserProfileFormValues>({
     resolver: zodResolver(userProfileSchema),
     defaultValues: {
-      name: userProfile.display_name || email?.split('@')[0] || "",
-      avatar: userProfile.avatar || "https://i.pravatar.cc/150?img=68",
+      name: "",
+      avatar: "https://i.pravatar.cc/150?img=68",
     },
   });
+
+  // Update form values when userProfile changes
+  useEffect(() => {
+    if (userProfile) {
+      form.reset({
+        name: userProfile.display_name || email?.split('@')[0] || "",
+        avatar: userProfile.avatar || "https://i.pravatar.cc/150?img=68"
+      });
+      
+      if (userProfile.avatar) {
+        setAvatarPreview(userProfile.avatar);
+      }
+    }
+  }, [userProfile, email, form]);
 
   const handleProfileUpdate = async (values: UserProfileFormValues) => {
     try {
