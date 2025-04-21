@@ -5,10 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
-import { PlusCircle } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useCompanies } from "@/hooks/useCompanies";
-import { NewCourseDialog } from "@/components/admin/dialogs/NewCourseDialog";
 
 type FilterOption = 'all' | 'favorites' | 'completed' | 'in-progress';
 
@@ -26,9 +22,6 @@ export const FilteredCoursesList: React.FC<FilteredCoursesListProps> = ({
   companyColor
 }) => {
   const navigate = useNavigate();
-  const { userProfile } = useAuth();
-  const { selectedCompany } = useCompanies();
-  const [isNewCourseDialogOpen, setIsNewCourseDialogOpen] = React.useState(false);
   
   return (
     <div className="mt-8">
@@ -105,42 +98,9 @@ export const FilteredCoursesList: React.FC<FilteredCoursesListProps> = ({
             </Card>
           ))
         ) : (
-          <div className="col-span-3">
-            <Card className="p-8 text-center">
-              <div className="max-w-md mx-auto">
-                {userProfile?.is_admin ? (
-                  <>
-                    <h3 className="text-xl font-medium mb-2">Nenhum curso encontrado</h3>
-                    <p className="text-gray-500 mb-6">
-                      Comece adicionando o primeiro curso para {selectedCompany?.nome}
-                    </p>
-                    <Button 
-                      onClick={() => setIsNewCourseDialogOpen(true)}
-                      className="gap-2"
-                    >
-                      <PlusCircle className="h-4 w-4" />
-                      Adicionar Curso
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <h3 className="text-xl font-medium mb-2">Nenhum curso disponível</h3>
-                    <p className="text-gray-500">
-                      Em breve terão cursos da {selectedCompany?.nome} aqui
-                    </p>
-                  </>
-                )}
-              </div>
-            </Card>
-          </div>
+          <p className="text-gray-500 col-span-3">Nenhum curso encontrado para este filtro.</p>
         )}
       </div>
-
-      <NewCourseDialog 
-        open={isNewCourseDialogOpen} 
-        onOpenChange={setIsNewCourseDialogOpen}
-      />
     </div>
   );
 };
-
