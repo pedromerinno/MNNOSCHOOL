@@ -42,7 +42,7 @@ export const NotificationsWidget = memo(() => {
     }
   }, []);
 
-  // Otimizando useEffect para reduzir chamadas de API
+  // Otimizando useEffect para reduzir chamadas de API e usar menos recursos
   useEffect(() => {
     // Verificamos se a empresa está selecionada antes de buscar avisos
     if (selectedCompany?.id && !initialFetchDoneRef.current) {
@@ -51,7 +51,7 @@ export const NotificationsWidget = memo(() => {
       
       // Pequeno delay para evitar corrida com outras chamadas
       const timer = setTimeout(() => {
-        fetchNotices(selectedCompany.id);
+        fetchNotices(selectedCompany.id, true); // Forçando um refresh no primeiro carregamento
       }, 500);
       
       return () => clearTimeout(timer);
