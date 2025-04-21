@@ -1,7 +1,7 @@
 
 interface CacheOptions {
-  expirationMinutes?: number;
   key: string;
+  expirationMinutes?: number;
 }
 
 interface CacheData<T> {
@@ -56,11 +56,6 @@ export const useCache = () => {
     try {
       localStorage.removeItem(key);
       console.log(`[Cache] Cleared data for key: ${key}`);
-      
-      // Sempre que limparmos o cache, voltar para o modo claro
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-      
     } catch (e) {
       console.error('[Cache] Error clearing cache:', e);
     }

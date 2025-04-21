@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -45,7 +46,8 @@ export function useCompanyNotices() {
 
     const cacheKey = `notices_${targetCompanyId}`;
     
-    const cachedData = getCache(cacheKey);
+    // Fix: Pass an object with key instead of just the string
+    const cachedData = getCache({ key: cacheKey });
     const hasLocalData = !!cachedData && Array.isArray(cachedData) && cachedData.length > 0;
     
     if (!shouldMakeRequest(forceRefresh, hasLocalData, undefined, cacheKey) || fetchingRef.current) {
@@ -83,7 +85,8 @@ export function useCompanyNotices() {
         setIsLoading(false);
         completeRequest(cacheKey);
         fetchingRef.current = false;
-        setCache(cacheKey, [], 300);
+        // Fix: Pass options object and data as arguments
+        setCache({ key: cacheKey }, []);
         return;
       }
       
@@ -138,7 +141,8 @@ export function useCompanyNotices() {
       
       const noticesWithCompanies = await Promise.all(noticesWithCompaniesPromises);
       
-      setCache(cacheKey, noticesWithCompanies, 300);
+      // Fix: Pass options object and data as arguments
+      setCache({ key: cacheKey }, noticesWithCompanies);
       
       setNotices(noticesWithCompanies);
       
