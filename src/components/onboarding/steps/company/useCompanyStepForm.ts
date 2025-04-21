@@ -55,7 +55,7 @@ export const useCompanyStepForm = (
   }, [companyType, onCompanyTypeSelect]);
 
   const handleCompanyLookup = useCallback(
-    async (_info: any, _lookupPending: boolean) => {
+    async (info: any, lookupPending: boolean) => {
       setShowCompanyInfo(false);
       if (companyId && companyId.length >= 10) {
         await fetchCompany(companyId);
@@ -182,6 +182,7 @@ export const useCompanyStepForm = (
 
   return {
     companyType,
+    setCompanyType,
     companyId,
     setCompanyId,
     companyDetails,

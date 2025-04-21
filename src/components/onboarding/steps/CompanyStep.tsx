@@ -26,6 +26,8 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
         onNext={onNext}
         onBack={onBack}
         onCompanyTypeSelect={onCompanyTypeSelect}
+        companyType={companyType}
+        onCompanyTypeChange={handleTypeChange}
       />
     </>
   );

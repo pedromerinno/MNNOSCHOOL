@@ -9,15 +9,20 @@ interface CompanyStepFormProps {
   onNext: () => void;
   onBack: () => void;
   onCompanyTypeSelect: (isExisting: boolean) => void;
+  companyType: "existing" | "new";
+  onCompanyTypeChange: (type: "existing" | "new") => void;
 }
 
 const CompanyStepForm: React.FC<CompanyStepFormProps> = ({
   onNext,
   onBack,
-  onCompanyTypeSelect
+  onCompanyTypeSelect,
+  companyType: parentCompanyType,
+  onCompanyTypeChange
 }) => {
   const {
     companyType,
+    setCompanyType,
     companyId,
     setCompanyId,
     companyDetails,
@@ -34,10 +39,18 @@ const CompanyStepForm: React.FC<CompanyStepFormProps> = ({
     onBack: handleBack
   } = useCompanyStepForm(onNext, onBack, onCompanyTypeSelect);
 
-  // Update parent component whenever company type changes
+  // Sincronizar o tipo de empresa entre o componente pai e o hook
+  React.useEffect(() => {
+    if (parentCompanyType !== companyType) {
+      setCompanyType(parentCompanyType);
+    }
+  }, [parentCompanyType, companyType, setCompanyType]);
+
+  // Atualizar o componente pai quando o tipo de empresa mudar
   React.useEffect(() => {
     onCompanyTypeSelect(companyType === "existing");
-  }, [companyType, onCompanyTypeSelect]);
+    onCompanyTypeChange(companyType);
+  }, [companyType, onCompanyTypeSelect, onCompanyTypeChange]);
 
   return (
     <form onSubmit={handleInitialSubmit} className="space-y-6">
