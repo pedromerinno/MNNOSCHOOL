@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useCompanyNotices } from "@/hooks/useCompanyNotices";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,14 @@ import NewNoticeDialog from "./dialogs/NewNoticeDialog";
 import { Notice } from "@/hooks/useNotifications";
 
 export const CompanyNoticesAdminList: React.FC = () => {
-  const { notices, deleteNotice, isLoading } = useCompanyNotices();
+  const { notices, deleteNotice, isLoading, fetchNotices } = useCompanyNotices();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingNotice, setEditingNotice] = useState<any | null>(null);
+
+  // Re-fetch notices when component mounts
+  useEffect(() => {
+    fetchNotices();
+  }, []);
 
   const handleEdit = (notice: any) => {
     setEditingNotice({
@@ -23,6 +28,15 @@ export const CompanyNoticesAdminList: React.FC = () => {
   const handleDelete = async (noticeId: string) => {
     if (window.confirm("Deseja realmente apagar este aviso?")) {
       await deleteNotice(noticeId);
+    }
+  };
+
+  // Handler para quando o diálogo é fechado
+  const handleDialogClose = (open: boolean) => {
+    setEditDialogOpen(open);
+    if (!open) {
+      // Re-fetch notices when dialog closes
+      fetchNotices();
     }
   };
 
@@ -86,10 +100,7 @@ export const CompanyNoticesAdminList: React.FC = () => {
       {/* Dialog de edição */}
       <NewNoticeDialog
         open={editDialogOpen}
-        onOpenChange={(o) => {
-          setEditDialogOpen(o);
-          if (!o) setEditingNotice(null);
-        }}
+        onOpenChange={handleDialogClose}
         initialData={editingNotice}
         editingNoticeId={editingNotice?.id || null}
       />

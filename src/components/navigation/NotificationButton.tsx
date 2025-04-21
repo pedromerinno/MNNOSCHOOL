@@ -1,103 +1,82 @@
 
-import React, { useState } from "react";
-import { Bell, Check, X } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { useNotifications } from "@/hooks/useNotifications";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { Notification } from "@/hooks/useNotifications";
 
 export const NotificationButton = () => {
-  const { 
-    notifications, 
-    unreadCount, 
-    isLoading, 
-    markAsRead, 
-    markAllAsRead 
-  } = useNotifications();
+  const { notifications, isLoading, markAsRead, unreadCount, markAllAsRead } = useNotifications();
   const [open, setOpen] = useState(false);
 
-  // Formatar data para exibição
-  const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), "dd MMM, HH:mm", { locale: ptBR });
-    } catch (error) {
-      return "-";
-    }
+  // Adicionar um handler para marcar como lido e atualizar a interface
+  const handleMarkAsRead = async (notificationId: string) => {
+    await markAsRead(notificationId);
+    // O estado já é atualizado dentro do markAsRead
   };
 
-  const handleNotificationClick = (id: string) => {
-    markAsRead(id);
+  // Handler para marcar todas como lidas
+  const handleMarkAllAsRead = async () => {
+    await markAllAsRead();
+    // O estado já é atualizado dentro do markAllAsRead
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative text-gray-500 hover:text-merinno-blue"
-        >
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="icon" className="relative">
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 flex items-center justify-center min-w-4 h-4 px-1 text-xs font-medium text-white bg-red-500 rounded-full">
-              {unreadCount > 99 ? '99+' : unreadCount}
+            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
+              {unreadCount}
             </span>
           )}
         </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
-        <div className="flex items-center justify-between p-4 bg-muted/50">
-          <h3 className="font-medium">Notificações</h3>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-80">
+        <div className="flex items-center justify-between p-2 border-b">
+          <h3 className="font-semibold">Notificações</h3>
           {unreadCount > 0 && (
             <Button 
               variant="ghost" 
               size="sm" 
-              className="h-8 text-xs"
-              onClick={() => markAllAsRead()}
+              className="text-xs"
+              onClick={handleMarkAllAsRead}
             >
-              <Check className="h-3.5 w-3.5 mr-1" />
               Marcar todas como lidas
             </Button>
           )}
         </div>
-        <Separator />
-        <ScrollArea className="h-[300px]">
+        <div className="max-h-[300px] overflow-y-auto">
           {isLoading ? (
-            <div className="flex justify-center items-center h-20">
-              <p className="text-sm text-muted-foreground">Carregando...</p>
-            </div>
+            <div className="p-4 text-center text-sm text-gray-500">Carregando...</div>
           ) : notifications.length === 0 ? (
-            <div className="flex justify-center items-center h-20">
-              <p className="text-sm text-muted-foreground">Nenhuma notificação</p>
-            </div>
+            <div className="p-4 text-center text-sm text-gray-500">Nenhuma notificação</div>
           ) : (
-            <div className="divide-y">
-              {notifications.map((notification) => (
-                <div 
-                  key={notification.id}
-                  className={`p-4 cursor-pointer transition-colors hover:bg-muted/50 ${
-                    !notification.read ? "bg-amber-50 dark:bg-amber-900/10" : ""
-                  }`}
-                  onClick={() => handleNotificationClick(notification.id)}
-                >
-                  <div className="flex justify-between items-start">
-                    <h4 className="text-sm font-medium line-clamp-1">{notification.title}</h4>
-                    <span className="text-xs text-muted-foreground ml-2 shrink-0">
-                      {formatDate(notification.created_at)}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                    {notification.content}
-                  </p>
+            notifications.map((notification: Notification) => (
+              <DropdownMenuItem 
+                key={notification.id} 
+                className={`flex flex-col items-start p-3 cursor-pointer ${!notification.read ? 'bg-blue-50 dark:bg-blue-900/10' : ''}`}
+                onClick={() => handleMarkAsRead(notification.id)}
+              >
+                <div className="font-semibold text-sm">{notification.title}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {notification.content}
                 </div>
-              ))}
-            </div>
+                <div className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+                  {new Date(notification.created_at).toLocaleString()}
+                </div>
+              </DropdownMenuItem>
+            ))
           )}
-        </ScrollArea>
-      </PopoverContent>
-    </Popover>
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };

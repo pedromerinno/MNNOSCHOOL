@@ -77,10 +77,12 @@ export function useNotifications() {
 
       if (error) throw error;
 
-      // Update local state
-      setNotifications(notifications.map(n =>
-        n.id === notificationId ? { ...n, read: true } : n
-      ));
+      // Update local state immediately
+      setNotifications(prevNotifications => 
+        prevNotifications.map(n =>
+          n.id === notificationId ? { ...n, read: true } : n
+        )
+      );
     } catch (err: any) {
       console.error('Erro ao marcar como lida:', err);
       toast.error(err.message || 'Erro ao marcar como lida');
@@ -106,10 +108,12 @@ export function useNotifications() {
 
       if (error) throw error;
 
-      // Update local state
-      setNotifications(notifications.map(n => 
-        unreadIds.includes(n.id) ? { ...n, read: true } : n
-      ));
+      // Update local state immediately
+      setNotifications(prevNotifications => 
+        prevNotifications.map(n => 
+          unreadIds.includes(n.id) ? { ...n, read: true } : n
+        )
+      );
       
       toast.success('Todas as notificações foram marcadas como lidas');
     } catch (err: any) {

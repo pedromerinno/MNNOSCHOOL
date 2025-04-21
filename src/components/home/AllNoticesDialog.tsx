@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +18,7 @@ interface AllNoticesDialogProps {
 }
 
 export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) {
-  const { notices, isLoading, error, deleteNotice } = useCompanyNotices();
+  const { notices, isLoading, error, deleteNotice, fetchNotices } = useCompanyNotices();
   const { userProfile } = useAuth();
   const [editNotice, setEditNotice] = useState<any | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -26,6 +26,13 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const canManage = userProfile?.is_admin || userProfile?.super_admin;
+
+  // Atualizar avisos quando o diálogo é aberto
+  useEffect(() => {
+    if (open) {
+      fetchNotices();
+    }
+  }, [open]);
 
   const getInitial = (name: string | null | undefined) =>
     name ? name.charAt(0).toUpperCase() : "?";
@@ -61,9 +68,21 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
   const confirmDelete = async () => {
     if (noticeIdToDelete) {
       await deleteNotice(noticeIdToDelete);
+      // Atualizar a lista após a exclusão
+      fetchNotices();
     }
     setDeleteConfirmOpen(false);
     setNoticeIdToDelete(null);
+  };
+
+  // Handler para quando o diálogo de edição é fechado
+  const handleEditDialogClose = (open: boolean) => {
+    setEditDialogOpen(open);
+    if (!open) {
+      setEditNotice(null);
+      // Re-fetch notices when dialog closes
+      fetchNotices();
+    }
   };
 
   return (
@@ -159,10 +178,7 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
       {/* Edit Notice Modal */}
       <NewNoticeDialog
         open={editDialogOpen}
-        onOpenChange={(o) => {
-          setEditDialogOpen(o);
-          if (!o) setEditNotice(null);
-        }}
+        onOpenChange={handleEditDialogClose}
         initialData={editNotice}
         editingNoticeId={editNotice?.id || null}
       />
