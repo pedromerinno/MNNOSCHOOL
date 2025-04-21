@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -118,7 +119,12 @@ const NewNoticeDialog = ({
       }
     } catch (error) {
       console.error("Erro ao salvar aviso:", error);
-      toast.error("Erro ao salvar aviso");
+      // Changed from toast.error to toast with variant destructive
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar aviso",
+        variant: "destructive"
+      });
     } finally {
       setSubmitting(false);
     }
@@ -208,7 +214,7 @@ const NewNoticeDialog = ({
                               {company.nome}
                             </FormLabel>
                             <p className="text-sm text-muted-foreground">
-                              {company.email}
+                              {company.nome} {/* Changed from company.email to company.nome since email doesn't exist */}
                             </p>
                           </div>
                           <FormControl>
