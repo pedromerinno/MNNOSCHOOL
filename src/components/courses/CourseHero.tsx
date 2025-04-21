@@ -52,6 +52,7 @@ export const CourseHero: React.FC<CourseHeroProps> = ({
           </Button>
         </div>
       )}
+      
       {/* Full-width background image */}
       <div className="absolute inset-0 w-full h-full">
         {imageUrl && (

@@ -200,12 +200,10 @@ export const CourseView: React.FC = () => {
                   className="bg-primary text-white gap-2 rounded-xl font-bold text-base py-3 shadow-none"
                   onClick={() => setShowLessonManager(true)}
                   variant="default"
-                  size="lg"
+                  size="sm"
                   aria-label="Gerenciar aulas"
                 >
-                  <span className="inline-flex items-center gap-1">
-                    <span>Gerenciar aulas</span>
-                  </span>
+                  Gerenciar aulas
                 </Button>
               )}
             </div>

@@ -116,14 +116,17 @@ export const createCourse = async (courseData: CourseFormValues): Promise<string
     
     const courseId = newCourse.id;
     
-    // If a companyId was provided, associate the course with the company
-    if (courseData.companyId) {
+    // If companyIds were provided, associate the course with those companies
+    if (courseData.companyIds && courseData.companyIds.length > 0) {
+      // Create an array of relationships to insert
+      const companyRelations = courseData.companyIds.map(companyId => ({
+        empresa_id: companyId,
+        course_id: courseId
+      }));
+      
       const { error: relationError } = await supabase
         .from('company_courses')
-        .insert([{
-          empresa_id: courseData.companyId,
-          course_id: courseId
-        }]);
+        .insert(companyRelations);
         
       if (relationError) {
         throw relationError;
@@ -153,6 +156,7 @@ export const createCourse = async (courseData: CourseFormValues): Promise<string
  */
 export const updateCourse = async (courseId: string, courseData: CourseFormValues): Promise<boolean> => {
   try {
+    // First update the course details
     const { error } = await supabase
       .from('courses')
       .update({
@@ -166,6 +170,33 @@ export const updateCourse = async (courseId: string, courseData: CourseFormValue
 
     if (error) {
       throw error;
+    }
+    
+    // If companyIds is provided, update the company relations
+    if (courseData.companyIds && courseData.companyIds.length > 0) {
+      // First remove existing relations
+      const { error: deleteError } = await supabase
+        .from('company_courses')
+        .delete()
+        .eq('course_id', courseId);
+        
+      if (deleteError) {
+        throw deleteError;
+      }
+      
+      // Then create new company relations
+      const companyRelations = courseData.companyIds.map(companyId => ({
+        empresa_id: companyId,
+        course_id: courseId
+      }));
+      
+      const { error: insertError } = await supabase
+        .from('company_courses')
+        .insert(companyRelations);
+        
+      if (insertError) {
+        throw insertError;
+      }
     }
     
     toast.success('Curso atualizado', {

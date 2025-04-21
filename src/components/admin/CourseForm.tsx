@@ -16,8 +16,18 @@ export const CourseForm: React.FC<CourseFormProps> = ({
   isSubmitting,
   onClose,
   availableCompanies = [],
-  showCompanySelector = true, // Add default value
+  showCompanySelector = true,
+  preselectedCompanyId,
 }) => {
+  // Initialize companyIds with preselectedCompanyId if available
+  const initialCompanyIds = preselectedCompanyId 
+    ? [preselectedCompanyId]
+    : Array.isArray((initialData as any)?.companyIds)
+      ? (initialData as any)?.companyIds
+      : (initialData as any)?.companyId
+        ? [(initialData as any)?.companyId]
+        : [];
+
   const form = useForm<CourseFormValues>({
     resolver: zodResolver(courseSchema),
     defaultValues: {
@@ -26,11 +36,7 @@ export const CourseForm: React.FC<CourseFormProps> = ({
       image_url: initialData?.image_url || "",
       instructor: initialData?.instructor || "",
       tags: initialData?.tags || [],
-      companyIds: Array.isArray((initialData as any)?.companyIds)
-        ? (initialData as any)?.companyIds
-        : (initialData as any)?.companyId
-        ? [(initialData as any)?.companyId]
-        : [],
+      companyIds: initialCompanyIds,
     },
   });
 

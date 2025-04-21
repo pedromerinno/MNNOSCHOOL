@@ -23,4 +23,5 @@ export interface CourseFormProps {
   // Passa a lista de empresas do usuário logado
   availableCompanies?: { id: string; nome: string; logo?: string }[];
   showCompanySelector?: boolean;
+  preselectedCompanyId?: string;
 }

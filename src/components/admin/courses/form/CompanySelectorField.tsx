@@ -75,7 +75,7 @@ export const CompanySelectorField: React.FC<CompanySelectorFieldProps> = ({ form
   return (
     <FormField
       control={form.control}
-      name="companyId"
+      name="companyIds"
       render={({ field }) => (
         <FormItem>
           <FormLabel>Empresa</FormLabel>
@@ -99,8 +99,11 @@ export const CompanySelectorField: React.FC<CompanySelectorFieldProps> = ({ form
             ) : (
               <Select
                 disabled={isLoadingCompanies}
-                onValueChange={field.onChange}
-                value={field.value}
+                onValueChange={(value) => {
+                  // Update to handle companyIds as an array
+                  form.setValue("companyIds", [value]);
+                }}
+                value={Array.isArray(field.value) && field.value.length > 0 ? field.value[0] : ""}
               >
                 <SelectTrigger className="w-full bg-white">
                   {isLoadingCompanies ? (
