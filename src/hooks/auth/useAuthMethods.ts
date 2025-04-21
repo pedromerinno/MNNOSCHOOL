@@ -69,8 +69,6 @@ export const useAuthMethods = ({
             display_name: displayName,
             interests: metadata?.interests || [],
           },
-          // Remover emailRedirectTo para não exigir confirmação
-          // emailRedirectTo: window.location.origin
         },
       });
 
@@ -81,7 +79,8 @@ export const useAuthMethods = ({
           .from('profiles')
           .update({ 
             display_name: displayName,
-            interesses: metadata?.interests || []
+            interesses: metadata?.interests || [],
+            primeiro_login: true // Garantir que o primeiro_login esteja definido como true
           })
           .eq('id', data.user.id);
           
@@ -89,9 +88,12 @@ export const useAuthMethods = ({
           console.error('Erro ao atualizar perfil:', profileError);
         }
 
-        // Redirecionar para a tela de onboarding após cadastro
-        navigate('/onboarding');
-        toast.success('Cadastro realizado com sucesso!');
+        // Aguardar um momento para garantir que o perfil foi criado corretamente
+        await fetchUserProfile(data.user.id);
+        
+        // Redirecionar explicitamente para a tela de onboarding após cadastro
+        toast.success('Cadastro realizado com sucesso! Redirecionando para configuração inicial...');
+        navigate('/onboarding', { replace: true });
       }
     } catch (error: any) {
       console.error('Erro no cadastro:', error);
@@ -99,7 +101,7 @@ export const useAuthMethods = ({
     } finally {
       setLoading(false);
     }
-  }, [setLoading, navigate]);
+  }, [setLoading, navigate, fetchUserProfile]);
 
   return {
     signInWithPassword,

@@ -94,8 +94,15 @@ export const ProtectedRoute = () => {
   }
 
   // Verificar se precisa fazer onboarding inicial
-  const needsOnboarding = userProfile?.primeiro_login || 
-                         userProfile?.interesses?.includes("onboarding_incomplete");
+  // IMPORTANTE: Precisamos ter certeza que esta verificação seja feita corretamente
+  const needsOnboarding = userProfile?.primeiro_login === true || 
+                         (userProfile?.interesses && userProfile.interesses.includes("onboarding_incomplete"));
+                         
+  console.log("ProtectedRoute: Verificando necessidade de onboarding:", { 
+    userProfile,
+    primeiro_login: userProfile?.primeiro_login,
+    interesses: userProfile?.interesses
+  });
                          
   // Redirecionar para onboarding se for a primeira vez
   if (needsOnboarding && !isOnboarding) {

@@ -40,10 +40,16 @@ export const SignupForm = () => {
     
     try {
       // Sempre incluir a flag onboarding_incomplete para garantir que o usuário vá para o onboarding
-      const metadataWithCompany = { interests: ["onboarding_incomplete"] };
+      const metadataWithCompany = { 
+        interests: ["onboarding_incomplete"] 
+      };
       
-      await signUp(email, password, email.split('@')[0], metadataWithCompany);
-      console.log("Usuario cadastrado com sucesso! Redirecionando para onboarding...");
+      // Usar o nome de exibição como o texto antes do @ no email, se não for fornecido
+      const displayName = email.split('@')[0];
+      
+      console.log("Iniciando cadastro com metadata:", metadataWithCompany);
+      await signUp(email, password, displayName, metadataWithCompany);
+      console.log("Usuário cadastrado com sucesso! Redirecionando para onboarding...");
     } catch (error) {
       console.error("Erro no cadastro:", error);
     } finally {
