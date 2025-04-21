@@ -98,7 +98,6 @@ const NewNoticeDialog = ({
   // Atualizar o onSubmit para notificar a conclusão bem-sucedida
   const onSubmit = async (data: NoticeFormData) => {
     setSubmitting(true);
-    
     try {
       if (editingNoticeId) {
         console.log("Editando aviso:", editingNoticeId, "Empresas:", data.companies);
@@ -119,7 +118,6 @@ const NewNoticeDialog = ({
       }
     } catch (error) {
       console.error("Erro ao salvar aviso:", error);
-      // Changed from toast.error to toast with variant destructive
       toast({
         title: "Erro",
         description: "Erro ao salvar aviso",
@@ -200,44 +198,52 @@ const NewNoticeDialog = ({
 
             <div className="space-y-2">
               <FormLabel>Empresas</FormLabel>
-              <div className="grid gap-2">
+              <div className="grid gap-3">
                 {userCompanies.map((company) => (
                   <FormField
                     key={company.id}
                     control={form.control}
                     name="companies"
-                    render={({ field }) => {
-                      return (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border p-3 shadow-sm">
-                          <div className="space-y-0.5">
-                            <FormLabel htmlFor={company.id} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    render={({ field }) => (
+                      <FormItem className={`flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 border border-border rounded-lg shadow-sm space-x-4 transition-colors`}>
+                        {/* Logo da empresa */}
+                        <div className="flex items-center space-x-3">
+                          {company.logo ? (
+                            <img
+                              src={company.logo}
+                              alt={company.nome}
+                              className="h-8 w-8 rounded-full bg-gray-200 object-cover border border-gray-200"
+                            />
+                          ) : (
+                            <div className="h-8 w-8 flex items-center justify-center rounded-full bg-gray-200 text-gray-600 font-bold border border-gray-200">
+                              {company.nome?.charAt(0).toUpperCase() || "?"}
+                            </div>
+                          )}
+                          <div>
+                            <FormLabel htmlFor={company.id} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 m-0">
                               {company.nome}
                             </FormLabel>
-                            <p className="text-sm text-muted-foreground">
-                              {company.nome} {/* Changed from company.email to company.nome since email doesn't exist */}
-                            </p>
                           </div>
-                          <FormControl>
-                            <Checkbox
-                              id={company.id}
-                              checked={field.value?.includes(company.id)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  field.onChange([...(field.value || []), company.id])
-                                } else {
-                                  field.onChange(field.value?.filter((value) => value !== company.id))
-                                }
-                              }}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )
-                    }}
+                        </div>
+                        <FormControl>
+                          <Checkbox
+                            id={company.id}
+                            checked={field.value?.includes(company.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                field.onChange([...(field.value || []), company.id])
+                              } else {
+                                field.onChange(field.value?.filter((value) => value !== company.id))
+                              }
+                            }}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
                   />
                 ))}
               </div>
             </div>
-
             <DialogFooter>
               <Button type="submit" disabled={submitting}>
                 {submitting ? "Salvando..." : "Salvar"}
