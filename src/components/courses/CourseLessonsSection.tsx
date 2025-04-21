@@ -25,6 +25,7 @@ export const CourseLessonsSection: React.FC<CourseLessonsSectionProps> = ({
 }) => (
   <div className="w-full md:w-4/12 mt-8 md:mt-0 relative">
     <div className="space-y-4 mt-4">
+      {/* TÍTULO UNIFICADO AQUI */}
       <div className="flex items-center justify-between">
         <h3 className="text-xl font-bold">Aulas do Curso</h3>
         {isAdmin && (
