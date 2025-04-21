@@ -1,5 +1,5 @@
 
-import { memo, useCallback, useEffect } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -26,6 +26,7 @@ export const CompanySelector = memo(() => {
   } = useCompanies();
   
   const { displayName, setDisplayName } = useCompanyNameDisplay(selectedCompany);
+  const [initialLoadAttempted, setInitialLoadAttempted] = useState(false);
   
   // Create a wrapper function with the correct return type
   const handleForceGetUserCompanies = async (userId: string): Promise<any> => {
@@ -41,28 +42,41 @@ export const CompanySelector = memo(() => {
 
   // Always select the first company if there's no selected company and companies exist
   useEffect(() => {
-    if (user?.id && userCompanies.length > 0 && !selectedCompany) {
+    if (user?.id && userCompanies.length > 0 && !selectedCompany && !initialLoadAttempted) {
       console.log('CompanySelector: Auto-selecting the first company:', userCompanies[0].nome);
       selectCompany(user.id, userCompanies[0]);
+      setInitialLoadAttempted(true);
       
       // Dispatch a company selected event
       const event = new CustomEvent('company-selected', {
         detail: { company: userCompanies[0] }
       });
       window.dispatchEvent(event);
+      
+      // Update the display name immediately
+      setDisplayName(userCompanies[0].nome);
+      
+      // Store in localStorage for persistence
+      try {
+        localStorage.setItem('selectedCompany', JSON.stringify(userCompanies[0]));
+        localStorage.setItem('selectedCompanyId', userCompanies[0].id);
+      } catch (e) {
+        console.warn('Error storing selected company:', e);
+      }
     }
-  }, [user?.id, userCompanies, selectedCompany, selectCompany]);
+  }, [user?.id, userCompanies, selectedCompany, selectCompany, setDisplayName, initialLoadAttempted]);
 
   // Force initial load when component mounts
   useEffect(() => {
-    if (user?.id && !isLoading && userCompanies.length === 0) {
+    if (user?.id && !isLoading && userCompanies.length === 0 && !initialLoadAttempted) {
       console.log('CompanySelector: No companies loaded, forcing initial load');
+      setInitialLoadAttempted(true);
       forceGetUserCompanies(user.id).catch(err => {
         console.error('Error forcing initial company load:', err);
         toast.error('Error loading companies. Please refresh the page.');
       });
     }
-  }, [user?.id, isLoading, userCompanies.length, forceGetUserCompanies]);
+  }, [user?.id, isLoading, userCompanies.length, forceGetUserCompanies, initialLoadAttempted]);
 
   const handleCompanyChange = useCallback((company: Company) => {
     if (!company || !user?.id) return;
@@ -88,8 +102,19 @@ export const CompanySelector = memo(() => {
     });
     window.dispatchEvent(event);
     
+    // Update display name immediately
+    setDisplayName(company.nome);
+    
     toast.success(`Company ${company.nome} selected successfully!`);
-  }, [user?.id, selectedCompany?.id, selectCompany, userCompanies]);
+    
+    // Store in localStorage for persistence
+    try {
+      localStorage.setItem('selectedCompany', JSON.stringify(company));
+      localStorage.setItem('selectedCompanyId', company.id);
+    } catch (e) {
+      console.warn('Error storing selected company:', e);
+    }
+  }, [user?.id, selectedCompany?.id, selectCompany, userCompanies, setDisplayName]);
 
   if (isLoading && !selectedCompany) {
     return <CompanyName displayName={displayName || "Loading..."} />;

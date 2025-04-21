@@ -17,21 +17,81 @@ export const useUserCompanies = ({
       console.log(`[useUserCompanies] Buscando empresas para usuário: ${userId}`);
       setIsLoading(true);
       
-      // First try to use the RPC function which handles permissions correctly
+      // Create a unique instance ID for this request for better debugging
+      const instanceId = Math.random().toString(36).substring(2, 8);
+      
+      // Try the RPC function first which has proper permission handling
       const { data: rpcData, error: rpcError } = await supabase
         .rpc('get_user_companies', { user_id: userId });
         
       if (!rpcError && rpcData && rpcData.length > 0) {
         console.log(`[useUserCompanies] Encontradas ${rpcData.length} empresas via RPC`);
-        setUserCompanies(rpcData as Company[]);
-        return rpcData as Company[];
+        
+        // Save to memory for immediate use and localStorage for later
+        const companies = rpcData as Company[];
+        setUserCompanies(companies);
+        
+        try {
+          // Cache to localStorage with a clear timestamp
+          localStorage.setItem('userCompanies', JSON.stringify(companies));
+          localStorage.setItem('userCompaniesTimestamp', Date.now().toString());
+          localStorage.setItem('userCompaniesUserId', userId);
+        } catch (e) {
+          console.warn('[useUserCompanies] Failed to cache companies to localStorage:', e);
+        }
+        
+        return companies;
       }
       
       if (rpcError) {
         console.warn('[useUserCompanies] Error using RPC, falling back to direct query:', rpcError);
       }
       
-      // Fallback to direct query if RPC not available or failed or returned no data
+      // Check if user is a super admin first
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('super_admin, is_admin')
+        .eq('id', userId)
+        .single();
+        
+      if (profileError) {
+        console.error('[useUserCompanies] Error checking user profile:', profileError);
+        throw profileError;
+      }
+      
+      // Super admins get all companies
+      if (profileData?.super_admin) {
+        console.log('[useUserCompanies] User is super admin, fetching all companies');
+        
+        const { data: allCompanies, error: companiesError } = await supabase
+          .from('empresas')
+          .select('*')
+          .order('nome', { ascending: true });
+          
+        if (companiesError) {
+          console.error('[useUserCompanies] Error fetching all companies for super admin:', companiesError);
+          throw companiesError;
+        }
+        
+        if (allCompanies && allCompanies.length > 0) {
+          console.log(`[useUserCompanies] Loaded ${allCompanies.length} companies for super admin`);
+          
+          try {
+            localStorage.setItem('userCompanies', JSON.stringify(allCompanies));
+            localStorage.setItem('userCompaniesTimestamp', Date.now().toString());
+            localStorage.setItem('userCompaniesUserId', userId);
+          } catch (e) {
+            console.warn('[useUserCompanies] Failed to cache companies to localStorage:', e);
+          }
+          
+          setUserCompanies(allCompanies as Company[]);
+          return allCompanies as Company[];
+        }
+        
+        return [];
+      }
+      
+      // For regular users, query the user_empresa relation table
       const { data: relations, error: relationsError } = await supabase
         .from('user_empresa')
         .select('empresa_id')
@@ -42,10 +102,10 @@ export const useUserCompanies = ({
         throw relationsError;
       }
       
-      console.log(`[useUserCompanies] Encontrados ${relations?.length || 0} relacionamentos empresa`);
+      console.log(`[useUserCompanies] Found ${relations?.length || 0} company relationships`);
       
       if (!relations || relations.length === 0) {
-        console.log(`[useUserCompanies] Nenhuma empresa associada ao usuário ${userId}`);
+        console.log(`[useUserCompanies] No companies associated with user ${userId}`);
         setUserCompanies([]);
         return [];
       }
@@ -63,20 +123,21 @@ export const useUserCompanies = ({
         throw companiesError;
       }
       
-      console.log(`[useUserCompanies] Carregados detalhes de ${companies?.length || 0} empresas`);
+      console.log(`[useUserCompanies] Loaded details for ${companies?.length || 0} companies`);
       
       if (companies && companies.length > 0) {
-        // Save to local cache for faster loading next time
+        // Save to both memory and localStorage
         try {
           localStorage.setItem('userCompanies', JSON.stringify(companies));
           localStorage.setItem('userCompaniesTimestamp', Date.now().toString());
+          localStorage.setItem('userCompaniesUserId', userId);
         } catch (e) {
           console.warn('[useUserCompanies] Failed to cache companies to localStorage:', e);
         }
         
-        // Log company names for debugging
+        // Log companies for debugging
         companies.forEach(company => {
-          console.log(`[useUserCompanies] Empresa carregada: ${company.nome} (${company.id})`);
+          console.log(`[useUserCompanies] Company loaded: ${company.nome} (${company.id})`);
         });
         
         setUserCompanies(companies as Company[]);

@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Company } from "@/types/company";
 import { toast } from 'sonner';
@@ -17,14 +17,29 @@ export const IntegrationHeader: React.FC<IntegrationHeaderProps> = ({
   onCompanyChange,
   isDisabled
 }) => {
-  // Force reselection if selectedCompany is null but companies are available
+  const [localSelectedId, setLocalSelectedId] = useState<string | null>(selectedCompany?.id || null);
+  
+  // Effect to handle companies loaded after component mount
   useEffect(() => {
     if (!selectedCompany && companies.length > 0 && !isDisabled) {
       console.log('IntegrationHeader: No company selected, auto-selecting first company');
       onCompanyChange(companies[0].id);
       toast.info(`Company ${companies[0].nome} automatically selected`);
+      setLocalSelectedId(companies[0].id);
     }
   }, [selectedCompany, companies, isDisabled, onCompanyChange]);
+  
+  // Effect to sync local state with prop updates
+  useEffect(() => {
+    if (selectedCompany?.id && localSelectedId !== selectedCompany.id) {
+      setLocalSelectedId(selectedCompany.id);
+    }
+  }, [selectedCompany, localSelectedId]);
+  
+  const handleCompanySelect = (companyId: string) => {
+    setLocalSelectedId(companyId);
+    onCompanyChange(companyId);
+  };
 
   return (
     <div className="flex flex-col md:flex-row md:items-center gap-4 justify-between">
@@ -37,9 +52,9 @@ export const IntegrationHeader: React.FC<IntegrationHeaderProps> = ({
       
       <div className="w-full md:w-72">
         <Select 
-          value={selectedCompany?.id} 
-          onValueChange={onCompanyChange}
-          disabled={isDisabled}
+          value={localSelectedId || undefined} 
+          onValueChange={handleCompanySelect}
+          disabled={isDisabled || companies.length === 0}
         >
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Selecione uma empresa" />
