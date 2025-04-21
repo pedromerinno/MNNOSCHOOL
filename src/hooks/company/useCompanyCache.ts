@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { Company } from '@/types/company';
 
 export const useCompanyCache = () => {
-  // Get cached user companies
+  // Buscar empresas do usuário do cache
   const getCachedUserCompanies = useCallback((): Company[] | null => {
     try {
       const cachedData = localStorage.getItem('userCompanies');
@@ -20,7 +20,7 @@ export const useCompanyCache = () => {
     }
   }, []);
 
-  // Cache user companies
+  // Armazenar empresas do usuário no cache
   const cacheUserCompanies = useCallback((companies: Company[]) => {
     try {
       if (Array.isArray(companies) && companies.length > 0) {
@@ -31,7 +31,7 @@ export const useCompanyCache = () => {
     }
   }, []);
 
-  // Clear cached user companies
+  // Limpar cache de empresas do usuário
   const clearCachedUserCompanies = useCallback(() => {
     try {
       localStorage.removeItem('userCompanies');
@@ -40,19 +40,19 @@ export const useCompanyCache = () => {
     }
   }, []);
 
-  // Get initial selected company (from cache)
+  // Obter empresa selecionada inicialmente (do cache)
   const getInitialSelectedCompany = useCallback((): Company | null => {
     try {
       const cachedCompany = localStorage.getItem('selectedCompany');
       if (cachedCompany) {
         const company = JSON.parse(cachedCompany);
         if (company && company.id) {
-          // Check if user has access to this company
+          // Verificar se o usuário tem acesso a esta empresa
           const cachedUserCompanies = getCachedUserCompanies();
           if (cachedUserCompanies) {
             const hasAccess = cachedUserCompanies.some(c => c.id === company.id);
             if (!hasAccess) {
-              console.log('User does not have access to cached company, clearing selection');
+              console.log('Usuário não tem acesso à empresa em cache, limpando seleção');
               localStorage.removeItem('selectedCompany');
               localStorage.removeItem('selectedCompanyId');
               return null;

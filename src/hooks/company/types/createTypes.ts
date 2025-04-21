@@ -1,7 +1,8 @@
 
-import { Company } from "@/types/company";
+import { Dispatch, SetStateAction } from 'react';
+import { Company } from '@/types/company';
 
 export interface UseCompanyCreateProps {
-  setIsLoading: (loading: boolean) => void;
-  setCompanies: (companies: Company[] | ((prevCompanies: Company[]) => Company[])) => void;
+  setIsLoading: Dispatch<SetStateAction<boolean>>;
+  setCompanies: Dispatch<SetStateAction<Company[]>>;
 }

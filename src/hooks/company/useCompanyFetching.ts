@@ -1,15 +1,14 @@
 
 import { useCallback, useRef } from "react";
 import { Company } from "@/types/company";
-import { useCompanyRequest } from "./useCompanyRequest";
+import { useCompanyRequest } from "./fetch/useCompanyRequest";
 import { useCompanyCache } from "./useCompanyCache";
-import { useCompanyRetry } from "./useCompanyRetry";
+import { useCompanyRetry } from "./fetch/useCompanyRetry";
 import { useCompanyFetch } from "./useCompanyFetch";
 import { UseCompanyFetchingProps } from "./types/fetchTypes";
 
 export const useCompanyFetching = ({
   userCompanies,
-  setCompanies,
   setUserCompanies,
   setSelectedCompany,
   setIsLoading,
@@ -34,7 +33,6 @@ export const useCompanyFetching = ({
   
   const companyFetchProps = {
     setIsLoading,
-    setCompanies,
     setUserCompanies,
     setSelectedCompany,
     setError
@@ -75,7 +73,7 @@ export const useCompanyFetching = ({
       if (JSON.stringify(userCompanies) !== JSON.stringify(cachedData)) {
         // Important: Only set the cachedData if it belongs to the current user
         // This prevents showing companies from a previous user after login
-        setCompanies(cachedData);
+        setUserCompanies(cachedData);
         memoryCache.current = { companies: cachedData, timestamp: Date.now() };
       }
       
@@ -122,7 +120,7 @@ export const useCompanyFetching = ({
       if (!forceRefresh) {
         const cachedData = getCachedUserCompanies();
         if (cachedData && cachedData.length > 0) {
-          setCompanies(cachedData);
+          setUserCompanies(cachedData);
           // Don't set isLoading to false here to prevent UI flickering
         }
       }
@@ -161,7 +159,7 @@ export const useCompanyFetching = ({
       const cachedData = getCachedUserCompanies();
       if (cachedData && cachedData.length > 0) {
         console.log(`[${hookInstanceIdRef.current}] Using cached companies after failure`);
-        setCompanies(cachedData);
+        setUserCompanies(cachedData);
         return cachedData;
       }
       
@@ -183,14 +181,14 @@ export const useCompanyFetching = ({
     getCachedUserCompanies,
     executeWithRetry,
     getCompanies,
-    setCompanies,
+    setUserCompanies,
     pendingRequestsRef,
     cacheUserCompanies,
-    setIsLoading,
-    setUserCompanies
+    setIsLoading
   ]);
   
   const getCompanyByIdOptimized = useCallback(async (companyId: string): Promise<Company | null> => {
+    // Fast path: check memory cache first
     if (fetchedCompaniesRef.current.has(companyId) && userCompanies.length > 0) {
       const existingCompany = userCompanies.find(company => company.id === companyId);
       if (existingCompany) {
