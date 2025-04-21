@@ -19,6 +19,7 @@ interface CompanyStepProps {
   onBack: () => void;
   onCompanyTypeSelect: (isExisting: boolean) => void;
   onCompanyCreated?: () => void;
+  hideBack?: boolean; // Add the hideBack optional property
 }
 
 interface CompanyDetails {
@@ -33,7 +34,13 @@ interface CompanyDetails {
   historia: string;
 }
 
-const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyTypeSelect, onCompanyCreated }) => {
+const CompanyStep: React.FC<CompanyStepProps> = ({ 
+  onNext, 
+  onBack, 
+  onCompanyTypeSelect, 
+  onCompanyCreated,
+  hideBack = false // Add default value of false
+}) => {
   const { profileData, updateProfileData } = useOnboarding();
   const { user, updateUserProfile } = useAuth();
   const navigate = useNavigate();
@@ -159,59 +166,23 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
           navigate("/", { replace: true });
         }
       } else {
-        // For existing company selection
         if (!companyInfo) {
-          // Try to fetch company info one more time
           await fetchCompany(companyId);
-        }
-        
-        if (!companyInfo && !companyLoading) {
-          setError("Empresa não encontrada com este ID");
-          setIsSubmitting(false);
-          return;
-        }
-        
-        // If we have company info, proceed with linking user to company
-        if (user && companyInfo) {
-          // Check if user is already linked to this company
-          const { data: existingRelation } = await supabase
-            .from('user_empresa')
-            .select('*')
-            .eq('user_id', user.id)
-            .eq('empresa_id', companyId)
-            .maybeSingle();
-            
-          if (!existingRelation) {
-            // Create relationship if it doesn't exist
-            const { error: relationError } = await supabase
-              .from('user_empresa')
-              .insert({
-                user_id: user.id,
-                empresa_id: companyId,
-                is_admin: false
-              });
-              
-            if (relationError) {
-              throw relationError;
-            }
-            
-            toast.success(`Vinculado com sucesso à empresa ${companyInfo.nome}`);
-          } else {
-            toast.info(`Você já está vinculado à empresa ${companyInfo.nome}`);
+          if (!companyInfo) {
+            setError("Empresa não encontrada com este ID");
+            setIsSubmitting(false);
+            return;
           }
-          
-          updateProfileData({ 
-            companyId: companyId,
-            newCompanyName: null,
-            companyDetails: null
-          });
-          
-          onCompanyTypeSelect(true);
-          onNext();
-        } else {
-          setError("Não foi possível vincular à empresa. Verifique o ID informado.");
-          setIsSubmitting(false);
         }
+
+        updateProfileData({ 
+          companyId: companyId,
+          newCompanyName: null,
+          companyDetails: null
+        });
+
+        onCompanyTypeSelect(true);
+        onNext();
       }
     } catch (error: any) {
       console.error('Error:', error);
@@ -225,7 +196,6 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
     setCompanyType(type);
     setError("");
     setShowCompanyInfo(false);
-    onCompanyTypeSelect(type === 'existing');
   };
 
   return (
@@ -293,23 +263,25 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
         <Button 
           type="submit" 
           className="w-full rounded-md bg-merinno-dark hover:bg-black text-white"
-          disabled={isSubmitting || (companyType === 'existing' && !companyInfo && companyId.length >= 10 && !companyLoading)}
+          disabled={isSubmitting || (companyType === 'existing' && !companyInfo && !companyLoading)}
         >
           {isSubmitting
             ? (companyType === 'new' ? "Criando..." : "Processando...")
             : (companyType === 'new' ? "Criar Empresa" : "Continuar")}
         </Button>
         
-        <Button 
-          type="button" 
-          variant="ghost"
-          className="flex items-center justify-center gap-2 text-gray-500 mt-2"
-          onClick={onBack}
-          disabled={isSubmitting}
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
-        </Button>
+        {!hideBack && (
+          <Button 
+            type="button" 
+            variant="ghost"
+            className="flex items-center justify-center gap-2 text-gray-500 mt-2"
+            onClick={onBack}
+            disabled={isSubmitting}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar
+          </Button>
+        )}
       </div>
     </form>
   );

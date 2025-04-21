@@ -1,3 +1,4 @@
+
 import { AlertTriangle, Building, Link, X } from "lucide-react";
 import { useState } from "react";
 import { Company } from "@/types/company";
@@ -19,13 +20,9 @@ import { useAuth } from "@/contexts/AuthContext";
 
 interface CompanyManagementSectionProps {
   userCompanies: Company[];
-  allowUnlink?: boolean;
 }
 
-export const CompanyManagementSection = ({ 
-  userCompanies,
-  allowUnlink = false 
-}: CompanyManagementSectionProps) => {
+export const CompanyManagementSection = ({ userCompanies }: CompanyManagementSectionProps) => {
   const [companyToRemove, setCompanyToRemove] = useState<Company | null>(null);
   const [companyId, setCompanyId] = useState("");
   const { removeUserFromCompany, assignUserToCompany } = useCompanyUserManagement();
@@ -100,16 +97,14 @@ export const CompanyManagementSection = ({
                 )}
                 <span className="text-sm font-medium">{company.nome}</span>
               </div>
-              {allowUnlink && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => setCompanyToRemove(company)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setCompanyToRemove(company)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </div>
           ))}
         </div>

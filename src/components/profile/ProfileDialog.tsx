@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Upload } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -56,6 +57,7 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
     },
   });
 
+  // Update form values when userProfile changes
   useEffect(() => {
     if (userProfile) {
       form.reset({
@@ -69,6 +71,7 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
     }
   }, [userProfile, email, form]);
 
+  // Update avatar preview when form changes
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
       if (name === 'avatar' && value.avatar) {
@@ -169,10 +172,7 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
             />
 
             <div className="border-t pt-4">
-              <CompanyManagementSection 
-                userCompanies={userCompanies} 
-                allowUnlink={true}
-              />
+              <CompanyManagementSection userCompanies={userCompanies} />
             </div>
             
             <div className="flex justify-end gap-2 pt-4 border-t">

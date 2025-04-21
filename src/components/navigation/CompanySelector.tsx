@@ -1,5 +1,5 @@
 
-import { memo, useCallback, useEffect } from "react";
+import { useEffect, useState, memo, useCallback } from "react";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -7,14 +7,11 @@ import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useCompanyNameDisplay } from "@/hooks/company/useCompanyNameDisplay";
-import { useCompanyEvents } from "@/hooks/company/useCompanyEvents";
-import { CompanyName } from "./company/CompanyName";
-import { CompanyMenuItem } from "./company/CompanyMenuItem";
-import { Company } from "@/types/company";
 
+// Usar memo para evitar renderizações desnecessárias
 export const CompanySelector = memo(() => {
   const { user } = useAuth();
   const { 
@@ -25,70 +22,68 @@ export const CompanySelector = memo(() => {
     forceGetUserCompanies
   } = useCompanies();
   
-  const { displayName, setDisplayName } = useCompanyNameDisplay(selectedCompany);
+  // Estado local para o nome da empresa que será exibido
+  const [displayName, setDisplayName] = useState<string>("merinno");
   
-  // Create a wrapper function with the correct return type
-  const handleForceGetUserCompanies = async (userId: string): Promise<any> => {
-    return await forceGetUserCompanies(userId);
-  };
-  
-  useCompanyEvents({
-    userId: user?.id,
-    forceGetUserCompanies: handleForceGetUserCompanies,
-    setDisplayName
-  });
-
-  // Auto-select the first company if there's only one and none selected
+  // Atualizar o nome da empresa quando mudar a seleção
   useEffect(() => {
-    if (user?.id && userCompanies.length === 1 && !selectedCompany) {
-      console.log('CompanySelector: Auto-selecting the only company:', userCompanies[0].nome);
-      selectCompany(user.id, userCompanies[0]);
-      
-      // Dispatch a company selected event
-      const event = new CustomEvent('company-selected', {
-        detail: { company: userCompanies[0] }
-      });
-      window.dispatchEvent(event);
+    if (selectedCompany?.nome) {
+      console.log(`CompanySelector: Atualizando nome para "${selectedCompany.nome}"`);
+      setDisplayName(selectedCompany.nome);
     }
-  }, [user?.id, userCompanies, selectedCompany, selectCompany]);
+  }, [selectedCompany]);
 
-  const handleCompanyChange = useCallback((company: Company) => {
+  // Listener para mudanças nas relações de empresa
+  const handleCompanyRelationChange = useCallback(async () => {
+    if (user?.id) {
+      console.log('CompanySelector: Detectada mudança na relação de empresa, atualizando dados');
+      await forceGetUserCompanies(user.id);
+    }
+  }, [user, forceGetUserCompanies]);
+  
+  // Configurar ouvinte de eventos apenas uma vez
+  useEffect(() => {
+    window.addEventListener('company-relation-changed', handleCompanyRelationChange);
+    
+    return () => {
+      window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
+    };
+  }, [handleCompanyRelationChange]);
+
+  const handleCompanyChange = useCallback((company) => {
     if (!company || !user?.id) return;
     
     if (selectedCompany?.id === company.id) {
-      console.log('CompanySelector: Company already selected, skipping change');
+      console.log('CompanySelector: Empresa já selecionada, pulando mudança');
       return;
     }
     
+    // Verificar se o usuário tem acesso a esta empresa
     const hasAccess = userCompanies.some(c => c.id === company.id);
     if (!hasAccess) {
-      console.error('CompanySelector: User does not have access to this company:', company.nome);
-      toast.error(`You do not have access to company ${company.nome}`);
+      console.error('CompanySelector: Usuário não tem acesso a esta empresa:', company.nome);
+      toast.error(`Você não tem acesso à empresa ${company.nome}`);
       return;
     }
     
-    console.log('CompanySelector: Selecting company:', company.nome);
+    console.log('CompanySelector: Selecionando empresa:', company.nome);
     selectCompany(user.id, company);
-    
-    // Dispatch a company selected event
-    const event = new CustomEvent('company-selected', {
-      detail: { company }
-    });
-    window.dispatchEvent(event);
-    
-    toast.success(`Company ${company.nome} selected successfully!`);
+    toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
   }, [user?.id, selectedCompany?.id, selectCompany, userCompanies]);
 
+  // Mostrar apenas o nome durante carregamento, sem skeleton
   if (isLoading && !selectedCompany) {
-    return <CompanyName displayName={displayName} />;
+    return <span className="text-lg font-bold text-merinno-dark">{displayName}</span>;
   }
 
+  // Se usuário não tiver empresas ou não estiver logado, mostrar texto padrão
   if (!user || !userCompanies || userCompanies.length === 0) {
-    return <CompanyName displayName="merinno" />;
+    return <span className="text-lg font-bold text-merinno-dark">merinno</span>;
   }
 
+  // Se usuário tiver apenas uma empresa, apenas mostrar o nome sem dropdown
   if (userCompanies.length === 1) {
-    return <CompanyName displayName={displayName} />;
+    return <span className="text-lg font-bold text-merinno-dark">{displayName}</span>;
   }
 
   return (
@@ -101,16 +96,32 @@ export const CompanySelector = memo(() => {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="bg-white dark:bg-gray-800 z-50">
         {Array.isArray(userCompanies) && userCompanies.map((company) => (
-          <CompanyMenuItem
-            key={company.id}
-            company={company}
-            isSelected={selectedCompany?.id === company.id}
-            onSelect={handleCompanyChange}
-          />
+          <DropdownMenuItem 
+            key={company.id} 
+            onClick={() => handleCompanyChange(company)}
+            className={`cursor-pointer ${selectedCompany?.id === company.id ? 'bg-gray-100 dark:bg-gray-700' : ''}`}
+          >
+            <div className="flex items-center">
+              {company.logo && (
+                <img
+                  src={company.logo}
+                  alt={company.nome}
+                  className="h-4 w-4 mr-2 object-contain rounded-lg"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = "/placeholder.svg";
+                    target.onerror = null;
+                  }}
+                />
+              )}
+              <span>{company.nome}</span>
+            </div>
+          </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
   );
 });
 
+// Definir displayName para melhorar depuração
 CompanySelector.displayName = 'CompanySelector';

@@ -42,8 +42,7 @@ export const useAuthMethods = ({
       setLoading(true);
       await supabase.auth.signOut();
       
-      // Redirecionar para página de login após logout
-      navigate('/login');
+      navigate('/login', { replace: true }); // Atualizado para redirecionar para /login
       toast.success('Você saiu da sua conta');
     } catch (error: any) {
       console.error('Erro ao fazer logout:', error);
