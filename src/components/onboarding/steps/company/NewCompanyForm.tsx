@@ -2,6 +2,8 @@
 import React from "react";
 import { Input } from "@/components/ui/input";
 import NewCompanyValuesField, { ValueItem } from "./NewCompanyValuesField";
+import OnboardingLogoUploadField from "./OnboardingLogoUploadField";
+import OnboardingColorPickerField from "./OnboardingColorPickerField";
 
 interface CompanyDetails {
   name: string;
@@ -32,7 +34,6 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
     });
   };
 
-  // Inicializa valores como array se undefined
   React.useEffect(() => {
     if (!Array.isArray(companyDetails.valores)) {
       handleChange("valores", []);
@@ -41,7 +42,6 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
 
   return (
     <div className="space-y-5">
-
       {/* 1. Nome da Empresa */}
       <div className="space-y-1">
         <label htmlFor="companyName" className="text-sm text-gray-500">
@@ -57,21 +57,16 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
         />
       </div>
 
-      {/* 2. Logo da Empresa */}
+      {/* 2. Logo da Empresa - upload + url */}
       <div className="space-y-1">
         <label htmlFor="logo" className="text-sm text-gray-500">
           Logo da empresa
         </label>
-        <Input
-          id="logo"
+        <OnboardingLogoUploadField
           value={companyDetails.logo ?? ""}
-          onChange={e => handleChange('logo', e.target.value)}
-          className="border-b border-gray-300 rounded-md px-3 py-2 focus-visible:ring-merinno-dark"
-          placeholder="https://exemplo.com/logo.png"
+          onChange={url => handleChange('logo', url)}
+          companyName={companyDetails.name}
         />
-        {companyDetails.logo && companyDetails.logo.trim() && (
-          <img src={companyDetails.logo} alt="Logo preview" className="h-14 mt-2 rounded bg-gray-50 border object-contain max-w-[180px]" />
-        )}
       </div>
 
       {/* 3. Frase Institucional */}
@@ -86,15 +81,12 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
         />
       </div>
 
-      {/* 4. Cor da empresa */}
+      {/* 4. Cor da empresa (color picker visual) */}
       <div className="space-y-1">
         <label htmlFor="corPrincipal" className="text-sm text-gray-500">Cor principal</label>
-        <Input
-          id="corPrincipal"
-          type="color"
+        <OnboardingColorPickerField
           value={companyDetails.cor_principal || "#000000"}
-          onChange={e => handleChange('cor_principal', e.target.value)}
-          className="h-12 w-full cursor-pointer border"
+          onChange={color => handleChange("cor_principal", color)}
         />
       </div>
 
@@ -110,7 +102,7 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
         />
       </div>
 
-      {/* 6. Valores (em tópicos dinâmicos) */}
+      {/* 6. Valores (tópicos dinâmicos igual ao admin) */}
       <NewCompanyValuesField
         values={Array.isArray(companyDetails.valores) ? companyDetails.valores : []}
         onChange={valores => handleChange("valores", valores)}
@@ -128,7 +120,7 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
         />
       </div>
 
-      {/* 8. História da Empresa (opcional, por último) */}
+      {/* 8. História da Empresa (opcional) */}
       <div className="space-y-1">
         <label htmlFor="historia" className="text-sm text-gray-500">História da empresa <span className="text-gray-400">(opcional)</span></label>
         <textarea
