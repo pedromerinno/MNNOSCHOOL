@@ -1,4 +1,5 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+
+import { useState, useEffect, lazy, Suspense, useRef } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useAuth } from "@/contexts/AuthContext";
@@ -51,6 +52,8 @@ const Index = () => {
   const { user, userProfile } = useAuth();
   const { getInitialSelectedCompany } = useCompanyCache();
   const navigate = useNavigate();
+  const hasAttemptedForceLoad = useRef(false);
+  const hasRedirectedToOnboarding = useRef(false);
 
   const handleCompanyCreated = () => {
     setShowCompanyDialog(false);
@@ -75,12 +78,17 @@ const Index = () => {
       if (!userProfile?.interesses?.includes("onboarding_incomplete")) {
         console.log("[Index] Usuário não tem flag de onboarding incompleto mas não tem empresas. Tentar forçar carregamento...");
         
-        // Tentar forçar o carregamento de empresas uma vez
-        if (user.id) {
+        // Proteger contra múltiplas tentativas de carregamento forçado
+        if (!hasAttemptedForceLoad.current && user.id) {
+          hasAttemptedForceLoad.current = true;
+          
           forceGetUserCompanies(user.id).then(companies => {
             if (companies.length === 0) {
-              console.log("[Index] Mesmo após forçar carregamento, não há empresas. Redirecionando para onboarding...");
-              navigate("/onboarding", { replace: true });
+              // Abrir diálogo para criar empresa apenas se ainda não redirecionou
+              if (!hasRedirectedToOnboarding.current) {
+                console.log("[Index] Mesmo após forçar carregamento, não há empresas. Abrindo diálogo de criação de empresa...");
+                setShowCompanyDialog(true);
+              }
             } else {
               toast.success("Empresas carregadas com sucesso!");
             }
@@ -91,6 +99,13 @@ const Index = () => {
       }
     }
   }, [user, userProfile, navigate, isLoading, userCompanies, fetchCount, forceGetUserCompanies]);
+
+  // Mostrar o diálogo de criação de empresa quando o usuário não tem empresas
+  useEffect(() => {
+    if (user && !isLoading && userCompanies.length === 0 && fetchCount > 0 && !hasRedirectedToOnboarding.current) {
+      setShowCompanyDialog(true);
+    }
+  }, [user, isLoading, userCompanies.length, fetchCount]);
   
   const hasCachedCompany = getInitialSelectedCompany() !== null;
   
@@ -114,9 +129,11 @@ const Index = () => {
     return () => clearTimeout(timeoutId);
   }, [isLoading, fetchCount, selectedCompany, isPageLoading, hasCachedCompany]);
 
+  // Carregar empresas apenas uma vez
   useEffect(() => {
-    if (user?.id && userCompanies.length === 0 && !isLoading) {
+    if (user?.id && userCompanies.length === 0 && !isLoading && !hasAttemptedForceLoad.current) {
       console.log("[Index] Forçando carregamento inicial de empresas");
+      hasAttemptedForceLoad.current = true;
       getUserCompanies(user.id, true).catch(err => {
         console.error("[Index] Erro no carregamento inicial:", err);
       });
@@ -159,7 +176,7 @@ const Index = () => {
         
         <div className="min-h-screen bg-background">
           <Suspense fallback={<LoadingState />}>
-            <UserHome />
+            <NoCompaniesAvailable />
           </Suspense>
         </div>
       </>
