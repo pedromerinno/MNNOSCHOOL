@@ -27,6 +27,9 @@ export const useCompanyNameDisplay = (selectedCompany: Company | null) => {
       window.dispatchEvent(new CustomEvent('company-display-updated', { 
         detail: { company: selectedCompany } 
       }));
+
+      // Ensure page reflects the latest company data by dispatching additional event
+      window.dispatchEvent(new Event('company-data-refreshed'));
     } else {
       // If no company is selected, check for cached company name
       const cachedCompanyName = localStorage.getItem('selectedCompanyName');
@@ -36,5 +39,13 @@ export const useCompanyNameDisplay = (selectedCompany: Company | null) => {
     }
   }, [selectedCompany, displayName]);
 
-  return { displayName, setDisplayName };
+  // Method to force refresh the display name from localStorage
+  const refreshDisplayName = () => {
+    const cachedName = localStorage.getItem('selectedCompanyName');
+    if (cachedName) {
+      setDisplayName(cachedName);
+    }
+  };
+
+  return { displayName, setDisplayName, refreshDisplayName };
 };

@@ -27,6 +27,11 @@ export const useCompanyCache = () => {
         localStorage.setItem('userCompanies', JSON.stringify(companies));
         // Also update last cache timestamp
         localStorage.setItem('companyDataTimestamp', Date.now().toString());
+        
+        // Dispatch event to notify other components of the cache update
+        window.dispatchEvent(new CustomEvent('company-cache-updated', {
+          detail: { companies }
+        }));
       }
     } catch (error) {
       console.error('Error caching user companies:', error);
@@ -51,6 +56,9 @@ export const useCompanyCache = () => {
       // Force a timestamp update to indicate fresh data is needed
       localStorage.setItem('cacheCleared', Date.now().toString());
       console.log('All company cache cleared successfully');
+      
+      // Dispatch an event to notify components that cache has been cleared
+      window.dispatchEvent(new Event('company-cache-cleared'));
     } catch (error) {
       console.error('Error clearing cached user companies:', error);
     }
@@ -102,11 +110,17 @@ export const useCompanyCache = () => {
     }
   }, [getCachedUserCompanies]);
 
+  // Force reload to ensure all components reflect the latest data
+  const forceDataReload = useCallback(() => {
+    window.location.reload();
+  }, []);
+
   return {
     getCachedUserCompanies,
     cacheUserCompanies,
     clearCachedUserCompanies,
     getInitialSelectedCompany,
-    isCacheExpired
+    isCacheExpired,
+    forceDataReload
   };
 };

@@ -26,7 +26,7 @@ export const CompanySelector = memo(() => {
     forceGetUserCompanies
   } = useCompanies();
   
-  const { clearCachedUserCompanies, isCacheExpired } = useCompanyCache();
+  const { clearCachedUserCompanies, isCacheExpired, forceDataReload } = useCompanyCache();
   const { displayName, setDisplayName } = useCompanyNameDisplay(selectedCompany);
   const [hasInitialized, setHasInitialized] = useState(false);
   
@@ -105,6 +105,22 @@ export const CompanySelector = memo(() => {
       window.location.reload();
     }, 500);
   }, [user?.id, selectedCompany?.id, selectCompany, userCompanies, setDisplayName]);
+
+  // Listen for cache-cleared events to ensure UI is updated
+  useEffect(() => {
+    const handleCacheCleared = () => {
+      console.log("[CompanySelector] Cache cleared event detected, triggering refresh");
+      if (user?.id) {
+        forceGetUserCompanies(user.id);
+      }
+    };
+    
+    window.addEventListener('company-cache-cleared', handleCacheCleared);
+    
+    return () => {
+      window.removeEventListener('company-cache-cleared', handleCacheCleared);
+    };
+  }, [user?.id, forceGetUserCompanies]);
 
   if (isLoading && !selectedCompany) {
     return <CompanyName displayName={displayName} />;
