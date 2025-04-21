@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCourseData } from '@/hooks/useCourseData';
 import { useLessonNavigation } from './useLessonNavigation';
@@ -11,7 +12,6 @@ import { Star } from 'lucide-react';
 import { useCompanies } from '@/hooks/useCompanies';
 import { useAuth } from '@/contexts/AuthContext';
 import { LessonManager } from '@/components/admin/courses/LessonManager';
-import { Button } from '@/components/ui/button';
 import { CourseForm } from '@/components/admin/CourseForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CourseFormValues } from '@/components/admin/courses/form/CourseFormTypes';
@@ -21,6 +21,7 @@ import { CourseStatsBar } from './CourseStatsBar';
 import { CourseProgressBox } from './CourseProgressBox';
 import { CourseLessonsSection } from './CourseLessonsSection';
 import { CourseViewSkeleton } from './CourseViewSkeleton';
+import { supabase } from "@/integrations/supabase/client";
 
 export const CourseView: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -36,6 +37,39 @@ export const CourseView: React.FC = () => {
   
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [courseCompanyIds, setCourseCompanyIds] = useState<string[]>([]);
+  const { userCompanies } = useCompanies();
+
+  // Fetch the company associations for this course when editing
+  useEffect(() => {
+    if (isEditDialogOpen && courseId) {
+      const fetchCourseCompanies = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('company_courses')
+            .select('empresa_id')
+            .eq('course_id', courseId);
+            
+          if (error) {
+            console.error("Error fetching course companies:", error);
+            return;
+          }
+          
+          if (data && data.length > 0) {
+            const companyIds = data.map(item => item.empresa_id);
+            setCourseCompanyIds(companyIds);
+            console.log("Fetched course company IDs:", companyIds);
+          } else {
+            setCourseCompanyIds([]);
+          }
+        } catch (error) {
+          console.error("Error in fetchCourseCompanies:", error);
+        }
+      };
+      
+      fetchCourseCompanies();
+    }
+  }, [isEditDialogOpen, courseId]);
 
   const handleEditCourse = () => {
     setIsEditDialogOpen(true);
@@ -57,8 +91,6 @@ export const CourseView: React.FC = () => {
       setIsSubmitting(false);
     }
   };
-
-  const { userCompanies } = useCompanies();
   
   if (loading) {
     return <CourseViewSkeleton />;
@@ -67,10 +99,6 @@ export const CourseView: React.FC = () => {
   if (!course || error) {
     return <CourseNotFound />;
   }
-
-  const courseCompanyIds = userCompanies
-    .filter((c) => selectedCompany?.id === c.id)
-    .map((c) => c.id);
 
   const initialFormData: CourseFormValues = {
     title: course.title,

@@ -22,16 +22,17 @@ export const updateCourse = async (courseId: string, courseData: CourseFormValue
 
     if (error) throw error;
 
-    // If companyIds is provided, update the company relations
-    if (courseData.companyIds && courseData.companyIds.length > 0) {
-      // First remove existing relations
-      const { error: deleteError } = await supabase
-        .from('company_courses')
-        .delete()
-        .eq('course_id', courseId);
-      if (deleteError) throw deleteError;
+    // Always update the company relations when editing a course
+    // First remove existing relations
+    const { error: deleteError } = await supabase
+      .from('company_courses')
+      .delete()
+      .eq('course_id', courseId);
+    
+    if (deleteError) throw deleteError;
 
-      // Then create new company relations
+    // Then create new company relations if companyIds array exists and is not empty
+    if (courseData.companyIds && courseData.companyIds.length > 0) {
       const companyRelations = courseData.companyIds.map(companyId => ({
         empresa_id: companyId,
         course_id: courseId
@@ -40,6 +41,7 @@ export const updateCourse = async (courseId: string, courseData: CourseFormValue
       const { error: insertError } = await supabase
         .from('company_courses')
         .insert(companyRelations);
+        
       if (insertError) throw insertError;
     }
 
@@ -49,6 +51,7 @@ export const updateCourse = async (courseId: string, courseData: CourseFormValue
 
     return true;
   } catch (error: any) {
+    console.error("Erro ao atualizar curso:", error);
     toast.error('Erro ao atualizar curso', {
       description: error.message,
     });
