@@ -7,32 +7,14 @@ import { PermissionError } from './user/PermissionError';
 import { AddAdminDialog } from './user/AddAdminDialog';
 import { UserManagementHeader } from './user/UserManagementHeader';
 import { UserManagementSkeleton } from './user/UserManagementSkeleton';
-import { useCompanies } from '@/hooks/useCompanies';
-import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from '@/components/ui/button';
-import { Copy } from 'lucide-react';
 
 export const UserManagement = () => {
   const { users, loading, fetchUsers, toggleAdminStatus } = useUsers();
-  const { selectedCompany } = useCompanies();
-  const { user } = useAuth();
-  
   const [initialSetupDone, setInitialSetupDone] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [permissionError, setPermissionError] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false); // Controle do modal de convite
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -49,19 +31,11 @@ export const UserManagement = () => {
     }
   };
 
+  // EXEMPLO DE PLACEHOLDER: aqui abrimos um toast/alerta, mas idealmente seria um Dialog de convite real
   const handleInviteUser = () => {
-    setShowInviteDialog(true);
+    alert('Função de convite de usuário em breve!'); // Substitua futuramente por Dialog real
+    // setIsInviteDialogOpen(true)
   };
-
-  const copyCompanyId = () => {
-    if (selectedCompany?.id) {
-      navigator.clipboard.writeText(selectedCompany.id);
-      toast.success("ID da empresa copiado!");
-    }
-  };
-
-  // Filter users to show only current user when no companies exist
-  const displayUsers = selectedCompany ? users : (user ? [user] : []);
 
   return (
     <div className="space-y-4">
@@ -74,7 +48,7 @@ export const UserManagement = () => {
       />
       
       <AdminSetup
-        users={displayUsers}
+        users={users}
         initialSetupDone={initialSetupDone}
         setInitialSetupDone={setInitialSetupDone}
         setPermissionError={setPermissionError}
@@ -83,11 +57,11 @@ export const UserManagement = () => {
       
       {permissionError && <PermissionError />}
       
-      {loading && displayUsers.length === 0 ? (
+      {loading && users.length === 0 ? (
         <UserManagementSkeleton />
       ) : (
         <UserTable 
-          users={displayUsers} 
+          users={users} 
           loading={loading} 
           onToggle={toggleAdminStatus} 
         />
@@ -98,34 +72,6 @@ export const UserManagement = () => {
         onOpenChange={setIsDialogOpen}
         fetchUsers={fetchUsers}
       />
-
-      <AlertDialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>ID da Empresa</AlertDialogTitle>
-            <AlertDialogDescription className="space-y-4">
-              <p>Compartilhe este ID com o usuário que deseja convidar:</p>
-              <div className="flex items-center gap-2 p-2 bg-gray-100 dark:bg-gray-800 rounded">
-                <code className="flex-1">{selectedCompany?.id}</code>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={copyCompanyId}
-                  className="h-8 w-8"
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Fechar</AlertDialogCancel>
-            <AlertDialogAction onClick={copyCompanyId}>
-              Copiar ID
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };
