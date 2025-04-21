@@ -1,4 +1,3 @@
-
 import { useState, useEffect, lazy, Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -6,6 +5,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCompanyCache } from "@/hooks/company/useCompanyCache";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import CompanyStep from "@/components/onboarding/steps/CompanyStep";
+import { OnboardingProvider } from "@/contexts/OnboardingContext";
 
 // Lazy-load components to improve initial loading time
 const NoCompaniesAvailable = lazy(() => import("@/components/home/NoCompaniesAvailable").then(module => ({ default: module.NoCompaniesAvailable })));
@@ -44,12 +46,19 @@ const LoadingState = () => (
 
 const Index = () => {
   const [isPageLoading, setIsPageLoading] = useState(true);
+  const [showCompanyDialog, setShowCompanyDialog] = useState(false);
   const { userCompanies, isLoading, fetchCount, selectedCompany, getUserCompanies, forceGetUserCompanies } = useCompanies();
   const { user, userProfile } = useAuth();
   const { getInitialSelectedCompany } = useCompanyCache();
   const navigate = useNavigate();
+
+  const handleCompanyCreated = () => {
+    setShowCompanyDialog(false);
+    if (user?.id) {
+      forceGetUserCompanies(user.id);
+    }
+  };
   
-  // Verificar necessidade de onboarding
   useEffect(() => {
     if (!user) return;
     
@@ -83,35 +92,28 @@ const Index = () => {
     }
   }, [user, userProfile, navigate, isLoading, userCompanies, fetchCount, forceGetUserCompanies]);
   
-  // Verificação imediata do cache para evitar o skeleton se já temos dados
   const hasCachedCompany = getInitialSelectedCompany() !== null;
   
-  // Melhor controle do estado de carregamento da página
   useEffect(() => {
-    // Se já temos empresa em cache, reduzir tempo de loading ou até pular
     if (hasCachedCompany) {
-      // Tempo muito reduzido para acelerar a transição
       setTimeout(() => setIsPageLoading(false), 50);
       return;
     }
     
-    // Finaliza o carregamento quando temos uma empresa selecionada ou os dados já foram carregados
     if (selectedCompany || (fetchCount > 0 && !isLoading)) {
       setIsPageLoading(false);
     }
     
-    // Timeout de segurança para evitar loading infinito
     const timeoutId = setTimeout(() => {
       if (isPageLoading) {
         console.log("[Index] Finalizando loading por timeout de segurança");
         setIsPageLoading(false);
       }
-    }, 2000); // 2 segundos de timeout
+    }, 2000);
     
     return () => clearTimeout(timeoutId);
   }, [isLoading, fetchCount, selectedCompany, isPageLoading, hasCachedCompany]);
 
-  // Carregamento inicial forçado
   useEffect(() => {
     if (user?.id && userCompanies.length === 0 && !isLoading) {
       console.log("[Index] Forçando carregamento inicial de empresas");
@@ -121,7 +123,6 @@ const Index = () => {
     }
   }, [user?.id, getUserCompanies, userCompanies.length, isLoading]);
 
-  // Otimização para pular estado de carregamento desnecessário
   if (hasCachedCompany && !isLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -132,17 +133,36 @@ const Index = () => {
     );
   }
 
-  // Pular skeleton durante carregamento se já temos dados em cache
   if ((isPageLoading && !hasCachedCompany) || (user && isLoading && !hasCachedCompany)) {
     return <LoadingState />;
   }
 
-  // Mostrar NoCompaniesAvailable quando terminamos de carregar E não há empresas
   if (user && !isLoading && userCompanies.length === 0) {
     return (
-      <Suspense fallback={<LoadingState />}>
-        <NoCompaniesAvailable />
-      </Suspense>
+      <>
+        <Dialog open={showCompanyDialog} onOpenChange={setShowCompanyDialog}>
+          <DialogContent className="max-w-4xl p-0">
+            <div className="bg-white rounded-3xl">
+              <div className="p-16">
+                <OnboardingProvider>
+                  <CompanyStep 
+                    onNext={() => {}} 
+                    onBack={() => setShowCompanyDialog(false)}
+                    onCompanyTypeSelect={() => {}}
+                    onCompanyCreated={handleCompanyCreated}
+                  />
+                </OnboardingProvider>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+        
+        <div className="min-h-screen bg-background">
+          <Suspense fallback={<LoadingState />}>
+            <UserHome />
+          </Suspense>
+        </div>
+      </>
     );
   }
 
