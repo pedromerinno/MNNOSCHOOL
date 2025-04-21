@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -8,7 +7,7 @@ import { useCompanies } from "@/hooks/useCompanies";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createCourse } from "@/services/courseService";
+import { createCourse } from "@/services/course";
 
 interface NewCourseDialogProps {
   open: boolean;
@@ -23,14 +22,12 @@ export const NewCourseDialog: React.FC<NewCourseDialogProps> = ({ open, onOpenCh
   const handleFormSubmit = async (data: CourseFormValues) => {
     setIsSubmitting(true);
     try {
-      // Use the actual createCourse function from the courseService
       const courseId = await createCourse(data);
       
       if (courseId) {
         toast.success("Curso criado com sucesso.");
         onOpenChange(false);
         
-        // Redirect to the newly created course
         navigate(`/courses/${courseId}`);
       } else {
         toast.error("Erro ao criar curso. Tente novamente.");
@@ -43,7 +40,6 @@ export const NewCourseDialog: React.FC<NewCourseDialogProps> = ({ open, onOpenCh
     }
   };
 
-  // Quando o usuário trocar a empresa via select, atualize no contexto
   const handleCompanyChange = (companyId: string) => {
     const company = userCompanies.find(c => c.id === companyId);
     if (company && user?.id) {
@@ -90,7 +86,7 @@ export const NewCourseDialog: React.FC<NewCourseDialogProps> = ({ open, onOpenCh
           isSubmitting={isSubmitting}
           onClose={() => onOpenChange(false)}
           preselectedCompanyId={selectedCompany?.id}
-          showCompanySelector={false} // Hide the second company selector
+          showCompanySelector={false}
         />
       </DialogContent>
     </Dialog>

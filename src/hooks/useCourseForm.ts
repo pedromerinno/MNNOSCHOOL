@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { createCourse, updateCourse } from '@/services/courseService';
+import { createCourse, updateCourse } from '@/services/course';
 import { CourseFormValues } from '@/components/admin/courses/form/CourseFormTypes';
 import { Course } from '@/components/admin/courses/types';
 

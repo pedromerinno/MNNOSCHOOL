@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Course } from './types';
-import { fetchCourses, deleteCourse } from '@/services/courseService';
+import { fetchCourses, deleteCourse } from '@/services/course';
 import { useCourseForm } from '@/hooks/useCourseForm';
 import { useCompanyCoursesManager } from '@/hooks/useCompanyCoursesManager';
 import { supabase } from "@/integrations/supabase/client";

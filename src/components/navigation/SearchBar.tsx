@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { fetchCourses } from "@/services/courseService";
+import { fetchCourses } from "@/services/course";
 import { DialogTitle } from "@/components/ui/dialog";
 
 // Definir um tipo para os cursos
