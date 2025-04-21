@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
@@ -8,6 +7,7 @@ import { format, formatDistanceToNow } from "date-fns";
 import { pt } from "date-fns/locale";
 import { useState } from "react";
 import NewNoticeDialog from "../admin/dialogs/NewNoticeDialog";
+import { AllNoticesDialog } from "./AllNoticesDialog";
 
 export const NotificationsWidget = () => {
   const { userProfile } = useAuth();
@@ -19,10 +19,10 @@ export const NotificationsWidget = () => {
     prevNotice 
   } = useCompanyNotices();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [noticesDialogOpen, setNoticesDialogOpen] = useState(false);
   
   const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
   
-  // Formatar tempo relativo (ex: "há 5 minutos")
   const formatRelativeTime = (dateString: string) => {
     try {
       return formatDistanceToNow(new Date(dateString), { 
@@ -91,10 +91,11 @@ export const NotificationsWidget = () => {
             </div>
           ) : (
             <div className="mb-8">
-              <span className="inline-block px-8 py-3 rounded-full bg-amber-100 dark:bg-amber-900/50 text-black dark:text-amber-100 text-base font-medium mb-6">
+              <span className="inline-block px-5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/50 text-yellow-700 dark:text-amber-100 text-xs font-semibold mb-4">
                 {currentNotice.type.charAt(0).toUpperCase() + currentNotice.type.slice(1)}
               </span>
-              <h4 className="text-xl font-medium mb-6 dark:text-white">{currentNotice.title}</h4>
+              <h4 className="text-lg font-bold mb-2 dark:text-white">{currentNotice.title}</h4>
+              <p className="text-base text-gray-800 dark:text-gray-300 mb-5">{currentNotice.content}</p>
               <div className="flex items-center text-gray-500">
                 {currentNotice.author?.avatar ? (
                   <img 
@@ -107,7 +108,7 @@ export const NotificationsWidget = () => {
                     {currentNotice.author?.display_name?.substring(0, 1).toUpperCase() || '?'}
                   </div>
                 )}
-                <span className="text-base font-medium text-black dark:text-white mr-6">
+                <span className="text-base font-medium text-black dark:text-white mr-4">
                   {currentNotice.author?.display_name || 'Usuário'}
                 </span>
                 <span className="text-sm text-gray-500 dark:text-gray-400">
@@ -118,16 +119,18 @@ export const NotificationsWidget = () => {
           )}
         </div>
         
-        {/* Rodapé com link para visualizar todos */}
         <div className="border-t border-gray-100 dark:border-gray-800 py-6 text-center mb-6">
-          <button className="text-base text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+          <button 
+            className="text-base text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+            onClick={() => setNoticesDialogOpen(true)}
+          >
             ver todos
           </button>
         </div>
       </CardContent>
       
-      {/* Dialog para criar novo aviso */}
       <NewNoticeDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+      <AllNoticesDialog open={noticesDialogOpen} onOpenChange={setNoticesDialogOpen} />
     </Card>
   );
 };

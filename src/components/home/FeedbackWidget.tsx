@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
@@ -8,10 +7,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ReturnFeedbackDialog } from "../feedback/ReturnFeedbackDialog";
 import { UserProfile } from "@/hooks/useUsers";
+import { useState } from "react";
+import { AllFeedbackDialog } from "./AllFeedbackDialog";
 
 export const FeedbackWidget = () => {
   const { feedbacks, loading } = useReceivedFeedbacks();
   const navigate = useNavigate();
+  const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
 
   const goToTeamProfile = async () => {
     const { data } = await supabase.auth.getUser();
@@ -74,7 +76,6 @@ export const FeedbackWidget = () => {
                     <span className="text-base font-medium text-black dark:text-white">
                       {feedbacks[0].from_profile?.display_name || 'Usuário'}
                     </span>
-                    {/* Removed cargo references as this field doesn't exist in the profile type */}
                   </div>
                   <span className="text-sm text-gray-500 dark:text-gray-400 ml-auto">
                     {formatDate(feedbacks[0].created_at)}
@@ -105,13 +106,14 @@ export const FeedbackWidget = () => {
         
         <div className="border-t border-gray-100 dark:border-gray-800 py-6 text-center mb-6">
           <button 
-            onClick={goToTeamProfile}
+            onClick={() => setFeedbackDialogOpen(true)}
             className="text-base text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
           >
             ver todos
           </button>
         </div>
       </CardContent>
+      <AllFeedbackDialog open={feedbackDialogOpen} onOpenChange={setFeedbackDialogOpen} />
     </Card>
   );
 };
