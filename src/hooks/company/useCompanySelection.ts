@@ -3,6 +3,7 @@ import { useCallback } from "react";
 import { Company } from "@/types/company";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useCompanyCache } from "./useCompanyCache";
 
 interface UseCompanySelectionProps {
   setSelectedCompany: (company: Company | null) => void;
@@ -13,6 +14,7 @@ export const useCompanySelection = ({
   setSelectedCompany,
   setCompanyContentLoaded 
 }: UseCompanySelectionProps) => {
+  const { cacheSelectedCompany, invalidateCache } = useCompanyCache();
   
   const selectCompany = useCallback(async (userId: string, company: Company) => {
     console.log(`[useCompanySelection] Selecting company: ${company.nome}`);
@@ -46,8 +48,14 @@ export const useCompanySelection = ({
         }
       }
       
+      // Invalidar cache antes de definir nova empresa
+      invalidateCache();
+      
       // Definir a empresa selecionada
       setSelectedCompany(company);
+      
+      // Armazenar no cache com nova versão
+      cacheSelectedCompany(company);
       
       // Reiniciar o estado de carregamento de conteúdo para a nova empresa
       if (setCompanyContentLoaded) {
@@ -60,21 +68,13 @@ export const useCompanySelection = ({
       });
       window.dispatchEvent(event);
       
-      // Salvar a seleção no armazenamento local para persistência
-      try {
-        localStorage.setItem('selectedCompany', JSON.stringify(company));
-        localStorage.setItem('selectedCompanyId', company.id);
-      } catch (e) {
-        console.warn('[useCompanySelection] Error storing selected company:', e);
-      }
-      
       return true;
     } catch (error: any) {
       console.error('[useCompanySelection] Error selecting company:', error);
       toast.error(error.message || 'Erro ao selecionar empresa');
       return false;
     }
-  }, [setSelectedCompany, setCompanyContentLoaded]);
+  }, [setSelectedCompany, setCompanyContentLoaded, cacheSelectedCompany, invalidateCache]);
 
   return { selectCompany };
 };

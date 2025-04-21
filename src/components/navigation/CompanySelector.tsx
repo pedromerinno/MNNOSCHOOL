@@ -14,6 +14,7 @@ import { useCompanyEvents } from "@/hooks/company/useCompanyEvents";
 import { CompanyName } from "./company/CompanyName";
 import { CompanyMenuItem } from "./company/CompanyMenuItem";
 import { Company } from "@/types/company";
+import { useCompanyCache } from "@/hooks/company/useCompanyCache";
 
 export const CompanySelector = memo(() => {
   const { user } = useAuth();
@@ -28,10 +29,12 @@ export const CompanySelector = memo(() => {
   
   const { displayName, setDisplayName } = useCompanyNameDisplay(selectedCompany);
   const [initialLoadAttempted, setInitialLoadAttempted] = useState(false);
+  const { invalidateCache } = useCompanyCache();
   
   // Create a wrapper function with the correct return type
   const handleForceGetUserCompanies = async (userId: string): Promise<any> => {
     console.log('CompanySelector: Forcing refresh of user companies');
+    invalidateCache(); // Invalidar cache antes de forçar atualização
     return await forceGetUserCompanies(userId);
   };
   
@@ -51,14 +54,6 @@ export const CompanySelector = memo(() => {
       
       // Update the display name immediately
       setDisplayName(userCompanies[0].nome);
-      
-      // Store in localStorage for persistence
-      try {
-        localStorage.setItem('selectedCompany', JSON.stringify(userCompanies[0]));
-        localStorage.setItem('selectedCompanyId', userCompanies[0].id);
-      } catch (e) {
-        console.warn('Error storing selected company:', e);
-      }
     }
   }, [user?.id, userCompanies, selectedCompany, selectCompany, setDisplayName, initialLoadAttempted]);
 
@@ -67,12 +62,13 @@ export const CompanySelector = memo(() => {
     if (user?.id && !isLoading && userCompanies.length === 0 && !initialLoadAttempted) {
       console.log('CompanySelector: No companies loaded, forcing initial load');
       setInitialLoadAttempted(true);
+      invalidateCache(); // Invalidar cache antes de forçar atualização
       forceGetUserCompanies(user.id).catch(err => {
         console.error('Error forcing initial company load:', err);
         toast.error('Error loading companies. Please refresh the page.');
       });
     }
-  }, [user?.id, isLoading, userCompanies.length, forceGetUserCompanies, initialLoadAttempted]);
+  }, [user?.id, isLoading, userCompanies.length, forceGetUserCompanies, initialLoadAttempted, invalidateCache]);
 
   const handleCompanyChange = useCallback((company: Company) => {
     if (!company || !user?.id) return;
@@ -90,6 +86,7 @@ export const CompanySelector = memo(() => {
     }
     
     console.log('CompanySelector: Selecting company:', company.nome);
+    invalidateCache(); // Invalidar cache antes de selecionar empresa
     selectCompany(user.id, company);
     
     // Resetar o estado de carregamento de conteúdo para a nova empresa
@@ -101,7 +98,7 @@ export const CompanySelector = memo(() => {
     setDisplayName(company.nome);
     
     toast.success(`Company ${company.nome} selected successfully!`);
-  }, [user?.id, selectedCompany?.id, selectCompany, userCompanies, setDisplayName, setCompanyContentLoaded]);
+  }, [user?.id, selectedCompany?.id, selectCompany, userCompanies, setDisplayName, setCompanyContentLoaded, invalidateCache]);
 
   if (isLoading && !selectedCompany) {
     return <CompanyName displayName={displayName || "Loading..."} />;
