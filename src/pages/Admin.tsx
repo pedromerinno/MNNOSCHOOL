@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,8 +11,8 @@ import { Building, Users, Book, Settings, LayoutDashboard, ArrowLeft } from 'luc
 import { CourseManagement } from '@/components/admin/CourseManagement';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 import { Button } from '@/components/ui/button';
+import { CompanyNoticesAdminList } from '@/components/admin/CompanyNoticesAdminList';
 
-// Helper para cor principal (azul padrão caso não tenha)
 const ADMIN_MAIN_COLOR = "#1EAEDB";
 const getLighterAdminColor = (opacity = 0.1) =>
   `rgba(30, 174, 219, ${opacity})`; // azul #1EAEDB
@@ -55,7 +54,14 @@ const AdminPage = () => {
       value: "companies",
       label: "Empresas",
       icon: Building,
-      content: <CompanyManagement />
+      content: (
+        <div>
+          <CompanyManagement />
+          <div className="mt-10">
+            <CompanyNoticesAdminList />
+          </div>
+        </div>
+      )
     },
     {
       value: "users",
@@ -80,7 +86,6 @@ const AdminPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-6 py-12">
-        {/* Novo título com visual idêntico às outras páginas */}
         <div className="flex items-center gap-4 mb-12">
           <Button 
             variant="ghost" 
@@ -96,7 +101,7 @@ const AdminPage = () => {
         </div>
 
         <Card className="mb-8 shadow-sm border border-gray-100 dark:border-gray-800">
-          <CardContent className="p-8"> {/* Padding reduzido de p-12 para p-8 */}
+          <CardContent className="p-8">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <div className="border-b border-gray-100 dark:border-gray-800 py-2 px-2 bg-transparent">
                 <TabsList className="flex gap-2 rounded-2xl p-1.5 bg-transparent dark:bg-transparent w-full justify-start">
@@ -122,7 +127,7 @@ const AdminPage = () => {
                   ))}
                 </TabsList>
               </div>
-              <div className="p-4"> {/* Padding reduzido de p-6 para p-4 para harmonizar com as tabelas */}
+              <div className="p-4">
                 <ErrorBoundary>
                   {tabs.map(tab => (
                     <TabsContent key={tab.value} value={tab.value} className="m-0">
@@ -140,4 +145,3 @@ const AdminPage = () => {
 };
 
 export default AdminPage;
-

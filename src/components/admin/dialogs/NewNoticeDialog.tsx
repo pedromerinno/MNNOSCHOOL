@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -12,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCompanies } from "@/hooks/useCompanies";
+import { toast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
   title: z.string().min(3, { message: "O título deve ter pelo menos 3 caracteres" }),
@@ -23,29 +23,36 @@ const formSchema = z.object({
 interface NewNoticeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialData?: Partial<NoticeFormData>;
+  editingNoticeId?: string | null;
 }
 
-const NewNoticeDialog: React.FC<NewNoticeDialogProps> = ({ open, onOpenChange }) => {
-  const { createNotice } = useCompanyNotices();
+const NewNoticeDialog: React.FC<NewNoticeDialogProps> = ({ open, onOpenChange, initialData, editingNoticeId }) => {
+  const { createNotice, updateNotice, isLoading } = useCompanyNotices();
   const { userCompanies, isLoading: loadingCompanies } = useCompanies();
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: "",
-      content: "",
-      type: "geral",
-      companies: [],
+      title: initialData?.title || "",
+      content: initialData?.content || "",
+      type: initialData?.type || "geral",
+      companies: initialData?.companies || [],
     }
   });
 
-  // Reset form when dialog closes
   useEffect(() => {
-    if (!open) {
-      form.reset();
+    if (open) {
+      form.reset({
+        title: initialData?.title || "",
+        content: initialData?.content || "",
+        type: initialData?.type || "geral",
+        companies: initialData?.companies || [],
+      });
     }
-  }, [open, form]);
+  }, [open, initialData, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
@@ -57,7 +64,12 @@ const NewNoticeDialog: React.FC<NewNoticeDialogProps> = ({ open, onOpenChange })
         type: values.type,
       };
 
-      const success = await createNotice(noticeData, values.companies);
+      let success: boolean = false;
+      if (editingNoticeId) {
+        success = await updateNotice(editingNoticeId, noticeData);
+      } else {
+        success = await createNotice(noticeData, values.companies);
+      }
 
       if (success) {
         form.reset();
@@ -68,17 +80,20 @@ const NewNoticeDialog: React.FC<NewNoticeDialogProps> = ({ open, onOpenChange })
     }
   };
 
-  // Múltipla seleção customizada para Shadcn (usando checkbox-listbox sem Select do shadcn)
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Criar Novo Aviso</DialogTitle>
+          <DialogTitle>
+            {editingNoticeId ? "Editar Aviso" : "Criar Novo Aviso"}
+          </DialogTitle>
           <DialogDescription>
-            Crie um novo aviso para todos os membros das empresas escolhidas
+            {editingNoticeId
+              ? "Altere o aviso para as empresas marcadas."
+              : "Crie um novo aviso para todos os membros das empresas escolhidas"}
           </DialogDescription>
         </DialogHeader>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -136,36 +151,57 @@ const NewNoticeDialog: React.FC<NewNoticeDialogProps> = ({ open, onOpenChange })
               )}
             />
 
-            {/* Nova seleção múltipla de empresas */}
             <FormField
               control={form.control}
               name="companies"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Empresas</FormLabel>
-                  <div className="flex flex-col gap-1 max-h-36 overflow-y-auto border rounded px-3 py-2 bg-muted">
+                  <div className="flex flex-wrap gap-3 max-h-40 overflow-y-auto">
                     {loadingCompanies ? (
                       <span>Carregando empresas...</span>
                     ) : userCompanies.length === 0 ? (
                       <span className="text-sm text-muted-foreground">Nenhuma empresa disponível</span>
                     ) : (
-                      userCompanies.map(company => (
-                        <label key={company.id} className="flex items-center gap-2 cursor-pointer select-none py-1">
-                          <input
-                            type="checkbox"
-                            value={company.id}
-                            checked={field.value?.includes(company.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                field.onChange([...field.value, company.id]);
-                              } else {
-                                field.onChange(field.value.filter((id: string) => id !== company.id));
+                      userCompanies.map(company => {
+                        const checked = field.value?.includes(company.id);
+                        return (
+                          <label
+                            key={company.id}
+                            className={`
+                              flex flex-col items-center gap-1 cursor-pointer select-none rounded-xl border px-4 py-3 min-w-[120px] transition
+                              ${checked
+                                ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                                : "border-gray-200 dark:border-gray-800 hover:border-blue-300"
                               }
-                            }}
-                          />
-                          <span className="text-sm">{company.nome}</span>
-                        </label>
-                      ))
+                            `}
+                          >
+                            <input
+                              type="checkbox"
+                              value={company.id}
+                              checked={checked}
+                              onChange={() => {
+                                if (checked) {
+                                  field.onChange(field.value.filter((id: string) => id !== company.id));
+                                } else {
+                                  field.onChange([...field.value, company.id]);
+                                }
+                              }}
+                              className="hidden"
+                            />
+                            {company.logo && (
+                              <img
+                                src={company.logo}
+                                alt={company.nome}
+                                className="h-8 w-8 object-cover rounded-full mb-1"
+                              />
+                            )}
+                            <span className="text-xs font-semibold text-center">
+                              {company.nome}
+                            </span>
+                          </label>
+                        );
+                      })
                     )}
                   </div>
                   <FormMessage />
@@ -183,8 +219,7 @@ const NewNoticeDialog: React.FC<NewNoticeDialogProps> = ({ open, onOpenChange })
                 Cancelar
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isSubmitting ? "Criando..." : "Criar Aviso"}
+                {isSubmitting ? (editingNoticeId ? "Salvando..." : "Criando...") : (editingNoticeId ? "Salvar" : "Criar Aviso")}
               </Button>
             </div>
           </form>

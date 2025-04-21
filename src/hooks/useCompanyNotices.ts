@@ -20,7 +20,6 @@ export function useCompanyNotices() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Buscar avisos da empresa
   const fetchNotices = async (companyId?: string) => {
     const targetCompanyId = companyId || selectedCompany?.id;
     
@@ -44,7 +43,6 @@ export function useCompanyNotices() {
       
       const noticesData = data as Notice[];
       
-      // Buscar informações dos autores
       if (noticesData.length > 0) {
         const authorIds = [...new Set(noticesData.map(n => n.created_by))];
         
@@ -55,7 +53,6 @@ export function useCompanyNotices() {
           
         if (authorsError) throw authorsError;
         
-        // Associar autores aos avisos
         const noticesWithAuthors = noticesData.map(notice => {
           const author = authors.find(a => a.id === notice.created_by) as NoticeAuthor;
           return { ...notice, author };
@@ -63,7 +60,6 @@ export function useCompanyNotices() {
         
         setNotices(noticesWithAuthors);
         
-        // Definir aviso atual
         if (noticesWithAuthors.length > 0) {
           setCurrentNotice(noticesWithAuthors[0]);
           setCurrentIndex(0);
@@ -82,17 +78,11 @@ export function useCompanyNotices() {
     }
   };
 
-  // Criar novo aviso (modificado para aceitar várias empresas)
   const createNotice = async (data: NoticeFormData, companyIds?: string[]) => {
     const { user } = useAuth();
     const { selectedCompany } = useCompanies();
 
-    // Garante que pelo menos uma empresa será usada
-    const targetCompanies = (companyIds && companyIds.length > 0)
-      ? companyIds
-      : (selectedCompany ? [selectedCompany.id] : []);
-
-    if (!user || targetCompanies.length === 0) {
+    if (!user || (companyIds && companyIds.length === 0)) {
       toast.error("Não foi possível criar o aviso. Usuário ou empresa não identificados.");
       return false;
     }
@@ -100,8 +90,7 @@ export function useCompanyNotices() {
     try {
       setIsLoading(true);
 
-      // Insere um aviso para cada empresa selecionada
-      const inserts = targetCompanies.map(companyId => ({
+      const inserts = companyIds.map(companyId => ({
         company_id: companyId,
         title: data.title,
         content: data.content,
@@ -115,8 +104,7 @@ export function useCompanyNotices() {
 
       if (error) throw error;
 
-      // Atualizar lista local
-      await fetchNotices(); // Pode considerar passar um companyId, mas atual retrocompatível
+      await fetchNotices();
 
       toast.success("Aviso(s) criado(s) com sucesso!");
       return true;
@@ -129,7 +117,6 @@ export function useCompanyNotices() {
     }
   };
 
-  // Atualizar aviso existente
   const updateNotice = async (noticeId: string, data: NoticeFormData) => {
     if (!user || !selectedCompany) {
       toast.error("Não foi possível atualizar o aviso. Usuário ou empresa não identificados.");
@@ -152,7 +139,6 @@ export function useCompanyNotices() {
       
       if (error) throw error;
       
-      // Atualizar lista local
       await fetchNotices();
       
       toast.success("Aviso atualizado com sucesso!");
@@ -166,7 +152,6 @@ export function useCompanyNotices() {
     }
   };
 
-  // Excluir aviso
   const deleteNotice = async (noticeId: string) => {
     if (!selectedCompany) return false;
 
@@ -181,7 +166,6 @@ export function useCompanyNotices() {
       
       if (error) throw error;
       
-      // Atualizar lista local
       await fetchNotices();
       
       toast.success("Aviso excluído com sucesso!");
@@ -195,7 +179,6 @@ export function useCompanyNotices() {
     }
   };
 
-  // Navegar para o próximo aviso
   const nextNotice = () => {
     if (notices.length <= 1) return;
     
@@ -204,7 +187,6 @@ export function useCompanyNotices() {
     setCurrentNotice(notices[nextIndex]);
   };
 
-  // Navegar para o aviso anterior
   const prevNotice = () => {
     if (notices.length <= 1) return;
     
@@ -213,7 +195,6 @@ export function useCompanyNotices() {
     setCurrentNotice(notices[prevIndex]);
   };
 
-  // Buscar avisos quando a empresa selecionada mudar
   useEffect(() => {
     if (selectedCompany?.id) {
       fetchNotices(selectedCompany.id);
