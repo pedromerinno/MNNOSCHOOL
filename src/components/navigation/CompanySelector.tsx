@@ -1,5 +1,5 @@
 
-import { memo, useCallback } from "react";
+import { memo, useCallback, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -26,6 +26,16 @@ export const CompanySelector = memo(() => {
   } = useCompanies();
   
   const { displayName, setDisplayName } = useCompanyNameDisplay(selectedCompany);
+  
+  // Force update when component mounts
+  useEffect(() => {
+    if (user?.id) {
+      console.log("[CompanySelector] Initial load - forcing company refresh");
+      forceGetUserCompanies(user.id).catch(err => {
+        console.error("[CompanySelector] Error loading companies:", err);
+      });
+    }
+  }, [user?.id, forceGetUserCompanies]);
   
   const handleForceGetUserCompanies = async (userId: string): Promise<any> => {
     return await forceGetUserCompanies(userId);
@@ -54,8 +64,14 @@ export const CompanySelector = memo(() => {
     
     console.log('CompanySelector: Selecionando empresa:', company.nome);
     selectCompany(user.id, company);
+    setDisplayName(company.nome);
+    localStorage.setItem('selectedCompanyName', company.nome);
+    localStorage.setItem('selectedCompanyId', company.id);
     toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
-  }, [user?.id, selectedCompany?.id, selectCompany, userCompanies]);
+    
+    // Reload page to ensure all components reflect the new company
+    window.location.reload();
+  }, [user?.id, selectedCompany?.id, selectCompany, userCompanies, setDisplayName]);
 
   if (isLoading && !selectedCompany) {
     return <CompanyName displayName={displayName} />;
@@ -66,7 +82,15 @@ export const CompanySelector = memo(() => {
   }
 
   if (userCompanies.length === 1) {
-    return <CompanyName displayName={displayName} />;
+    // If there's only one company, make sure it's selected
+    if (user?.id && (!selectedCompany || selectedCompany.id !== userCompanies[0].id)) {
+      console.log('CompanySelector: Auto-selecting the only company:', userCompanies[0].nome);
+      selectCompany(user.id, userCompanies[0]);
+      setDisplayName(userCompanies[0].nome);
+      localStorage.setItem('selectedCompanyName', userCompanies[0].nome);
+      localStorage.setItem('selectedCompanyId', userCompanies[0].id);
+    }
+    return <CompanyName displayName={displayName || userCompanies[0].nome} />;
   }
 
   return (

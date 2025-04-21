@@ -83,6 +83,21 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
     }
   };
 
+  const triggerCompanyRelationChanged = () => {
+    console.log('Dispatching company-relation-changed event');
+    
+    // Dispatch both types of events to ensure compatibility
+    window.dispatchEvent(new Event('company-relation-changed'));
+    window.dispatchEvent(new CustomEvent('company-relation-changed'));
+    
+    // Force refresh companies data
+    if (user?.id) {
+      forceGetUserCompanies(user.id).catch(err => {
+        console.error('Error refreshing companies data:', err);
+      });
+    }
+  };
+
   const handleAddUser = async () => {
     if (!selectedUserId || !company.id) return;
     
@@ -99,8 +114,7 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
           await forceGetUserCompanies(user.id);
         }
         
-        // Trigger refresh of company data throughout the app
-        window.dispatchEvent(new CustomEvent('company-relation-changed'));
+        triggerCompanyRelationChanged();
         
         toast.success("Usuário adicionado com sucesso");
       }
@@ -126,8 +140,7 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
           await forceGetUserCompanies(user.id);
         }
         
-        // Trigger refresh of company data throughout the app
-        window.dispatchEvent(new CustomEvent('company-relation-changed'));
+        triggerCompanyRelationChanged();
         
         toast.success("Usuário removido com sucesso");
       }
