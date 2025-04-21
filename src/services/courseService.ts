@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from 'sonner';
 import { Course } from '@/components/admin/courses/types';
@@ -132,6 +133,11 @@ export const createCourse = async (courseData: CourseFormValues): Promise<string
     toast.success('Curso criado', {
       description: 'O novo curso foi criado com sucesso.',
     });
+    
+    // Dispatch a custom event to notify that a course was created
+    window.dispatchEvent(new CustomEvent('course-created', { 
+      detail: { courseId } 
+    }));
     
     return courseId;
   } catch (error: any) {

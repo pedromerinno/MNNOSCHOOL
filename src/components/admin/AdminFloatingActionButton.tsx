@@ -1,26 +1,10 @@
+
 import React, { useState } from "react";
 import { Plus, FilePlus, Link, BookPlus, MessageSquarePlus, BellPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
-import { CourseForm } from "@/components/admin/CourseForm";
-import { CourseFormValues } from "@/components/admin/courses/form/CourseFormTypes";
-import { useCourseForm } from "@/hooks/useCourseForm";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { useCompanies } from "@/hooks/useCompanies";
-
-import {
-  NewCourseDialog,
-  NewNoticeDialog,
-  NewDiscussionDialog,
-  NewAccessDialog,
-  AddDocumentDialog
-} from "./dialogs";
+import { NewCourseDialog, NewNoticeDialog, NewDiscussionDialog, NewAccessDialog, AddDocumentDialog } from "./dialogs";
 
 const FAB_OPTIONS = [
   {

@@ -1,5 +1,6 @@
 
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CourseForm } from "@/components/admin/CourseForm";
 import { CourseFormValues } from "@/components/admin/courses/form/CourseFormTypes";
@@ -7,6 +8,7 @@ import { useCompanies } from "@/hooks/useCompanies";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { createCourse } from "@/services/courseService";
 
 interface NewCourseDialogProps {
   open: boolean;
@@ -16,14 +18,25 @@ interface NewCourseDialogProps {
 export const NewCourseDialog: React.FC<NewCourseDialogProps> = ({ open, onOpenChange }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { selectedCompany, userCompanies, selectCompany, user } = useCompanies();
+  const navigate = useNavigate();
 
   const handleFormSubmit = async (data: CourseFormValues) => {
     setIsSubmitting(true);
     try {
-      await new Promise(res => setTimeout(res, 1200));
-      toast.success("Curso criado com sucesso.");
-      onOpenChange(false);
+      // Use the actual createCourse function from the courseService
+      const courseId = await createCourse(data);
+      
+      if (courseId) {
+        toast.success("Curso criado com sucesso.");
+        onOpenChange(false);
+        
+        // Redirect to the newly created course
+        navigate(`/courses/${courseId}`);
+      } else {
+        toast.error("Erro ao criar curso. Tente novamente.");
+      }
     } catch (error) {
+      console.error("Error creating course:", error);
       toast.error("Erro ao criar curso.");
     } finally {
       setIsSubmitting(false);

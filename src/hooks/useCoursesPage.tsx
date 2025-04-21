@@ -93,6 +93,22 @@ export const useCoursesPage = () => {
     }
   }, [selectedCompany, fetchCourseData, lastSelectedCompanyId]);
 
+  // Listen for the course-created event
+  useEffect(() => {
+    const handleCourseCreated = () => {
+      console.log("Course created event detected, refreshing courses");
+      if (selectedCompany) {
+        fetchCourseData(true);
+      }
+    };
+
+    window.addEventListener('course-created', handleCourseCreated);
+    
+    return () => {
+      window.removeEventListener('course-created', handleCourseCreated);
+    };
+  }, [fetchCourseData, selectedCompany]);
+
   const getTitle = () => {
     return selectedCompany 
       ? `Todos os Cursos - ${selectedCompany.nome}` 
