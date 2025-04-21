@@ -1,8 +1,8 @@
 
-import { useRef } from "react";
+import { useRef, useCallback } from "react";
 
-// Reducing the cache interval to 60 seconds to ensure more frequent updates
-export const MIN_REQUEST_INTERVAL = 60000; // 1 minute
+// Reduzindo o intervalo mínimo de requisição para 30 segundos para mais frequência de atualizações
+export const MIN_REQUEST_INTERVAL = 30000; // 30 segundos
 
 export const useCompanyRequest = () => {
   // Timestamp da última requisição
@@ -11,13 +11,29 @@ export const useCompanyRequest = () => {
   const isFetchingRef = useRef<boolean>(false);
   // Fila de requisições para gerenciar requisições concorrentes
   const pendingRequestsRef = useRef<number>(0);
-  // Número máximo de requisições concorrentes para prevenir esgotamento de recursos
-  const MAX_CONCURRENT_REQUESTS = 2; // Increased to allow more concurrent requests
+  // Limite de requisições concorrentes para evitar sobrecarga
+  const MAX_CONCURRENT_REQUESTS = 1; // Limitando a uma requisição por vez
+  // Controlador para debouncing de requisições
+  const timeoutRef = useRef<number | null>(null);
+  
+  /**
+   * Utiliza debounce para evitar múltiplas chamadas em curto período
+   */
+  const debouncedRequest = useCallback((callback: () => void, delay: number = 300) => {
+    if (typeof timeoutRef.current === 'number') {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    timeoutRef.current = window.setTimeout(() => {
+      callback();
+      timeoutRef.current = null;
+    }, delay);
+  }, []);
   
   /**
    * Verifica se uma nova requisição deve ser feita com base no tempo e estado atual
    */
-  const shouldMakeRequest = (
+  const shouldMakeRequest = useCallback((
     forceRefresh: boolean, 
     hasLocalData: boolean, 
     customInterval?: number
@@ -51,12 +67,12 @@ export const useCompanyRequest = () => {
     }
     
     return true;
-  };
+  }, []);
   
   /**
    * Marca o início de uma requisição
    */
-  const startRequest = (): void => {
+  const startRequest = useCallback((): void => {
     // Se já estiver buscando, não inicia nova requisição
     if (isFetchingRef.current) {
       console.log('[Company Request] Já existe uma requisição em andamento, ignorando');
@@ -66,12 +82,12 @@ export const useCompanyRequest = () => {
     isFetchingRef.current = true;
     pendingRequestsRef.current += 1;
     console.log(`[Company Request] Iniciando requisição. Total pendente: ${pendingRequestsRef.current}`);
-  };
+  }, []);
   
   /**
    * Atualiza o timestamp da última requisição bem-sucedida
    */
-  const completeRequest = (): void => {
+  const completeRequest = useCallback((): void => {
     lastFetchTimeRef.current = Date.now();
     isFetchingRef.current = false;
     // Decrementa o contador de requisições pendentes
@@ -79,20 +95,20 @@ export const useCompanyRequest = () => {
       pendingRequestsRef.current -= 1;
     }
     console.log(`[Company Request] Requisição completada. Total pendente: ${pendingRequestsRef.current}`);
-  };
+  }, []);
   
   /**
    * Marca requisição como finalizada mas sem atualizar o timestamp
    * (usado para requisições falhas)
    */
-  const resetRequestState = (): void => {
+  const resetRequestState = useCallback((): void => {
     isFetchingRef.current = false;
     // Decrementa o contador de requisições pendentes
     if (pendingRequestsRef.current > 0) {
       pendingRequestsRef.current -= 1;
     }
     console.log(`[Company Request] Estado de requisição resetado. Total pendente: ${pendingRequestsRef.current}`);
-  };
+  }, []);
   
   return {
     lastFetchTimeRef,
@@ -101,6 +117,7 @@ export const useCompanyRequest = () => {
     shouldMakeRequest,
     startRequest,
     completeRequest,
-    resetRequestState
+    resetRequestState,
+    debouncedRequest
   };
 };

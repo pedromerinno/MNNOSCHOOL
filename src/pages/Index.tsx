@@ -43,7 +43,7 @@ const LoadingState = () => (
 const Index = () => {
   const [isPageLoading, setIsPageLoading] = useState(true);
   const { userCompanies, isLoading, fetchCount, selectedCompany } = useCompanies();
-  const { user, userProfile } = useAuth();
+  const { user } = useAuth();
   const { getInitialSelectedCompany } = useCompanyCache();
   
   // Verificação imediata do cache para evitar o skeleton se já temos dados
@@ -51,8 +51,6 @@ const Index = () => {
   
   // Melhor controle do estado de carregamento da página
   useEffect(() => {
-    console.log("[Index] Page loading state check, cached company:", hasCachedCompany);
-    
     // Se já temos empresa em cache, reduzir tempo de loading ou até pular
     if (hasCachedCompany) {
       // Muito reduzido para acelerar a transição
@@ -62,7 +60,6 @@ const Index = () => {
     
     // Finaliza o carregamento quando temos uma empresa selecionada ou os dados já foram carregados
     if (selectedCompany || (fetchCount > 0 && !isLoading)) {
-      console.log("[Index] Finalizando loading devido a empresa selecionada ou dados carregados");
       setIsPageLoading(false);
     }
     
@@ -72,19 +69,18 @@ const Index = () => {
         console.log("[Index] Finalizando loading por timeout de segurança");
         setIsPageLoading(false);
       }
-    }, 1000); // Reduzido para 1 segundo
+    }, 800); // Reduzido para 800ms
     
     return () => clearTimeout(timeoutId);
   }, [isLoading, fetchCount, selectedCompany, isPageLoading, hasCachedCompany]);
 
-  // Mostrar skeleton durante carregamento, mas pular se já temos dados em cache
+  // Pular skeleton durante carregamento se já temos dados em cache
   if ((isPageLoading && !hasCachedCompany) || (user && isLoading && !hasCachedCompany)) {
     return <LoadingState />;
   }
 
   // Mostrar NoCompaniesAvailable quando terminamos de carregar E não há empresas
   if (user && !isLoading && userCompanies.length === 0) {
-    console.log("[Index] Não há empresas disponíveis, mostrando NoCompaniesAvailable");
     return (
       <Suspense fallback={<LoadingState />}>
         <NoCompaniesAvailable />

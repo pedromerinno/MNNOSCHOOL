@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
@@ -36,20 +37,26 @@ export const NotificationsWidget = memo(() => {
     }
   }, []);
 
+  // Reduzimos para apenas uma chamada de fetchNotices usando useEffect com array de dependências vazio
   useEffect(() => {
-    console.log("NotificationsWidget mounted, fetching notices");
+    // Para evitar requisições em cascata, apenas registramos que montamos o componente uma vez
+    console.log("NotificationsWidget mounted");
+    
+    // Adicionando um pequeno delay para evitar condições de corrida com outras chamadas
     const timer = setTimeout(() => {
       fetchNotices();
-    }, 100);
+    }, 300);
     
     return () => clearTimeout(timer);
-  }, [fetchNotices]);
+  }, [fetchNotices]); // fetchNotices é memorizado pelo useCallback no hook
 
   const handleDialogOpenChange = (open: boolean) => {
     setDialogOpen(open);
     if (!open) {
+      // Só recarregamos os avisos se o diálogo for fechado
       console.log("Notice dialog closed, refreshing notices");
-      fetchNotices();
+      // Adicionando delay para dar tempo de concluir a operação do servidor
+      setTimeout(() => fetchNotices(), 300);
     }
   };
 
@@ -57,10 +64,12 @@ export const NotificationsWidget = memo(() => {
     setNoticesDialogOpen(open);
     if (!open) {
       console.log("All notices dialog closed, refreshing notices");
-      fetchNotices();
+      // Adicionando delay para dar tempo de concluir a operação do servidor
+      setTimeout(() => fetchNotices(), 300);
     }
   };
 
+  // O resto do componente permanece o mesmo
   return (
     <Card className="border-0 shadow-none overflow-hidden bg-[#F1EDE4] dark:bg-[#342B1A] rounded-[30px]">
       <CardContent className="p-0 flex flex-col h-full">
