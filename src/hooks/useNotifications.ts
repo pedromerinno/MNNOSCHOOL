@@ -1,5 +1,6 @@
+
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useCompanies } from "./useCompanies";
 import { toast } from "sonner";
 
@@ -19,7 +20,7 @@ export interface Notice {
   created_by: string;
   updated_at: string;
   author?: NoticeAuthor;
-  companies?: string[]; // Add the companies property
+  companies?: string[]; // Companies property
 }
 
 export interface Notification {
@@ -86,6 +87,42 @@ export function useNotifications() {
     }
   };
 
+  // Add markAllAsRead function
+  const markAllAsRead = async () => {
+    if (!notifications.length || !selectedCompany?.id) return;
+    
+    try {
+      // Get IDs of unread notifications
+      const unreadIds = notifications
+        .filter(n => !n.read)
+        .map(n => n.id);
+      
+      if (unreadIds.length === 0) return;
+      
+      const { error } = await supabase
+        .from('user_notifications')
+        .update({ read: true })
+        .in('id', unreadIds);
+
+      if (error) throw error;
+
+      // Update local state
+      setNotifications(notifications.map(n => 
+        unreadIds.includes(n.id) ? { ...n, read: true } : n
+      ));
+      
+      toast.success('Todas as notificações foram marcadas como lidas');
+    } catch (err: any) {
+      console.error('Erro ao marcar todas como lidas:', err);
+      toast.error(err.message || 'Erro ao marcar todas como lidas');
+    }
+  };
+
+  // Calculate unread count
+  const unreadCount = useMemo(() => {
+    return notifications.filter(n => !n.read).length;
+  }, [notifications]);
+
   useEffect(() => {
     if (selectedCompany?.id) {
       fetchNotifications(selectedCompany.id);
@@ -101,5 +138,7 @@ export function useNotifications() {
     error,
     fetchNotifications,
     markAsRead,
+    markAllAsRead,
+    unreadCount
   };
 }
