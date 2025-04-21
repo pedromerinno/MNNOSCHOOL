@@ -1,3 +1,4 @@
+
 import { useState, useEffect, lazy, Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -6,10 +7,9 @@ import { useCompanyCache } from "@/hooks/company/useCompanyCache";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
-// Lazy-load components
+// Lazy-load components to improve initial loading time
 const NoCompaniesAvailable = lazy(() => import("@/components/home/NoCompaniesAvailable").then(module => ({ default: module.NoCompaniesAvailable })));
 const UserHome = lazy(() => import("@/components/home/UserHome").then(module => ({ default: module.UserHome })));
-const CompanyStep = lazy(() => import("@/components/onboarding/steps/CompanyStep").then(module => ({ default: CompanyStep })));
 
 const LoadingState = () => (
   <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
@@ -48,7 +48,8 @@ const Index = () => {
   const { user, userProfile } = useAuth();
   const { getInitialSelectedCompany } = useCompanyCache();
   const navigate = useNavigate();
-
+  
+  // Verificar necessidade de onboarding
   useEffect(() => {
     if (!user) return;
     
@@ -58,12 +59,14 @@ const Index = () => {
       return;
     }
     
+    // Se o usuário está logado e não tem empresas, isso pode ser um problema
     if (user && !isLoading && userCompanies.length === 0 && fetchCount > 0) {
       console.log("[Index] Usuário não tem empresas após carregamento. Verificando se precisa de onboarding...");
       
       if (!userProfile?.interesses?.includes("onboarding_incomplete")) {
         console.log("[Index] Usuário não tem flag de onboarding incompleto mas não tem empresas. Tentar forçar carregamento...");
         
+        // Tentar forçar o carregamento de empresas uma vez
         if (user.id) {
           forceGetUserCompanies(user.id).then(companies => {
             if (companies.length === 0) {
@@ -80,28 +83,35 @@ const Index = () => {
     }
   }, [user, userProfile, navigate, isLoading, userCompanies, fetchCount, forceGetUserCompanies]);
   
+  // Verificação imediata do cache para evitar o skeleton se já temos dados
   const hasCachedCompany = getInitialSelectedCompany() !== null;
-
+  
+  // Melhor controle do estado de carregamento da página
   useEffect(() => {
+    // Se já temos empresa em cache, reduzir tempo de loading ou até pular
     if (hasCachedCompany) {
+      // Tempo muito reduzido para acelerar a transição
       setTimeout(() => setIsPageLoading(false), 50);
       return;
     }
     
+    // Finaliza o carregamento quando temos uma empresa selecionada ou os dados já foram carregados
     if (selectedCompany || (fetchCount > 0 && !isLoading)) {
       setIsPageLoading(false);
     }
     
+    // Timeout de segurança para evitar loading infinito
     const timeoutId = setTimeout(() => {
       if (isPageLoading) {
         console.log("[Index] Finalizando loading por timeout de segurança");
         setIsPageLoading(false);
       }
-    }, 2000);
+    }, 2000); // 2 segundos de timeout
     
     return () => clearTimeout(timeoutId);
   }, [isLoading, fetchCount, selectedCompany, isPageLoading, hasCachedCompany]);
 
+  // Carregamento inicial forçado
   useEffect(() => {
     if (user?.id && userCompanies.length === 0 && !isLoading) {
       console.log("[Index] Forçando carregamento inicial de empresas");
@@ -111,38 +121,28 @@ const Index = () => {
     }
   }, [user?.id, getUserCompanies, userCompanies.length, isLoading]);
 
-  const handleCompanyCreated = async () => {
-    console.log("Company created successfully, refreshing companies");
-    if (user?.id) {
-      await forceGetUserCompanies(user.id);
-    }
-    toast.success("Empresa criada com sucesso!");
-  };
+  // Otimização para pular estado de carregamento desnecessário
+  if (hasCachedCompany && !isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Suspense fallback={<LoadingState />}>
+          <UserHome />
+        </Suspense>
+      </div>
+    );
+  }
 
+  // Pular skeleton durante carregamento se já temos dados em cache
   if ((isPageLoading && !hasCachedCompany) || (user && isLoading && !hasCachedCompany)) {
     return <LoadingState />;
   }
 
-  if (!isLoading && user && userCompanies.length === 0) {
+  // Mostrar NoCompaniesAvailable quando terminamos de carregar E não há empresas
+  if (user && !isLoading && userCompanies.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="mb-10 text-center">
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-4">
-            Cadastrar Empresa
-          </h1>
-        </div>
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-16">
-          <Suspense fallback={<LoadingState />}>
-            <CompanyStep 
-              onNext={() => {}} 
-              onBack={() => {}} 
-              onCompanyTypeSelect={() => {}}
-              onCompanyCreated={handleCompanyCreated}
-              hideBack={true}
-            />
-          </Suspense>
-        </div>
-      </div>
+      <Suspense fallback={<LoadingState />}>
+        <NoCompaniesAvailable />
+      </Suspense>
     );
   }
 
