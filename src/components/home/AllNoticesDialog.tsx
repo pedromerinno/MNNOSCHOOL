@@ -31,7 +31,7 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg sm:max-w-2xl px-0 py-0" >
+      <DialogContent className="max-w-lg sm:max-w-2xl px-0 py-0">
         <DialogHeader className="px-6 pt-6 pb-4">
           <DialogTitle className="text-xl font-semibold">
             Todos os Avisos
