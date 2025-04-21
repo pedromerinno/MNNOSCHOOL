@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -57,6 +57,14 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
     [companyId, fetchCompany]
   );
 
+  // Effect to automatically proceed when a valid company is selected
+  useEffect(() => {
+    // Only proceed automatically if we already have companyInfo loaded and the form is not already submitting
+    if (companyType === 'existing' && companyInfo && showCompanyInfo && !isSubmitting) {
+      setError(""); // Clear any previous errors
+    }
+  }, [companyInfo, showCompanyInfo, companyType, isSubmitting]);
+
   const handleInitialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -79,6 +87,7 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
       if (companyType === 'new') {
         if (!user) {
           toast.error("Usuário não autenticado");
+          setIsSubmitting(false);
           return;
         }
 
@@ -126,20 +135,14 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
         navigate("/");
       } else {
         // Verificar se o ID da empresa existe antes de prosseguir
-        const { data: company, error: companyCheckError } = await supabase
-          .from('empresas')
-          .select('id, nome')
-          .eq('id', companyId)
-          .maybeSingle();
-
-        if (companyCheckError) {
-          throw companyCheckError;
-        }
-
-        if (!company) {
-          setError("Empresa não encontrada com este ID");
-          setIsSubmitting(false);
-          return;
+        if (!companyInfo) {
+          // Se ainda não temos os dados da empresa, tente buscá-los antes de prosseguir
+          await fetchCompany(companyId);
+          if (!companyInfo) {
+            setError("Empresa não encontrada com este ID");
+            setIsSubmitting(false);
+            return;
+          }
         }
 
         updateProfileData({ 
@@ -148,7 +151,10 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
           companyDetails: null
         });
 
+        // Importante: notificar o componente pai que uma empresa existente foi selecionada
         onCompanyTypeSelect(true);
+        
+        // Avançar para o próximo passo
         onNext();
       }
     } catch (error: any) {
@@ -231,7 +237,7 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
         <Button 
           type="submit" 
           className="w-full rounded-md bg-merinno-dark hover:bg-black text-white"
-          disabled={isSubmitting}
+          disabled={isSubmitting || (companyType === 'existing' && !companyInfo && !companyLoading)}
         >
           {isSubmitting ? "Processando..." : "Continuar"}
         </Button>

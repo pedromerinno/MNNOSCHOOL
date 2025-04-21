@@ -22,6 +22,28 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
 }) => {
   const [localId, setLocalId] = useState(companyId);
   const [lookupPending, setLookupPending] = useState(false);
+  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+
+  // Para debounce enquanto o usuário digita
+  const handleInputChange = (value: string) => {
+    setLocalId(value);
+    onCompanyIdChange(value);
+    
+    if (onCompanyLookup) {
+      onCompanyLookup(null, true);
+      
+      // Limpa timer anterior se houver
+      if (debounceTimer) clearTimeout(debounceTimer);
+      
+      // Configura novo timer para buscar após um curto período de tempo
+      if (value.length >= 10) {
+        const timer = setTimeout(() => {
+          handleBlur();
+        }, 500);
+        setDebounceTimer(timer);
+      }
+    }
+  };
 
   // Para evitar buscas excessivas, debounce ao sair do campo (onBlur)
   const handleBlur = async () => {
@@ -47,6 +69,16 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
 
   useEffect(() => {
     setLocalId(companyId);
+    
+    // Se já temos um ID válido ao montar o componente, buscar imediatamente
+    if (companyId && companyId.length >= 10 && onCompanyLookup) {
+      handleBlur();
+    }
+    
+    return () => {
+      // Limpa qualquer timer pendente ao desmontar
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
   }, [companyId]);
 
   return (
@@ -57,16 +89,11 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
       <Input
         id="companyId"
         value={localId}
-        onChange={e => {
-          setLocalId(e.target.value);
-          onCompanyIdChange(e.target.value);
-          if (onCompanyLookup) onCompanyLookup(null, true);
-        }}
+        onChange={e => handleInputChange(e.target.value)}
         onBlur={handleBlur}
         className="border-b border-gray-300 rounded-md px-3 py-2 focus-visible:ring-merinno-dark"
         placeholder="Digite o ID da empresa"
       />
-      {/* Exibição dinâmica do nome/logo vem do pai */}
     </div>
   );
 };
