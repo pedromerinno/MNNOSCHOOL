@@ -13,6 +13,7 @@ interface CourseHeroProps {
   courseId: string;
   firstLessonId?: string;
   showEditButton?: boolean;
+  onEditCourse?: () => void;
 }
 
 export const CourseHero: React.FC<CourseHeroProps> = ({ 
@@ -22,7 +23,8 @@ export const CourseHero: React.FC<CourseHeroProps> = ({
   favorite,
   courseId,
   firstLessonId,
-  showEditButton = false
+  showEditButton = false,
+  onEditCourse
 }) => {
   const navigate = useNavigate();
 
@@ -30,10 +32,6 @@ export const CourseHero: React.FC<CourseHeroProps> = ({
     if (firstLessonId) {
       navigate(`/courses/${courseId}/lessons/${firstLessonId}`);
     }
-  };
-
-  const handleEditCourse = () => {
-    navigate(`/admin/courses/edit/${courseId}`);
   };
 
   return (
@@ -44,7 +42,7 @@ export const CourseHero: React.FC<CourseHeroProps> = ({
           <Button
             variant="secondary"
             className="flex gap-2 bg-white/90 text-[#1A1F2C] border-none shadow-lg hover:bg-white"
-            onClick={handleEditCourse}
+            onClick={onEditCourse}
             size="sm"
             aria-label="Editar curso"
           >

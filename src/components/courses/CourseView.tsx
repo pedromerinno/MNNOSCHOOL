@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCourseData } from '@/hooks/useCourseData';
@@ -15,6 +16,11 @@ import { useCompanies } from '@/hooks/useCompanies';
 import { useAuth } from '@/contexts/AuthContext';
 import { LessonManager } from '@/components/admin/courses/LessonManager';
 import { Button } from '@/components/ui/button';
+import { CourseForm } from '@/components/admin/CourseForm';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CourseFormValues } from '@/components/admin/courses/form/CourseFormTypes';
+import { updateCourse } from '@/services/courseService';
+import { toast } from 'sonner';
 
 export const CourseView: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -27,9 +33,31 @@ export const CourseView: React.FC = () => {
   const [showLessonManager, setShowLessonManager] = useState(false);
   const { userProfile } = useAuth();
   const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
+  
+  // Estado para controlar o diálogo de edição do curso
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleEditCourse = () => {
-    window.location.href = `/admin/courses/edit/${course.id}`;
+    setIsEditDialogOpen(true);
+  };
+
+  const handleCourseUpdate = async (data: CourseFormValues) => {
+    if (!courseId) return;
+    
+    setIsSubmitting(true);
+    try {
+      await updateCourse(courseId, data);
+      toast.success("Curso atualizado com sucesso");
+      setIsEditDialogOpen(false);
+      // Recarregar a página para mostrar as mudanças
+      window.location.reload();
+    } catch (error) {
+      console.error("Erro ao atualizar curso:", error);
+      toast.error("Erro ao atualizar curso");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (loading) {
@@ -57,6 +85,16 @@ export const CourseView: React.FC = () => {
     ? `${hours}h ${minutes > 0 ? `${minutes} min` : ''}` 
     : `${minutes} min`;
 
+  // Preparar os dados iniciais para o formulário de edição
+  const initialFormData = {
+    title: course.title,
+    description: course.description || "",
+    image_url: course.image_url || "",
+    instructor: course.instructor || "",
+    tags: course.tags || [],
+    companyId: selectedCompany?.id || ""
+  };
+
   return (
     <div className="container max-w-7xl mx-auto px-4 py-8">
       <CourseHeader 
@@ -73,6 +111,7 @@ export const CourseView: React.FC = () => {
           courseId={course.id}
           firstLessonId={firstLessonId}
           showEditButton={isAdmin}
+          onEditCourse={handleEditCourse}
         />
       </div>
       
@@ -179,6 +218,24 @@ export const CourseView: React.FC = () => {
           />
         </div>
       </div>
+
+      {/* Diálogo para edição do curso */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Curso</DialogTitle>
+          </DialogHeader>
+          <CourseForm
+            initialData={initialFormData}
+            onSubmit={handleCourseUpdate}
+            onCancel={() => setIsEditDialogOpen(false)}
+            isSubmitting={isSubmitting}
+            onClose={() => setIsEditDialogOpen(false)}
+            preselectedCompanyId={selectedCompany?.id}
+            showCompanySelector={false}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
