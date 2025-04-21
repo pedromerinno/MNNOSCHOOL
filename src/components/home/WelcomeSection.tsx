@@ -9,17 +9,20 @@ import { Company } from "@/types/company";
 
 export const WelcomeSection = () => {
   const { user, userProfile } = useAuth();
-  const { selectedCompany } = useCompanies();
+  const { selectedCompany, userCompanies } = useCompanies();
   const navigate = useNavigate();
   const [displayCompany, setDisplayCompany] = useState<Company | null>(null);
 
-  // Update display company when selection changes
+  // Update display company when selectedCompany changes or when companies are loaded
   useEffect(() => {
     if (selectedCompany) {
       console.log('[WelcomeSection] Selected company updated:', selectedCompany.nome);
       setDisplayCompany(selectedCompany);
+    } else if (userCompanies && userCompanies.length > 0) {
+      console.log('[WelcomeSection] No selected company, using first company:', userCompanies[0].nome);
+      setDisplayCompany(userCompanies[0]);
     }
-  }, [selectedCompany]);
+  }, [selectedCompany, userCompanies]);
 
   // Listen for company update events
   useEffect(() => {

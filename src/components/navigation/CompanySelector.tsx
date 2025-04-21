@@ -38,10 +38,10 @@ export const CompanySelector = memo(() => {
     setDisplayName
   });
 
-  // Auto-select the first company if there's only one and none selected
+  // Always select the first company if there's no selected company and companies exist
   useEffect(() => {
-    if (user?.id && userCompanies.length === 1 && !selectedCompany) {
-      console.log('CompanySelector: Auto-selecting the only company:', userCompanies[0].nome);
+    if (user?.id && userCompanies.length > 0 && !selectedCompany) {
+      console.log('CompanySelector: Auto-selecting the first company:', userCompanies[0].nome);
       selectCompany(user.id, userCompanies[0]);
       
       // Dispatch a company selected event
