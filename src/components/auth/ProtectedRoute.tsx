@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -13,26 +13,39 @@ export const ProtectedRoute = () => {
   const location = useLocation();
   const isOnboarding = location.pathname === "/onboarding";
   
+  // Só carrega os dados de empresas se não estiver na página de onboarding
   const { userCompanies, isLoading: companiesLoading } = useCompanies({
     skipLoadingInOnboarding: isOnboarding
   });
   
-  // Simplificando a lógica de estado para evitar problemas de inicialização
-  let authError = null;
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
+  // Verificação de estado de autenticação
   useEffect(() => {
     console.log("ProtectedRoute: Verificando autenticação");
     
+    // Define um timeout mais curto para o carregamento da autenticação (5 segundos)
     const timeoutId = setTimeout(() => {
       if (loading) {
         console.log("ProtectedRoute: Tempo limite de carregamento atingido");
+        setInitialLoadDone(true);
+        setAuthError("Tempo limite de autenticação excedido. Por favor, recarregue a página ou faça login novamente.");
         toast.error("Tempo limite de autenticação excedido. Tente recarregar a página.");
       }
     }, 5000);
     
+    // Se o carregamento for concluído, marca como pronto
+    if (!loading) {
+      console.log("ProtectedRoute: Carregamento concluído");
+      setInitialLoadDone(true);
+      clearTimeout(timeoutId);
+    }
+    
     return () => clearTimeout(timeoutId);
   }, [loading]);
 
+  // Mostrar um loading mais simplificado e rápido
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -41,6 +54,7 @@ export const ProtectedRoute = () => {
     );
   }
 
+  // Mostra erro de autenticação se houver
   if (authError) {
     return (
       <div className="flex flex-col items-center justify-center h-screen p-4">
@@ -73,24 +87,29 @@ export const ProtectedRoute = () => {
     );
   }
 
+  // Redirecionar para login se não autenticado
   if (!user) {
     console.log("ProtectedRoute: Usuário não autenticado, redirecionando para login");
     return <Navigate to="/login" replace />;
   }
 
-  const needsCompleteOnboarding = userProfile?.interesses?.includes("onboarding_incomplete");
+  // Verificar se precisa fazer onboarding inicial
+  // Consideramos tanto a flag 'onboarding_incomplete' quanto a ausência de empresas
+  const needsOnboarding = userProfile?.interesses?.includes("onboarding_incomplete");
   const hasNoCompanies = !isOnboarding && (!userCompanies || userCompanies.length === 0) && !companiesLoading;
-  
-  if (needsCompleteOnboarding && !isOnboarding) {
-    console.log("ProtectedRoute: Usuário precisa completar onboarding inicial");
+                         
+  // Redirecionar para onboarding se for necessário e não estiver na página de onboarding
+  if ((needsOnboarding || hasNoCompanies) && !isOnboarding) {
+    console.log("ProtectedRoute: Usuário precisa completar onboarding inicial", { 
+      interesses: userProfile?.interesses,
+      userCompanies: userCompanies?.length,
+      needsOnboarding,
+      hasNoCompanies
+    });
     return <Navigate to="/onboarding" replace />;
   }
-  
-  if (!needsCompleteOnboarding && hasNoCompanies && !isOnboarding) {
-    console.log("ProtectedRoute: Usuário sem empresas, redirecionando para onboarding");
-    return <Navigate to="/onboarding?step=3" replace />;
-  }
 
+  // Renderiza rotas protegidas se autenticado
   console.log("ProtectedRoute: Usuário autenticado, renderizando rotas protegidas");
   return (
     <ErrorBoundary fallback={ErrorFallback}>
@@ -99,6 +118,7 @@ export const ProtectedRoute = () => {
   );
 };
 
+// Componente de erro personalizado para ErrorBoundary
 const ErrorFallback = (
   <div className="flex flex-col items-center justify-center h-screen p-4">
     <div className="bg-amber-50 border border-amber-200 p-6 rounded-lg max-w-md w-full shadow-md dark:bg-amber-900/30 dark:border-amber-800">

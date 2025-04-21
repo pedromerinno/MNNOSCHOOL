@@ -17,7 +17,7 @@ export const useLoginForm = () => {
     setIsLoggingIn(true);
     
     try {
-      // Limpar todos os caches relevantes
+      // Clear all relevant cache
       clearCache({ key: 'userCompanies' });
       clearCache({ key: 'selectedCompany' });
       clearCache({ key: 'selectedCompanyId' });
@@ -25,6 +25,7 @@ export const useLoginForm = () => {
       clearCache({ key: 'courses' });
       clearCache({ key: 'access' });
       
+      // Limpar todos os caches de localStorage diretamente para garantir limpeza completa
       localStorage.removeItem('userCompanies');
       localStorage.removeItem('selectedCompany');
       localStorage.removeItem('selectedCompanyId');
