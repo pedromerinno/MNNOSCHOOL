@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import OnboardingLayout from "@/components/onboarding/OnboardingLayout";
@@ -26,10 +27,13 @@ const OnboardingContent = () => {
   
   const isUpdate = !userProfile?.interesses?.includes("onboarding_incomplete");
 
+  // Mostra 4 passos apenas se empresa for existente, se for nova apenas 3 passos.
   const totalSteps = isExistingCompany ? 4 : 3;
 
   const nextStep = () => {
-    if (currentStep < totalSteps) {
+    // Se for nova empresa, não avança além do passo 3, pois redirecionamento acontece após criar empresa.
+    if ((isExistingCompany === false && currentStep < 3) ||
+        (isExistingCompany === true && currentStep < 4)) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -42,6 +46,10 @@ const OnboardingContent = () => {
 
   const handleCompanyChoice = (isExisting: boolean) => {
     setIsExistingCompany(isExisting);
+    // Reset step para 3 caso usuário troque opção para não pular passo
+    if (currentStep > 3) {
+      setCurrentStep(3);
+    }
   };
 
   return (
@@ -71,6 +79,7 @@ const OnboardingContent = () => {
             onCompanyTypeSelect={handleCompanyChoice}
           />
         )}
+        {/* Exibe o passo 4 somente se uma empresa existente foi selecionada */}
         {currentStep === 4 && isExistingCompany && (
           <InterestsStep onBack={prevStep} />
         )}
