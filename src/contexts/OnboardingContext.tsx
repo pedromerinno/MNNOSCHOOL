@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -129,10 +130,6 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       
       // Remover a flag de onboarding_incomplete dos interesses e atualizar primeiro_login
       const cleanInterests = profileData.interests.filter(i => i !== "onboarding_incomplete");
-      console.log("Removendo flags de onboarding:", { 
-        antes: profileData.interests, 
-        depois: cleanInterests 
-      });
       
       // Dados a atualizar no perfil do usuário
       const profileUpdate = {

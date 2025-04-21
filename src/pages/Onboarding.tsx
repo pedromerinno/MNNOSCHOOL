@@ -5,7 +5,6 @@ import OnboardingLayout from "@/components/onboarding/OnboardingLayout";
 import ProfileStep from "@/components/onboarding/steps/ProfileStep";
 import PhotoStep from "@/components/onboarding/steps/PhotoStep";
 import CompanyStep from "@/components/onboarding/steps/CompanyStep";
-import InterestsStep from "@/components/onboarding/steps/InterestsStep";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
@@ -66,17 +65,7 @@ const OnboardingContent = () => {
   const [onboardingComplete, setOnboardingComplete] = useState(false);
 
   const isUpdate = userProfile && !userProfile?.interesses?.includes("onboarding_incomplete");
-  const totalSteps = isExistingCompany ? 4 : 3;
-
-  // Ensure the correct step is shown when user chooses company type
-  useEffect(() => {
-    if (isExistingCompany === true && currentStep === 3) {
-      setCurrentStep(4);
-    }
-    if (isExistingCompany === false && currentStep === 4) {
-      setCurrentStep(3);
-    }
-  }, [isExistingCompany, currentStep]);
+  const totalSteps = 3; // Changed from conditional 3/4 to fixed 3 (removed interests step)
 
   const nextStep = () => {
     if (currentStep < totalSteps) {
@@ -101,7 +90,8 @@ const OnboardingContent = () => {
     if (userProfile?.interesses?.includes("onboarding_incomplete")) {
       const updatedInterests = userProfile.interesses.filter(i => i !== "onboarding_incomplete");
       await updateUserData({
-        interesses: updatedInterests
+        interesses: updatedInterests,
+        primeiro_login: false
       });
     }
     
@@ -150,9 +140,6 @@ const OnboardingContent = () => {
             onCompanyTypeSelect={handleCompanyChoice}
             onCompanyCreated={handleCompanyCreated}
           />
-        )}
-        {currentStep === 4 && isExistingCompany && (
-          <InterestsStep onBack={prevStep} />
         )}
       </div>
     </>

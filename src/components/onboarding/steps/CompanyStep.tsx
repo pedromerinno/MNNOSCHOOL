@@ -137,7 +137,8 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
           .from('profiles')
           .update({ 
             is_admin: true,
-            interesses: (profileData.interests || []).filter(i => i !== 'onboarding_incomplete')
+            interesses: (profileData.interests || []).filter(i => i !== 'onboarding_incomplete'),
+            primeiro_login: false // Set primeiro_login to false after completing onboarding
           })
           .eq('id', user.id);
 
@@ -146,7 +147,8 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
         // Atualizar perfil no contexto do Auth
         await updateUserProfile({ 
           is_admin: true,
-          interesses: (profileData.interests || []).filter(i => i !== 'onboarding_incomplete')
+          interesses: (profileData.interests || []).filter(i => i !== 'onboarding_incomplete'),
+          primeiro_login: false
         });
 
         toast.success("Empresa criada com sucesso!");
@@ -200,14 +202,29 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
             toast.info(`Você já está vinculado à empresa ${companyInfo.nome}`);
           }
           
-          updateProfileData({ 
-            companyId: companyId,
-            newCompanyName: null,
-            companyDetails: null
+          // Update profile to remove onboarding flags
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .update({ 
+              interesses: (profileData.interests || []).filter(i => i !== 'onboarding_incomplete'),
+              primeiro_login: false
+            })
+            .eq('id', user.id);
+            
+          if (profileError) throw profileError;
+          
+          // Update profile in context
+          await updateUserProfile({
+            interesses: (profileData.interests || []).filter(i => i !== 'onboarding_incomplete'),
+            primeiro_login: false
           });
           
-          onCompanyTypeSelect(true);
-          onNext();
+          // Finalizar onboarding
+          if (onCompanyCreated) {
+            onCompanyCreated();
+          } else {
+            navigate("/", { replace: true });
+          }
         } else {
           setError("Não foi possível vincular à empresa. Verifique o ID informado.");
           setIsSubmitting(false);
