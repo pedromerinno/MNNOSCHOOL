@@ -55,7 +55,7 @@ export const CourseLessonList: React.FC<CourseLessonListProps> = ({
 
   return (
     <div className="space-y-4 mt-4">
-      <h3 className="text-xl font-bold">Aulas do Curso</h3>
+      {/* Removed duplicate title from here */}
       <Separator />
       
       <div className="space-y-2">
@@ -106,3 +106,4 @@ export const CourseLessonList: React.FC<CourseLessonListProps> = ({
     </div>
   );
 };
+
