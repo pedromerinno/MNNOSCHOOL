@@ -54,6 +54,11 @@ const CompanyStepForm: React.FC<CompanyStepFormProps> = ({ onNext, onBack, onCom
   const { companyInfo, loading: companyLoading, error: companyLookupError, fetchCompany } = useQuickCompanyLookup();
   const [showCompanyInfo, setShowCompanyInfo] = useState(false);
 
+  useEffect(() => {
+    // Update onCompanyTypeSelect whenever companyType changes
+    onCompanyTypeSelect(companyType === 'existing');
+  }, [companyType, onCompanyTypeSelect]);
+
   const handleCompanyLookup = useCallback(
     async (info: any, lookupPending: boolean) => {
       setShowCompanyInfo(false);
@@ -141,22 +146,29 @@ const CompanyStepForm: React.FC<CompanyStepFormProps> = ({ onNext, onBack, onCom
         toast.success("Empresa criada com sucesso!");
         window.location.href = `/company/${newCompany.id}`;
       } else {
-        if (!companyInfo) {
+        // This is the existing company case - we need to properly handle it
+        if (!companyInfo && companyId) {
           await fetchCompany(companyId);
-          if (!companyInfo) {
-            setError("Empresa não encontrada com este ID");
-            setIsSubmitting(false);
-            return;
-          }
+          // We don't immediately return here in case fetchCompany has successfully gotten the info
+        }
+        
+        if (!companyInfo && !companyLoading) {
+          setError("Empresa não encontrada com este ID");
+          setIsSubmitting(false);
+          return;
         }
 
+        // Update the profile data with the company ID
         updateProfileData({ 
           companyId: companyId,
           newCompanyName: null,
           companyDetails: null
         });
 
+        // Signal that an existing company was selected
         onCompanyTypeSelect(true);
+        
+        // Move to the next step
         onNext();
       }
     } catch (error: any) {
