@@ -12,11 +12,25 @@ import ExistingCompanyForm from "./company/ExistingCompanyForm";
 import NewCompanyForm from "./company/NewCompanyForm";
 import { useQuickCompanyLookup } from "@/hooks/company/useQuickCompanyLookup";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ValueItem } from "./company/NewCompanyValuesField";
 
 interface CompanyStepProps {
   onNext: () => void;
   onBack: () => void;
   onCompanyTypeSelect: (isExisting: boolean) => void;
+}
+
+// Define the interface matching the expected structure in NewCompanyForm
+interface CompanyDetails {
+  name: string;
+  logo?: string;
+  frase_institucional: string;
+  cor_principal: string;
+  missao: string;
+  valores: ValueItem[];
+  video_institucional: string;
+  descricao_video: string;
+  historia: string;
 }
 
 const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyTypeSelect }) => {
@@ -27,12 +41,12 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
     profileData.companyId ? 'existing' : 'new'
   );
   const [companyId, setCompanyId] = useState(profileData.companyId || "");
-  const [companyDetails, setCompanyDetails] = useState({
+  const [companyDetails, setCompanyDetails] = useState<CompanyDetails>({
     name: profileData.newCompanyName || "",
-    description: "",
+    logo: "",
     historia: "",
     missao: "",
-    valores: "",
+    valores: [],
     frase_institucional: "",
     video_institucional: "",
     descricao_video: "",
@@ -91,14 +105,20 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
           return;
         }
 
+        // Format valores for database - convert array to JSON string if needed
+        const formattedValues = Array.isArray(companyDetails.valores) 
+          ? JSON.stringify(companyDetails.valores)
+          : companyDetails.valores;
+
         // Criar nova empresa
         const { data: newCompany, error: companyError } = await supabase
           .from('empresas')
           .insert({
             nome: companyDetails.name,
+            logo: companyDetails.logo,
             historia: companyDetails.historia,
             missao: companyDetails.missao,
-            valores: companyDetails.valores,
+            valores: formattedValues,
             frase_institucional: companyDetails.frase_institucional,
             video_institucional: companyDetails.video_institucional,
             descricao_video: companyDetails.descricao_video,
