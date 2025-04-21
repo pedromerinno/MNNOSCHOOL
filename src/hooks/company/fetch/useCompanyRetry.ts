@@ -2,6 +2,7 @@
 import { useCallback } from "react";
 
 export const useCompanyRetry = () => {
+  // Reducing maximum retry attempts to prevent resource exhaustion
   const MAX_RETRY_ATTEMPTS = 0; // No retries by default to prevent cascading failures
   
   const executeWithRetry = useCallback(async <T>(
