@@ -1,18 +1,35 @@
 
-import { useEffect } from "react";
-import { Company } from "@/types/company";
+import { useEffect, useCallback } from 'react';
+import { Company } from '@/types/company';
 
-export const useCompanyEvents = (setSelectedCompany: (company: Company | null) => void) => {
+interface UseCompanyEventsProps {
+  userId: string | undefined;
+  forceGetUserCompanies: (userId: string) => Promise<void>;
+  setDisplayName: (name: string) => void;
+}
+
+export const useCompanyEvents = ({ userId, forceGetUserCompanies, setDisplayName }: UseCompanyEventsProps) => {
+  const handleCompanyRelationChange = useCallback(async () => {
+    if (userId) {
+      console.log('CompanySelector: Detectada mudança na relação de empresa, atualizando dados');
+      await forceGetUserCompanies(userId);
+    }
+  }, [userId, forceGetUserCompanies]);
+
   useEffect(() => {
-    const handleCompanySelected = (event: CustomEvent) => {
-      const { company } = event.detail;
-      setSelectedCompany(company);
-    };
-
-    window.addEventListener('company-selected', handleCompanySelected as EventListener);
+    window.addEventListener('company-relation-changed', handleCompanyRelationChange);
+    window.addEventListener('company-updated', (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const updatedCompany = customEvent.detail.company;
+      if (updatedCompany) {
+        setDisplayName(updatedCompany.nome);
+        localStorage.setItem('selectedCompanyName', updatedCompany.nome);
+      }
+    });
     
     return () => {
-      window.removeEventListener('company-selected', handleCompanySelected as EventListener);
+      window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
+      window.removeEventListener('company-updated', () => {});
     };
-  }, [setSelectedCompany]);
+  }, [handleCompanyRelationChange, setDisplayName]);
 };
