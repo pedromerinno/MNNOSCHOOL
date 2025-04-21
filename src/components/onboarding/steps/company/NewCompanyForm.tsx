@@ -136,3 +136,4 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
 };
 
 export default NewCompanyForm;
+

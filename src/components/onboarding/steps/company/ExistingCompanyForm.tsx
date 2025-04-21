@@ -1,6 +1,7 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface CompanyInfo {
   id: string;
@@ -11,7 +12,7 @@ interface CompanyInfo {
 interface ExistingCompanyFormProps {
   companyId: string;
   onCompanyIdChange: (id: string) => void;
-  onCompanyLookup?: (company: CompanyInfo | null, lookupPending: boolean) => Promise<void>;
+  onCompanyLookup?: (company: CompanyInfo | null, lookupPending: boolean) => void;
 }
 
 const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
@@ -19,37 +20,66 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
   onCompanyIdChange,
   onCompanyLookup,
 }) => {
-  // Simplificação do processo de debounce para reduzir complexidade
+  const [localId, setLocalId] = useState(companyId);
+  const [lookupPending, setLookupPending] = useState(false);
+  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+
+  // Para debounce enquanto o usuário digita
   const handleInputChange = (value: string) => {
+    setLocalId(value);
     onCompanyIdChange(value);
     
-    if (onCompanyLookup && value.length >= 10) {
-      // Notifica que uma busca está pendente
+    if (onCompanyLookup) {
       onCompanyLookup(null, true);
       
-      // Inicia a busca após um curto período
-      setTimeout(() => {
-        handleBlur();
-      }, 500);
+      // Limpa timer anterior se houver
+      if (debounceTimer) clearTimeout(debounceTimer);
+      
+      // Configura novo timer para buscar após um curto período de tempo
+      if (value.length >= 10) {
+        const timer = setTimeout(() => {
+          handleBlur();
+        }, 500);
+        setDebounceTimer(timer);
+      }
     }
   };
 
+  // Para evitar buscas excessivas, debounce ao sair do campo (onBlur)
   const handleBlur = async () => {
-    if (!onCompanyLookup) return;
-    
-    if (companyId.length >= 10) {
-      await onCompanyLookup(null, false);
-    } else {
-      onCompanyLookup(null, false);
+    if (onCompanyLookup) {
+      setLookupPending(true);
+      const res = await fetchCompany(localId);
+      onCompanyLookup(res, false);
+      setLookupPending(false);
     }
   };
 
-  // Buscar companhia ao montar o componente se o ID já existir
+  // Busca rápida pelo id preenchido
+  const fetchCompany = async (id: string): Promise<CompanyInfo | null> => {
+    if (!id || id.length < 10) return null;
+    try {
+      const { data } = await fetch("/api/companies/lookup?id=" + id).then(res => res.json());
+      if (!data) return null;
+      return data as CompanyInfo;
+    } catch {
+      return null;
+    }
+  };
+
   useEffect(() => {
+    setLocalId(companyId);
+    
+    // Se já temos um ID válido ao montar o componente, buscar imediatamente
     if (companyId && companyId.length >= 10 && onCompanyLookup) {
       handleBlur();
     }
-  }, []);
+    
+    return () => {
+      // Limpa qualquer timer pendente ao desmontar
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
+  }, [companyId]);
 
   return (
     <div className="space-y-3">
@@ -58,10 +88,10 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
       </label>
       <Input
         id="companyId"
-        value={companyId}
+        value={localId}
         onChange={e => handleInputChange(e.target.value)}
         onBlur={handleBlur}
-        className="border-b border-gray-300 rounded-md px-3 py-2 focus-visible:ring-black"
+        className="border-b border-gray-300 rounded-md px-3 py-2 focus-visible:ring-merinno-dark"
         placeholder="Digite o ID da empresa"
       />
     </div>
