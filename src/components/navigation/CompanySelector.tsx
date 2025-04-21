@@ -1,4 +1,3 @@
-
 import { memo, useCallback } from "react";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -27,7 +26,6 @@ export const CompanySelector = memo(() => {
   
   const { displayName, setDisplayName } = useCompanyNameDisplay(selectedCompany);
   
-  // Create a wrapper function with the correct return type
   const handleForceGetUserCompanies = async (userId: string): Promise<any> => {
     return await forceGetUserCompanies(userId);
   };
@@ -63,7 +61,7 @@ export const CompanySelector = memo(() => {
   }
 
   if (!user || !userCompanies || userCompanies.length === 0) {
-    return <CompanyName displayName="merinno" />;
+    return <CompanyName displayName="MNNO" />;
   }
 
   if (userCompanies.length === 1) {
