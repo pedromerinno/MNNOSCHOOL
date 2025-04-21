@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -6,8 +7,9 @@ import { useCompanyNotices } from "@/hooks/useCompanyNotices";
 import { formatDistanceToNow } from "date-fns";
 import { pt } from "date-fns/locale";
 import { Avatar } from "@/components/ui/avatar";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, RefreshCw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCompanies } from "@/hooks/useCompanies";
 import NewNoticeDialog from "@/components/admin/dialogs/NewNoticeDialog";
 import { Button } from "@/components/ui/button";
 
@@ -19,19 +21,21 @@ interface AllNoticesDialogProps {
 export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) {
   const { notices, isLoading, error, deleteNotice, fetchNotices } = useCompanyNotices();
   const { userProfile } = useAuth();
+  const { selectedCompany } = useCompanies();
   const [editNotice, setEditNotice] = useState<any | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [noticeIdToDelete, setNoticeIdToDelete] = useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const canManage = userProfile?.is_admin || userProfile?.super_admin;
 
   // Atualizar avisos quando o diálogo é aberto
   useEffect(() => {
     if (open) {
-      fetchNotices();
+      fetchNotices(selectedCompany?.id, true);
     }
-  }, [open]);
+  }, [open, selectedCompany?.id]);
 
   const getInitial = (name: string | null | undefined) =>
     name ? name.charAt(0).toUpperCase() : "?";
@@ -68,7 +72,7 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
     if (noticeIdToDelete) {
       await deleteNotice(noticeIdToDelete);
       // Atualizar a lista após a exclusão
-      fetchNotices();
+      fetchNotices(selectedCompany?.id, true);
       // Notificar o componente pai para atualizar o widget de notificações
       onOpenChange(false);
       onOpenChange(true);
@@ -83,7 +87,18 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
     if (!open) {
       setEditNotice(null);
       // Re-fetch notices when dialog closes
-      fetchNotices();
+      fetchNotices(selectedCompany?.id, true);
+    }
+  };
+
+  const handleRefresh = async () => {
+    if (!selectedCompany?.id) return;
+    
+    setRefreshing(true);
+    try {
+      await fetchNotices(selectedCompany.id, true);
+    } finally {
+      setTimeout(() => setRefreshing(false), 500);
     }
   };
 
@@ -91,10 +106,20 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-lg sm:max-w-2xl px-0 py-0">
-          <DialogHeader className="px-6 pt-6 pb-4">
+          <DialogHeader className="px-6 pt-6 pb-4 flex justify-between items-center flex-row">
             <DialogTitle className="text-xl font-semibold">
               Todos os Avisos
             </DialogTitle>
+            <Button 
+              size="icon"
+              variant="ghost"
+              onClick={handleRefresh}
+              disabled={refreshing || isLoading}
+              title="Atualizar avisos"
+              className="h-8 w-8 rounded-full"
+            >
+              <RefreshCw className={`h-4 w-4 ${refreshing || isLoading ? 'animate-spin' : ''}`} />
+            </Button>
           </DialogHeader>
           <ScrollArea className="h-[60vh] px-6 pb-6">
             {isLoading ? (
@@ -102,10 +127,29 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
                 Carregando avisos...
               </div>
             ) : error ? (
-              <div className="text-red-500">{error}</div>
+              <div className="text-red-500 p-4 text-center">
+                <p>{error}</p>
+                <Button 
+                  onClick={handleRefresh} 
+                  variant="outline" 
+                  className="mt-2"
+                  disabled={refreshing}
+                >
+                  Tentar novamente
+                </Button>
+              </div>
             ) : notices.length === 0 ? (
-              <div className="flex items-center justify-center h-24">
-                Nenhum aviso disponível
+              <div className="flex flex-col items-center justify-center h-24 gap-2">
+                <p className="text-gray-500 dark:text-gray-400">Nenhum aviso disponível</p>
+                {canManage && (
+                  <Button 
+                    onClick={() => setEditDialogOpen(true)}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Criar novo aviso
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="space-y-6">

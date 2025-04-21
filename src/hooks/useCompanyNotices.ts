@@ -98,13 +98,34 @@ export function useCompanyNotices() {
       const { data: noticesData, error: noticesError } = await supabase
         .from('company_notices')
         .select('*')
-        .in('id', noticeIds)
-        .order('created_at', { ascending: false });
+        .in('id', noticeIds);
       
       if (noticesError) throw noticesError;
       
       if (!noticesData || noticesData.length === 0) {
         console.log(`No notice data found for IDs: ${noticeIds.join(', ')}`);
+        
+        // Tentar limpar relações incorretas se não encontrarmos os avisos correspondentes
+        if (noticeIds.length > 0) {
+          try {
+            console.log(`Attempting to clean up invalid notice relations for company: ${targetCompanyId}`);
+            // Esta operação remove relações para avisos que não existem mais
+            const { error: cleanupError } = await supabase
+              .from('notice_companies')
+              .delete()
+              .eq('company_id', targetCompanyId)
+              .in('notice_id', noticeIds);
+              
+            if (cleanupError) {
+              console.error("Error cleaning up invalid notice relations:", cleanupError);
+            } else {
+              console.log("Successfully cleaned up invalid notice relations");
+            }
+          } catch (cleanupErr) {
+            console.error("Failed to clean up invalid notice relations:", cleanupErr);
+          }
+        }
+        
         clearCache({ key: cacheKey });
         setNotices([]);
         setCurrentNotice(null);

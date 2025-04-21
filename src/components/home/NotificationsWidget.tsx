@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, RefreshCw } from "lucide-react";
 import { useCompanyNotices } from "@/hooks/useCompanyNotices";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatDistanceToNow } from "date-fns";
@@ -25,6 +25,7 @@ export const NotificationsWidget = memo(() => {
   
   const [dialogOpen, setDialogOpen] = useState(false);
   const [noticesDialogOpen, setNoticesDialogOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   // Evitar múltiplas chamadas em sequência
   const initialFetchDoneRef = useRef(false);
   
@@ -84,7 +85,17 @@ export const NotificationsWidget = memo(() => {
     }
   };
 
-  // O resto do componente permanece o mesmo
+  const handleRefresh = async () => {
+    if (!selectedCompany?.id) return;
+    
+    setRefreshing(true);
+    try {
+      await fetchNotices(selectedCompany.id, true);
+    } finally {
+      setTimeout(() => setRefreshing(false), 500);
+    }
+  };
+
   return (
     <Card className="border-0 shadow-none overflow-hidden bg-[#F1EDE4] dark:bg-[#342B1A] rounded-[30px]">
       <CardContent className="p-0 flex flex-col h-full">
@@ -103,6 +114,16 @@ export const NotificationsWidget = memo(() => {
             )}
           </div>
           <div className="flex space-x-2">
+            <Button 
+              size="icon" 
+              variant="ghost"
+              onClick={handleRefresh}
+              disabled={refreshing || isLoading}
+              title="Atualizar avisos"
+              className="h-7 w-7 rounded-full"
+            >
+              <RefreshCw className={`h-4 w-4 ${refreshing || isLoading ? 'animate-spin' : ''}`} />
+            </Button>
             <Button 
               size="icon" 
               variant="ghost" 
@@ -125,19 +146,31 @@ export const NotificationsWidget = memo(() => {
         </div>
         
         <div className="px-12 flex-1">
-          {isLoading ? (
+          {refreshing || isLoading ? (
             <div className="flex items-center justify-center h-40">
               <div className="animate-pulse text-gray-400">Carregando avisos...</div>
             </div>
           ) : error ? (
-            <div className="flex items-center justify-center h-40">
-              <div className="text-red-500">Erro ao carregar avisos</div>
+            <div className="flex flex-col items-center justify-center h-40 gap-2">
+              <div className="text-red-500 text-center">{error}</div>
+              <Button variant="outline" size="sm" onClick={handleRefresh}>
+                Tentar novamente
+              </Button>
             </div>
           ) : !currentNotice ? (
-            <div className="flex items-center justify-center h-40">
+            <div className="flex flex-col items-center justify-center h-40 gap-2">
               <div className="text-gray-500 dark:text-gray-400">
                 Nenhum aviso disponível
               </div>
+              {isAdmin && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setDialogOpen(true)}
+                >
+                  Criar aviso
+                </Button>
+              )}
             </div>
           ) : (
             <div>
