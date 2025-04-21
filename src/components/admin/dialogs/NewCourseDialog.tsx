@@ -5,7 +5,6 @@ import { CourseForm } from "@/components/admin/CourseForm";
 import { CourseFormValues } from "@/components/admin/courses/form/CourseFormTypes";
 import { useCompanies } from "@/hooks/useCompanies";
 import { toast } from "sonner";
-import { CompanySelectorField } from "@/components/admin/courses/form/CompanySelectorField";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -45,20 +44,7 @@ export const NewCourseDialog: React.FC<NewCourseDialogProps> = ({ open, onOpenCh
         <DialogHeader>
           <DialogTitle>Novo Curso</DialogTitle>
         </DialogHeader>
-        {/* Mostra o logo e nome da empresa atual se houver */}
-        {selectedCompany && (
-          <div className="flex flex-col items-center mb-4">
-            {selectedCompany.logo && (
-              <img
-                src={selectedCompany.logo}
-                alt={selectedCompany.nome ?? "Logo"}
-                className="w-20 h-20 object-contain rounded mb-1"
-                style={{ background: "#f7f7f7", border: "1px solid #eee" }}
-              />
-            )}
-            <span className="font-medium text-gray-700">{selectedCompany.nome}</span>
-          </div>
-        )}
+        {/* Removido logo e nome da empresa */}
         {/* Seletor de empresa sempre visível */}
         <div className="mb-4">
           <Label>Empresa</Label>
