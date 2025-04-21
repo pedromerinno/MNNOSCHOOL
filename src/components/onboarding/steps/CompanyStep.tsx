@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import CompanyStepHeader from "./company/CompanyStepHeader";
 import CompanyStepForm from "./company/CompanyStepForm";
 
@@ -21,6 +21,11 @@ const CompanyStep: React.FC<CompanyStepProps> = ({
     setCompanyType(type);
     onCompanyTypeSelect(type === "existing");
   };
+
+  // Notify parent component of initial company type on mount
+  useEffect(() => {
+    onCompanyTypeSelect(companyType === "existing");
+  }, []);
 
   return (
     <>

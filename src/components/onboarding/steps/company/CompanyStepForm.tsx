@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,16 +44,39 @@ const CompanyStepForm: React.FC<CompanyStepFormProps> = ({
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Limpar erro quando os dados mudam
+  useEffect(() => {
+    if (error && !isSubmitting) {
+      setError("");
+    }
+  }, [companyId, companyType, companyInfo, error, isSubmitting]);
+
   const handleInitialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Form submitted with company type:", companyType);
     console.log("Company ID:", companyId);
     console.log("Company details:", companyDetails);
+    console.log("Company info:", companyInfo);
 
     if (companyType === "existing" && !companyId) {
       setError("Por favor, informe o ID da empresa");
       return;
     }
+    
+    if (companyType === "existing" && !companyInfo && !companyLoading) {
+      // Se estamos no tipo existente mas não temos informações, tente buscar uma última vez
+      await handleCompanyLookup(null, true);
+      
+      // Aguarde um momento para dar tempo de carregar
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Verifique novamente se temos informações
+      if (!companyInfo) {
+        setError("Empresa não encontrada com este ID. Verifique e tente novamente.");
+        return;
+      }
+    }
+    
     if (companyType === "new" && !companyDetails.name) {
       setError("Por favor, informe o nome da empresa");
       return;
@@ -138,6 +162,12 @@ const CompanyStepForm: React.FC<CompanyStepFormProps> = ({
           return;
         }
         
+        if (!companyInfo) {
+          setError("Informações da empresa não encontradas");
+          setIsSubmitting(false);
+          return;
+        }
+        
         // Update profile data with company ID
         updateProfileData({
           companyId,
@@ -146,6 +176,7 @@ const CompanyStepForm: React.FC<CompanyStepFormProps> = ({
         });
         
         console.log("Moving to next step");
+        onCompanyTypeChange("existing"); // Ensure type is set correctly
         onNext(); // This should trigger navigation to the next step
       }
     } catch (error: any) {

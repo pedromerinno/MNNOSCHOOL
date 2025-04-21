@@ -28,6 +28,7 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
     onCompanyIdChange(value);
     
     if (onCompanyLookup) {
+      // Notificar que uma busca está pendente
       onCompanyLookup(null, true);
       
       // Limpa timer anterior se houver
@@ -45,15 +46,21 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
 
   // Para evitar buscas excessivas, debounce ao sair do campo (onBlur)
   const handleBlur = async () => {
-    if (onCompanyLookup) {
-      setLookupPending(true);
-      try {
-        const res = await fetchCompany(companyId);
-        onCompanyLookup(res, false);
-      } catch (error) {
-        console.error("Error looking up company:", error);
-        onCompanyLookup(null, false);
-      }
+    if (!onCompanyLookup) return;
+    
+    if (companyId.length < 10) {
+      onCompanyLookup(null, false);
+      return;
+    }
+    
+    setLookupPending(true);
+    try {
+      const res = await fetchCompany(companyId);
+      onCompanyLookup(res, false);
+    } catch (error) {
+      console.error("Error looking up company:", error);
+      onCompanyLookup(null, false);
+    } finally {
       setLookupPending(false);
     }
   };
@@ -61,6 +68,9 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
   // Busca rápida pelo id preenchido
   const fetchCompany = async (id: string): Promise<CompanyInfo | null> => {
     if (!id || id.length < 10) return null;
+    
+    console.log("Fetching company with ID:", id);
+    
     try {
       const { data, error } = await supabase
         .from("empresas")
@@ -68,7 +78,12 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
         .eq("id", id)
         .maybeSingle();
         
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error:", error);
+        throw error;
+      }
+      
+      console.log("Company data received:", data);
       return data as CompanyInfo;
     } catch (error) {
       console.error("Error fetching company:", error);

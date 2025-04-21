@@ -19,14 +19,14 @@ export function useExistingCompany(companyId: string) {
       
       if (companyId && companyId.length >= 10) {
         try {
+          // Execute the fetch and wait for it to complete
           await fetchCompany(companyId);
+          
+          // After fetch completes, log the current company info
           console.log("Company lookup result:", companyInfo);
           
-          // Check companyInfo state directly after the fetch operation has completed
-          if (companyInfo) {
-            setShowCompanyInfo(true);
-          }
-          
+          // No need to check result here - we'll use the useEffect below to update UI
+          // when companyInfo actually changes (after the state update)
           return companyInfo;
         } catch (error) {
           console.error("Error during company lookup:", error);
