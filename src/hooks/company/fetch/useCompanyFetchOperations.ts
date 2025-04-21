@@ -4,6 +4,7 @@ import { useCompanyCache } from "../useCompanyCache";
 import { useCompanyRetry } from "./useCompanyRetry";
 import { Company } from "@/types/company";
 import { CompanyFetchActions } from "../types/fetchingTypes";
+import { useCompanyFetchState } from "./useCompanyFetchState";
 
 export const useCompanyFetchOperations = (
   userCompanies: Company[],
@@ -88,4 +89,3 @@ export const useCompanyFetchOperations = (
 
   return { executeFetch };
 };
-

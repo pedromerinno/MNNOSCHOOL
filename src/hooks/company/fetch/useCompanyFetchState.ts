@@ -1,6 +1,7 @@
 
 import { useRef } from "react";
 import { CompanyFetchState } from "../types/fetchingTypes";
+import { Company } from "@/types/company";
 
 export const useCompanyFetchState = () => {
   const fetchInProgressRef = useRef(false);
@@ -24,4 +25,3 @@ export const useCompanyFetchState = () => {
     memoryCacheRef
   };
 };
-
