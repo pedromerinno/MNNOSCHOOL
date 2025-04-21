@@ -1,14 +1,27 @@
-
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 export const NoCompaniesAvailable = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [showCompanyDialog, setShowCompanyDialog] = useState(true);
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleExistingCompany = () => {
+    setShowCompanyDialog(false);
+    setIsFormOpen(true);
+  };
+
+  const handleNewCompany = () => {
+    setShowCompanyDialog(false);
+    navigate('/onboarding');
+  };
 
   const handleRequestAccess = () => {
     // Add email subject and body with user information
@@ -28,6 +41,27 @@ export const NoCompaniesAvailable = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
+      <Dialog open={showCompanyDialog} onOpenChange={setShowCompanyDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Vincular Empresa</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <p className="text-sm text-muted-foreground">
+              Escolha uma opção para vincular sua conta a uma empresa:
+            </p>
+            <div className="flex flex-col gap-3">
+              <Button onClick={handleExistingCompany}>
+                Vincular a Empresa Existente
+              </Button>
+              <Button variant="outline" onClick={handleNewCompany}>
+                Criar Nova Empresa
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="text-center max-w-md mx-auto">
         <div className="flex justify-center mb-6">
           <AlertTriangle className="h-16 w-16 text-amber-500" />

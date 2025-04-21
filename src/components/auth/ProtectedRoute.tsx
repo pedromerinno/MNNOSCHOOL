@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -94,19 +93,21 @@ export const ProtectedRoute = () => {
   }
 
   // Verificar se precisa fazer onboarding inicial
-  // Consideramos tanto a flag 'onboarding_incomplete' quanto a ausência de empresas
+  // Consideramos apenas a flag 'onboarding_incomplete' para onboarding
   const needsOnboarding = userProfile?.interesses?.includes("onboarding_incomplete");
-  const hasNoCompanies = !isOnboarding && (!userCompanies || userCompanies.length === 0) && !companiesLoading;
                          
-  // Redirecionar para onboarding se for necessário e não estiver na página de onboarding
-  if ((needsOnboarding || hasNoCompanies) && !isOnboarding) {
+  // Redirecionar para onboarding se for a primeira vez
+  if (needsOnboarding && !isOnboarding) {
     console.log("ProtectedRoute: Usuário precisa completar onboarding inicial", { 
-      interesses: userProfile?.interesses,
-      userCompanies: userCompanies?.length,
-      needsOnboarding,
-      hasNoCompanies
+      interesses: userProfile?.interesses
     });
     return <Navigate to="/onboarding" replace />;
+  }
+
+  // Se não precisa de onboarding mas não tem empresas, permitir acesso à home
+  // O componente NoCompaniesAvailable será mostrado na home
+  if (!needsOnboarding && !isOnboarding && (!userCompanies || userCompanies.length === 0) && !companiesLoading) {
+    console.log("ProtectedRoute: Usuário sem empresas mas já fez onboarding");
   }
 
   // Renderiza rotas protegidas se autenticado
