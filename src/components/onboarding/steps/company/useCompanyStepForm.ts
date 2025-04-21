@@ -1,25 +1,17 @@
-
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuickCompanyLookup } from "@/hooks/company/useQuickCompanyLookup";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { ValueItem } from "./NewCompanyValuesField";
+import type { CompanyType } from "./hooks/useCompanyType";
+import { useCompanyType } from "./hooks/useCompanyType";
+import { useCompanyDetails } from "./hooks/useCompanyDetails";
+import { useExistingCompany } from "./hooks/useExistingCompany";
 
-export type CompanyType = "existing" | "new";
-
-export interface CompanyDetails {
-  name: string;
-  logo?: string;
-  frase_institucional: string;
-  cor_principal: string;
-  missao: string;
-  valores: ValueItem[];
-  video_institucional: string;
-  descricao_video: string;
-  historia: string;
-}
+export { CompanyType };
+export type { ValueItem };
+export type { CompanyDetails } from "./hooks/useCompanyDetails";
 
 export const useCompanyStepForm = (
   onNext: () => void,
@@ -29,69 +21,41 @@ export const useCompanyStepForm = (
   const { profileData, updateProfileData } = useOnboarding();
   const { user } = useAuth();
 
-  const [companyType, setCompanyType] = useState<CompanyType>(
-    profileData.companyId ? "existing" : "new"
-  );
+  // Company type hook
+  const { companyType, setCompanyType, handleCompanyTypeChange } =
+    useCompanyType(onCompanyTypeSelect);
+
+  // Existing company ID
   const [companyId, setCompanyId] = useState(profileData.companyId || "");
-  const [companyDetails, setCompanyDetails] = useState<CompanyDetails>({
-    name: profileData.newCompanyName || "",
-    logo: "",
-    historia: "",
-    missao: "",
-    valores: [],
-    frase_institucional: "",
-    video_institucional: "",
-    descricao_video: "",
-    cor_principal: "#000000"
-  });
+
+  // Company details (new company)
+  const { companyDetails, setCompanyDetails } = useCompanyDetails();
+
+  // Existing company info/lookup
+  const {
+    companyInfo,
+    companyLoading,
+    showCompanyInfo,
+    setShowCompanyInfo,
+    handleCompanyLookup
+  } = useExistingCompany(companyId);
+
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { companyInfo, loading: companyLoading, fetchCompany } = useQuickCompanyLookup();
-  const [showCompanyInfo, setShowCompanyInfo] = useState(false);
-
-  useEffect(() => {
-    onCompanyTypeSelect(companyType === "existing");
-  }, [companyType, onCompanyTypeSelect]);
-
-  const handleCompanyLookup = useCallback(
-    async (info: any, lookupPending: boolean) => {
-      setShowCompanyInfo(false);
-      if (companyId && companyId.length >= 10) {
-        await fetchCompany(companyId);
-        setShowCompanyInfo(true);
-      }
-    },
-    [companyId, fetchCompany]
-  );
-
-  useEffect(() => {
-    if (
-      companyType === "existing" &&
-      companyInfo &&
-      showCompanyInfo &&
-      !isSubmitting
-    ) {
-      setError("");
-    }
-  }, [companyInfo, showCompanyInfo, companyType, isSubmitting]);
-
-  const handleCompanyTypeChange = (type: CompanyType) => {
-    setCompanyType(type);
-    setError("");
-    setShowCompanyInfo(false);
-  };
+  // Clear company info error on update
+  // Only when not submitting and company info visible
+  // showCompanyInfo ensures "Empresa não encontrada" feedback
+  // Can also be handled at render in CompanyStepError
 
   const handleInitialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (isSubmitting) return;
 
     if (companyType === "existing" && !companyId) {
       setError("Por favor, informe o ID da empresa");
       return;
     }
-
     if (companyType === "new" && !companyDetails.name) {
       setError("Por favor, informe o nome da empresa");
       return;
@@ -155,7 +119,7 @@ export const useCompanyStepForm = (
         window.location.href = `/company/${newCompany.id}`;
       } else {
         if (!companyInfo && companyId) {
-          await fetchCompany(companyId);
+          await handleCompanyLookup(null, true);
           await new Promise((resolve) => setTimeout(resolve, 100));
         }
 
