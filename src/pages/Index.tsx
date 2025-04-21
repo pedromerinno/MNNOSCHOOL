@@ -53,8 +53,8 @@ const Index = () => {
   useEffect(() => {
     // Se já temos empresa em cache, reduzir tempo de loading ou até pular
     if (hasCachedCompany) {
-      // Muito reduzido para acelerar a transição
-      setTimeout(() => setIsPageLoading(false), 50);
+      // Tempo muito reduzido para acelerar a transição
+      setTimeout(() => setIsPageLoading(false), 20);
       return;
     }
     
@@ -69,10 +69,21 @@ const Index = () => {
         console.log("[Index] Finalizando loading por timeout de segurança");
         setIsPageLoading(false);
       }
-    }, 800); // Reduzido para 800ms
+    }, 600); // Reduzido para 600ms
     
     return () => clearTimeout(timeoutId);
   }, [isLoading, fetchCount, selectedCompany, isPageLoading, hasCachedCompany]);
+
+  // Otimização para pular estado de carregamento desnecessário
+  if (hasCachedCompany && !isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Suspense fallback={<LoadingState />}>
+          <UserHome />
+        </Suspense>
+      </div>
+    );
+  }
 
   // Pular skeleton durante carregamento se já temos dados em cache
   if ((isPageLoading && !hasCachedCompany) || (user && isLoading && !hasCachedCompany)) {

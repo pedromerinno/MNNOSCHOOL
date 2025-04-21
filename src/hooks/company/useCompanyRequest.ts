@@ -1,8 +1,8 @@
 
 import { useRef, useCallback } from "react";
 
-// Reduzindo o intervalo mínimo de requisição para 30 segundos para mais frequência de atualizações
-export const MIN_REQUEST_INTERVAL = 30000; // 30 segundos
+// Reduzindo o intervalo mínimo de requisição para 45 segundos para balancear frequência e performance
+export const MIN_REQUEST_INTERVAL = 45000; // 45 segundos
 
 export const useCompanyRequest = () => {
   // Timestamp da última requisição
@@ -15,6 +15,8 @@ export const useCompanyRequest = () => {
   const MAX_CONCURRENT_REQUESTS = 1; // Limitando a uma requisição por vez
   // Controlador para debouncing de requisições
   const timeoutRef = useRef<number | null>(null);
+  // Rastreamento de requisições por chave para evitar duplicação
+  const requestKeysRef = useRef<Record<string, number>>({});
   
   /**
    * Utiliza debounce para evitar múltiplas chamadas em curto período
@@ -36,9 +38,23 @@ export const useCompanyRequest = () => {
   const shouldMakeRequest = useCallback((
     forceRefresh: boolean, 
     hasLocalData: boolean, 
-    customInterval?: number
+    customInterval?: number,
+    requestKey?: string
   ): boolean => {
     const now = Date.now();
+    
+    // Se houver um requestKey, verifica se já foi requisitado recentemente
+    if (requestKey) {
+      const lastKeyRequest = requestKeysRef.current[requestKey] || 0;
+      const keyInterval = customInterval || MIN_REQUEST_INTERVAL;
+      const timeSinceLastKeyRequest = now - lastKeyRequest;
+      
+      // Se já foi requisitado recentemente e não é forçado, bloqueia
+      if (timeSinceLastKeyRequest < keyInterval && hasLocalData && !forceRefresh) {
+        console.log(`[Company Request] Requisição "${requestKey}" bloqueada - última há ${Math.round(timeSinceLastKeyRequest/1000)}s (intervalo: ${keyInterval/1000}s)`);
+        return false;
+      }
+    }
     
     // Se houver muitas requisições pendentes, bloqueia novas
     if (pendingRequestsRef.current >= MAX_CONCURRENT_REQUESTS) {
@@ -72,7 +88,7 @@ export const useCompanyRequest = () => {
   /**
    * Marca o início de uma requisição
    */
-  const startRequest = useCallback((): void => {
+  const startRequest = useCallback((requestKey?: string): void => {
     // Se já estiver buscando, não inicia nova requisição
     if (isFetchingRef.current) {
       console.log('[Company Request] Já existe uma requisição em andamento, ignorando');
@@ -81,20 +97,33 @@ export const useCompanyRequest = () => {
     
     isFetchingRef.current = true;
     pendingRequestsRef.current += 1;
-    console.log(`[Company Request] Iniciando requisição. Total pendente: ${pendingRequestsRef.current}`);
+    
+    // Se tiver uma chave, registra o timestamp dessa requisição específica
+    if (requestKey) {
+      requestKeysRef.current[requestKey] = Date.now();
+    }
+    
+    console.log(`[Company Request] Iniciando requisição${requestKey ? ` (${requestKey})` : ''}. Total pendente: ${pendingRequestsRef.current}`);
   }, []);
   
   /**
    * Atualiza o timestamp da última requisição bem-sucedida
    */
-  const completeRequest = useCallback((): void => {
+  const completeRequest = useCallback((requestKey?: string): void => {
     lastFetchTimeRef.current = Date.now();
     isFetchingRef.current = false;
+    
     // Decrementa o contador de requisições pendentes
     if (pendingRequestsRef.current > 0) {
       pendingRequestsRef.current -= 1;
     }
-    console.log(`[Company Request] Requisição completada. Total pendente: ${pendingRequestsRef.current}`);
+    
+    // Se tiver uma chave, atualiza o timestamp dessa requisição específica
+    if (requestKey) {
+      requestKeysRef.current[requestKey] = Date.now();
+    }
+    
+    console.log(`[Company Request] Requisição${requestKey ? ` (${requestKey})` : ''} completada. Total pendente: ${pendingRequestsRef.current}`);
   }, []);
   
   /**
@@ -110,6 +139,14 @@ export const useCompanyRequest = () => {
     console.log(`[Company Request] Estado de requisição resetado. Total pendente: ${pendingRequestsRef.current}`);
   }, []);
   
+  /**
+   * Limpa todas as chaves de requisição armazenadas
+   */
+  const clearRequestKeys = useCallback((): void => {
+    requestKeysRef.current = {};
+    console.log('[Company Request] Chaves de requisição limpas');
+  }, []);
+  
   return {
     lastFetchTimeRef,
     isFetchingRef,
@@ -118,6 +155,7 @@ export const useCompanyRequest = () => {
     startRequest,
     completeRequest,
     resetRequestState,
-    debouncedRequest
+    debouncedRequest,
+    clearRequestKeys
   };
 };

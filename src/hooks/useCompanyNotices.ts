@@ -1,11 +1,11 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "./useCompanies";
 import { toast } from "sonner";
 import { Notice, NoticeAuthor } from "./useNotifications";
 import { useCache } from "@/hooks/useCache";
+import { useCompanyRequest } from "@/hooks/company/useCompanyRequest";
 
 export interface NoticeFormData {
   title: string;
@@ -22,25 +22,53 @@ export function useCompanyNotices() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { clearCache } = useCache();
+  const { getCache, setCache, clearCache } = useCache();
+  const {
+    shouldMakeRequest,
+    startRequest,
+    completeRequest,
+    resetRequestState,
+    debouncedRequest
+  } = useCompanyRequest();
+  
+  const fetchingRef = useRef(false);
 
-  const fetchNotices = async (companyId?: string) => {
+  const fetchNotices = useCallback(async (companyId?: string, forceRefresh = false) => {
     const targetCompanyId = companyId || selectedCompany?.id;
     
     if (!targetCompanyId) {
       setNotices([]);
+      setCurrentNotice(null);
       setIsLoading(false);
+      return;
+    }
+
+    const cacheKey = `notices_${targetCompanyId}`;
+    
+    const cachedData = getCache(cacheKey);
+    const hasLocalData = !!cachedData && Array.isArray(cachedData) && cachedData.length > 0;
+    
+    if (!shouldMakeRequest(forceRefresh, hasLocalData, undefined, cacheKey) || fetchingRef.current) {
+      if (hasLocalData) {
+        console.log(`Usando dados em cache para avisos da empresa ${targetCompanyId}`);
+        setNotices(cachedData);
+        if (cachedData.length > 0) {
+          setCurrentNotice(cachedData[0]);
+          setCurrentIndex(0);
+        }
+        setIsLoading(false);
+      }
       return;
     }
 
     try {
       setIsLoading(true);
       setError(null);
+      fetchingRef.current = true;
+      startRequest(cacheKey);
       
-      // Debug logging
       console.log(`Fetching notices for company: ${targetCompanyId}`);
       
-      // Obter avisos associados à empresa através da tabela de relação notice_companies
       const { data, error } = await supabase
         .from('notice_companies')
         .select('notice_id')
@@ -53,13 +81,15 @@ export function useCompanyNotices() {
         setNotices([]);
         setCurrentNotice(null);
         setIsLoading(false);
+        completeRequest(cacheKey);
+        fetchingRef.current = false;
+        setCache(cacheKey, [], 300);
         return;
       }
       
       const noticeIds = data.map(item => item.notice_id);
       console.log(`Found ${noticeIds.length} notice IDs for company: ${targetCompanyId}`);
       
-      // Buscar os detalhes completos dos avisos
       const { data: noticesData, error: noticesError } = await supabase
         .from('company_notices')
         .select('*')
@@ -68,55 +98,67 @@ export function useCompanyNotices() {
       
       if (noticesError) throw noticesError;
       
-      if (noticesData && noticesData.length > 0) {
-        console.log(`Retrieved ${noticesData.length} notices`);
-        
-        const authorIds = [...new Set(noticesData.map(n => n.created_by))];
-        
-        const { data: authors, error: authorsError } = await supabase
-          .from('profiles')
-          .select('id, display_name, avatar')
-          .in('id', authorIds);
-          
-        if (authorsError) throw authorsError;
-        
-        // Para cada aviso, buscar todas as empresas associadas a ele
-        const noticesWithCompanies = await Promise.all(noticesData.map(async (notice) => {
-          const { data: companies } = await supabase
-            .from('notice_companies')
-            .select('company_id')
-            .eq('notice_id', notice.id);
-          
-          const companyIds = companies ? companies.map(c => c.company_id) : [];
-          
-          const author = authors?.find(a => a.id === notice.created_by) as NoticeAuthor;
-          return { 
-            ...notice, 
-            author,
-            companies: companyIds
-          };
-        }));
-        
-        setNotices(noticesWithCompanies);
-        
-        if (noticesWithCompanies.length > 0) {
-          setCurrentNotice(noticesWithCompanies[0]);
-          setCurrentIndex(0);
-        } else {
-          setCurrentNotice(null);
-        }
-      } else {
+      if (!noticesData || noticesData.length === 0) {
         console.log(`No notice data found for IDs: ${noticeIds.join(', ')}`);
+        clearCache(cacheKey);
         setNotices([]);
         setCurrentNotice(null);
+        setIsLoading(false);
+        resetRequestState();
+        fetchingRef.current = false;
+        return;
       }
+      
+      console.log(`Retrieved ${noticesData.length} notices`);
+      
+      const authorIds = [...new Set(noticesData.map(n => n.created_by))];
+      
+      const { data: authors, error: authorsError } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar')
+        .in('id', authorIds);
+        
+      if (authorsError) throw authorsError;
+      
+      const noticesWithCompaniesPromises = noticesData.map(async (notice) => {
+        const { data: companies } = await supabase
+          .from('notice_companies')
+          .select('company_id')
+          .eq('notice_id', notice.id);
+        
+        const companyIds = companies ? companies.map(c => c.company_id) : [];
+        
+        const author = authors?.find(a => a.id === notice.created_by) as NoticeAuthor;
+        return { 
+          ...notice, 
+          author,
+          companies: companyIds
+        };
+      });
+      
+      const noticesWithCompanies = await Promise.all(noticesWithCompaniesPromises);
+      
+      setCache(cacheKey, noticesWithCompanies, 300);
+      
+      setNotices(noticesWithCompanies);
+      
+      if (noticesWithCompanies.length > 0) {
+        setCurrentNotice(noticesWithCompanies[0]);
+        setCurrentIndex(0);
+      } else {
+        setCurrentNotice(null);
+      }
+      
+      completeRequest(cacheKey);
     } catch (err: any) {
       console.error('Erro ao buscar avisos:', err);
       setError(err.message || 'Erro ao buscar avisos');
+      resetRequestState();
     } finally {
       setIsLoading(false);
+      fetchingRef.current = false;
     }
-  };
+  }, [selectedCompany?.id, getCache, setCache, clearCache, shouldMakeRequest, startRequest, completeRequest, resetRequestState]);
 
   const createNotice = async (data: NoticeFormData, companyIds?: string[]) => {
     if (!user || !companyIds || companyIds.length === 0) {
@@ -128,11 +170,10 @@ export function useCompanyNotices() {
       setIsLoading(true);
       console.log("Criando aviso para empresas:", companyIds);
 
-      // Criar o aviso na tabela company_notices
       const { data: newNotice, error } = await supabase
         .from('company_notices')
         .insert({
-          company_id: companyIds[0], // Mantemos um valor para compatibilidade com o esquema atual
+          company_id: companyIds[0],
           title: data.title,
           content: data.content,
           type: data.type,
@@ -147,7 +188,6 @@ export function useCompanyNotices() {
         throw new Error("Erro ao criar aviso: ID do aviso não retornado");
       }
 
-      // Criar as relações entre o aviso e as empresas selecionadas
       const noticeRelations = companyIds.map(companyId => ({
         notice_id: newNotice.id,
         company_id: companyId
@@ -159,7 +199,6 @@ export function useCompanyNotices() {
 
       if (relationsError) throw relationsError;
 
-      // Notificar os usuários das empresas
       for (const companyId of companyIds) {
         const { data: usersToNotify, error: errorUsers } = await supabase
           .from('user_empresa')
@@ -223,7 +262,6 @@ export function useCompanyNotices() {
       setIsLoading(true);
       console.log("Atualizando aviso:", { noticeId, data, userId: user.id });
 
-      // 1. Atualizar os dados básicos do aviso
       const { error: updateError } = await supabase
         .from('company_notices')
         .update({
@@ -239,7 +277,6 @@ export function useCompanyNotices() {
         throw updateError;
       }
 
-      // 2. Obter as empresas atualmente associadas ao aviso
       const { data: currentRelations, error: getRelationsError } = await supabase
         .from('notice_companies')
         .select('company_id')
@@ -256,7 +293,6 @@ export function useCompanyNotices() {
       console.log("Empresas atuais:", currentCompanyIds);
       console.log("Novas empresas:", newCompanyIds);
 
-      // 3. Remover relações que não existem mais
       const companiesToRemove = currentCompanyIds.filter(id => !newCompanyIds.includes(id));
       if (companiesToRemove.length > 0) {
         const { error: removeError } = await supabase
@@ -271,7 +307,6 @@ export function useCompanyNotices() {
         }
       }
 
-      // 4. Adicionar novas relações
       const companiesToAdd = newCompanyIds.filter(id => !currentCompanyIds.includes(id));
       if (companiesToAdd.length > 0) {
         const newRelations = companiesToAdd.map(companyId => ({
@@ -289,7 +324,6 @@ export function useCompanyNotices() {
         }
       }
 
-      // 5. Notificar os usuários das novas empresas
       for (const companyId of companiesToAdd) {
         const { data: usersToNotify, error: errorUsers } = await supabase
           .from('user_empresa')
@@ -323,7 +357,6 @@ export function useCompanyNotices() {
         }
       }
 
-      // 6. Limpar cache e recarregar
       if (selectedCompany?.id) {
         clearCache(`notices_${selectedCompany.id}`);
       }
@@ -347,7 +380,6 @@ export function useCompanyNotices() {
     try {
       setIsLoading(true);
       
-      // Ao excluir o aviso, as relações serão automaticamente excluídas devido à restrição ON DELETE CASCADE
       const { error } = await supabase
         .from('company_notices')
         .delete()
@@ -386,14 +418,17 @@ export function useCompanyNotices() {
 
   useEffect(() => {
     if (selectedCompany?.id) {
-      console.log(`Selected company changed, fetching notices for: ${selectedCompany.id}`);
-      fetchNotices(selectedCompany.id);
+      console.log(`Selected company changed to: ${selectedCompany.id}, will fetch notices`);
+      
+      debouncedRequest(() => {
+        fetchNotices(selectedCompany.id);
+      }, 300);
     } else {
       setNotices([]);
       setCurrentNotice(null);
       setIsLoading(false);
     }
-  }, [selectedCompany?.id]);
+  }, [selectedCompany?.id, debouncedRequest]);
 
   return {
     notices,

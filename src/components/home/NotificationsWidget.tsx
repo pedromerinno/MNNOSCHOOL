@@ -6,12 +6,14 @@ import { useCompanyNotices } from "@/hooks/useCompanyNotices";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatDistanceToNow } from "date-fns";
 import { pt } from "date-fns/locale";
-import { useState, useEffect, memo, useCallback } from "react";
+import { useState, useRef, memo, useCallback, useEffect } from "react";
 import NewNoticeDialog from "../admin/dialogs/NewNoticeDialog";
 import { AllNoticesDialog } from "./AllNoticesDialog";
+import { useCompanies } from "@/hooks/useCompanies";
 
 export const NotificationsWidget = memo(() => {
   const { userProfile } = useAuth();
+  const { selectedCompany } = useCompanies();
   const { 
     currentNotice, 
     isLoading, 
@@ -20,8 +22,11 @@ export const NotificationsWidget = memo(() => {
     prevNotice,
     fetchNotices
   } = useCompanyNotices();
+  
   const [dialogOpen, setDialogOpen] = useState(false);
   const [noticesDialogOpen, setNoticesDialogOpen] = useState(false);
+  // Evitar múltiplas chamadas em sequência
+  const initialFetchDoneRef = useRef(false);
   
   const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
   
@@ -37,35 +42,45 @@ export const NotificationsWidget = memo(() => {
     }
   }, []);
 
-  // Reduzimos para apenas uma chamada de fetchNotices usando useEffect com array de dependências vazio
+  // Otimizando useEffect para reduzir chamadas de API
   useEffect(() => {
-    // Para evitar requisições em cascata, apenas registramos que montamos o componente uma vez
-    console.log("NotificationsWidget mounted");
-    
-    // Adicionando um pequeno delay para evitar condições de corrida com outras chamadas
-    const timer = setTimeout(() => {
-      fetchNotices();
-    }, 300);
-    
-    return () => clearTimeout(timer);
-  }, [fetchNotices]); // fetchNotices é memorizado pelo useCallback no hook
+    // Verificamos se a empresa está selecionada antes de buscar avisos
+    if (selectedCompany?.id && !initialFetchDoneRef.current) {
+      console.log("NotificationsWidget: Primeira busca de avisos");
+      initialFetchDoneRef.current = true;
+      
+      // Pequeno delay para evitar corrida com outras chamadas
+      const timer = setTimeout(() => {
+        fetchNotices(selectedCompany.id);
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [selectedCompany?.id, fetchNotices]);
 
   const handleDialogOpenChange = (open: boolean) => {
     setDialogOpen(open);
-    if (!open) {
-      // Só recarregamos os avisos se o diálogo for fechado
+    if (!open && initialFetchDoneRef.current) {
       console.log("Notice dialog closed, refreshing notices");
-      // Adicionando delay para dar tempo de concluir a operação do servidor
-      setTimeout(() => fetchNotices(), 300);
+      // Adicionando delay para dar tempo de concluir a operação no servidor
+      setTimeout(() => {
+        if (selectedCompany?.id) {
+          fetchNotices(selectedCompany.id, true); // Forçando refresh
+        }
+      }, 500);
     }
   };
 
   const handleAllNoticesDialogChange = (open: boolean) => {
     setNoticesDialogOpen(open);
-    if (!open) {
+    if (!open && initialFetchDoneRef.current) {
       console.log("All notices dialog closed, refreshing notices");
-      // Adicionando delay para dar tempo de concluir a operação do servidor
-      setTimeout(() => fetchNotices(), 300);
+      // Adicionando delay para dar tempo de concluir a operação no servidor
+      setTimeout(() => {
+        if (selectedCompany?.id) {
+          fetchNotices(selectedCompany.id, true); // Forçando refresh
+        }
+      }, 500);
     }
   };
 
