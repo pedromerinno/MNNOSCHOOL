@@ -1,4 +1,3 @@
-
 import { useCallback, useRef } from "react";
 import { Company } from "@/types/company";
 import { useCompanyRequest } from "./fetch/useCompanyRequest";
@@ -15,6 +14,16 @@ export const useCompanyFetching = ({
   setError,
   incrementFetchCount
 }: UseCompanyFetchingProps) => {
+  // References for tracking requests and caching
+  const fetchInProgressRef = useRef<boolean>(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const lastSuccessfulFetchRef = useRef<number>(0);
+  const didFetchOnPageLoadRef = useRef<boolean>(false);
+  const hookInstanceIdRef = useRef<string>(`fetch-${Math.random().toString(36).substring(2, 9)}`);
+  const fetchedCompaniesRef = useRef<Set<string>>(new Set());
+  const memoryCache = useRef<{ companies: Company[] | null, timestamp: number }>({ companies: null, timestamp: 0 });
+  const pendingRequestsMapRef = useRef<Map<string, Promise<Company[]>>>(new Map());
+
   const {
     shouldMakeRequest,
     startRequest,
@@ -38,22 +47,7 @@ export const useCompanyFetching = ({
     setError
   };
   
-  const { getCompanyById, getUserCompanies: getCompanies } = useCompanyFetch(companyFetchProps);
-  
-  // State for tracking requests
-  const fetchInProgressRef = useRef(false);
-  const abortControllerRef = useRef<AbortController | null>(null);
-  const lastSuccessfulFetchRef = useRef<number>(0);
-  const didFetchOnPageLoadRef = useRef<boolean>(false);
-  const hookInstanceIdRef = useRef<string>(`fetch-${Math.random().toString(36).substring(2, 9)}`);
-  const fetchedCompaniesRef = useRef<Set<string>>(new Set());
-  const memoryCache = useRef<{ 
-    companies: Company[] | null, 
-    timestamp: number 
-  }>({ companies: null, timestamp: 0 });
-
-  // Request coalescing - prevent multiple simultaneous requests
-  const pendingRequestsMapRef = useRef<Map<string, Promise<Company[]>>>(new Map());
+  const { getUserCompanies: getCompanies, getCompanyById } = useCompanyFetch(companyFetchProps);
 
   const getUserCompanies = useCallback(async (
     userId: string, 
@@ -217,7 +211,7 @@ export const useCompanyFetching = ({
     cacheUserCompanies,
     setIsLoading
   ]);
-  
+
   const getCompanyByIdOptimized = useCallback(async (companyId: string): Promise<Company | null> => {
     // Fast path: check memory cache first
     if (fetchedCompaniesRef.current.has(companyId) && userCompanies.length > 0) {
@@ -239,13 +233,13 @@ export const useCompanyFetching = ({
       return null;
     }
   }, [getCompanyById, userCompanies]);
-  
+
   const forceGetUserCompanies = useCallback(async (userId: string): Promise<Company[]> => {
     console.log(`[${hookInstanceIdRef.current}] Forcing user companies fetch and clearing cache first`);
     clearCachedUserCompanies();
     return getUserCompanies(userId, true);
   }, [getUserCompanies, clearCachedUserCompanies]);
-  
+
   return {
     getUserCompanies,
     forceGetUserCompanies,

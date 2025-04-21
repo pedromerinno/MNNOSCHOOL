@@ -1,28 +1,19 @@
-
 import { useRef, useCallback } from "react";
 
 // Optimized request interval to better balance performance and responsiveness
-export const MIN_REQUEST_INTERVAL = 60000; // 60 seconds
+export const MIN_REQUEST_INTERVAL = 45000; // 45 seconds
 
 export const useCompanyRequest = () => {
-  // Reference for tracking the timestamp of the last fetch
   const lastFetchTimeRef = useRef<number>(0);
-  // Flag to track if a fetch operation is in progress
   const isFetchingRef = useRef<boolean>(false);
-  // Counter for tracking pending requests
   const pendingRequestsRef = useRef<number>(0);
-  // Maximum number of concurrent requests to prevent overloading
   const MAX_CONCURRENT_REQUESTS = 1;
-  // Cache for request keys to prevent duplicates
+  const timeoutRef = useRef<number | null>(null);
   const requestKeysRef = useRef<Record<string, number>>({});
-  // Error tracking for implementing backoff
   const errorCountRef = useRef<number>(0);
-  // Backoff time tracking
-  const backoffTimeRef = useRef<number>(0);
+  const blockTimeRef = useRef<number>(0);
+  const MAX_BLOCK_TIME = 300000;
   
-  /**
-   * Determines if a new request should be made based on timing and state
-   */
   const shouldMakeRequest = useCallback((
     forceRefresh: boolean, 
     hasLocalData: boolean, 
@@ -31,121 +22,140 @@ export const useCompanyRequest = () => {
   ): boolean => {
     const now = Date.now();
     
-    // If there's an active backoff period due to errors
-    if (backoffTimeRef.current > 0 && !forceRefresh) {
-      if (now - lastFetchTimeRef.current < backoffTimeRef.current) {
-        console.log(`[Company Request] In backoff period (${Math.round((backoffTimeRef.current - (now - lastFetchTimeRef.current))/1000)}s remaining)`);
-        return false;
-      } else {
-        // Reset backoff after period has passed
-        backoffTimeRef.current = 0;
-        errorCountRef.current = 0;
-      }
+    // Verificar bloqueio por erros
+    if (!forceRefresh && checkErrorBlock()) {
+      return false;
     }
     
-    // Check request key cache
-    if (requestKey && !forceRefresh) {
+    // Se houver um requestKey, verifica se já foi requisitado recentemente
+    if (requestKey) {
       const lastKeyRequest = requestKeysRef.current[requestKey] || 0;
       const keyInterval = customInterval || MIN_REQUEST_INTERVAL;
+      const timeSinceLastKeyRequest = now - lastKeyRequest;
       
-      if (now - lastKeyRequest < keyInterval && hasLocalData) {
-        console.log(`[Company Request] Request "${requestKey}" throttled - last request was ${Math.round((now - lastKeyRequest)/1000)}s ago`);
+      // Se já foi requisitado recentemente e não é forçado, bloqueia
+      if (timeSinceLastKeyRequest < keyInterval && hasLocalData && !forceRefresh) {
+        console.log(`[Company Request] Requisição "${requestKey}" bloqueada - última há ${Math.round(timeSinceLastKeyRequest/1000)}s (intervalo: ${keyInterval/1000}s)`);
         return false;
       }
     }
     
-    // Check for concurrent request limit
-    if (pendingRequestsRef.current >= MAX_CONCURRENT_REQUESTS && !forceRefresh) {
-      console.log(`[Company Request] Max concurrent requests (${MAX_CONCURRENT_REQUESTS}) reached, request queued`);
+    // Se houver muitas requisições pendentes, bloqueia novas
+    if (pendingRequestsRef.current >= MAX_CONCURRENT_REQUESTS) {
+      console.log(`[Company Request] Bloqueando requisição - já existe ${pendingRequestsRef.current} requisição ativa`);
       return false;
     }
     
-    // Check if a fetch is already in progress
+    // Se estiver já buscando, não permite nova requisição
     if (isFetchingRef.current && !forceRefresh) {
-      console.log('[Company Request] Request in progress, new request blocked');
+      console.log('[Company Request] Já existe uma requisição em andamento, bloqueando nova requisição');
       return false;
     }
     
-    // Force refresh always bypasses time-based checks
+    // Se forçar atualização, sempre permite (mas ainda respeita o limite de requisições concorrentes)
     if (forceRefresh) {
-      console.log('[Company Request] Force refresh requested, proceeding');
+      console.log('[Company Request] Forçando atualização, permitindo requisição');
       return true;
     }
     
-    // Standard interval-based throttling
+    // Verificar intervalo mínimo entre requisições
     const interval = customInterval || MIN_REQUEST_INTERVAL;
     const timeSinceLastFetch = now - lastFetchTimeRef.current;
     
     if (timeSinceLastFetch < interval && hasLocalData) {
-      console.log(`[Company Request] Request too soon (${Math.round(timeSinceLastFetch/1000)}s < ${interval/1000}s), using cached data`);
+      console.log(`[Company Request] Intervalo entre requisições muito pequeno (${Math.round(timeSinceLastFetch/1000)}s), bloqueando`);
       return false;
     }
     
     return true;
-  }, []);
+  }, [checkErrorBlock]);
   
-  /**
-   * Marks the start of a request
-   */
-  const startRequest = useCallback((requestKey?: string): void => {
-    const now = Date.now();
+  const startRequest = useCallback((requestKey?: string) => {
     isFetchingRef.current = true;
     pendingRequestsRef.current += 1;
-    lastFetchTimeRef.current = now;
+    lastFetchTimeRef.current = Date.now();
     
     if (requestKey) {
-      requestKeysRef.current[requestKey] = now;
+      requestKeysRef.current[requestKey] = Date.now();
     }
     
-    console.log(`[Company Request] Request started. Total pending: ${pendingRequestsRef.current}`);
+    console.log(`[Company Request] Iniciando requisição. Total pendente: ${pendingRequestsRef.current}`);
   }, []);
   
-  /**
-   * Marks the completion of a request
-   */
-  const completeRequest = useCallback((isError: boolean = false): void => {
+  const completeRequest = useCallback((isError: boolean = false) => {
     pendingRequestsRef.current = Math.max(0, pendingRequestsRef.current - 1);
     isFetchingRef.current = false;
+    
+    console.log(`[Company Request] Requisição concluída. Total pendente: ${pendingRequestsRef.current}`);
     
     if (isError) {
       errorCountRef.current += 1;
       
-      // Implement exponential backoff for consecutive errors
+      // Implementa backoff exponencial para erros consecutivos
       if (errorCountRef.current > 1) {
-        // Start with 5 seconds and double with each error, capped at 5 minutes
-        backoffTimeRef.current = Math.min(300000, 5000 * Math.pow(2, errorCountRef.current - 1));
-        console.log(`[Company Request] Error #${errorCountRef.current}, implementing ${backoffTimeRef.current/1000}s backoff`);
+        // Começa com 10 segundos e dobra a cada erro, até MAX_BLOCK_TIME
+        blockTimeRef.current = Math.min(
+          MAX_BLOCK_TIME, 
+          10000 * Math.pow(2, errorCountRef.current - 1)
+        );
+        
+        console.log(`[Company Request] Erro consecutivo #${errorCountRef.current}. Bloqueando por ${blockTimeRef.current/1000}s`);
       }
     } else {
-      // Reset error count on success
+      // Reset do contador de erros ao ter sucesso
+      errorCountRef.current = 0;
+      blockTimeRef.current = 0;
+    }
+  }, []);
+  
+  const resetRequestState = useCallback(() => {
+    isFetchingRef.current = false;
+    console.log(`[Company Request] Estado de requisição resetado. Total pendente: ${pendingRequestsRef.current}`);
+  }, []);
+  
+    /**
+   * Utiliza debounce para evitar múltiplas chamadas em curto período
+   */
+  const debouncedRequest = useCallback((callback: () => void, delay: number = 300) => {
+    if (typeof timeoutRef.current === 'number') {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    timeoutRef.current = window.setTimeout(() => {
+      callback();
+      timeoutRef.current = null;
+    }, delay);
+  }, []);
+  
+  /**
+   * Verifica tempo de bloqueio atual após erros
+   */
+  const checkErrorBlock = useCallback((): boolean => {
+    if (blockTimeRef.current === 0) return false;
+    
+    const now = Date.now();
+    const timeSinceLastBlock = now - lastFetchTimeRef.current;
+    
+    if (timeSinceLastBlock < blockTimeRef.current) {
+      console.log(`[Company Request] Bloqueando requisição - em período de bloqueio por ${Math.round((blockTimeRef.current - timeSinceLastBlock)/1000)}s`);
+      return true;
+    }
+    
+    // Se passou o tempo de bloqueio, resetar
+    if (timeSinceLastBlock > blockTimeRef.current) {
+      blockTimeRef.current = 0;
       errorCountRef.current = 0;
     }
     
-    console.log(`[Company Request] Request completed. Total pending: ${pendingRequestsRef.current}`);
-  }, []);
-  
-  /**
-   * Resets the request state (used for cleanup)
-   */
-  const resetRequestState = useCallback((): void => {
-    isFetchingRef.current = false;
-    console.log(`[Company Request] Request state reset. Total pending: ${pendingRequestsRef.current}`);
-  }, []);
-  
-  /**
-   * Clears all request keys (used when forcing a full refresh)
-   */
-  const clearRequestKeys = useCallback((): void => {
-    requestKeysRef.current = {};
-    console.log('[Company Request] Request key cache cleared');
+    return false;
   }, []);
   
   return {
-    pendingRequestsRef,
     shouldMakeRequest,
     startRequest,
     completeRequest,
     resetRequestState,
-    clearRequestKeys
+    debouncedRequest,
+    pendingRequestsRef
   };
 };

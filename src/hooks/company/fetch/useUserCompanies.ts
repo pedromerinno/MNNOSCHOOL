@@ -1,4 +1,3 @@
-
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Company } from "@/types/company";
@@ -13,19 +12,16 @@ export const useUserCompanies = ({
     try {
       console.log(`[useUserCompanies] Buscando empresas para usuário: ${userId}`);
       
-      // Try the RPC function first which has proper permission handling
       const { data: rpcData, error: rpcError } = await supabase
         .rpc('get_user_companies', { user_id: userId });
         
       if (!rpcError && rpcData && rpcData.length > 0) {
         console.log(`[useUserCompanies] Encontradas ${rpcData.length} empresas via RPC`);
         
-        // Save to memory for immediate use and localStorage for later
         const companies = rpcData as Company[];
         setUserCompanies(companies);
         
         try {
-          // Cache to localStorage with a clear timestamp
           localStorage.setItem('userCompanies', JSON.stringify(companies));
           localStorage.setItem('userCompaniesTimestamp', Date.now().toString());
           localStorage.setItem('userCompaniesUserId', userId);
@@ -40,7 +36,6 @@ export const useUserCompanies = ({
         console.warn('[useUserCompanies] Error using RPC, falling back to direct query:', rpcError);
       }
       
-      // Check if user is a super admin first
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('super_admin, is_admin')
@@ -52,7 +47,6 @@ export const useUserCompanies = ({
         throw profileError;
       }
       
-      // Super admins get all companies
       if (profileData?.super_admin) {
         console.log('[useUserCompanies] User is super admin, fetching all companies');
         
@@ -84,7 +78,6 @@ export const useUserCompanies = ({
         return [];
       }
       
-      // For regular users, query the user_empresa relation table
       const { data: relations, error: relationsError } = await supabase
         .from('user_empresa')
         .select('empresa_id')
@@ -119,7 +112,6 @@ export const useUserCompanies = ({
       console.log(`[useUserCompanies] Loaded details for ${companies?.length || 0} companies`);
       
       if (companies && companies.length > 0) {
-        // Save to both memory and localStorage
         try {
           localStorage.setItem('userCompanies', JSON.stringify(companies));
           localStorage.setItem('userCompaniesTimestamp', Date.now().toString());
@@ -128,7 +120,6 @@ export const useUserCompanies = ({
           console.warn('[useUserCompanies] Failed to cache companies to localStorage:', e);
         }
         
-        // Log companies for debugging
         companies.forEach(company => {
           console.log(`[useUserCompanies] Company loaded: ${company.nome} (${company.id})`);
         });
