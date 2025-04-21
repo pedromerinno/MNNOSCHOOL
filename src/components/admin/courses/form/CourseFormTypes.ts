@@ -20,4 +20,5 @@ export interface CourseFormProps {
   isSubmitting: boolean;
   onClose?: () => void;
   preselectedCompanyId?: string;
+  showCompanySelector?: boolean;
 }

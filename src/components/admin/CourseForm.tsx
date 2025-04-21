@@ -10,23 +10,14 @@ import { TagsField } from './courses/form/TagsField';
 import { CompanySelectorField } from './courses/form/CompanySelectorField';
 import { FormActions } from './courses/form/FormActions';
 
-// Define the CourseFormProps type directly in this file
-export interface CourseFormProps {
-  initialData?: Course | null;
-  onSubmit: (data: CourseFormValues) => void;
-  onCancel: () => void;
-  isSubmitting: boolean;
-  onClose?: () => void;
-  preselectedCompanyId?: string;
-}
-
 export const CourseForm: React.FC<CourseFormProps> = ({ 
   initialData, 
   onSubmit, 
   onCancel, 
   isSubmitting,
   onClose,
-  preselectedCompanyId
+  preselectedCompanyId,
+  showCompanySelector = true  // Add default value
 }) => {
   const form = useForm<CourseFormValues>({
     resolver: zodResolver(courseSchema),
@@ -47,11 +38,7 @@ export const CourseForm: React.FC<CourseFormProps> = ({
     }
   }, [preselectedCompanyId, form]);
 
-  // Determine if we need to show the company selector
-  // Only show when creating a new course and no preselected company
-  const showCompanySelector = !initialData && !preselectedCompanyId;
-  
-  // Check if a company is selected
+  // Use the showCompanySelector prop that was passed instead of calculating it
   const companySelected = !!form.getValues("companyId");
 
   return (
@@ -77,4 +64,3 @@ export const CourseForm: React.FC<CourseFormProps> = ({
     </Form>
   );
 };
-
