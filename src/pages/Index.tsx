@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCompanyCache } from "@/hooks/company/useCompanyCache";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import CompanyStep from "@/components/onboarding/steps/CompanyStep";
 
 // Lazy-load components to improve initial loading time
 const NoCompaniesAvailable = lazy(() => import("@/components/home/NoCompaniesAvailable").then(module => ({ default: module.NoCompaniesAvailable })));
@@ -44,6 +45,7 @@ const LoadingState = () => (
 
 const Index = () => {
   const [isPageLoading, setIsPageLoading] = useState(true);
+  const [showCompanyForm, setShowCompanyForm] = useState(false);
   const { userCompanies, isLoading, fetchCount, selectedCompany, getUserCompanies, forceGetUserCompanies } = useCompanies();
   const { user, userProfile } = useAuth();
   const { getInitialSelectedCompany } = useCompanyCache();
@@ -70,10 +72,11 @@ const Index = () => {
         if (user.id) {
           forceGetUserCompanies(user.id).then(companies => {
             if (companies.length === 0) {
-              console.log("[Index] Mesmo após forçar carregamento, não há empresas. Redirecionando para onboarding...");
-              navigate("/onboarding", { replace: true });
+              console.log("[Index] Mesmo após forçar carregamento, não há empresas. Mostrando formulário de cadastro...");
+              setShowCompanyForm(true);
             } else {
               toast.success("Empresas carregadas com sucesso!");
+              setShowCompanyForm(false);
             }
           }).catch(err => {
             console.error("[Index] Erro ao tentar forçar carregamento de empresas:", err);
@@ -98,6 +101,12 @@ const Index = () => {
     // Finaliza o carregamento quando temos uma empresa selecionada ou os dados já foram carregados
     if (selectedCompany || (fetchCount > 0 && !isLoading)) {
       setIsPageLoading(false);
+      // Só mostrar formulário de empresa quando temos certeza que não há empresas
+      if (fetchCount > 0 && userCompanies.length === 0 && !selectedCompany) {
+        setShowCompanyForm(true);
+      } else {
+        setShowCompanyForm(false);
+      }
     }
     
     // Timeout de segurança para evitar loading infinito
@@ -105,11 +114,15 @@ const Index = () => {
       if (isPageLoading) {
         console.log("[Index] Finalizando loading por timeout de segurança");
         setIsPageLoading(false);
+        // Verificar se deve mostrar formulário após timeout
+        if (userCompanies.length === 0) {
+          setShowCompanyForm(true);
+        }
       }
     }, 2000); // 2 segundos de timeout
     
     return () => clearTimeout(timeoutId);
-  }, [isLoading, fetchCount, selectedCompany, isPageLoading, hasCachedCompany]);
+  }, [isLoading, fetchCount, selectedCompany, isPageLoading, hasCachedCompany, userCompanies.length]);
 
   // Carregamento inicial forçado
   useEffect(() => {
@@ -121,24 +134,40 @@ const Index = () => {
     }
   }, [user?.id, getUserCompanies, userCompanies.length, isLoading]);
 
-  // Otimização para pular estado de carregamento desnecessário
-  if (hasCachedCompany && !isLoading) {
+  const handleCompanyCreated = async () => {
+    toast.success("Empresa criada com sucesso!");
+    setShowCompanyForm(false);
+    
+    if (user?.id) {
+      await forceGetUserCompanies(user.id);
+    }
+  };
+
+  // Mostrar loading state durante o carregamento
+  if (isPageLoading || (user && isLoading && userCompanies.length === 0)) {
+    return <LoadingState />;
+  }
+
+  // Mostrar formulário de cadastro quando não há empresas
+  if (user && !isLoading && showCompanyForm) {
     return (
-      <div className="min-h-screen bg-background">
-        <Suspense fallback={<LoadingState />}>
-          <UserHome />
-        </Suspense>
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <h1 className="text-2xl font-bold mb-6 text-center">Cadastrar Empresa</h1>
+          <CompanyStep 
+            onNext={() => {}} 
+            onBack={() => {}} 
+            onCompanyTypeSelect={() => {}} 
+            onCompanyCreated={handleCompanyCreated}
+            hideBack={true}
+          />
+        </div>
       </div>
     );
   }
 
-  // Pular skeleton durante carregamento se já temos dados em cache
-  if ((isPageLoading && !hasCachedCompany) || (user && isLoading && !hasCachedCompany)) {
-    return <LoadingState />;
-  }
-
-  // Mostrar NoCompaniesAvailable quando terminamos de carregar E não há empresas
-  if (user && !isLoading && userCompanies.length === 0) {
+  // Mostrar NoCompaniesAvailable quando terminamos de carregar e não há empresas
+  if (user && !isLoading && userCompanies.length === 0 && !showCompanyForm) {
     return (
       <Suspense fallback={<LoadingState />}>
         <NoCompaniesAvailable />
@@ -146,6 +175,7 @@ const Index = () => {
     );
   }
 
+  // Mostrar página inicial quando temos empresas
   return (
     <div className="min-h-screen bg-background">
       <Suspense fallback={<LoadingState />}>
