@@ -17,10 +17,13 @@ export const useLoginForm = () => {
     setIsLoggingIn(true);
     
     try {
-      // Limpar cache relacionado a empresas para garantir dados frescos
+      // Clear all relevant cache
       clearCache({ key: 'userCompanies' });
       clearCache({ key: 'selectedCompany' });
       clearCache({ key: 'selectedCompanyId' });
+      clearCache({ key: 'notices' });
+      clearCache({ key: 'courses' });
+      clearCache({ key: 'access' });
       
       const { data, error } = await signInWithPassword(email, password);
       if (error) throw error;

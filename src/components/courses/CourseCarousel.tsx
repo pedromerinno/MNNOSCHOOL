@@ -1,8 +1,7 @@
-
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Play } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useCompanies } from "@/hooks/useCompanies";
 import { CompanyThemedBadge } from "@/components/ui/badge";
@@ -14,6 +13,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { useAuth } from "@/hooks/useAuth";
 
 interface CourseCarouselProps {
   courses: any[];
@@ -23,6 +23,7 @@ interface CourseCarouselProps {
 export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], loading }) => {
   const navigate = useNavigate();
   const { selectedCompany } = useCompanies();
+  const { user } = useAuth();
 
   // Loading state with Skeleton UI
   if (loading) {
@@ -45,14 +46,25 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], lo
     );
   }
 
-  // Empty state with better messaging
+  // Empty state with better messaging and button
   if (!courses || courses.length === 0) {
     return (
       <div className="w-full h-[500px] rounded-2xl bg-gray-100 dark:bg-gray-800 flex flex-col items-center justify-center p-8 text-center">
-        <h3 className="text-xl font-semibold mb-2">Nenhum curso em destaque disponível</h3>
-        <p className="text-gray-500 dark:text-gray-400 max-w-md">
+        <h3 className="text-2xl font-semibold mb-3 text-gray-900 dark:text-gray-100">
+          Nenhum curso em destaque disponível
+        </h3>
+        <p className="text-gray-500 dark:text-gray-400 max-w-md mb-8">
           Esta empresa ainda não possui cursos em destaque ou você não tem acesso a eles.
         </p>
+        {user?.is_admin && (
+          <Button 
+            onClick={() => navigate('/admin/courses')}
+            className="bg-primary hover:bg-primary/90"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Cadastrar Novo Curso
+          </Button>
+        )}
       </div>
     );
   }
