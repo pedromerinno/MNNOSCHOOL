@@ -1,12 +1,13 @@
 
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import CompanyStep from "@/components/onboarding/steps/CompanyStep";
+import { OnboardingProvider } from "@/contexts/OnboardingContext";
 
 export const NoCompaniesAvailable = () => {
   const [showCompanyDialog, setShowCompanyDialog] = useState(true);
@@ -37,12 +38,14 @@ export const NoCompaniesAvailable = () => {
         <DialogContent className="max-w-4xl p-0">
           <div className="bg-white rounded-3xl">
             <div className="p-16">
-              <CompanyStep 
-                onNext={() => {}} 
-                onBack={() => setShowCompanyDialog(false)}
-                onCompanyTypeSelect={() => {}}
-                onCompanyCreated={handleCompanyCreated}
-              />
+              <OnboardingProvider>
+                <CompanyStep 
+                  onNext={() => {}} 
+                  onBack={() => setShowCompanyDialog(false)}
+                  onCompanyTypeSelect={() => {}}
+                  onCompanyCreated={handleCompanyCreated}
+                />
+              </OnboardingProvider>
             </div>
           </div>
         </DialogContent>
