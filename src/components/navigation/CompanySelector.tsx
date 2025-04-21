@@ -11,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// Usar memo para evitar renderizações desnecessárias
 export const CompanySelector = memo(() => {
   const { user } = useAuth();
   const { 
@@ -22,14 +21,16 @@ export const CompanySelector = memo(() => {
     forceGetUserCompanies
   } = useCompanies();
   
-  // Estado local para o nome da empresa que será exibido
   const [displayName, setDisplayName] = useState<string>("merinno");
   
-  // Atualizar o nome da empresa quando mudar a seleção
+  // Atualizar o nome da empresa quando mudar a seleção ou após eventos de empresa
   useEffect(() => {
     if (selectedCompany?.nome) {
       console.log(`CompanySelector: Atualizando nome para "${selectedCompany.nome}"`);
       setDisplayName(selectedCompany.nome);
+      
+      // Atualizar o localStorage para persistência
+      localStorage.setItem('selectedCompanyName', selectedCompany.nome);
     }
   }, [selectedCompany]);
 
@@ -41,12 +42,29 @@ export const CompanySelector = memo(() => {
     }
   }, [user, forceGetUserCompanies]);
   
-  // Configurar ouvinte de eventos apenas uma vez
+  // Carregar nome da empresa do localStorage ao inicializar
+  useEffect(() => {
+    const cachedCompanyName = localStorage.getItem('selectedCompanyName');
+    if (cachedCompanyName) {
+      setDisplayName(cachedCompanyName);
+    }
+  }, []);
+  
+  // Configurar ouvinte de eventos
   useEffect(() => {
     window.addEventListener('company-relation-changed', handleCompanyRelationChange);
+    window.addEventListener('company-updated', (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const updatedCompany = customEvent.detail.company;
+      if (updatedCompany) {
+        setDisplayName(updatedCompany.nome);
+        localStorage.setItem('selectedCompanyName', updatedCompany.nome);
+      }
+    });
     
     return () => {
       window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
+      window.removeEventListener('company-updated', () => {});
     };
   }, [handleCompanyRelationChange]);
 
@@ -58,7 +76,6 @@ export const CompanySelector = memo(() => {
       return;
     }
     
-    // Verificar se o usuário tem acesso a esta empresa
     const hasAccess = userCompanies.some(c => c.id === company.id);
     if (!hasAccess) {
       console.error('CompanySelector: Usuário não tem acesso a esta empresa:', company.nome);
@@ -71,17 +88,15 @@ export const CompanySelector = memo(() => {
     toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
   }, [user?.id, selectedCompany?.id, selectCompany, userCompanies]);
 
-  // Mostrar apenas o nome durante carregamento, sem skeleton
+  // Manter a lógica de renderização existente
   if (isLoading && !selectedCompany) {
     return <span className="text-lg font-bold text-merinno-dark">{displayName}</span>;
   }
 
-  // Se usuário não tiver empresas ou não estiver logado, mostrar texto padrão
   if (!user || !userCompanies || userCompanies.length === 0) {
     return <span className="text-lg font-bold text-merinno-dark">merinno</span>;
   }
 
-  // Se usuário tiver apenas uma empresa, apenas mostrar o nome sem dropdown
   if (userCompanies.length === 1) {
     return <span className="text-lg font-bold text-merinno-dark">{displayName}</span>;
   }
@@ -123,5 +138,4 @@ export const CompanySelector = memo(() => {
   );
 });
 
-// Definir displayName para melhorar depuração
 CompanySelector.displayName = 'CompanySelector';
