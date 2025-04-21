@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -27,6 +28,7 @@ import Notes from "./pages/Notes";
 import Manifesto from "./pages/Manifesto";
 import Team from "./pages/Team";
 import TeamMemberProfile from "./pages/TeamMemberProfile";
+import CompanyPage from "./pages/CompanyPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -120,6 +122,12 @@ const App = () => {
                 <Route path="/team/:memberId" element={<>
                   <MainNavigationMenu />
                   <TeamMemberProfile />
+                </>} />
+
+                {/* Add Company Page route */}
+                <Route path="/company/:companyId" element={<>
+                  <MainNavigationMenu />
+                  <CompanyPage />
                 </>} />
               
               </Route>

@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -137,7 +138,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       window.dispatchEvent(new Event('company-relation-changed'));
       
       toast.success("Perfil atualizado com sucesso!");
-      navigate("/"); // Navigate to home page after successful update
+      navigate("/"); // Ensures users are always redirected to the homepage after onboarding
       
     } catch (error) {
       console.error("Erro ao salvar perfil:", error);

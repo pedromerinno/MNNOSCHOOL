@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -141,7 +142,7 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
         if (profileError) throw profileError;
 
         toast.success("Empresa criada com sucesso!");
-        navigate(`/company/${newCompany.id}`);
+        navigate("/"); // Changed from navigate(`/company/${newCompany.id}`) to navigate("/")
       } else {
         if (!companyInfo) {
           await fetchCompany(companyId);
