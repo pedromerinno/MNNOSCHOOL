@@ -1,4 +1,3 @@
-
 import { useState, useEffect, lazy, Suspense, useRef } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -48,22 +47,34 @@ const Index = () => {
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [showCompanyDialog, setShowCompanyDialog] = useState(false);
   const { userCompanies, isLoading, fetchCount, selectedCompany, getUserCompanies, forceGetUserCompanies } = useCompanies();
-  const { user, userProfile } = useAuth();
-  const { getInitialSelectedCompany } = useCompanyCache();
+  const { user, userProfile, refreshSession } = useAuth();
+  const { getInitialSelectedCompany, clearCachedUserCompanies } = useCompanyCache();
   const navigate = useNavigate();
   const hasAttemptedForceLoad = useRef(false);
   const hasRedirectedToOnboarding = useRef(false);
 
+  useEffect(() => {
+    if (!user && !isLoading) {
+      console.log("[Index] No user detected, attempting to refresh session");
+      refreshSession().then(session => {
+        if (!session) {
+          console.log("[Index] Session refresh failed, redirecting to login");
+          navigate("/login");
+        }
+      });
+    }
+  }, [user, isLoading, navigate, refreshSession]);
+
   const handleCompanyCreated = () => {
     setShowCompanyDialog(false);
     if (user?.id) {
+      clearCachedUserCompanies();
       forceGetUserCompanies(user.id);
       toast.success("Empresa criada com sucesso!");
     }
   };
   
   const handleCompanyTypeSelect = (isExisting: boolean) => {
-    // This is needed for the CompanyStep component
     console.log("[Index] Company type selected:", isExisting ? "existing" : "new");
   };
   
@@ -85,14 +96,17 @@ const Index = () => {
         if (!hasAttemptedForceLoad.current && user.id) {
           hasAttemptedForceLoad.current = true;
           
+          clearCachedUserCompanies();
+          
           forceGetUserCompanies(user.id).then(companies => {
-            if (companies.length === 0) {
+            if (!companies || companies.length === 0) {
               if (!hasRedirectedToOnboarding.current) {
                 console.log("[Index] Mesmo após forçar carregamento, não há empresas. Abrindo diálogo de criação de empresa...");
                 setShowCompanyDialog(true);
               }
             } else {
               toast.success("Empresas carregadas com sucesso!");
+              window.location.reload();
             }
           }).catch(err => {
             console.error("[Index] Erro ao tentar forçar carregamento de empresas:", err);
@@ -100,7 +114,7 @@ const Index = () => {
         }
       }
     }
-  }, [user, userProfile, navigate, isLoading, userCompanies, fetchCount, forceGetUserCompanies]);
+  }, [user, userProfile, navigate, isLoading, userCompanies, fetchCount, forceGetUserCompanies, clearCachedUserCompanies]);
 
   useEffect(() => {
     if (user && !isLoading && userCompanies.length === 0 && fetchCount > 0 && !hasRedirectedToOnboarding.current) {
@@ -134,11 +148,12 @@ const Index = () => {
     if (user?.id && userCompanies.length === 0 && !isLoading && !hasAttemptedForceLoad.current) {
       console.log("[Index] Forçando carregamento inicial de empresas");
       hasAttemptedForceLoad.current = true;
+      clearCachedUserCompanies();
       getUserCompanies(user.id, true).catch(err => {
         console.error("[Index] Erro no carregamento inicial:", err);
       });
     }
-  }, [user?.id, getUserCompanies, userCompanies.length, isLoading]);
+  }, [user?.id, getUserCompanies, userCompanies.length, isLoading, clearCachedUserCompanies]);
 
   if (hasCachedCompany && !isLoading) {
     return (

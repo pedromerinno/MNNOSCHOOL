@@ -35,6 +35,10 @@ export const useCompanyCache = () => {
   const clearCachedUserCompanies = useCallback(() => {
     try {
       localStorage.removeItem('userCompanies');
+      localStorage.removeItem('selectedCompany');
+      localStorage.removeItem('selectedCompanyId');
+      localStorage.removeItem('selectedCompanyName');
+      console.log('All company cache cleared successfully');
     } catch (error) {
       console.error('Error clearing cached user companies:', error);
     }
@@ -55,6 +59,7 @@ export const useCompanyCache = () => {
               console.log('Usuário não tem acesso à empresa em cache, limpando seleção');
               localStorage.removeItem('selectedCompany');
               localStorage.removeItem('selectedCompanyId');
+              localStorage.removeItem('selectedCompanyName');
               return null;
             }
           }
