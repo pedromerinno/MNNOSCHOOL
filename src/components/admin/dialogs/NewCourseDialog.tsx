@@ -6,6 +6,8 @@ import { CourseFormValues } from "@/components/admin/courses/form/CourseFormType
 import { useCompanies } from "@/hooks/useCompanies";
 import { toast } from "sonner";
 import { CompanySelectorField } from "@/components/admin/courses/form/CompanySelectorField";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface NewCourseDialogProps {
   open: boolean;
@@ -59,20 +61,31 @@ export const NewCourseDialog: React.FC<NewCourseDialogProps> = ({ open, onOpenCh
         )}
         {/* Seletor de empresa sempre visível */}
         <div className="mb-4">
-          <CompanySelectorField
-            form={{
-              // Cria uma interface fake para controlar só a troca de empresa aqui,
-              // pois o form principal mantém sua lógica normalmente
-              control: {
-                // Apenas plugar onchange (não usado via react-hook-form real)
-              }
-            } as any}
-            showCompanySelector={true}
-            // @ts-ignore
-            fieldValue={selectedCompany?.id || ""}
+          <Label>Empresa</Label>
+          <Select 
+            value={selectedCompany?.id || ""} 
             onValueChange={handleCompanyChange}
-            overrideUserCompanies={userCompanies}
-          />
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione uma empresa" />
+            </SelectTrigger>
+            <SelectContent>
+              {userCompanies.map((company) => (
+                <SelectItem key={company.id} value={company.id}>
+                  <div className="flex items-center">
+                    {company.logo && (
+                      <img
+                        src={company.logo}
+                        alt={company.nome}
+                        className="h-4 w-4 mr-2 object-contain rounded-lg"
+                      />
+                    )}
+                    <span>{company.nome}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <CourseForm
           onSubmit={handleFormSubmit}
