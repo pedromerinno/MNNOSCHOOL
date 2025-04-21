@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -23,7 +24,7 @@ const formSchema = z.object({
 interface NewNoticeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  initialData?: Partial<NoticeFormData>;
+  initialData?: Partial<NoticeFormData> & { companies?: string[] }; // Added explicit companies type
   editingNoticeId?: string | null;
 }
 

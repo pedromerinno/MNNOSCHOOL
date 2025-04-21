@@ -9,6 +9,7 @@ export interface NoticeFormData {
   title: string;
   content: string;
   type: string;
+  companies?: string[]; // Added the companies property as optional
 }
 
 export function useCompanyNotices() {
