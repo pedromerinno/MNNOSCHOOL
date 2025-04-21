@@ -37,9 +37,13 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
     cor_principal: "#000000"
   });
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInitialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent multiple submissions
+    if (isSubmitting) return;
     
     if (companyType === 'existing' && !companyId) {
       setError("Por favor, informe o ID da empresa");
@@ -50,6 +54,8 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
       setError("Por favor, informe o nome da empresa");
       return;
     }
+    
+    setIsSubmitting(true);
     
     try {
       if (companyType === 'new') {
@@ -101,17 +107,40 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
         toast.success("Empresa criada com sucesso!");
         navigate("/");
       } else {
+        // Verificar se o ID da empresa existe antes de prosseguir
+        const { data: company, error: companyCheckError } = await supabase
+          .from('empresas')
+          .select('id, nome')
+          .eq('id', companyId)
+          .maybeSingle();
+          
+        if (companyCheckError) {
+          throw companyCheckError;
+        }
+        
+        if (!company) {
+          setError("Empresa não encontrada com este ID");
+          setIsSubmitting(false);
+          return;
+        }
+        
+        console.log("Empresa encontrada:", company.nome);
+        toast.success(`Empresa encontrada: ${company.nome}`);
+        
         updateProfileData({ 
           companyId: companyId,
           newCompanyName: null,
           companyDetails: null
         });
+        
         onCompanyTypeSelect(true);
         onNext();
       }
     } catch (error: any) {
       console.error('Error:', error);
       toast.error("Erro ao processar operação: " + error.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -154,8 +183,9 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
         <Button 
           type="submit" 
           className="w-full rounded-md bg-merinno-dark hover:bg-black text-white"
+          disabled={isSubmitting}
         >
-          Continuar
+          {isSubmitting ? "Processando..." : "Continuar"}
         </Button>
         
         <Button 
@@ -163,6 +193,7 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
           variant="ghost"
           className="flex items-center justify-center gap-2 text-gray-500 mt-2"
           onClick={onBack}
+          disabled={isSubmitting}
         >
           <ArrowLeft className="h-4 w-4" />
           Voltar

@@ -24,6 +24,8 @@ const InterestsStep: React.FC<InterestsStepProps> = ({ onBack }) => {
         
         // Se tivermos uma empresa selecionada no profileData
         if (profileData.companyId) {
+          console.log("Buscando tags para empresa ID:", profileData.companyId);
+          
           // Primeiro pegamos os IDs dos cursos da empresa
           const { data: companyCourses, error: coursesError } = await supabase
             .from('company_courses')
@@ -33,11 +35,14 @@ const InterestsStep: React.FC<InterestsStepProps> = ({ onBack }) => {
           if (coursesError) throw coursesError;
           
           if (!companyCourses || companyCourses.length === 0) {
-            setAvailableInterests(['Tecnologia', 'Negócios']); // Tags padrão se não houver cursos
+            console.log("Nenhum curso encontrado para esta empresa, usando tags padrão");
+            setAvailableInterests(['Tecnologia', 'Negócios', 'Liderança', 'Marketing', 'Inovação']);
+            setIsLoadingTags(false);
             return;
           }
           
           const courseIds = companyCourses.map(cc => cc.course_id);
+          console.log("IDs de cursos encontrados:", courseIds);
           
           // Agora buscamos as tags de todos os cursos da empresa
           const { data: courses, error: tagsError } = await supabase
@@ -48,22 +53,29 @@ const InterestsStep: React.FC<InterestsStepProps> = ({ onBack }) => {
           if (tagsError) throw tagsError;
           
           // Extrair todas as tags únicas dos cursos
+          const allTags = courses.flatMap(course => course.tags || []);
           const uniqueTags = Array.from(new Set(
-            courses
-              .flatMap(course => course.tags || [])
-              .filter(tag => tag) // Remove null/undefined
+            allTags.filter(tag => tag) // Remove null/undefined
           ));
           
-          setAvailableInterests(uniqueTags.length > 0 ? uniqueTags : ['Tecnologia', 'Negócios']);
+          console.log("Tags únicas encontradas:", uniqueTags);
+          
+          if (uniqueTags.length > 0) {
+            setAvailableInterests(uniqueTags);
+          } else {
+            console.log("Nenhuma tag encontrada nos cursos, usando tags padrão");
+            setAvailableInterests(['Tecnologia', 'Negócios', 'Liderança', 'Marketing', 'Inovação']);
+          }
         } else {
           // Se não temos empresa, usamos tags padrão
-          setAvailableInterests(['Tecnologia', 'Negócios']);
+          console.log("Nenhuma empresa selecionada, usando tags padrão");
+          setAvailableInterests(['Tecnologia', 'Negócios', 'Liderança', 'Marketing', 'Inovação']);
         }
       } catch (error: any) {
         console.error('Erro ao buscar tags:', error);
         toast.error("Erro ao carregar interesses disponíveis");
         // Usar tags padrão em caso de erro
-        setAvailableInterests(['Tecnologia', 'Negócios']);
+        setAvailableInterests(['Tecnologia', 'Negócios', 'Liderança', 'Marketing', 'Inovação']);
       } finally {
         setIsLoadingTags(false);
       }
