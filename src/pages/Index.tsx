@@ -1,47 +1,15 @@
-
 import { useState, useEffect, lazy, Suspense } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanyCache } from "@/hooks/company/useCompanyCache";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import CompanyStep from "@/components/onboarding/steps/CompanyStep";
+import { LoadingPlaceholder } from "@/components/home/LoadingPlaceholder";
 
 // Lazy-load components to improve initial loading time
 const NoCompaniesAvailable = lazy(() => import("@/components/home/NoCompaniesAvailable").then(module => ({ default: module.NoCompaniesAvailable })));
 const UserHome = lazy(() => import("@/components/home/UserHome").then(module => ({ default: module.UserHome })));
-
-const LoadingState = () => (
-  <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-    <div className="w-full max-w-3xl space-y-8">
-      <div className="flex flex-col items-center gap-4">
-        <Skeleton className="h-10 w-40 rounded-full" />
-        <Skeleton className="h-4 w-60 rounded-full" />
-      </div>
-      
-      <div className="space-y-6">
-        <div className="space-y-3">
-          <Skeleton className="h-8 w-48 rounded-lg" />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-40 w-full rounded-xl" />
-            ))}
-          </div>
-        </div>
-        
-        <div className="space-y-3">
-          <Skeleton className="h-8 w-64 rounded-lg" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-28 w-full rounded-xl" />
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-);
 
 const Index = () => {
   const [isPageLoading, setIsPageLoading] = useState(true);
@@ -170,14 +138,13 @@ const Index = () => {
     }
   };
 
-  // IMPORTANTE: Mostrar loading state durante o carregamento
+  // Show loading placeholder during initial loading
   if (isPageLoading) {
-    console.log("[Index] Mostrando estado de carregamento");
-    return <LoadingState />;
+    console.log("[Index] Mostrando estado de carregamento inicial");
+    return <LoadingPlaceholder />;
   }
 
-  // Mostrar formulário de cadastro apenas quando temos certeza que não há empresas
-  // E somente após o delay de 500ms ter sido completado
+  // Show company registration form only when needed
   if (showCompanyForm) {
     console.log("[Index] Renderizando formulário de cadastro de empresa");
     return (
@@ -196,11 +163,11 @@ const Index = () => {
     );
   }
 
-  // Mostrar página inicial quando temos empresas
+  // Show home page with companies
   console.log("[Index] Renderizando página inicial com empresas");
   return (
     <div className="min-h-screen bg-background">
-      <Suspense fallback={<LoadingState />}>
+      <Suspense fallback={<LoadingPlaceholder />}>
         <UserHome />
       </Suspense>
     </div>
