@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
 import NewNoticeDialog from "./dialogs/NewNoticeDialog";
+import { Notice } from "@/hooks/useNotifications";
 
 export const CompanyNoticesAdminList: React.FC = () => {
   const { notices, deleteNotice, isLoading } = useCompanyNotices();
@@ -48,7 +49,7 @@ export const CompanyNoticesAdminList: React.FC = () => {
                 </Badge>
                 {/* Mostrar todas as empresas associadas ao aviso */}
                 <div className="flex gap-1 flex-wrap">
-                  {notice.companies?.map((companyId: string) => (
+                  {notice.companies && notice.companies.map((companyId: string) => (
                     <span key={companyId} className="text-gray-500 text-xs bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
                       {companyId}
                     </span>
