@@ -1,6 +1,5 @@
-
 import React, { useState } from "react";
-import { Plus, FilePlus, Link, BookPlus, MessageSquarePlus } from "lucide-react";
+import { Plus, FilePlus, Link, BookPlus, MessageSquarePlus, BellPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -15,9 +14,139 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-// Novo Acesso - state simplificado
+function NewCourseDialog({ open, onOpenChange }: { open: boolean, onOpenChange: (v: boolean) => void }) {
+  const [title, setTitle] = useState('');
+  const [instructor, setInstructor] = useState('');
+  const [description, setDescription] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSave = async () => {
+    setLoading(true);
+    await new Promise(res => setTimeout(res, 1200));
+    toast.success("Curso criado com sucesso.");
+    setTitle('');
+    setInstructor('');
+    setDescription('');
+    onOpenChange(false);
+    setLoading(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Novo Curso</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 py-2">
+          <div>
+            <Label>Título</Label>
+            <Input value={title} onChange={e => setTitle(e.target.value)} />
+          </div>
+          <div>
+            <Label>Instrutor</Label>
+            <Input value={instructor} onChange={e => setInstructor(e.target.value)} />
+          </div>
+          <div>
+            <Label>Descrição</Label>
+            <Textarea value={description} onChange={e => setDescription(e.target.value)} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button onClick={handleSave} disabled={loading}>
+            {loading ? "Salvando..." : "Adicionar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function NewNoticeDialog({ open, onOpenChange }: { open: boolean, onOpenChange: (v: boolean) => void }) {
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSave = async () => {
+    setLoading(true);
+    await new Promise(res => setTimeout(res, 1200));
+    toast.success("Aviso criado com sucesso.");
+    setTitle('');
+    setContent('');
+    onOpenChange(false);
+    setLoading(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Novo Aviso</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 py-2">
+          <div>
+            <Label>Título</Label>
+            <Input value={title} onChange={e => setTitle(e.target.value)} />
+          </div>
+          <div>
+            <Label>Conteúdo</Label>
+            <Textarea value={content} onChange={e => setContent(e.target.value)} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button onClick={handleSave} disabled={loading}>
+            {loading ? "Salvando..." : "Adicionar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function NewDiscussionDialog({ open, onOpenChange }: { open: boolean, onOpenChange: (v: boolean) => void }) {
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSave = async () => {
+    setLoading(true);
+    await new Promise(res => setTimeout(res, 1200));
+    toast.success("Discussão criada com sucesso.");
+    setTitle('');
+    setContent('');
+    onOpenChange(false);
+    setLoading(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Nova Discussão</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 py-2">
+          <div>
+            <Label>Título</Label>
+            <Input value={title} onChange={e => setTitle(e.target.value)} />
+          </div>
+          <div>
+            <Label>Conteúdo</Label>
+            <Textarea value={content} onChange={e => setContent(e.target.value)} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button onClick={handleSave} disabled={loading}>
+            {loading ? "Salvando..." : "Adicionar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function NewAccessDialog({ open, onOpenChange }: { open: boolean, onOpenChange: (v: boolean) => void }) {
-  // Campos necessários
   const [tool_name, setToolName] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -28,7 +157,6 @@ function NewAccessDialog({ open, onOpenChange }: { open: boolean, onOpenChange: 
   const handleSave = async () => {
     try {
       setLoading(true);
-      // Simulações: aqui você deveria integrar com a função de inserir acesso (como em AccessManagement)
       await new Promise(res => setTimeout(res, 1200));
       toast.success("Acesso criado com sucesso.");
       onOpenChange(false);
@@ -83,7 +211,6 @@ function NewAccessDialog({ open, onOpenChange }: { open: boolean, onOpenChange: 
   );
 }
 
-// Adicionar documento - state simplificado
 function AddDocumentDialog({ open, onOpenChange }: { open: boolean, onOpenChange: (v: boolean) => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [description, setDescription] = useState("");
@@ -95,7 +222,6 @@ function AddDocumentDialog({ open, onOpenChange }: { open: boolean, onOpenChange
   const handleUpload = async () => {
     try {
       setLoading(true);
-      // Aqui você deveria chamar lógica de upload, como em DocumentUploadDialog
       await new Promise(res => setTimeout(res, 1200));
       toast.success("Documento enviado com sucesso!");
       setFile(null);
@@ -134,22 +260,21 @@ function AddDocumentDialog({ open, onOpenChange }: { open: boolean, onOpenChange
   );
 }
 
-// Opções do FAB com ações
 const FAB_OPTIONS = [
   {
     label: "Novo Curso",
     icon: <BookPlus className="h-5 w-5 mr-2" />,
-    action: () => window.open("/admin?tab=allcourses", "_self"),
+    action: "openCourse" as const,
   },
   {
     label: "Novo Aviso",
-    icon: <MessageSquarePlus className="h-5 w-5 mr-2" />,
-    action: () => window.open("/community", "_self"),
+    icon: <BellPlus className="h-5 w-5 mr-2" />,
+    action: "openNotice" as const,
   },
   {
     label: "Nova Discussão",
     icon: <MessageSquarePlus className="h-5 w-5 mr-2" />,
-    action: () => window.open("/community", "_self"),
+    action: "openDiscussion" as const,
   },
   {
     label: "Novo Acesso",
@@ -166,6 +291,9 @@ const FAB_OPTIONS = [
 export const AdminFloatingActionButton = () => {
   const [open, setOpen] = useState(false);
   const { userProfile } = useAuth();
+  const [courseDialogOpen, setCourseDialogOpen] = useState(false);
+  const [noticeDialogOpen, setNoticeDialogOpen] = useState(false);
+  const [discussionDialogOpen, setDiscussionDialogOpen] = useState(false);
   const [accessDialogOpen, setAccessDialogOpen] = useState(false);
   const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
 
@@ -173,9 +301,23 @@ export const AdminFloatingActionButton = () => {
 
   const handleOption = (option: (typeof FAB_OPTIONS)[number]) => {
     setOpen(false);
-    if (option.action === "openAccess") setAccessDialogOpen(true);
-    else if (option.action === "openDocument") setDocumentDialogOpen(true);
-    else option.action();
+    switch (option.action) {
+      case "openCourse":
+        setCourseDialogOpen(true);
+        break;
+      case "openNotice":
+        setNoticeDialogOpen(true);
+        break;
+      case "openDiscussion":
+        setDiscussionDialogOpen(true);
+        break;
+      case "openAccess":
+        setAccessDialogOpen(true);
+        break;
+      case "openDocument":
+        setDocumentDialogOpen(true);
+        break;
+    }
   };
 
   return (
@@ -200,8 +342,8 @@ export const AdminFloatingActionButton = () => {
             <Button
               key={option.label}
               variant="ghost"
-              className="w-full !justify-start text-sm font-medium py-2 px-2"
-              style={{ fontSize: "0.91rem" }} // Fonte ainda menor
+              className="w-full !justify-start text-xs font-medium py-2 px-2"
+              style={{ fontSize: "0.87rem" }}
               onClick={() => handleOption(option)}
             >
               {option.icon}
@@ -210,9 +352,11 @@ export const AdminFloatingActionButton = () => {
           ))}
         </PopoverContent>
       </Popover>
+      <NewCourseDialog open={courseDialogOpen} onOpenChange={setCourseDialogOpen} />
+      <NewNoticeDialog open={noticeDialogOpen} onOpenChange={setNoticeDialogOpen} />
+      <NewDiscussionDialog open={discussionDialogOpen} onOpenChange={setDiscussionDialogOpen} />
       <NewAccessDialog open={accessDialogOpen} onOpenChange={setAccessDialogOpen} />
       <AddDocumentDialog open={documentDialogOpen} onOpenChange={setDocumentDialogOpen} />
     </>
   );
 };
-
