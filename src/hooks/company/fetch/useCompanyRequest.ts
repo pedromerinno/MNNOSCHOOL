@@ -1,3 +1,4 @@
+
 import { useRef, useCallback } from "react";
 
 // Optimized request interval to better balance performance and responsiveness
@@ -13,6 +14,29 @@ export const useCompanyRequest = () => {
   const errorCountRef = useRef<number>(0);
   const blockTimeRef = useRef<number>(0);
   const MAX_BLOCK_TIME = 300000;
+  
+  /**
+   * Verifica tempo de bloqueio atual após erros
+   */
+  const checkErrorBlock = useCallback((): boolean => {
+    if (blockTimeRef.current === 0) return false;
+    
+    const now = Date.now();
+    const timeSinceLastBlock = now - lastFetchTimeRef.current;
+    
+    if (timeSinceLastBlock < blockTimeRef.current) {
+      console.log(`[Company Request] Bloqueando requisição - em período de bloqueio por ${Math.round((blockTimeRef.current - timeSinceLastBlock)/1000)}s`);
+      return true;
+    }
+    
+    // Se passou o tempo de bloqueio, resetar
+    if (timeSinceLastBlock > blockTimeRef.current) {
+      blockTimeRef.current = 0;
+      errorCountRef.current = 0;
+    }
+    
+    return false;
+  }, []);
   
   const shouldMakeRequest = useCallback((
     forceRefresh: boolean, 
@@ -70,6 +94,20 @@ export const useCompanyRequest = () => {
     return true;
   }, [checkErrorBlock]);
   
+  /**
+   * Utiliza debounce para evitar múltiplas chamadas em curto período
+   */
+  const debouncedRequest = useCallback((callback: () => void, delay: number = 300) => {
+    if (typeof timeoutRef.current === 'number') {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    timeoutRef.current = window.setTimeout(() => {
+      callback();
+      timeoutRef.current = null;
+    }, delay);
+  }, []);
+  
   const startRequest = useCallback((requestKey?: string) => {
     isFetchingRef.current = true;
     pendingRequestsRef.current += 1;
@@ -111,43 +149,6 @@ export const useCompanyRequest = () => {
   const resetRequestState = useCallback(() => {
     isFetchingRef.current = false;
     console.log(`[Company Request] Estado de requisição resetado. Total pendente: ${pendingRequestsRef.current}`);
-  }, []);
-  
-    /**
-   * Utiliza debounce para evitar múltiplas chamadas em curto período
-   */
-  const debouncedRequest = useCallback((callback: () => void, delay: number = 300) => {
-    if (typeof timeoutRef.current === 'number') {
-      clearTimeout(timeoutRef.current);
-    }
-    
-    timeoutRef.current = window.setTimeout(() => {
-      callback();
-      timeoutRef.current = null;
-    }, delay);
-  }, []);
-  
-  /**
-   * Verifica tempo de bloqueio atual após erros
-   */
-  const checkErrorBlock = useCallback((): boolean => {
-    if (blockTimeRef.current === 0) return false;
-    
-    const now = Date.now();
-    const timeSinceLastBlock = now - lastFetchTimeRef.current;
-    
-    if (timeSinceLastBlock < blockTimeRef.current) {
-      console.log(`[Company Request] Bloqueando requisição - em período de bloqueio por ${Math.round((blockTimeRef.current - timeSinceLastBlock)/1000)}s`);
-      return true;
-    }
-    
-    // Se passou o tempo de bloqueio, resetar
-    if (timeSinceLastBlock > blockTimeRef.current) {
-      blockTimeRef.current = 0;
-      errorCountRef.current = 0;
-    }
-    
-    return false;
   }, []);
   
   return {
