@@ -83,24 +83,6 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
     }
   };
 
-  const triggerCompanyRelationChanged = () => {
-    console.log('Dispatching company-relation-changed event');
-    
-    // Dispatch both types of events to ensure compatibility
-    window.dispatchEvent(new Event('company-relation-changed'));
-    window.dispatchEvent(new CustomEvent('company-relation-changed'));
-    
-    // Force refresh companies data
-    if (user?.id) {
-      forceGetUserCompanies(user.id).then(() => {
-        // Reload page to ensure UI is updated with the new company
-        window.location.reload();
-      }).catch(err => {
-        console.error('Error refreshing companies data:', err);
-      });
-    }
-  };
-
   const handleAddUser = async () => {
     if (!selectedUserId || !company.id) return;
     
@@ -112,12 +94,8 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
         // Reset selection
         setSelectedUserId('');
         
-        // Force fetch companies to update UI
-        if (user?.id) {
-          await forceGetUserCompanies(user.id);
-        }
-        
-        triggerCompanyRelationChanged();
+        // Dispatch event to notify components to refresh their company data
+        window.dispatchEvent(new CustomEvent('company-relation-changed'));
         
         toast.success("Usuário adicionado com sucesso");
       }
@@ -138,12 +116,8 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
         // Refresh the list
         await fetchCompanyUsers();
         
-        // Force fetch companies to update UI
-        if (user?.id) {
-          await forceGetUserCompanies(user.id);
-        }
-        
-        triggerCompanyRelationChanged();
+        // Dispatch a custom event to notify components to refresh their company data
+        window.dispatchEvent(new CustomEvent('company-relation-changed'));
         
         toast.success("Usuário removido com sucesso");
       }

@@ -25,59 +25,18 @@ export const useCompanyCache = () => {
     try {
       if (Array.isArray(companies) && companies.length > 0) {
         localStorage.setItem('userCompanies', JSON.stringify(companies));
-        // Also update last cache timestamp
-        localStorage.setItem('companyDataTimestamp', Date.now().toString());
-        
-        // Dispatch event to notify other components of the cache update
-        window.dispatchEvent(new CustomEvent('company-cache-updated', {
-          detail: { companies }
-        }));
       }
     } catch (error) {
       console.error('Error caching user companies:', error);
     }
   }, []);
 
-  // Limpar cache de empresas do usuário - versão melhorada
+  // Limpar cache de empresas do usuário
   const clearCachedUserCompanies = useCallback(() => {
     try {
-      // Clear all company-related cache items
-      const companyKeys = [
-        'userCompanies',
-        'selectedCompany',
-        'selectedCompanyId',
-        'selectedCompanyName',
-        'companyDataTimestamp',
-        'companyDisplayName'
-      ];
-      
-      companyKeys.forEach(key => localStorage.removeItem(key));
-      
-      // Force a timestamp update to indicate fresh data is needed
-      localStorage.setItem('cacheCleared', Date.now().toString());
-      console.log('All company cache cleared successfully');
-      
-      // Dispatch an event to notify components that cache has been cleared
-      window.dispatchEvent(new Event('company-cache-cleared'));
+      localStorage.removeItem('userCompanies');
     } catch (error) {
       console.error('Error clearing cached user companies:', error);
-    }
-  }, []);
-
-  // Verificar se o cache está expirado (mais de 5 minutos)
-  const isCacheExpired = useCallback((): boolean => {
-    try {
-      const timestamp = localStorage.getItem('companyDataTimestamp');
-      if (!timestamp) return true;
-      
-      const lastUpdate = parseInt(timestamp, 10);
-      const now = Date.now();
-      const fiveMinutes = 5 * 60 * 1000;
-      
-      return (now - lastUpdate) > fiveMinutes;
-    } catch (error) {
-      console.error('Error checking cache expiration:', error);
-      return true;
     }
   }, []);
 
@@ -96,7 +55,6 @@ export const useCompanyCache = () => {
               console.log('Usuário não tem acesso à empresa em cache, limpando seleção');
               localStorage.removeItem('selectedCompany');
               localStorage.removeItem('selectedCompanyId');
-              localStorage.removeItem('selectedCompanyName');
               return null;
             }
           }
@@ -110,17 +68,10 @@ export const useCompanyCache = () => {
     }
   }, [getCachedUserCompanies]);
 
-  // Force reload to ensure all components reflect the latest data
-  const forceDataReload = useCallback(() => {
-    window.location.reload();
-  }, []);
-
   return {
     getCachedUserCompanies,
     cacheUserCompanies,
     clearCachedUserCompanies,
-    getInitialSelectedCompany,
-    isCacheExpired,
-    forceDataReload
+    getInitialSelectedCompany
   };
 };

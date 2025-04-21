@@ -6,7 +6,7 @@ import { UseCompanyFetchProps } from "../types/fetchTypes";
 
 export const useUserCompanies = ({ 
   setIsLoading, 
-  setUserCompanies = () => {}, 
+  setUserCompanies, 
   setError 
 }: UseCompanyFetchProps) => {
   const getUserCompanies = useCallback(async (userId: string, signal?: AbortSignal) => {

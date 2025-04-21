@@ -16,7 +16,6 @@ interface AuthContextType {
   signUp: (email: string, password: string, displayName: string, metadata?: { interests?: string[] }) => Promise<void>;
   updateUserProfile: (userData: Partial<UserProfile>) => Promise<void>;
   updateUserData: (userData: Partial<UserProfile>) => Promise<void>;
-  refreshSession: () => Promise<Session | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,8 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     session, 
     loading: sessionLoading, 
     setUser, 
-    setSession,
-    refreshSession
+    setSession 
   } = useAuthSession();
   
   const { 
@@ -73,8 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signOut,
     signUp,
     updateUserProfile,
-    updateUserData: handleUpdateUserData,
-    refreshSession
+    updateUserData: handleUpdateUserData
   };
 
   return (

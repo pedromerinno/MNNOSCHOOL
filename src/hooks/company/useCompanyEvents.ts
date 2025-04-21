@@ -1,66 +1,35 @@
 
 import { useEffect, useCallback } from 'react';
+import { Company } from '@/types/company';
 
-interface UseCompanyEventsProps {
-  userId?: string;
-  forceGetUserCompanies: (userId: string) => Promise<any>;
+export interface UseCompanyEventsProps {
+  userId: string | undefined;
+  forceGetUserCompanies: (userId: string) => Promise<any>; // Changed return type to be more flexible
   setDisplayName: (name: string) => void;
 }
 
-export const useCompanyEvents = ({
-  userId,
-  forceGetUserCompanies,
-  setDisplayName
-}: UseCompanyEventsProps) => {
+export const useCompanyEvents = ({ userId, forceGetUserCompanies, setDisplayName }: UseCompanyEventsProps) => {
   const handleCompanyRelationChange = useCallback(async () => {
-    if (!userId) return;
-    
-    console.log(`[useCompanyEvents] Detected company relation change for user ${userId}`);
-    try {
-      const companies = await forceGetUserCompanies(userId);
-      console.log(`[useCompanyEvents] Updated companies after relation change:`, companies?.length || 0);
-      
-      // Ensure the selected company is valid after the relation change
-      const storedCompanyId = localStorage.getItem('selectedCompanyId');
-      const storedCompanyName = localStorage.getItem('selectedCompanyName');
-      
-      if (storedCompanyName) {
-        setDisplayName(storedCompanyName);
-      } else if (companies && companies.length > 0) {
-        // If no stored company but companies exist, select the first one
-        setDisplayName(companies[0].nome);
-        localStorage.setItem('selectedCompanyId', companies[0].id);
-        localStorage.setItem('selectedCompanyName', companies[0].nome);
-        localStorage.setItem('selectedCompany', JSON.stringify(companies[0]));
-      }
-    } catch (error) {
-      console.error('[useCompanyEvents] Error handling company relation change:', error);
+    if (userId) {
+      console.log('CompanySelector: Detectada mudança na relação de empresa, atualizando dados');
+      await forceGetUserCompanies(userId);
     }
-  }, [userId, forceGetUserCompanies, setDisplayName]);
+  }, [userId, forceGetUserCompanies]);
 
   useEffect(() => {
-    // Listen for both the custom event and the standard Event
-    const handleEvent = () => {
-      console.log('[useCompanyEvents] Company relation change event detected');
-      handleCompanyRelationChange();
-    };
-    
-    window.addEventListener('company-relation-changed', handleEvent);
-    
-    // Also listen for company-selected events
-    const handleCompanySelected = (event: any) => {
-      const company = event.detail?.company;
-      console.log('[useCompanyEvents] Company selected event detected', company?.nome || '');
-      if (company?.nome) {
-        setDisplayName(company.nome);
+    window.addEventListener('company-relation-changed', handleCompanyRelationChange);
+    window.addEventListener('company-updated', (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const updatedCompany = customEvent.detail.company;
+      if (updatedCompany) {
+        setDisplayName(updatedCompany.nome);
+        localStorage.setItem('selectedCompanyName', updatedCompany.nome);
       }
-    };
-    
-    window.addEventListener('company-selected', handleCompanySelected);
+    });
     
     return () => {
-      window.removeEventListener('company-relation-changed', handleEvent);
-      window.removeEventListener('company-selected', handleCompanySelected);
+      window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
+      window.removeEventListener('company-updated', () => {});
     };
   }, [handleCompanyRelationChange, setDisplayName]);
 };

@@ -14,15 +14,6 @@ export const useAuthSession = () => {
       try {
         setLoading(true);
         
-        // Get initial session
-        const { data } = await supabase.auth.getSession();
-        
-        if (data.session) {
-          setSession(data.session);
-          setUser(data.session.user);
-        }
-        
-        // Set up auth state change listener
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
           async (event, newSession) => {
             console.log(`Auth event: ${event}`);
@@ -31,6 +22,13 @@ export const useAuthSession = () => {
             setUser(newSession?.user || null);
           }
         );
+        
+        const { data } = await supabase.auth.getSession();
+        
+        if (data.session) {
+          setSession(data.session);
+          setUser(data.session.user);
+        }
         
         return () => {
           subscription.unsubscribe();
@@ -46,34 +44,11 @@ export const useAuthSession = () => {
     setupAuth();
   }, []);
 
-  // Add a manual refresh method
-  const refreshSession = useCallback(async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase.auth.refreshSession();
-      
-      if (error) throw error;
-      
-      if (data.session) {
-        setSession(data.session);
-        setUser(data.session.user);
-      }
-      
-      return data.session;
-    } catch (error) {
-      console.error('Error refreshing session:', error);
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   return {
     user,
     session,
     loading,
     setUser,
-    setSession,
-    refreshSession
+    setSession
   };
 };

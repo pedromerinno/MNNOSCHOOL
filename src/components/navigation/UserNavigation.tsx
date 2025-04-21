@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogOut, User, ChevronDown, Building } from "lucide-react";
@@ -34,20 +33,11 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
     selectedCompany, 
     selectCompany,
     isLoading,
-    forceGetUserCompanies
   } = useCompanies();
   
   useEffect(() => {
     const handleCompanyRelationChange = async () => {
       console.log('UserNavigation: Detected company relation change');
-      if (user?.id) {
-        try {
-          // Force refresh companies data when relations change
-          await forceGetUserCompanies(user.id);
-        } catch (error) {
-          console.error('Error refreshing companies after relation change:', error);
-        }
-      }
     };
     
     window.addEventListener('company-relation-changed', handleCompanyRelationChange);
@@ -55,7 +45,7 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
     return () => {
       window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
     };
-  }, [user?.id, forceGetUserCompanies]);
+  }, []);
 
   useEffect(() => {
     setDisplayName(userProfile?.display_name || user?.email?.split('@')[0] || "Usuário");
