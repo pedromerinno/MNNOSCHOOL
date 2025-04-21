@@ -68,7 +68,8 @@ export const useAuthMethods = ({
             display_name: displayName,
             interests: metadata?.interests || [],
           },
-          emailRedirectTo: window.location.origin
+          // Remover emailRedirectTo para não exigir confirmação
+          // emailRedirectTo: window.location.origin
         },
       });
 
@@ -86,16 +87,18 @@ export const useAuthMethods = ({
         if (profileError) {
           console.error('Erro ao atualizar perfil:', profileError);
         }
-      }
 
-      toast.success('Verifique seu email para confirmar o cadastro.');
+        // Redirecionar para a tela de onboarding após cadastro
+        navigate('/onboarding');
+        toast.success('Cadastro realizado com sucesso!');
+      }
     } catch (error: any) {
       console.error('Erro no cadastro:', error);
       toast.error(error.error_description || error.message || 'Falha no cadastro');
     } finally {
       setLoading(false);
     }
-  }, [setLoading]);
+  }, [setLoading, navigate]);
 
   return {
     signInWithPassword,
