@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
 import { useCompanyNotices, NoticeFormData } from "@/hooks/useCompanyNotices";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -54,15 +53,15 @@ const NewNoticeDialog: React.FC<NewNoticeDialogProps> = ({
 
   useEffect(() => {
     if (open) {
+      // Log de depuração para verificar os dados iniciais
+      console.log("Abrindo diálogo com dados iniciais:", initialData);
+      
       form.reset({
         title: initialData?.title || "",
         content: initialData?.content || "",
         type: initialData?.type || "geral",
         companies: initialData?.companies || [],
       });
-      
-      // Log para debug - vamos verificar se as empresas estão sendo passadas corretamente
-      console.log("Abrindo diálogo de edição com dados:", initialData);
     }
   }, [open, initialData, form]);
 
@@ -80,13 +79,15 @@ const NewNoticeDialog: React.FC<NewNoticeDialogProps> = ({
         title: values.title,
         content: values.content,
         type: values.type,
-        companies: values.companies // Adicionamos companies para que seja usado na atualização
+        companies: values.companies
       };
 
       let success: boolean = false;
       if (editingNoticeId) {
+        console.log("Editando aviso:", editingNoticeId, "Empresas:", values.companies);
         success = await updateNotice(editingNoticeId, noticeData);
       } else {
+        console.log("Criando novo aviso para empresas:", values.companies);
         success = await createNotice(noticeData, values.companies);
       }
 
@@ -182,6 +183,7 @@ const NewNoticeDialog: React.FC<NewNoticeDialogProps> = ({
                       <span className="text-sm text-muted-foreground">Nenhuma empresa disponível</span>
                     ) : (
                       userCompanies.map(company => {
+                        // Verificar se a empresa está selecionada
                         const checked = field.value?.includes(company.id);
                         return (
                           <label
@@ -199,11 +201,15 @@ const NewNoticeDialog: React.FC<NewNoticeDialogProps> = ({
                           >
                             <Checkbox
                               checked={checked}
-                              onCheckedChange={() => {
-                                if (checked) {
-                                  field.onChange(field.value.filter((id: string) => id !== company.id));
-                                } else {
+                              onCheckedChange={(isChecked) => {
+                                if (isChecked) {
+                                  // Adicionar empresa se não estiver selecionada
                                   field.onChange([...field.value, company.id]);
+                                  console.log("Empresa adicionada:", company.id, "Nova lista:", [...field.value, company.id]);
+                                } else {
+                                  // Remover empresa se estiver selecionada
+                                  field.onChange(field.value.filter((id: string) => id !== company.id));
+                                  console.log("Empresa removida:", company.id, "Nova lista:", field.value.filter((id: string) => id !== company.id));
                                 }
                               }}
                               className="mr-2"

@@ -460,6 +460,42 @@ export type Database = {
           },
         ]
       }
+      notice_companies: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          notice_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          notice_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          notice_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notice_companies_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notice_companies_notice_id_fkey"
+            columns: ["notice_id"]
+            isOneToOne: false
+            referencedRelation: "company_notices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar: string | null

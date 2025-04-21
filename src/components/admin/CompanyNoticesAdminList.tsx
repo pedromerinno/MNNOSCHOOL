@@ -14,7 +14,7 @@ export const CompanyNoticesAdminList: React.FC = () => {
   const handleEdit = (notice: any) => {
     setEditingNotice({
       ...notice,
-      companies: [notice.company_id], // Informações mínimas para edição
+      companies: notice.companies || [notice.company_id], // Usar companies se disponível, senão usar company_id
     });
     setEditDialogOpen(true);
   };
@@ -46,9 +46,14 @@ export const CompanyNoticesAdminList: React.FC = () => {
                 <Badge variant="outline" className="px-4">
                   {notice.type.charAt(0).toUpperCase() + notice.type.slice(1)}
                 </Badge>
-                <span className="text-gray-500 text-xs">
-                  {notice.company_id}
-                </span>
+                {/* Mostrar todas as empresas associadas ao aviso */}
+                <div className="flex gap-1 flex-wrap">
+                  {notice.companies?.map((companyId: string) => (
+                    <span key={companyId} className="text-gray-500 text-xs bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
+                      {companyId}
+                    </span>
+                  ))}
+                </div>
               </div>
               <div className="font-semibold">{notice.title}</div>
               <div className="text-sm text-gray-700 dark:text-gray-300">

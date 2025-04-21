@@ -42,14 +42,14 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
   };
 
   const handleEdit = (notice: any) => {
-    setEditNotice({
+    // Transformar o aviso para incluir o array de companies para o diálogo de edição
+    const noticeToEdit = {
       ...notice,
-      companies: [notice.company_id],
-    });
-    console.log("Preparando para editar aviso:", {
-      ...notice,
-      companies: [notice.company_id]
-    });
+      companies: notice.companies || []
+    };
+    
+    console.log("Preparando para editar aviso:", noticeToEdit);
+    setEditNotice(noticeToEdit);
     setEditDialogOpen(true);
   };
 
