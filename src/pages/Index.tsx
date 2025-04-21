@@ -51,7 +51,9 @@ const Index = () => {
   
   // Verificar necessidade de onboarding
   useEffect(() => {
-    if (user && userProfile?.interesses?.includes("onboarding_incomplete")) {
+    if (!user) return;
+    
+    if (userProfile?.interesses?.includes("onboarding_incomplete")) {
       console.log("[Index] Usuário precisa completar onboarding, redirecionando...");
       navigate("/onboarding", { replace: true });
       return;
@@ -89,7 +91,7 @@ const Index = () => {
     // Se já temos empresa em cache, reduzir tempo de loading ou até pular
     if (hasCachedCompany) {
       // Tempo muito reduzido para acelerar a transição
-      setTimeout(() => setIsPageLoading(false), 20);
+      setTimeout(() => setIsPageLoading(false), 50);
       return;
     }
     
@@ -104,7 +106,7 @@ const Index = () => {
         console.log("[Index] Finalizando loading por timeout de segurança");
         setIsPageLoading(false);
       }
-    }, 1000); // Aumentado para 1 segundo
+    }, 2000); // 2 segundos de timeout
     
     return () => clearTimeout(timeoutId);
   }, [isLoading, fetchCount, selectedCompany, isPageLoading, hasCachedCompany]);

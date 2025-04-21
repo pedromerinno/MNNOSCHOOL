@@ -12,6 +12,13 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 
 const Onboarding = () => {
+  const { userProfile } = useAuth();
+  
+  // Se o usuário não precisar de onboarding, redirecionar
+  if (userProfile && !userProfile?.interesses?.includes("onboarding_incomplete")) {
+    return <Navigate to="/" replace />;
+  }
+  
   return (
     <OnboardingProvider>
       <OnboardingLayout>
@@ -42,14 +49,6 @@ const OnboardingContent = () => {
       setCurrentStep(3);
     }
   }, [isExistingCompany, currentStep]);
-  
-  // Se o usuário estiver logado e onboarding estiver completo, redirecionar imediatamente
-  useEffect(() => {
-    if (userProfile && !userProfile.interesses?.includes("onboarding_incomplete")) {
-      console.log("Onboarding já foi concluído, redirecionando para home");
-      navigate("/", { replace: true });
-    }
-  }, [userProfile, navigate]);
 
   const nextStep = () => {
     if (currentStep < totalSteps) {
@@ -72,19 +71,17 @@ const OnboardingContent = () => {
     toast.success("Configuração concluída com sucesso!");
     setOnboardingComplete(true);
     
-    // Garantir que o evento de mudança de relação de empresa seja disparado
+    // Disparar eventos de atualização
     window.dispatchEvent(new Event('company-relation-changed'));
-    
-    // Também forçar recarregamento de empresas
     window.dispatchEvent(new Event('force-reload-companies'));
     
-    // Pequeno tempo de espera para garantir que os eventos sejam processados
+    // Redirecionar para a página inicial após um curto intervalo
     setTimeout(() => {
       navigate("/", { replace: true });
-    }, 500);
+    }, 300);
   };
 
-  // Redirecionamento direto se o onboarding foi completado (via criação de empresa)
+  // Redirecionamento direto se o onboarding foi completado
   if (onboardingComplete) {
     console.log("Onboarding complete, redirecting to home");
     return <Navigate to="/" replace />;

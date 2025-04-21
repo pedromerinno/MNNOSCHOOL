@@ -175,9 +175,8 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       
       toast.success("Perfil atualizado com sucesso!");
       
-      // Pequeno tempo de espera para garantir que os eventos sejam processados
+      // Redirecionar para a página inicial depois de garantir que os dados foram processados
       setTimeout(() => {
-        // Garantir redirecionamento para a página inicial
         console.log("Redirecionando para home após onboarding");
         navigate("/", { replace: true });
       }, 500);

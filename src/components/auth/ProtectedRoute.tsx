@@ -21,7 +21,7 @@ export const ProtectedRoute = () => {
   const [initialLoadDone, setInitialLoadDone] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  // Verificação de estado de autenticação com timeout mais curto
+  // Verificação de estado de autenticação
   useEffect(() => {
     console.log("ProtectedRoute: Verificando autenticação");
     
@@ -44,20 +44,6 @@ export const ProtectedRoute = () => {
     
     return () => clearTimeout(timeoutId);
   }, [loading]);
-
-  // Verificação adicional de token
-  useEffect(() => {
-    if (session && !loading && user) {
-      console.log("ProtectedRoute: Sessão verificada com sucesso");
-      
-      // Limpa erros anteriores se tivermos uma sessão válida
-      if (authError) {
-        setAuthError(null);
-      }
-    } else if (!loading && initialLoadDone && !user) {
-      console.log("ProtectedRoute: Usuário não autenticado após carregamento");
-    }
-  }, [session, loading, initialLoadDone, user, authError]);
 
   // Mostrar um loading mais simplificado e rápido
   if (loading) {
@@ -108,20 +94,21 @@ export const ProtectedRoute = () => {
   }
 
   // Verificar se precisa fazer onboarding inicial
-  const needsOnboarding = userProfile?.interesses?.includes("onboarding_incomplete") || 
-                          (!isOnboarding && (!userCompanies || userCompanies.length === 0));
+  const needsOnboarding = userProfile?.interesses?.includes("onboarding_incomplete");
+  const noCompanies = !isOnboarding && (!userCompanies || userCompanies.length === 0) && !companiesLoading;
                          
-  // Redirecionar para onboarding apenas se for necessário o onboarding inicial
-  if (needsOnboarding && !isOnboarding) {
+  // Redirecionar para onboarding se for necessário e não estiver na página de onboarding
+  if ((needsOnboarding || noCompanies) && !isOnboarding) {
     console.log("ProtectedRoute: Usuário precisa completar onboarding inicial", { 
       interesses: userProfile?.interesses,
-      userCompanies: userCompanies?.length
+      userCompanies: userCompanies?.length,
+      needsOnboarding,
+      noCompanies
     });
     return <Navigate to="/onboarding" replace />;
   }
 
-  // Renderiza rotas protegidas se autenticado, ignorando loading de empresas
-  // para evitar redirecionamento desnecessário
+  // Renderiza rotas protegidas se autenticado
   console.log("ProtectedRoute: Usuário autenticado, renderizando rotas protegidas");
   return (
     <ErrorBoundary fallback={ErrorFallback}>
