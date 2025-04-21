@@ -1,14 +1,9 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CourseForm } from '@/components/admin/CourseForm';
 import { CourseFormValues } from '@/components/admin/courses/form/CourseFormTypes';
 import { Company } from '@/types/company';
-import { Button } from '@/components/ui/button';
-import { Trash2 } from 'lucide-react';
-import { deleteCourse } from '@/services/course';
-import { toast } from 'sonner';
 
 interface EditCourseDialogProps {
   open: boolean;
@@ -17,7 +12,6 @@ interface EditCourseDialogProps {
   onSubmit: (data: CourseFormValues) => Promise<void>;
   isSubmitting: boolean;
   userCompanies: Company[];
-  courseId: string;
 }
 
 export const EditCourseDialog: React.FC<EditCourseDialogProps> = ({
@@ -26,41 +20,13 @@ export const EditCourseDialog: React.FC<EditCourseDialogProps> = ({
   initialData,
   onSubmit,
   isSubmitting,
-  userCompanies,
-  courseId
+  userCompanies
 }) => {
-  const navigate = useNavigate();
-
-  const handleDeleteCourse = async () => {
-    if (window.confirm('Are you sure you want to delete this course? This action cannot be undone.')) {
-      try {
-        const success = await deleteCourse(courseId);
-        if (success) {
-          toast.success('Course deleted successfully');
-          onOpenChange(false);
-          navigate('/courses');
-        }
-      } catch (error) {
-        console.error('Error deleting course:', error);
-        toast.error('Failed to delete course');
-      }
-    }
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="flex flex-row items-center justify-between">
-          <DialogTitle>Edit Course</DialogTitle>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleDeleteCourse}
-            className="h-8"
-          >
-            <Trash2 className="h-4 w-4 mr-1" />
-            Delete Course
-          </Button>
+        <DialogHeader>
+          <DialogTitle>Editar Curso</DialogTitle>
         </DialogHeader>
         <CourseForm
           initialData={initialData}
