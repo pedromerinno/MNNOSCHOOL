@@ -1,10 +1,11 @@
+
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanyState } from "./useCompanyState";
 import { useCompanyFetching } from "./useCompanyFetching";
 import { useCompanyModification } from "./useCompanyModification";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useCompanyEvents, UseCompanyEventsProps } from "./useCompanyEvents";
+import { useCompanyEvents } from "./useCompanyEvents";
 
 export const useCompaniesProvider = () => {
   const { user } = useAuth();
@@ -47,11 +48,7 @@ export const useCompaniesProvider = () => {
     return await forceGetUserCompanies(userId);
   };
 
-  const handleSetSelectedCompany = (company: any) => {
-    stateActions.setSelectedCompany(company);
-  };
-
-  const companyEventsProps: UseCompanyEventsProps = {
+  const companyEventsProps = {
     userId: user?.id,
     forceGetUserCompanies: handleForceGetUserCompanies,
     setDisplayName: (name: string) => {
@@ -85,30 +82,16 @@ export const useCompaniesProvider = () => {
     checkUserRole();
   }, [user?.id, hasCheckedUserRole, setIsSuperAdmin]);
 
-  useEffect(() => {
-    const loadInitialData = async () => {
-      if (user?.id && (userCompanies.length === 0) && !isLoading && hasCheckedUserRole) {
-        try {
-          await getUserCompanies(user.id);
-        } catch (error) {
-          console.error('[useCompanies] Error loading initial company data:', error);
-        }
-      }
-    };
-    
-    loadInitialData();
-  }, [user?.id, userCompanies.length, isLoading, getUserCompanies, hasCheckedUserRole]);
-
   return {
     isLoading,
-    companies: Array.isArray(companies) ? companies : [],
-    userCompanies: Array.isArray(userCompanies) ? userCompanies : [],
+    companies,
+    userCompanies,
     selectedCompany,
     error,
     fetchCount,
     isSuperAdmin,
     getUserCompanies,
-    forceGetUserCompanies: handleForceGetUserCompanies,
+    forceGetUserCompanies,
     getCompanyById,
     fetchCompanies,
     selectCompany,

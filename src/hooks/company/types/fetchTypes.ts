@@ -1,19 +1,12 @@
 
-import { Company } from "@/types/company";
-
-export interface UseCompanyFetchProps {
-  setIsLoading: (loading: boolean) => void;
-  setCompanies?: (companies: Company[]) => void;
-  setUserCompanies: (companies: Company[]) => void;
-  setSelectedCompany: (company: Company | null) => void;
-  setError: (error: Error | null) => void;
-}
+import { Company } from '@/types/company';
+import { Dispatch, SetStateAction } from 'react';
 
 export interface UseCompanyFetchingProps {
   userCompanies: Company[];
-  setUserCompanies: (companies: Company[]) => void;
-  setSelectedCompany: (company: Company | null) => void;
-  setIsLoading: (isLoading: boolean) => void;
-  setError: (error: Error | null) => void;
+  setUserCompanies: Dispatch<SetStateAction<Company[]>>;
+  setSelectedCompany: Dispatch<SetStateAction<Company | null>>;
+  setIsLoading: Dispatch<SetStateAction<boolean>>;
+  setError: Dispatch<SetStateAction<Error | null>>;
   incrementFetchCount: () => void;
 }
