@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -83,34 +82,43 @@ export function useCompanyNotices() {
     }
   };
 
-  // Criar novo aviso
-  const createNotice = async (data: NoticeFormData) => {
-    if (!user || !selectedCompany) {
+  // Criar novo aviso (modificado para aceitar várias empresas)
+  const createNotice = async (data: NoticeFormData, companyIds?: string[]) => {
+    const { user } = useAuth();
+    const { selectedCompany } = useCompanies();
+
+    // Garante que pelo menos uma empresa será usada
+    const targetCompanies = (companyIds && companyIds.length > 0)
+      ? companyIds
+      : (selectedCompany ? [selectedCompany.id] : []);
+
+    if (!user || targetCompanies.length === 0) {
       toast.error("Não foi possível criar o aviso. Usuário ou empresa não identificados.");
       return false;
     }
 
     try {
       setIsLoading(true);
-      
-      const { data: newNotice, error } = await supabase
+
+      // Insere um aviso para cada empresa selecionada
+      const inserts = targetCompanies.map(companyId => ({
+        company_id: companyId,
+        title: data.title,
+        content: data.content,
+        type: data.type,
+        created_by: user.id,
+      }));
+
+      const { error } = await supabase
         .from('company_notices')
-        .insert({
-          company_id: selectedCompany.id,
-          title: data.title,
-          content: data.content,
-          type: data.type,
-          created_by: user.id
-        })
-        .select()
-        .single();
-      
+        .insert(inserts);
+
       if (error) throw error;
-      
+
       // Atualizar lista local
-      await fetchNotices();
-      
-      toast.success("Aviso criado com sucesso!");
+      await fetchNotices(); // Pode considerar passar um companyId, mas atual retrocompatível
+
+      toast.success("Aviso(s) criado(s) com sucesso!");
       return true;
     } catch (err: any) {
       console.error('Erro ao criar aviso:', err);
