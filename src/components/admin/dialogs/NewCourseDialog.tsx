@@ -34,6 +34,17 @@ export const NewCourseDialog: React.FC<NewCourseDialogProps> = ({ open, onOpenCh
         <DialogHeader>
           <DialogTitle>Novo Curso</DialogTitle>
         </DialogHeader>
+        {/* Mostra o logo da empresa selecionada, se houver */}
+        {selectedCompany?.logo && (
+          <div className="flex justify-center mb-2">
+            <img
+              src={selectedCompany.logo}
+              alt={selectedCompany.nome ?? "Logo"}
+              className="w-20 h-20 object-contain rounded"
+              style={{ background: "#f7f7f7", border: "1px solid #eee" }}
+            />
+          </div>
+        )}
         <CourseForm
           onSubmit={handleFormSubmit}
           onCancel={() => onOpenChange(false)}
