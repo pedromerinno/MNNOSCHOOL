@@ -22,26 +22,18 @@ export const CompanySelector = memo(() => {
     forceGetUserCompanies
   } = useCompanies();
   
-  // Estado local para nome da empresa com inicialização imediata de cache
-  const [displayName, setDisplayName] = useState<string>(() => {
-    try {
-      const cachedCompany = localStorage.getItem('selectedCompany');
-      if (cachedCompany) {
-        const company = JSON.parse(cachedCompany);
-        return company?.nome || "merinno";
-      }
-    } catch (e) {}
-    return "merinno";
-  });
+  // Estado local para o nome da empresa que será exibido
+  const [displayName, setDisplayName] = useState<string>("merinno");
   
   // Atualizar o nome da empresa quando mudar a seleção
   useEffect(() => {
     if (selectedCompany?.nome) {
+      console.log(`CompanySelector: Atualizando nome para "${selectedCompany.nome}"`);
       setDisplayName(selectedCompany.nome);
     }
   }, [selectedCompany]);
 
-  // Listener para mudanças nas relações de empresa - usando useCallback para evitar recriações
+  // Listener para mudanças nas relações de empresa
   const handleCompanyRelationChange = useCallback(async () => {
     if (user?.id) {
       console.log('CompanySelector: Detectada mudança na relação de empresa, atualizando dados');
@@ -57,8 +49,6 @@ export const CompanySelector = memo(() => {
       window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
     };
   }, [handleCompanyRelationChange]);
-
-  // Removido o auto-select da primeira empresa para evitar resetar a seleção durante navegação
 
   const handleCompanyChange = useCallback((company) => {
     if (!company || !user?.id) return;

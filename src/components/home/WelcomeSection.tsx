@@ -6,43 +6,13 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Company } from "@/types/company";
-import { useCompanyCache } from "@/hooks/company/useCompanyCache";
 
 export const WelcomeSection = () => {
   const { user, userProfile } = useAuth();
-  const { getUserCompanies, selectedCompany, userCompanies } = useCompanies();
-  const { getInitialSelectedCompany } = useCompanyCache();
+  const { selectedCompany } = useCompanies();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-
-  // Usar cache para renderização inicial
-  const [displayCompany, setDisplayCompany] = useState<Company | null>(() => {
-    // Tentar obter a empresa do cache imediatamente
-    const cachedCompany = getInitialSelectedCompany();
-    if (cachedCompany) {
-      console.log('Usando empresa em cache para exibição inicial:', cachedCompany.nome);
-      return cachedCompany;
-    }
-    return null;
-  });
-
-  // Buscar dados atualizados das empresas sem forçar seleção
-  useEffect(() => {
-    const fetchUserCompanies = async () => {
-      if (user?.id && userCompanies.length === 0 && !isLoading) {
-        try {
-          setIsLoading(true);
-          await getUserCompanies(user.id, false);
-        } catch (error) {
-          console.error('Erro na busca da empresa:', error);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    fetchUserCompanies();
-  }, [user, getUserCompanies, userCompanies.length, isLoading]);
+  const [displayCompany, setDisplayCompany] = useState<Company | null>(null);
 
   // Atualizar empresa exibida quando a seleção mudar
   useEffect(() => {
@@ -88,4 +58,3 @@ export const WelcomeSection = () => {
     </div>
   );
 };
-

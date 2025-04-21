@@ -25,6 +25,12 @@ export const useLoginForm = () => {
       clearCache({ key: 'courses' });
       clearCache({ key: 'access' });
       
+      // Limpar todos os caches de localStorage diretamente para garantir limpeza completa
+      localStorage.removeItem('userCompanies');
+      localStorage.removeItem('selectedCompany');
+      localStorage.removeItem('selectedCompanyId');
+      console.log("Login: Cache limpo antes de realizar login");
+      
       const { data, error } = await signInWithPassword(email, password);
       if (error) throw error;
 

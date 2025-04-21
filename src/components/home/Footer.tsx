@@ -1,21 +1,17 @@
 
 import { useCompanies } from "@/hooks/useCompanies";
-import { useCompanyCache } from "@/hooks/company/useCompanyCache";
 import { useState, useEffect } from "react";
 
 export const Footer = () => {
   const { selectedCompany } = useCompanies();
-  const { getInitialSelectedCompany } = useCompanyCache();
   
-  // Inicializar com valor do cache
-  const [companyName, setCompanyName] = useState<string>(() => {
-    const cachedCompany = getInitialSelectedCompany();
-    return cachedCompany?.nome || "merinno";
-  });
+  // Estado local para o nome da empresa
+  const [companyName, setCompanyName] = useState<string>("merinno");
   
   // Atualizar quando a seleção mudar
   useEffect(() => {
     if (selectedCompany?.nome) {
+      console.log(`Footer: Atualizando nome para "${selectedCompany.nome}"`);
       setCompanyName(selectedCompany.nome);
     }
   }, [selectedCompany]);
