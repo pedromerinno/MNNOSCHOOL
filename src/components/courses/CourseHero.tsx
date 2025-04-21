@@ -68,7 +68,8 @@ export const CourseHero: React.FC<CourseHeroProps> = ({
       
       <div className="relative z-10 h-full">
         <div className="flex flex-col h-full p-8">
-          <div className="flex-1 max-w-3xl">
+          {/* Container with 50% width for the title */}
+          <div className="flex-1 max-w-1/2"> 
             <h1 className="text-3xl md:text-4xl font-bold mb-4">{title}</h1>
             {instructor && (
               <p className="text-white/80 mb-6">
