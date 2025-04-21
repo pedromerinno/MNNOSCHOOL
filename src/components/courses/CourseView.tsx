@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCourseData } from '@/hooks/useCourseData';
@@ -21,6 +20,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { CourseFormValues } from '@/components/admin/courses/form/CourseFormTypes';
 import { updateCourse } from '@/services/courseService';
 import { toast } from 'sonner';
+import { CourseStatsBar } from './CourseStatsBar';
+import { CourseProgressBox } from './CourseProgressBox';
+import { CourseLessonsSection } from './CourseLessonsSection';
 
 export const CourseView: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -60,7 +62,6 @@ export const CourseView: React.FC = () => {
 
   const { userCompanies } = useCompanies();
   
-  // Adicionando verificações de segurança
   if (loading) {
     return <CourseViewSkeleton />;
   }
@@ -121,39 +122,14 @@ export const CourseView: React.FC = () => {
       
       <div className="flex flex-col md:flex-row items-start gap-8">
         <div className="w-full md:w-8/12 space-y-8">
-          <div className="flex items-center gap-6 text-sm">
-            <div className="flex items-center gap-1">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span>{formattedDuration}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <BookOpen className="h-4 w-4 text-muted-foreground" />
-              <span>{course.lessons?.length || 0} lições</span>
-            </div>
-            {course.tags && course.tags.length > 0 && (
-              <div className="flex items-center gap-2">
-                {course.tags.map((tag, index) => (
-                  <Badge key={index} variant="outline">{tag}</Badge>
-                ))}
-              </div>
-            )}
-          </div>
-          
-          {course.progress > 0 && (
-            <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-sm font-medium">Seu progresso</h3>
-                <span className="text-sm">{course.progress}% concluído</span>
-              </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                <div 
-                  className="bg-primary h-2 rounded-full" 
-                  style={{ width: `${course.progress}%` }}
-                ></div>
-              </div>
-            </div>
-          )}
-          
+          <CourseStatsBar
+            duration={formattedDuration}
+            lessonCount={course.lessons?.length || 0}
+            tags={course.tags}
+          />
+
+          <CourseProgressBox progress={course.progress} />
+
           <Tabs defaultValue="description" value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid grid-cols-2 w-full rounded-2xl p-1.5 bg-transparent dark:bg-transparent gap-2">
               <TabsTrigger 
@@ -194,35 +170,15 @@ export const CourseView: React.FC = () => {
           </Tabs>
         </div>
         
-        <div className="w-full md:w-4/12 mt-8 md:mt-0 relative">
-          <div className="space-y-4 mt-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold">Aulas do Curso</h3>
-              {isAdmin && (
-                <Button 
-                  className="bg-primary text-white gap-2 rounded-xl font-bold text-base py-3 shadow-none"
-                  onClick={() => setShowLessonManager(true)}
-                  variant="default"
-                  size="sm"
-                  aria-label="Gerenciar aulas"
-                >
-                  Gerenciar aulas
-                </Button>
-              )}
-            </div>
-            <LessonManager
-              courseId={course.id}
-              courseTitle={course.title}
-              open={showLessonManager}
-              onClose={() => setShowLessonManager(false)}
-            />
-            <CourseLessonList 
-              lessons={course.lessons} 
-              courseId={course.id}  
-              onStartLesson={startLesson} 
-            />
-          </div>
-        </div>
+        <CourseLessonsSection
+          isAdmin={isAdmin}
+          showLessonManager={showLessonManager}
+          setShowLessonManager={setShowLessonManager}
+          courseId={course.id}
+          courseTitle={course.title}
+          lessons={course.lessons}
+          startLesson={startLesson}
+        />
       </div>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
