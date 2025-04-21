@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
@@ -9,11 +10,14 @@ import { ReturnFeedbackDialog } from "../feedback/ReturnFeedbackDialog";
 import { UserProfile } from "@/hooks/useUsers";
 import { useState } from "react";
 import { AllFeedbackDialog } from "./AllFeedbackDialog";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export const FeedbackWidget = () => {
   const { feedbacks, loading } = useReceivedFeedbacks();
   const navigate = useNavigate();
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const goToTeamProfile = async () => {
     const { data } = await supabase.auth.getUser();
@@ -42,12 +46,47 @@ export const FeedbackWidget = () => {
     cargo_id: profile.cargo_id || null
   });
 
+  // Handlers para trocar o feedback exibido
+  const prevFeedback = () => {
+    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : prev));
+  };
+
+  const nextFeedback = () => {
+    setCurrentIndex((prev) => (prev < feedbacks.length - 1 ? prev + 1 : prev));
+  };
+
+  // Reseta o índice se os feedbacks mudarem
+  if (currentIndex > feedbacks.length - 1) {
+    setCurrentIndex(feedbacks.length - 1);
+  }
+
+  const currentFeedback = feedbacks[currentIndex];
+
   return (
     <Card className="border-0 shadow-none overflow-hidden rounded-[30px] bg-[#FAFFF7] dark:bg-[#1A2E1A]">
       <CardContent className="p-0 flex flex-col h-full">
         <div className="p-8 flex justify-between items-center">
           <h3 className="text-xl font-medium dark:text-white">Feedbacks</h3>
-          <span className="text-xl font-medium dark:text-white">{feedbacks.length}</span>
+          <div className="flex space-x-4">
+            <Button 
+              size="icon" 
+              variant="ghost"
+              className="h-12 w-12 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+              onClick={prevFeedback}
+              disabled={loading || currentIndex === 0}
+            >
+              <ChevronLeft className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+            </Button>
+            <Button 
+              size="icon" 
+              variant="ghost"
+              className="h-12 w-12 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+              onClick={nextFeedback}
+              disabled={loading || currentIndex === feedbacks.length - 1 || feedbacks.length === 0}
+            >
+              <ChevronRight className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+            </Button>
+          </div>
         </div>
         
         <div className="px-8 pb-8 flex-1">
@@ -55,35 +94,35 @@ export const FeedbackWidget = () => {
             <div className="space-y-4">
               <Skeleton className="h-32 w-full" />
             </div>
-          ) : feedbacks.length > 0 ? (
+          ) : feedbacks.length > 0 && currentFeedback ? (
             <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-6">
               <p className="text-base mb-6 dark:text-gray-200">
-                {feedbacks[0].content}
+                {currentFeedback.content}
               </p>
               <div className="flex flex-col">
                 <div className="flex items-center mb-4">
                   <Avatar className="h-8 w-8 mr-4">
                     <AvatarImage 
-                      src={feedbacks[0].from_profile?.avatar || 'https://i.pravatar.cc/150'} 
-                      alt={`${feedbacks[0].from_profile?.display_name || 'Usuário'} avatar`}
+                      src={currentFeedback.from_profile?.avatar || 'https://i.pravatar.cc/150'} 
+                      alt={`${currentFeedback.from_profile?.display_name || 'Usuário'} avatar`}
                       className="object-cover"
                     />
                     <AvatarFallback>
-                      {(feedbacks[0].from_profile?.display_name || 'U').charAt(0).toUpperCase()}
+                      {(currentFeedback.from_profile?.display_name || 'U').charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col">
                     <span className="text-base font-medium text-black dark:text-white">
-                      {feedbacks[0].from_profile?.display_name || 'Usuário'}
+                      {currentFeedback.from_profile?.display_name || 'Usuário'}
                     </span>
                   </div>
                   <span className="text-sm text-gray-500 dark:text-gray-400 ml-auto">
-                    {formatDate(feedbacks[0].created_at)}
+                    {formatDate(currentFeedback.created_at)}
                   </span>
                 </div>
-                {feedbacks[0].from_profile && (
+                {currentFeedback.from_profile && (
                   <ReturnFeedbackDialog
-                    toUser={mapToUserProfile(feedbacks[0].from_profile)}
+                    toUser={mapToUserProfile(currentFeedback.from_profile)}
                     trigger={
                       <button 
                         className="self-start px-8 py-3 rounded-full bg-white/80 dark:bg-white/10 text-black dark:text-white hover:bg-white dark:hover:bg-white/20 transition-colors"
@@ -117,3 +156,4 @@ export const FeedbackWidget = () => {
     </Card>
   );
 };
+
