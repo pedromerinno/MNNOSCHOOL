@@ -8,7 +8,7 @@ interface UseCompanySelectionProps {
 }
 
 export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionProps) => {
-  // Get the stored company ID from localStorage
+  // Get stored company ID from localStorage
   const getStoredCompanyId = useCallback((): string | null => {
     try {
       return localStorage.getItem('selectedCompanyId');
@@ -18,7 +18,7 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
     }
   }, []);
 
-  // Get the stored company object from localStorage
+  // Get stored company object from localStorage
   const getStoredCompany = useCallback((): Company | null => {
     try {
       const companyData = localStorage.getItem('selectedCompany');
@@ -51,7 +51,7 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
       }
     } catch (error) {
       console.error('Error selecting company:', error);
-      toast.error('Erro ao selecionar empresa. Por favor, tente novamente.');
+      toast.error('Error selecting company. Please try again.');
     }
   }, [setSelectedCompany]);
 
