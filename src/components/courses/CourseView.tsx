@@ -1,96 +1,41 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCourseData } from '@/hooks/useCourseData';
 import { useLessonNavigation } from './useLessonNavigation';
 import { CourseHeader } from './CourseHeader';
 import { CourseHero } from './CourseHero';
 import { CourseNotFound } from './CourseNotFound';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CourseDescription } from './CourseDescription';
-import { Star } from 'lucide-react';
-import { useCompanies } from '@/hooks/useCompanies';
-import { useAuth } from '@/contexts/AuthContext';
-import { LessonManager } from '@/components/admin/courses/LessonManager';
-import { CourseForm } from '@/components/admin/CourseForm';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CourseFormValues } from '@/components/admin/courses/form/CourseFormTypes';
-import { updateCourse } from '@/services/course';
-import { toast } from 'sonner';
 import { CourseStatsBar } from './CourseStatsBar';
 import { CourseProgressBox } from './CourseProgressBox';
 import { CourseLessonsSection } from './CourseLessonsSection';
 import { CourseViewSkeleton } from './CourseViewSkeleton';
-import { supabase } from "@/integrations/supabase/client";
+import { CourseContent } from './CourseContent';
+import { EditCourseDialog } from './EditCourseDialog';
+import { useCompanies } from '@/hooks/useCompanies';
+import { useAuth } from '@/contexts/AuthContext';
+import { LessonManager } from '@/components/admin/courses/LessonManager';
+import { useCourseEdit } from '@/hooks/course/useCourseEdit';
 
 export const CourseView: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const { course, loading, error } = useCourseData(courseId);
   const { startLesson } = useLessonNavigation(courseId);
   const [activeTab, setActiveTab] = useState<string>("description");
-  const { selectedCompany } = useCompanies();
+  const { selectedCompany, userCompanies } = useCompanies();
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
-
   const [showLessonManager, setShowLessonManager] = useState(false);
   const { userProfile } = useAuth();
   const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
-  
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [courseCompanyIds, setCourseCompanyIds] = useState<string[]>([]);
-  const { userCompanies } = useCompanies();
 
-  useEffect(() => {
-    if (isEditDialogOpen && courseId) {
-      const fetchCourseCompanies = async () => {
-        try {
-          console.log("Buscando empresas do curso:", courseId);
-          const { data, error } = await supabase
-            .from('company_courses')
-            .select('empresa_id')
-            .eq('course_id', courseId);
-            
-          if (error) {
-            console.error("Erro ao buscar empresas do curso:", error);
-            return;
-          }
-          
-          if (data && data.length > 0) {
-            const companyIds = data.map(item => item.empresa_id);
-            setCourseCompanyIds(companyIds);
-            console.log("IDs das empresas vinculadas:", companyIds);
-          } else {
-            setCourseCompanyIds([]);
-            console.log("Nenhuma empresa vinculada ao curso");
-          }
-        } catch (error) {
-          console.error("Erro ao buscar empresas do curso:", error);
-        }
-      };
-      
-      fetchCourseCompanies();
-    }
-  }, [isEditDialogOpen, courseId]);
-
-  const handleEditCourse = () => {
-    setIsEditDialogOpen(true);
-  };
-
-  const handleCourseUpdate = async (data: CourseFormValues) => {
-    if (!courseId) return;
-    
-    setIsSubmitting(true);
-    try {
-      await updateCourse(courseId, data);
-      toast.success("Curso atualizado com sucesso");
-      setIsEditDialogOpen(false);
-      window.location.reload();
-    } catch (error) {
-      console.error("Erro ao atualizar curso:", error);
-      toast.error("Erro ao atualizar curso");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const {
+    isEditDialogOpen,
+    setIsEditDialogOpen,
+    isSubmitting,
+    courseCompanyIds,
+    handleEditCourse,
+    handleCourseUpdate
+  } = useCourseEdit(courseId);
   
   if (loading) {
     return <CourseViewSkeleton />;
@@ -100,7 +45,7 @@ export const CourseView: React.FC = () => {
     return <CourseNotFound />;
   }
 
-  const initialFormData: CourseFormValues = {
+  const initialFormData = {
     title: course.title,
     description: course.description || "",
     image_url: course.image_url || "",
@@ -109,16 +54,12 @@ export const CourseView: React.FC = () => {
     companyIds: courseCompanyIds,
   };
 
-  const firstLessonId = course.lessons && course.lessons.length > 0 ? course.lessons[0].id : undefined;
-
-  const totalDuration = course.lessons && course.lessons.length > 0 
-    ? course.lessons.reduce((total, lesson) => {
-        const minutes = lesson.duration 
-          ? parseInt(lesson.duration.replace(/[^0-9]/g, '')) 
-          : 0;
-        return total + minutes;
-      }, 0)
-    : 0;
+  const totalDuration = course.lessons?.reduce((total, lesson) => {
+    const minutes = lesson.duration 
+      ? parseInt(lesson.duration.replace(/[^0-9]/g, '')) 
+      : 0;
+    return total + minutes;
+  }, 0) || 0;
   
   const hours = Math.floor(totalDuration / 60);
   const minutes = totalDuration % 60;
@@ -151,49 +92,17 @@ export const CourseView: React.FC = () => {
           <CourseStatsBar
             duration={formattedDuration}
             lessonCount={course.lessons?.length || 0}
-            tags={course.tags || null}
+            tags={course.tags}
           />
 
           <CourseProgressBox progress={course.progress} />
 
-          <Tabs defaultValue="description" value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-2 w-full rounded-2xl p-1.5 bg-transparent dark:bg-transparent gap-2">
-              <TabsTrigger 
-                value="description"
-                className="flex items-center gap-2 rounded-xl py-4 px-6 transition-colors"
-                style={{
-                  backgroundColor: activeTab === "description" ? `${companyColor}10` : undefined,
-                  borderColor: activeTab === "description" ? companyColor : undefined,
-                  color: activeTab === "description" ? companyColor : undefined
-                }}
-              >
-                Descrição
-              </TabsTrigger>
-              <TabsTrigger 
-                value="reviews"
-                className="flex items-center gap-2 rounded-xl py-4 px-6 transition-colors"
-                style={{
-                  backgroundColor: activeTab === "reviews" ? `${companyColor}10` : undefined,
-                  borderColor: activeTab === "reviews" ? companyColor : undefined,
-                  color: activeTab === "reviews" ? companyColor : undefined
-                }}
-              >
-                Avaliações
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="description" className="mt-12">
-              <CourseDescription description={course.description} />
-            </TabsContent>
-            <TabsContent value="reviews" className="mt-12">
-              <div className="text-center py-8">
-                <Star className="h-8 w-8 text-yellow-400 mx-auto mb-2" />
-                <h3 className="text-lg font-medium mb-1">Sem avaliações ainda</h3>
-                <p className="text-muted-foreground">
-                  Seja o primeiro a avaliar este curso
-                </p>
-              </div>
-            </TabsContent>
-          </Tabs>
+          <CourseContent 
+            description={course.description}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            companyColor={companyColor}
+          />
         </div>
         
         <CourseLessonsSection
@@ -207,22 +116,21 @@ export const CourseView: React.FC = () => {
         />
       </div>
 
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Editar Curso</DialogTitle>
-          </DialogHeader>
-          <CourseForm
-            initialData={initialFormData}
-            onSubmit={handleCourseUpdate}
-            onCancel={() => setIsEditDialogOpen(false)}
-            isSubmitting={isSubmitting}
-            onClose={() => setIsEditDialogOpen(false)}
-            availableCompanies={userCompanies}
-            showCompanySelector={true}
-          />
-        </DialogContent>
-      </Dialog>
+      <EditCourseDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        initialData={initialFormData}
+        onSubmit={handleCourseUpdate}
+        isSubmitting={isSubmitting}
+        userCompanies={userCompanies}
+      />
+
+      <LessonManager
+        courseId={course.id}
+        courseTitle={course.title}
+        open={showLessonManager}
+        onClose={() => setShowLessonManager(false)}
+      />
     </div>
   );
 };
