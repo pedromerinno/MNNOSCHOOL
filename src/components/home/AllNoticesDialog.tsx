@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -27,15 +26,30 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
   const [noticeIdToDelete, setNoticeIdToDelete] = useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const refreshTimeoutRef = useRef<number | null>(null);
 
   const canManage = userProfile?.is_admin || userProfile?.super_admin;
 
-  // Atualizar avisos quando o diálogo é aberto
+  // Atualizar avisos quando o diálogo é aberto, com debounce para evitar múltiplas chamadas
   useEffect(() => {
     if (open) {
-      fetchNotices(selectedCompany?.id, true);
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+      
+      refreshTimeoutRef.current = window.setTimeout(() => {
+        fetchNotices(selectedCompany?.id, true);
+        refreshTimeoutRef.current = null;
+      }, 300);
     }
-  }, [open, selectedCompany?.id]);
+    
+    return () => {
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+        refreshTimeoutRef.current = null;
+      }
+    };
+  }, [open, selectedCompany?.id, fetchNotices]);
 
   const getInitial = (name: string | null | undefined) =>
     name ? name.charAt(0).toUpperCase() : "?";
@@ -72,7 +86,15 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
     if (noticeIdToDelete) {
       await deleteNotice(noticeIdToDelete);
       // Atualizar a lista após a exclusão
-      fetchNotices(selectedCompany?.id, true);
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+      
+      refreshTimeoutRef.current = window.setTimeout(() => {
+        fetchNotices(selectedCompany?.id, true);
+        refreshTimeoutRef.current = null;
+      }, 300);
+      
       // Notificar o componente pai para atualizar o widget de notificações
       onOpenChange(false);
       onOpenChange(true);
@@ -86,8 +108,15 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
     setEditDialogOpen(open);
     if (!open) {
       setEditNotice(null);
-      // Re-fetch notices when dialog closes
-      fetchNotices(selectedCompany?.id, true);
+      // Re-fetch notices when dialog closes with debounce
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+      
+      refreshTimeoutRef.current = window.setTimeout(() => {
+        fetchNotices(selectedCompany?.id, true);
+        refreshTimeoutRef.current = null;
+      }, 300);
     }
   };
 

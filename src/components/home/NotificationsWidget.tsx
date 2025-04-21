@@ -28,6 +28,7 @@ export const NotificationsWidget = memo(() => {
   const [refreshing, setRefreshing] = useState(false);
   // Evitar múltiplas chamadas em sequência
   const initialFetchDoneRef = useRef(false);
+  const fetchTimeoutRef = useRef<number | null>(null);
   
   const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
   
@@ -51,12 +52,22 @@ export const NotificationsWidget = memo(() => {
       initialFetchDoneRef.current = true;
       
       // Pequeno delay para evitar corrida com outras chamadas
-      const timer = setTimeout(() => {
-        fetchNotices(selectedCompany.id, true); // Forçando um refresh no primeiro carregamento
-      }, 500);
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+      }
       
-      return () => clearTimeout(timer);
+      fetchTimeoutRef.current = window.setTimeout(() => {
+        fetchNotices(selectedCompany.id, true); // Forçando um refresh no primeiro carregamento
+        fetchTimeoutRef.current = null;
+      }, 500);
     }
+    
+    return () => {
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+        fetchTimeoutRef.current = null;
+      }
+    };
   }, [selectedCompany?.id, fetchNotices]);
 
   const handleDialogOpenChange = (open: boolean) => {
@@ -64,10 +75,15 @@ export const NotificationsWidget = memo(() => {
     if (!open && initialFetchDoneRef.current) {
       console.log("Notice dialog closed, refreshing notices");
       // Adicionando delay para dar tempo de concluir a operação no servidor
-      setTimeout(() => {
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+      }
+      
+      fetchTimeoutRef.current = window.setTimeout(() => {
         if (selectedCompany?.id) {
           fetchNotices(selectedCompany.id, true); // Forçando refresh
         }
+        fetchTimeoutRef.current = null;
       }, 500);
     }
   };
@@ -77,10 +93,15 @@ export const NotificationsWidget = memo(() => {
     if (!open && initialFetchDoneRef.current) {
       console.log("All notices dialog closed, refreshing notices");
       // Adicionando delay para dar tempo de concluir a operação no servidor
-      setTimeout(() => {
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+      }
+      
+      fetchTimeoutRef.current = window.setTimeout(() => {
         if (selectedCompany?.id) {
           fetchNotices(selectedCompany.id, true); // Forçando refresh
         }
+        fetchTimeoutRef.current = null;
       }, 500);
     }
   };
