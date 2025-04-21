@@ -108,13 +108,15 @@ export const ProtectedRoute = () => {
   }
 
   // Verificar se precisa fazer onboarding inicial
-  // Importante: usar OU lógico aqui para combinar as duas condições
   const needsOnboarding = userProfile?.interesses?.includes("onboarding_incomplete") || 
-                         (!userCompanies || userCompanies.length === 0);
+                          (!isOnboarding && (!userCompanies || userCompanies.length === 0));
                          
   // Redirecionar para onboarding apenas se for necessário o onboarding inicial
   if (needsOnboarding && !isOnboarding) {
-    console.log("ProtectedRoute: Usuário precisa completar onboarding inicial");
+    console.log("ProtectedRoute: Usuário precisa completar onboarding inicial", { 
+      interesses: userProfile?.interesses,
+      userCompanies: userCompanies?.length
+    });
     return <Navigate to="/onboarding" replace />;
   }
 

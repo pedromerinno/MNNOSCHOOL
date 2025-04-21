@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -45,10 +46,14 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
     setIsLoading(true);
     
     try {
+      console.log("Iniciando salvamento de perfil de onboarding:", profileData);
+      
       // Criar empresa se necessário
       let finalCompanyId = profileData.companyId;
       
       if (!finalCompanyId && profileData.newCompanyName) {
+        console.log("Criando nova empresa:", profileData.newCompanyName);
+        
         const { data: companyData, error: companyError } = await supabase
           .from('empresas')
           .insert([{ 
@@ -66,7 +71,12 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
           .select('id')
           .single();
           
-        if (companyError) throw companyError;
+        if (companyError) {
+          console.error("Erro ao criar empresa:", companyError);
+          throw companyError;
+        }
+        
+        console.log("Empresa criada com sucesso:", companyData);
         finalCompanyId = companyData.id;
         
         // Vincular usuário à empresa como admin (criador da empresa)
@@ -82,17 +92,23 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
           console.error("Erro ao vincular usuário à empresa:", relationError);
           throw relationError;
         }
+        
+        console.log("Usuário vinculado como admin da empresa");
       } else if (finalCompanyId) {
+        console.log("Usando empresa existente:", finalCompanyId);
+        
         // Se empresa já existe, verificar se já existe vínculo
         const { data: existingRelation } = await supabase
           .from('user_empresa')
           .select('*')
           .eq('user_id', user.id)
           .eq('empresa_id', finalCompanyId)
-          .maybeSingle(); // Usando maybeSingle em vez de single para evitar erro quando não encontrar
+          .maybeSingle();
           
         // Se não existe vínculo, criar (sem verificação de admin)
         if (!existingRelation) {
+          console.log("Criando novo vínculo para empresa existente");
+          
           const { error: relationError } = await supabase
             .from('user_empresa')
             .insert([{ 
@@ -105,15 +121,28 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
             console.error("Erro ao vincular usuário à empresa existente:", relationError);
             throw relationError;
           }
+          
+          console.log("Usuário vinculado como membro da empresa existente");
+        } else {
+          console.log("Vínculo com empresa já existe:", existingRelation);
         }
       }
+      
+      // Remover a flag de onboarding_incomplete dos interesses
+      const cleanInterests = profileData.interests.filter(i => i !== "onboarding_incomplete");
+      console.log("Removendo flag de onboarding incompleto:", { 
+        antes: profileData.interests, 
+        depois: cleanInterests 
+      });
       
       // Dados a atualizar no perfil do usuário
       const profileUpdate = {
         display_name: profileData.displayName,
         avatar: profileData.avatarUrl,
-        interesses: profileData.interests.filter(i => i !== "onboarding_incomplete")
+        interesses: cleanInterests
       };
+      
+      console.log("Atualizando perfil do usuário:", profileUpdate);
       
       // Atualizar perfil do usuário no banco de dados
       const { error: updateError } = await supabase
@@ -126,19 +155,32 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
         throw updateError;
       }
       
+      console.log("Perfil atualizado com sucesso no banco de dados");
+      
       // Atualizar perfil do usuário no contexto local
       await updateUserProfile(profileUpdate);
       
       // Atualizar estado global
       await updateUserData(profileUpdate);
       
+      console.log("Perfil atualizado com sucesso localmente");
+      
       // Disparar evento para atualizar relacionamentos de empresa
       window.dispatchEvent(new Event('company-relation-changed'));
       
+      // Também forçar recarregamento de empresas
+      window.dispatchEvent(new Event('force-reload-companies'));
+      
+      console.log("Eventos de atualização disparados");
+      
       toast.success("Perfil atualizado com sucesso!");
       
-      // Garantir redirecionamento para a página inicial
-      navigate("/", { replace: true });
+      // Pequeno tempo de espera para garantir que os eventos sejam processados
+      setTimeout(() => {
+        // Garantir redirecionamento para a página inicial
+        console.log("Redirecionando para home após onboarding");
+        navigate("/", { replace: true });
+      }, 500);
       
     } catch (error) {
       console.error("Erro ao salvar perfil:", error);

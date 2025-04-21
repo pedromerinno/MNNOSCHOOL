@@ -5,6 +5,7 @@ import { useCompanies } from "@/hooks/useCompanies";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanyCache } from "@/hooks/company/useCompanyCache";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 // Lazy-load components to improve initial loading time
 const NoCompaniesAvailable = lazy(() => import("@/components/home/NoCompaniesAvailable").then(module => ({ default: module.NoCompaniesAvailable })));
@@ -43,7 +44,7 @@ const LoadingState = () => (
 
 const Index = () => {
   const [isPageLoading, setIsPageLoading] = useState(true);
-  const { userCompanies, isLoading, fetchCount, selectedCompany } = useCompanies();
+  const { userCompanies, isLoading, fetchCount, selectedCompany, getUserCompanies, forceGetUserCompanies } = useCompanies();
   const { user, userProfile } = useAuth();
   const { getInitialSelectedCompany } = useCompanyCache();
   const navigate = useNavigate();
@@ -53,8 +54,32 @@ const Index = () => {
     if (user && userProfile?.interesses?.includes("onboarding_incomplete")) {
       console.log("[Index] Usuário precisa completar onboarding, redirecionando...");
       navigate("/onboarding", { replace: true });
+      return;
     }
-  }, [user, userProfile, navigate]);
+    
+    // Se o usuário está logado e não tem empresas, isso pode ser um problema
+    if (user && !isLoading && userCompanies.length === 0 && fetchCount > 0) {
+      console.log("[Index] Usuário não tem empresas após carregamento. Verificando se precisa de onboarding...");
+      
+      if (!userProfile?.interesses?.includes("onboarding_incomplete")) {
+        console.log("[Index] Usuário não tem flag de onboarding incompleto mas não tem empresas. Tentar forçar carregamento...");
+        
+        // Tentar forçar o carregamento de empresas uma vez
+        if (user.id) {
+          forceGetUserCompanies(user.id).then(companies => {
+            if (companies.length === 0) {
+              console.log("[Index] Mesmo após forçar carregamento, não há empresas. Redirecionando para onboarding...");
+              navigate("/onboarding", { replace: true });
+            } else {
+              toast.success("Empresas carregadas com sucesso!");
+            }
+          }).catch(err => {
+            console.error("[Index] Erro ao tentar forçar carregamento de empresas:", err);
+          });
+        }
+      }
+    }
+  }, [user, userProfile, navigate, isLoading, userCompanies, fetchCount, forceGetUserCompanies]);
   
   // Verificação imediata do cache para evitar o skeleton se já temos dados
   const hasCachedCompany = getInitialSelectedCompany() !== null;
@@ -79,10 +104,20 @@ const Index = () => {
         console.log("[Index] Finalizando loading por timeout de segurança");
         setIsPageLoading(false);
       }
-    }, 600); // Reduzido para 600ms
+    }, 1000); // Aumentado para 1 segundo
     
     return () => clearTimeout(timeoutId);
   }, [isLoading, fetchCount, selectedCompany, isPageLoading, hasCachedCompany]);
+
+  // Carregamento inicial forçado
+  useEffect(() => {
+    if (user?.id && userCompanies.length === 0 && !isLoading) {
+      console.log("[Index] Forçando carregamento inicial de empresas");
+      getUserCompanies(user.id, true).catch(err => {
+        console.error("[Index] Erro no carregamento inicial:", err);
+      });
+    }
+  }, [user?.id, getUserCompanies, userCompanies.length, isLoading]);
 
   // Otimização para pular estado de carregamento desnecessário
   if (hasCachedCompany && !isLoading) {

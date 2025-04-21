@@ -9,6 +9,7 @@ import InterestsStep from "@/components/onboarding/steps/InterestsStep";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
+import { toast } from "sonner";
 
 const Onboarding = () => {
   return (
@@ -29,12 +30,12 @@ const OnboardingContent = () => {
   const [isExistingCompany, setIsExistingCompany] = useState<boolean | null>(null);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
 
-  const isUpdate = !userProfile?.interesses?.includes("onboarding_incomplete");
+  const isUpdate = userProfile && !userProfile?.interesses?.includes("onboarding_incomplete");
   const totalSteps = isExistingCompany ? 4 : 3;
 
   // Garantir que a etapa correta seja exibida quando o usuário escolhe o tipo de empresa
   useEffect(() => {
-    if (isExistingCompany && currentStep === 3) {
+    if (isExistingCompany === true && currentStep === 3) {
       setCurrentStep(4);
     }
     if (isExistingCompany === false && currentStep === 4) {
@@ -45,7 +46,7 @@ const OnboardingContent = () => {
   // Se o usuário estiver logado e onboarding estiver completo, redirecionar imediatamente
   useEffect(() => {
     if (userProfile && !userProfile.interesses?.includes("onboarding_incomplete")) {
-      // Redirecionar para a página inicial se o onboarding já foi concluído
+      console.log("Onboarding já foi concluído, redirecionando para home");
       navigate("/", { replace: true });
     }
   }, [userProfile, navigate]);
@@ -67,7 +68,20 @@ const OnboardingContent = () => {
   };
 
   const handleCompanyCreated = () => {
+    console.log("Empresa criada com sucesso, finalizando onboarding");
+    toast.success("Configuração concluída com sucesso!");
     setOnboardingComplete(true);
+    
+    // Garantir que o evento de mudança de relação de empresa seja disparado
+    window.dispatchEvent(new Event('company-relation-changed'));
+    
+    // Também forçar recarregamento de empresas
+    window.dispatchEvent(new Event('force-reload-companies'));
+    
+    // Pequeno tempo de espera para garantir que os eventos sejam processados
+    setTimeout(() => {
+      navigate("/", { replace: true });
+    }, 500);
   };
 
   // Redirecionamento direto se o onboarding foi completado (via criação de empresa)
