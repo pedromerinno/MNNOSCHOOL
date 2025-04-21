@@ -7,6 +7,7 @@ import { CourseHero } from './CourseHero';
 import { CourseNotFound } from './CourseNotFound';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CourseDescription } from './CourseDescription';
+import { Star } from 'lucide-react';
 import { useCompanies } from '@/hooks/useCompanies';
 import { useAuth } from '@/contexts/AuthContext';
 import { LessonManager } from '@/components/admin/courses/LessonManager';
@@ -19,6 +20,7 @@ import { toast } from 'sonner';
 import { CourseStatsBar } from './CourseStatsBar';
 import { CourseProgressBox } from './CourseProgressBox';
 import { CourseLessonsSection } from './CourseLessonsSection';
+import { CourseViewSkeleton } from './CourseViewSkeleton';
 
 export const CourseView: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
