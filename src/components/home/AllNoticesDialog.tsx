@@ -46,6 +46,10 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
       ...notice,
       companies: [notice.company_id],
     });
+    console.log("Preparando para editar aviso:", {
+      ...notice,
+      companies: [notice.company_id]
+    });
     setEditDialogOpen(true);
   };
 
@@ -183,4 +187,3 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
     </>
   );
 }
-

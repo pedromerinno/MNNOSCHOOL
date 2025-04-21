@@ -130,7 +130,54 @@ export function useCompanyNotices() {
     try {
       setIsLoading(true);
 
-      // Atualiza o aviso
+      // Verificar se a empresa do aviso está sendo alterada
+      if (data.companies && data.companies.length > 0) {
+        // Se companies é fornecido, então precisamos verificar se estamos mudando a empresa
+        const { data: existingNotice, error: fetchError } = await supabase
+          .from('company_notices')
+          .select('company_id')
+          .eq('id', noticeId)
+          .single();
+
+        if (fetchError) throw fetchError;
+
+        // Se a empresa está sendo alterada, precisamos excluir o aviso atual e criar um novo
+        if (existingNotice.company_id !== data.companies[0]) {
+          // Primeiro exclui o aviso antigo
+          const { error: deleteError } = await supabase
+            .from('company_notices')
+            .delete()
+            .eq('id', noticeId);
+
+          if (deleteError) throw deleteError;
+
+          // Agora cria um novo aviso na nova empresa
+          const { error: insertError } = await supabase
+            .from('company_notices')
+            .insert({
+              company_id: data.companies[0],
+              title: data.title,
+              content: data.content,
+              type: data.type,
+              created_by: user.id,
+            });
+
+          if (insertError) throw insertError;
+
+          // Limpa o cache para as duas empresas (antiga e nova)
+          clearCache(`notices_${existingNotice.company_id}`);
+          clearCache(`notices_${data.companies[0]}`);
+
+          // Busca avisos atualizados
+          await fetchNotices();
+
+          toast.success("Aviso movido para outra empresa com sucesso!");
+          return true;
+        }
+      }
+
+      // Se não estamos alterando a empresa ou se não foi especificada empresa, 
+      // apenas atualizamos os dados do aviso
       const { error } = await supabase
         .from('company_notices')
         .update({
@@ -139,8 +186,7 @@ export function useCompanyNotices() {
           type: data.type,
           updated_at: new Date().toISOString()
         })
-        .eq('id', noticeId)
-        .eq('company_id', selectedCompany.id);
+        .eq('id', noticeId);
 
       if (error) throw error;
 

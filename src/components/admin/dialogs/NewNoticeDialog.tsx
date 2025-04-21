@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -11,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCompanies } from "@/hooks/useCompanies";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const formSchema = z.object({
@@ -57,17 +58,22 @@ const NewNoticeDialog: React.FC<NewNoticeDialogProps> = ({
         type: initialData?.type || "geral",
         companies: initialData?.companies || [],
       });
+      
+      // Log para debug - vamos verificar se as empresas estão sendo passadas corretamente
+      console.log("Abrindo diálogo de edição com dados:", initialData);
     }
   }, [open, initialData, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setIsSubmitting(true);
+      console.log("Enviando formulário com valores:", values);
 
       const noticeData: NoticeFormData = {
         title: values.title,
         content: values.content,
         type: values.type,
+        companies: values.companies // Adicionamos companies para que seja usado na atualização
       };
 
       let success: boolean = false;
