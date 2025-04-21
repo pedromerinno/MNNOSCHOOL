@@ -70,7 +70,7 @@ export function useCompanyNotices() {
       
       console.log(`Fetching notices for company: ${targetCompanyId}`);
       
-      // Buscar IDs de avisos para a empresa específica
+      // Buscar IDs de avisos para a empresa específica através da tabela notice_companies
       const { data: noticeRelations, error: relationsError } = await supabase
         .from('notice_companies')
         .select('notice_id')
@@ -103,7 +103,7 @@ export function useCompanyNotices() {
       
       if (!noticesData || noticesData.length === 0) {
         console.log(`No notice data found for IDs: ${noticeIds.join(', ')}`);
-        clearCache(cacheKey);
+        clearCache({ key: cacheKey });
         setNotices([]);
         setCurrentNotice(null);
         setIsLoading(false);
@@ -165,17 +165,17 @@ export function useCompanyNotices() {
     }
   }, [selectedCompany?.id, getCache, setCache, clearCache, shouldMakeRequest, startRequest, completeRequest, resetRequestState]);
 
-  const createNotice = async (data: NoticeFormData, companyIds?: string[]) => {
-    if (!user || !companyIds || companyIds.length === 0) {
+  const createNotice = async (data: NoticeFormData) => {
+    if (!user || !data.companies || data.companies.length === 0) {
       toast.error("Não foi possível criar o aviso. Usuário ou empresa não identificados.");
       return false;
     }
 
     try {
       setIsLoading(true);
-      console.log("Criando aviso para empresas:", companyIds);
+      console.log("Criando aviso para empresas:", data.companies);
 
-      // Criar o aviso principal
+      // Criar o aviso principal - use a primeira empresa como referência principal
       const { data: newNotice, error } = await supabase
         .from('company_notices')
         .insert({
@@ -183,7 +183,7 @@ export function useCompanyNotices() {
           content: data.content,
           type: data.type,
           created_by: user.id,
-          company_id: companyIds[0], // Usando a primeira empresa como referência principal
+          company_id: data.companies[0], // Usando a primeira empresa como referência principal
         })
         .select('id')
         .single();
@@ -195,7 +195,7 @@ export function useCompanyNotices() {
       }
 
       // Criar relações para todas as empresas selecionadas
-      const noticeRelations = companyIds.map(companyId => ({
+      const noticeRelations = data.companies.map(companyId => ({
         notice_id: newNotice.id,
         company_id: companyId
       }));
@@ -207,7 +207,7 @@ export function useCompanyNotices() {
       if (relationsError) throw relationsError;
 
       // Criar notificações para todos os usuários de cada empresa
-      for (const companyId of companyIds) {
+      for (const companyId of data.companies) {
         const { data: usersToNotify, error: errorUsers } = await supabase
           .from('user_empresa')
           .select('user_id')
@@ -238,6 +238,11 @@ export function useCompanyNotices() {
             console.error("Erro ao criar notificações:", notifyErr);
           }
         }
+      }
+
+      // Limpar cache para todas as empresas afetadas
+      for (const companyId of data.companies) {
+        clearCache({ key: `notices_${companyId}` });
       }
 
       // Atualizar avisos após a criação
@@ -371,14 +376,10 @@ export function useCompanyNotices() {
         }
       }
 
-      // Limpar cache e atualizar avisos
-      if (selectedCompany?.id) {
-        clearCache(`notices_${selectedCompany.id}`);
-      }
-      
-      // Limpar o cache para todas as empresas afetadas
-      for (const companyId of [...companiesToAdd, ...companiesToRemove]) {
-        clearCache(`notices_${companyId}`);
+      // Limpar cache para todas as empresas afetadas
+      const allAffectedCompanies = [...companiesToAdd, ...companiesToRemove, ...currentCompanyIds];
+      for (const companyId of allAffectedCompanies) {
+        clearCache({ key: `notices_${companyId}` });
       }
 
       await fetchNotices(undefined, true);
@@ -419,7 +420,7 @@ export function useCompanyNotices() {
       // Limpar cache para todas as empresas relacionadas
       if (relatedCompanies && relatedCompanies.length > 0) {
         for (const item of relatedCompanies) {
-          clearCache(`notices_${item.company_id}`);
+          clearCache({ key: `notices_${item.company_id}` });
         }
       }
       

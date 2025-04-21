@@ -22,7 +22,7 @@ export const useCache = () => {
       console.log(`[Cache] Stored data for key: ${key}`);
     } catch (e) {
       console.error('[Cache] Error storing data:', e);
-      clearCache(options.key);
+      clearCache({ key: options.key });
     }
   };
   
@@ -39,7 +39,7 @@ export const useCache = () => {
       
       if (minutesSinceCache > expirationMinutes) {
         console.log(`[Cache] Expired data for key: ${key}`);
-        clearCache(key);
+        clearCache({ key });
         return null;
       }
       
@@ -47,13 +47,14 @@ export const useCache = () => {
       return data;
     } catch (e) {
       console.error('[Cache] Error retrieving data:', e);
-      clearCache(options.key);
+      clearCache({ key: options.key });
       return null;
     }
   };
   
-  const clearCache = (key: string): void => {
+  const clearCache = (options: CacheOptions): void => {
     try {
+      const { key } = options;
       localStorage.removeItem(key);
       console.log(`[Cache] Cleared data for key: ${key}`);
     } catch (e) {

@@ -77,7 +77,11 @@ const NewNoticeDialog = ({
       if (initialData) {
         // For editing existing notice
         Object.keys(initialData).forEach(key => {
-          setValue(key as keyof NoticeFormData, initialData[key]);
+          if (key === 'companies' && Array.isArray(initialData[key])) {
+            setValue(key as keyof NoticeFormData, initialData[key]);
+          } else if (key === 'title' || key === 'content' || key === 'type') {
+            setValue(key as keyof NoticeFormData, initialData[key]);
+          }
         });
       } else if (selectedCompany) {
         // For new notice, pre-select current company
@@ -111,9 +115,10 @@ const NewNoticeDialog = ({
     try {
       console.log("Submitting notice form:", data);
       
+      let success = false;
       if (editingNoticeId) {
         console.log(`Editing notice ${editingNoticeId} for companies:`, data.companies);
-        const success = await updateNotice(editingNoticeId, data);
+        success = await updateNotice(editingNoticeId, data);
         if (success) {
           toast({
             title: "Sucesso",
@@ -125,7 +130,7 @@ const NewNoticeDialog = ({
         }
       } else {
         console.log("Creating new notice for companies:", data.companies);
-        const success = await createNotice(data, data.companies);
+        success = await createNotice(data);
         if (success) {
           toast({
             title: "Sucesso",
