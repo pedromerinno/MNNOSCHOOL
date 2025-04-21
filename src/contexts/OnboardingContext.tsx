@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -48,7 +47,6 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
     try {
       console.log("Iniciando salvamento de perfil de onboarding:", profileData);
       
-      // Criar empresa se necessário
       let finalCompanyId = profileData.companyId;
       
       if (!finalCompanyId && profileData.newCompanyName) {
@@ -79,7 +77,6 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
         console.log("Empresa criada com sucesso:", companyData);
         finalCompanyId = companyData.id;
         
-        // Vincular usuário à empresa como admin (criador da empresa)
         const { error: relationError } = await supabase
           .from('user_empresa')
           .insert([{ 
@@ -97,7 +94,6 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       } else if (finalCompanyId) {
         console.log("Usando empresa existente:", finalCompanyId);
         
-        // Se empresa já existe, verificar se já existe vínculo
         const { data: existingRelation } = await supabase
           .from('user_empresa')
           .select('*')
@@ -105,7 +101,6 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
           .eq('empresa_id', finalCompanyId)
           .maybeSingle();
           
-        // Se não existe vínculo, criar (sem verificação de admin)
         if (!existingRelation) {
           console.log("Criando novo vínculo para empresa existente");
           
@@ -114,7 +109,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
             .insert([{ 
               user_id: user.id,
               empresa_id: finalCompanyId,
-              is_admin: false // Usuário não é admin por padrão quando se associa a empresa existente
+              is_admin: false
             }]);
             
           if (relationError) {
@@ -128,23 +123,22 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
         }
       }
       
-      // Remover a flag de onboarding_incomplete dos interesses
       const cleanInterests = profileData.interests.filter(i => i !== "onboarding_incomplete");
-      console.log("Removendo flag de onboarding incompleto:", { 
+      console.log("Atualizando flags de onboarding:", { 
         antes: profileData.interests, 
-        depois: cleanInterests 
+        depois: cleanInterests,
+        primeiro_login: false
       });
       
-      // Dados a atualizar no perfil do usuário
       const profileUpdate = {
         display_name: profileData.displayName,
         avatar: profileData.avatarUrl,
-        interesses: cleanInterests
+        interesses: cleanInterests,
+        primeiro_login: false
       };
       
       console.log("Atualizando perfil do usuário:", profileUpdate);
       
-      // Atualizar perfil do usuário no banco de dados
       const { error: updateError } = await supabase
         .from('profiles')
         .update(profileUpdate)
@@ -157,25 +151,20 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       
       console.log("Perfil atualizado com sucesso no banco de dados");
       
-      // Atualizar perfil do usuário no contexto local
       await updateUserProfile(profileUpdate);
       
-      // Atualizar estado global
       await updateUserData(profileUpdate);
       
       console.log("Perfil atualizado com sucesso localmente");
       
-      // Disparar evento para atualizar relacionamentos de empresa
       window.dispatchEvent(new Event('company-relation-changed'));
       
-      // Também forçar recarregamento de empresas
       window.dispatchEvent(new Event('force-reload-companies'));
       
       console.log("Eventos de atualização disparados");
       
       toast.success("Perfil atualizado com sucesso!");
       
-      // Redirecionar para a página inicial depois de garantir que os dados foram processados
       setTimeout(() => {
         console.log("Redirecionando para home após onboarding");
         navigate("/", { replace: true });

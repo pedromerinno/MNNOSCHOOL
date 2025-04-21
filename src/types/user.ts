@@ -7,5 +7,6 @@ export interface UserProfile {
   super_admin?: boolean | null;
   avatar?: string | null;
   cargo_id?: string | null;
-  interesses?: string[] | null;  // Adicionado o campo de interesses
+  interesses?: string[] | null;
+  primeiro_login?: boolean | null;
 }
