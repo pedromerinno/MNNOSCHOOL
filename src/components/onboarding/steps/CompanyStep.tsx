@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,6 +17,7 @@ interface CompanyStepProps {
   onNext: () => void;
   onBack: () => void;
   onCompanyTypeSelect: (isExisting: boolean) => void;
+  onCompanyCreated?: () => void;
 }
 
 interface CompanyDetails {
@@ -32,7 +32,7 @@ interface CompanyDetails {
   historia: string;
 }
 
-const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyTypeSelect }) => {
+const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyTypeSelect, onCompanyCreated }) => {
   const { profileData, updateProfileData } = useOnboarding();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -142,7 +142,12 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
         if (profileError) throw profileError;
 
         toast.success("Empresa criada com sucesso!");
-        navigate("/"); // Changed from navigate(`/company/${newCompany.id}`) to navigate("/")
+        
+        if (onCompanyCreated) {
+          onCompanyCreated();
+        } else {
+          navigate("/");
+        }
       } else {
         if (!companyInfo) {
           await fetchCompany(companyId);

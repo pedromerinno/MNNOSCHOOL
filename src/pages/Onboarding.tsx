@@ -7,6 +7,7 @@ import PhotoStep from "@/components/onboarding/steps/PhotoStep";
 import CompanyStep from "@/components/onboarding/steps/CompanyStep";
 import InterestsStep from "@/components/onboarding/steps/InterestsStep";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
+import { Navigate } from "react-router-dom";
 
 const Onboarding = () => {
   return (
@@ -24,6 +25,7 @@ const OnboardingContent = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const { userProfile } = useAuth();
   const [isExistingCompany, setIsExistingCompany] = useState<boolean | null>(null);
+  const [onboardingComplete, setOnboardingComplete] = useState(false);
 
   const isUpdate = !userProfile?.interesses?.includes("onboarding_incomplete");
   // Novo: totalSteps dinâmico com base na seleção de empresa
@@ -58,6 +60,16 @@ const OnboardingContent = () => {
     setIsExistingCompany(isExisting);
   };
 
+  // Nova função para redirecionar após criar empresa
+  const handleCompanyCreated = () => {
+    setOnboardingComplete(true);
+  };
+
+  // Se onboarding finalizado, redirecionar para a homepage
+  if (onboardingComplete) {
+    return <Navigate to="/" replace />;
+  }
+
   return (
     <>
       <div className="mb-10 w-full max-w-3xl text-center">
@@ -83,6 +95,7 @@ const OnboardingContent = () => {
             onNext={nextStep} 
             onBack={prevStep} 
             onCompanyTypeSelect={handleCompanyChoice}
+            onCompanyCreated={handleCompanyCreated}
           />
         )}
         {/* Só mostra o passo 4 se isExistingCompany for true! */}
@@ -95,4 +108,3 @@ const OnboardingContent = () => {
 };
 
 export default Onboarding;
-
