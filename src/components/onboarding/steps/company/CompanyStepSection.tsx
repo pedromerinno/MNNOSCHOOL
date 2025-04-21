@@ -3,16 +3,23 @@ import React from "react";
 import ExistingCompanySection from "./ExistingCompanySection";
 import NewCompanySection from "./NewCompanySection";
 import type { CompanyDetails } from "./useCompanyStepForm";
+import type { Company } from "@/types/company";
+
+interface CompanyInfo {
+  id: string;
+  nome: string;
+  logo?: string | null;
+}
 
 interface CompanyStepSectionProps {
   companyType: "existing" | "new";
   companyId: string;
   setCompanyId: (id: string) => void;
-  companyInfo: any;
+  companyInfo: Company | null;
   companyLoading: boolean;
   showCompanyInfo: boolean;
   setShowCompanyInfo: (show: boolean) => void;
-  handleCompanyLookup: (info: any, lookupPending: boolean) => void;
+  handleCompanyLookup: (info: CompanyInfo | null, lookupPending: boolean) => Promise<void>;
   companyDetails: CompanyDetails;
   setCompanyDetails: (details: CompanyDetails) => void;
 }

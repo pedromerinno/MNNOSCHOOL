@@ -3,17 +3,23 @@ import { useState, useEffect, useCallback } from "react";
 import { useQuickCompanyLookup } from "@/hooks/company/useQuickCompanyLookup";
 import type { Company } from "@/types/company";
 
+interface CompanyInfo {
+  id: string;
+  nome: string;
+  logo?: string | null;
+}
+
 export function useExistingCompany(companyId: string) {
   const { companyInfo, loading: companyLoading, fetchCompany } = useQuickCompanyLookup();
   const [showCompanyInfo, setShowCompanyInfo] = useState(false);
 
   const handleCompanyLookup = useCallback(
-    async (_info: any, lookupPending: boolean) => {
+    async (info: CompanyInfo | null, lookupPending: boolean): Promise<void> => {
       console.log("Looking up company with ID:", companyId, "lookupPending:", lookupPending);
       
       if (lookupPending) {
         // Se lookup está pendente, não esconde a informação ainda
-        return null;
+        return;
       }
       
       setShowCompanyInfo(false);
@@ -25,15 +31,10 @@ export function useExistingCompany(companyId: string) {
           
           // Depois que a busca é concluída, registra no console o estado atual
           console.log("Company lookup result after fetch:", companyInfo);
-          
-          return null; // Retornamos null e não companyInfo, porque o state pode não ter sido atualizado ainda
         } catch (error) {
           console.error("Error during company lookup:", error);
-          return null;
         }
       }
-      
-      return null;
     },
     [companyId, companyInfo, fetchCompany]
   );

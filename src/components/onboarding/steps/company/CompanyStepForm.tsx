@@ -9,6 +9,13 @@ import { useExistingCompany } from "./hooks/useExistingCompany";
 import CompanyStepSection from "./CompanyStepSection";
 import CompanyStepError from "./CompanyStepError";
 import CompanyStepActions from "./CompanyStepActions";
+import type { Company } from "@/types/company";
+
+interface CompanyInfo {
+  id: string;
+  nome: string;
+  logo?: string | null;
+}
 
 interface CompanyStepFormProps {
   onNext: (companyId?: string) => void;

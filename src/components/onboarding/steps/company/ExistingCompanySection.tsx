@@ -2,15 +2,22 @@
 import React from "react";
 import ExistingCompanyForm from "./ExistingCompanyForm";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { Company } from "@/types/company";
+
+interface CompanyInfo {
+  id: string;
+  nome: string;
+  logo?: string | null;
+}
 
 interface ExistingCompanySectionProps {
   companyId: string;
   setCompanyId: (id: string) => void;
-  companyInfo: any;
+  companyInfo: Company | null;
   companyLoading: boolean;
   showCompanyInfo: boolean;
   setShowCompanyInfo: (show: boolean) => void;
-  handleCompanyLookup: (info: any, lookupPending: boolean) => void;
+  handleCompanyLookup: (info: CompanyInfo | null, lookupPending: boolean) => Promise<void>;
 }
 
 const ExistingCompanySection: React.FC<ExistingCompanySectionProps> = ({
