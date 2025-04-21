@@ -6,10 +6,10 @@ export const usePageLoading = (userCompanies: any[], isLoading: boolean, fetchCo
   const [isPageLoading, setIsPageLoading] = useState(true);
   const { getInitialSelectedCompany } = useCompanyCache();
   
-  // Immediate cache check to avoid skeleton if we have data
+  // Verificação imediata de cache para evitar skeleton se já tivermos dados
   const hasCachedCompany = getInitialSelectedCompany() !== null;
   
-  // Improve page loading state control
+  // Melhorar controle de estado de loading da página
   useEffect(() => {
     if (hasCachedCompany) {
       console.log("[Index] Empresa encontrada em cache, acelerando transição");

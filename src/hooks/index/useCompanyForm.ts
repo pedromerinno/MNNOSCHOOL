@@ -9,7 +9,7 @@ export const useCompanyForm = (
   const [showCompanyForm, setShowCompanyForm] = useState(false);
   const [formShowDelayComplete, setFormShowDelayComplete] = useState(false);
   
-  // Implement delay to show form after determining no companies exist
+  // Implementar delay para mostrar formulário após determinar que não há empresas
   useEffect(() => {
     let timeoutId: number | undefined;
     
@@ -30,7 +30,7 @@ export const useCompanyForm = (
     };
   }, [isPageLoading, userCompanies.length, fetchCount]);
   
-  // Update showCompanyForm whenever formShowDelayComplete changes
+  // Atualizar showCompanyForm sempre que formShowDelayComplete mudar
   useEffect(() => {
     if (!isPageLoading && userCompanies.length === 0 && formShowDelayComplete) {
       console.log("[Index] Exibindo formulário após verificação completa e delay");
