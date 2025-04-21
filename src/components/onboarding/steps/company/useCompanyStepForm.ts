@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useCallback } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -48,9 +49,11 @@ export const useCompanyStepForm = (
   // showCompanyInfo ensures "Empresa não encontrada" feedback
   // Can also be handled at render in CompanyStepError
 
-  const handleInitialSubmit = async (e: React.FormEvent) => {
+  const handleInitialSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
+
+    console.log("Handling initial submit", { companyType, companyId, companyDetails });
 
     if (companyType === "existing" && !companyId) {
       setError("Por favor, informe o ID da empresa");
@@ -62,6 +65,7 @@ export const useCompanyStepForm = (
     }
 
     setIsSubmitting(true);
+    setError("");
 
     try {
       if (companyType === "new") {
@@ -74,6 +78,8 @@ export const useCompanyStepForm = (
         const formattedValues = Array.isArray(companyDetails.valores)
           ? JSON.stringify(companyDetails.valores)
           : companyDetails.valores;
+
+        console.log("Creating new company", companyDetails);
 
         const { data: newCompany, error: companyError } = await supabase
           .from("empresas")
@@ -91,7 +97,12 @@ export const useCompanyStepForm = (
           .select()
           .single();
 
-        if (companyError) throw companyError;
+        if (companyError) {
+          console.error("Error creating company:", companyError);
+          throw companyError;
+        }
+
+        console.log("New company created:", newCompany);
 
         const { error: relationError } = await supabase
           .from("user_empresa")
@@ -101,7 +112,10 @@ export const useCompanyStepForm = (
             is_admin: true
           });
 
-        if (relationError) throw relationError;
+        if (relationError) {
+          console.error("Error creating relation:", relationError);
+          throw relationError;
+        }
 
         const { error: profileError } = await supabase
           .from("profiles")
@@ -113,7 +127,10 @@ export const useCompanyStepForm = (
           })
           .eq("id", user.id);
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error("Error updating profile:", profileError);
+          throw profileError;
+        }
 
         toast.success("Empresa criada com sucesso!");
         window.location.href = `/company/${newCompany.id}`;
@@ -129,20 +146,40 @@ export const useCompanyStepForm = (
           return;
         }
 
+        console.log("Updating profile data with company ID:", companyId);
+        
         updateProfileData({
           companyId,
           newCompanyName: null,
           companyDetails: null
         });
+        
         onCompanyTypeSelect(true);
+        
+        console.log("Navigating to next step");
         onNext();
       }
     } catch (error: any) {
+      console.error("Error in form submission:", error);
       toast.error("Erro ao processar operação: " + error.message);
+      setError("Erro ao processar operação: " + error.message);
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [
+    isSubmitting, 
+    companyType, 
+    companyId, 
+    companyDetails, 
+    user, 
+    profileData.interests, 
+    companyInfo, 
+    companyLoading, 
+    handleCompanyLookup, 
+    updateProfileData, 
+    onCompanyTypeSelect, 
+    onNext
+  ]);
 
   return {
     companyType,

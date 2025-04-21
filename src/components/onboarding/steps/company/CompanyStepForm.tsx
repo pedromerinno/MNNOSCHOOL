@@ -48,12 +48,20 @@ const CompanyStepForm: React.FC<CompanyStepFormProps> = ({
 
   // Atualizar o componente pai quando o tipo de empresa mudar
   React.useEffect(() => {
-    onCompanyTypeSelect(companyType === "existing");
-    onCompanyTypeChange(companyType);
-  }, [companyType, onCompanyTypeSelect, onCompanyTypeChange]);
+    if (companyType !== parentCompanyType) {
+      onCompanyTypeSelect(companyType === "existing");
+      onCompanyTypeChange(companyType);
+    }
+  }, [companyType, onCompanyTypeSelect, onCompanyTypeChange, parentCompanyType]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Form submitted");
+    handleInitialSubmit(e);
+  };
 
   return (
-    <form onSubmit={handleInitialSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <CompanyStepSection
         companyType={companyType}
         companyId={companyId}

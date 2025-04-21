@@ -13,6 +13,7 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
   const [companyType, setCompanyType] = useState<"existing" | "new">("existing");
   
   const handleTypeChange = (type: "existing" | "new") => {
+    console.log("Company type changed in parent:", type);
     setCompanyType(type);
   };
 
