@@ -8,6 +8,7 @@ import CompanyStep from "@/components/onboarding/steps/CompanyStep";
 import InterestsStep from "@/components/onboarding/steps/InterestsStep";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { Navigate, useNavigate } from "react-router-dom";
+import { Progress } from "@/components/ui/progress";
 
 const Onboarding = () => {
   return (
@@ -83,12 +84,11 @@ const OnboardingContent = () => {
         <p className="text-sm text-gray-500 mb-4">
           Passo {currentStep} de {totalSteps}
         </p>
-        <div className="w-full h-1 rounded-full bg-gray-100 overflow-hidden">
-          <div 
-            className="h-full rounded-full bg-black transition-all duration-500 ease-out"
-            style={{ width: `${(currentStep / totalSteps) * 100}%` }}
-          />
-        </div>
+        <Progress 
+          value={(currentStep / totalSteps) * 100} 
+          className="h-1 w-full rounded-full bg-gray-100"
+          indicatorClassName="bg-black transition-all duration-500 ease-out"
+        />
       </div>
 
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-16 w-full max-w-3xl transition-all duration-300">

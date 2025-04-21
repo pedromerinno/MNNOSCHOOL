@@ -1,94 +1,150 @@
 
 import React, { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
+import { useCompanyNotices, NoticeFormData } from "@/hooks/useCompanyNotices";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
-import { useCompanies } from "@/hooks/useCompanies";
+
+const formSchema = z.object({
+  title: z.string().min(3, { message: "O título deve ter pelo menos 3 caracteres" }),
+  content: z.string().min(10, { message: "O conteúdo deve ter pelo menos 10 caracteres" }),
+  type: z.string().default("geral")
+});
 
 interface NewNoticeDialogProps {
   open: boolean;
-  onOpenChange: (v: boolean) => void;
+  onOpenChange: (open: boolean) => void;
 }
 
-export const NewNoticeDialog: React.FC<NewNoticeDialogProps> = ({ open, onOpenChange }) => {
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  // Companies logic
-  const { selectedCompany, userCompanies, selectCompany, user } = useCompanies();
-
-  const handleCompanyChange = (companyId: string) => {
-    const company = userCompanies.find(c => c.id === companyId);
-    if (company && user?.id) {
-      selectCompany(user.id, company);
+const NewNoticeDialog: React.FC<NewNoticeDialogProps> = ({ open, onOpenChange }) => {
+  const { createNotice } = useCompanyNotices();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: "",
+      content: "",
+      type: "geral"
     }
-  };
+  });
 
-  const handleSave = async () => {
-    setLoading(true);
-    await new Promise(res => setTimeout(res, 1200));
-    toast.success("Aviso criado com sucesso.");
-    setTitle('');
-    setContent('');
-    onOpenChange(false);
-    setLoading(false);
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    try {
+      setIsSubmitting(true);
+      
+      const noticeData: NoticeFormData = {
+        title: values.title,
+        content: values.content,
+        type: values.type
+      };
+      
+      const success = await createNotice(noticeData);
+      
+      if (success) {
+        form.reset();
+        onOpenChange(false);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Novo Aviso</DialogTitle>
+          <DialogTitle>Criar Novo Aviso</DialogTitle>
+          <DialogDescription>
+            Crie um novo aviso para todos os membros da empresa
+          </DialogDescription>
         </DialogHeader>
-        <div className="mb-4">
-          <Label>Empresa</Label>
-          <Select 
-            value={selectedCompany?.id || ""} 
-            onValueChange={handleCompanyChange}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione uma empresa" />
-            </SelectTrigger>
-            <SelectContent>
-              {userCompanies.map((company) => (
-                <SelectItem key={company.id} value={company.id}>
-                  <div className="flex items-center">
-                    {company.logo && (
-                      <img
-                        src={company.logo}
-                        alt={company.nome}
-                        className="h-6 w-6 object-contain rounded-full mr-2"
-                      />
-                    )}
-                    <span>{company.nome}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-3 py-2">
-          <div>
-            <Label>Título</Label>
-            <Input value={title} onChange={e => setTitle(e.target.value)} />
-          </div>
-          <div>
-            <Label>Conteúdo</Label>
-            <Textarea value={content} onChange={e => setContent(e.target.value)} />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleSave} disabled={loading}>
-            {loading ? "Salvando..." : "Adicionar"}
-          </Button>
-        </DialogFooter>
+        
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Título</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Título do aviso" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tipo</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o tipo" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="geral">Geral</SelectItem>
+                      <SelectItem value="recesso">Recesso</SelectItem>
+                      <SelectItem value="feriado">Feriado</SelectItem>
+                      <SelectItem value="evento">Evento</SelectItem>
+                      <SelectItem value="urgente">Urgente</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="content"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Conteúdo</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Conteúdo do aviso" 
+                      rows={5}
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isSubmitting}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isSubmitting ? "Criando..." : "Criar Aviso"}
+              </Button>
+            </div>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
 };
+
+export default NewNoticeDialog;
