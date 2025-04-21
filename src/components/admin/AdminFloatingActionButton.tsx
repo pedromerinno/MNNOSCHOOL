@@ -342,8 +342,8 @@ export const AdminFloatingActionButton = () => {
             <Button
               key={option.label}
               variant="ghost"
-              className="w-full !justify-start text-xs font-medium py-2 px-2"
-              style={{ fontSize: "0.87rem" }}
+              className="w-full !justify-start text-xs font-medium py-1.5 px-2"
+              style={{ fontSize: "0.85rem" }}
               onClick={() => handleOption(option)}
             >
               {option.icon}
