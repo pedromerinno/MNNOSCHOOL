@@ -1,39 +1,31 @@
+
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import CompanyStep from "@/components/onboarding/steps/CompanyStep";
 
 export const NoCompaniesAvailable = () => {
-  const [isFormOpen, setIsFormOpen] = useState(false);
   const [showCompanyDialog, setShowCompanyDialog] = useState(true);
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const handleExistingCompany = () => {
+  const handleCompanyCreated = () => {
     setShowCompanyDialog(false);
-    setIsFormOpen(true);
-  };
-
-  const handleNewCompany = () => {
-    setShowCompanyDialog(false);
-    navigate('/onboarding');
+    navigate('/', { replace: true });
   };
 
   const handleRequestAccess = () => {
-    // Add email subject and body with user information
     const subject = encodeURIComponent("Solicitação de Acesso à Plataforma");
     const body = encodeURIComponent(
       `Olá,\n\nGostaria de solicitar acesso à plataforma Merinno.\n\nInformações do usuário:\nEmail: ${user?.email || "Não disponível"}\n\nAtenciosamente,\n${user?.email?.split('@')[0] || "Usuário"}`
     );
     
-    // Open mail client with pre-filled email
     window.location.href = `mailto:suporte@merinno.com?subject=${subject}&body=${body}`;
     
-    // Show confirmation toast
     toast.success("Redirecionando para seu cliente de email", {
       description: "Preencha os detalhes adicionais necessários e envie o email para solicitar acesso.",
     });
@@ -42,21 +34,15 @@ export const NoCompaniesAvailable = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
       <Dialog open={showCompanyDialog} onOpenChange={setShowCompanyDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Vincular Empresa</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <p className="text-sm text-muted-foreground">
-              Escolha uma opção para vincular sua conta a uma empresa:
-            </p>
-            <div className="flex flex-col gap-3">
-              <Button onClick={handleExistingCompany}>
-                Vincular a Empresa Existente
-              </Button>
-              <Button variant="outline" onClick={handleNewCompany}>
-                Criar Nova Empresa
-              </Button>
+        <DialogContent className="max-w-4xl p-0">
+          <div className="bg-white rounded-3xl">
+            <div className="p-16">
+              <CompanyStep 
+                onNext={() => {}} 
+                onBack={() => setShowCompanyDialog(false)}
+                onCompanyTypeSelect={() => {}}
+                onCompanyCreated={handleCompanyCreated}
+              />
             </div>
           </div>
         </DialogContent>
@@ -79,40 +65,18 @@ export const NoCompaniesAvailable = () => {
           <Button 
             variant="default" 
             className="bg-black hover:bg-black/80 text-white"
+            onClick={() => setShowCompanyDialog(true)}
+          >
+            Vincular Empresa
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            className="border-black hover:bg-black/5"
             onClick={handleRequestAccess}
           >
             Solicitar acesso
           </Button>
-          
-          <Sheet open={isFormOpen} onOpenChange={setIsFormOpen}>
-            <SheetTrigger asChild>
-              <Button variant="outline" className="border-black hover:bg-black/5">
-                Precisa de ajuda?
-              </Button>
-            </SheetTrigger>
-            <SheetContent>
-              <SheetHeader>
-                <SheetTitle>Suporte Merinno</SheetTitle>
-              </SheetHeader>
-              <div className="mt-6 space-y-4">
-                <p>
-                  Se você está tentando acessar a plataforma mas não tem nenhuma empresa 
-                  vinculada, você precisa entrar em contato com o suporte da Merinno.
-                </p>
-                <p>
-                  Existem duas possibilidades:
-                </p>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>Você ainda não foi convidado para nenhuma empresa</li>
-                  <li>Seu cadastro na plataforma ainda está sendo processado</li>
-                </ul>
-                <p className="pt-2">
-                  Em ambos os casos, clique no botão "Solicitar acesso" para enviar um email 
-                  para nossa equipe de suporte.
-                </p>
-              </div>
-            </SheetContent>
-          </Sheet>
         </div>
       </div>
     </div>
