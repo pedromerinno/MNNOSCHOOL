@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import { LessonManager } from '@/components/admin/courses/LessonManager';
 import { CourseLessonList } from './CourseLessonList';
 
@@ -25,17 +26,18 @@ export const CourseLessonsSection: React.FC<CourseLessonsSectionProps> = ({
 }) => (
   <div className="w-full md:w-4/12 mt-8 md:mt-0 relative">
     <div className="space-y-4 mt-4">
-      {/* TÍTULO UNIFICADO AQUI */}
+      {/* Remove título duplicado e deixa só um título único */}
       <div className="flex items-center justify-between">
         <h3 className="text-xl font-bold">Aulas do Curso</h3>
         {isAdmin && (
           <Button 
-            className="bg-primary text-white gap-2 rounded-xl font-bold text-base py-3 shadow-none"
+            className="bg-primary text-white gap-2 rounded-xl font-normal text-sm py-2 shadow-none"
             onClick={() => setShowLessonManager(true)}
             variant="default"
             size="sm"
             aria-label="Gerenciar aulas"
           >
+            <Plus className="h-4 w-4" />
             Gerenciar aulas
           </Button>
         )}
