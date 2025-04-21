@@ -32,6 +32,7 @@ export const useLoginForm = () => {
         const companies = await forceGetUserCompanies(data.session.user.id);
         console.log("Empresas encontradas:", companies?.length || 0);
         
+        // Verificar se o usuário tem empresas associadas
         if (companies?.length > 0) {
           console.log("Selecionando a primeira empresa disponível:", companies[0].nome);
           
@@ -50,13 +51,12 @@ export const useLoginForm = () => {
             toast.error("Erro ao selecionar empresa");
           }
         } else {
-          console.log("Nenhuma empresa disponível para este usuário");
-          toast.error("Nenhuma empresa disponível para este usuário");
+          console.log("Nenhuma empresa disponível para este usuário, redirecionando para onboarding");
+          toast.success("Login realizado com sucesso!");
           
-          // Redirecionar para a página inicial mesmo sem empresas
-          // para exibir o componente NoCompaniesAvailable
+          // Redirecionar para onboarding caso não tenha empresas
           setTimeout(() => {
-            navigate('/');
+            navigate('/onboarding');
           }, 100);
         }
       }

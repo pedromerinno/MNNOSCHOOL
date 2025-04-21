@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanyCache } from "@/hooks/company/useCompanyCache";
+import { useNavigate } from "react-router-dom";
 
 // Lazy-load components to improve initial loading time
 const NoCompaniesAvailable = lazy(() => import("@/components/home/NoCompaniesAvailable").then(module => ({ default: module.NoCompaniesAvailable })));
@@ -43,8 +44,17 @@ const LoadingState = () => (
 const Index = () => {
   const [isPageLoading, setIsPageLoading] = useState(true);
   const { userCompanies, isLoading, fetchCount, selectedCompany } = useCompanies();
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const { getInitialSelectedCompany } = useCompanyCache();
+  const navigate = useNavigate();
+  
+  // Verificar necessidade de onboarding
+  useEffect(() => {
+    if (user && userProfile?.interesses?.includes("onboarding_incomplete")) {
+      console.log("[Index] Usuário precisa completar onboarding, redirecionando...");
+      navigate("/onboarding", { replace: true });
+    }
+  }, [user, userProfile, navigate]);
   
   // Verificação imediata do cache para evitar o skeleton se já temos dados
   const hasCachedCompany = getInitialSelectedCompany() !== null;
