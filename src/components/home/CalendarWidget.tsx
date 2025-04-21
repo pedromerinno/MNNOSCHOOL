@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -111,7 +112,7 @@ export const CalendarWidget = () => {
           <h3 className="text-xl font-medium capitalize">
             {getMonthName(currentDate)} {getYear(currentDate)}
           </h3>
-          <div className="flex space-x-4">
+          <div className="flex space-x-2">
             <Button 
               size="icon" 
               variant="ghost" 
@@ -162,3 +163,4 @@ export const CalendarWidget = () => {
     </Card>
   );
 };
+

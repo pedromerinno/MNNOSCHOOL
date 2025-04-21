@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
@@ -153,3 +154,4 @@ export const NotificationsWidget = () => {
     </Card>
   );
 };
+
