@@ -1,6 +1,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useQuickCompanyLookup } from "@/hooks/company/useQuickCompanyLookup";
+import type { Company } from "@/types/company";
 
 export function useExistingCompany(companyId: string) {
   const { companyInfo, loading: companyLoading, fetchCompany } = useQuickCompanyLookup();
@@ -11,7 +12,7 @@ export function useExistingCompany(companyId: string) {
       console.log("Looking up company with ID:", companyId, "lookupPending:", lookupPending);
       
       if (lookupPending) {
-        // If lookup is pending, don't hide info yet
+        // Se lookup está pendente, não esconde a informação ainda
         return null;
       }
       
@@ -19,15 +20,13 @@ export function useExistingCompany(companyId: string) {
       
       if (companyId && companyId.length >= 10) {
         try {
-          // Execute the fetch and wait for it to complete
+          // Executa a busca e aguarda sua conclusão
           await fetchCompany(companyId);
           
-          // After fetch completes, log the current company info
-          console.log("Company lookup result:", companyInfo);
+          // Depois que a busca é concluída, registra no console o estado atual
+          console.log("Company lookup result after fetch:", companyInfo);
           
-          // No need to check result here - we'll use the useEffect below to update UI
-          // when companyInfo actually changes (after the state update)
-          return companyInfo;
+          return null; // Retornamos null e não companyInfo, porque o state pode não ter sido atualizado ainda
         } catch (error) {
           console.error("Error during company lookup:", error);
           return null;
@@ -40,14 +39,14 @@ export function useExistingCompany(companyId: string) {
   );
 
   useEffect(() => {
-    // Reset visible info when ID changes
+    // Redefine as informações visíveis quando o ID muda
     if (!companyId || companyId.length < 10) {
       setShowCompanyInfo(false);
     }
   }, [companyId]);
 
   useEffect(() => {
-    // Update showCompanyInfo when companyInfo changes
+    // Atualiza showCompanyInfo quando companyInfo muda
     if (companyInfo) {
       setShowCompanyInfo(true);
     }

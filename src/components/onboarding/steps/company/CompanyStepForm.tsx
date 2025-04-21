@@ -11,7 +11,7 @@ import CompanyStepError from "./CompanyStepError";
 import CompanyStepActions from "./CompanyStepActions";
 
 interface CompanyStepFormProps {
-  onNext: () => void;
+  onNext: (companyId?: string) => void;
   onBack: () => void;
   companyType: "existing" | "new";
   onCompanyTypeChange: (type: "existing" | "new") => void;
@@ -23,16 +23,16 @@ const CompanyStepForm: React.FC<CompanyStepFormProps> = ({
   companyType,
   onCompanyTypeChange
 }) => {
-  const { profileData, updateProfileData } = useOnboarding();
+  const { profileData } = useOnboarding();
   const { user } = useAuth();
   
-  // Company ID for existing company option
+  // ID da empresa para opção de empresa existente
   const [companyId, setCompanyId] = useState(profileData.companyId || "");
   
-  // Company details for new company option
+  // Detalhes da empresa para opção de nova empresa
   const { companyDetails, setCompanyDetails } = useCompanyDetails();
   
-  // Existing company lookup
+  // Busca de empresa existente
   const {
     companyInfo,
     companyLoading,
@@ -51,30 +51,14 @@ const CompanyStepForm: React.FC<CompanyStepFormProps> = ({
     }
   }, [companyId, companyType, companyInfo, error, isSubmitting]);
 
-  const handleInitialSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Form submitted with company type:", companyType);
-    console.log("Company ID:", companyId);
-    console.log("Company details:", companyDetails);
-    console.log("Company info:", companyInfo);
-
+    
+    // Validação básica
     if (companyType === "existing" && !companyId) {
       setError("Por favor, informe o ID da empresa");
       return;
-    }
-    
-    if (companyType === "existing" && !companyInfo && !companyLoading) {
-      // Se estamos no tipo existente mas não temos informações, tente buscar uma última vez
-      await handleCompanyLookup(null, true);
-      
-      // Aguarde um momento para dar tempo de carregar
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // Verifique novamente se temos informações
-      if (!companyInfo) {
-        setError("Empresa não encontrada com este ID. Verifique e tente novamente.");
-        return;
-      }
     }
     
     if (companyType === "new" && !companyDetails.name) {
@@ -86,7 +70,35 @@ const CompanyStepForm: React.FC<CompanyStepFormProps> = ({
     setError("");
 
     try {
-      if (companyType === "new") {
+      if (companyType === "existing") {
+        // Para empresa existente, simplificada
+        console.log("Existing company selected with ID:", companyId);
+        
+        if (!companyId) {
+          setError("ID da empresa é obrigatório");
+          setIsSubmitting(false);
+          return;
+        }
+        
+        if (!companyInfo && !companyLoading) {
+          // Se não temos informações ainda, tente buscar uma última vez
+          await handleCompanyLookup(null, true);
+          
+          // Aguarde um momento para dar tempo de carregar
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Se mesmo assim não tivermos informações, é possível que a empresa não exista
+          if (!companyInfo) {
+            setError("Empresa não encontrada com este ID. Verifique e tente novamente.");
+            setIsSubmitting(false);
+            return;
+          }
+        }
+        
+        console.log("Moving to next step with company ID:", companyId);
+        onNext(companyId);
+      } else {
+        // Para nova empresa
         if (!user) {
           toast.error("Usuário não autenticado");
           setIsSubmitting(false);
@@ -152,32 +164,6 @@ const CompanyStepForm: React.FC<CompanyStepFormProps> = ({
 
         toast.success("Empresa criada com sucesso!");
         window.location.href = `/company/${newCompany.id}`;
-      } else {
-        // For existing company, simplified logic
-        console.log("Existing company selected with ID:", companyId);
-        
-        if (!companyId) {
-          setError("ID da empresa é obrigatório");
-          setIsSubmitting(false);
-          return;
-        }
-        
-        if (!companyInfo) {
-          setError("Informações da empresa não encontradas");
-          setIsSubmitting(false);
-          return;
-        }
-        
-        // Update profile data with company ID
-        updateProfileData({
-          companyId,
-          newCompanyName: null,
-          companyDetails: null
-        });
-        
-        console.log("Moving to next step");
-        onCompanyTypeChange("existing"); // Ensure type is set correctly
-        onNext(); // This should trigger navigation to the next step
       }
     } catch (error: any) {
       console.error("Error in form submission:", error);
@@ -189,7 +175,7 @@ const CompanyStepForm: React.FC<CompanyStepFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleInitialSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <CompanyStepSection
         companyType={companyType}
         companyId={companyId}

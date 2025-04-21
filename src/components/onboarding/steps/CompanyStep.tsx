@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from "react";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 import CompanyStepHeader from "./company/CompanyStepHeader";
 import CompanyStepForm from "./company/CompanyStepForm";
 
@@ -15,6 +16,7 @@ const CompanyStep: React.FC<CompanyStepProps> = ({
   onCompanyTypeSelect 
 }) => {
   const [companyType, setCompanyType] = useState<"existing" | "new">("existing");
+  const { updateProfileData } = useOnboarding();
   
   const handleTypeChange = (type: "existing" | "new") => {
     console.log("Company type changed in CompanyStep:", type);
@@ -22,10 +24,24 @@ const CompanyStep: React.FC<CompanyStepProps> = ({
     onCompanyTypeSelect(type === "existing");
   };
 
-  // Notify parent component of initial company type on mount
+  // Notificar componente pai do tipo de empresa inicial ao montar
   useEffect(() => {
     onCompanyTypeSelect(companyType === "existing");
   }, []);
+
+  const handleSubmitSuccess = (companyId: string | null = null) => {
+    console.log("Form submitted successfully, companyId:", companyId);
+    
+    if (companyId) {
+      updateProfileData({
+        companyId,
+        newCompanyName: null,
+        companyDetails: null
+      });
+    }
+    
+    onNext();
+  };
 
   return (
     <>
@@ -34,7 +50,7 @@ const CompanyStep: React.FC<CompanyStepProps> = ({
         onTypeChange={handleTypeChange} 
       />
       <CompanyStepForm
-        onNext={onNext}
+        onNext={handleSubmitSuccess}
         onBack={onBack}
         companyType={companyType}
         onCompanyTypeChange={handleTypeChange}
