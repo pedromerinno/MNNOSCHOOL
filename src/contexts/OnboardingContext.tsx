@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -110,7 +109,6 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       }
       
       // Dados a atualizar no perfil do usuário
-      // Removendo a configuração de cargo_id para evitar erros, já que provavelmente não há um campo cargo_id na tabela
       const profileUpdate = {
         display_name: profileData.displayName,
         avatar: profileData.avatarUrl,
@@ -138,7 +136,9 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       window.dispatchEvent(new Event('company-relation-changed'));
       
       toast.success("Perfil atualizado com sucesso!");
-      navigate("/"); // Ensures users are always redirected to the homepage after onboarding
+      
+      // Garantir redirecionamento para a página inicial
+      navigate("/", { replace: true });
       
     } catch (error) {
       console.error("Erro ao salvar perfil:", error);

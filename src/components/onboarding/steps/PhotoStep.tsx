@@ -14,7 +14,7 @@ interface PhotoStepProps {
 }
 
 const PhotoStep: React.FC<PhotoStepProps> = ({ onNext, onBack }) => {
-  const { user } = useAuth();
+  const { user, updateUserProfile } = useAuth();
   const { profileData, updateProfileData } = useOnboarding();
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState("");
@@ -43,8 +43,20 @@ const PhotoStep: React.FC<PhotoStepProps> = ({ onNext, onBack }) => {
         .from('avatars')
         .getPublicUrl(filePath);
         
+      // Atualizar URL no estado local e no contexto
       setAvatarUrl(publicUrl);
       updateProfileData({ avatarUrl: publicUrl });
+      
+      // Atualizar o perfil no banco de dados
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar: publicUrl })
+        .eq('id', user.id);
+      
+      if (updateError) throw updateError;
+      
+      // Também atualizar no contexto de autenticação
+      await updateUserProfile({ avatar: publicUrl });
       
       toast.success("Foto de perfil carregada com sucesso!");
       

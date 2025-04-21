@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -34,7 +35,7 @@ interface CompanyDetails {
 
 const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyTypeSelect, onCompanyCreated }) => {
   const { profileData, updateProfileData } = useOnboarding();
-  const { user } = useAuth();
+  const { user, updateUserProfile } = useAuth();
   const navigate = useNavigate();
   const [companyType, setCompanyType] = useState<'existing' | 'new'>(
     profileData.companyId ? 'existing' : 'new'
@@ -131,6 +132,7 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
 
         if (relationError) throw relationError;
 
+        // Atualizar perfil para remover flag de onboarding_incomplete
         const { error: profileError } = await supabase
           .from('profiles')
           .update({ 
@@ -140,13 +142,21 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
           .eq('id', user.id);
 
         if (profileError) throw profileError;
+        
+        // Atualizar perfil no contexto do Auth
+        await updateUserProfile({ 
+          is_admin: true,
+          interesses: (profileData.interests || []).filter(i => i !== 'onboarding_incomplete')
+        });
 
         toast.success("Empresa criada com sucesso!");
         
+        // Chamar callback se existir, caso contrário redirecionar diretamente
         if (onCompanyCreated) {
           onCompanyCreated();
         } else {
-          navigate("/");
+          // Garantir redirecionamento forçado para a homepage
+          navigate("/", { replace: true });
         }
       } else {
         if (!companyInfo) {

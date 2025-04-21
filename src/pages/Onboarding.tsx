@@ -7,7 +7,7 @@ import PhotoStep from "@/components/onboarding/steps/PhotoStep";
 import CompanyStep from "@/components/onboarding/steps/CompanyStep";
 import InterestsStep from "@/components/onboarding/steps/InterestsStep";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 
 const Onboarding = () => {
   return (
@@ -24,24 +24,29 @@ const Onboarding = () => {
 const OnboardingContent = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const { userProfile } = useAuth();
+  const navigate = useNavigate();
   const [isExistingCompany, setIsExistingCompany] = useState<boolean | null>(null);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
 
   const isUpdate = !userProfile?.interesses?.includes("onboarding_incomplete");
-  // Novo: totalSteps dinâmico com base na seleção de empresa
   const totalSteps = isExistingCompany ? 4 : 3;
 
-  // Step auto-avança/regressa conforme seleção de empresa
   useEffect(() => {
-    // Caso opção Empresa Existente seja selecionada, vá para o passo 4
     if (isExistingCompany && currentStep === 3) {
       setCurrentStep(4);
     }
-    // Caso Nova Empresa, volte ao passo 3 se já estamos no 4
     if (isExistingCompany === false && currentStep === 4) {
       setCurrentStep(3);
     }
   }, [isExistingCompany, currentStep]);
+  
+  // Se o usuário estiver logado e onboarding estiver completo, redirecionar imediatamente
+  useEffect(() => {
+    if (userProfile && !userProfile.interesses?.includes("onboarding_incomplete")) {
+      // Redirecionar para a página inicial se o onboarding já foi concluído
+      navigate("/", { replace: true });
+    }
+  }, [userProfile, navigate]);
 
   const nextStep = () => {
     if (currentStep < totalSteps) {
@@ -55,18 +60,17 @@ const OnboardingContent = () => {
     }
   };
 
-  // Quando selecionar tipo de empresa no CompanyStep, atualize isExistingCompany (Empresa existente: true, Nova: false)
   const handleCompanyChoice = (isExisting: boolean) => {
     setIsExistingCompany(isExisting);
   };
 
-  // Nova função para redirecionar após criar empresa
   const handleCompanyCreated = () => {
     setOnboardingComplete(true);
   };
 
-  // Se onboarding finalizado, redirecionar para a homepage
+  // Redirecionamento direto se o onboarding foi completado (via criação de empresa)
   if (onboardingComplete) {
+    console.log("Onboarding complete, redirecting to home");
     return <Navigate to="/" replace />;
   }
 
@@ -98,7 +102,6 @@ const OnboardingContent = () => {
             onCompanyCreated={handleCompanyCreated}
           />
         )}
-        {/* Só mostra o passo 4 se isExistingCompany for true! */}
         {currentStep === 4 && isExistingCompany && (
           <InterestsStep onBack={prevStep} />
         )}
