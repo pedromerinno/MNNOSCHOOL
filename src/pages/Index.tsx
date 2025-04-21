@@ -51,6 +51,18 @@ const Index = () => {
   const { getInitialSelectedCompany } = useCompanyCache();
   const navigate = useNavigate();
   
+  // Debug logging to track state
+  useEffect(() => {
+    console.log("[Index] Current state:", {
+      isPageLoading,
+      showCompanyForm,
+      userCompaniesCount: userCompanies?.length || 0,
+      isLoading,
+      fetchCount,
+      hasSelectedCompany: !!selectedCompany,
+    });
+  }, [isPageLoading, showCompanyForm, userCompanies, isLoading, fetchCount, selectedCompany]);
+  
   // Verificar necessidade de onboarding
   useEffect(() => {
     if (!user) return;
@@ -65,23 +77,38 @@ const Index = () => {
   // Verificação imediata do cache para evitar o skeleton se já temos dados
   const hasCachedCompany = getInitialSelectedCompany() !== null;
   
-  // MODIFICAÇÃO: Melhorar controle do estado de carregamento da página
-  // Não mostrar formulário de criação de empresa até termos certeza que os dados foram carregados
+  // Força carregamento inicial uma vez
+  useEffect(() => {
+    if (user?.id && !isLoading && fetchCount === 0) {
+      console.log("[Index] Iniciando carregamento inicial forçado de empresas");
+      forceGetUserCompanies(user.id).catch(err => {
+        console.error("[Index] Erro no carregamento inicial forçado:", err);
+      });
+    }
+  }, [user?.id, isLoading, fetchCount, forceGetUserCompanies]);
+  
+  // Melhorar controle do estado de carregamento da página
   useEffect(() => {
     // Se já temos empresa em cache, reduzir tempo de loading
     if (hasCachedCompany) {
-      // Tempo muito reduzido para acelerar a transição
+      console.log("[Index] Empresa encontrada em cache, acelerando transição");
       setTimeout(() => setIsPageLoading(false), 50);
       return;
     }
     
     // Verificar se já carregamos os dados e podemos tomar uma decisão
-    if ((fetchCount > 0 && !isLoading) || selectedCompany) {
+    if (!isLoading && fetchCount > 0) {
+      console.log("[Index] Dados carregados, verificando empresas:", {
+        userCompaniesCount: userCompanies?.length || 0,
+        hasSelectedCompany: !!selectedCompany
+      });
+      
+      // Importante: Definir primeiro isPageLoading como false, antes de decidir sobre showCompanyForm
       setIsPageLoading(false);
       
-      // IMPORTANTE: Só mostrar formulário de empresa quando temos certeza que não há empresas
+      // Só mostrar formulário de empresa quando temos certeza que não há empresas
       // E os dados já estão completamente carregados
-      if (fetchCount > 0 && userCompanies.length === 0 && !selectedCompany) {
+      if (userCompanies.length === 0 && !selectedCompany) {
         console.log("[Index] Carregamento completo: usuário não tem empresas, mostrando formulário");
         setShowCompanyForm(true);
       } else {
@@ -90,79 +117,44 @@ const Index = () => {
       }
     }
     
-    // Timeout de segurança para evitar loading infinito (mantendo a mesma lógica)
+    // Timeout de segurança para evitar loading infinito
     const timeoutId = setTimeout(() => {
       if (isPageLoading) {
         console.log("[Index] Finalizando loading por timeout de segurança");
         setIsPageLoading(false);
         
         // Verificar se deve mostrar formulário após timeout - apenas se dados estiverem carregados
-        if (fetchCount > 0 && userCompanies.length === 0) {
+        if (fetchCount > 0 && userCompanies.length === 0 && !selectedCompany) {
           console.log("[Index] Após timeout: usuário não tem empresas, mostrando formulário");
           setShowCompanyForm(true);
         } else {
-          console.log("[Index] Após timeout: mantendo estado atual do formulário");
+          console.log("[Index] Após timeout: usuário tem empresas ou não temos dados suficientes");
+          setShowCompanyForm(false);
         }
       }
     }, 2000); // 2 segundos de timeout
     
     return () => clearTimeout(timeoutId);
-  }, [isLoading, fetchCount, selectedCompany, isPageLoading, hasCachedCompany, userCompanies.length]);
-
-  // Carregamento inicial forçado
-  useEffect(() => {
-    if (user?.id && userCompanies.length === 0 && !isLoading) {
-      console.log("[Index] Forçando carregamento inicial de empresas");
-      getUserCompanies(user.id, true).catch(err => {
-        console.error("[Index] Erro no carregamento inicial:", err);
-      });
-    }
-  }, [user?.id, getUserCompanies, userCompanies.length, isLoading]);
-
-  // Efeito para tentar recarregar empresas quando não temos nenhuma
-  useEffect(() => {
-    if (user && !isLoading && userCompanies.length === 0 && fetchCount > 0) {
-      console.log("[Index] Usuário não tem empresas após carregamento. Verificando se precisa tentar novamente...");
-      
-      if (!userProfile?.interesses?.includes("onboarding_incomplete")) {
-        console.log("[Index] Usuário não tem flag de onboarding incompleto mas não tem empresas. Tentando uma vez mais...");
-        
-        // Tentar forçar o carregamento de empresas uma vez mais
-        if (user.id) {
-          forceGetUserCompanies(user.id).then(companies => {
-            if (companies.length === 0) {
-              console.log("[Index] Mesmo após segunda tentativa, não há empresas. Mostrando formulário de cadastro...");
-              setShowCompanyForm(true);
-            } else {
-              toast.success("Empresas carregadas com sucesso!");
-              setShowCompanyForm(false);
-            }
-          }).catch(err => {
-            console.error("[Index] Erro ao tentar forçar carregamento de empresas:", err);
-          });
-        }
-      }
-    }
-  }, [user, userProfile, isLoading, userCompanies, fetchCount, forceGetUserCompanies]);
+  }, [isLoading, fetchCount, selectedCompany, isPageLoading, hasCachedCompany, userCompanies]);
 
   const handleCompanyCreated = async () => {
     toast.success("Empresa criada com sucesso!");
     setShowCompanyForm(false);
     
     if (user?.id) {
+      console.log("[Index] Empresa criada, forçando recarregamento de empresas");
       await forceGetUserCompanies(user.id);
     }
   };
 
   // IMPORTANTE: Mostrar loading state durante o carregamento
-  // Não mostrar formulário ou componente enquanto está carregando
-  if (isPageLoading || (user && isLoading && userCompanies.length === 0)) {
+  if (isPageLoading) {
     console.log("[Index] Mostrando estado de carregamento");
     return <LoadingState />;
   }
 
-  // Mostrar formulário de cadastro quando não há empresas, MAS APENAS após o carregamento
-  if (user && !isLoading && showCompanyForm) {
+  // Mostrar formulário de cadastro apenas quando temos certeza que não há empresas
+  if (showCompanyForm) {
     console.log("[Index] Renderizando formulário de cadastro de empresa");
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -181,7 +173,7 @@ const Index = () => {
   }
 
   // Mostrar NoCompaniesAvailable quando terminamos de carregar e não há empresas
-  if (user && !isLoading && userCompanies.length === 0 && !showCompanyForm) {
+  if (userCompanies.length === 0 && fetchCount > 0) {
     console.log("[Index] Renderizando componente de sem empresas disponíveis");
     return (
       <Suspense fallback={<LoadingState />}>
