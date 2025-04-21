@@ -45,8 +45,6 @@ const CompanyStepForm: React.FC<CompanyStepFormProps> = ({
 
   const handleInitialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
-
     console.log("Form submitted with company type:", companyType);
     console.log("Company ID:", companyId);
     console.log("Company details:", companyDetails);
@@ -131,27 +129,24 @@ const CompanyStepForm: React.FC<CompanyStepFormProps> = ({
         toast.success("Empresa criada com sucesso!");
         window.location.href = `/company/${newCompany.id}`;
       } else {
-        if (!companyInfo && companyId) {
-          await handleCompanyLookup(null, true);
-          await new Promise((resolve) => setTimeout(resolve, 100));
-        }
-
-        if (!companyInfo && !companyLoading) {
-          setError("Empresa não encontrada com este ID");
+        // For existing company, simplified logic
+        console.log("Existing company selected with ID:", companyId);
+        
+        if (!companyId) {
+          setError("ID da empresa é obrigatório");
           setIsSubmitting(false);
           return;
         }
-
-        console.log("Updating profile data with company ID:", companyId);
         
+        // Update profile data with company ID
         updateProfileData({
           companyId,
           newCompanyName: null,
           companyDetails: null
         });
         
-        console.log("Navigating to next step");
-        onNext();
+        console.log("Moving to next step");
+        onNext(); // This should trigger navigation to the next step
       }
     } catch (error: any) {
       console.error("Error in form submission:", error);

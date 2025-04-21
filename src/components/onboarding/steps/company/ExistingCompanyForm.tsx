@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CompanyInfo {
   id: string;
@@ -47,8 +47,13 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
   const handleBlur = async () => {
     if (onCompanyLookup) {
       setLookupPending(true);
-      const res = await fetchCompany(companyId);
-      onCompanyLookup(res, false);
+      try {
+        const res = await fetchCompany(companyId);
+        onCompanyLookup(res, false);
+      } catch (error) {
+        console.error("Error looking up company:", error);
+        onCompanyLookup(null, false);
+      }
       setLookupPending(false);
     }
   };
@@ -57,10 +62,16 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
   const fetchCompany = async (id: string): Promise<CompanyInfo | null> => {
     if (!id || id.length < 10) return null;
     try {
-      const { data } = await fetch("/api/companies/lookup?id=" + id).then(res => res.json());
-      if (!data) return null;
+      const { data, error } = await supabase
+        .from("empresas")
+        .select("id, nome, logo")
+        .eq("id", id)
+        .maybeSingle();
+        
+      if (error) throw error;
       return data as CompanyInfo;
-    } catch {
+    } catch (error) {
+      console.error("Error fetching company:", error);
       return null;
     }
   };
@@ -87,7 +98,7 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
         value={companyId}
         onChange={e => handleInputChange(e.target.value)}
         onBlur={handleBlur}
-        className="border-b border-gray-300 rounded-md px-3 py-2 focus-visible:ring-merinno-dark"
+        className="border-b border-gray-300 rounded-md px-3 py-2 focus-visible:ring-black"
         placeholder="Digite o ID da empresa"
       />
     </div>

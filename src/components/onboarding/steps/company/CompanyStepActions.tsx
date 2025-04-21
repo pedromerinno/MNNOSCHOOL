@@ -21,7 +21,7 @@ const CompanyStepActions: React.FC<CompanyStepActionsProps> = ({
   <div className="pt-4 flex flex-col gap-3">
     <Button 
       type="submit" 
-      className="w-full rounded-md bg-merinno-dark hover:bg-black text-white"
+      className="w-full rounded-md bg-black hover:bg-black/80 text-white"
       disabled={isSubmitting || (companyType === 'existing' && !companyInfo && !companyLoading)}
     >
       {isSubmitting

@@ -9,11 +9,15 @@ interface CompanyStepProps {
   onCompanyTypeSelect: (isExisting: boolean) => void;
 }
 
-const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyTypeSelect }) => {
+const CompanyStep: React.FC<CompanyStepProps> = ({ 
+  onNext, 
+  onBack, 
+  onCompanyTypeSelect 
+}) => {
   const [companyType, setCompanyType] = useState<"existing" | "new">("existing");
   
   const handleTypeChange = (type: "existing" | "new") => {
-    console.log("Company type changed in parent:", type);
+    console.log("Company type changed in CompanyStep:", type);
     setCompanyType(type);
     onCompanyTypeSelect(type === "existing");
   };
