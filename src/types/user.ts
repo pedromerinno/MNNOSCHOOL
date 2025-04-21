@@ -8,4 +8,5 @@ export interface UserProfile {
   avatar?: string | null;
   cargo_id?: string | null;
   interesses?: string[] | null;  // Adicionado o campo de interesses
+  primeiro_login?: boolean | null; // Adicionado o campo primeiro_login
 }
