@@ -1,3 +1,4 @@
+
 import { useState, useEffect, lazy, Suspense, useRef } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -5,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCompanyCache } from "@/hooks/company/useCompanyCache";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import CompanyStep from "@/components/onboarding/steps/CompanyStep";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
 
@@ -57,7 +58,13 @@ const Index = () => {
     setShowCompanyDialog(false);
     if (user?.id) {
       forceGetUserCompanies(user.id);
+      toast.success("Empresa criada com sucesso!");
     }
+  };
+  
+  const handleCompanyTypeSelect = (isExisting: boolean) => {
+    // This is needed for the CompanyStep component
+    console.log("[Index] Company type selected:", isExisting ? "existing" : "new");
   };
   
   useEffect(() => {
@@ -152,13 +159,20 @@ const Index = () => {
       <>
         <Dialog open={showCompanyDialog} onOpenChange={setShowCompanyDialog}>
           <DialogContent className="max-w-2xl p-0 h-[90vh] overflow-hidden flex flex-col">
+            <DialogTitle className="sr-only">Configuração de Empresa</DialogTitle>
             <div className="bg-white rounded-t-lg flex-1 overflow-auto">
               <div className="p-6 md:p-8">
                 <OnboardingProvider>
                   <CompanyStep 
-                    onNext={() => {}} 
+                    onNext={() => {
+                      console.log("[Index] CompanyStep onNext called");
+                      setShowCompanyDialog(false);
+                      if (user?.id) {
+                        forceGetUserCompanies(user.id);
+                      }
+                    }}
                     onBack={() => setShowCompanyDialog(false)}
-                    onCompanyTypeSelect={() => {}}
+                    onCompanyTypeSelect={handleCompanyTypeSelect}
                     onCompanyCreated={handleCompanyCreated}
                   />
                 </OnboardingProvider>
