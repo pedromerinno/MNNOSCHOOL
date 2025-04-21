@@ -1,184 +1,41 @@
 
-import { useState, useEffect, lazy, Suspense, useRef } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useCompanies } from "@/hooks/useCompanies";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCompanies } from "@/hooks/useCompanies";
 import { useCompanyCache } from "@/hooks/company/useCompanyCache";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import CompanyStep from "@/components/onboarding/steps/CompanyStep";
-import { OnboardingProvider } from "@/contexts/OnboardingContext";
+import { LoadingHome } from "@/components/home/LoadingHome";
+import { CompanyCreationDialog } from "@/components/home/CompanyCreationDialog";
+import { useCompanyDialog } from "@/hooks/home/useCompanyDialog";
+import { useCompanyInitialization } from "@/hooks/home/useCompanyInitialization";
 
 const NoCompaniesAvailable = lazy(() => import("@/components/home/NoCompaniesAvailable").then(module => ({ default: module.NoCompaniesAvailable })));
 const UserHome = lazy(() => import("@/components/home/UserHome").then(module => ({ default: module.UserHome })));
 
-const LoadingState = () => (
-  <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-    <div className="w-full max-w-3xl space-y-8">
-      <div className="flex flex-col items-center gap-4">
-        <Skeleton className="h-10 w-40 rounded-full" />
-        <Skeleton className="h-4 w-60 rounded-full" />
-      </div>
-      
-      <div className="space-y-6">
-        <div className="space-y-3">
-          <Skeleton className="h-8 w-48 rounded-lg" />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-40 w-full rounded-xl" />
-            ))}
-          </div>
-        </div>
-        
-        <div className="space-y-3">
-          <Skeleton className="h-8 w-64 rounded-lg" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-28 w-full rounded-xl" />
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
 const Index = () => {
   const [isPageLoading, setIsPageLoading] = useState(true);
-  const [showCompanyDialog, setShowCompanyDialog] = useState(false);
-  const { userCompanies, isLoading, fetchCount, selectedCompany, getUserCompanies, forceGetUserCompanies } = useCompanies();
-  const { user, userProfile } = useAuth();
-  const { getInitialSelectedCompany, clearCachedUserCompanies } = useCompanyCache();
-  const navigate = useNavigate();
-  const hasAttemptedForceLoad = useRef(false);
-  const hasRedirectedToOnboarding = useRef(false);
-  const lastCacheCheckTime = useRef(Date.now());
-  const cacheCheckInterval = 5 * 60 * 1000; // 5 minutes
-  const eventHandlersRegistered = useRef(false);
-
-  const handleCompanyCreated = () => {
-    setShowCompanyDialog(false);
-    if (user?.id) {
-      forceGetUserCompanies(user.id);
-      toast.success("Company created successfully!");
-    }
-  };
-  
-  const handleCompanyTypeSelect = (isExisting: boolean) => {
-    console.log("[Index] Company type selected:", isExisting ? "existing" : "new");
-  };
-  
-  // Periodic cache check with refresh rate limiting
-  useEffect(() => {
-    const now = Date.now();
-    if (now - lastCacheCheckTime.current > cacheCheckInterval) {
-      console.log("[Index] Cache expired, forcing data refresh");
-      lastCacheCheckTime.current = now;
-      clearCachedUserCompanies();
-      if (user?.id && !hasAttemptedForceLoad.current) {
-        hasAttemptedForceLoad.current = true;
-        forceGetUserCompanies(user.id).finally(() => {
-          // Reset the flag after a delay to allow future refreshes
-          setTimeout(() => {
-            hasAttemptedForceLoad.current = false;
-          }, 10000);
-        });
-      }
-    }
-  }, [clearCachedUserCompanies, forceGetUserCompanies, user]);
-  
-  // Register event handlers only once
-  useEffect(() => {
-    if (eventHandlersRegistered.current) return;
-    
-    const handleCompanyUpdate = () => {
-      console.log("[Index] Received company update event, refreshing data");
-      if (user?.id && !hasAttemptedForceLoad.current) {
-        hasAttemptedForceLoad.current = true;
-        forceGetUserCompanies(user.id).finally(() => {
-          // Reset the flag after a delay to allow future refreshes
-          setTimeout(() => {
-            hasAttemptedForceLoad.current = false;
-          }, 10000);
-        });
-      }
-    };
-    
-    window.addEventListener('company-updated', handleCompanyUpdate);
-    window.addEventListener('company-selected', handleCompanyUpdate);
-    window.addEventListener('company-relation-changed', handleCompanyUpdate);
-    
-    eventHandlersRegistered.current = true;
-    
-    return () => {
-      window.removeEventListener('company-updated', handleCompanyUpdate);
-      window.removeEventListener('company-selected', handleCompanyUpdate);
-      window.removeEventListener('company-relation-changed', handleCompanyUpdate);
-    };
-  }, [forceGetUserCompanies, user]);
-  
-  // Handle onboarding and company creation
-  useEffect(() => {
-    if (!user) return;
-    
-    if (userProfile?.interesses?.includes("onboarding_incomplete")) {
-      console.log("[Index] User needs to complete onboarding, redirecting...");
-      navigate("/onboarding", { replace: true });
-      return;
-    }
-    
-    if (user && !isLoading && userCompanies.length === 0 && fetchCount > 0) {
-      console.log("[Index] User does not have companies after loading. Checking if onboarding is needed...");
-      
-      if (!userProfile?.interesses?.includes("onboarding_incomplete")) {
-        console.log("[Index] User does not have onboarding incomplete flag but does not have companies. Trying to force load...");
-        
-        if (!hasAttemptedForceLoad.current && user.id) {
-          hasAttemptedForceLoad.current = true;
-          
-          forceGetUserCompanies(user.id)
-            .then(companies => {
-              if (companies.length === 0) {
-                if (!hasRedirectedToOnboarding.current) {
-                  console.log("[Index] Even after forcing load, no companies. Opening company creation dialog...");
-                  setShowCompanyDialog(true);
-                }
-              } else {
-                toast.success("Companies loaded successfully!");
-              }
-            })
-            .catch(err => {
-              console.error("[Index] Error while trying to force load companies:", err);
-            })
-            .finally(() => {
-              // Reset the flag after a delay
-              setTimeout(() => {
-                hasAttemptedForceLoad.current = false;
-              }, 10000);
-            });
-        }
-      }
-    }
-  }, [user, userProfile, navigate, isLoading, userCompanies, fetchCount, forceGetUserCompanies]);
-
-  // Show company dialog for users with no companies
-  useEffect(() => {
-    if (user && !isLoading && userCompanies.length === 0 && fetchCount > 0 && !hasRedirectedToOnboarding.current) {
-      setShowCompanyDialog(true);
-    }
-  }, [user, isLoading, userCompanies.length, fetchCount]);
-  
+  const { user } = useAuth();
+  const { userCompanies, isLoading, selectedCompany } = useCompanies();
+  const { getInitialSelectedCompany } = useCompanyCache();
   const hasCachedCompany = getInitialSelectedCompany() !== null;
   
-  // Page loading state management
+  const {
+    showCompanyDialog,
+    setShowCompanyDialog,
+    handleCompanyCreated,
+    handleCompanyTypeSelect
+  } = useCompanyDialog();
+
+  // Initialize company data
+  useCompanyInitialization(setShowCompanyDialog);
+  
+  // Handle page loading state
   useEffect(() => {
     if (hasCachedCompany) {
       setTimeout(() => setIsPageLoading(false), 50);
       return;
     }
     
-    if (selectedCompany || (fetchCount > 0 && !isLoading)) {
+    if (selectedCompany || (!isLoading && hasCachedCompany)) {
       setIsPageLoading(false);
     }
     
@@ -190,30 +47,12 @@ const Index = () => {
     }, 2000);
     
     return () => clearTimeout(timeoutId);
-  }, [isLoading, fetchCount, selectedCompany, isPageLoading, hasCachedCompany]);
-
-  // Initial data load - but only once
-  useEffect(() => {
-    if (user?.id && userCompanies.length === 0 && !isLoading && !hasAttemptedForceLoad.current) {
-      console.log("[Index] Forcing initial company load");
-      hasAttemptedForceLoad.current = true;
-      getUserCompanies(user.id, true)
-        .catch(err => {
-          console.error("[Index] Error in initial load:", err);
-        })
-        .finally(() => {
-          // Reset the flag after a delay
-          setTimeout(() => {
-            hasAttemptedForceLoad.current = false;
-          }, 10000);
-        });
-    }
-  }, [user?.id, getUserCompanies, userCompanies.length, isLoading]);
+  }, [isLoading, selectedCompany, isPageLoading, hasCachedCompany]);
 
   if (hasCachedCompany && !isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <Suspense fallback={<LoadingState />}>
+        <Suspense fallback={<LoadingHome />}>
           <UserHome />
         </Suspense>
       </div>
@@ -221,38 +60,21 @@ const Index = () => {
   }
 
   if ((isPageLoading && !hasCachedCompany) || (user && isLoading && !hasCachedCompany)) {
-    return <LoadingState />;
+    return <LoadingHome />;
   }
 
   if (user && !isLoading && userCompanies.length === 0) {
     return (
       <>
-        <Dialog open={showCompanyDialog} onOpenChange={setShowCompanyDialog}>
-          <DialogContent className="max-w-2xl p-0 h-[90vh] overflow-hidden flex flex-col">
-            <DialogTitle className="sr-only">Configuration of Company</DialogTitle>
-            <div className="bg-white rounded-t-lg flex-1 overflow-auto">
-              <div className="p-6 md:p-8">
-                <OnboardingProvider>
-                  <CompanyStep 
-                    onNext={() => {
-                      console.log("[Index] CompanyStep onNext called");
-                      setShowCompanyDialog(false);
-                      if (user?.id) {
-                        forceGetUserCompanies(user.id);
-                      }
-                    }}
-                    onBack={() => setShowCompanyDialog(false)}
-                    onCompanyTypeSelect={handleCompanyTypeSelect}
-                    onCompanyCreated={handleCompanyCreated}
-                  />
-                </OnboardingProvider>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <CompanyCreationDialog
+          open={showCompanyDialog}
+          onOpenChange={setShowCompanyDialog}
+          onCompanyCreated={handleCompanyCreated}
+          onCompanyTypeSelect={handleCompanyTypeSelect}
+        />
         
         <div className="min-h-screen bg-background">
-          <Suspense fallback={<LoadingState />}>
+          <Suspense fallback={<LoadingHome />}>
             <NoCompaniesAvailable />
           </Suspense>
         </div>
@@ -262,7 +84,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Suspense fallback={<LoadingState />}>
+      <Suspense fallback={<LoadingHome />}>
         <UserHome />
       </Suspense>
     </div>
