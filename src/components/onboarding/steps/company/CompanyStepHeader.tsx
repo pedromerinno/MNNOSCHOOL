@@ -1,13 +1,20 @@
 
 import React from "react";
+import CompanyTypeSelector from "./CompanyTypeSelector";
 
-const CompanyStepHeader: React.FC = () => (
-  <div className="space-y-2">
-    <h2 className="text-xl font-medium">Sobre sua empresa</h2>
-    <p className="text-gray-500 text-sm">
-      Você faz parte de uma empresa existente ou deseja criar uma nova?
-    </p>
-  </div>
+interface CompanyStepHeaderProps {
+  companyType: "existing" | "new";
+  onTypeChange: (type: "existing" | "new") => void;
+}
+
+const CompanyStepHeader: React.FC<CompanyStepHeaderProps> = ({
+  companyType,
+  onTypeChange,
+}) => (
+  <CompanyTypeSelector
+    companyType={companyType}
+    onTypeChange={onTypeChange}
+  />
 );
 
 export default CompanyStepHeader;
