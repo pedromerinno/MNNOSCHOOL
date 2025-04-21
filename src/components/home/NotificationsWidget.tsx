@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useCompanyNotices } from "@/hooks/useCompanyNotices";
 import { useAuth } from "@/contexts/AuthContext";
-import { format, formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 import { pt } from "date-fns/locale";
 import { useState } from "react";
 import NewNoticeDialog from "../admin/dialogs/NewNoticeDialog";
@@ -75,7 +75,7 @@ export const NotificationsWidget = () => {
           </div>
         </div>
         
-        <div className="px-12 pb-8 flex-1">
+        <div className="px-12 flex-1"> {/* Removido pb-8 */}
           {isLoading ? (
             <div className="flex items-center justify-center h-40">
               <div className="animate-pulse text-gray-400">Carregando avisos...</div>
@@ -91,7 +91,7 @@ export const NotificationsWidget = () => {
               </div>
             </div>
           ) : (
-            <div className="mb-8">
+            <div> {/* Removido mb-8 */}
               <span className="inline-block px-6 py-1.5 rounded-full bg-amber-100 dark:bg-amber-900/50 text-yellow-700 dark:text-amber-100 text-xs font-semibold mb-4">
                 {currentNotice.type.charAt(0).toUpperCase() + currentNotice.type.slice(1)}
               </span>
@@ -140,3 +140,4 @@ export const NotificationsWidget = () => {
     </Card>
   );
 };
+
