@@ -20,13 +20,11 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
   onCompanyIdChange,
   onCompanyLookup,
 }) => {
-  const [localId, setLocalId] = useState(companyId);
   const [lookupPending, setLookupPending] = useState(false);
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
 
   // Para debounce enquanto o usuário digita
   const handleInputChange = (value: string) => {
-    setLocalId(value);
     onCompanyIdChange(value);
     
     if (onCompanyLookup) {
@@ -49,7 +47,7 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
   const handleBlur = async () => {
     if (onCompanyLookup) {
       setLookupPending(true);
-      const res = await fetchCompany(localId);
+      const res = await fetchCompany(companyId);
       onCompanyLookup(res, false);
       setLookupPending(false);
     }
@@ -68,8 +66,6 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
   };
 
   useEffect(() => {
-    setLocalId(companyId);
-    
     // Se já temos um ID válido ao montar o componente, buscar imediatamente
     if (companyId && companyId.length >= 10 && onCompanyLookup) {
       handleBlur();
@@ -79,7 +75,7 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
       // Limpa qualquer timer pendente ao desmontar
       if (debounceTimer) clearTimeout(debounceTimer);
     };
-  }, [companyId]);
+  }, []);
 
   return (
     <div className="space-y-3">
@@ -88,7 +84,7 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
       </label>
       <Input
         id="companyId"
-        value={localId}
+        value={companyId}
         onChange={e => handleInputChange(e.target.value)}
         onBlur={handleBlur}
         className="border-b border-gray-300 rounded-md px-3 py-2 focus-visible:ring-merinno-dark"
