@@ -1,5 +1,5 @@
 
-import { CompanyStep } from "@/components/onboarding/steps/CompanyStep";
+import CompanyStep from "@/components/onboarding/steps/CompanyStep";
 import { toast } from "sonner";
 
 interface CompanyFormSectionProps {
@@ -27,4 +27,3 @@ export const CompanyFormSection = ({ onCompanyCreated }: CompanyFormSectionProps
     </div>
   );
 };
-
