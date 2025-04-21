@@ -92,7 +92,10 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
     
     // Force refresh companies data
     if (user?.id) {
-      forceGetUserCompanies(user.id).catch(err => {
+      forceGetUserCompanies(user.id).then(() => {
+        // Reload page to ensure UI is updated with the new company
+        window.location.reload();
+      }).catch(err => {
         console.error('Error refreshing companies data:', err);
       });
     }

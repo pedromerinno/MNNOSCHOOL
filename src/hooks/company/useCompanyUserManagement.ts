@@ -46,6 +46,7 @@ export const useCompanyUserManagement = () => {
       // Trigger company relation change event
       console.log('Dispatching company-relation-changed event');
       window.dispatchEvent(new Event('company-relation-changed'));
+      window.dispatchEvent(new CustomEvent('company-relation-changed'));
       
       return true;
     } catch (error) {
@@ -74,6 +75,7 @@ export const useCompanyUserManagement = () => {
       // Trigger company relation change event
       console.log('Dispatching company-relation-changed event');
       window.dispatchEvent(new Event('company-relation-changed'));
+      window.dispatchEvent(new CustomEvent('company-relation-changed'));
       
       return true;
     } catch (error) {

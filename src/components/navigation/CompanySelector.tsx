@@ -67,10 +67,20 @@ export const CompanySelector = memo(() => {
     setDisplayName(company.nome);
     localStorage.setItem('selectedCompanyName', company.nome);
     localStorage.setItem('selectedCompanyId', company.id);
+    localStorage.setItem('selectedCompany', JSON.stringify(company));
     toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
     
+    // Dispatch custom event
+    window.dispatchEvent(
+      new CustomEvent('company-selected', { 
+        detail: { company, userId: user.id } 
+      })
+    );
+    
     // Reload page to ensure all components reflect the new company
-    window.location.reload();
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
   }, [user?.id, selectedCompany?.id, selectCompany, userCompanies, setDisplayName]);
 
   if (isLoading && !selectedCompany) {
@@ -89,6 +99,7 @@ export const CompanySelector = memo(() => {
       setDisplayName(userCompanies[0].nome);
       localStorage.setItem('selectedCompanyName', userCompanies[0].nome);
       localStorage.setItem('selectedCompanyId', userCompanies[0].id);
+      localStorage.setItem('selectedCompany', JSON.stringify(userCompanies[0]));
     }
     return <CompanyName displayName={displayName || userCompanies[0].nome} />;
   }

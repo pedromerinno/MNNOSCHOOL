@@ -31,12 +31,7 @@ export const useCompanyEvents = ({
         setDisplayName(companies[0].nome);
         localStorage.setItem('selectedCompanyId', companies[0].id);
         localStorage.setItem('selectedCompanyName', companies[0].nome);
-      }
-      
-      // Reload page to ensure UI is updated with the new company
-      if (companies && companies.length > 0) {
-        console.log("[useCompanyEvents] Reloading page to ensure UI is updated");
-        window.location.reload();
+        localStorage.setItem('selectedCompany', JSON.stringify(companies[0]));
       }
     } catch (error) {
       console.error('[useCompanyEvents] Error handling company relation change:', error);
@@ -44,7 +39,7 @@ export const useCompanyEvents = ({
   }, [userId, forceGetUserCompanies, setDisplayName]);
 
   useEffect(() => {
-    // Listen for both the custom event and the CustomEvent
+    // Listen for both the custom event and the standard Event
     const handleEvent = () => {
       console.log('[useCompanyEvents] Company relation change event detected');
       handleCompanyRelationChange();
@@ -52,8 +47,20 @@ export const useCompanyEvents = ({
     
     window.addEventListener('company-relation-changed', handleEvent);
     
+    // Also listen for company-selected events
+    const handleCompanySelected = (event: any) => {
+      const company = event.detail?.company;
+      console.log('[useCompanyEvents] Company selected event detected', company?.nome || '');
+      if (company?.nome) {
+        setDisplayName(company.nome);
+      }
+    };
+    
+    window.addEventListener('company-selected', handleCompanySelected);
+    
     return () => {
       window.removeEventListener('company-relation-changed', handleEvent);
+      window.removeEventListener('company-selected', handleCompanySelected);
     };
-  }, [handleCompanyRelationChange]);
+  }, [handleCompanyRelationChange, setDisplayName]);
 };

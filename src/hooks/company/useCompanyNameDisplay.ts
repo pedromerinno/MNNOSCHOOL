@@ -15,6 +15,7 @@ export const useCompanyNameDisplay = (selectedCompany: Company | null) => {
       setDisplayName(selectedCompany.nome);
       localStorage.setItem('selectedCompanyName', selectedCompany.nome);
       localStorage.setItem('selectedCompanyId', selectedCompany.id);
+      localStorage.setItem('selectedCompany', JSON.stringify(selectedCompany));
     } else {
       // If no company is selected, check for cached company name
       const cachedCompanyName = localStorage.getItem('selectedCompanyName');
