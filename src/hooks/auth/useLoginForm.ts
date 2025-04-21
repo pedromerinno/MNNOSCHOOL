@@ -18,9 +18,9 @@ export const useLoginForm = () => {
     
     try {
       // Limpar cache relacionado a empresas para garantir dados frescos
-      clearCache('userCompanies');
-      clearCache('selectedCompany');
-      clearCache('selectedCompanyId');
+      clearCache({ key: 'userCompanies' });
+      clearCache({ key: 'selectedCompany' });
+      clearCache({ key: 'selectedCompanyId' });
       
       const { data, error } = await signInWithPassword(email, password);
       if (error) throw error;
