@@ -44,8 +44,6 @@ export const NewCourseDialog: React.FC<NewCourseDialogProps> = ({ open, onOpenCh
         <DialogHeader>
           <DialogTitle>Novo Curso</DialogTitle>
         </DialogHeader>
-        {/* Removido logo e nome da empresa */}
-        {/* Seletor de empresa sempre visível */}
         <div className="mb-4">
           <Label>Empresa</Label>
           <Select 
@@ -63,7 +61,7 @@ export const NewCourseDialog: React.FC<NewCourseDialogProps> = ({ open, onOpenCh
                       <img
                         src={company.logo}
                         alt={company.nome}
-                        className="h-4 w-4 mr-2 object-contain rounded-lg"
+                        className="h-4 w-4 mr-2 object-contain rounded-full"
                       />
                     )}
                     <span>{company.nome}</span>
@@ -79,6 +77,7 @@ export const NewCourseDialog: React.FC<NewCourseDialogProps> = ({ open, onOpenCh
           isSubmitting={isSubmitting}
           onClose={() => onOpenChange(false)}
           preselectedCompanyId={selectedCompany?.id}
+          showCompanySelector={false} // Hide the second company selector
         />
       </DialogContent>
     </Dialog>
