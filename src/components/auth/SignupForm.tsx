@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +10,6 @@ export const SignupForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [companyId, setCompanyId] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
   const { signUp } = useAuth();
@@ -39,9 +39,7 @@ export const SignupForm = () => {
     setIsRegistering(true);
     
     try {
-      const metadataWithCompany = companyId 
-        ? { interests: ["onboarding_incomplete"], companyId } 
-        : { interests: ["onboarding_incomplete"] };
+      const metadataWithCompany = { interests: ["onboarding_incomplete"] };
       
       await signUp(email, password, email.split('@')[0], metadataWithCompany);
       console.log("Usuario cadastrado com sucesso! Perfil será criado automaticamente.");
@@ -101,16 +99,6 @@ export const SignupForm = () => {
           )}
         </div>
         
-        <div>
-          <Input
-            type="text"
-            value={companyId}
-            onChange={(e) => setCompanyId(e.target.value)}
-            placeholder="ID da empresa (opcional)"
-            className="w-full h-12 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
-        
         <Button
           type="submit"
           disabled={isRegistering}
@@ -159,3 +147,4 @@ export const SignupForm = () => {
     </div>
   );
 };
+
