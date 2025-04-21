@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCourseData } from '@/hooks/useCourseData';
@@ -34,7 +33,6 @@ export const CourseView: React.FC = () => {
   const { userProfile } = useAuth();
   const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
   
-  // Estado para controlar o diálogo de edição do curso
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -50,7 +48,6 @@ export const CourseView: React.FC = () => {
       await updateCourse(courseId, data);
       toast.success("Curso atualizado com sucesso");
       setIsEditDialogOpen(false);
-      // Recarregar a página para mostrar as mudanças
       window.location.reload();
     } catch (error) {
       console.error("Erro ao atualizar curso:", error);
@@ -58,6 +55,20 @@ export const CourseView: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const { userCompanies } = useCompanies();
+  const courseCompanyIds = userCompanies
+    .filter((c) => selectedCompany?.id === c.id)
+    .map((c) => c.id);
+
+  const initialFormData: CourseFormValues = {
+    title: course.title,
+    description: course.description || "",
+    image_url: course.image_url || "",
+    instructor: course.instructor || "",
+    tags: course.tags || [],
+    companyIds: courseCompanyIds,
   };
 
   if (loading) {
@@ -85,17 +96,6 @@ export const CourseView: React.FC = () => {
     ? `${hours}h ${minutes > 0 ? `${minutes} min` : ''}` 
     : `${minutes} min`;
 
-  // Preparar os dados iniciais para o formulário de edição
-  // Não precisamos passar o objeto course completo, apenas os campos necessários para o formulário
-  const initialFormData: CourseFormValues = {
-    title: course.title,
-    description: course.description || "",
-    image_url: course.image_url || "",
-    instructor: course.instructor || "",
-    tags: course.tags || [],
-    companyId: selectedCompany?.id || ""
-  };
-
   return (
     <div className="container max-w-7xl mx-auto px-4 py-8">
       <CourseHeader 
@@ -110,7 +110,7 @@ export const CourseView: React.FC = () => {
           instructor={course.instructor || ""}
           favorite={course.favorite || false}
           courseId={course.id}
-          firstLessonId={firstLessonId}
+          firstLessonId={course.lessons?.[0]?.id}
           showEditButton={isAdmin}
           onEditCourse={handleEditCourse}
         />
@@ -192,35 +192,38 @@ export const CourseView: React.FC = () => {
         </div>
         
         <div className="w-full md:w-4/12 mt-8 md:mt-0 relative">
-          {isAdmin && (
-            <div className="mb-6">
-              <Button 
-                className="bg-primary text-white shadow-lg gap-2 rounded-xl w-full font-bold text-base py-3"
-                onClick={() => setShowLessonManager(true)}
-                variant="default"
-                size="lg"
-                aria-label="Gerenciar aulas"
-              >
-                <Plus className="w-5 h-5" />
-                Gerenciar aulas
-              </Button>
-              <LessonManager
-                courseId={course.id}
-                courseTitle={course.title}
-                open={showLessonManager}
-                onClose={() => setShowLessonManager(false)}
-              />
+          <div className="space-y-4 mt-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-bold">Aulas do Curso</h3>
+              {isAdmin && (
+                <Button 
+                  className="bg-primary text-white gap-2 rounded-xl font-bold text-base py-3 shadow-none"
+                  onClick={() => setShowLessonManager(true)}
+                  variant="default"
+                  size="lg"
+                  aria-label="Gerenciar aulas"
+                >
+                  <span className="inline-flex items-center gap-1">
+                    <span>Gerenciar aulas</span>
+                  </span>
+                </Button>
+              )}
             </div>
-          )}
-          <CourseLessonList 
-            lessons={course.lessons} 
-            courseId={course.id}  
-            onStartLesson={startLesson} 
-          />
+            <LessonManager
+              courseId={course.id}
+              courseTitle={course.title}
+              open={showLessonManager}
+              onClose={() => setShowLessonManager(false)}
+            />
+            <CourseLessonList 
+              lessons={course.lessons} 
+              courseId={course.id}  
+              onStartLesson={startLesson} 
+            />
+          </div>
         </div>
       </div>
 
-      {/* Diálogo para edição do curso */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -232,8 +235,8 @@ export const CourseView: React.FC = () => {
             onCancel={() => setIsEditDialogOpen(false)}
             isSubmitting={isSubmitting}
             onClose={() => setIsEditDialogOpen(false)}
-            preselectedCompanyId={selectedCompany?.id}
-            showCompanySelector={false}
+            availableCompanies={userCompanies}
+            showCompanySelector={true}
           />
         </DialogContent>
       </Dialog>

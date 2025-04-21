@@ -41,12 +41,13 @@ export const CourseHero: React.FC<CourseHeroProps> = ({
         <div className="absolute top-6 right-8 z-20">
           <Button
             variant="secondary"
-            className="flex gap-2 bg-white/90 text-[#1A1F2C] border-none shadow-lg hover:bg-white"
+            className="flex gap-2 bg-white/90 text-[#1A1F2C] border-none hover:bg-white shadow-none"
             onClick={onEditCourse}
             size="sm"
             aria-label="Editar curso"
           >
-            <PencilLine className="h-4 w-4" />
+            {/* Lucide icon edit */}
+            <svg xmlns="http://www.w3.org/2000/svg" width={16} height={16} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-edit h-4 w-4"><path d="M15.21 2.29a2.1 2.1 0 0 1 0 2.97l-9.47 9.46a2 2 0 0 1-1.42.59H2v-2.32a2 2 0 0 1 .59-1.42l9.44-9.44a2.1 2.1 0 0 1 2.97 0ZM12 6l2 2"/><path d="M16 16H0"/></svg>
             Editar curso
           </Button>
         </div>

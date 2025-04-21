@@ -3,12 +3,11 @@ import React, { useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
-import { Course } from './CourseManagement';
 import { courseSchema, CourseFormValues, CourseFormProps } from './courses/form/CourseFormTypes';
 import { CourseFormFields } from './courses/form/CourseFormFields';
 import { TagsField } from './courses/form/TagsField';
-import { CompanySelectorField } from './courses/form/CompanySelectorField';
 import { FormActions } from './courses/form/FormActions';
+import { CompanyMultiSelectorField } from "./courses/form/CompanyMultiSelectorField";
 
 export const CourseForm: React.FC<CourseFormProps> = ({ 
   initialData, 
@@ -16,8 +15,8 @@ export const CourseForm: React.FC<CourseFormProps> = ({
   onCancel, 
   isSubmitting,
   onClose,
-  preselectedCompanyId,
-  showCompanySelector = true  // Add default value
+  availableCompanies = [],
+  showCompanySelector = true, // Add default value
 }) => {
   const form = useForm<CourseFormValues>({
     resolver: zodResolver(courseSchema),
@@ -27,30 +26,26 @@ export const CourseForm: React.FC<CourseFormProps> = ({
       image_url: initialData?.image_url || "",
       instructor: initialData?.instructor || "",
       tags: initialData?.tags || [],
-      companyId: preselectedCompanyId || "",
+      companyIds: Array.isArray((initialData as any)?.companyIds)
+        ? (initialData as any)?.companyIds
+        : (initialData as any)?.companyId
+        ? [(initialData as any)?.companyId]
+        : [],
     },
   });
-
-  // Update form value when preselectedCompanyId changes
-  useEffect(() => {
-    if (preselectedCompanyId) {
-      form.setValue("companyId", preselectedCompanyId);
-    }
-  }, [preselectedCompanyId, form]);
-
-  // Use the showCompanySelector prop that was passed instead of calculating it
-  const companySelected = !!form.getValues("companyId");
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <CompanySelectorField 
-          form={form} 
-          showCompanySelector={showCompanySelector} 
-        />
-        
+        {showCompanySelector && availableCompanies.length > 0 && (
+          <CompanyMultiSelectorField 
+            form={form} 
+            companies={availableCompanies}
+          />
+        )}
+
         <CourseFormFields form={form} />
-        
+
         <TagsField form={form} />
 
         <FormActions 
@@ -58,7 +53,7 @@ export const CourseForm: React.FC<CourseFormProps> = ({
           isSubmitting={isSubmitting} 
           isEditing={!!initialData}
           showCompanySelector={showCompanySelector}
-          companySelected={companySelected}
+          companySelected={(form.watch("companyIds") || []).length > 0}
         />
       </form>
     </Form>

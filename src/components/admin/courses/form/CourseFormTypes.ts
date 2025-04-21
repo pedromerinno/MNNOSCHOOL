@@ -2,13 +2,14 @@
 import { z } from "zod";
 import { Course } from "../../courses/types";
 
+// companyIds agora é um array obrigatório, sempre presente
 export const courseSchema = z.object({
   title: z.string().min(1, "O título é obrigatório"),
   description: z.string().nullable().optional(),
   image_url: z.string().nullable().optional(),
   instructor: z.string().nullable().optional(),
   tags: z.array(z.string()).optional().default([]),
-  companyId: z.string().optional(),
+  companyIds: z.array(z.string()).min(1, "Selecione ao menos uma empresa"), // multi-empresa
 });
 
 export type CourseFormValues = z.infer<typeof courseSchema>;
@@ -19,6 +20,7 @@ export interface CourseFormProps {
   onCancel: () => void;
   isSubmitting: boolean;
   onClose?: () => void;
-  preselectedCompanyId?: string;
+  // Passa a lista de empresas do usuário logado
+  availableCompanies?: { id: string; nome: string; logo?: string }[];
   showCompanySelector?: boolean;
 }
