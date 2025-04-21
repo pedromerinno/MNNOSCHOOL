@@ -63,7 +63,7 @@ export function useCompanyNotices() {
       
       if (noticesError) throw noticesError;
       
-      if (noticesData.length > 0) {
+      if (noticesData && noticesData.length > 0) {
         const authorIds = [...new Set(noticesData.map(n => n.created_by))];
         
         const { data: authors, error: authorsError } = await supabase
@@ -82,7 +82,7 @@ export function useCompanyNotices() {
           
           const companyIds = companies ? companies.map(c => c.company_id) : [];
           
-          const author = authors.find(a => a.id === notice.created_by) as NoticeAuthor;
+          const author = authors?.find(a => a.id === notice.created_by) as NoticeAuthor;
           return { 
             ...notice, 
             author,

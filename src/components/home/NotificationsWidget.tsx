@@ -37,6 +37,11 @@ export const NotificationsWidget = () => {
     }
   };
 
+  useEffect(() => {
+    // Atualizar avisos ao montar o componente
+    fetchNotices();
+  }, []);
+
   const handleDialogOpenChange = (open: boolean) => {
     setDialogOpen(open);
     if (!open) {
@@ -154,4 +159,3 @@ export const NotificationsWidget = () => {
     </Card>
   );
 };
-
