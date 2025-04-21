@@ -41,7 +41,7 @@ export const CompanyMultiSelectorField: React.FC<CompanyMultiSelectorFieldProps>
                     onClick={() => toggleCompany(company.id)}
                     className={`flex items-center gap-2 px-4 py-1.5 rounded-2xl border transition-all 
                       ${selected 
-                        ? "bg-primary text-white border-primary shadow" 
+                        ? "bg-black text-white border-black shadow" 
                         : "bg-muted text-foreground border-muted"
                       }
                       hover:shadow-md focus:outline-none`}
