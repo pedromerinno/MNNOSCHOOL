@@ -50,17 +50,19 @@ const Index = () => {
   const { user, userProfile } = useAuth();
   const { getInitialSelectedCompany } = useCompanyCache();
   const navigate = useNavigate();
+  const [formShowDelayComplete, setFormShowDelayComplete] = useState(false);
   
   // Debug logging to track state
   useEffect(() => {
     console.log("[Index] Current state:", {
       isPageLoading,
       showCompanyForm,
+      formShowDelayComplete,
       userCompaniesCount: userCompanies?.length || 0,
       isLoading,
       fetchCount,
     });
-  }, [isPageLoading, showCompanyForm, userCompanies, isLoading, fetchCount]);
+  }, [isPageLoading, showCompanyForm, formShowDelayComplete, userCompanies, isLoading, fetchCount]);
   
   // Verificar necessidade de onboarding
   useEffect(() => {
@@ -86,6 +88,27 @@ const Index = () => {
     }
   }, [user?.id, isLoading, fetchCount, forceGetUserCompanies]);
   
+  // Implementa o delay de 500ms para mostrar o formulário após determinar que não há empresas
+  useEffect(() => {
+    let timeoutId: number | undefined;
+    
+    if (!isPageLoading && userCompanies.length === 0 && fetchCount > 0) {
+      console.log("[Index] Iniciando delay de 500ms para mostrar formulário de empresa");
+      timeoutId = window.setTimeout(() => {
+        console.log("[Index] Delay completo, habilitando exibição do formulário");
+        setFormShowDelayComplete(true);
+      }, 500);
+    } else {
+      setFormShowDelayComplete(false);
+    }
+    
+    return () => {
+      if (timeoutId) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, [isPageLoading, userCompanies.length, fetchCount]);
+  
   // Melhorar controle do estado de carregamento da página e determinar quando mostrar o formulário
   useEffect(() => {
     // Se já temos empresa em cache, reduzir tempo de loading
@@ -106,8 +129,8 @@ const Index = () => {
       setIsPageLoading(false);
       
       // Mostrar formulário apenas quando confirmamos que não há empresas
-      // Após carregamento completo dos dados
-      setShowCompanyForm(userCompanies.length === 0);
+      // E após o delay de exibição ter sido completado
+      setShowCompanyForm(userCompanies.length === 0 && formShowDelayComplete);
     }
     
     // Timeout de segurança para evitar loading infinito
@@ -116,15 +139,26 @@ const Index = () => {
         console.log("[Index] Finalizando loading por timeout de segurança");
         setIsPageLoading(false);
         
-        // Verificar se deve mostrar formulário após timeout - apenas se dados estiverem carregados
-        if (fetchCount > 0) {
+        // Verificar se deve mostrar formulário após timeout - apenas se dados estiverem carregados e delay completado
+        if (fetchCount > 0 && formShowDelayComplete) {
           setShowCompanyForm(userCompanies.length === 0);
         }
       }
     }, 2000); // 2 segundos de timeout
     
     return () => clearTimeout(timeoutId);
-  }, [isLoading, fetchCount, isPageLoading, hasCachedCompany, userCompanies]);
+  }, [isLoading, fetchCount, isPageLoading, hasCachedCompany, userCompanies, formShowDelayComplete]);
+
+  // Atualiza o estado de showCompanyForm sempre que formShowDelayComplete mudar
+  useEffect(() => {
+    if (!isPageLoading && userCompanies.length === 0 && formShowDelayComplete) {
+      console.log("[Index] Exibindo formulário após verificação completa e delay");
+      setShowCompanyForm(true);
+    } else if (userCompanies.length > 0) {
+      console.log("[Index] Usuário tem empresas, ocultando formulário");
+      setShowCompanyForm(false);
+    }
+  }, [formShowDelayComplete, isPageLoading, userCompanies.length]);
 
   const handleCompanyCreated = async () => {
     toast.success("Empresa criada com sucesso!");
@@ -143,6 +177,7 @@ const Index = () => {
   }
 
   // Mostrar formulário de cadastro apenas quando temos certeza que não há empresas
+  // E somente após o delay de 500ms ter sido completado
   if (showCompanyForm) {
     console.log("[Index] Renderizando formulário de cadastro de empresa");
     return (
