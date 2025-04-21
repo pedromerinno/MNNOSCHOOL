@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,7 +19,6 @@ interface CompanyStepProps {
   onCompanyTypeSelect: (isExisting: boolean) => void;
 }
 
-// Define the interface matching the expected structure in NewCompanyForm
 interface CompanyDetails {
   name: string;
   logo?: string;
@@ -55,11 +53,9 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Novo estado para informações da empresa buscada
   const { companyInfo, loading: companyLoading, error: companyLookupError, fetchCompany } = useQuickCompanyLookup();
   const [showCompanyInfo, setShowCompanyInfo] = useState(false);
 
-  // Chamada quando campo perde foco ou ID muda
   const handleCompanyLookup = useCallback(
     async (info: any, lookupPending: boolean) => {
       setShowCompanyInfo(false);
@@ -71,18 +67,15 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
     [companyId, fetchCompany]
   );
 
-  // Effect to automatically proceed when a valid company is selected
   useEffect(() => {
-    // Only proceed automatically if we already have companyInfo loaded and the form is not already submitting
     if (companyType === 'existing' && companyInfo && showCompanyInfo && !isSubmitting) {
-      setError(""); // Clear any previous errors
+      setError("");
     }
   }, [companyInfo, showCompanyInfo, companyType, isSubmitting]);
 
   const handleInitialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Prevent multiple submissions
     if (isSubmitting) return;
 
     if (companyType === 'existing' && !companyId) {
@@ -105,12 +98,10 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
           return;
         }
 
-        // Format valores for database - convert array to JSON string if needed
         const formattedValues = Array.isArray(companyDetails.valores) 
           ? JSON.stringify(companyDetails.valores)
           : companyDetails.valores;
 
-        // Criar nova empresa
         const { data: newCompany, error: companyError } = await supabase
           .from('empresas')
           .insert({
@@ -129,7 +120,6 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
 
         if (companyError) throw companyError;
 
-        // Associar usuário à empresa como admin
         const { error: relationError } = await supabase
           .from('user_empresa')
           .insert({
@@ -140,7 +130,6 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
 
         if (relationError) throw relationError;
 
-        // Atualizar perfil do usuário como admin
         const { error: profileError } = await supabase
           .from('profiles')
           .update({ 
@@ -152,11 +141,9 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
         if (profileError) throw profileError;
 
         toast.success("Empresa criada com sucesso!");
-        navigate("/");
+        navigate(`/company/${newCompany.id}`);
       } else {
-        // Verificar se o ID da empresa existe antes de prosseguir
         if (!companyInfo) {
-          // Se ainda não temos os dados da empresa, tente buscá-los antes de prosseguir
           await fetchCompany(companyId);
           if (!companyInfo) {
             setError("Empresa não encontrada com este ID");
@@ -171,10 +158,7 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
           companyDetails: null
         });
 
-        // Importante: notificar o componente pai que uma empresa existente foi selecionada
         onCompanyTypeSelect(true);
-        
-        // Avançar para o próximo passo
         onNext();
       }
     } catch (error: any) {
@@ -216,7 +200,6 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
               }}
               onCompanyLookup={handleCompanyLookup}
             />
-            {/* Exibe nome e logo se disponível */}
             {companyLoading ? (
               <div className="flex items-center gap-3 mt-3">
                 <Skeleton className="h-9 w-9 rounded-full" />
@@ -259,7 +242,9 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
           className="w-full rounded-md bg-merinno-dark hover:bg-black text-white"
           disabled={isSubmitting || (companyType === 'existing' && !companyInfo && !companyLoading)}
         >
-          {isSubmitting ? "Processando..." : "Continuar"}
+          {isSubmitting
+            ? (companyType === 'new' ? "Criando..." : "Processando...")
+            : (companyType === 'new' ? "Criar Empresa" : "Continuar")}
         </Button>
         
         <Button 
