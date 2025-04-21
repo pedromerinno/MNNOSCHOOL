@@ -1,3 +1,4 @@
+
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -43,6 +44,7 @@ export const useCompanyUserManagement = () => {
       toast.success("Usuário associado à empresa com sucesso");
       
       // Trigger company relation change event
+      console.log('Dispatching company-relation-changed event');
       window.dispatchEvent(new Event('company-relation-changed'));
       
       return true;
@@ -70,6 +72,7 @@ export const useCompanyUserManagement = () => {
       toast.success("Removido da empresa com sucesso");
       
       // Trigger company relation change event
+      console.log('Dispatching company-relation-changed event');
       window.dispatchEvent(new Event('company-relation-changed'));
       
       return true;
@@ -82,14 +85,6 @@ export const useCompanyUserManagement = () => {
   
   const getCompanyUsers = useCallback(async (companyId: string): Promise<UserProfile[]> => {
     try {
-      // Check if user belongs to company using RPC function
-      const { data: canAccess, error: accessError } = await supabase
-        .rpc('user_belongs_to_company', { company_id: companyId });
-      
-      if (accessError) {
-        console.warn('Error checking company access:', accessError);
-      }
-      
       // First get all user IDs associated with the company
       const { data: userCompanyRelations, error: relationError } = await supabase
         .from('user_empresa')
@@ -105,7 +100,7 @@ export const useCompanyUserManagement = () => {
       // Get user IDs
       const userIds = userCompanyRelations.map(relation => relation.user_id);
       
-      // Get complete user profiles - using a separate query to avoid RLS issues
+      // Get complete user profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, display_name, email, cargo_id, is_admin, avatar')

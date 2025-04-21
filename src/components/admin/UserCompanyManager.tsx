@@ -94,7 +94,12 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
         // Reset selection
         setSelectedUserId('');
         
-        // Dispatch event to notify components to refresh their company data
+        // Force fetch companies to update UI
+        if (user?.id) {
+          await forceGetUserCompanies(user.id);
+        }
+        
+        // Trigger refresh of company data throughout the app
         window.dispatchEvent(new CustomEvent('company-relation-changed'));
         
         toast.success("Usuário adicionado com sucesso");
@@ -116,7 +121,12 @@ export const UserCompanyManager: React.FC<UserCompanyManagerProps> = ({ company,
         // Refresh the list
         await fetchCompanyUsers();
         
-        // Dispatch a custom event to notify components to refresh their company data
+        // Force fetch companies to update UI
+        if (user?.id) {
+          await forceGetUserCompanies(user.id);
+        }
+        
+        // Trigger refresh of company data throughout the app
         window.dispatchEvent(new CustomEvent('company-relation-changed'));
         
         toast.success("Usuário removido com sucesso");

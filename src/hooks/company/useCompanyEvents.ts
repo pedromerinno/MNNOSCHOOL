@@ -1,35 +1,43 @@
 
 import { useEffect, useCallback } from 'react';
-import { Company } from '@/types/company';
 
-export interface UseCompanyEventsProps {
-  userId: string | undefined;
-  forceGetUserCompanies: (userId: string) => Promise<any>; // Changed return type to be more flexible
+interface UseCompanyEventsProps {
+  userId?: string;
+  forceGetUserCompanies: (userId: string) => Promise<any>;
   setDisplayName: (name: string) => void;
 }
 
-export const useCompanyEvents = ({ userId, forceGetUserCompanies, setDisplayName }: UseCompanyEventsProps) => {
+export const useCompanyEvents = ({
+  userId,
+  forceGetUserCompanies,
+  setDisplayName
+}: UseCompanyEventsProps) => {
   const handleCompanyRelationChange = useCallback(async () => {
-    if (userId) {
-      console.log('CompanySelector: Detectada mudança na relação de empresa, atualizando dados');
-      await forceGetUserCompanies(userId);
+    if (!userId) return;
+    
+    console.log(`[useCompanyEvents] Detected company relation change for user ${userId}`);
+    try {
+      const companies = await forceGetUserCompanies(userId);
+      console.log(`[useCompanyEvents] Updated companies after relation change:`, companies?.length || 0);
+      
+      // You may want to reset selected company in some cases
+      const storedCompanyId = localStorage.getItem('selectedCompanyId');
+      const storedCompanyName = localStorage.getItem('selectedCompanyName');
+      
+      if (storedCompanyName) {
+        setDisplayName(storedCompanyName);
+      }
+    } catch (error) {
+      console.error('[useCompanyEvents] Error handling company relation change:', error);
     }
-  }, [userId, forceGetUserCompanies]);
+  }, [userId, forceGetUserCompanies, setDisplayName]);
 
   useEffect(() => {
+    // Listen for custom company relation change events
     window.addEventListener('company-relation-changed', handleCompanyRelationChange);
-    window.addEventListener('company-updated', (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const updatedCompany = customEvent.detail.company;
-      if (updatedCompany) {
-        setDisplayName(updatedCompany.nome);
-        localStorage.setItem('selectedCompanyName', updatedCompany.nome);
-      }
-    });
     
     return () => {
       window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
-      window.removeEventListener('company-updated', () => {});
     };
-  }, [handleCompanyRelationChange, setDisplayName]);
+  }, [handleCompanyRelationChange]);
 };
