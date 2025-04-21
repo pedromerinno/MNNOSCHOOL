@@ -96,7 +96,10 @@ export const NotificationsWidget = () => {
                 {currentNotice.type.charAt(0).toUpperCase() + currentNotice.type.slice(1)}
               </span>
               <h4 className="text-lg font-bold mb-2 dark:text-white">{currentNotice.title}</h4>
-              <p className="text-base text-gray-800 dark:text-gray-300 mb-5">{currentNotice.content}</p>
+              {/* Limitar o conteúdo a no máximo 3 linhas com overflow e truncamento */}
+              <p className="text-base text-gray-800 dark:text-gray-300 mb-5 line-clamp-3">
+                {currentNotice.content}
+              </p>
               <div className="flex items-center bg-amber-100/50 dark:bg-amber-900/20 p-3 rounded-lg space-y-1">
                 <div className="flex items-center">
                   {currentNotice.author?.avatar ? (
@@ -127,7 +130,7 @@ export const NotificationsWidget = () => {
             className="text-base text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
             onClick={() => setNoticesDialogOpen(true)}
           >
-            ver todos
+            Ver mais
           </button>
         </div>
       </CardContent>
