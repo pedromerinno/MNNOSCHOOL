@@ -32,6 +32,7 @@ const OnboardingContent = () => {
   const isUpdate = !userProfile?.interesses?.includes("onboarding_incomplete");
   const totalSteps = isExistingCompany ? 4 : 3;
 
+  // Garantir que a etapa correta seja exibida quando o usuário escolhe o tipo de empresa
   useEffect(() => {
     if (isExistingCompany && currentStep === 3) {
       setCurrentStep(4);

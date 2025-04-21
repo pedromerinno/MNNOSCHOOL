@@ -108,6 +108,7 @@ export const ProtectedRoute = () => {
   }
 
   // Verificar se precisa fazer onboarding inicial
+  // Importante: usar OU lógico aqui para combinar as duas condições
   const needsOnboarding = userProfile?.interesses?.includes("onboarding_incomplete") || 
                          (!userCompanies || userCompanies.length === 0);
                          

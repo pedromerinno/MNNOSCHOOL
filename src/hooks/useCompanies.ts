@@ -122,6 +122,7 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
       return;
     }
     
+    // IMPORTANTE: Verificar se devemos pular o carregamento durante onboarding
     if (skipLoadingInOnboarding) {
       console.log("[useCompanies] Pulando carregamento de empresas durante onboarding");
       return;
@@ -183,10 +184,11 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
   
   // Carregar dados iniciais apenas quando necessário
   useEffect(() => {
-    if (user?.id && !initialDataLoaded.current) {
+    // IMPORTANTE: Verificar a opção skipLoadingInOnboarding antes de carregar dados
+    if (user?.id && !initialDataLoaded.current && !skipLoadingInOnboarding) {
       loadInitialData();
     }
-  }, [loadInitialData, user?.id]);
+  }, [loadInitialData, user?.id, skipLoadingInOnboarding]);
   
   // Atualizar dados quando necessário (with better memoization)
   const handleCompanyRelationChange = useCallback(async () => {
@@ -220,6 +222,7 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
   
   // Configurar listeners apenas uma vez
   useEffect(() => {
+    // IMPORTANTE: Não configurar listeners se estivermos em modo onboarding
     if (skipLoadingInOnboarding) {
       return;
     }
@@ -235,6 +238,7 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
   
   // Restaurar empresa selecionada previamente (memoizado para evitar recriações)
   const restoreSelectedCompany = useCallback(async () => {
+    // IMPORTANTE: Não restaurar empresa se estivermos em modo onboarding
     if (skipLoadingInOnboarding) {
       return;
     }
@@ -322,10 +326,11 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
 
   // Restaurar empresa apenas quando necessário
   useEffect(() => {
-    if (userCompanies.length > 0 && !selectedCompany) {
+    // IMPORTANTE: Não restaurar empresa se estivermos em modo onboarding
+    if (userCompanies.length > 0 && !selectedCompany && !skipLoadingInOnboarding) {
       restoreSelectedCompany();
     }
-  }, [userCompanies.length, selectedCompany, restoreSelectedCompany]);
+  }, [userCompanies.length, selectedCompany, restoreSelectedCompany, skipLoadingInOnboarding]);
   
   return {
     isLoading,

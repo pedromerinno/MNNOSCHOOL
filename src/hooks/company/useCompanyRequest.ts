@@ -17,6 +17,12 @@ export const useCompanyRequest = () => {
   const timeoutRef = useRef<number | null>(null);
   // Rastreamento de requisições por chave para evitar duplicação
   const requestKeysRef = useRef<Record<string, number>>({});
+  // Contador de erro de requisições
+  const errorCountRef = useRef<number>(0);
+  // Tempo de bloqueio progressivo após erros
+  const blockTimeRef = useRef<number>(0);
+  // Tempo máximo de bloqueio (5 minutos)
+  const MAX_BLOCK_TIME = 300000;
   
   /**
    * Utiliza debounce para evitar múltiplas chamadas em curto período
@@ -33,6 +39,29 @@ export const useCompanyRequest = () => {
   }, []);
   
   /**
+   * Verifica tempo de bloqueio atual após erros
+   */
+  const checkErrorBlock = useCallback((): boolean => {
+    if (blockTimeRef.current === 0) return false;
+    
+    const now = Date.now();
+    const timeSinceLastBlock = now - lastFetchTimeRef.current;
+    
+    if (timeSinceLastBlock < blockTimeRef.current) {
+      console.log(`[Company Request] Bloqueando requisição - em período de bloqueio por ${Math.round((blockTimeRef.current - timeSinceLastBlock)/1000)}s`);
+      return true;
+    }
+    
+    // Se passou o tempo de bloqueio, resetar
+    if (timeSinceLastBlock > blockTimeRef.current) {
+      blockTimeRef.current = 0;
+      errorCountRef.current = 0;
+    }
+    
+    return false;
+  }, []);
+  
+  /**
    * Verifica se uma nova requisição deve ser feita com base no tempo e estado atual
    */
   const shouldMakeRequest = useCallback((
@@ -42,6 +71,11 @@ export const useCompanyRequest = () => {
     requestKey?: string
   ): boolean => {
     const now = Date.now();
+    
+    // Verificar bloqueio por erros
+    if (!forceRefresh && checkErrorBlock()) {
+      return false;
+    }
     
     // Se houver um requestKey, verifica se já foi requisitado recentemente
     if (requestKey) {
@@ -83,7 +117,7 @@ export const useCompanyRequest = () => {
     }
     
     return true;
-  }, []);
+  }, [checkErrorBlock]);
   
   /**
    * Marca o início de uma requisição
@@ -113,6 +147,10 @@ export const useCompanyRequest = () => {
     lastFetchTimeRef.current = Date.now();
     isFetchingRef.current = false;
     
+    // Resetar contagem de erros em caso de sucesso
+    errorCountRef.current = 0;
+    blockTimeRef.current = 0;
+    
     // Decrementa o contador de requisições pendentes
     if (pendingRequestsRef.current > 0) {
       pendingRequestsRef.current -= 1;
@@ -136,6 +174,18 @@ export const useCompanyRequest = () => {
     if (pendingRequestsRef.current > 0) {
       pendingRequestsRef.current -= 1;
     }
+    
+    // Incrementar contador de erros e aplicar backoff
+    errorCountRef.current += 1;
+    
+    // Backoff exponencial: cada erro consecutivo aumenta o tempo de bloqueio
+    if (errorCountRef.current > 1) {
+      // 5 segundos * 2^(erros-1), limitado a MAX_BLOCK_TIME
+      blockTimeRef.current = Math.min(5000 * Math.pow(2, errorCountRef.current - 1), MAX_BLOCK_TIME);
+      console.log(`[Company Request] Aplicando backoff: ${blockTimeRef.current/1000}s após ${errorCountRef.current} erros`);
+      lastFetchTimeRef.current = Date.now(); // Marca o início do bloqueio
+    }
+    
     console.log(`[Company Request] Estado de requisição resetado. Total pendente: ${pendingRequestsRef.current}`);
   }, []);
   
