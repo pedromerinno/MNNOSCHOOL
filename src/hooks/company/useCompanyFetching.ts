@@ -58,6 +58,12 @@ export const useCompanyFetching = ({
   ): Promise<Company[]> => {
     const cachedData = getCachedUserCompanies();
     
+    // Immediately use memory cache for speed if available
+    if (memoryCache.current.companies && memoryCache.current.companies.length > 0 && !forceRefresh) {
+      console.log(`[${hookInstanceIdRef.current}] Using memory cache for immediate response`);
+      return memoryCache.current.companies;
+    }
+    
     if (didFetchOnPageLoadRef.current && !forceRefresh && userCompanies.length > 0) {
       console.log(`[${hookInstanceIdRef.current}] Already loaded companies this session. Using cached data.`);
       return userCompanies;
@@ -68,6 +74,7 @@ export const useCompanyFetching = ({
         // Important: Only set the cachedData if it belongs to the current user
         // This prevents showing companies from a previous user after login
         setUserCompanies(cachedData);
+        memoryCache.current = { companies: cachedData, timestamp: Date.now() };
       }
       
       if (memoryCache.current.companies && !forceRefresh) {
@@ -78,7 +85,7 @@ export const useCompanyFetching = ({
 
     const now = Date.now();
     const timeSinceLastSuccess = now - lastSuccessfulFetchRef.current;
-    const COMPONENT_SPECIFIC_THROTTLE = 120000;
+    const COMPONENT_SPECIFIC_THROTTLE = 300000; // 5 minutes
     
     if (!forceRefresh && lastSuccessfulFetchRef.current > 0 && 
         timeSinceLastSuccess < COMPONENT_SPECIFIC_THROTTLE && userCompanies.length > 0) {
@@ -94,11 +101,11 @@ export const useCompanyFetching = ({
     
     if (fetchInProgressRef.current && !forceRefresh) {
       console.log(`[${hookInstanceIdRef.current}] A fetch operation is already in progress. Skipping duplicate request.`);
-      return userCompanies;
+      return userCompanies.length > 0 ? userCompanies : (cachedData || []);
     }
     
     if (!shouldMakeRequest(forceRefresh, userCompanies.length > 0)) {
-      return userCompanies;
+      return userCompanies.length > 0 ? userCompanies : (cachedData || []);
     }
 
     fetchInProgressRef.current = true;
@@ -114,6 +121,7 @@ export const useCompanyFetching = ({
         const cachedData = getCachedUserCompanies();
         if (cachedData && cachedData.length > 0) {
           setUserCompanies(cachedData);
+          // Don't set isLoading to false here to prevent UI flickering
         }
       }
       
@@ -180,6 +188,7 @@ export const useCompanyFetching = ({
   ]);
   
   const getCompanyByIdOptimized = useCallback(async (companyId: string): Promise<Company | null> => {
+    // Fast path: check memory cache first
     if (fetchedCompaniesRef.current.has(companyId) && userCompanies.length > 0) {
       const existingCompany = userCompanies.find(company => company.id === companyId);
       if (existingCompany) {

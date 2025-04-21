@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, memo, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -13,7 +13,7 @@ interface CalendarDay {
   isNextMonth?: boolean;
 }
 
-export const CalendarWidget = () => {
+export const CalendarWidget = memo(() => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const { selectedCompany } = useCompanies();
   
@@ -43,20 +43,29 @@ export const CalendarWidget = () => {
     });
   };
   
-  const getDaysInMonth = (date: Date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    return new Date(year, month + 1, 0).getDate();
-  };
-  
-  const getFirstDayOfMonth = (date: Date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const dayOfWeek = new Date(year, month, 1).getDay();
-    return dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-  };
-  
-  const generateCalendarDays = () => {
+  const calendarDays = useMemo(() => {
+    const getDaysInMonth = (date: Date) => {
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      return new Date(year, month + 1, 0).getDate();
+    };
+    
+    const getFirstDayOfMonth = (date: Date) => {
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const dayOfWeek = new Date(year, month, 1).getDay();
+      return dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    };
+    
+    const isToday = (date: Date) => {
+      const today = new Date();
+      return (
+        date.getDate() === today.getDate() &&
+        date.getMonth() === today.getMonth() &&
+        date.getFullYear() === today.getFullYear()
+      );
+    };
+    
     const daysInMonth = getDaysInMonth(currentDate);
     const firstDayOfMonth = getFirstDayOfMonth(currentDate);
     
@@ -89,18 +98,7 @@ export const CalendarWidget = () => {
     }));
     
     return [...prevMonthDays, ...currentMonthDays, ...nextMonthDays];
-  };
-  
-  const isToday = (date: Date) => {
-    const today = new Date();
-    return (
-      date.getDate() === today.getDate() &&
-      date.getMonth() === today.getMonth() &&
-      date.getFullYear() === today.getFullYear()
-    );
-  };
-  
-  const calendarDays = generateCalendarDays();
+  }, [currentDate]);
   
   return (
     <Card 
@@ -162,5 +160,4 @@ export const CalendarWidget = () => {
       </CardContent>
     </Card>
   );
-};
-
+});

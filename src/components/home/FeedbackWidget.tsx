@@ -8,12 +8,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ReturnFeedbackDialog } from "../feedback/ReturnFeedbackDialog";
 import { UserProfile } from "@/hooks/useUsers";
-import { useState } from "react";
+import { useState, memo } from "react";
 import { AllFeedbackDialog } from "./AllFeedbackDialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-export const FeedbackWidget = () => {
+export const FeedbackWidget = memo(() => {
   const { feedbacks, loading } = useReceivedFeedbacks();
   const navigate = useNavigate();
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
@@ -54,7 +54,7 @@ export const FeedbackWidget = () => {
     setCurrentIndex((prev) => (prev < feedbacks.length - 1 ? prev + 1 : prev));
   };
 
-  if (currentIndex > feedbacks.length - 1) {
+  if (currentIndex > feedbacks.length - 1 && feedbacks.length > 0) {
     setCurrentIndex(feedbacks.length - 1);
   }
 
@@ -104,6 +104,7 @@ export const FeedbackWidget = () => {
                       src={currentFeedback.from_profile?.avatar || 'https://i.pravatar.cc/150'} 
                       alt={`${currentFeedback.from_profile?.display_name || 'Usuário'} avatar`}
                       className="object-cover"
+                      loading="lazy"
                     />
                     <AvatarFallback>
                       {(currentFeedback.from_profile?.display_name || 'U').charAt(0).toUpperCase()}
@@ -150,8 +151,7 @@ export const FeedbackWidget = () => {
           </button>
         </div>
       </CardContent>
-      <AllFeedbackDialog open={feedbackDialogOpen} onOpenChange={setFeedbackDialogOpen} />
+      {feedbackDialogOpen && <AllFeedbackDialog open={feedbackDialogOpen} onOpenChange={setFeedbackDialogOpen} />}
     </Card>
   );
-};
-
+});

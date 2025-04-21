@@ -6,11 +6,11 @@ import { useCompanyNotices } from "@/hooks/useCompanyNotices";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatDistanceToNow } from "date-fns";
 import { pt } from "date-fns/locale";
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import NewNoticeDialog from "../admin/dialogs/NewNoticeDialog";
 import { AllNoticesDialog } from "./AllNoticesDialog";
 
-export const NotificationsWidget = () => {
+export const NotificationsWidget = memo(() => {
   const { userProfile } = useAuth();
   const { 
     currentNotice, 
@@ -38,8 +38,13 @@ export const NotificationsWidget = () => {
   };
 
   useEffect(() => {
-    // Atualizar avisos ao montar o componente
-    fetchNotices();
+    // Atualizar avisos ao montar o componente com um pequeno delay
+    // para não bloquear a renderização inicial
+    const timer = setTimeout(() => {
+      fetchNotices();
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, []);
 
   const handleDialogOpenChange = (open: boolean) => {
@@ -126,6 +131,7 @@ export const NotificationsWidget = () => {
                       src={currentNotice.author.avatar} 
                       alt="Autor do aviso" 
                       className="h-6 w-6 rounded-full mr-3 object-cover"
+                      loading="lazy"
                     />
                   ) : (
                     <div className="h-6 w-6 rounded-full mr-3 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-300">
@@ -154,8 +160,8 @@ export const NotificationsWidget = () => {
         </div>
       </CardContent>
       
-      <NewNoticeDialog open={dialogOpen} onOpenChange={handleDialogOpenChange} />
-      <AllNoticesDialog open={noticesDialogOpen} onOpenChange={handleAllNoticesDialogChange} />
+      {dialogOpen && <NewNoticeDialog open={dialogOpen} onOpenChange={handleDialogOpenChange} />}
+      {noticesDialogOpen && <AllNoticesDialog open={noticesDialogOpen} onOpenChange={handleAllNoticesDialogChange} />}
     </Card>
   );
-};
+});
