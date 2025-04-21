@@ -1,49 +1,14 @@
 
-import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCompanies } from "@/hooks/useCompanies";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Company } from "@/types/company";
+import { CompanyInfoDisplay } from "@/components/company/CompanyInfoDisplay";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const WelcomeSection = () => {
   const { user, userProfile } = useAuth();
-  const { selectedCompany, userCompanies } = useCompanies();
   const navigate = useNavigate();
-  const [displayCompany, setDisplayCompany] = useState<Company | null>(null);
-
-  // Update display company when selectedCompany changes or when companies are loaded
-  useEffect(() => {
-    if (selectedCompany) {
-      console.log('[WelcomeSection] Selected company updated:', selectedCompany.nome);
-      setDisplayCompany(selectedCompany);
-    } else if (userCompanies && userCompanies.length > 0) {
-      console.log('[WelcomeSection] No selected company, using first company:', userCompanies[0].nome);
-      setDisplayCompany(userCompanies[0]);
-    }
-  }, [selectedCompany, userCompanies]);
-
-  // Listen for company update events
-  useEffect(() => {
-    const handleCompanyUpdate = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const updatedCompany = customEvent.detail?.company;
-      
-      if (updatedCompany) {
-        console.log('[WelcomeSection] Company update event received:', updatedCompany.nome);
-        setDisplayCompany(updatedCompany);
-      }
-    };
-    
-    window.addEventListener('company-updated', handleCompanyUpdate);
-    window.addEventListener('company-selected', handleCompanyUpdate);
-    
-    return () => {
-      window.removeEventListener('company-updated', handleCompanyUpdate);
-      window.removeEventListener('company-selected', handleCompanyUpdate);
-    };
-  }, []);
 
   const userName = userProfile?.display_name || user?.email?.split('@')[0] || 'User';
 
@@ -52,7 +17,27 @@ export const WelcomeSection = () => {
   };
 
   const defaultPhrase = "Together, we're designing the future of great companies";
-  const companyPhrase = displayCompany?.frase_institucional || defaultPhrase;
+
+  // Renderização condicional da frase institucional com fallback
+  const renderCompanyInfo = (company: any) => (
+    <p 
+      className="text-[#000000] text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-5"
+    >
+      {company?.frase_institucional || defaultPhrase}
+    </p>
+  );
+
+  // Fallback para estado de carregamento
+  const loadingFallback = (
+    <Skeleton className="text-[#000000] text-center text-[40px] font-normal max-w-[50%] h-[80px] mx-auto leading-[1.1] mb-5" />
+  );
+
+  // Fallback para estado sem empresa
+  const emptyFallback = (
+    <p className="text-[#000000] text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-5 mx-auto">
+      {defaultPhrase}
+    </p>
+  );
 
   return (
     <div className="mb-16 mt-10">
@@ -63,11 +48,11 @@ export const WelcomeSection = () => {
           Hello, {userName}
         </p>
         
-        <p 
-          className="text-[#000000] text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-5"
-        >
-          {companyPhrase}
-        </p>
+        <CompanyInfoDisplay 
+          renderInfo={renderCompanyInfo}
+          loadingFallback={loadingFallback}
+          emptyFallback={emptyFallback}
+        />
         
         <Button 
           onClick={handleLearnMore} 

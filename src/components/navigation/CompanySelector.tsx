@@ -60,6 +60,16 @@ export const CompanySelector = memo(() => {
       
       // Update the display name immediately
       setDisplayName(userCompanies[0].nome);
+      
+      // Disparar evento para garantir que todos os componentes sejam atualizados
+      const updateEvent = new CustomEvent('company-updated', {
+        detail: { company: userCompanies[0] }
+      });
+      
+      // Pequeno atraso para garantir que o evento de seleção foi processado primeiro
+      setTimeout(() => {
+        window.dispatchEvent(updateEvent);
+      }, 100);
     }
   }, [user?.id, userCompanies, selectedCompany, selectCompany, setDisplayName, initialLoadAttempted]);
 

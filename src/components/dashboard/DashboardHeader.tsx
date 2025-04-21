@@ -1,26 +1,27 @@
 
-import { useCompanies } from "@/hooks/useCompanies";
 import { useState, useEffect } from "react";
+import { CompanyInfoDisplay } from "@/components/company/CompanyInfoDisplay";
 
 export const DashboardHeader = () => {
-  const { selectedCompany, userCompanies } = useCompanies();
-  
   // Estado local para cor com inicialização
   const [headerBgColor, setHeaderBgColor] = useState<string>("transparent");
   
-  // Atualizar a cor quando a empresa selecionada mudar ou quando userCompanies mudar
-  useEffect(() => {
-    // Priorize a empresa selecionada
-    if (selectedCompany?.cor_principal) {
-      console.log(`DashboardHeader: Atualizando cor para ${selectedCompany.cor_principal}`);
-      setHeaderBgColor(`${selectedCompany.cor_principal}05`); // 5% de opacidade
-    } 
-    // Se não houver empresa selecionada mas existirem empresas, use a primeira
-    else if (userCompanies && userCompanies.length > 0 && userCompanies[0].cor_principal) {
-      console.log(`DashboardHeader: Não há empresa selecionada, usando cor da primeira empresa: ${userCompanies[0].cor_principal}`);
-      setHeaderBgColor(`${userCompanies[0].cor_principal}05`); // 5% de opacidade
-    }
-  }, [selectedCompany, userCompanies]);
+  // Renderizar o header com base na empresa selecionada
+  const renderCompanyHeader = (company: any) => {
+    // Atualizar cor baseada na empresa
+    useEffect(() => {
+      if (company?.cor_principal) {
+        console.log(`DashboardHeader: Atualizando cor para ${company.cor_principal}`);
+        setHeaderBgColor(`${company.cor_principal}05`); // 5% de opacidade
+      }
+    }, [company]);
+    
+    return (
+      <div className="flex items-center justify-end">
+        {/* Empty container for potential future elements */}
+      </div>
+    );
+  };
   
   // Listen for company update events
   useEffect(() => {
@@ -50,9 +51,11 @@ export const DashboardHeader = () => {
         backgroundColor: headerBgColor 
       }}
     >
-      <div className="flex items-center justify-end">
-        {/* Empty container for potential future elements */}
-      </div>
+      <CompanyInfoDisplay 
+        renderInfo={renderCompanyHeader}
+        loadingFallback={<div className="flex items-center justify-end" />}
+        emptyFallback={<div className="flex items-center justify-end" />}
+      />
     </div>
   );
 };

@@ -78,6 +78,17 @@ export const useCompanySelection = ({
       });
       window.dispatchEvent(event);
       
+      // Também despachar evento de atualização para garantir que todos os componentes saibam
+      // que houve uma mudança de empresa
+      const updateEvent = new CustomEvent('company-updated', {
+        detail: { company }
+      });
+      
+      // Pequeno atraso para garantir que o evento de seleção foi processado primeiro
+      setTimeout(() => {
+        window.dispatchEvent(updateEvent);
+      }, 50);
+      
       return true;
     } catch (error: any) {
       console.error('[useCompanySelection] Error selecting company:', error);
