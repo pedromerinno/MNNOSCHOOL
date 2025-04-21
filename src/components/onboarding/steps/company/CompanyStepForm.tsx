@@ -78,6 +78,7 @@ const CompanyStepForm: React.FC<CompanyStepFormProps> = ({ onNext, onBack, onCom
 
   const handleInitialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Form submitted - company type:", companyType);
 
     if (isSubmitting) return;
 
@@ -147,17 +148,25 @@ const CompanyStepForm: React.FC<CompanyStepFormProps> = ({ onNext, onBack, onCom
         window.location.href = `/company/${newCompany.id}`;
       } else {
         // This is the existing company case - we need to properly handle it
+        console.log("Processing existing company submission with ID:", companyId);
+        
+        // If we don't have company info yet but have an ID, try to fetch it
         if (!companyInfo && companyId) {
+          console.log("Fetching company info before proceeding");
           await fetchCompany(companyId);
-          // We don't immediately return here in case fetchCompany has successfully gotten the info
+          // Give a moment for the state to update with company info
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
         
+        // After fetching, check if we found a company
         if (!companyInfo && !companyLoading) {
+          console.log("Company not found after lookup");
           setError("Empresa não encontrada com este ID");
           setIsSubmitting(false);
           return;
         }
 
+        console.log("Updating profile data with company ID:", companyId);
         // Update the profile data with the company ID
         updateProfileData({ 
           companyId: companyId,
@@ -168,7 +177,8 @@ const CompanyStepForm: React.FC<CompanyStepFormProps> = ({ onNext, onBack, onCom
         // Signal that an existing company was selected
         onCompanyTypeSelect(true);
         
-        // Move to the next step
+        console.log("Moving to next step");
+        // Move to the next step - this is key for the button to work!
         onNext();
       }
     } catch (error: any) {
