@@ -1,4 +1,3 @@
-
 import { useEffect, useCallback, useRef } from "react";
 import { useCompanyState } from "./company/useCompanyState";
 import { useCompanyFetching } from "./company/useCompanyFetching";
@@ -7,7 +6,6 @@ import { useCompanyCreate } from "./company/useCompanyCreate";
 import { useCompanyUpdate } from "./company/useCompanyUpdate";
 import { useCompanyDelete } from "./company/useCompanyDelete";
 import { useCompanyUserManagement } from "./company/useCompanyUserManagement";
-import { useCompanyEvents } from "./company/useCompanyEvents";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Company } from "@/types/company";
@@ -90,31 +88,6 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     removeUserFromCompany 
   } = useCompanyUserManagement();
   
-  // Listen for company selection events
-  useCompanyEvents(setSelectedCompany);
-  
-  // Clear cached company data on user change
-  useEffect(() => {
-    if (user?.id) {
-      // This is a user change or initial login
-      const checkUserChange = async () => {
-        // Reset data for new user
-        initialDataLoaded.current = false;
-        
-        // Clear cache if we already have data loaded (which means this is a user change)
-        if (userCompanies.length > 0) {
-          localStorage.removeItem('userCompanies');
-          localStorage.removeItem('selectedCompany');
-          localStorage.removeItem('selectedCompanyId');
-          setUserCompanies([]);
-          setSelectedCompany(null);
-        }
-      };
-      
-      checkUserChange();
-    }
-  }, [user?.id, setUserCompanies, setSelectedCompany]);
-  
   // Carregamento de dados global com memoização do callback para reduzir recriações
   const loadInitialData = useCallback(async () => {
     // Se já carregamos os dados iniciais, não carregue novamente
@@ -182,14 +155,6 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     }
   }, [user?.id, isLoading, getUserCompanies, skipLoadingInOnboarding, setUserCompanies]);
   
-  // Carregar dados iniciais apenas quando necessário
-  useEffect(() => {
-    // IMPORTANTE: Verificar a opção skipLoadingInOnboarding antes de carregar dados
-    if (user?.id && !initialDataLoaded.current && !skipLoadingInOnboarding) {
-      loadInitialData();
-    }
-  }, [loadInitialData, user?.id, skipLoadingInOnboarding]);
-  
   // Atualizar dados quando necessário (with better memoization)
   const handleCompanyRelationChange = useCallback(async () => {
     if (user?.id) {
@@ -220,117 +185,10 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     }
   }, [user?.id, forceGetUserCompanies, fetchCompanies]);
   
-  // Configurar listeners apenas uma vez
-  useEffect(() => {
-    // IMPORTANTE: Não configurar listeners se estivermos em modo onboarding
-    if (skipLoadingInOnboarding) {
-      return;
-    }
-    
-    window.addEventListener('company-relation-changed', handleCompanyRelationChange);
-    window.addEventListener('force-reload-companies', handleForceReload);
-    
-    return () => {
-      window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
-      window.removeEventListener('force-reload-companies', handleForceReload);
-    };
-  }, [handleCompanyRelationChange, handleForceReload, skipLoadingInOnboarding]);
-  
-  // Restaurar empresa selecionada previamente (memoizado para evitar recriações)
-  const restoreSelectedCompany = useCallback(async () => {
-    // IMPORTANTE: Não restaurar empresa se estivermos em modo onboarding
-    if (skipLoadingInOnboarding) {
-      return;
-    }
-    
-    // Pular se já temos uma empresa selecionada
-    if (selectedCompany) return;
-    
-    // Primeiro tentar obter o objeto completo de empresa do localStorage
-    const cachedCompany = getStoredCompany();
-    if (cachedCompany) {
-      // Verificar se o usuário tem acesso a esta empresa
-      const hasAccess = userCompanies.some(company => company.id === cachedCompany.id);
-      
-      if (hasAccess) {
-        console.log('[useCompanies] Empresa selecionada restaurada do cache:', cachedCompany.nome);
-        setSelectedCompany(cachedCompany);
-        return;
-      } else {
-        console.log('[useCompanies] Usuário não tem acesso à empresa em cache, selecionando outra');
-        localStorage.removeItem('selectedCompany');
-        localStorage.removeItem('selectedCompanyId');
-      }
-    }
-    
-    // Se temos empresas de usuário mas nenhuma selecionada ainda
-    if (userCompanies.length > 0) {
-      const storedCompanyId = getStoredCompanyId();
-      
-      if (storedCompanyId) {
-        // Tentar encontrar nas empresas de usuário já carregadas
-        const storedCompany = userCompanies.find(company => company.id === storedCompanyId);
-        
-        if (storedCompany) {
-          setSelectedCompany(storedCompany);
-          console.log('[useCompanies] Empresa selecionada restaurada do ID no localStorage:', storedCompany.nome);
-        } else {
-          // Se não encontrada, tentar buscar
-          try {
-            const company = await getCompanyById(storedCompanyId);
-            if (company) {
-              // Verificar se o usuário tem acesso a esta empresa
-              const hasAccess = userCompanies.some(c => c.id === company.id);
-              
-              if (hasAccess) {
-                setSelectedCompany(company);
-                console.log('[useCompanies] Empresa selecionada restaurada do banco de dados:', company.nome);
-              } else {
-                localStorage.removeItem('selectedCompanyId');
-                // Selecionar a primeira empresa disponível
-                setSelectedCompany(userCompanies[0]);
-                console.log('[useCompanies] Selecionando primeira empresa disponível após verificação de acesso:', userCompanies[0].nome);
-              }
-            } else {
-              // Se não encontrada, selecionar a primeira empresa
-              localStorage.removeItem('selectedCompanyId');
-              setSelectedCompany(userCompanies[0]);
-              console.log('[useCompanies] Primeira empresa disponível selecionada após busca:', userCompanies[0].nome);
-            }
-          } catch (error) {
-            console.error('[useCompanies] Falha ao restaurar empresa do localStorage', error);
-            localStorage.removeItem('selectedCompanyId');
-            
-            // Se falhar e tivermos empresas de usuário, selecionar a primeira
-            if (userCompanies.length > 0) {
-              setSelectedCompany(userCompanies[0]);
-              console.log('[useCompanies] Primeira empresa disponível selecionada após falha:', userCompanies[0].nome);
-            }
-          }
-        }
-      } else if (userCompanies.length === 1) {
-        // Selecionar automaticamente a única empresa
-        setSelectedCompany(userCompanies[0]);
-        console.log('[useCompanies] Única empresa disponível selecionada automaticamente:', userCompanies[0].nome);
-      }
-    }
-  }, [
-    userCompanies, 
-    selectedCompany, 
-    getCompanyById, 
-    getStoredCompanyId, 
-    getStoredCompany, 
-    setSelectedCompany, 
-    skipLoadingInOnboarding
-  ]);
-
-  // Restaurar empresa apenas quando necessário
-  useEffect(() => {
-    // IMPORTANTE: Não restaurar empresa se estivermos em modo onboarding
-    if (userCompanies.length > 0 && !selectedCompany && !skipLoadingInOnboarding) {
-      restoreSelectedCompany();
-    }
-  }, [userCompanies.length, selectedCompany, restoreSelectedCompany, skipLoadingInOnboarding]);
+  // Wrap forceGetUserCompanies to ensure it matches the expected interface
+  const wrappedForceGetUserCompanies = useCallback(async (userId: string): Promise<any> => {
+    return await forceGetUserCompanies(userId);
+  }, [forceGetUserCompanies]);
   
   return {
     isLoading,
@@ -341,7 +199,7 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     fetchCount,
     fetchCompanies,
     getUserCompanies,
-    forceGetUserCompanies,
+    forceGetUserCompanies: wrappedForceGetUserCompanies,
     getCompanyById,
     selectCompany,
     createCompany,

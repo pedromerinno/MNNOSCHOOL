@@ -1,11 +1,10 @@
-
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanyState } from "./useCompanyState";
 import { useCompanyFetching } from "./useCompanyFetching";
 import { useCompanyModification } from "./useCompanyModification";
-import { useCompanyEvents } from "./useCompanyEvents";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { UseCompanyEventsProps } from "./useCompanyEvents";
 
 export const useCompaniesProvider = () => {
   const { user } = useAuth();
@@ -43,6 +42,16 @@ export const useCompaniesProvider = () => {
   } = useCompanyModification({
     ...stateActions
   });
+
+  // Create a wrapper function for forceGetUserCompanies with the correct signature for useCompanyEvents
+  const handleForceGetUserCompanies = async (userId: string): Promise<any> => {
+    return await forceGetUserCompanies(userId);
+  };
+
+  // Use a function to update selected company
+  const handleSetSelectedCompany = (company: any) => {
+    stateActions.setSelectedCompany(company);
+  };
 
   // Listen for selected company events
   useCompanyEvents(stateActions.setSelectedCompany);
@@ -96,7 +105,7 @@ export const useCompaniesProvider = () => {
     fetchCount,
     isSuperAdmin,
     getUserCompanies,
-    forceGetUserCompanies,
+    forceGetUserCompanies: handleForceGetUserCompanies,
     getCompanyById,
     fetchCompanies,
     selectCompany,

@@ -27,9 +27,14 @@ export const CompanySelector = memo(() => {
   
   const { displayName, setDisplayName } = useCompanyNameDisplay(selectedCompany);
   
+  // Create a wrapper function with the correct return type
+  const handleForceGetUserCompanies = async (userId: string): Promise<any> => {
+    return await forceGetUserCompanies(userId);
+  };
+  
   useCompanyEvents({
     userId: user?.id,
-    forceGetUserCompanies,
+    forceGetUserCompanies: handleForceGetUserCompanies,
     setDisplayName
   });
 

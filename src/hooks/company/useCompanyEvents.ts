@@ -2,9 +2,9 @@
 import { useEffect, useCallback } from 'react';
 import { Company } from '@/types/company';
 
-interface UseCompanyEventsProps {
+export interface UseCompanyEventsProps {
   userId: string | undefined;
-  forceGetUserCompanies: (userId: string) => Promise<void>;
+  forceGetUserCompanies: (userId: string) => Promise<any>; // Changed return type to be more flexible
   setDisplayName: (name: string) => void;
 }
 
