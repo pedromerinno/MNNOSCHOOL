@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -8,7 +9,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -25,7 +25,6 @@ import { useToast } from "@/components/ui/use-toast";
 import { useCompanyNotices, NoticeFormData } from "@/hooks/useCompanyNotices";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCompanies } from "@/hooks/useCompanies";
-import { Checkbox } from "@/components/ui/checkbox";
 
 interface NewNoticeDialogProps {
   open: boolean;
@@ -42,7 +41,7 @@ const NewNoticeDialog = ({
 }: NewNoticeDialogProps) => {
   const { toast } = useToast();
   const { createNotice, updateNotice } = useCompanyNotices();
-  const { userCompanies } = useCompanies();
+  const { userCompanies, selectedCompany } = useCompanies();
   const [dialogOpen, setDialogOpen] = useState(open);
   const [submitting, setSubmitting] = useState(false);
 
@@ -54,7 +53,9 @@ const NewNoticeDialog = ({
       message: "Conteúdo deve ter pelo menos 10 caracteres.",
     }),
     type: z.enum(['informativo', 'urgente', 'padrão']),
-    companies: z.array(z.string()).optional(),
+    companies: z.array(z.string()).min(1, {
+      message: "Selecione pelo menos uma empresa."
+    }),
   });
 
   const form = useForm<NoticeFormData>({
@@ -63,7 +64,7 @@ const NewNoticeDialog = ({
       title: initialData?.title || "",
       content: initialData?.content || "",
       type: initialData?.type || "informativo",
-      companies: initialData?.companies || [],
+      companies: initialData?.companies || (selectedCompany ? [selectedCompany.id] : []),
     },
     mode: "onChange",
   });
@@ -72,14 +73,18 @@ const NewNoticeDialog = ({
 
   useEffect(() => {
     setDialogOpen(open);
-    if (open && initialData) {
-      Object.keys(initialData).forEach(key => {
-        setValue(key as keyof NoticeFormData, initialData[key]);
-      });
+    if (open) {
+      if (initialData) {
+        // For editing existing notice
+        Object.keys(initialData).forEach(key => {
+          setValue(key as keyof NoticeFormData, initialData[key]);
+        });
+      } else if (selectedCompany) {
+        // For new notice, pre-select current company
+        setValue("companies", [selectedCompany.id]);
+      }
     }
-  }, [open, initialData, setValue]);
-
-  const selectedCompanies = watch("companies");
+  }, [open, initialData, setValue, selectedCompany]);
 
   useEffect(() => {
     if (!dialogOpen) {
@@ -87,26 +92,45 @@ const NewNoticeDialog = ({
         title: initialData?.title || "",
         content: initialData?.content || "",
         type: initialData?.type || "informativo",
-        companies: initialData?.companies || [],
+        companies: initialData?.companies || (selectedCompany ? [selectedCompany.id] : []),
       });
     }
-  }, [dialogOpen, reset, initialData]);
+  }, [dialogOpen, reset, initialData, selectedCompany]);
 
   const onSubmit = async (data: NoticeFormData) => {
+    if (!data.companies || data.companies.length === 0) {
+      toast({
+        title: "Error",
+        description: "Selecione pelo menos uma empresa.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setSubmitting(true);
     try {
+      console.log("Submitting notice form:", data);
+      
       if (editingNoticeId) {
-        console.log("Editando aviso:", editingNoticeId, "Empresas:", data.companies);
+        console.log(`Editing notice ${editingNoticeId} for companies:`, data.companies);
         const success = await updateNotice(editingNoticeId, data);
         if (success) {
+          toast({
+            title: "Sucesso",
+            description: "Aviso atualizado com sucesso"
+          });
           setDialogOpen(false);
           onOpenChange(false);
           reset();
         }
       } else {
-        console.log("Enviando formulário com valores:", data);
+        console.log("Creating new notice for companies:", data.companies);
         const success = await createNotice(data, data.companies);
         if (success) {
+          toast({
+            title: "Sucesso",
+            description: "Aviso criado com sucesso"
+          });
           setDialogOpen(false);
           onOpenChange(false);
           reset();

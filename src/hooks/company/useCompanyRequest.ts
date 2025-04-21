@@ -1,8 +1,8 @@
 
 import { useRef } from "react";
 
-// Aumentando para 300 segundos (5 minutos) para reduzir drasticamente a frequência de chamadas API
-export const MIN_REQUEST_INTERVAL = 300000; // 5 minutos 
+// Reducing the cache interval to 60 seconds to ensure more frequent updates
+export const MIN_REQUEST_INTERVAL = 60000; // 1 minute
 
 export const useCompanyRequest = () => {
   // Timestamp da última requisição
@@ -12,7 +12,7 @@ export const useCompanyRequest = () => {
   // Fila de requisições para gerenciar requisições concorrentes
   const pendingRequestsRef = useRef<number>(0);
   // Número máximo de requisições concorrentes para prevenir esgotamento de recursos
-  const MAX_CONCURRENT_REQUESTS = 1;
+  const MAX_CONCURRENT_REQUESTS = 2; // Increased to allow more concurrent requests
   
   /**
    * Verifica se uma nova requisição deve ser feita com base no tempo e estado atual

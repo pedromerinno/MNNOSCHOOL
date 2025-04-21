@@ -51,15 +51,18 @@ const Index = () => {
   
   // Melhor controle do estado de carregamento da página
   useEffect(() => {
+    console.log("[Index] Page loading state check, cached company:", hasCachedCompany);
+    
     // Se já temos empresa em cache, reduzir tempo de loading ou até pular
     if (hasCachedCompany) {
-      // Definir um timeout mais curto para dar tempo de transição
-      setTimeout(() => setIsPageLoading(false), 100);
+      // Muito reduzido para acelerar a transição
+      setTimeout(() => setIsPageLoading(false), 50);
       return;
     }
     
     // Finaliza o carregamento quando temos uma empresa selecionada ou os dados já foram carregados
     if (selectedCompany || (fetchCount > 0 && !isLoading)) {
+      console.log("[Index] Finalizando loading devido a empresa selecionada ou dados carregados");
       setIsPageLoading(false);
     }
     
@@ -69,7 +72,7 @@ const Index = () => {
         console.log("[Index] Finalizando loading por timeout de segurança");
         setIsPageLoading(false);
       }
-    }, 1500); // Reduzido para 1.5 segundos
+    }, 1000); // Reduzido para 1 segundo
     
     return () => clearTimeout(timeoutId);
   }, [isLoading, fetchCount, selectedCompany, isPageLoading, hasCachedCompany]);

@@ -37,6 +37,9 @@ export function useCompanyNotices() {
       setIsLoading(true);
       setError(null);
       
+      // Debug logging
+      console.log(`Fetching notices for company: ${targetCompanyId}`);
+      
       // Obter avisos associados à empresa através da tabela de relação notice_companies
       const { data, error } = await supabase
         .from('notice_companies')
@@ -46,6 +49,7 @@ export function useCompanyNotices() {
       if (error) throw error;
       
       if (!data || data.length === 0) {
+        console.log(`No notices found for company: ${targetCompanyId}`);
         setNotices([]);
         setCurrentNotice(null);
         setIsLoading(false);
@@ -53,6 +57,7 @@ export function useCompanyNotices() {
       }
       
       const noticeIds = data.map(item => item.notice_id);
+      console.log(`Found ${noticeIds.length} notice IDs for company: ${targetCompanyId}`);
       
       // Buscar os detalhes completos dos avisos
       const { data: noticesData, error: noticesError } = await supabase
@@ -64,6 +69,8 @@ export function useCompanyNotices() {
       if (noticesError) throw noticesError;
       
       if (noticesData && noticesData.length > 0) {
+        console.log(`Retrieved ${noticesData.length} notices`);
+        
         const authorIds = [...new Set(noticesData.map(n => n.created_by))];
         
         const { data: authors, error: authorsError } = await supabase
@@ -99,6 +106,7 @@ export function useCompanyNotices() {
           setCurrentNotice(null);
         }
       } else {
+        console.log(`No notice data found for IDs: ${noticeIds.join(', ')}`);
         setNotices([]);
         setCurrentNotice(null);
       }
@@ -378,6 +386,7 @@ export function useCompanyNotices() {
 
   useEffect(() => {
     if (selectedCompany?.id) {
+      console.log(`Selected company changed, fetching notices for: ${selectedCompany.id}`);
       fetchNotices(selectedCompany.id);
     } else {
       setNotices([]);

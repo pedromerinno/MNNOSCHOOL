@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
@@ -6,7 +5,7 @@ import { useCompanyNotices } from "@/hooks/useCompanyNotices";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatDistanceToNow } from "date-fns";
 import { pt } from "date-fns/locale";
-import { useState, useEffect, memo } from "react";
+import { useState, useEffect, memo, useCallback } from "react";
 import NewNoticeDialog from "../admin/dialogs/NewNoticeDialog";
 import { AllNoticesDialog } from "./AllNoticesDialog";
 
@@ -25,7 +24,7 @@ export const NotificationsWidget = memo(() => {
   
   const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
   
-  const formatRelativeTime = (dateString: string) => {
+  const formatRelativeTime = useCallback((dateString: string) => {
     try {
       return formatDistanceToNow(new Date(dateString), { 
         addSuffix: true,
@@ -35,21 +34,21 @@ export const NotificationsWidget = memo(() => {
       console.error("Erro ao formatar data:", error);
       return "data desconhecida";
     }
-  };
+  }, []);
 
   useEffect(() => {
-    // Atualizar avisos ao montar o componente com um pequeno delay
-    // para não bloquear a renderização inicial
+    console.log("NotificationsWidget mounted, fetching notices");
     const timer = setTimeout(() => {
       fetchNotices();
     }, 100);
     
     return () => clearTimeout(timer);
-  }, []);
+  }, [fetchNotices]);
 
   const handleDialogOpenChange = (open: boolean) => {
     setDialogOpen(open);
     if (!open) {
+      console.log("Notice dialog closed, refreshing notices");
       fetchNotices();
     }
   };
@@ -57,6 +56,7 @@ export const NotificationsWidget = memo(() => {
   const handleAllNoticesDialogChange = (open: boolean) => {
     setNoticesDialogOpen(open);
     if (!open) {
+      console.log("All notices dialog closed, refreshing notices");
       fetchNotices();
     }
   };
