@@ -19,14 +19,15 @@ export function useExistingCompany(companyId: string) {
       
       if (companyId && companyId.length >= 10) {
         try {
-          const result = await fetchCompany(companyId);
-          console.log("Company lookup result:", result);
+          await fetchCompany(companyId);
+          console.log("Company lookup result:", companyInfo);
           
-          if (result) {
+          // Check companyInfo state directly after the fetch operation has completed
+          if (companyInfo) {
             setShowCompanyInfo(true);
           }
           
-          return result;
+          return companyInfo;
         } catch (error) {
           console.error("Error during company lookup:", error);
           return null;
@@ -35,7 +36,7 @@ export function useExistingCompany(companyId: string) {
       
       return null;
     },
-    [companyId, fetchCompany]
+    [companyId, companyInfo, fetchCompany]
   );
 
   useEffect(() => {
@@ -44,6 +45,13 @@ export function useExistingCompany(companyId: string) {
       setShowCompanyInfo(false);
     }
   }, [companyId]);
+
+  useEffect(() => {
+    // Update showCompanyInfo when companyInfo changes
+    if (companyInfo) {
+      setShowCompanyInfo(true);
+    }
+  }, [companyInfo]);
 
   return { 
     companyInfo, 
