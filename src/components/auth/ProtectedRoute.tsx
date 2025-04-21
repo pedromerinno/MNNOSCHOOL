@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+
+import React, { useEffect } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -16,8 +17,8 @@ export const ProtectedRoute = () => {
     skipLoadingInOnboarding: isOnboarding
   });
   
-  const [initialLoadDone, setInitialLoadDone] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
+  // Simplificando a lógica de estado para evitar problemas de inicialização
+  let authError = null;
 
   useEffect(() => {
     console.log("ProtectedRoute: Verificando autenticação");
@@ -25,17 +26,9 @@ export const ProtectedRoute = () => {
     const timeoutId = setTimeout(() => {
       if (loading) {
         console.log("ProtectedRoute: Tempo limite de carregamento atingido");
-        setInitialLoadDone(true);
-        setAuthError("Tempo limite de autenticação excedido. Por favor, recarregue a página ou faça login novamente.");
         toast.error("Tempo limite de autenticação excedido. Tente recarregar a página.");
       }
     }, 5000);
-    
-    if (!loading) {
-      console.log("ProtectedRoute: Carregamento concluído");
-      setInitialLoadDone(true);
-      clearTimeout(timeoutId);
-    }
     
     return () => clearTimeout(timeoutId);
   }, [loading]);
