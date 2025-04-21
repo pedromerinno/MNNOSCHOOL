@@ -3,7 +3,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useReceivedFeedbacks } from "@/hooks/feedback/useReceivedFeedbacks";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
-import { X } from "lucide-react";
 import { pt } from "date-fns/locale";
 
 interface AllFeedbackDialogProps {
@@ -28,15 +27,8 @@ export function AllFeedbackDialog({ open, onOpenChange }: AllFeedbackDialogProps
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg sm:max-w-2xl px-0 py-0">
-        <DialogHeader className="px-6 pt-6 pb-1 flex flex-row items-center justify-between">
+        <DialogHeader className="px-6 pt-6 pb-4 text-left">
           <DialogTitle className="text-xl font-semibold">Todos os Feedbacks Recebidos</DialogTitle>
-          <button 
-            aria-label="Fechar"
-            className="rounded-full p-2 hover:bg-muted transition-colors"
-            onClick={() => onOpenChange(false)}
-          >
-            <X className="h-5 w-5" />
-          </button>
         </DialogHeader>
         <div className="px-6 pb-6 h-[60vh] overflow-y-auto">
           {loading ? (
