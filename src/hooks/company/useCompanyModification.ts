@@ -1,3 +1,4 @@
+
 import { useCallback } from "react";
 import { Company } from "@/types/company";
 import { supabase } from "@/integrations/supabase/client";
