@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "./useCompanies";
 import { toast } from "sonner";
 import { Notice, NoticeAuthor } from "./useNotifications";
+import { useCache } from "@/hooks/useCache"; // Import do hook de cache
 
 export interface NoticeFormData {
   title: string;
@@ -20,6 +22,7 @@ export function useCompanyNotices() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { clearCache } = useCache(); // Usar método para limpar cache
 
   const fetchNotices = async (companyId?: string) => {
     const targetCompanyId = companyId || selectedCompany?.id;
@@ -126,7 +129,8 @@ export function useCompanyNotices() {
 
     try {
       setIsLoading(true);
-      
+
+      // Atualiza o aviso
       const { error } = await supabase
         .from('company_notices')
         .update({
@@ -137,12 +141,45 @@ export function useCompanyNotices() {
         })
         .eq('id', noticeId)
         .eq('company_id', selectedCompany.id);
-      
+
       if (error) throw error;
-      
+
+      // Limpa o cache relacionado a avisos da empresa (ajuste a chave do cache caso necessário)
+      clearCache(`notices_${selectedCompany.id}`);
+
+      // Busca avisos atualizados
       await fetchNotices();
-      
-      toast.success("Aviso atualizado com sucesso!");
+
+      // Notifica membros da empresa sobre a atualização do aviso
+      // Busca usuários da empresa exceto quem editou
+      const { data: usersToNotify, error: errorUsers } = await supabase
+        .from('company_users')
+        .select('user_id')
+        .eq('company_id', selectedCompany.id)
+        .neq('user_id', user.id);
+
+      if (!errorUsers && usersToNotify) {
+        const notifications = usersToNotify.map((u: { user_id: string }) => ({
+          user_id: u.user_id,
+          company_id: selectedCompany.id,
+          title: `Aviso atualizado: ${data.title}`,
+          content: data.content.slice(0, 80) + (data.content.length > 80 ? "..." : ""),
+          type: "aviso",
+          related_id: noticeId,
+          read: false
+        }));
+
+        if (notifications.length > 0) {
+          const { error: notifyErr } = await supabase
+            .from('user_notifications')
+            .insert(notifications);
+          if (!notifyErr) {
+            toast.success("Aviso atualizado e membros notificados!");
+          }
+        }
+      } else {
+        toast.success("Aviso atualizado com sucesso!");
+      }
       return true;
     } catch (err: any) {
       console.error('Erro ao atualizar aviso:', err);
