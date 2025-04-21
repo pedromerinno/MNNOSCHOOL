@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -75,6 +74,28 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
     }
   }, [companyInfo, showCompanyInfo, companyType, isSubmitting]);
 
+  const handleCompanyCreationSuccess = async (company: any) => {
+    localStorage.removeItem('userCompanies');
+    localStorage.removeItem('selectedCompany');
+    localStorage.removeItem('selectedCompanyId');
+    localStorage.removeItem('selectedCompanyName');
+    
+    window.dispatchEvent(new Event('company-relation-changed'));
+    window.dispatchEvent(new Event('force-reload-companies'));
+    
+    window.dispatchEvent(new CustomEvent('company-selected', { 
+      detail: { company } 
+    }));
+    
+    toast.success("Empresa configurada com sucesso!");
+    
+    if (onCompanyCreated) {
+      onCompanyCreated();
+    } else {
+      navigate("/", { replace: true });
+    }
+  };
+
   const handleInitialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -132,19 +153,17 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
 
         if (relationError) throw relationError;
 
-        // Atualizar perfil para remover flag de onboarding_incomplete
         const { error: profileError } = await supabase
           .from('profiles')
           .update({ 
             is_admin: true,
             interesses: (profileData.interests || []).filter(i => i !== 'onboarding_incomplete'),
-            primeiro_login: false // Set primeiro_login to false after completing onboarding
+            primeiro_login: false
           })
           .eq('id', user.id);
 
         if (profileError) throw profileError;
         
-        // Atualizar perfil no contexto do Auth
         await updateUserProfile({ 
           is_admin: true,
           interesses: (profileData.interests || []).filter(i => i !== 'onboarding_incomplete'),
@@ -153,17 +172,13 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
 
         toast.success("Empresa criada com sucesso!");
         
-        // Chamar callback se existir, caso contrário redirecionar diretamente
         if (onCompanyCreated) {
           onCompanyCreated();
         } else {
-          // Garantir redirecionamento forçado para a homepage
           navigate("/", { replace: true });
         }
       } else {
-        // For existing company selection
         if (!companyInfo) {
-          // Try to fetch company info one more time
           await fetchCompany(companyId);
         }
         
@@ -173,9 +188,7 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
           return;
         }
         
-        // If we have company info, proceed with linking user to company
         if (user && companyInfo) {
-          // Check if user is already linked to this company
           const { data: existingRelation } = await supabase
             .from('user_empresa')
             .select('*')
@@ -184,7 +197,6 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
             .maybeSingle();
             
           if (!existingRelation) {
-            // Create relationship if it doesn't exist
             const { error: relationError } = await supabase
               .from('user_empresa')
               .insert({
@@ -193,16 +205,13 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
                 is_admin: false
               });
               
-            if (relationError) {
-              throw relationError;
-            }
+            if (relationError) throw relationError;
             
             toast.success(`Vinculado com sucesso à empresa ${companyInfo.nome}`);
           } else {
             toast.info(`Você já está vinculado à empresa ${companyInfo.nome}`);
           }
           
-          // Update profile to remove onboarding flags
           const { error: profileError } = await supabase
             .from('profiles')
             .update({ 
@@ -213,18 +222,12 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
             
           if (profileError) throw profileError;
           
-          // Update profile in context
           await updateUserProfile({
             interesses: (profileData.interests || []).filter(i => i !== 'onboarding_incomplete'),
             primeiro_login: false
           });
-          
-          // Finalizar onboarding
-          if (onCompanyCreated) {
-            onCompanyCreated();
-          } else {
-            navigate("/", { replace: true });
-          }
+
+          await handleCompanyCreationSuccess(companyInfo);
         } else {
           setError("Não foi possível vincular à empresa. Verifique o ID informado.");
           setIsSubmitting(false);
@@ -233,7 +236,6 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
     } catch (error: any) {
       console.error('Error:', error);
       toast.error("Erro ao processar operação: " + error.message);
-    } finally {
       setIsSubmitting(false);
     }
   };
