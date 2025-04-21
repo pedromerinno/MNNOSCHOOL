@@ -1,5 +1,5 @@
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { useCompanyNotices } from "@/hooks/useCompanyNotices";
@@ -57,23 +57,23 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
               {notices.map(notice => (
                 <div key={notice.id} className="p-4 bg-amber-50/80 dark:bg-amber-900/10 rounded-xl">
                   <div className="mb-2 flex items-center gap-2">
-                    <Badge className="bg-amber-200 text-yellow-800 font-semibold rounded-full px-3 py-1 text-xs">
+                    <Badge className="bg-amber-200 text-yellow-800 font-semibold rounded-full px-4 py-1.5 text-xs">
                       {notice.type.charAt(0).toUpperCase() + notice.type.slice(1)}
                     </Badge>
                   </div>
                   <h4 className="text-lg font-semibold mb-1 text-black dark:text-white">{notice.title}</h4>
                   <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">{notice.content}</p>
-                  <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 gap-2">
+                  <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 gap-2 bg-amber-100/50 dark:bg-amber-900/20 p-2 rounded-lg">
                     {notice.author?.avatar ? (
-                      <Avatar className="h-7 w-7 mr-2">
-                        <img className="rounded-full object-cover h-7 w-7" src={notice.author.avatar} alt="Autor do aviso"/>
+                      <Avatar className="h-6 w-6 mr-1">
+                        <img className="rounded-full object-cover h-6 w-6" src={notice.author.avatar} alt="Autor do aviso"/>
                       </Avatar>
                     ) : (
-                      <div className="h-7 w-7 mr-2 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                      <div className="h-6 w-6 mr-1 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                         {getInitial(notice.author?.display_name)}
                       </div>
                     )}
-                    <span className="font-medium">{notice.author?.display_name || "Usuário"}</span>
+                    <span className="font-medium text-xs">{notice.author?.display_name || "Usuário"}</span>
                     <span className="mx-1">•</span>
                     <span>{formatCreatedAt(notice.created_at)}</span>
                   </div>

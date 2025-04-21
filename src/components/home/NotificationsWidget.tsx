@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
@@ -91,29 +92,31 @@ export const NotificationsWidget = () => {
             </div>
           ) : (
             <div className="mb-8">
-              <span className="inline-block px-5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/50 text-yellow-700 dark:text-amber-100 text-xs font-semibold mb-4">
+              <span className="inline-block px-6 py-1.5 rounded-full bg-amber-100 dark:bg-amber-900/50 text-yellow-700 dark:text-amber-100 text-xs font-semibold mb-4">
                 {currentNotice.type.charAt(0).toUpperCase() + currentNotice.type.slice(1)}
               </span>
               <h4 className="text-lg font-bold mb-2 dark:text-white">{currentNotice.title}</h4>
               <p className="text-base text-gray-800 dark:text-gray-300 mb-5">{currentNotice.content}</p>
-              <div className="flex items-center text-gray-500">
-                {currentNotice.author?.avatar ? (
-                  <img 
-                    src={currentNotice.author.avatar} 
-                    alt="Autor do aviso" 
-                    className="h-8 w-8 rounded-full mr-4 object-cover"
-                  />
-                ) : (
-                  <div className="h-8 w-8 rounded-full mr-4 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-300">
-                    {currentNotice.author?.display_name?.substring(0, 1).toUpperCase() || '?'}
-                  </div>
-                )}
-                <span className="text-base font-medium text-black dark:text-white mr-4">
-                  {currentNotice.author?.display_name || 'Usuário'}
-                </span>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  {formatRelativeTime(currentNotice.created_at)}
-                </span>
+              <div className="flex items-center bg-amber-100/50 dark:bg-amber-900/20 p-3 rounded-lg space-y-1">
+                <div className="flex items-center">
+                  {currentNotice.author?.avatar ? (
+                    <img 
+                      src={currentNotice.author.avatar} 
+                      alt="Autor do aviso" 
+                      className="h-6 w-6 rounded-full mr-3 object-cover"
+                    />
+                  ) : (
+                    <div className="h-6 w-6 rounded-full mr-3 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-300">
+                      {currentNotice.author?.display_name?.substring(0, 1).toUpperCase() || '?'}
+                    </div>
+                  )}
+                  <span className="text-sm font-medium text-black dark:text-white mr-3">
+                    {currentNotice.author?.display_name || 'Usuário'}
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {formatRelativeTime(currentNotice.created_at)}
+                  </span>
+                </div>
               </div>
             </div>
           )}
