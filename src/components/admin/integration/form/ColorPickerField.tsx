@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Control } from "react-hook-form";
 import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
@@ -34,36 +33,45 @@ export const ColorPickerField: React.FC<ColorPickerFieldProps> = ({
       render={({ field }) => (
         <FormItem>
           <FormLabel>{label}</FormLabel>
-          <div className="flex items-center gap-2">
+          <div className="relative flex items-center gap-2">
             <Popover open={isOpen} onOpenChange={setIsOpen}>
               <PopoverTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  className="w-10 h-10 p-0 border-2"
-                  style={{ 
+                <Button
+                  variant="outline"
+                  className="w-10 h-10 p-0 border-2 ring-2 ring-offset-2 ring-blue-300"
+                  style={{
                     backgroundColor: field.value || "#1EAEDB",
-                    borderColor: field.value === "#FFFFFF" ? "#E5E7EB" : field.value || "#1EAEDB" 
+                    borderColor: field.value === "#FFFFFF" ? "#E5E7EB" : field.value || "#1EAEDB",
                   }}
+                  aria-label="Escolher cor"
                 >
-                  <span className="sr-only">Escolher cor</span>
+                  <span className="sr-only">Abrir seletor de cor</span>
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-64">
+              <PopoverContent
+                className="w-64 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-xl"
+                align="start"
+                sideOffset={6}
+              >
                 <div className="flex flex-col gap-2">
                   <div className="grid grid-cols-5 gap-2">
                     {predefinedColors.map((color) => (
                       <button
                         key={color}
                         type="button"
-                        className="w-8 h-8 rounded-md border border-gray-200 cursor-pointer"
-                        style={{ 
+                        title={color}
+                        className={`w-8 h-8 rounded-md border border-gray-200 cursor-pointer transition-shadow duration-75
+                          ${field.value === color ? "ring-2 ring-blue-400 border-blue-400 scale-110" : ""}
+                        `}
+                        style={{
                           backgroundColor: color,
-                          borderColor: color === "#FFFFFF" ? "#E5E7EB" : color
+                          borderColor: color === "#FFFFFF" ? "#E5E7EB" : color,
                         }}
                         onClick={() => {
                           field.onChange(color);
                           setIsOpen(false);
                         }}
+                        aria-label={`Selecionar cor ${color}`}
                       />
                     ))}
                   </div>
@@ -81,17 +89,22 @@ export const ColorPickerField: React.FC<ColorPickerFieldProps> = ({
             </Popover>
             <FormControl>
               <div className="flex-1 relative">
-                <Input 
-                  type="text" 
-                  {...field} 
+                <Input
+                  type="text"
+                  {...field}
                   placeholder="#RRGGBB"
+                  style={{
+                    borderLeft: `8px solid ${field.value || "#1EAEDB"}`,
+                    paddingLeft: "0.75rem",
+                  }}
                 />
-                <Button 
-                  type="button" 
-                  size="icon" 
-                  variant="ghost" 
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
                   className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
                   onClick={() => setIsOpen(true)}
+                  aria-label="Abrir seletor de cor"
                 >
                   <Palette className="h-4 w-4" />
                 </Button>
