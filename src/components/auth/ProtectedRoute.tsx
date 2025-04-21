@@ -12,6 +12,7 @@ export const ProtectedRoute = () => {
   const location = useLocation();
   const isOnboarding = location.pathname === "/onboarding";
   
+  // Só carrega os dados de empresas se não estiver na página de onboarding
   const { userCompanies, isLoading: companiesLoading } = useCompanies({
     skipLoadingInOnboarding: isOnboarding
   });
@@ -19,9 +20,11 @@ export const ProtectedRoute = () => {
   const [initialLoadDone, setInitialLoadDone] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
+  // Verificação de estado de autenticação
   useEffect(() => {
     console.log("ProtectedRoute: Verificando autenticação");
     
+    // Define um timeout mais curto para o carregamento da autenticação (5 segundos)
     const timeoutId = setTimeout(() => {
       if (loading) {
         console.log("ProtectedRoute: Tempo limite de carregamento atingido");
@@ -31,6 +34,7 @@ export const ProtectedRoute = () => {
       }
     }, 5000);
     
+    // Se o carregamento for concluído, marca como pronto
     if (!loading) {
       console.log("ProtectedRoute: Carregamento concluído");
       setInitialLoadDone(true);
@@ -40,6 +44,7 @@ export const ProtectedRoute = () => {
     return () => clearTimeout(timeoutId);
   }, [loading]);
 
+  // Mostrar um loading mais simplificado e rápido
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -48,6 +53,7 @@ export const ProtectedRoute = () => {
     );
   }
 
+  // Mostra erro de autenticação se houver
   if (authError) {
     return (
       <div className="flex flex-col items-center justify-center h-screen p-4">
@@ -80,24 +86,31 @@ export const ProtectedRoute = () => {
     );
   }
 
+  // Redirecionar para login se não autenticado
   if (!user) {
     console.log("ProtectedRoute: Usuário não autenticado, redirecionando para login");
     return <Navigate to="/login" replace />;
   }
 
-  const needsCompleteOnboarding = userProfile?.interesses?.includes("onboarding_incomplete");
-  const hasNoCompanies = !isOnboarding && (!userCompanies || userCompanies.length === 0) && !companiesLoading;
-  
-  if (needsCompleteOnboarding && !isOnboarding) {
-    console.log("ProtectedRoute: Usuário precisa completar onboarding inicial");
+  // Verificar se precisa fazer onboarding inicial
+  // Consideramos apenas a flag 'onboarding_incomplete' para onboarding
+  const needsOnboarding = userProfile?.interesses?.includes("onboarding_incomplete");
+                         
+  // Redirecionar para onboarding se for a primeira vez
+  if (needsOnboarding && !isOnboarding) {
+    console.log("ProtectedRoute: Usuário precisa completar onboarding inicial", { 
+      interesses: userProfile?.interesses
+    });
     return <Navigate to="/onboarding" replace />;
   }
-  
-  if (!needsCompleteOnboarding && hasNoCompanies && !isOnboarding) {
-    console.log("ProtectedRoute: Usuário sem empresas, redirecionando para onboarding");
-    return <Navigate to="/onboarding?step=3" replace />;
+
+  // Se não precisa de onboarding mas não tem empresas, permitir acesso à home
+  // O componente NoCompaniesAvailable será mostrado na home
+  if (!needsOnboarding && !isOnboarding && (!userCompanies || userCompanies.length === 0) && !companiesLoading) {
+    console.log("ProtectedRoute: Usuário sem empresas mas já fez onboarding");
   }
 
+  // Renderiza rotas protegidas se autenticado
   console.log("ProtectedRoute: Usuário autenticado, renderizando rotas protegidas");
   return (
     <ErrorBoundary fallback={ErrorFallback}>
@@ -106,6 +119,7 @@ export const ProtectedRoute = () => {
   );
 };
 
+// Componente de erro personalizado para ErrorBoundary
 const ErrorFallback = (
   <div className="flex flex-col items-center justify-center h-screen p-4">
     <div className="bg-amber-50 border border-amber-200 p-6 rounded-lg max-w-md w-full shadow-md dark:bg-amber-900/30 dark:border-amber-800">

@@ -1,11 +1,10 @@
-
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanyState } from "./useCompanyState";
 import { useCompanyFetching } from "./useCompanyFetching";
 import { useCompanyModification } from "./useCompanyModification";
-import { useCompanyEvents } from "./useCompanyEvents";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useCompanyEvents, UseCompanyEventsProps } from "./useCompanyEvents";
 
 export const useCompaniesProvider = () => {
   const { user } = useAuth();
@@ -44,10 +43,24 @@ export const useCompaniesProvider = () => {
     ...stateActions
   });
 
-  // Listen for selected company events
-  useCompanyEvents(stateActions.setSelectedCompany);
+  const handleForceGetUserCompanies = async (userId: string): Promise<any> => {
+    return await forceGetUserCompanies(userId);
+  };
 
-  // Verificar se o usuário é super admin
+  const handleSetSelectedCompany = (company: any) => {
+    stateActions.setSelectedCompany(company);
+  };
+
+  const companyEventsProps: UseCompanyEventsProps = {
+    userId: user?.id,
+    forceGetUserCompanies: handleForceGetUserCompanies,
+    setDisplayName: (name: string) => {
+      localStorage.setItem('selectedCompanyName', name);
+    }
+  };
+
+  useCompanyEvents(companyEventsProps);
+
   useEffect(() => {
     const checkUserRole = async () => {
       if (user?.id && !hasCheckedUserRole) {
@@ -72,7 +85,6 @@ export const useCompaniesProvider = () => {
     checkUserRole();
   }, [user?.id, hasCheckedUserRole, setIsSuperAdmin]);
 
-  // Global data loading - load user companies only when user is logged in
   useEffect(() => {
     const loadInitialData = async () => {
       if (user?.id && (userCompanies.length === 0) && !isLoading && hasCheckedUserRole) {
@@ -96,7 +108,7 @@ export const useCompaniesProvider = () => {
     fetchCount,
     isSuperAdmin,
     getUserCompanies,
-    forceGetUserCompanies,
+    forceGetUserCompanies: handleForceGetUserCompanies,
     getCompanyById,
     fetchCompanies,
     selectCompany,
