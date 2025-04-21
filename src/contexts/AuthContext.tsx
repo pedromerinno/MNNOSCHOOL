@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { UserProfile } from '@/types/user';
@@ -46,7 +45,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading: (isLoading) => setLoading(isLoading)
   });
 
-  // If the user has changed, fetch their profile
   React.useEffect(() => {
     if (user) {
       setTimeout(async () => {
@@ -56,13 +54,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [user, fetchUserProfile]);
 
   const handleUpdateUserData = async (userData: Partial<UserProfile>) => {
-    if (!user) {
-      return;
-    }
+    if (!user) return;
     await updateUserData(user.id, userData);
   };
 
-  const value: AuthContextType = {
+  const value = {
     user,
     session,
     userProfile,

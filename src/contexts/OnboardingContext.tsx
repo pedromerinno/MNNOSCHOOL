@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -128,9 +127,9 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
         }
       }
       
-      // Remover a flag de onboarding_incomplete dos interesses
+      // Remover a flag de onboarding_incomplete dos interesses e atualizar primeiro_login
       const cleanInterests = profileData.interests.filter(i => i !== "onboarding_incomplete");
-      console.log("Removendo flag de onboarding incompleto:", { 
+      console.log("Removendo flags de onboarding:", { 
         antes: profileData.interests, 
         depois: cleanInterests 
       });
@@ -139,7 +138,8 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       const profileUpdate = {
         display_name: profileData.displayName,
         avatar: profileData.avatarUrl,
-        interesses: cleanInterests
+        interesses: cleanInterests,
+        primeiro_login: false // Set primeiro_login to false after completing onboarding
       };
       
       console.log("Atualizando perfil do usuário:", profileUpdate);

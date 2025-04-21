@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -93,12 +94,13 @@ export const ProtectedRoute = () => {
   }
 
   // Verificar se precisa fazer onboarding inicial
-  // Consideramos apenas a flag 'onboarding_incomplete' para onboarding
-  const needsOnboarding = userProfile?.interesses?.includes("onboarding_incomplete");
+  const needsOnboarding = userProfile?.primeiro_login || 
+                         userProfile?.interesses?.includes("onboarding_incomplete");
                          
   // Redirecionar para onboarding se for a primeira vez
   if (needsOnboarding && !isOnboarding) {
     console.log("ProtectedRoute: Usuário precisa completar onboarding inicial", { 
+      primeiro_login: userProfile?.primeiro_login,
       interesses: userProfile?.interesses
     });
     return <Navigate to="/onboarding" replace />;
