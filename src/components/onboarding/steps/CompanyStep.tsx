@@ -10,9 +10,18 @@ interface CompanyStepProps {
 }
 
 const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyTypeSelect }) => {
+  const [companyType, setCompanyType] = useState<"existing" | "new">("existing");
+  
+  const handleTypeChange = (type: "existing" | "new") => {
+    setCompanyType(type);
+  };
+
   return (
     <>
-      <CompanyStepHeader />
+      <CompanyStepHeader 
+        companyType={companyType} 
+        onTypeChange={handleTypeChange} 
+      />
       <CompanyStepForm
         onNext={onNext}
         onBack={onBack}
