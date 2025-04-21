@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Share } from 'lucide-react';
+import { Share, PencilLine } from 'lucide-react';
 import { FavoriteButton } from './FavoriteButton';
 import { useNavigate } from 'react-router-dom';
 
@@ -12,6 +12,7 @@ interface CourseHeroProps {
   favorite: boolean;
   courseId: string;
   firstLessonId?: string;
+  showEditButton?: boolean;
 }
 
 export const CourseHero: React.FC<CourseHeroProps> = ({ 
@@ -20,7 +21,8 @@ export const CourseHero: React.FC<CourseHeroProps> = ({
   instructor,
   favorite,
   courseId,
-  firstLessonId
+  firstLessonId,
+  showEditButton = false
 }) => {
   const navigate = useNavigate();
 
@@ -30,8 +32,27 @@ export const CourseHero: React.FC<CourseHeroProps> = ({
     }
   };
 
+  const handleEditCourse = () => {
+    navigate(`/admin/courses/edit/${courseId}`);
+  };
+
   return (
     <div className="relative rounded-xl overflow-hidden h-[400px] bg-[#1A1F2C] text-white">
+      {/* Botão Editar Curso (apenas admin) */}
+      {showEditButton && (
+        <div className="absolute top-6 right-8 z-20">
+          <Button
+            variant="secondary"
+            className="flex gap-2 bg-white/90 text-[#1A1F2C] border-none shadow-lg hover:bg-white"
+            onClick={handleEditCourse}
+            size="sm"
+            aria-label="Editar curso"
+          >
+            <PencilLine className="h-4 w-4" />
+            Editar curso
+          </Button>
+        </div>
+      )}
       {/* Full-width background image */}
       <div className="absolute inset-0 w-full h-full">
         {imageUrl && (
@@ -87,4 +108,3 @@ export const CourseHero: React.FC<CourseHeroProps> = ({
     </div>
   );
 };
-

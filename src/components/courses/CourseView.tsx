@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCourseData } from '@/hooks/useCourseData';
@@ -13,9 +12,7 @@ import { CourseDescription } from './CourseDescription';
 import { Badge } from '@/components/ui/badge';
 import { Clock, BookOpen, Star, Plus } from 'lucide-react';
 import { useCompanies } from '@/hooks/useCompanies';
-// Importa o contexto de autenticação
 import { useAuth } from '@/contexts/AuthContext';
-// Importa o LessonManager (gerenciador de aulas do admin)
 import { LessonManager } from '@/components/admin/courses/LessonManager';
 import { Button } from '@/components/ui/button';
 
@@ -27,11 +24,13 @@ export const CourseView: React.FC = () => {
   const { selectedCompany } = useCompanies();
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
 
-  // STATE PARA O PAINEL DE GERENCIAMENTO DE AULAS
   const [showLessonManager, setShowLessonManager] = useState(false);
-  // VERIFICA SE É ADMIN OU SUPER ADMIN
   const { userProfile } = useAuth();
   const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
+
+  const handleEditCourse = () => {
+    window.location.href = `/admin/courses/edit/${course.id}`;
+  };
 
   if (loading) {
     return <CourseViewSkeleton />;
@@ -73,6 +72,7 @@ export const CourseView: React.FC = () => {
           favorite={course.favorite || false}
           courseId={course.id}
           firstLessonId={firstLessonId}
+          showEditButton={isAdmin}
         />
       </div>
       
@@ -152,18 +152,17 @@ export const CourseView: React.FC = () => {
         </div>
         
         <div className="w-full md:w-4/12 mt-8 md:mt-0 relative">
-          {/* Botão flutuante de Gerenciar Aulas */}
           {isAdmin && (
-            <>
+            <div className="mb-6">
               <Button 
-                className="absolute top-0 right-0 z-20 bg-primary text-white shadow-lg rounded-full flex items-center gap-2 px-4 py-2"
+                className="bg-primary text-white shadow-lg gap-2 rounded-xl w-full font-bold text-base py-3"
                 onClick={() => setShowLessonManager(true)}
                 variant="default"
-                size="sm"
+                size="lg"
                 aria-label="Gerenciar aulas"
               >
-                <Plus className="w-4 h-4" />
-                Gerenciar Aulas
+                <Plus className="w-5 h-5" />
+                Gerenciar aulas
               </Button>
               <LessonManager
                 courseId={course.id}
@@ -171,7 +170,7 @@ export const CourseView: React.FC = () => {
                 open={showLessonManager}
                 onClose={() => setShowLessonManager(false)}
               />
-            </>
+            </div>
           )}
           <CourseLessonList 
             lessons={course.lessons} 
