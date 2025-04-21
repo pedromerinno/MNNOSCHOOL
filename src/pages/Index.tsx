@@ -53,20 +53,42 @@ const Index = () => {
   useEffect(() => {
     if (hasCachedCompany || (!isLoading && fetchCount > 0)) {
       setIsPageLoading(false);
-      setShowCompanyForm(userCompanies.length === 0 && formShowDelayComplete);
+      
+      // Only show company form if user has no companies AND the delay is complete
+      const shouldShowCompanyForm = userCompanies.length === 0 && formShowDelayComplete;
+      setShowCompanyForm(shouldShowCompanyForm);
+      
+      // Log for debugging
+      if (shouldShowCompanyForm) {
+        console.log("[Index] Showing company form because user has no companies");
+      } else if (userCompanies.length > 0) {
+        console.log("[Index] User has companies, not showing company form");
+      }
     }
     
     const timeoutId = setTimeout(() => {
       if (isPageLoading) {
         setIsPageLoading(false);
-        if (fetchCount > 0 && formShowDelayComplete) {
-          setShowCompanyForm(userCompanies.length === 0);
+        if (fetchCount > 0 && userCompanies.length === 0 && formShowDelayComplete) {
+          console.log("[Index] Timeout reached, showing company form");
+          setShowCompanyForm(true);
+        } else if (userCompanies.length > 0) {
+          console.log("[Index] Timeout reached, user has companies, not showing form");
+          setShowCompanyForm(false);
         }
       }
     }, 2000);
     
     return () => clearTimeout(timeoutId);
   }, [isLoading, fetchCount, isPageLoading, hasCachedCompany, userCompanies, formShowDelayComplete]);
+
+  // Force hide company form if userCompanies length changes to > 0
+  useEffect(() => {
+    if (userCompanies.length > 0 && showCompanyForm) {
+      console.log("[Index] User now has companies, hiding company form");
+      setShowCompanyForm(false);
+    }
+  }, [userCompanies.length, showCompanyForm]);
 
   if (isPageLoading) {
     return <LoadingState />;
@@ -95,4 +117,3 @@ const Index = () => {
 };
 
 export default Index;
-
