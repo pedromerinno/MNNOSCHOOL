@@ -1,43 +1,35 @@
 
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCompanies } from "@/hooks/useCompanies";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { CompanyInfoDisplay } from "@/components/company/CompanyInfoDisplay";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Company } from "@/types/company";
 
 export const WelcomeSection = () => {
   const { user, userProfile } = useAuth();
+  const { selectedCompany } = useCompanies();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [displayCompany, setDisplayCompany] = useState<Company | null>(null);
 
-  const userName = userProfile?.display_name || user?.email?.split('@')[0] || 'User';
+  // Atualizar empresa exibida quando a seleção mudar
+  useEffect(() => {
+    if (selectedCompany) {
+      console.log('[WelcomeSection] Empresa selecionada atualizada:', selectedCompany.nome);
+      setDisplayCompany(selectedCompany);
+    }
+  }, [selectedCompany]);
+
+  const userName = userProfile?.display_name || user?.email?.split('@')[0] || 'Usuário';
 
   const handleLearnMore = () => {
     navigate('/integration');
   };
 
-  const defaultPhrase = "Together, we're designing the future of great companies";
-
-  // Renderização condicional da frase institucional com fallback
-  const renderCompanyInfo = (company: any) => (
-    <p 
-      className="text-[#000000] text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-5"
-    >
-      {company?.frase_institucional || defaultPhrase}
-    </p>
-  );
-
-  // Fallback para estado de carregamento
-  const loadingFallback = (
-    <Skeleton className="text-[#000000] text-center text-[40px] font-normal max-w-[50%] h-[80px] mx-auto leading-[1.1] mb-5" />
-  );
-
-  // Fallback para estado sem empresa
-  const emptyFallback = (
-    <p className="text-[#000000] text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-5 mx-auto">
-      {defaultPhrase}
-    </p>
-  );
+  const defaultPhrase = "Juntos, estamos desenhando o futuro de grandes empresas";
+  const companyPhrase = displayCompany?.frase_institucional || defaultPhrase;
 
   return (
     <div className="mb-16 mt-10">
@@ -45,21 +37,21 @@ export const WelcomeSection = () => {
         <p 
           className="text-gray-700 dark:text-gray-200 mb-6 text-center bg-[#FFF5E4] dark:bg-amber-900/30 py-1.5 px-6 rounded-full max-w-fit text-sm font-semibold"
         >
-          Hello, {userName}
+          Olá, {userName}
         </p>
         
-        <CompanyInfoDisplay 
-          renderInfo={renderCompanyInfo}
-          loadingFallback={loadingFallback}
-          emptyFallback={emptyFallback}
-        />
+        <p 
+          className="text-[#000000] text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-5"
+        >
+          {companyPhrase}
+        </p>
         
         <Button 
           onClick={handleLearnMore} 
           className="mt-1 flex items-center gap-2 text-white rounded-full text-sm transition-colors duration-300 bg-black hover:bg-black/90"
           variant="default"
         >
-          Learn more
+          Saiba mais
           <ArrowRight className="h-4 w-4" />
         </Button>
       </div>

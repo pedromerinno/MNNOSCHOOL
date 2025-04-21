@@ -1,5 +1,5 @@
 
-import { memo, useCallback, useEffect, useState, useRef } from "react";
+import { useEffect, useState, memo, useCallback } from "react";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -7,14 +7,9 @@ import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useCompanyNameDisplay } from "@/hooks/company/useCompanyNameDisplay";
-import { useCompanyEvents } from "@/hooks/company/useCompanyEvents";
-import { CompanyName } from "./company/CompanyName";
-import { CompanyMenuItem } from "./company/CompanyMenuItem";
-import { Company } from "@/types/company";
-import { useCompanyCache } from "@/hooks/company/useCompanyCache";
 
 export const CompanySelector = memo(() => {
   const { user } = useAuth();
@@ -23,127 +18,120 @@ export const CompanySelector = memo(() => {
     selectedCompany, 
     selectCompany,
     isLoading,
-    forceGetUserCompanies,
-    setCompanyContentLoaded
+    forceGetUserCompanies
   } = useCompanies();
   
-  const { displayName, setDisplayName } = useCompanyNameDisplay(selectedCompany);
-  const [initialLoadAttempted, setInitialLoadAttempted] = useState(false);
-  const { invalidateCache } = useCompanyCache();
-  const initialSelectionMadeRef = useRef(false);
+  const [displayName, setDisplayName] = useState<string>("merinno");
   
-  // Create a wrapper function with the correct return type
-  const handleForceGetUserCompanies = async (userId: string): Promise<any> => {
-    console.log('CompanySelector: Forcing refresh of user companies');
-    invalidateCache(); // Invalidar cache antes de forçar atualização
-    return await forceGetUserCompanies(userId);
-  };
+  // Atualizar o nome da empresa quando mudar a seleção ou após eventos de empresa
+  useEffect(() => {
+    if (selectedCompany?.nome) {
+      console.log(`CompanySelector: Atualizando nome para "${selectedCompany.nome}"`);
+      setDisplayName(selectedCompany.nome);
+      
+      // Atualizar o localStorage para persistência
+      localStorage.setItem('selectedCompanyName', selectedCompany.nome);
+    }
+  }, [selectedCompany]);
+
+  // Listener para mudanças nas relações de empresa
+  const handleCompanyRelationChange = useCallback(async () => {
+    if (user?.id) {
+      console.log('CompanySelector: Detectada mudança na relação de empresa, atualizando dados');
+      await forceGetUserCompanies(user.id);
+    }
+  }, [user, forceGetUserCompanies]);
   
-  // Use the new central event handler
-  useCompanyEvents({
-    userId: user?.id,
-    forceGetUserCompanies: handleForceGetUserCompanies,
-    setDisplayName
-  });
-
-  // Always select the first company if there's no selected company and companies exist
+  // Carregar nome da empresa do localStorage ao inicializar
   useEffect(() => {
-    if (user?.id && 
-        userCompanies.length > 0 && 
-        !selectedCompany && 
-        !initialLoadAttempted && 
-        !initialSelectionMadeRef.current) {
-      console.log('CompanySelector: Auto-selecting the first company:', userCompanies[0].nome);
-      initialSelectionMadeRef.current = true;
-      selectCompany(user.id, userCompanies[0]);
-      setInitialLoadAttempted(true);
-      
-      // Update the display name immediately
-      setDisplayName(userCompanies[0].nome);
-      
-      // Disparar evento para garantir que todos os componentes sejam atualizados
-      const updateEvent = new CustomEvent('company-updated', {
-        detail: { company: userCompanies[0] }
-      });
-      
-      // Pequeno atraso para garantir que o evento de seleção foi processado primeiro
-      setTimeout(() => {
-        window.dispatchEvent(updateEvent);
-      }, 100);
+    const cachedCompanyName = localStorage.getItem('selectedCompanyName');
+    if (cachedCompanyName) {
+      setDisplayName(cachedCompanyName);
     }
-  }, [user?.id, userCompanies, selectedCompany, selectCompany, setDisplayName, initialLoadAttempted]);
-
-  // Force initial load when component mounts - but only once
+  }, []);
+  
+  // Configurar ouvinte de eventos
   useEffect(() => {
-    if (user?.id && !isLoading && userCompanies.length === 0 && !initialLoadAttempted) {
-      console.log('CompanySelector: No companies loaded, forcing initial load');
-      setInitialLoadAttempted(true);
-      invalidateCache(); // Invalidar cache antes de forçar atualização
-      forceGetUserCompanies(user.id).catch(err => {
-        console.error('Error forcing initial company load:', err);
-        toast.error('Error loading companies. Please refresh the page.');
-      });
-    }
-  }, [user?.id, isLoading, userCompanies.length, forceGetUserCompanies, initialLoadAttempted, invalidateCache]);
+    window.addEventListener('company-relation-changed', handleCompanyRelationChange);
+    window.addEventListener('company-updated', (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const updatedCompany = customEvent.detail.company;
+      if (updatedCompany) {
+        setDisplayName(updatedCompany.nome);
+        localStorage.setItem('selectedCompanyName', updatedCompany.nome);
+      }
+    });
+    
+    return () => {
+      window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
+      window.removeEventListener('company-updated', () => {});
+    };
+  }, [handleCompanyRelationChange]);
 
-  const handleCompanyChange = useCallback((company: Company) => {
+  const handleCompanyChange = useCallback((company) => {
     if (!company || !user?.id) return;
     
     if (selectedCompany?.id === company.id) {
-      console.log('CompanySelector: Company already selected, skipping change');
+      console.log('CompanySelector: Empresa já selecionada, pulando mudança');
       return;
     }
     
     const hasAccess = userCompanies.some(c => c.id === company.id);
     if (!hasAccess) {
-      console.error('CompanySelector: User does not have access to this company:', company.nome);
-      toast.error(`You do not have access to company ${company.nome}`);
+      console.error('CompanySelector: Usuário não tem acesso a esta empresa:', company.nome);
+      toast.error(`Você não tem acesso à empresa ${company.nome}`);
       return;
     }
     
-    console.log('CompanySelector: Selecting company:', company.nome);
-    invalidateCache(); // Invalidar cache antes de selecionar empresa
+    console.log('CompanySelector: Selecionando empresa:', company.nome);
     selectCompany(user.id, company);
-    
-    // Resetar o estado de carregamento de conteúdo para a nova empresa
-    if (setCompanyContentLoaded) {
-      setCompanyContentLoaded(false);
-    }
-    
-    // Update display name immediately
-    setDisplayName(company.nome);
-    
-    toast.success(`Company ${company.nome} selected successfully!`);
-  }, [user?.id, selectedCompany?.id, selectCompany, userCompanies, setDisplayName, setCompanyContentLoaded, invalidateCache]);
+    toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
+  }, [user?.id, selectedCompany?.id, selectCompany, userCompanies]);
 
+  // Manter a lógica de renderização existente
   if (isLoading && !selectedCompany) {
-    return <CompanyName displayName={displayName || "Loading..."} />;
+    return <span className="text-lg font-bold text-merinno-dark">{displayName}</span>;
   }
 
   if (!user || !userCompanies || userCompanies.length === 0) {
-    return <CompanyName displayName={displayName || "merinno"} />;
+    return <span className="text-lg font-bold text-merinno-dark">merinno</span>;
   }
 
   if (userCompanies.length === 1) {
-    return <CompanyName displayName={displayName || userCompanies[0].nome} />;
+    return <span className="text-lg font-bold text-merinno-dark">{displayName}</span>;
   }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center text-lg font-bold text-merinno-dark focus:outline-none">
-          {displayName || (selectedCompany?.nome || "Select Company")}
+          {displayName}
           <ChevronDown className="ml-1 h-4 w-4" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="bg-white dark:bg-gray-800 z-50">
         {Array.isArray(userCompanies) && userCompanies.map((company) => (
-          <CompanyMenuItem
-            key={company.id}
-            company={company}
-            isSelected={selectedCompany?.id === company.id}
-            onSelect={handleCompanyChange}
-          />
+          <DropdownMenuItem 
+            key={company.id} 
+            onClick={() => handleCompanyChange(company)}
+            className={`cursor-pointer ${selectedCompany?.id === company.id ? 'bg-gray-100 dark:bg-gray-700' : ''}`}
+          >
+            <div className="flex items-center">
+              {company.logo && (
+                <img
+                  src={company.logo}
+                  alt={company.nome}
+                  className="h-4 w-4 mr-2 object-contain rounded-lg"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = "/placeholder.svg";
+                    target.onerror = null;
+                  }}
+                />
+              )}
+              <span>{company.nome}</span>
+            </div>
+          </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
     </DropdownMenu>

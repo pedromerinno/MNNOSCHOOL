@@ -506,7 +506,6 @@ export type Database = {
           id: string
           interesses: string[] | null
           is_admin: boolean | null
-          primeiro_login: boolean | null
           super_admin: boolean | null
           updated_at: string
         }
@@ -519,7 +518,6 @@ export type Database = {
           id: string
           interesses?: string[] | null
           is_admin?: boolean | null
-          primeiro_login?: boolean | null
           super_admin?: boolean | null
           updated_at?: string
         }
@@ -532,7 +530,6 @@ export type Database = {
           id?: string
           interesses?: string[] | null
           is_admin?: boolean | null
-          primeiro_login?: boolean | null
           super_admin?: boolean | null
           updated_at?: string
         }
@@ -881,7 +878,6 @@ export type Database = {
           id: string
           interesses: string[] | null
           is_admin: boolean | null
-          primeiro_login: boolean | null
           super_admin: boolean | null
           updated_at: string
         }[]

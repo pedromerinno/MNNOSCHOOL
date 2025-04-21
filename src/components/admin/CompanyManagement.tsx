@@ -11,12 +11,11 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { CompanyTable } from './CompanyTable';
 import { CompanyForm } from './CompanyForm';
-import { useCompanies } from '@/hooks/useCompanies';
+import { useCompanies } from '@/hooks/company';
 import { Company } from '@/types/company';
 import { UserCompanyManager } from './UserCompanyManager';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 
 export const CompanyManagement: React.FC = () => {
   const { 
@@ -26,67 +25,34 @@ export const CompanyManagement: React.FC = () => {
     fetchCompanies, 
     createCompany, 
     updateCompany, 
-    deleteCompany,
-    forceGetUserCompanies 
+    deleteCompany 
   } = useCompanies();
   
-  const { user, userProfile } = useAuth();
+  const { userProfile } = useAuth();
   const isSuperAdmin = userProfile?.super_admin === true;
-  const isAdminUser = userProfile?.is_admin === true;
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isUserManagerOpen, setIsUserManagerOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<Company | undefined>(undefined);
-  const [adminCompanies, setAdminCompanies] = useState<Company[]>([]);
-  const [loadingAdminCompanies, setLoadingAdminCompanies] = useState(false);
 
   // Fetch companies on mount
   useEffect(() => {
     const loadCompanies = async () => {
-      console.log('CompanyManagement: Iniciando carregamento das empresas');
-      setLoadingAdminCompanies(true);
-      
-      try {
-        // Para super admin, carregar todas as empresas
-        if (isSuperAdmin) {
+      // Se for super admin ou não tiver acesso a empresas específicas, buscar todas
+      if (isSuperAdmin) {
+        try {
           console.log('CompanyManagement: Loading all companies for super admin');
           await fetchCompanies();
-          setAdminCompanies(companies);
-        } 
-        // Para admin normal, carregar empresas associadas ao usuário
-        else if (isAdminUser && user?.id) {
-          console.log('CompanyManagement: Loading companies for admin user');
-          // Usar RPC function para evitar problemas de RLS
-          const { data, error } = await supabase
-            .rpc('get_user_companies_for_admin', { current_user_id: user.id });
-            
-          if (error) {
-            console.error('Error fetching admin companies:', error);
-            toast.error("Erro ao carregar empresas: " + error.message);
-          } else {
-            console.log('CompanyManagement: Loaded', data?.length || 0, 'companies for admin');
-            setAdminCompanies(data || []);
-          }
-          
-          // Atualizar também userCompanies para manter consistência
-          if (user?.id) {
-            await forceGetUserCompanies(user.id);
-          }
-        } else {
-          console.log('CompanyManagement: No sufficient permissions, showing available companies');
-          setAdminCompanies(userCompanies);
+        } catch (error) {
+          console.error('Error fetching companies:', error);
+          toast.error("Erro ao carregar empresas");
         }
-      } catch (error) {
-        console.error('Error fetching companies:', error);
-        toast.error("Erro ao carregar empresas");
-      } finally {
-        setLoadingAdminCompanies(false);
       }
     };
     
     loadCompanies();
-  }, [fetchCompanies, isSuperAdmin, isAdminUser, user?.id, companies, userCompanies, forceGetUserCompanies]);
+  }, [fetchCompanies, isSuperAdmin]);
 
   const handleCreateCompany = () => {
     if (!userProfile?.is_admin && !userProfile?.super_admin) {
@@ -116,9 +82,6 @@ export const CompanyManagement: React.FC = () => {
     
     if (confirm('Tem certeza que deseja excluir esta empresa? Esta ação não pode ser desfeita.')) {
       await deleteCompany(companyId);
-      // Atualizar a lista após exclusão
-      const updatedList = adminCompanies.filter(company => company.id !== companyId);
-      setAdminCompanies(updatedList);
     }
   };
 
@@ -142,21 +105,10 @@ export const CompanyManagement: React.FC = () => {
     try {
       if (selectedCompany) {
         await updateCompany(selectedCompany.id, data);
-        // Atualizar a lista após edição
-        setAdminCompanies(prevCompanies => 
-          prevCompanies.map(c => c.id === selectedCompany.id ? { ...c, ...data } : c)
-        );
       } else {
-        const newCompany = await createCompany(data);
-        // Adicionar nova empresa à lista
-        if (newCompany) {
-          setAdminCompanies(prev => [...prev, newCompany]);
-        }
+        await createCompany(data);
       }
       setIsFormOpen(false);
-      
-      // Dispatch event to trigger refresh in other components
-      window.dispatchEvent(new Event('company-relation-changed'));
     } catch (error) {
       console.error('Error submitting form:', error);
     } finally {
@@ -164,19 +116,10 @@ export const CompanyManagement: React.FC = () => {
     }
   };
 
-  // Loading state UI
-  if (loadingAdminCompanies && adminCompanies.length === 0) {
-    return (
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">Carregando empresas...</h2>
-        </div>
-        <div className="rounded-md border p-8 flex justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-        </div>
-      </div>
-    );
-  }
+  // Determinar quais empresas mostrar baseado no perfil do usuário
+  const displayCompanies = isSuperAdmin 
+    ? (Array.isArray(companies) ? companies : []) 
+    : (Array.isArray(userCompanies) ? userCompanies : []);
 
   return (
     <div className="space-y-4">
@@ -189,8 +132,8 @@ export const CompanyManagement: React.FC = () => {
       </div>
       
       <CompanyTable 
-        companies={adminCompanies} 
-        loading={loadingAdminCompanies} 
+        companies={displayCompanies} 
+        loading={isLoading} 
         onEdit={handleEditCompany}
         onDelete={handleDeleteCompany}
         onManageUsers={handleManageUsers}

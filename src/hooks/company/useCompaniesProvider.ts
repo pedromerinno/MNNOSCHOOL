@@ -1,10 +1,11 @@
+
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanyState } from "./useCompanyState";
 import { useCompanyFetching } from "./useCompanyFetching";
 import { useCompanyModification } from "./useCompanyModification";
+import { useCompanyEvents } from "./useCompanyEvents";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useCompanyEvents } from "./useCompanyEvents";
 
 export const useCompaniesProvider = () => {
   const { user } = useAuth();
@@ -43,24 +44,10 @@ export const useCompaniesProvider = () => {
     ...stateActions
   });
 
-  const handleForceGetUserCompanies = async (userId: string): Promise<any> => {
-    return await forceGetUserCompanies(userId);
-  };
+  // Listen for selected company events
+  useCompanyEvents(stateActions.setSelectedCompany);
 
-  const handleSetSelectedCompany = (company: any) => {
-    stateActions.setSelectedCompany(company);
-  };
-
-  const companyEventsProps = {
-    userId: user?.id,
-    forceGetUserCompanies: handleForceGetUserCompanies,
-    setDisplayName: (name: string) => {
-      localStorage.setItem('selectedCompanyName', name);
-    }
-  };
-
-  useCompanyEvents(companyEventsProps);
-
+  // Verificar se o usuário é super admin
   useEffect(() => {
     const checkUserRole = async () => {
       if (user?.id && !hasCheckedUserRole) {
@@ -85,6 +72,7 @@ export const useCompaniesProvider = () => {
     checkUserRole();
   }, [user?.id, hasCheckedUserRole, setIsSuperAdmin]);
 
+  // Global data loading - load user companies only when user is logged in
   useEffect(() => {
     const loadInitialData = async () => {
       if (user?.id && (userCompanies.length === 0) && !isLoading && hasCheckedUserRole) {
@@ -108,7 +96,7 @@ export const useCompaniesProvider = () => {
     fetchCount,
     isSuperAdmin,
     getUserCompanies,
-    forceGetUserCompanies: handleForceGetUserCompanies,
+    forceGetUserCompanies,
     getCompanyById,
     fetchCompanies,
     selectCompany,
