@@ -86,7 +86,8 @@ export const CourseView: React.FC = () => {
     : `${minutes} min`;
 
   // Preparar os dados iniciais para o formulário de edição
-  const initialFormData = {
+  // Não precisamos passar o objeto course completo, apenas os campos necessários para o formulário
+  const initialFormData: CourseFormValues = {
     title: course.title,
     description: course.description || "",
     image_url: course.image_url || "",

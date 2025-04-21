@@ -14,7 +14,7 @@ export const courseSchema = z.object({
 export type CourseFormValues = z.infer<typeof courseSchema>;
 
 export interface CourseFormProps {
-  initialData?: Course | null;
+  initialData?: Course | CourseFormValues | null;
   onSubmit: (data: CourseFormValues) => void;
   onCancel: () => void;
   isSubmitting: boolean;
