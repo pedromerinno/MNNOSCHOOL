@@ -52,6 +52,16 @@ export const CompanySelector = memo(() => {
     }
   }, [user?.id, userCompanies, selectedCompany, selectCompany]);
 
+  // Force initial load when component mounts
+  useEffect(() => {
+    if (user?.id && !isLoading && userCompanies.length === 0) {
+      console.log('CompanySelector: No companies loaded, forcing initial load');
+      forceGetUserCompanies(user.id).catch(err => {
+        console.error('Error forcing initial company load:', err);
+      });
+    }
+  }, [user?.id, isLoading, userCompanies.length, forceGetUserCompanies]);
+
   const handleCompanyChange = useCallback((company: Company) => {
     if (!company || !user?.id) return;
     

@@ -1,3 +1,4 @@
+
 import { useEffect, useCallback, useRef } from "react";
 import { useCompanyState } from "./company/useCompanyState";
 import { useCompanyFetching } from "./company/useCompanyFetching";
@@ -18,7 +19,7 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
   const { skipLoadingInOnboarding = false } = options;
   
   // Get auth context for global access
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const initialDataLoaded = useRef(false);
   
   // Use specialized hooks for state management
@@ -134,26 +135,35 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
         }
       }
       
-      // Verificar se é super admin (uma única vez)
+      // Verificar se é super admin ou admin (uma única vez)
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('super_admin')
+        .select('super_admin, is_admin')
         .eq('id', user.id)
         .single();
       
       if (profileData?.super_admin) {
+        console.log('[useCompanies] Usuário é super admin, buscando todas as empresas');
+        // Super admins access all companies
         const { data: allCompanies } = await supabase
           .from('empresas')
-          .select('*');
+          .select('*')
+          .order('nome');
         
         setUserCompanies(allCompanies as Company[] || []);
       } else {
+        console.log('[useCompanies] Buscando empresas do usuário:', user.id);
         await getUserCompanies(user.id);
       }
     } catch (error) {
       console.error('[useCompanies] Erro ao carregar dados iniciais de empresas:', error);
     }
   }, [user?.id, isLoading, getUserCompanies, skipLoadingInOnboarding, setUserCompanies]);
+  
+  // Run loadInitialData on component mount or when user/isLoading changes
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData, user?.id]);
   
   // Atualizar dados quando necessário (with better memoization)
   const handleCompanyRelationChange = useCallback(async () => {
@@ -166,6 +176,14 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
       }
     }
   }, [user?.id, forceGetUserCompanies]);
+  
+  // Listen for company relation change events
+  useEffect(() => {
+    window.addEventListener('company-relation-changed', handleCompanyRelationChange);
+    return () => {
+      window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
+    };
+  }, [handleCompanyRelationChange]);
 
   const handleForceReload = useCallback(async () => {
     if (user?.id) {
@@ -184,6 +202,14 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
       }
     }
   }, [user?.id, forceGetUserCompanies, fetchCompanies]);
+  
+  // Listen for force reload events
+  useEffect(() => {
+    window.addEventListener('force-reload-companies', handleForceReload);
+    return () => {
+      window.removeEventListener('force-reload-companies', handleForceReload);
+    };
+  }, [handleForceReload]);
   
   // Wrap forceGetUserCompanies to ensure it matches the expected interface
   const wrappedForceGetUserCompanies = useCallback(async (userId: string): Promise<any> => {
