@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { CourseFormValues } from "@/components/admin/courses/form/CourseFormTypes";
 
 /**
- * Creates a new course
+ * Creates a new course and notifies company users
  */
 export const createCourse = async (courseData: CourseFormValues): Promise<string | null> => {
   try {
@@ -23,17 +23,47 @@ export const createCourse = async (courseData: CourseFormValues): Promise<string
     if (error) throw error;
     const courseId = newCourse.id;
 
-    // If companyIds were provided, associate the course with those companies
+    // Create company relations and notifications
     if (courseData.companyIds && courseData.companyIds.length > 0) {
-      // Create an array of relationships to insert
       const companyRelations = courseData.companyIds.map(companyId => ({
         empresa_id: companyId,
         course_id: courseId
       }));
+      
+      // Insert company relations
       const { error: relationError } = await supabase
         .from('company_courses')
         .insert(companyRelations);
+      
       if (relationError) throw relationError;
+
+      // Create notifications for all company users
+      const notifications = await Promise.all(courseData.companyIds.map(async (companyId) => {
+        const { data: users } = await supabase
+          .from('user_empresa')
+          .select('user_id')
+          .eq('empresa_id', companyId);
+
+        if (users) {
+          const userNotifications = users.map(({ user_id }) => ({
+            user_id,
+            company_id: companyId,
+            title: 'Novo curso disponível',
+            content: `Um novo curso "${courseData.title}" foi adicionado.`,
+            type: 'course',
+            related_id: courseId,
+            read: false,
+          }));
+
+          const { error: notificationError } = await supabase
+            .from('user_notifications')
+            .insert(userNotifications);
+
+          if (notificationError) {
+            console.error('Error creating notifications:', notificationError);
+          }
+        }
+      }));
     }
 
     toast.success('Curso criado', {
