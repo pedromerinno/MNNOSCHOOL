@@ -144,7 +144,7 @@ export function useCompanyNotices() {
 
       if (error) throw error;
 
-      // Limpa o cache relacionado a avisos da empresa (ajuste a chave do cache caso necessário)
+      // Limpa o cache relacionado a avisos da empresa
       clearCache(`notices_${selectedCompany.id}`);
 
       // Busca avisos atualizados
@@ -153,13 +153,14 @@ export function useCompanyNotices() {
       // Notifica membros da empresa sobre a atualização do aviso
       // Busca usuários da empresa exceto quem editou
       const { data: usersToNotify, error: errorUsers } = await supabase
-        .from('company_users')
+        .from('user_empresa')  // Corrigido: usando a tabela correta user_empresa em vez de company_users
         .select('user_id')
-        .eq('company_id', selectedCompany.id)
+        .eq('empresa_id', selectedCompany.id)  // Corrigido: usando empresa_id em vez de company_id
         .neq('user_id', user.id);
 
-      if (!errorUsers && usersToNotify) {
-        const notifications = usersToNotify.map((u: { user_id: string }) => ({
+      if (!errorUsers && usersToNotify && Array.isArray(usersToNotify)) {
+        // Criar notificações para cada usuário
+        const notifications = usersToNotify.map((u) => ({
           user_id: u.user_id,
           company_id: selectedCompany.id,
           title: `Aviso atualizado: ${data.title}`,
