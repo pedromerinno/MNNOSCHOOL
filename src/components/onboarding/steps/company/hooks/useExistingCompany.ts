@@ -7,12 +7,16 @@ export function useExistingCompany(companyId: string) {
   const [showCompanyInfo, setShowCompanyInfo] = useState(false);
 
   const handleCompanyLookup = useCallback(
-    async (_info: any, _lookupPending: boolean) => {
+    async (_info: any, lookupPending: boolean) => {
+      console.log("Lookup company with ID:", companyId, "lookupPending:", lookupPending);
       setShowCompanyInfo(false);
       if (companyId && companyId.length >= 10) {
-        await fetchCompany(companyId);
+        const result = await fetchCompany(companyId);
+        console.log("Company lookup result:", result);
         setShowCompanyInfo(true);
+        return result;
       }
+      return null;
     },
     [companyId, fetchCompany]
   );

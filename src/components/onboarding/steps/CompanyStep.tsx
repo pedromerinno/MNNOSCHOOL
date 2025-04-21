@@ -15,6 +15,7 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
   const handleTypeChange = (type: "existing" | "new") => {
     console.log("Company type changed in parent:", type);
     setCompanyType(type);
+    onCompanyTypeSelect(type === "existing");
   };
 
   return (
@@ -26,7 +27,6 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
       <CompanyStepForm
         onNext={onNext}
         onBack={onBack}
-        onCompanyTypeSelect={onCompanyTypeSelect}
         companyType={companyType}
         onCompanyTypeChange={handleTypeChange}
       />
