@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import OnboardingLayout from "@/components/onboarding/OnboardingLayout";
 import ProfileStep from "@/components/onboarding/steps/ProfileStep";
@@ -23,10 +24,22 @@ const OnboardingContent = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const { userProfile } = useAuth();
   const [isExistingCompany, setIsExistingCompany] = useState<boolean | null>(null);
-  
-  const isUpdate = !userProfile?.interesses?.includes("onboarding_incomplete");
 
+  const isUpdate = !userProfile?.interesses?.includes("onboarding_incomplete");
+  // Novo: totalSteps dinâmico com base na seleção de empresa
   const totalSteps = isExistingCompany ? 4 : 3;
+
+  // Step auto-avança/regressa conforme seleção de empresa
+  useEffect(() => {
+    // Caso opção Empresa Existente seja selecionada, vá para o passo 4
+    if (isExistingCompany && currentStep === 3) {
+      setCurrentStep(4);
+    }
+    // Caso Nova Empresa, volte ao passo 3 se já estamos no 4
+    if (isExistingCompany === false && currentStep === 4) {
+      setCurrentStep(3);
+    }
+  }, [isExistingCompany, currentStep]);
 
   const nextStep = () => {
     if (currentStep < totalSteps) {
@@ -40,6 +53,7 @@ const OnboardingContent = () => {
     }
   };
 
+  // Quando selecionar tipo de empresa no CompanyStep, atualize isExistingCompany (Empresa existente: true, Nova: false)
   const handleCompanyChoice = (isExisting: boolean) => {
     setIsExistingCompany(isExisting);
   };
@@ -71,6 +85,7 @@ const OnboardingContent = () => {
             onCompanyTypeSelect={handleCompanyChoice}
           />
         )}
+        {/* Só mostra o passo 4 se isExistingCompany for true! */}
         {currentStep === 4 && isExistingCompany && (
           <InterestsStep onBack={prevStep} />
         )}
@@ -80,3 +95,4 @@ const OnboardingContent = () => {
 };
 
 export default Onboarding;
+
