@@ -1,63 +1,80 @@
 
-import { useCallback } from 'react';
-import { Company } from '@/types/company';
-import { toast } from 'sonner';
+import { useCallback } from "react";
+import { Company } from "@/types/company";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface UseCompanySelectionProps {
   setSelectedCompany: (company: Company | null) => void;
+  setCompanyContentLoaded?: (loaded: boolean) => void;
 }
 
-export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionProps) => {
-  // Get the stored company ID from localStorage
-  const getStoredCompanyId = useCallback((): string | null => {
+export const useCompanySelection = ({ 
+  setSelectedCompany,
+  setCompanyContentLoaded 
+}: UseCompanySelectionProps) => {
+  
+  const selectCompany = useCallback(async (userId: string, company: Company) => {
+    console.log(`[useCompanySelection] Selecting company: ${company.nome}`);
+    
+    // Verificar se o usuário tem acesso a esta empresa
     try {
-      return localStorage.getItem('selectedCompanyId');
-    } catch (error) {
-      console.error('Error getting stored company ID:', error);
-      return null;
-    }
-  }, []);
-
-  // Get the stored company object from localStorage
-  const getStoredCompany = useCallback((): Company | null => {
-    try {
-      const companyData = localStorage.getItem('selectedCompany');
-      if (companyData) {
-        return JSON.parse(companyData);
-      }
-      return null;
-    } catch (error) {
-      console.error('Error getting stored company:', error);
-      return null;
-    }
-  }, []);
-
-  // Select a company and store it in localStorage
-  const selectCompany = useCallback((userId: string, company: Company | null) => {
-    try {
-      if (company) {
-        localStorage.setItem('selectedCompanyId', company.id);
-        localStorage.setItem('selectedCompany', JSON.stringify(company));
-        setSelectedCompany(company);
+      const { data, error } = await supabase
+        .from('user_empresa')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('empresa_id', company.id)
+        .single();
         
-        // Dispatch custom event for other components to react
-        window.dispatchEvent(new CustomEvent('company-selected', { 
-          detail: { company }
-        }));
-      } else {
-        localStorage.removeItem('selectedCompanyId');
-        localStorage.removeItem('selectedCompany');
-        setSelectedCompany(null);
+      if (error && error.code !== 'PGRST116') {
+        // PGRST116 é "Did not find a result", que é esperado se o usuário for super admin
+        console.warn(`[useCompanySelection] Verificando permissão do usuário: ${error.message}`);
+        
+        // Verificar se o usuário é super admin
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('super_admin')
+          .eq('id', userId)
+          .single();
+          
+        if (profileError) {
+          throw new Error(`Erro ao verificar permissões: ${profileError.message}`);
+        }
+        
+        if (!profile?.super_admin) {
+          throw new Error('Você não tem permissão para acessar esta empresa');
+        }
       }
-    } catch (error) {
-      console.error('Error selecting company:', error);
-      toast.error('Erro ao selecionar empresa. Por favor, tente novamente.');
+      
+      // Definir a empresa selecionada
+      setSelectedCompany(company);
+      
+      // Reiniciar o estado de carregamento de conteúdo para a nova empresa
+      if (setCompanyContentLoaded) {
+        setCompanyContentLoaded(false);
+      }
+      
+      // Despachar evento para notificar outros componentes
+      const event = new CustomEvent('company-selected', {
+        detail: { company }
+      });
+      window.dispatchEvent(event);
+      
+      // Salvar a seleção no armazenamento local para persistência
+      try {
+        localStorage.setItem('selectedCompany', JSON.stringify(company));
+        localStorage.setItem('selectedCompanyId', company.id);
+      } catch (e) {
+        console.warn('[useCompanySelection] Error storing selected company:', e);
+      }
+      
+      return true;
+    } catch (error: any) {
+      console.error('[useCompanySelection] Error selecting company:', error);
+      toast.error(error.message || 'Erro ao selecionar empresa');
+      return false;
     }
-  }, [setSelectedCompany]);
+  }, [setSelectedCompany, setCompanyContentLoaded]);
 
-  return {
-    selectCompany,
-    getStoredCompanyId,
-    getStoredCompany
-  };
+  return { selectCompany };
 };

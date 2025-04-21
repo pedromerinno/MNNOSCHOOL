@@ -17,4 +17,6 @@ export interface UseCompanyStateReturn {
   resetError: () => void;
   isSuperAdmin: boolean;
   setIsSuperAdmin: (isSuperAdmin: boolean) => void;
+  companyContentLoaded: boolean;
+  setCompanyContentLoaded: (loaded: boolean) => void;
 }

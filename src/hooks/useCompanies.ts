@@ -32,7 +32,9 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     setError,
     fetchCount,
     incrementFetchCount,
-    resetError
+    resetError,
+    companyContentLoaded,
+    setCompanyContentLoaded
   } = useCompanyState();
   
   const {
@@ -61,7 +63,8 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
   });
   
   const { selectCompany } = useCompanySelection({ 
-    setSelectedCompany 
+    setSelectedCompany,
+    setCompanyContentLoaded
   });
   
   const { updateCompany } = useCompanyUpdate({ 
@@ -124,6 +127,8 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     selectedCompany,
     error,
     fetchCount,
+    companyContentLoaded,
+    setCompanyContentLoaded,
     fetchCompanies,
     getUserCompanies,
     forceGetUserCompanies,

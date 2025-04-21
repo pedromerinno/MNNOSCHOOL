@@ -22,7 +22,8 @@ export const CompanySelector = memo(() => {
     selectedCompany, 
     selectCompany,
     isLoading,
-    forceGetUserCompanies
+    forceGetUserCompanies,
+    setCompanyContentLoaded
   } = useCompanies();
   
   const { displayName, setDisplayName } = useCompanyNameDisplay(selectedCompany);
@@ -34,6 +35,7 @@ export const CompanySelector = memo(() => {
     return await forceGetUserCompanies(userId);
   };
   
+  // Use the new central event handler
   useCompanyEvents({
     userId: user?.id,
     forceGetUserCompanies: handleForceGetUserCompanies,
@@ -46,12 +48,6 @@ export const CompanySelector = memo(() => {
       console.log('CompanySelector: Auto-selecting the first company:', userCompanies[0].nome);
       selectCompany(user.id, userCompanies[0]);
       setInitialLoadAttempted(true);
-      
-      // Dispatch a company selected event
-      const event = new CustomEvent('company-selected', {
-        detail: { company: userCompanies[0] }
-      });
-      window.dispatchEvent(event);
       
       // Update the display name immediately
       setDisplayName(userCompanies[0].nome);
@@ -96,25 +92,16 @@ export const CompanySelector = memo(() => {
     console.log('CompanySelector: Selecting company:', company.nome);
     selectCompany(user.id, company);
     
-    // Dispatch a company selected event
-    const event = new CustomEvent('company-selected', {
-      detail: { company }
-    });
-    window.dispatchEvent(event);
+    // Resetar o estado de carregamento de conteúdo para a nova empresa
+    if (setCompanyContentLoaded) {
+      setCompanyContentLoaded(false);
+    }
     
     // Update display name immediately
     setDisplayName(company.nome);
     
     toast.success(`Company ${company.nome} selected successfully!`);
-    
-    // Store in localStorage for persistence
-    try {
-      localStorage.setItem('selectedCompany', JSON.stringify(company));
-      localStorage.setItem('selectedCompanyId', company.id);
-    } catch (e) {
-      console.warn('Error storing selected company:', e);
-    }
-  }, [user?.id, selectedCompany?.id, selectCompany, userCompanies, setDisplayName]);
+  }, [user?.id, selectedCompany?.id, selectCompany, userCompanies, setDisplayName, setCompanyContentLoaded]);
 
   if (isLoading && !selectedCompany) {
     return <CompanyName displayName={displayName || "Loading..."} />;
