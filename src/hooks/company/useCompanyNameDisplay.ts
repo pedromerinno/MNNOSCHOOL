@@ -13,9 +13,20 @@ export const useCompanyNameDisplay = (selectedCompany: Company | null) => {
     if (selectedCompany?.nome) {
       console.log(`CompanySelector: Atualizando nome para "${selectedCompany.nome}"`);
       setDisplayName(selectedCompany.nome);
+      
+      // Update all related storage items consistently
       localStorage.setItem('selectedCompanyName', selectedCompany.nome);
       localStorage.setItem('selectedCompanyId', selectedCompany.id);
       localStorage.setItem('selectedCompany', JSON.stringify(selectedCompany));
+      localStorage.setItem('companyDisplayName', selectedCompany.nome);
+      
+      // Force a timestamp update to indicate fresh data
+      localStorage.setItem('companyDataTimestamp', Date.now().toString());
+      
+      // Dispatch custom event to notify other components
+      window.dispatchEvent(new CustomEvent('company-display-updated', { 
+        detail: { company: selectedCompany } 
+      }));
     } else {
       // If no company is selected, check for cached company name
       const cachedCompanyName = localStorage.getItem('selectedCompanyName');
