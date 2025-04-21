@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
@@ -46,7 +45,6 @@ export const FeedbackWidget = () => {
     cargo_id: profile.cargo_id || null
   });
 
-  // Handlers para trocar o feedback exibido
   const prevFeedback = () => {
     setCurrentIndex((prev) => (prev > 0 ? prev - 1 : prev));
   };
@@ -55,7 +53,6 @@ export const FeedbackWidget = () => {
     setCurrentIndex((prev) => (prev < feedbacks.length - 1 ? prev + 1 : prev));
   };
 
-  // Reseta o índice se os feedbacks mudarem
   if (currentIndex > feedbacks.length - 1) {
     setCurrentIndex(feedbacks.length - 1);
   }
@@ -67,7 +64,7 @@ export const FeedbackWidget = () => {
       <CardContent className="p-0 flex flex-col h-full">
         <div className="p-8 flex justify-between items-center">
           <h3 className="text-xl font-medium dark:text-white">Feedbacks</h3>
-          <div className="flex space-x-4">
+          <div className="flex space-x-2">
             <Button 
               size="icon" 
               variant="ghost"
@@ -156,4 +153,3 @@ export const FeedbackWidget = () => {
     </Card>
   );
 };
-

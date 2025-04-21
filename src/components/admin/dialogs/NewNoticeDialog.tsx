@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -28,7 +27,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCompanies } from "@/hooks/useCompanies";
 import { Checkbox } from "@/components/ui/checkbox";
 
-// Adicionar props para callback após operação bem-sucedida
 interface NewNoticeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -85,7 +83,6 @@ const NewNoticeDialog = ({
 
   useEffect(() => {
     if (!dialogOpen) {
-      // Reset form when dialog is closed
       reset({
         title: initialData?.title || "",
         content: initialData?.content || "",
@@ -95,7 +92,6 @@ const NewNoticeDialog = ({
     }
   }, [dialogOpen, reset, initialData]);
 
-  // Atualizar o onSubmit para notificar a conclusão bem-sucedida
   const onSubmit = async (data: NoticeFormData) => {
     setSubmitting(true);
     try {
@@ -198,48 +194,69 @@ const NewNoticeDialog = ({
 
             <div className="space-y-2">
               <FormLabel>Empresas</FormLabel>
-              <div className="grid gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {userCompanies.map((company) => (
                   <FormField
                     key={company.id}
                     control={form.control}
                     name="companies"
-                    render={({ field }) => (
-                      <FormItem className={`flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 border border-border rounded-lg shadow-sm space-x-4 transition-colors`}>
-                        {/* Logo da empresa */}
-                        <div className="flex items-center space-x-3">
-                          {company.logo ? (
-                            <img
-                              src={company.logo}
-                              alt={company.nome}
-                              className="h-8 w-8 rounded-full bg-gray-200 object-cover border border-gray-200"
-                            />
-                          ) : (
-                            <div className="h-8 w-8 flex items-center justify-center rounded-full bg-gray-200 text-gray-600 font-bold border border-gray-200">
-                              {company.nome?.charAt(0).toUpperCase() || "?"}
-                            </div>
-                          )}
-                          <div>
-                            <FormLabel htmlFor={company.id} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 m-0">
-                              {company.nome}
-                            </FormLabel>
-                          </div>
-                        </div>
-                        <FormControl>
-                          <Checkbox
-                            id={company.id}
-                            checked={field.value?.includes(company.id)}
-                            onCheckedChange={(checked) => {
+                    render={({ field }) => {
+                      const checked = field.value?.includes(company.id);
+                      return (
+                        <FormItem
+                          className={`
+                            flex items-center gap-3 p-2 sm:p-3 rounded-lg
+                            border transition-colors cursor-pointer select-none
+                            ${checked ? "bg-[#ece6ff] dark:bg-indigo-950 border-primary shadow-md" : "bg-gray-50 dark:bg-gray-900 border-border"}
+                            hover:border-primary/60
+                          `}
+                          onClick={() => {
+                            if (checked) {
+                              field.onChange(field.value?.filter((id) => id !== company.id));
+                            } else {
+                              field.onChange([...(field.value || []), company.id]);
+                            }
+                          }}
+                          tabIndex={0}
+                          role="button"
+                          aria-pressed={checked}
+                          onKeyDown={e => {
+                            if (e.key === " " || e.key === "Enter") {
+                              e.preventDefault();
                               if (checked) {
-                                field.onChange([...(field.value || []), company.id])
+                                field.onChange(field.value?.filter((id) => id !== company.id));
                               } else {
-                                field.onChange(field.value?.filter((value) => value !== company.id))
+                                field.onChange([...(field.value || []), company.id]);
                               }
-                            }}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
+                            }
+                          }}
+                        >
+                          <div className="flex items-center space-x-2">
+                            {company.logo ? (
+                              <img
+                                src={company.logo}
+                                alt={company.nome}
+                                className="h-8 w-8 rounded-full bg-gray-200 object-cover border border-gray-200"
+                              />
+                            ) : (
+                              <div className="h-8 w-8 flex items-center justify-center rounded-full bg-gray-200 text-gray-600 font-bold border border-gray-200">
+                                {company.nome?.charAt(0).toUpperCase() || "?"}
+                              </div>
+                            )}
+                            <span className="text-sm font-medium">{company.nome}</span>
+                          </div>
+                          <FormControl>
+                            <span className={
+                              `ml-auto w-5 h-5 flex items-center justify-center rounded-full
+                              border-2 ${checked ? 'border-primary bg-primary text-white' : 'border-gray-300 bg-white text-transparent'}
+                              transition-colors`
+                            }>
+                              <svg width="16" height="16" className={checked ? "" : "invisible"} viewBox="0 0 16 16" fill="none"><path d="M4 8.5L7 11.5L12 5.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                            </span>
+                          </FormControl>
+                        </FormItem>
+                      )
+                    }}
                   />
                 ))}
               </div>

@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
@@ -37,20 +36,16 @@ export const NotificationsWidget = () => {
     }
   };
 
-  // Atualizar avisos quando o diálogo de edição é fechado
   const handleDialogOpenChange = (open: boolean) => {
     setDialogOpen(open);
     if (!open) {
-      // Quando o diálogo é fechado, atualizar os avisos
       fetchNotices();
     }
   };
 
-  // Atualizar avisos quando o diálogo de todos os avisos é fechado
   const handleAllNoticesDialogChange = (open: boolean) => {
     setNoticesDialogOpen(open);
     if (!open) {
-      // Quando o diálogo é fechado, atualizar os avisos
       fetchNotices();
     }
   };
@@ -72,7 +67,7 @@ export const NotificationsWidget = () => {
               </Button>
             )}
           </div>
-          <div className="flex space-x-4">
+          <div className="flex space-x-2">
             <Button 
               size="icon" 
               variant="ghost" 
@@ -94,7 +89,7 @@ export const NotificationsWidget = () => {
           </div>
         </div>
         
-        <div className="px-12 flex-1"> {/* Removido pb-8 */}
+        <div className="px-12 flex-1">
           {isLoading ? (
             <div className="flex items-center justify-center h-40">
               <div className="animate-pulse text-gray-400">Carregando avisos...</div>
@@ -110,12 +105,11 @@ export const NotificationsWidget = () => {
               </div>
             </div>
           ) : (
-            <div> {/* Removido mb-8 */}
+            <div>
               <span className="inline-block px-6 py-1.5 rounded-full bg-amber-100 dark:bg-amber-900/50 text-yellow-700 dark:text-amber-100 text-xs font-semibold mb-4">
                 {currentNotice.type.charAt(0).toUpperCase() + currentNotice.type.slice(1)}
               </span>
               <h4 className="text-lg font-bold mb-2 dark:text-white">{currentNotice.title}</h4>
-              {/* Limitar o conteúdo a no máximo 3 linhas com overflow e truncamento */}
               <p className="text-base text-gray-800 dark:text-gray-300 mb-5 line-clamp-3">
                 {currentNotice.content}
               </p>
