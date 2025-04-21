@@ -1,5 +1,5 @@
 
-import { memo, useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState, useRef } from "react";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -30,6 +30,7 @@ export const CompanySelector = memo(() => {
   const { displayName, setDisplayName } = useCompanyNameDisplay(selectedCompany);
   const [initialLoadAttempted, setInitialLoadAttempted] = useState(false);
   const { invalidateCache } = useCompanyCache();
+  const initialSelectionMadeRef = useRef(false);
   
   // Create a wrapper function with the correct return type
   const handleForceGetUserCompanies = async (userId: string): Promise<any> => {
@@ -47,8 +48,13 @@ export const CompanySelector = memo(() => {
 
   // Always select the first company if there's no selected company and companies exist
   useEffect(() => {
-    if (user?.id && userCompanies.length > 0 && !selectedCompany && !initialLoadAttempted) {
+    if (user?.id && 
+        userCompanies.length > 0 && 
+        !selectedCompany && 
+        !initialLoadAttempted && 
+        !initialSelectionMadeRef.current) {
       console.log('CompanySelector: Auto-selecting the first company:', userCompanies[0].nome);
+      initialSelectionMadeRef.current = true;
       selectCompany(user.id, userCompanies[0]);
       setInitialLoadAttempted(true);
       
@@ -57,7 +63,7 @@ export const CompanySelector = memo(() => {
     }
   }, [user?.id, userCompanies, selectedCompany, selectCompany, setDisplayName, initialLoadAttempted]);
 
-  // Force initial load when component mounts
+  // Force initial load when component mounts - but only once
   useEffect(() => {
     if (user?.id && !isLoading && userCompanies.length === 0 && !initialLoadAttempted) {
       console.log('CompanySelector: No companies loaded, forcing initial load');

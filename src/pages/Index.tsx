@@ -1,3 +1,4 @@
+
 import { useState, useEffect, lazy, Suspense, useRef } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -54,6 +55,7 @@ const Index = () => {
   const hasRedirectedToOnboarding = useRef(false);
   const lastCacheCheckTime = useRef(Date.now());
   const cacheCheckInterval = 5 * 60 * 1000; // 5 minutes
+  const eventHandlersRegistered = useRef(false);
 
   const handleCompanyCreated = () => {
     setShowCompanyDialog(false);
@@ -67,29 +69,47 @@ const Index = () => {
     console.log("[Index] Company type selected:", isExisting ? "existing" : "new");
   };
   
+  // Periodic cache check with refresh rate limiting
   useEffect(() => {
     const now = Date.now();
     if (now - lastCacheCheckTime.current > cacheCheckInterval) {
       console.log("[Index] Cache expired, forcing data refresh");
       lastCacheCheckTime.current = now;
       clearCachedUserCompanies();
-      if (user?.id) {
-        forceGetUserCompanies(user.id);
+      if (user?.id && !hasAttemptedForceLoad.current) {
+        hasAttemptedForceLoad.current = true;
+        forceGetUserCompanies(user.id).finally(() => {
+          // Reset the flag after a delay to allow future refreshes
+          setTimeout(() => {
+            hasAttemptedForceLoad.current = false;
+          }, 10000);
+        });
       }
     }
   }, [clearCachedUserCompanies, forceGetUserCompanies, user]);
   
+  // Register event handlers only once
   useEffect(() => {
+    if (eventHandlersRegistered.current) return;
+    
     const handleCompanyUpdate = () => {
       console.log("[Index] Received company update event, refreshing data");
-      if (user?.id) {
-        forceGetUserCompanies(user.id);
+      if (user?.id && !hasAttemptedForceLoad.current) {
+        hasAttemptedForceLoad.current = true;
+        forceGetUserCompanies(user.id).finally(() => {
+          // Reset the flag after a delay to allow future refreshes
+          setTimeout(() => {
+            hasAttemptedForceLoad.current = false;
+          }, 10000);
+        });
       }
     };
     
     window.addEventListener('company-updated', handleCompanyUpdate);
     window.addEventListener('company-selected', handleCompanyUpdate);
     window.addEventListener('company-relation-changed', handleCompanyUpdate);
+    
+    eventHandlersRegistered.current = true;
     
     return () => {
       window.removeEventListener('company-updated', handleCompanyUpdate);
@@ -98,6 +118,7 @@ const Index = () => {
     };
   }, [forceGetUserCompanies, user]);
   
+  // Handle onboarding and company creation
   useEffect(() => {
     if (!user) return;
     
@@ -116,23 +137,32 @@ const Index = () => {
         if (!hasAttemptedForceLoad.current && user.id) {
           hasAttemptedForceLoad.current = true;
           
-          forceGetUserCompanies(user.id).then(companies => {
-            if (companies.length === 0) {
-              if (!hasRedirectedToOnboarding.current) {
-                console.log("[Index] Even after forcing load, no companies. Opening company creation dialog...");
-                setShowCompanyDialog(true);
+          forceGetUserCompanies(user.id)
+            .then(companies => {
+              if (companies.length === 0) {
+                if (!hasRedirectedToOnboarding.current) {
+                  console.log("[Index] Even after forcing load, no companies. Opening company creation dialog...");
+                  setShowCompanyDialog(true);
+                }
+              } else {
+                toast.success("Companies loaded successfully!");
               }
-            } else {
-              toast.success("Companies loaded successfully!");
-            }
-          }).catch(err => {
-            console.error("[Index] Error while trying to force load companies:", err);
-          });
+            })
+            .catch(err => {
+              console.error("[Index] Error while trying to force load companies:", err);
+            })
+            .finally(() => {
+              // Reset the flag after a delay
+              setTimeout(() => {
+                hasAttemptedForceLoad.current = false;
+              }, 10000);
+            });
         }
       }
     }
   }, [user, userProfile, navigate, isLoading, userCompanies, fetchCount, forceGetUserCompanies]);
 
+  // Show company dialog for users with no companies
   useEffect(() => {
     if (user && !isLoading && userCompanies.length === 0 && fetchCount > 0 && !hasRedirectedToOnboarding.current) {
       setShowCompanyDialog(true);
@@ -141,6 +171,7 @@ const Index = () => {
   
   const hasCachedCompany = getInitialSelectedCompany() !== null;
   
+  // Page loading state management
   useEffect(() => {
     if (hasCachedCompany) {
       setTimeout(() => setIsPageLoading(false), 50);
@@ -161,13 +192,21 @@ const Index = () => {
     return () => clearTimeout(timeoutId);
   }, [isLoading, fetchCount, selectedCompany, isPageLoading, hasCachedCompany]);
 
+  // Initial data load - but only once
   useEffect(() => {
     if (user?.id && userCompanies.length === 0 && !isLoading && !hasAttemptedForceLoad.current) {
       console.log("[Index] Forcing initial company load");
       hasAttemptedForceLoad.current = true;
-      getUserCompanies(user.id, true).catch(err => {
-        console.error("[Index] Error in initial load:", err);
-      });
+      getUserCompanies(user.id, true)
+        .catch(err => {
+          console.error("[Index] Error in initial load:", err);
+        })
+        .finally(() => {
+          // Reset the flag after a delay
+          setTimeout(() => {
+            hasAttemptedForceLoad.current = false;
+          }, 10000);
+        });
     }
   }, [user?.id, getUserCompanies, userCompanies.length, isLoading]);
 

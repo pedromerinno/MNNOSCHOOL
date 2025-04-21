@@ -52,14 +52,26 @@ export const useCompanyFetching = ({
     timestamp: number 
   }>({ companies: null, timestamp: 0 });
 
+  // Request coalescing - prevent multiple simultaneous requests
+  const pendingRequestsMapRef = useRef<Map<string, Promise<Company[]>>>(new Map());
+
   const getUserCompanies = useCallback(async (
     userId: string, 
     forceRefresh: boolean = false
   ): Promise<Company[]> => {
-    const cachedData = getCachedUserCompanies();
+    const requestId = `user-companies-${userId}-${forceRefresh ? 'force' : 'normal'}`;
+    
+    // If there's already a pending request for the same data, return that promise
+    if (pendingRequestsMapRef.current.has(requestId) && !forceRefresh) {
+      console.log(`[${hookInstanceIdRef.current}] Reusing pending request for user companies`);
+      return pendingRequestsMapRef.current.get(requestId)!;
+    }
     
     // Immediately use memory cache for speed if available
-    if (memoryCache.current.companies && memoryCache.current.companies.length > 0 && !forceRefresh) {
+    if (memoryCache.current.companies && 
+        memoryCache.current.companies.length > 0 && 
+        !forceRefresh && 
+        Date.now() - memoryCache.current.timestamp < 60000) { // 1 minute cache
       console.log(`[${hookInstanceIdRef.current}] Using memory cache for immediate response`);
       return memoryCache.current.companies;
     }
@@ -69,10 +81,10 @@ export const useCompanyFetching = ({
       return userCompanies;
     }
     
+    const cachedData = getCachedUserCompanies();
     if (cachedData && cachedData.length > 0 && !forceRefresh) {
       if (JSON.stringify(userCompanies) !== JSON.stringify(cachedData)) {
-        // Important: Only set the cachedData if it belongs to the current user
-        // This prevents showing companies from a previous user after login
+        // Only set the cachedData if it belongs to the current user
         setUserCompanies(cachedData);
         memoryCache.current = { companies: cachedData, timestamp: Date.now() };
       }
@@ -85,11 +97,11 @@ export const useCompanyFetching = ({
 
     const now = Date.now();
     const timeSinceLastSuccess = now - lastSuccessfulFetchRef.current;
-    const COMPONENT_SPECIFIC_THROTTLE = 300000; // 5 minutes
+    const THROTTLE_DURATION = 10000; // 10 seconds
     
     if (!forceRefresh && lastSuccessfulFetchRef.current > 0 && 
-        timeSinceLastSuccess < COMPONENT_SPECIFIC_THROTTLE && userCompanies.length > 0) {
-      console.log(`[${hookInstanceIdRef.current}] Last successful request was ${Math.round(timeSinceLastSuccess/1000)}s ago. Using cached data.`);
+        timeSinceLastSuccess < THROTTLE_DURATION && userCompanies.length > 0) {
+      console.log(`[${hookInstanceIdRef.current}] Last successful request was ${Math.round(timeSinceLastSuccess/1000)}s ago. Rate limiting.`);
       return userCompanies;
     }
     
@@ -116,60 +128,79 @@ export const useCompanyFetching = ({
     
     abortControllerRef.current = new AbortController();
     
-    try {
-      if (!forceRefresh) {
+    // Create the fetch promise
+    const fetchPromise = (async () => {
+      try {
+        if (!forceRefresh) {
+          const cachedData = getCachedUserCompanies();
+          if (cachedData && cachedData.length > 0) {
+            setUserCompanies(cachedData);
+          }
+        }
+        
+        const result = await executeWithRetry(() => getCompanies(userId, abortControllerRef.current?.signal));
+        
+        completeRequest();
+        lastSuccessfulFetchRef.current = Date.now();
+        didFetchOnPageLoadRef.current = true;
+        
+        memoryCache.current = { 
+          companies: result, 
+          timestamp: Date.now() 
+        };
+        
+        if (result && result.length > 0) {
+          cacheUserCompanies(result);
+          result.forEach(company => fetchedCompaniesRef.current.add(company.id));
+        }
+        
+        setIsLoading(false);
+        
+        // Remove this promise from the pending map
+        setTimeout(() => {
+          pendingRequestsMapRef.current.delete(requestId);
+        }, 0);
+        
+        return result;
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error('Unknown error');
+        
+        if (error.name === 'AbortError') {
+          console.log(`[${hookInstanceIdRef.current}] Request was aborted`);
+          setIsLoading(false);
+          
+          // Remove this promise from the pending map
+          pendingRequestsMapRef.current.delete(requestId);
+          
+          return userCompanies;
+        }
+        
+        setError(error);
+        console.error(`[${hookInstanceIdRef.current}] Error fetching companies:`, error);
+        
         const cachedData = getCachedUserCompanies();
         if (cachedData && cachedData.length > 0) {
+          console.log(`[${hookInstanceIdRef.current}] Using cached companies after failure`);
           setUserCompanies(cachedData);
-          // Don't set isLoading to false here to prevent UI flickering
+          return cachedData;
         }
-      }
-      
-      const result = await executeWithRetry(() => getCompanies(userId, abortControllerRef.current?.signal));
-      
-      completeRequest();
-      lastSuccessfulFetchRef.current = Date.now();
-      didFetchOnPageLoadRef.current = true;
-      
-      memoryCache.current = { 
-        companies: result, 
-        timestamp: Date.now() 
-      };
-      
-      if (result && result.length > 0) {
-        cacheUserCompanies(result);
-        result.forEach(company => fetchedCompaniesRef.current.add(company.id));
-      }
-      
-      setIsLoading(false);
-      
-      return result;
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error('Unknown error');
-      
-      if (error.name === 'AbortError') {
-        console.log(`[${hookInstanceIdRef.current}] Request was aborted`);
+        
+        // Remove this promise from the pending map
+        pendingRequestsMapRef.current.delete(requestId);
+        
+        return [];
+      } finally {
+        fetchInProgressRef.current = false;
         setIsLoading(false);
-        return userCompanies;
+        resetRequestState();
+        abortControllerRef.current = null;
       }
-      
-      setError(error);
-      console.error(`[${hookInstanceIdRef.current}] Error fetching companies:`, error);
-      
-      const cachedData = getCachedUserCompanies();
-      if (cachedData && cachedData.length > 0) {
-        console.log(`[${hookInstanceIdRef.current}] Using cached companies after failure`);
-        setUserCompanies(cachedData);
-        return cachedData;
-      }
-      
-      return [];
-    } finally {
-      fetchInProgressRef.current = false;
-      setIsLoading(false);
-      resetRequestState();
-      abortControllerRef.current = null;
-    }
+    })();
+    
+    // Store this promise for future reuse
+    pendingRequestsMapRef.current.set(requestId, fetchPromise);
+    
+    return fetchPromise;
   }, [
     userCompanies,
     shouldMakeRequest,

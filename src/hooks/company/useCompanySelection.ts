@@ -1,5 +1,5 @@
 
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { Company } from "@/types/company";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -15,8 +15,15 @@ export const useCompanySelection = ({
   setCompanyContentLoaded 
 }: UseCompanySelectionProps) => {
   const { cacheSelectedCompany, invalidateCache } = useCompanyCache();
+  const lastSelectionRef = useRef<string | null>(null);
   
   const selectCompany = useCallback(async (userId: string, company: Company) => {
+    // Skip if the same company is being selected again
+    if (lastSelectionRef.current === company.id) {
+      console.log(`[useCompanySelection] Company ${company.nome} already selected, skipping`);
+      return true;
+    }
+    
     console.log(`[useCompanySelection] Selecting company: ${company.nome}`);
     
     // Verificar se o usuário tem acesso a esta empresa
@@ -48,6 +55,9 @@ export const useCompanySelection = ({
         }
       }
       
+      // Set the last selected company ID to prevent duplicate selections
+      lastSelectionRef.current = company.id;
+      
       // Invalidar cache antes de definir nova empresa
       invalidateCache();
       
@@ -62,7 +72,7 @@ export const useCompanySelection = ({
         setCompanyContentLoaded(false);
       }
       
-      // Despachar evento para notificar outros componentes
+      // Despachar evento para notificar outros componentes (apenas uma vez)
       const event = new CustomEvent('company-selected', {
         detail: { company }
       });
