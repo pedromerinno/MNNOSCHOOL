@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -77,7 +78,7 @@ export function useCompanyNotices() {
       
       if (relationsError) throw relationsError;
       
-      console.log("Found", relations?.length || 0, "company relations");
+      console.log("Found", noticeRelations?.length || 0, "company relations");
       
       if (!noticeRelations || noticeRelations.length === 0) {
         console.log(`No notices found for company: ${targetCompanyId}`);
