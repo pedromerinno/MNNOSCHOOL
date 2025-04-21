@@ -10,15 +10,8 @@ export const useUserCompanies = ({
   setError 
 }: UseCompanyFetchProps) => {
   const getUserCompanies = useCallback(async (userId: string, signal?: AbortSignal) => {
-    const controller = signal ? null : new AbortController();
-    const abortSignal = signal || controller?.signal;
-    
     try {
       console.log(`[useUserCompanies] Buscando empresas para usuário: ${userId}`);
-      setIsLoading(true);
-      
-      // Create a unique instance ID for this request for better debugging
-      const instanceId = Math.random().toString(36).substring(2, 8);
       
       // Try the RPC function first which has proper permission handling
       const { data: rpcData, error: rpcError } = await supabase
@@ -152,7 +145,6 @@ export const useUserCompanies = ({
       return [];
     } finally {
       setIsLoading(false);
-      controller?.abort();
     }
   }, [setUserCompanies, setError, setIsLoading]);
 
