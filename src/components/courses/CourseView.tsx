@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCourseData } from '@/hooks/useCourseData';
@@ -40,7 +39,6 @@ export const CourseView: React.FC = () => {
   const [courseCompanyIds, setCourseCompanyIds] = useState<string[]>([]);
   const { userCompanies } = useCompanies();
 
-  // Fetch the company associations for this course when editing
   useEffect(() => {
     if (isEditDialogOpen && courseId) {
       const fetchCourseCompanies = async () => {
