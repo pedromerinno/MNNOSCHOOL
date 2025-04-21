@@ -27,8 +27,8 @@ const OnboardingContent = () => {
   
   const isUpdate = !userProfile?.interesses?.includes("onboarding_incomplete");
 
-  // Define o número total de passos com base na seleção de tipo de empresa
-  const totalSteps = isExistingCompany === true ? 4 : 3;
+  // Mostra 4 passos apenas se empresa for existente, se for nova apenas 3 passos.
+  const totalSteps = isExistingCompany ? 4 : 3;
 
   const nextStep = () => {
     // Se for nova empresa, não avança além do passo 3, pois redirecionamento acontece após criar empresa.
