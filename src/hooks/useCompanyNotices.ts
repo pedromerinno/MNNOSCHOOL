@@ -1,17 +1,16 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "./useCompanies";
 import { toast } from "sonner";
 import { Notice, NoticeAuthor } from "./useNotifications";
-import { useCache } from "@/hooks/useCache"; // Import do hook de cache
+import { useCache } from "@/hooks/useCache";
 
 export interface NoticeFormData {
   title: string;
   content: string;
   type: string;
-  companies?: string[]; // Added the companies property as optional
+  companies?: string[];
 }
 
 export function useCompanyNotices() {
@@ -22,7 +21,7 @@ export function useCompanyNotices() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { clearCache } = useCache(); // Usar método para limpar cache
+  const { clearCache } = useCache();
 
   const fetchNotices = async (companyId?: string) => {
     const targetCompanyId = companyId || selectedCompany?.id;
@@ -83,9 +82,6 @@ export function useCompanyNotices() {
   };
 
   const createNotice = async (data: NoticeFormData, companyIds?: string[]) => {
-    const { user } = useAuth();
-    const { selectedCompany } = useCompanies();
-
     if (!user || (companyIds && companyIds.length === 0)) {
       toast.error("Não foi possível criar o aviso. Usuário ou empresa não identificados.");
       return false;
@@ -122,36 +118,42 @@ export function useCompanyNotices() {
   };
 
   const updateNotice = async (noticeId: string, data: NoticeFormData) => {
-    if (!user || !selectedCompany) {
-      toast.error("Não foi possível atualizar o aviso. Usuário ou empresa não identificados.");
+    if (!user?.id) {
+      console.error("updateNotice: User not identified");
+      toast.error("Não foi possível atualizar o aviso. Usuário não identificado.");
       return false;
     }
 
     try {
       setIsLoading(true);
+      console.log("Updating notice:", { noticeId, data, userId: user.id });
 
-      // Verificar se a empresa do aviso está sendo alterada
       if (data.companies && data.companies.length > 0) {
-        // Se companies é fornecido, então precisamos verificar se estamos mudando a empresa
         const { data: existingNotice, error: fetchError } = await supabase
           .from('company_notices')
           .select('company_id')
           .eq('id', noticeId)
           .single();
 
-        if (fetchError) throw fetchError;
+        if (fetchError) {
+          console.error("Failed to fetch existing notice:", fetchError);
+          throw fetchError;
+        }
 
-        // Se a empresa está sendo alterada, precisamos excluir o aviso atual e criar um novo
+        console.log("Existing notice company:", existingNotice.company_id);
+        console.log("New company:", data.companies[0]);
+
         if (existingNotice.company_id !== data.companies[0]) {
-          // Primeiro exclui o aviso antigo
           const { error: deleteError } = await supabase
             .from('company_notices')
             .delete()
             .eq('id', noticeId);
 
-          if (deleteError) throw deleteError;
+          if (deleteError) {
+            console.error("Failed to delete old notice:", deleteError);
+            throw deleteError;
+          }
 
-          // Agora cria um novo aviso na nova empresa
           const { error: insertError } = await supabase
             .from('company_notices')
             .insert({
@@ -162,13 +164,14 @@ export function useCompanyNotices() {
               created_by: user.id,
             });
 
-          if (insertError) throw insertError;
+          if (insertError) {
+            console.error("Failed to insert new notice:", insertError);
+            throw insertError;
+          }
 
-          // Limpa o cache para as duas empresas (antiga e nova)
           clearCache(`notices_${existingNotice.company_id}`);
           clearCache(`notices_${data.companies[0]}`);
 
-          // Busca avisos atualizados
           await fetchNotices();
 
           toast.success("Aviso movido para outra empresa com sucesso!");
@@ -176,8 +179,6 @@ export function useCompanyNotices() {
         }
       }
 
-      // Se não estamos alterando a empresa ou se não foi especificada empresa, 
-      // apenas atualizamos os dados do aviso
       const { error } = await supabase
         .from('company_notices')
         .update({
@@ -188,45 +189,56 @@ export function useCompanyNotices() {
         })
         .eq('id', noticeId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Failed to update notice:", error);
+        throw error;
+      }
 
-      // Limpa o cache relacionado a avisos da empresa
-      clearCache(`notices_${selectedCompany.id}`);
+      if (selectedCompany?.id) {
+        clearCache(`notices_${selectedCompany.id}`);
+      }
 
-      // Busca avisos atualizados
       await fetchNotices();
 
-      // Notifica membros da empresa sobre a atualização do aviso
-      // Busca usuários da empresa exceto quem editou
-      const { data: usersToNotify, error: errorUsers } = await supabase
-        .from('user_empresa')  // Corrigido: usando a tabela correta user_empresa em vez de company_users
-        .select('user_id')
-        .eq('empresa_id', selectedCompany.id)  // Corrigido: usando empresa_id em vez de company_id
-        .neq('user_id', user.id);
+      if (selectedCompany?.id) {
+        const { data: usersToNotify, error: errorUsers } = await supabase
+          .from('user_empresa')
+          .select('user_id')
+          .eq('empresa_id', selectedCompany.id)
+          .neq('user_id', user.id);
 
-      if (!errorUsers && usersToNotify && Array.isArray(usersToNotify)) {
-        // Criar notificações para cada usuário
-        const notifications = usersToNotify.map((u) => ({
-          user_id: u.user_id,
-          company_id: selectedCompany.id,
-          title: `Aviso atualizado: ${data.title}`,
-          content: data.content.slice(0, 80) + (data.content.length > 80 ? "..." : ""),
-          type: "aviso",
-          related_id: noticeId,
-          read: false
-        }));
+        if (errorUsers) {
+          console.error("Failed to fetch users to notify:", errorUsers);
+        }
 
-        if (notifications.length > 0) {
+        if (!errorUsers && usersToNotify && Array.isArray(usersToNotify)) {
+          const notifications = usersToNotify.map((u) => ({
+            user_id: u.user_id,
+            company_id: selectedCompany.id,
+            title: `Aviso atualizado: ${data.title}`,
+            content: data.content.slice(0, 80) + (data.content.length > 80 ? "..." : ""),
+            type: "aviso",
+            related_id: noticeId,
+            read: false
+          }));
+
           const { error: notifyErr } = await supabase
             .from('user_notifications')
             .insert(notifications);
-          if (!notifyErr) {
+
+          if (notifyErr) {
+            console.error("Failed to create notifications:", notifyErr);
+          } else {
             toast.success("Aviso atualizado e membros notificados!");
           }
+        } else {
+          toast.success("Aviso atualizado com sucesso!");
         }
       } else {
+        console.error("No selected company found when trying to notify users");
         toast.success("Aviso atualizado com sucesso!");
       }
+      
       return true;
     } catch (err: any) {
       console.error('Erro ao atualizar aviso:', err);

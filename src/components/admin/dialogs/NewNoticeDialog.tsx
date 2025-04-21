@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCompanies } from "@/hooks/useCompanies";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useAuth } from "@/contexts/AuthContext";
 
 const formSchema = z.object({
   title: z.string().min(3, { message: "O título deve ter pelo menos 3 caracteres" }),
@@ -35,6 +36,7 @@ const NewNoticeDialog: React.FC<NewNoticeDialogProps> = ({
   initialData,
   editingNoticeId
 }) => {
+  const { user } = useAuth();
   const { createNotice, updateNotice, isLoading } = useCompanyNotices();
   const { userCompanies, isLoading: loadingCompanies } = useCompanies();
 
@@ -65,6 +67,11 @@ const NewNoticeDialog: React.FC<NewNoticeDialogProps> = ({
   }, [open, initialData, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!user?.id) {
+      toast.error("Você precisa estar logado para criar ou editar avisos.");
+      return;
+    }
+    
     try {
       setIsSubmitting(true);
       console.log("Enviando formulário com valores:", values);
