@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import CompanyStepHeader from "./company/CompanyStepHeader";
 import CompanyStepForm from "./company/CompanyStepForm";
 
