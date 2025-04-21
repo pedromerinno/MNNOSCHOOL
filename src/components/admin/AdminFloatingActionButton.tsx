@@ -8,55 +8,47 @@ import {
 } from "@/components/ui/popover";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { CourseForm } from "@/components/admin/CourseForm";
+import { CourseFormValues } from "@/components/admin/courses/form/CourseFormTypes";
+import { useCourseForm } from "@/hooks/useCourseForm";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useCompanies } from "@/hooks/useCompanies";
 
 function NewCourseDialog({ open, onOpenChange }: { open: boolean, onOpenChange: (v: boolean) => void }) {
-  const [title, setTitle] = useState('');
-  const [instructor, setInstructor] = useState('');
-  const [description, setDescription] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const handleSave = async () => {
-    setLoading(true);
-    await new Promise(res => setTimeout(res, 1200));
-    toast.success("Curso criado com sucesso.");
-    setTitle('');
-    setInstructor('');
-    setDescription('');
-    onOpenChange(false);
-    setLoading(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { selectedCompany } = useCompanies();
+  
+  const handleFormSubmit = async (data: CourseFormValues) => {
+    setIsSubmitting(true);
+    try {
+      await new Promise(res => setTimeout(res, 1200));
+      toast.success("Curso criado com sucesso.");
+      onOpenChange(false);
+    } catch (error) {
+      toast.error("Erro ao criar curso.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Novo Curso</DialogTitle>
         </DialogHeader>
-        <div className="space-y-3 py-2">
-          <div>
-            <Label>Título</Label>
-            <Input value={title} onChange={e => setTitle(e.target.value)} />
-          </div>
-          <div>
-            <Label>Instrutor</Label>
-            <Input value={instructor} onChange={e => setInstructor(e.target.value)} />
-          </div>
-          <div>
-            <Label>Descrição</Label>
-            <Textarea value={description} onChange={e => setDescription(e.target.value)} />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleSave} disabled={loading}>
-            {loading ? "Salvando..." : "Adicionar"}
-          </Button>
-        </DialogFooter>
+        <CourseForm
+          onSubmit={handleFormSubmit}
+          onCancel={() => onOpenChange(false)}
+          isSubmitting={isSubmitting}
+          onClose={() => onOpenChange(false)}
+          preselectedCompanyId={selectedCompany?.id}
+        />
       </DialogContent>
     </Dialog>
   );
