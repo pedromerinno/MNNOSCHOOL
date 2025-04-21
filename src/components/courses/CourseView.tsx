@@ -149,7 +149,7 @@ export const CourseView: React.FC = () => {
           <CourseStatsBar
             duration={formattedDuration}
             lessonCount={course.lessons?.length || 0}
-            tags={course.tags}
+            tags={course.tags || null}
           />
 
           <CourseProgressBox progress={course.progress} />
