@@ -1,8 +1,6 @@
-
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
-
 import { cn } from "@/lib/utils"
 
 const Dialog = ({
@@ -38,7 +36,7 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-black/50",
+      "fixed inset-0 z-50 bg-black/20",
       className
     )}
     {...props}

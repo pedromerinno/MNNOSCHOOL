@@ -1,7 +1,5 @@
-
 import * as React from "react"
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
-
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 
@@ -9,12 +7,10 @@ const AlertDialog = ({
   children,
   ...props
 }: AlertDialogPrimitive.AlertDialogProps) => {
-  // Reset pointer-events when dialog closes
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       document.body.style.pointerEvents = '';
     }
-    // Call the original onOpenChange if provided
     props.onOpenChange?.(open);
   };
 
@@ -35,7 +31,7 @@ const AlertDialogOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Overlay
     className={cn(
-      "fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-50 bg-black/20",
       className
     )}
     {...props}
@@ -58,17 +54,13 @@ const AlertDialogContent = React.forwardRef<
       )}
       {...props}
       onOpenAutoFocus={(e) => {
-        // Reset pointer-events when dialog opens
         document.body.style.pointerEvents = '';
-        // Call original onOpenAutoFocus if provided
         if (props.onOpenAutoFocus) {
           props.onOpenAutoFocus(e);
         }
       }}
       onCloseAutoFocus={(e) => {
-        // Reset pointer-events when dialog closes
         document.body.style.pointerEvents = '';
-        // Call original onCloseAutoFocus if provided
         if (props.onCloseAutoFocus) {
           props.onCloseAutoFocus(e);
         }
