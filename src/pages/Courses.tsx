@@ -10,6 +10,8 @@ import { NewCourseDialog } from "@/components/admin/dialogs/NewCourseDialog";
 import { EmptyCoursesState } from "@/components/courses/EmptyCoursesState";
 import { CoursesGrid } from "@/components/courses/CoursesGrid";
 import { CoursesLoadingSkeleton } from "@/components/courses/CoursesLoadingSkeleton";
+import { Button } from "@/components/ui/button";
+import { PlusCircle } from "lucide-react";
 
 const Courses = () => {
   const { selectedCompany, isLoading: companyLoading, user } = useCompanies();
@@ -71,12 +73,24 @@ const Courses = () => {
     );
   }
 
-  // Show empty state if there are no courses
   const hasNoCourses = !allCompanyCourses || allCompanyCourses.length === 0;
 
   return (
     <DashboardLayout>
       <div className="container mx-auto max-w-screen-2xl space-y-12 px-4 py-6">
+        {/* Admin Create Course Button */}
+        {isAdmin && (
+          <div className="flex justify-end">
+            <Button
+              onClick={() => setIsNewCourseDialogOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <PlusCircle className="h-4 w-4" />
+              Criar um novo curso
+            </Button>
+          </div>
+        )}
+
         {hasNoCourses ? (
           <EmptyCoursesState
             companyName={selectedCompany.nome}
