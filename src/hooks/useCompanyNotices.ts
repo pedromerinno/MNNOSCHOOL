@@ -13,6 +13,12 @@ export interface NoticeFormData {
   companies: string[];
 }
 
+// Define the interface for profile data
+interface ProfileData {
+  display_name: string | null;
+  avatar: string | null;
+}
+
 export function useCompanyNotices() {
   const [notices, setNotices] = useState<Notice[]>([]);
   const [currentNoticeIndex, setCurrentNoticeIndex] = useState(0);
@@ -61,16 +67,20 @@ export function useCompanyNotices() {
 
       console.log(`Retrieved ${data?.length || 0} notices`);
       
-      // Format notices with author data
-      const formattedNotices = (data || []).map(notice => ({
-        ...notice,
-        author: {
-          id: notice.created_by,
-          // Fix type errors by using optional chaining and providing defaults
-          display_name: notice.profiles?.display_name || null,
-          avatar: notice.profiles?.avatar || null
-        }
-      }));
+      // Format notices with author data - fix typing issues with proper type assertions
+      const formattedNotices = (data || []).map(notice => {
+        // Handle the profiles data safely with proper typing
+        const profileData = notice.profiles as ProfileData | null;
+        
+        return {
+          ...notice,
+          author: {
+            id: notice.created_by,
+            display_name: profileData?.display_name || null,
+            avatar: profileData?.avatar || null
+          }
+        };
+      });
 
       setNotices(formattedNotices);
       setCurrentNoticeIndex(0); // Reset to first notice
