@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -15,16 +15,28 @@ export const NotificationButton = () => {
   const { notifications, isLoading, markAsRead, unreadCount, markAllAsRead } = useNotifications();
   const [open, setOpen] = useState(false);
 
-  // Adicionar um handler para marcar como lido e atualizar a interface
-  const handleMarkAsRead = async (notificationId: string) => {
-    await markAsRead(notificationId);
-    // O estado já é atualizado dentro do markAsRead
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'course_created':
+        return '📚';
+      case 'lesson_created':
+        return '📝';
+      case 'access_created':
+        return '🔑';
+      case 'discussion_created':
+        return '💬';
+      case 'notice':
+      default:
+        return '📢';
+    }
   };
 
-  // Handler para marcar todas como lidas
+  const handleMarkAsRead = async (notificationId: string) => {
+    await markAsRead(notificationId);
+  };
+
   const handleMarkAllAsRead = async () => {
     await markAllAsRead();
-    // O estado já é atualizado dentro do markAllAsRead
   };
 
   return (
@@ -65,12 +77,19 @@ export const NotificationButton = () => {
                 className={`flex flex-col items-start p-3 cursor-pointer ${!notification.read ? 'bg-blue-50 dark:bg-blue-900/10' : ''}`}
                 onClick={() => handleMarkAsRead(notification.id)}
               >
-                <div className="font-semibold text-sm">{notification.title}</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {notification.content}
-                </div>
-                <div className="text-xs text-gray-400 dark:text-gray-500 mt-2">
-                  {new Date(notification.created_at).toLocaleString()}
+                <div className="flex items-start gap-2 w-full">
+                  <span className="text-lg" role="img" aria-label="notification type">
+                    {getNotificationIcon(notification.type)}
+                  </span>
+                  <div className="flex-1">
+                    <div className="font-semibold text-sm">{notification.title}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {notification.content}
+                    </div>
+                    <div className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+                      {new Date(notification.created_at).toLocaleString()}
+                    </div>
+                  </div>
                 </div>
               </DropdownMenuItem>
             ))
