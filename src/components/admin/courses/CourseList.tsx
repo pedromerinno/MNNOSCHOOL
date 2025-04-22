@@ -2,12 +2,16 @@
 import React, { useState } from 'react';
 import { Course } from './types';
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Pencil, Building, Loader2, Users, FileText } from "lucide-react";
+import { PlusCircle, Pencil, Building, Loader2, Users, FileText, Trash2 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { CourseForm } from '../CourseForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CompanyCoursesManager } from '../CompanyCoursesManager';
 import { LessonManager } from './LessonManager';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, 
+AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
+import { deleteCourse } from '@/services/course';
 import { 
   Table,
   TableBody,
@@ -47,6 +51,8 @@ export const CourseList: React.FC<CourseListProps> = ({
   handleFormSubmit
 }) => {
   const [isLessonManagerOpen, setIsLessonManagerOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
   
   const handleNewCourse = () => {
     setSelectedCourse(null);
@@ -66,6 +72,32 @@ export const CourseList: React.FC<CourseListProps> = ({
   const handleManageLessons = (course: Course) => {
     setSelectedCourse(course);
     setIsLessonManagerOpen(true);
+  };
+
+  const confirmDeleteCourse = (course: Course) => {
+    setCourseToDelete(course);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteCourse = async () => {
+    if (!courseToDelete) return;
+    
+    try {
+      const success = await deleteCourse(courseToDelete.id);
+      if (success) {
+        toast.success('Curso excluído com sucesso');
+        // Dispatch an event to trigger a re-fetch
+        window.dispatchEvent(new CustomEvent('course-deleted', { 
+          detail: { courseId: courseToDelete.id } 
+        }));
+      }
+    } catch (error) {
+      console.error('Error deleting course:', error);
+      toast.error('Erro ao excluir curso');
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setCourseToDelete(null);
+    }
   };
 
   if (isLoading) {
@@ -143,6 +175,14 @@ export const CourseList: React.FC<CourseListProps> = ({
                       <Building className="h-4 w-4 mr-2" />
                       Empresas
                     </Button>
+                    <Button 
+                      variant="destructive" 
+                      size="sm"
+                      onClick={() => confirmDeleteCourse(course)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Excluir
+                    </Button>
                   </div>
                 </TableCell>
               </TableRow>
@@ -193,6 +233,32 @@ export const CourseList: React.FC<CourseListProps> = ({
           open={isLessonManagerOpen}
         />
       )}
+
+      {/* Diálogo de confirmação para excluir curso */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir curso</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este curso? Esta ação não pode ser desfeita.
+              {courseToDelete && (
+                <div className="mt-2 font-semibold text-foreground">
+                  "{courseToDelete.title}"
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteCourse}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
