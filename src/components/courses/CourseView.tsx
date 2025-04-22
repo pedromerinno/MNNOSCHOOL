@@ -123,7 +123,6 @@ export const CourseView: React.FC = () => {
         onSubmit={handleCourseUpdate}
         isSubmitting={isSubmitting}
         userCompanies={userCompanies}
-        courseId={courseId}
       />
 
       <LessonManager
