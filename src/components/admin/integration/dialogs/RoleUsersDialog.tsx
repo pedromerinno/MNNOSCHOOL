@@ -35,14 +35,19 @@ const RoleUsersDialog: React.FC<RoleUsersDialogProps> = ({
   const fetchUsersWithRole = async () => {
     setLoading(true);
     try {
+      console.log(`Buscando usuários com cargo ID: ${roleId}`);
       // Query to get users who have this role assigned
       const { data, error } = await supabase
         .from('profiles')
         .select('id, display_name, avatar_url, email')
         .eq('cargo_id', roleId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao buscar usuários com cargo:", error);
+        throw error;
+      }
 
+      console.log(`Encontrados ${data?.length || 0} usuários com este cargo`);
       // Set the users
       setUsers(data || []);
     } catch (error: any) {

@@ -15,7 +15,7 @@ export const useDocumentValidation = () => {
         return false;
       }
       
-      console.log("Buckets disponíveis:", buckets);
+      console.log("Buckets disponíveis:", buckets?.map(b => b.name).join(', ') || 'nenhum');
       
       const documentsBucket = buckets?.find(b => b.name === 'documents');
       
@@ -36,6 +36,7 @@ export const useDocumentValidation = () => {
     try {
       console.log("Iniciando criação do bucket 'documents'...");
       
+      // First try with options
       const { error: createError } = await supabase.storage.createBucket('documents', {
         public: false,
         fileSizeLimit: 10485760, // 10MB
@@ -44,7 +45,7 @@ export const useDocumentValidation = () => {
       if (createError) {
         console.error("Erro ao criar bucket 'documents':", createError);
         
-        // Try to create without options as a fallback
+        // If first attempt failed, try without options as a fallback
         console.log("Tentando criar bucket sem opções...");
         const { error: fallbackError } = await supabase.storage.createBucket('documents');
         
