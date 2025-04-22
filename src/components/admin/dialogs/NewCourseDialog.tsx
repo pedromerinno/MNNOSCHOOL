@@ -27,7 +27,7 @@ export const NewCourseDialog: React.FC<NewCourseDialogProps> = ({ open, onOpenCh
       if (selectedCompany?.id && (!data.companyIds || !data.companyIds.includes(selectedCompany.id))) {
         if (!data.companyIds) {
           data.companyIds = [selectedCompany.id];
-        } else {
+        } else if (!data.companyIds.includes(selectedCompany.id)) {
           data.companyIds.push(selectedCompany.id);
         }
       }
@@ -45,15 +45,12 @@ export const NewCourseDialog: React.FC<NewCourseDialogProps> = ({ open, onOpenCh
         
         // Espera um breve momento para garantir que as notificações sejam processadas
         setTimeout(() => {
-          // Dispara um evento para atualizar as notificações
-          window.dispatchEvent(new CustomEvent('refresh-notifications'));
-          
           // Fecha o diálogo após o curso ser criado com sucesso
           onOpenChange(false);
           
           // Navigation occurs after successful course creation
           navigate(`/courses/${courseId}`);
-        }, 500);
+        }, 700);
       } else {
         toast.error("Erro ao criar curso. Tente novamente.");
       }

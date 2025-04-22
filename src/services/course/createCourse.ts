@@ -37,9 +37,9 @@ export const createCourse = async (courseData: CourseFormValues): Promise<string
         
       if (relationError) throw relationError;
 
-      // Notifications are created by the database trigger
-      // We log information to help with debugging
+      // Notificações são criadas pelo trigger do banco de dados
       console.log(`Course-company relations created for course: ${courseId} and companies: ${courseData.companyIds.join(', ')}`);
+      console.log(`Notifications should be created by the database trigger`);
     } else {
       console.warn(`No company IDs provided for course: ${courseId}. No notifications will be created.`);
     }
@@ -48,13 +48,16 @@ export const createCourse = async (courseData: CourseFormValues): Promise<string
       description: 'O novo curso foi criado com sucesso.',
     });
 
-    // Dispatch a custom event that can be listened to by other components for refreshing data
-    window.dispatchEvent(new CustomEvent('course-created', { 
-      detail: { courseId } 
-    }));
-    
-    // Force refresh notifications - usando CustomEvent em vez de Event
-    window.dispatchEvent(new CustomEvent('refresh-notifications'));
+    // Disparar um evento para atualizar as notificações (após um pequeno delay para permitir que o trigger do banco execute)
+    setTimeout(() => {
+      console.log("Dispatching course-created event");
+      window.dispatchEvent(new CustomEvent('course-created', { 
+        detail: { courseId } 
+      }));
+      
+      console.log("Dispatching refresh-notifications event");
+      window.dispatchEvent(new CustomEvent('refresh-notifications'));
+    }, 500);
     
     return courseId;
   } catch (error: any) {

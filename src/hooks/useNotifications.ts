@@ -151,6 +151,7 @@ export function useNotifications() {
 
     console.log('Setting up real-time notification subscription');
     
+    // Inscrever-se em mudanças na tabela user_notifications
     const channel = supabase
       .channel('user-notifications')
       .on(
@@ -162,11 +163,16 @@ export function useNotifications() {
           filter: `company_id=eq.${selectedCompany.id}`
         },
         (payload) => {
-          console.log('New notification received:', payload);
-          setNotifications(prev => [payload.new as Notification, ...prev]);
+          console.log('New notification received via realtime:', payload);
+          const newNotification = payload.new as Notification;
           
+          // Atualizar estado local com a nova notificação
+          setNotifications(prev => [newNotification, ...prev]);
+          
+          // Mostrar toast com a notificação
           toast.info('Nova notificação', {
-            description: (payload.new as Notification).title
+            description: newNotification.title,
+            duration: 5000,
           });
         }
       )

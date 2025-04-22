@@ -23,6 +23,13 @@ export const useCourseForm = (onSuccess: () => void) => {
         });
         const courseId = await createCourse(data);
         console.log('Course created with ID:', courseId);
+        
+        // Garantir que o evento de notificação seja disparado
+        if (courseId) {
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('refresh-notifications'));
+          }, 500);
+        }
       }
 
       setIsFormOpen(false);
