@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useCompanies } from "./useCompanies";
@@ -50,7 +49,6 @@ export function useNotifications() {
       return;
     }
 
-    // Para evitar múltiplas chamadas rápidas em sequência
     const now = Date.now();
     if (!forceRefresh && now - lastFetchTime < 1000) {
       console.log("Evitando múltiplas requisições rápidas de notificações");
@@ -92,7 +90,6 @@ export function useNotifications() {
 
       if (error) throw error;
 
-      // Update local state immediately
       setNotifications(prevNotifications => 
         prevNotifications.map(n =>
           n.id === notificationId ? { ...n, read: true } : n
@@ -104,12 +101,10 @@ export function useNotifications() {
     }
   };
 
-  // Add markAllAsRead function
   const markAllAsRead = async () => {
     if (!notifications.length || !selectedCompany?.id) return;
     
     try {
-      // Get IDs of unread notifications
       const unreadIds = notifications
         .filter(n => !n.read)
         .map(n => n.id);
@@ -123,7 +118,6 @@ export function useNotifications() {
 
       if (error) throw error;
 
-      // Update local state immediately
       setNotifications(prevNotifications => 
         prevNotifications.map(n => 
           unreadIds.includes(n.id) ? { ...n, read: true } : n
@@ -137,7 +131,6 @@ export function useNotifications() {
     }
   };
 
-  // Calculate unread count
   const unreadCount = useMemo(() => {
     return notifications.filter(n => !n.read).length;
   }, [notifications]);
@@ -151,6 +144,38 @@ export function useNotifications() {
       setIsLoading(false);
     }
   }, [selectedCompany?.id, fetchNotifications]);
+
+  useEffect(() => {
+    if (!selectedCompany?.id) return;
+
+    console.log('Setting up real-time notification subscription');
+    
+    const channel = supabase
+      .channel('user-notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'user_notifications',
+          filter: `company_id=eq.${selectedCompany.id}`
+        },
+        (payload) => {
+          console.log('New notification received:', payload);
+          setNotifications(prev => [payload.new as Notification, ...prev]);
+          
+          toast.info('Nova notificação', {
+            description: (payload.new as Notification).title
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('Cleaning up notification subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [selectedCompany?.id]);
 
   return {
     notifications,
