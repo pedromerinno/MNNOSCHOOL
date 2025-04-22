@@ -38,7 +38,7 @@
     --popover-foreground: 0 0% 98%;
     --primary: 0 0% 98%;
     --primary-foreground: 0 0% 13.3%;
-    --secondary: 0 0% 15%;
+    --secondary: 0 0% 12.5%; /* Updated from #111827 to #1f1f20 */
     --secondary-foreground: 0 0% 98%;
     --muted: 0 0% 15%;
     --muted-foreground: 0 0% 65%;
@@ -46,8 +46,8 @@
     --accent-foreground: 0 0% 98%;
     --destructive: 0 0% 45%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 10%; /* Adjusted to match new background */
-    --input: 0 0% 10%; /* Adjusted to match new background */
+    --border: 0 0% 17%; /* Updated to #2b2b2b */
+    --input: 0 0% 10%; /* Adjusted to match background */
     --ring: 0 0% 83.9%;
   }
 }
