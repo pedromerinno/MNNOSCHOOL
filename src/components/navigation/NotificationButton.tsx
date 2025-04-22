@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,14 +16,12 @@ export const NotificationButton = () => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Add an effect to listen for the refresh-notifications event
   useEffect(() => {
     const handleRefreshNotifications = () => {
       console.log("Refreshing notifications from event");
       fetchNotifications(undefined, true);
     };
 
-    // Adiciona ouvintes para ambos os eventos
     window.addEventListener('refresh-notifications', handleRefreshNotifications);
     window.addEventListener('course-created', handleRefreshNotifications);
     
@@ -53,12 +50,9 @@ export const NotificationButton = () => {
   const handleNotificationClick = async (notification: Notification) => {
     await markAsRead(notification.id);
     
-    // Navigate based on notification type
     if (notification.type === 'course_created' && notification.related_id) {
       navigate(`/courses/${notification.related_id}`);
     } else if (notification.type === 'lesson_created' && notification.related_id) {
-      // For lesson notifications, we would need the course ID as well
-      // For now, we'll just mark it as read
     } else if (notification.type === 'discussion_created' && notification.related_id) {
       navigate(`/community?discussion=${notification.related_id}`);
     } else if (notification.type === 'access_created' && notification.related_id) {
