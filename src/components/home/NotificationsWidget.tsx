@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Plus, RefreshCw } from "lucide-react";
@@ -43,19 +42,15 @@ export const NotificationsWidget = memo(() => {
     }
   }, []);
 
-  // Optimized useEffect with error handling
   useEffect(() => {
-    // Only fetch if we have a selected company
     if (selectedCompany?.id && !initialFetchDoneRef.current) {
       console.log("NotificationsWidget: Primeira busca de avisos");
       initialFetchDoneRef.current = true;
       
-      // Clean up any existing timeout
       if (fetchTimeoutRef.current) {
         clearTimeout(fetchTimeoutRef.current);
       }
       
-      // Set a short delay to prevent race conditions
       fetchTimeoutRef.current = window.setTimeout(() => {
         try {
           fetchNotices(selectedCompany.id, true).catch(err => {
@@ -80,7 +75,6 @@ export const NotificationsWidget = memo(() => {
     setDialogOpen(open);
     if (!open && initialFetchDoneRef.current) {
       console.log("Notice dialog closed, refreshing notices");
-      // Add delay to allow server operations to complete
       if (fetchTimeoutRef.current) {
         clearTimeout(fetchTimeoutRef.current);
       }
@@ -104,7 +98,6 @@ export const NotificationsWidget = memo(() => {
     setNoticesDialogOpen(open);
     if (!open && initialFetchDoneRef.current) {
       console.log("All notices dialog closed, refreshing notices");
-      // Add delay to allow server operations to complete
       if (fetchTimeoutRef.current) {
         clearTimeout(fetchTimeoutRef.current);
       }
@@ -138,7 +131,7 @@ export const NotificationsWidget = memo(() => {
   };
 
   return (
-    <Card className="border-0 shadow-none overflow-hidden bg-[#F1EDE4] dark:bg-[#342B1A] rounded-[30px]">
+    <Card className="border-0 shadow-none overflow-hidden bg-[#F1EDE4] dark:bg-[#222222] rounded-[30px]">
       <CardContent className="p-0 flex flex-col h-full">
         <div className="p-8 flex justify-between items-center">
           <div className="flex items-center gap-3">
@@ -231,7 +224,6 @@ export const NotificationsWidget = memo(() => {
                       className="h-6 w-6 rounded-full mr-3 object-cover"
                       loading="lazy"
                       onError={(e) => {
-                        // Fallback for broken image
                         (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMiIgZmlsbD0iI2UyZThmMCIvPjxwYXRoIGQ9Ik04IDhoOHY4SDh6IiBmaWxsPSIjOTRhM2IzIi8+PC9zdmc+';
                       }}
                     />
@@ -267,4 +259,3 @@ export const NotificationsWidget = memo(() => {
     </Card>
   );
 });
-

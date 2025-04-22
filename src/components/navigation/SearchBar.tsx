@@ -76,16 +76,13 @@ export const SearchBar = () => {
       <div className="relative w-64">
         <div 
           className={cn(
-            "flex items-center rounded-full bg-gray-50 dark:bg-[#191919] border border-gray-200 dark:border-gray-700 px-3 py-1 hover:border-gray-300 dark:hover:border-gray-600 transition-all cursor-pointer",
+            "flex items-center rounded-full bg-gray-50 dark:bg-[#191919] border border-gray-200 dark:border-[#333333] px-3 py-1 hover:border-gray-300 dark:hover:border-[#444444] transition-all cursor-pointer",
             "focus-within:ring-2 focus-within:ring-offset-0",
             "focus-within:ring-opacity-50"
           )}
           onClick={() => setOpen(true)}
-          style={{ 
-            "--tw-ring-color": `${companyColor}40`
-          } as React.CSSProperties}
         >
-          <Search className="h-4 w-4 text-gray-400 dark:text-gray-500 mr-2 flex-shrink-0" />
+          <Search className="h-4 w-4 text-gray-400 dark:text-[#666666] mr-2 flex-shrink-0" />
           <input
             value={searchQuery}
             onChange={(e) => handleInputChange(e.target.value)}

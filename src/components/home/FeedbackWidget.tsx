@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
@@ -61,7 +60,7 @@ export const FeedbackWidget = memo(() => {
   const currentFeedback = feedbacks[currentIndex];
 
   return (
-    <Card className="border-0 shadow-none overflow-hidden rounded-[30px] bg-[#FAFFF7] dark:bg-[#1A2E1A]">
+    <Card className="border-0 shadow-none overflow-hidden rounded-[30px] bg-[#FAFFF7] dark:bg-[#222222]">
       <CardContent className="p-0 flex flex-col h-full">
         <div className="p-8 flex justify-between items-center">
           <h3 className="text-xl font-medium dark:text-white">Feedbacks</h3>
