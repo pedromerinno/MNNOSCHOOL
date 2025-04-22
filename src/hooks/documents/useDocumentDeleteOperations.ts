@@ -17,16 +17,18 @@ export const useDocumentDeleteOperations = (
     }
 
     try {
+      console.log("Iniciando exclusão do documento:", documentId);
+      
       // Fetch document details
       const { data: document, error: fetchError } = await supabase
         .from('user_documents')
-        .select('file_path, uploaded_by, user_id')
+        .select('file_path, uploaded_by, user_id, company_id')
         .eq('id', documentId)
         .single();
 
       if (fetchError) {
         console.error("Erro ao buscar detalhes do documento:", fetchError);
-        throw fetchError;
+        throw new Error("Não foi possível obter informações do documento");
       }
 
       if (!document) {
@@ -34,62 +36,98 @@ export const useDocumentDeleteOperations = (
         return false;
       }
 
+      console.log("Documento encontrado:", document);
+
       // Get current authenticated user
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
       
-      if (!user) {
+      if (authError || !user) {
+        console.error("Erro de autenticação:", authError);
         toast.error("Usuário não autenticado");
         return false;
       }
 
-      // Check if user is admin 
-      const { data: profileData } = await supabase
+      console.log("Usuário autenticado:", user.id);
+
+      // Check if user is admin or super_admin
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('is_admin, super_admin')
         .eq('id', user.id)
         .single();
         
+      if (profileError) {
+        console.error("Erro ao verificar perfil do usuário:", profileError);
+      }
+      
       const isAdmin = profileData?.is_admin || profileData?.super_admin;
+      console.log("Usuário é admin:", isAdmin);
 
-      // Only allow deletion if user is the uploader or an admin
-      if (document.uploaded_by !== user.id && !isAdmin) {
-        toast.error("Você só pode excluir documentos que você mesmo enviou");
+      // Only allow deletion if user is the uploader, the owner, or an admin
+      const canDelete = document.uploaded_by === user.id || isAdmin || document.user_id === user.id;
+      
+      if (!canDelete) {
+        toast.error("Você não tem permissão para excluir este documento");
         return false;
       }
 
-      // Create bucket if it doesn't exist - this is automatic now
-      const bucketExists = await createBucketIfNotExists();
+      console.log("Verificando bucket de armazenamento...");
       
-      if (!bucketExists) {
-        // Retry once more with forceful creation
-        console.log("Retry bucket creation forcefully");
-        const { error } = await supabase.storage.createBucket('documents', {
-          public: false,
-          fileSizeLimit: 10485760, // 10MB
-        });
+      // Try to create bucket if it doesn't exist
+      try {
+        const bucketExists = await createBucketIfNotExists();
         
-        if (error) {
-          console.error("Segunda tentativa falhou:", error);
-          toast.error("Não foi possível acessar o armazenamento. Tente novamente mais tarde.");
-          return false;
+        if (!bucketExists) {
+          console.log("Bucket não existe, tentando criar à força...");
+          
+          // Check if bucket exists first
+          const { data: buckets, error: bucketListError } = await supabase.storage.listBuckets();
+          
+          if (bucketListError) {
+            console.error("Erro ao listar buckets:", bucketListError);
+          } else {
+            console.log("Buckets disponíveis:", buckets);
+          }
+          
+          // Force bucket creation
+          const { error: createError } = await supabase.storage.createBucket('documents', {
+            public: false,
+            fileSizeLimit: 10485760, // 10MB
+          });
+          
+          if (createError) {
+            console.error("Erro ao criar bucket forçadamente:", createError);
+            // Continue with DB deletion even if bucket creation fails
+          } else {
+            console.log("Bucket criado com sucesso!");
+          }
         }
+      } catch (bucketError) {
+        console.error("Erro ao verificar/criar bucket:", bucketError);
+        // Continue with deletion anyway
       }
 
-      // Try to remove the file, but continue even if it fails
+      console.log("Tentando remover arquivo:", document.file_path);
+      
+      // Try to remove the file from storage, but continue even if it fails
       try {
         const { error: removeError } = await supabase.storage
           .from('documents')
           .remove([document.file_path]);
 
         if (removeError) {
-          console.warn("Warning during file removal:", removeError);
+          console.warn("Aviso durante remoção do arquivo:", removeError);
           // Continue with database record deletion even if file removal fails
+        } else {
+          console.log("Arquivo removido com sucesso!");
         }
       } catch (storageError) {
         console.warn("Erro ao remover arquivo do storage:", storageError);
         // Don't return false here, we still want to delete the database record
       }
 
+      console.log("Removendo registro do banco de dados...");
+      
       // Delete the database record
       const { error: deleteError } = await supabase
         .from('user_documents')
@@ -98,16 +136,18 @@ export const useDocumentDeleteOperations = (
 
       if (deleteError) {
         console.error("Erro ao excluir registro do documento:", deleteError);
-        throw deleteError;
+        throw new Error("Falha ao excluir o registro do documento no banco de dados");
       }
 
+      console.log("Documento excluído com sucesso!");
+      
       // Update the state to remove the deleted document
       setDocuments(currentDocs => currentDocs.filter(doc => doc.id !== documentId));
       toast.success('Documento excluído com sucesso');
       return true;
     } catch (error: any) {
       console.error('Error deleting document:', error);
-      toast.error(`Erro ao excluir documento: ${error.message}`);
+      toast.error(`Falha ao excluir o documento: ${error.message}`);
       return false;
     }
   }, [createBucketIfNotExists, setDocuments]);

@@ -1,17 +1,21 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const useDocumentValidation = () => {
   const checkBucketExists = async () => {
     try {
+      console.log("Verificando se o bucket 'documents' existe...");
+      
       const { data: buckets, error } = await supabase.storage.listBuckets();
       
       if (error) {
         console.error("Erro ao verificar buckets:", error);
         return false;
       }
+      
+      console.log("Buckets disponíveis:", buckets);
       
       const documentsBucket = buckets?.find(b => b.name === 'documents');
       
@@ -20,6 +24,7 @@ export const useDocumentValidation = () => {
         return await createBucket();
       }
       
+      console.log("Bucket 'documents' encontrado!");
       return true;
     } catch (err) {
       console.error("Erro ao verificar storage bucket:", err);
@@ -29,6 +34,8 @@ export const useDocumentValidation = () => {
 
   const createBucket = async () => {
     try {
+      console.log("Iniciando criação do bucket 'documents'...");
+      
       const { error: createError } = await supabase.storage.createBucket('documents', {
         public: false,
         fileSizeLimit: 10485760, // 10MB
@@ -36,12 +43,19 @@ export const useDocumentValidation = () => {
       
       if (createError) {
         console.error("Erro ao criar bucket 'documents':", createError);
-        toast.error("Não foi possível criar o armazenamento de documentos. Contate o administrador.");
-        return false;
+        
+        // Try to create without options as a fallback
+        console.log("Tentando criar bucket sem opções...");
+        const { error: fallbackError } = await supabase.storage.createBucket('documents');
+        
+        if (fallbackError) {
+          console.error("Falha também na criação sem opções:", fallbackError);
+          toast.error("Não foi possível criar o armazenamento de documentos. Contate o administrador.");
+          return false;
+        }
       }
       
       console.log("Bucket 'documents' criado com sucesso!");
-      toast.success("Armazenamento de documentos criado com sucesso!");
       return true;
     } catch (err) {
       console.error("Erro ao criar storage bucket:", err);
@@ -49,9 +63,9 @@ export const useDocumentValidation = () => {
     }
   };
 
-  const createBucketIfNotExists = async () => {
+  const createBucketIfNotExists = useCallback(async () => {
     return await checkBucketExists();
-  };
+  }, []);
 
-  return { checkBucketExists, createBucketIfNotExists };
+  return { checkBucketExists, createBucketIfNotExists, createBucket };
 };
