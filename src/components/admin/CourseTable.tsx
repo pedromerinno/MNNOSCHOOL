@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Table,
@@ -12,8 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, Building, FileText, Image } from "lucide-react";
 import { Course } from './CourseManagement';
 import { Skeleton } from "@/components/ui/skeleton";
+import { deleteCourse } from '@/services/course';
+import { toast } from 'sonner';
 
-// Supondo que cada Course tenha companies?: { logo: string | null, nome: string }[]
 type ExtendedCourse = Course & {
   companies?: { logo: string | null, nome: string }[];
 };
@@ -63,6 +63,21 @@ export const CourseTable: React.FC<CourseTableProps> = ({
   onManageCompanies,
   onViewLessons
 }) => {
+  const handleDelete = async (courseId: string) => {
+    if (window.confirm('Tem certeza que deseja excluir este curso? Esta ação não pode ser desfeita.')) {
+      try {
+        const success = await deleteCourse(courseId);
+        if (success) {
+          onDelete?.(courseId);
+          toast.success('Curso excluído com sucesso');
+        }
+      } catch (error) {
+        console.error('Error deleting course:', error);
+        toast.error('Erro ao excluir curso');
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="rounded-md border overflow-hidden">
@@ -168,7 +183,7 @@ export const CourseTable: React.FC<CourseTableProps> = ({
                     <Button 
                       variant="destructive" 
                       size="sm"
-                      onClick={() => onDelete(course.id)}
+                      onClick={() => handleDelete(course.id)}
                     >
                       <Trash2 className="h-4 w-4 mr-1" />
                       Excluir
