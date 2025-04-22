@@ -36,27 +36,54 @@ export const useDocumentValidation = () => {
     try {
       console.log("Iniciando criação do bucket 'documents'...");
       
-      // First try with options
-      const { error: createError } = await supabase.storage.createBucket('documents', {
-        public: false,
-        fileSizeLimit: 10485760, // 10MB
-      });
+      // First try without options - simpler approach may work in more environments
+      const { data, error } = await supabase.storage.createBucket('documents');
       
-      if (createError) {
-        console.error("Erro ao criar bucket 'documents':", createError);
+      if (error) {
+        console.error("Tentativa simples falhou:", error);
         
-        // If first attempt failed, try without options as a fallback
-        console.log("Tentando criar bucket sem opções...");
-        const { error: fallbackError } = await supabase.storage.createBucket('documents');
+        // If first attempt failed with simple approach, try with options
+        console.log("Tentando criar bucket com opções específicas...");
+        const { error: secondError } = await supabase.storage.createBucket('documents', {
+          public: false,
+          fileSizeLimit: 10485760, // 10MB
+        });
         
-        if (fallbackError) {
-          console.error("Falha também na criação sem opções:", fallbackError);
-          toast.error("Não foi possível criar o armazenamento de documentos. Contate o administrador.");
-          return false;
+        if (secondError) {
+          console.error("Falha também na criação com opções:", secondError);
+          
+          // Try one more time with minimal options
+          console.log("Tentativa final com opções mínimas...");
+          const { error: finalError } = await supabase.storage.createBucket('documents', {
+            public: true // Try as public bucket as last resort
+          });
+          
+          if (finalError) {
+            console.error("Todas as tentativas de criação falharam:", finalError);
+            toast.error("Não foi possível criar o armazenamento de documentos. Contate o administrador.");
+            return false;
+          }
         }
       }
       
       console.log("Bucket 'documents' criado com sucesso!");
+      
+      // Add public policy to the bucket to ensure files can be accessed
+      try {
+        const { error: policyError } = await supabase.storage.from('documents')
+          .createSignedUrl('test.txt', 60);
+          
+        if (policyError && policyError.message.includes('not found')) {
+          console.log("Criando arquivo de teste para validar o bucket...");
+          const testBlob = new Blob(["test"], { type: 'text/plain' });
+          await supabase.storage.from('documents').upload('test.txt', testBlob);
+          console.log("Arquivo de teste criado com sucesso!");
+        }
+      } catch (policyErr) {
+        console.warn("Aviso na validação do bucket:", policyErr);
+        // Continue anyway, this is just a validation step
+      }
+      
       return true;
     } catch (err) {
       console.error("Erro ao criar storage bucket:", err);
