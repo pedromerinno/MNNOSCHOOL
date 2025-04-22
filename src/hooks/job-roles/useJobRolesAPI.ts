@@ -3,9 +3,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { JobRole } from "@/types/job-roles";
 import { toast } from "sonner";
 
+// Cache object to store job roles by company
+const jobRolesCache: Record<string, { data: JobRole[], timestamp: number }> = {};
+const CACHE_TTL = 60000; // 1 minute cache lifetime
+
 export const useJobRolesAPI = () => {
-  const fetchJobRoles = async (companyId: string) => {
+  const fetchJobRoles = async (companyId: string, forceRefresh = false) => {
     try {
+      // Check cache first if we're not forcing a refresh
+      const now = Date.now();
+      const cachedData = jobRolesCache[companyId];
+      
+      if (!forceRefresh && cachedData && (now - cachedData.timestamp < CACHE_TTL)) {
+        console.log("Using cached job roles for company:", companyId);
+        return cachedData.data;
+      }
+      
       console.log("Fetching job roles for company:", companyId);
       const { data, error } = await supabase
         .from('job_roles')
@@ -15,6 +28,13 @@ export const useJobRolesAPI = () => {
         
       if (error) throw error;
       console.log("Fetched job roles:", data);
+      
+      // Update cache
+      jobRolesCache[companyId] = {
+        data: data || [],
+        timestamp: now
+      };
+      
       return data || [];
     } catch (error: any) {
       console.error("Error fetching job roles:", error);
@@ -51,6 +71,9 @@ export const useJobRolesAPI = () => {
           throw error;
         }
         
+        // Invalidate cache
+        delete jobRolesCache[companyId];
+        
         console.log("New role created:", data?.[0]);
         return data?.[0] || null;
       } 
@@ -74,6 +97,9 @@ export const useJobRolesAPI = () => {
           throw error;
         }
         
+        // Invalidate cache
+        delete jobRolesCache[companyId];
+        
         console.log("Role updated:", data?.[0]);
         return data?.[0] || null;
       }
@@ -86,7 +112,7 @@ export const useJobRolesAPI = () => {
     }
   };
 
-  const deleteRole = async (roleId: string) => {
+  const deleteRole = async (roleId: string, companyId: string) => {
     try {
       console.log("Checking if role can be deleted:", roleId);
       const { count, error } = await supabase
@@ -109,6 +135,9 @@ export const useJobRolesAPI = () => {
         
       if (deleteError) throw deleteError;
       
+      // Invalidate cache
+      delete jobRolesCache[companyId];
+      
       return true;
     } catch (error: any) {
       console.error("Error deleting job role:", error);
@@ -117,7 +146,7 @@ export const useJobRolesAPI = () => {
     }
   };
 
-  const updateRoleOrder = async (roleId: string, newOrderIndex: number) => {
+  const updateRoleOrder = async (roleId: string, newOrderIndex: number, companyId: string) => {
     try {
       console.log("Updating role order:", roleId, "new index:", newOrderIndex);
       const { error } = await supabase
@@ -126,6 +155,10 @@ export const useJobRolesAPI = () => {
         .eq('id', roleId);
         
       if (error) throw error;
+      
+      // Invalidate cache
+      delete jobRolesCache[companyId];
+      
       return true;
     } catch (error: any) {
       console.error("Error updating role order:", error);
@@ -134,10 +167,20 @@ export const useJobRolesAPI = () => {
     }
   };
 
+  const clearCache = (companyId?: string) => {
+    if (companyId) {
+      delete jobRolesCache[companyId];
+    } else {
+      // Clear all cache
+      Object.keys(jobRolesCache).forEach(key => delete jobRolesCache[key]);
+    }
+  };
+
   return {
     fetchJobRoles,
     saveRole,
     deleteRole,
     updateRoleOrder,
+    clearCache
   };
 };

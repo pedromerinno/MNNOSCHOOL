@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus, Briefcase } from "lucide-react";
@@ -31,13 +31,14 @@ export const JobRolesManager: React.FC<JobRolesManagerProps> = ({ company }) => 
     setShowRoleUsersDialog,
     handleSaveRole,
     handleDeleteRole,
-    handleMoveRole
+    handleMoveRole,
+    refreshJobRoles
   } = useJobRoles(company);
 
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [assignedUsers, setAssignedUsers] = useState<{ id: string; display_name: string }[]>([]);
 
-  const handleAddRole = () => {
+  const handleAddRole = useCallback(() => {
     setNewRole({
       title: '',
       description: '',
@@ -47,9 +48,9 @@ export const JobRolesManager: React.FC<JobRolesManagerProps> = ({ company }) => 
       order_index: jobRoles.length,
       company_id: company.id
     });
-  };
+  }, [jobRoles.length, company.id, setNewRole]);
 
-  if (isLoading) {
+  if (isLoading && jobRoles.length === 0) {
     return (
       <Card>
         <CardContent className="p-6 text-center">
@@ -89,10 +90,12 @@ export const JobRolesManager: React.FC<JobRolesManagerProps> = ({ company }) => 
         </div>
         
         {!newRole && !editingRole && (
-          <Button onClick={handleAddRole}>
-            <Plus className="h-4 w-4 mr-2" />
-            Adicionar Cargo
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={handleAddRole}>
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar Cargo
+            </Button>
+          </div>
         )}
       </div>
 

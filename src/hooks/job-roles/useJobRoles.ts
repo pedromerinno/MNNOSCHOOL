@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { JobRole } from "@/types/job-roles";
 import { Company } from "@/types/company";
 import { useJobRolesAPI } from './useJobRolesAPI';
@@ -24,19 +24,52 @@ export const useJobRoles = (company: Company) => {
     setShowRoleUsersDialog,
   } = useJobRolesState();
 
-  const { fetchJobRoles, saveRole, deleteRole, updateRoleOrder } = useJobRolesAPI();
+  const { fetchJobRoles, saveRole, deleteRole, updateRoleOrder, clearCache } = useJobRolesAPI();
+  const initialLoadDone = useRef(false);
+  const loadingRef = useRef(false);
 
   // Load job roles when company changes
   useEffect(() => {
-    if (company?.id) {
-      setIsLoading(true);
-      fetchJobRoles(company.id)
-        .then(data => {
-          setJobRoles(data);
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
+    if (!company?.id) return;
+    
+    if (loadingRef.current) return;
+    
+    const loadRoles = async () => {
+      if (!initialLoadDone.current) {
+        setIsLoading(true);
+        loadingRef.current = true;
+      }
+      
+      try {
+        const data = await fetchJobRoles(company.id);
+        setJobRoles(data);
+        initialLoadDone.current = true;
+      } catch (error) {
+        console.error("Error loading roles:", error);
+      } finally {
+        setIsLoading(false);
+        loadingRef.current = false;
+      }
+    };
+    
+    loadRoles();
+  }, [company?.id, fetchJobRoles, setJobRoles, setIsLoading]);
+
+  // Handle forced refresh
+  const refreshJobRoles = useCallback(async (forceRefresh = true) => {
+    if (!company?.id || loadingRef.current) return;
+    
+    setIsLoading(true);
+    loadingRef.current = true;
+    
+    try {
+      const data = await fetchJobRoles(company.id, forceRefresh);
+      setJobRoles(data);
+    } catch (error) {
+      console.error("Error refreshing job roles:", error);
+    } finally {
+      setIsLoading(false);
+      loadingRef.current = false;
     }
   }, [company?.id, fetchJobRoles, setJobRoles, setIsLoading]);
 
@@ -82,10 +115,12 @@ export const useJobRoles = (company: Company) => {
 
   // Delete a job role
   const handleDeleteRole = useCallback(async (roleId: string) => {
+    if (!company?.id) return;
+    
     if (window.confirm("Tem certeza que deseja excluir este cargo?")) {
       setIsLoading(true);
       try {
-        const success = await deleteRole(roleId);
+        const success = await deleteRole(roleId, company.id);
         
         if (success) {
           setJobRoles(prev => prev.filter(role => role.id !== roleId));
@@ -100,10 +135,12 @@ export const useJobRoles = (company: Company) => {
         setIsLoading(false);
       }
     }
-  }, [deleteRole, setIsLoading, setJobRoles]);
+  }, [company?.id, deleteRole, setIsLoading, setJobRoles]);
 
   // Reorder job roles
   const handleMoveRole = useCallback(async (roleId: string, direction: 'up' | 'down') => {
+    if (!company?.id) return;
+    
     const currentIndex = jobRoles.findIndex(role => role.id === roleId);
     if (currentIndex === -1) return;
     
@@ -124,10 +161,10 @@ export const useJobRoles = (company: Company) => {
     
     try {
       // Update the current role's order
-      const success1 = await updateRoleOrder(currentRole.id, targetRole.order_index);
+      const success1 = await updateRoleOrder(currentRole.id, targetRole.order_index, company.id);
       
       // Update the target role's order
-      const success2 = await updateRoleOrder(targetRole.id, currentRole.order_index);
+      const success2 = await updateRoleOrder(targetRole.id, currentRole.order_index, company.id);
       
       if (success1 && success2) {
         // Update local state to reflect the change
@@ -148,7 +185,16 @@ export const useJobRoles = (company: Company) => {
     } finally {
       setIsLoading(false);
     }
-  }, [jobRoles, setIsLoading, setJobRoles, updateRoleOrder]);
+  }, [company?.id, jobRoles, setIsLoading, setJobRoles, updateRoleOrder]);
+
+  // Clean up cache when component unmounts
+  useEffect(() => {
+    return () => {
+      if (company?.id) {
+        clearCache(company.id);
+      }
+    };
+  }, [company?.id, clearCache]);
 
   return {
     jobRoles,
@@ -165,6 +211,7 @@ export const useJobRoles = (company: Company) => {
     setShowRoleUsersDialog,
     handleSaveRole,
     handleDeleteRole,
-    handleMoveRole
+    handleMoveRole,
+    refreshJobRoles
   };
 };

@@ -1,12 +1,12 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { TabsContent } from "@/components/ui/tabs";
 import { Company } from "@/types/company";
 import { CompanyIntegrationForm } from '../CompanyIntegrationForm';
 import { IntegrationVideosManager } from '../IntegrationVideosManager';
 import { JobRolesManager } from '../job-roles/JobRolesManager';
 import { AccessManagement } from '../AccessManagement';
-import { CollaboratorsManagement } from '../CollaboratorsManagement';
+import { CollaboratorsManagement } from '../collaborators/CollaboratorsManagement';
 import { CompanyCourseManagement } from '../CompanyCourseManagement';
 
 interface SettingsTabContentProps {
@@ -22,44 +22,55 @@ export const SettingsTabContent: React.FC<SettingsTabContentProps> = ({
   onSubmit,
   isSaving
 }) => {
-  // Use key state to force re-render when job roles update
   const [refreshKey, setRefreshKey] = useState(0);
+  
+  // More efficient event handler using useCallback
+  const handleJobRolesUpdated = useCallback(() => {
+    console.log("Job roles updated event detected, refreshing tab content");
+    // Only refresh if we're on the roles tab
+    if (value === "cargo") {
+      setRefreshKey(prev => prev + 1);
+    }
+  }, [value]);
   
   // Listen for job role updates
   useEffect(() => {
-    const handleJobRolesUpdated = () => {
-      console.log("Job roles updated event detected, refreshing tab content");
-      setRefreshKey(prev => prev + 1);
-    };
-    
     window.addEventListener('job-roles-updated', handleJobRolesUpdated);
     
     return () => {
       window.removeEventListener('job-roles-updated', handleJobRolesUpdated);
     };
-  }, []);
+  }, [handleJobRolesUpdated]);
+
+  // Only generate key when needed, not on every render
+  const getKey = useCallback((tabValue: string) => {
+    if (tabValue === "cargo") {
+      return `roles-${company.id}-${refreshKey}`;
+    }
+    return `${tabValue}-${company.id}`;
+  }, [company.id, refreshKey]);
 
   const getContent = () => {
     switch (value) {
       case "info":
         return (
           <CompanyIntegrationForm 
-            key={`info-${company.id}`}
+            key={getKey("info")}
             company={company}
             onSubmit={onSubmit!}
             isSaving={isSaving!}
           />
         );
       case "videos":
-        return <IntegrationVideosManager key={`videos-${company.id}`} company={company} />;
+        return <IntegrationVideosManager key={getKey("videos")} company={company} />;
       case "cargo":
-        return <JobRolesManager key={`roles-${company.id}-${refreshKey}`} company={company} />;
+        return <JobRolesManager key={getKey("cargo")} company={company} />;
       case "access":
-        return <AccessManagement key={`access-${company.id}`} company={company} />;
+        return <AccessManagement key={getKey("access")} company={company} />;
       case "collaborators":
-        return <CollaboratorsManagement key={`collaborators-${company.id}`} company={company} />;
+        return <CollaboratorsManagement key={getKey("collaborators")} company={company} />;
       case "courses":
-        return <CompanyCourseManagement key={`courses-${company.id}`} company={company} />;
+        return <CompanyCourseManagement key={getKey("courses")} company={company} />;
       default:
         return null;
     }
