@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Link, FileText, Users, School, Globe, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
