@@ -21,7 +21,7 @@ export const NotificationButton = () => {
   useEffect(() => {
     const handleRefreshNotifications = () => {
       console.log("Refreshing notifications from event");
-      fetchNotifications();
+      fetchNotifications(undefined, true);
     };
 
     // Adiciona ouvintes para ambos os eventos
