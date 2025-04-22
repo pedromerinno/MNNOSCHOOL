@@ -12,7 +12,7 @@ import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from './constants';
 // Make these constants available for import
 export { MAX_FILE_SIZE, ALLOWED_FILE_TYPES };
 
-// Add optional parameters to make the hook more flexible
+// Adicionar parâmetros opcionais para tornar o hook mais flexível
 export const useDocumentUpload = (params?: { 
   userId?: string, 
   companyId?: string, 
@@ -27,7 +27,7 @@ export const useDocumentUpload = (params?: {
   const { uploadToStorage } = useStorageOperations();
   const { createBucketIfNotExists } = useDocumentValidation();
 
-  // Fetch current user ID
+  // Buscar ID do usuário atual
   useEffect(() => {
     const fetchCurrentUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -59,7 +59,7 @@ export const useDocumentUpload = (params?: {
   const uploadDocument = async (file: File, documentType: DocumentType, description: string) => {
     if (!validateFile(file)) return false;
 
-    // Determine the target user and company IDs
+    // Determinar o ID do usuário e da empresa
     let userId = params?.userId;
     let companyId = params?.companyId;
     
@@ -90,28 +90,29 @@ export const useDocumentUpload = (params?: {
     setFileError(null);
 
     try {
-      // Create the bucket if it doesn't exist
+      // Criar o bucket se ele não existir
+      console.log("Verificando/criando bucket de documentos...");
       const bucketExists = await createBucketIfNotExists();
       
       if (!bucketExists) {
-        console.error("Falha ao criar bucket de documentos");
-        toast.error("Sistema de armazenamento não está disponível. Por favor, tente novamente mais tarde.");
+        console.error("Falha ao criar/verificar bucket de documentos");
+        toast.error("Não foi possível configurar o armazenamento de documentos. Contate o administrador.");
         return false;
       }
 
-      // Upload the file to storage
+      // Fazer upload do arquivo para o storage
       console.log("Iniciando upload do arquivo...");
       const filePath = await uploadToStorage(userId, file);
       console.log("Arquivo enviado com sucesso para:", filePath);
 
-      // Get the current authenticated user
+      // Obter o usuário autenticado atual
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error("Usuário não autenticado");
         return false;
       }
 
-      // Create the document record in the database
+      // Criar o registro do documento no banco de dados
       console.log("Salvando registro do documento no banco de dados...");
       const { error } = await supabase
         .from('user_documents')
@@ -134,7 +135,7 @@ export const useDocumentUpload = (params?: {
       console.log("Documento cadastrado com sucesso!");
       toast.success('Documento enviado com sucesso');
       
-      // Call onUploadComplete if provided
+      // Chamar onUploadComplete se fornecido
       if (params?.onUploadComplete) {
         params.onUploadComplete();
       }
@@ -145,10 +146,12 @@ export const useDocumentUpload = (params?: {
       
       let errorMessage = 'Erro ao enviar documento';
       
-      if (error.message.includes("storage/bucket-not-found")) {
+      if (error.message?.includes("storage/bucket-not-found")) {
         errorMessage = "Sistema de armazenamento não está disponível. Por favor, tente novamente mais tarde.";
-      } else if (error.message.includes("already exists")) {
+      } else if (error.message?.includes("already exists")) {
         errorMessage = "Um arquivo com este nome já existe. Tente novamente.";
+      } else if (error.message?.includes("permission denied")) {
+        errorMessage = "Você não tem permissão para fazer upload desse arquivo.";
       } else {
         errorMessage = `Erro: ${error.message}`;
       }

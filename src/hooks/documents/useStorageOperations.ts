@@ -2,44 +2,40 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MAX_FILE_SIZE } from './constants';
+import { useDocumentValidation } from './useDocumentValidation';
 
 export const useStorageOperations = () => {
+  const { createBucketIfNotExists } = useDocumentValidation();
+  
   const uploadToStorage = async (userId: string, file: File): Promise<string> => {
     if (file.size > MAX_FILE_SIZE) {
       throw new Error("File size exceeds 10MB limit");
     }
     
     try {
-      // Create a unique file path with timestamp to ensure uniqueness
+      // Verificar se o bucket existe antes de tentar o upload
+      const bucketExists = await createBucketIfNotExists();
+      
+      if (!bucketExists) {
+        console.error("Falha ao verificar/criar o bucket de documentos");
+        throw new Error("Não foi possível configurar o armazenamento de documentos");
+      }
+      
+      console.log("Bucket verificado/criado com sucesso, prosseguindo com upload...");
+      
+      // Criar um caminho único para o arquivo
       const userDir = `user-documents/${userId}`;
       const fileExt = file.name.split('.').pop();
       const timestamp = new Date().getTime();
       const uniqueId = Math.random().toString(36).substring(2, 8);
       const fileName = `${userDir}/${timestamp}-${uniqueId}.${fileExt}`;
 
-      // Try to create the bucket before upload
-      try {
-        const { error: bucketError } = await supabase.storage.createBucket('documents', {
-          public: false,
-          fileSizeLimit: 10485760, // 10MB
-        });
-        
-        if (bucketError && !bucketError.message.includes('already exists')) {
-          console.warn("Aviso ao criar bucket (pode já existir):", bucketError);
-        } else {
-          console.log("Bucket criado ou já existente");
-        }
-      } catch (bucketErr) {
-        console.warn("Erro ao verificar/criar bucket (ignorando):", bucketErr);
-        // Continue anyway, as the bucket might already exist
-      }
-
-      // Upload file to storage with retry logic
-      const uploadWithRetry = async (retries = 2): Promise<string> => {
+      // Upload do arquivo para o storage com lógica de retry
+      const uploadWithRetry = async (retries = 3): Promise<string> => {
         try {
-          console.log(`Tentando upload de arquivo (tentativa ${3-retries}/3)...`);
+          console.log(`Tentando upload de arquivo (tentativa ${4-retries}/3)...`);
           
-          const { error: uploadError } = await supabase.storage
+          const { data, error: uploadError } = await supabase.storage
             .from('documents')
             .upload(fileName, file, {
               cacheControl: '3600',
@@ -49,7 +45,11 @@ export const useStorageOperations = () => {
           if (uploadError) {
             console.error("Erro de upload:", uploadError);
             
-            if (retries > 0 && (uploadError.message.includes('timeout') || uploadError.message.includes('network'))) {
+            if (retries > 0 && (
+              uploadError.message.includes('timeout') || 
+              uploadError.message.includes('network') ||
+              uploadError.message.includes('failed')
+            )) {
               console.log("Tentando novamente em 1 segundo...");
               await new Promise(resolve => setTimeout(resolve, 1000));
               return await uploadWithRetry(retries - 1);
@@ -86,8 +86,6 @@ export const useStorageOperations = () => {
       
       if (error) {
         console.error("Erro ao remover arquivo:", error);
-        // Don't throw here - we'll still want to delete the database record
-        // even if the file removal fails
         return false;
       }
       
@@ -95,10 +93,30 @@ export const useStorageOperations = () => {
       return true;
     } catch (err) {
       console.error("Erro em deleteFromStorage:", err);
-      // Return false but don't throw - allow database record deletion to proceed
       return false;
     }
   };
 
-  return { uploadToStorage, deleteFromStorage };
+  // Método para verificar se um arquivo existe
+  const fileExists = async (filePath: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .list(filePath.split('/').slice(0, -1).join('/'), {
+          search: filePath.split('/').pop() || ''
+        });
+      
+      if (error) {
+        console.error("Erro ao verificar existência do arquivo:", error);
+        return false;
+      }
+      
+      return data && data.length > 0;
+    } catch (err) {
+      console.error("Erro ao verificar existência do arquivo:", err);
+      return false;
+    }
+  };
+
+  return { uploadToStorage, deleteFromStorage, fileExists };
 };

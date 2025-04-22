@@ -3,11 +3,22 @@ import { useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UserDocument } from "@/types/document";
+import { useDocumentValidation } from './useDocumentValidation';
 
 export const useDocumentDownload = () => {
+  const { createBucketIfNotExists } = useDocumentValidation();
+
   const downloadDocument = useCallback(async (document: UserDocument): Promise<void> => {
     try {
       console.log("Iniciando download do documento:", document.id);
+      
+      // Garantir que o bucket existe antes de tentar download
+      const bucketExists = await createBucketIfNotExists();
+      
+      if (!bucketExists) {
+        console.error("Bucket não existe ou não pôde ser criado");
+        throw new Error("Sistema de armazenamento não está disponível");
+      }
       
       const { data, error } = await supabase.storage
         .from('documents')
@@ -42,7 +53,7 @@ export const useDocumentDownload = () => {
         toast.error(`Erro ao baixar documento: ${error.message}`);
       }
     }
-  }, []);
+  }, [createBucketIfNotExists]);
 
   return { downloadDocument };
 };
