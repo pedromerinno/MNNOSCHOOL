@@ -1,4 +1,3 @@
-
 import { Link, useLocation } from "react-router-dom";
 import { 
   NavigationMenu, 
@@ -47,10 +46,10 @@ export const NavMenuLinks = ({ adminLabel = "Admin" }) => {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-base font-medium mb-1 group-hover:text-gray-900 dark:group-hover:text-white">
+                    <h3 className="text-sm font-medium mb-1 group-hover:text-gray-900 dark:group-hover:text-white">
                       Todos os Cursos
                     </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       Visualize todos os cursos disponíveis na sua empresa
                     </p>
                   </div>
@@ -66,10 +65,10 @@ export const NavMenuLinks = ({ adminLabel = "Admin" }) => {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-base font-medium mb-1 group-hover:text-gray-900 dark:group-hover:text-white">
+                    <h3 className="text-sm font-medium mb-1 group-hover:text-gray-900 dark:group-hover:text-white">
                       Painel
                     </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       Cursos favoritos e em andamento
                     </p>
                   </div>
