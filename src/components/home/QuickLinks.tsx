@@ -51,12 +51,12 @@ export const QuickLinks = () => {
       {links.map((link, index) => (
         <Card 
           key={index} 
-          className="border-0 shadow-none bg-white dark:bg-card rounded-[30px] cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          className="border-0 shadow-none bg-white dark:bg-[#222222] rounded-[30px] cursor-pointer hover:bg-gray-50 dark:hover:bg-[#2C2C2C] transition-colors"
           onClick={() => handleNavigate(link.path)}
         >
           <CardContent className="p-6 flex flex-col">
             <div className="flex items-center mb-2">
-              <span className="mr-3 bg-gray-100 dark:bg-gray-800 p-2 rounded-lg">
+              <span className="mr-3 bg-gray-100 dark:bg-[#1F1F1F] p-2 rounded-lg">
                 <link.icon className="h-5 w-5 text-gray-700 dark:text-gray-300 stroke-current" strokeWidth={1.5} />
               </span>
               <span className="font-medium dark:text-white">{link.label}</span>
