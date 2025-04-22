@@ -7,10 +7,13 @@ import { CourseCategories } from "@/components/courses/CourseCategories";
 import { useCoursesPage } from "@/hooks/useCoursesPage";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCompanies } from "@/hooks/useCompanies";
+import { Button } from "@/components/ui/button";
+import { PlusCircle } from "lucide-react";
+import { NewCourseDialog } from "@/components/admin/dialogs/NewCourseDialog";
 
 const Courses = () => {
   const navigate = useNavigate();
-  const { selectedCompany, isLoading: companyLoading } = useCompanies();
+  const { selectedCompany, isLoading: companyLoading, user } = useCompanies();
   const {
     featuredCourses,
     allCompanyCourses,
@@ -22,6 +25,9 @@ const Courses = () => {
 
   const [activeCategory, setActiveCategory] = useState("all");
   const [showContent, setShowContent] = useState(false);
+  const [isNewCourseDialogOpen, setIsNewCourseDialogOpen] = useState(false);
+
+  const isAdmin = user?.is_admin || user?.super_admin;
 
   // Controle de exibição do conteúdo para evitar "piscar"
   useEffect(() => {
@@ -102,7 +108,6 @@ const Courses = () => {
             <h2 className="text-xl font-semibold">Todos os cursos</h2>
             
             {allCoursesLoading ? (
-              // Loading skeleton for courses grid
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {[1, 2, 3, 4, 5, 6].map((index) => (
                   <div key={index} className="aspect-[4/3] rounded-lg overflow-hidden">
@@ -111,11 +116,19 @@ const Courses = () => {
                 ))}
               </div>
             ) : filteredCourses?.length === 0 ? (
-              // Empty state
-              <div className="py-12 text-center">
-                <p className="text-gray-500 dark:text-gray-400">
-                  Nenhum curso disponível para esta categoria.
+              <div className="col-span-3 flex flex-col items-center justify-center py-12 text-center">
+                <p className="text-gray-500 dark:text-gray-400 text-lg mb-6">
+                  Em breve, aqui estarão todos os cursos da {selectedCompany.nome}.
                 </p>
+                {isAdmin && (
+                  <Button
+                    onClick={() => setIsNewCourseDialogOpen(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                    Criar um novo curso
+                  </Button>
+                )}
               </div>
             ) : (
               // Courses grid
@@ -155,8 +168,14 @@ const Courses = () => {
           </div>
         </div>
       </div>
+
+      <NewCourseDialog 
+        open={isNewCourseDialogOpen}
+        onOpenChange={setIsNewCourseDialogOpen}
+      />
     </DashboardLayout>
   );
 };
 
 export default Courses;
+
