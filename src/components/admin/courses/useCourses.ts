@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Course } from './types';
@@ -37,7 +36,6 @@ export const useCourses = (companyId?: string) => {
         return;
       }
 
-      // Check if user is super admin
       const { data: currentUserProfile } = await supabase
         .from('profiles')
         .select('is_admin, super_admin')
@@ -45,11 +43,9 @@ export const useCourses = (companyId?: string) => {
         .single();
 
       if (currentUserProfile?.super_admin) {
-        // Super admins can see all courses
         const allCourses = await fetchCourses(companyId);
         setCourses(allCourses);
       } else if (currentUserProfile?.is_admin) {
-        // Regular admins can only see courses from their companies
         const { data: userCompanies } = await supabase
           .from('user_empresa')
           .select('empresa_id')
@@ -62,7 +58,6 @@ export const useCourses = (companyId?: string) => {
 
         const companyIds = userCompanies.map(uc => uc.empresa_id);
 
-        // Get courses associated with user's companies
         const { data: companyCourses } = await supabase
           .from('company_courses')
           .select('course_id')
@@ -92,7 +87,6 @@ export const useCourses = (companyId?: string) => {
     }
   };
 
-  // Handle course deletion
   const handleDeleteCourse = async (courseId: string) => {
     if (confirm('Tem certeza que deseja excluir este curso? Esta ação não pode ser desfeita.')) {
       const success = await deleteCourse(courseId);
@@ -102,12 +96,10 @@ export const useCourses = (companyId?: string) => {
     }
   };
 
-  // Listen for company changes in settings
   useEffect(() => {
     const handleSettingsCompanyChange = (e: CustomEvent) => {
       if (e.detail?.company?.id) {
         console.log(`Company changed in settings, updating courses for: ${e.detail.company.nome}`);
-        // Close any open dialogs
         setIsFormOpen(false);
         setIsCompanyManagerOpen(false);
         setSelectedCourse(null);
@@ -121,7 +113,19 @@ export const useCourses = (companyId?: string) => {
     };
   }, []);
 
-  // Fetch courses on mount or when companyId changes
+  useEffect(() => {
+    const handleCourseDeleted = (e: CustomEvent) => {
+      console.log('Course deleted event received, refreshing courses list');
+      loadCourses();
+    };
+
+    window.addEventListener('course-deleted', handleCourseDeleted as EventListener);
+    
+    return () => {
+      window.removeEventListener('course-deleted', handleCourseDeleted as EventListener);
+    };
+  }, []);
+
   useEffect(() => {
     loadCourses();
   }, [companyId]); 
