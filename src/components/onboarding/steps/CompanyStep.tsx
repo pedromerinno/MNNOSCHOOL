@@ -311,7 +311,7 @@ const CompanyStep: React.FC<CompanyStepProps> = ({ onNext, onBack, onCompanyType
       <div className="pt-4 flex flex-col gap-3">
         <Button 
           type="submit" 
-          className="w-full rounded-md bg-merinno-dark hover:bg-black text-white"
+          className="w-full rounded-md bg-black text-white hover:bg-gray-800"
           disabled={isSubmitting || (companyType === 'existing' && !companyInfo && companyId.length >= 10 && !companyLoading)}
         >
           {isSubmitting
