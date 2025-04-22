@@ -30,9 +30,9 @@
   }
 
   .dark {
-    --background: 0 0% 10%;  // Dark mode background: #191919
+    --background: 0 0% 10%; /* Dark mode background: #191919 */
     --foreground: 0 0% 98%;
-    --card: 0 0% 13.3%;  // Dark mode card: #222222
+    --card: 0 0% 13.3%; /* Dark mode card: #222222 */
     --card-foreground: 0 0% 98%;
     --popover: 0 0% 13.3%;
     --popover-foreground: 0 0% 98%;
@@ -46,8 +46,8 @@
     --accent-foreground: 0 0% 98%;
     --destructive: 0 0% 45%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 10%;  // Ajustado para combinar com o novo background
-    --input: 0 0% 10%;   // Ajustado para combinar com o novo background
+    --border: 0 0% 10%; /* Adjusted to match new background */
+    --input: 0 0% 10%; /* Adjusted to match new background */
     --ring: 0 0% 83.9%;
   }
 }
