@@ -29,6 +29,7 @@ export const JobRoleForm = ({
     requirements: role.requirements || '',
     expectations: role.expectations || ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     setFormValues({
@@ -60,20 +61,31 @@ export const JobRoleForm = ({
     }).join('\n');
   };
 
-  const handleSaveValues = () => {
+  const handleSaveValues = async () => {
     if (!formValues.title.trim()) {
       toast.error("O título do cargo é obrigatório");
       return;
     }
 
-    const formattedValues = {
-      ...formValues,
-      responsibilities: formatBulletPoints(formValues.responsibilities),
-      requirements: formatBulletPoints(formValues.requirements),
-      expectations: formatBulletPoints(formValues.expectations)
-    };
-
-    onSave(formattedValues);
+    setIsSubmitting(true);
+    
+    try {
+      const formattedValues = {
+        ...role, // Keep existing fields including ID
+        ...formValues,
+        responsibilities: formatBulletPoints(formValues.responsibilities),
+        requirements: formatBulletPoints(formValues.requirements),
+        expectations: formatBulletPoints(formValues.expectations)
+      };
+      
+      console.log("Submitting role data:", formattedValues);
+      onSave(formattedValues);
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      toast.error("Erro ao salvar cargo");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getPlaceholder = (field: string) => {
@@ -154,12 +166,16 @@ export const JobRoleForm = ({
           </div>
 
           <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={onCancel}>
+            <Button variant="outline" onClick={onCancel} type="button" disabled={isSubmitting}>
               <X className="h-4 w-4 mr-2" />
               Cancelar
             </Button>
-            <Button onClick={handleSaveValues}>
-              <Save className="h-4 w-4 mr-2" />
+            <Button onClick={handleSaveValues} type="button" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <span className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full"></span>
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
               Salvar
             </Button>
           </div>

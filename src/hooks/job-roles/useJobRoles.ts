@@ -1,19 +1,16 @@
 
-import { useEffect } from 'react';
-import { Company } from "@/types/company";
+import { useState, useEffect, useCallback } from 'react';
 import { JobRole } from "@/types/job-roles";
-import { useJobRolesState } from './useJobRolesState';
+import { Company } from "@/types/company";
 import { useJobRolesAPI } from './useJobRolesAPI';
+import { useJobRolesState } from './useJobRolesState';
 import { toast } from "sonner";
 
 export const useJobRoles = (company: Company) => {
-  const state = useJobRolesState();
-  const api = useJobRolesAPI();
-
   const {
     jobRoles,
-    setJobRoles,
     isLoading,
+    setJobRoles,
     setIsLoading,
     editingRole,
     setEditingRole,
@@ -23,124 +20,151 @@ export const useJobRoles = (company: Company) => {
     setSelectedRole,
     isFormOpen,
     setIsFormOpen,
-    isSubmitting,
-    setIsSubmitting,
     showRoleUsersDialog,
-    setShowRoleUsersDialog
-  } = state;
+    setShowRoleUsersDialog,
+  } = useJobRolesState();
 
-  const fetchJobRoles = async () => {
+  const { fetchJobRoles, saveRole, deleteRole, updateRoleOrder } = useJobRolesAPI();
+
+  // Load job roles when company changes
+  useEffect(() => {
+    if (company?.id) {
+      setIsLoading(true);
+      fetchJobRoles(company.id)
+        .then(data => {
+          setJobRoles(data);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    }
+  }, [company?.id, fetchJobRoles, setJobRoles, setIsLoading]);
+
+  // Save a job role (new or existing)
+  const handleSaveRole = useCallback(async (role: Partial<JobRole>, isNew: boolean) => {
+    if (!company?.id) {
+      toast.error("Nenhuma empresa selecionada");
+      return;
+    }
+
     setIsLoading(true);
+
     try {
-      const data = await api.fetchJobRoles(company.id);
-      setJobRoles(data);
+      console.log(`Attempting to ${isNew ? 'create' : 'update'} role:`, role);
+      const savedRole = await saveRole(role, company.id, isNew);
+      
+      if (savedRole) {
+        if (isNew) {
+          setJobRoles(prev => [...prev, savedRole]);
+          setNewRole(null);
+          toast.success("Cargo criado com sucesso");
+        } else {
+          setJobRoles(prev => 
+            prev.map(item => item.id === savedRole.id ? savedRole : item)
+          );
+          setEditingRole(null);
+          toast.success("Cargo atualizado com sucesso");
+        }
+        
+        // Trigger refresh event for components that depend on job roles
+        window.dispatchEvent(new Event('job-roles-updated'));
+      } else {
+        console.error("Failed to save role - no data returned");
+        toast.error(`Erro ao ${isNew ? 'criar' : 'atualizar'} cargo`);
+      }
     } catch (error) {
-      console.error("Error fetching job roles:", error);
-      toast.error("Erro ao carregar cargos");
+      console.error("Error in handleSaveRole:", error);
+      toast.error(`Erro ao ${isNew ? 'criar' : 'atualizar'} cargo`);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [company?.id, saveRole, setEditingRole, setIsLoading, setJobRoles, setNewRole]);
 
-  const handleSaveRole = async (role: Partial<JobRole>, isNew: boolean) => {
+  // Delete a job role
+  const handleDeleteRole = useCallback(async (roleId: string) => {
+    if (window.confirm("Tem certeza que deseja excluir este cargo?")) {
+      setIsLoading(true);
+      try {
+        const success = await deleteRole(roleId);
+        
+        if (success) {
+          setJobRoles(prev => prev.filter(role => role.id !== roleId));
+          toast.success("Cargo excluído com sucesso");
+          
+          // Trigger refresh event
+          window.dispatchEvent(new Event('job-roles-updated'));
+        }
+      } catch (error) {
+        console.error("Error in handleDeleteRole:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  }, [deleteRole, setIsLoading, setJobRoles]);
+
+  // Reorder job roles
+  const handleMoveRole = useCallback(async (roleId: string, direction: 'up' | 'down') => {
+    const currentIndex = jobRoles.findIndex(role => role.id === roleId);
+    if (currentIndex === -1) return;
+    
+    let newIndex;
+    if (direction === 'up' && currentIndex > 0) {
+      newIndex = currentIndex - 1;
+    } else if (direction === 'down' && currentIndex < jobRoles.length - 1) {
+      newIndex = currentIndex + 1;
+    } else {
+      return; // Can't move further in that direction
+    }
+    
+    // Swap order indexes
+    const currentRole = jobRoles[currentIndex];
+    const targetRole = jobRoles[newIndex];
+    
+    setIsLoading(true);
+    
     try {
-      setIsSubmitting(true);
-      console.log("Saving role:", role, "isNew:", isNew);
+      // Update the current role's order
+      const success1 = await updateRoleOrder(currentRole.id, targetRole.order_index);
       
-      if (!role.title) {
-        toast.error("Título do cargo é obrigatório");
-        return false;
-      }
+      // Update the target role's order
+      const success2 = await updateRoleOrder(targetRole.id, currentRole.order_index);
       
-      const savedRole = await api.saveRole(role, company.id, isNew);
-      
-      if (savedRole) {
-        // Reset form state
-        setEditingRole(null);
-        setNewRole(null);
-        setIsFormOpen(false);
+      if (success1 && success2) {
+        // Update local state to reflect the change
+        const newRoles = [...jobRoles];
+        [newRoles[currentIndex], newRoles[newIndex]] = [newRoles[newIndex], newRoles[currentIndex]];
         
-        // Refresh job roles list
-        await fetchJobRoles();
+        // Update the order_index properties
+        [newRoles[currentIndex].order_index, newRoles[newIndex].order_index] = 
+          [newRoles[newIndex].order_index, newRoles[currentIndex].order_index];
         
-        toast.success(isNew ? "Cargo adicionado com sucesso" : "Cargo atualizado com sucesso");
-        return true;
+        setJobRoles(newRoles);
+        
+        // Trigger refresh event
+        window.dispatchEvent(new Event('job-roles-updated'));
       }
-      return false;
-    } catch (error: any) {
-      console.error("Error saving job role:", error);
-      toast.error(`Erro ao salvar cargo: ${error.message}`);
-      return false;
+    } catch (error) {
+      console.error("Error in handleMoveRole:", error);
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
-  };
-
-  const handleDeleteRole = async (roleId: string) => {
-    if (!confirm("Tem certeza que deseja excluir este cargo?")) {
-      return false;
-    }
-    
-    try {
-      const success = await api.deleteRole(roleId);
-      
-      if (success) {
-        await fetchJobRoles();
-        toast.success("Cargo excluído com sucesso");
-        return true;
-      }
-      return false;
-    } catch (error: any) {
-      console.error("Error deleting job role:", error);
-      toast.error(`Erro ao excluir cargo: ${error.message}`);
-      return false;
-    }
-  };
-
-  const handleMoveRole = async (roleId: string, direction: 'up' | 'down') => {
-    const roleIndex = jobRoles.findIndex(r => r.id === roleId);
-    if (roleIndex === -1) return;
-    
-    const newRoles = [...jobRoles];
-    const targetIndex = direction === 'up' ? roleIndex - 1 : roleIndex + 1;
-    
-    if (targetIndex < 0 || targetIndex >= newRoles.length) return;
-    
-    // Update order indexes
-    const tempIndex = newRoles[roleIndex].order_index;
-    newRoles[roleIndex].order_index = newRoles[targetIndex].order_index;
-    newRoles[targetIndex].order_index = tempIndex;
-    
-    // Update positions in array
-    [newRoles[roleIndex], newRoles[targetIndex]] = [newRoles[targetIndex], newRoles[roleIndex]];
-    
-    setJobRoles(newRoles);
-    
-    // Update in database
-    try {
-      await Promise.all([
-        api.updateRoleOrder(newRoles[roleIndex].id, newRoles[roleIndex].order_index),
-        api.updateRoleOrder(newRoles[targetIndex].id, newRoles[targetIndex].order_index)
-      ]);
-    } catch (error: any) {
-      console.error("Error reordering job roles:", error);
-      toast.error(`Erro ao reordenar cargos: ${error.message}`);
-      // Reload to get correct order
-      fetchJobRoles();
-    }
-  };
-
-  useEffect(() => {
-    if (company?.id) {
-      fetchJobRoles();
-    }
-  }, [company?.id]);
+  }, [jobRoles, setIsLoading, setJobRoles, updateRoleOrder]);
 
   return {
-    ...state,
+    jobRoles,
+    isLoading,
+    editingRole,
+    setEditingRole,
+    newRole,
+    setNewRole,
+    selectedRole,
+    setSelectedRole,
+    isFormOpen,
+    setIsFormOpen,
+    showRoleUsersDialog,
+    setShowRoleUsersDialog,
     handleSaveRole,
     handleDeleteRole,
-    handleMoveRole,
-    fetchJobRoles
+    handleMoveRole
   };
 };
