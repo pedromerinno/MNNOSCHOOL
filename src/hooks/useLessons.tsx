@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from '@/hooks/use-toast';
 import { Lesson } from '@/components/courses/CourseLessonList';
@@ -14,6 +13,48 @@ export const useLessons = (courseId: string) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<ExtendedLesson | undefined>(undefined);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!courseId) return;
+
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('public:lessons')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'lessons',
+          filter: `course_id=eq.${courseId}`,
+        },
+        (payload) => {
+          console.log('Received real-time update:', payload);
+          
+          // Handle different types of changes
+          if (payload.eventType === 'INSERT') {
+            setLessons(current => [...current, payload.new as Lesson].sort((a, b) => (a.order_index || 0) - (b.order_index || 0)));
+          } else if (payload.eventType === 'DELETE') {
+            setLessons(current => current.filter(lesson => lesson.id !== payload.old.id));
+          } else if (payload.eventType === 'UPDATE') {
+            setLessons(current => 
+              current.map(lesson => 
+                lesson.id === payload.new.id ? payload.new as Lesson : lesson
+              ).sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    // Initial fetch of lessons
+    fetchLessons();
+
+    // Cleanup subscription on unmount
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [courseId]);
 
   const fetchLessons = async () => {
     if (!courseId) return;
@@ -49,11 +90,10 @@ export const useLessons = (courseId: string) => {
     
     setIsSubmitting(true);
     try {
-      // Ensure order_index is not undefined
       const lessonDataWithDefaults = {
         ...lessonData,
         course_id: courseId,
-        order_index: lessonData.order_index ?? 0, // Default to 0 if undefined
+        order_index: lessonData.order_index ?? 0,
       };
 
       const { data, error } = await supabase
@@ -62,17 +102,13 @@ export const useLessons = (courseId: string) => {
         .select()
         .single();
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: 'Aula criada',
         description: 'A aula foi criada com sucesso',
       });
 
-      // Atualizar a lista de aulas
-      fetchLessons();
       return data;
     } catch (error: any) {
       console.error("Erro ao criar aula:", error);
@@ -90,7 +126,6 @@ export const useLessons = (courseId: string) => {
   const handleUpdateLesson = async (lessonId: string, lessonData: Partial<ExtendedLesson>) => {
     setIsSubmitting(true);
     try {
-      // Create an update object only with properties that exist in lessonData
       const updateData: any = {};
       if (lessonData.title !== undefined) updateData.title = lessonData.title;
       if (lessonData.description !== undefined) updateData.description = lessonData.description;
@@ -104,17 +139,13 @@ export const useLessons = (courseId: string) => {
         .update(updateData)
         .eq('id', lessonId);
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: 'Aula atualizada',
         description: 'A aula foi atualizada com sucesso',
       });
 
-      // Atualizar a lista de aulas
-      fetchLessons();
     } catch (error: any) {
       console.error("Erro ao atualizar aula:", error);
       toast({
@@ -134,17 +165,13 @@ export const useLessons = (courseId: string) => {
         .delete()
         .eq('id', lessonId);
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: 'Aula excluída',
         description: 'A aula foi excluída com sucesso',
       });
 
-      // Atualizar a lista de aulas
-      fetchLessons();
       return true;
     } catch (error: any) {
       toast({
