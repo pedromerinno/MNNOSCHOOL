@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface RoleUsersDialogProps {
   roleId: string;
@@ -39,7 +40,7 @@ const RoleUsersDialog: React.FC<RoleUsersDialogProps> = ({
       // Query to get users who have this role assigned
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, display_name, avatar_url, email')
+        .select('id, display_name, avatar, email')
         .eq('cargo_id', roleId);
 
       if (error) {
@@ -79,19 +80,18 @@ const RoleUsersDialog: React.FC<RoleUsersDialogProps> = ({
             <div className="space-y-2 max-h-[300px] overflow-y-auto">
               {users.map((user) => (
                 <div key={user.id} className="p-3 border rounded-md flex items-center">
-                  <div className="w-8 h-8 bg-gray-200 rounded-full overflow-hidden mr-3 flex-shrink-0">
-                    {user.avatar_url ? (
-                      <img 
-                        src={user.avatar_url} 
+                  <Avatar className="w-8 h-8 mr-3 flex-shrink-0">
+                    {user.avatar ? (
+                      <AvatarImage 
+                        src={user.avatar} 
                         alt={user.display_name} 
-                        className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-blue-100 text-blue-500">
+                      <AvatarFallback className="bg-blue-100 text-blue-500">
                         {user.display_name?.charAt(0).toUpperCase() || '?'}
-                      </div>
+                      </AvatarFallback>
                     )}
-                  </div>
+                  </Avatar>
                   <div>
                     <p className="font-medium">{user.display_name}</p>
                     <p className="text-sm text-gray-500">{user.email}</p>
