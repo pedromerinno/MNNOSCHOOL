@@ -1,158 +1,89 @@
 
-import { useState, useEffect } from 'react';
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { Lesson } from '@/components/courses/CourseLessonList';
-
-type Course = {
-  id: string;
-  title: string;
-  description: string | null;
-  image_url: string | null;
-  instructor: string | null;
-  lessons: Lesson[];
-  progress: number;
-  completed: boolean;
-  favorite: boolean;
-  tags?: string[];
-};
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export const useCourseData = (courseId: string | undefined) => {
-  const [course, setCourse] = useState<Course | null>(null);
+  const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchCourse = async () => {
-      if (!courseId) {
-        setLoading(false);
-        setError(new Error("ID do curso não fornecido"));
-        return;
-      }
+  const fetchCourseData = useCallback(async () => {
+    if (!courseId) {
+      setLoading(false);
+      return;
+    }
 
-      try {
-        setLoading(true);
-        setError(null);
-        
-        // Fetch the course
-        const { data: courseData, error: courseError } = await supabase
-          .from('courses')
-          .select(`
-            id, 
-            title, 
-            description, 
-            image_url, 
-            instructor,
-            tags
-          `)
-          .eq('id', courseId)
-          .maybeSingle(); // Usando maybeSingle ao invés de single para evitar erros
-        
-        if (courseError) {
-          throw courseError;
-        }
-        
-        if (!courseData) {
-          throw new Error("Curso não encontrado");
-        }
-        
-        // Fetch the lessons
-        const { data: lessonsData, error: lessonsError } = await supabase
-          .from('lessons')
-          .select(`
-            id, 
-            title, 
-            description, 
-            duration, 
-            type, 
-            order_index
-          `)
-          .eq('course_id', courseId)
-          .order('order_index', { ascending: true });
-        
-        if (lessonsError) {
-          throw lessonsError;
-        }
-        
-        // Fetch user progress for lessons
-        const userId = (await supabase.auth.getUser()).data.user?.id;
-        const { data: lessonProgressData, error: lessonProgressError } = await supabase
-          .from('user_lesson_progress')
-          .select('lesson_id, completed')
-          .eq('user_id', userId || '');
-        
-        if (lessonProgressError) {
-          console.error('Error fetching lesson progress:', lessonProgressError);
-        }
-        
-        // Fetch user progress for this course
-        const { data: progressData, error: progressError } = await supabase
+    try {
+      setLoading(true);
+      
+      // Fetch course details
+      const { data: courseData, error: courseError } = await supabase
+        .from('courses')
+        .select('*')
+        .eq('id', courseId)
+        .single();
+      
+      if (courseError) throw courseError;
+      
+      // Fetch lessons for the course
+      const { data: lessonsData, error: lessonsError } = await supabase
+        .from('lessons')
+        .select('*')
+        .eq('course_id', courseId)
+        .order('order_index', { ascending: true });
+      
+      if (lessonsError) throw lessonsError;
+      
+      // Get user's progress
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        const { data: progressData } = await supabase
           .from('user_course_progress')
-          .select('progress, completed, favorite')
+          .select('*')
           .eq('course_id', courseId)
-          .eq('user_id', userId || '')
-          .maybeSingle();
-        
-        if (progressError) {
-          console.error('Error fetching progress:', progressError);
-        }
-        
-        // Format the lessons
-        const formattedLessons: Lesson[] = lessonsData ? lessonsData.map(lesson => ({
-          id: lesson.id,
-          title: lesson.title,
-          description: lesson.description,
-          duration: lesson.duration,
-          type: lesson.type,
-          order_index: lesson.order_index,
-          course_id: courseId, // Add the course_id here
-          completed: lessonProgressData?.some(progress => 
-            progress.lesson_id === lesson.id && progress.completed
-          ) || false
-        })) : [];
-        
-        // Calculate progress if not available
-        let progress = 0;
-        let completed = false;
-        let favorite = false;
-        
-        if (progressData) {
-          progress = progressData.progress;
-          completed = progressData.completed;
-          favorite = progressData.favorite || false;
-        } else {
-          // Calculate progress based on completed lessons
-          const completedLessons = formattedLessons.filter(lesson => lesson.completed).length;
-          if (formattedLessons.length > 0) {
-            progress = Math.round((completedLessons / formattedLessons.length) * 100);
-          }
-          completed = progress === 100;
-        }
+          .eq('user_id', user.id)
+          .single();
         
         setCourse({
           ...courseData,
-          lessons: formattedLessons,
-          progress,
-          completed,
-          favorite
+          lessons: lessonsData || [],
+          progress: progressData?.progress || 0,
+          favorite: progressData?.favorite || false,
         });
-        
-      } catch (error: any) {
-        console.error('Error fetching course:', error);
-        setError(error);
-        toast({
-          title: 'Erro ao carregar curso',
-          description: error.message || 'Ocorreu um erro ao buscar os dados do curso',
-          variant: 'destructive',
+      } else {
+        setCourse({
+          ...courseData,
+          lessons: lessonsData || [],
+          progress: 0,
         });
-      } finally {
-        setLoading(false);
       }
-    };
-    
-    fetchCourse();
-  }, [courseId, toast]);
+      
+      setError(null);
+    } catch (err: any) {
+      console.error('Error fetching course data:', err);
+      setError(err);
+      // Only show toast for network errors, not for "no rows returned" which is handled by UI
+      if (!err.message.includes('no rows returned')) {
+        toast.error('Erro ao carregar curso', {
+          description: 'Ocorreu um erro ao carregar os dados do curso.'
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [courseId]);
 
-  return { course, loading, error };
+  // Initial data fetch
+  useEffect(() => {
+    fetchCourseData();
+  }, [fetchCourseData]);
+
+  // Add a function to refresh the course data
+  const refreshCourseData = useCallback(() => {
+    fetchCourseData();
+  }, [fetchCourseData]);
+
+  return { course, loading, error, refreshCourseData };
 };

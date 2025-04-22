@@ -53,11 +53,14 @@ export const useCourseEdit = (courseId: string | undefined) => {
       
       if (success) {
         setIsEditDialogOpen(false);
-        // Trigger refresh if needed
-        window.dispatchEvent(new CustomEvent('course-updated'));
+        // Trigger a course-updated event instead of a generic refresh
+        window.dispatchEvent(new CustomEvent('course-updated', { 
+          detail: { courseId } 
+        }));
       }
     } catch (error) {
       console.error('Error updating course:', error);
+      toast.error('Erro ao atualizar curso');
     } finally {
       setIsSubmitting(false);
     }

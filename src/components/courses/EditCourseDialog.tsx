@@ -30,11 +30,22 @@ export const EditCourseDialog: React.FC<EditCourseDialogProps> = ({
   const navigate = useNavigate();
 
   const handleDeleteCourse = async () => {
+    // Make sure we have a valid ID before trying to delete
+    if (!initialData.id) {
+      toast.error('Erro ao excluir curso: ID não encontrado');
+      return;
+    }
+
     if (window.confirm('Tem certeza que deseja excluir este curso?')) {
-      const success = await deleteCourse(initialData.id as string);
-      if (success) {
-        onOpenChange(false);
-        navigate('/courses');
+      try {
+        const success = await deleteCourse(initialData.id);
+        if (success) {
+          onOpenChange(false);
+          navigate('/courses');
+        }
+      } catch (error) {
+        console.error('Error deleting course:', error);
+        toast.error('Erro ao excluir curso');
       }
     }
   };

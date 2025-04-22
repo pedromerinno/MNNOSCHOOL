@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCourseData } from '@/hooks/useCourseData';
 import { useLessonNavigation } from './useLessonNavigation';
@@ -19,7 +19,7 @@ import { useCourseEdit } from '@/hooks/course/useCourseEdit';
 
 export const CourseView: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
-  const { course, loading, error } = useCourseData(courseId);
+  const { course, loading, error, refreshCourseData } = useCourseData(courseId);
   const { startLesson } = useLessonNavigation(courseId);
   const [activeTab, setActiveTab] = useState<string>("description");
   const { selectedCompany, userCompanies } = useCompanies();
@@ -37,6 +37,21 @@ export const CourseView: React.FC = () => {
     handleCourseUpdate
   } = useCourseEdit(courseId);
   
+  // Listen for course update events
+  useEffect(() => {
+    const handleCourseUpdated = (event: CustomEvent) => {
+      if (event.detail?.courseId === courseId) {
+        refreshCourseData();
+      }
+    };
+
+    window.addEventListener('course-updated', handleCourseUpdated as EventListener);
+    
+    return () => {
+      window.removeEventListener('course-updated', handleCourseUpdated as EventListener);
+    };
+  }, [courseId, refreshCourseData]);
+  
   if (loading) {
     return <CourseViewSkeleton />;
   }
@@ -46,6 +61,7 @@ export const CourseView: React.FC = () => {
   }
 
   const initialFormData = {
+    id: course.id,
     title: course.title,
     description: course.description || "",
     image_url: course.image_url || "",
