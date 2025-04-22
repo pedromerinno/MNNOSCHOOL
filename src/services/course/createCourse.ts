@@ -23,6 +23,8 @@ export const createCourse = async (courseData: CourseFormValues): Promise<string
 
     // Associate course with companies
     if (courseData.companyIds && courseData.companyIds.length > 0) {
+      console.log(`Creating course-company associations for course: ${courseId}, companies: ${courseData.companyIds.join(', ')}`);
+      
       const companyRelations = courseData.companyIds.map(companyId => ({
         empresa_id: companyId,
         course_id: courseId
@@ -35,9 +37,11 @@ export const createCourse = async (courseData: CourseFormValues): Promise<string
         
       if (relationError) throw relationError;
 
-      // Notifications should be created by the database trigger
-      // But we'll log information to help with debugging
-      console.log(`Course created: ${courseId} for companies: ${courseData.companyIds.join(', ')}`);
+      // Notifications are created by the database trigger
+      // We log information to help with debugging
+      console.log(`Course-company relations created for course: ${courseId} and companies: ${courseData.companyIds.join(', ')}`);
+    } else {
+      console.warn(`No company IDs provided for course: ${courseId}. No notifications will be created.`);
     }
 
     toast.success('Curso criado', {
@@ -48,6 +52,9 @@ export const createCourse = async (courseData: CourseFormValues): Promise<string
     window.dispatchEvent(new CustomEvent('course-created', { 
       detail: { courseId } 
     }));
+    
+    // Force refresh notifications
+    window.dispatchEvent(new CustomEvent('refresh-notifications'));
     
     return courseId;
   } catch (error: any) {

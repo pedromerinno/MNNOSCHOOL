@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -10,10 +10,25 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { Notification } from "@/hooks/useNotifications";
+import { useNavigate } from "react-router-dom";
 
 export const NotificationButton = () => {
-  const { notifications, isLoading, markAsRead, unreadCount, markAllAsRead } = useNotifications();
+  const { notifications, isLoading, markAsRead, unreadCount, markAllAsRead, fetchNotifications } = useNotifications();
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+
+  // Add an effect to listen for the refresh-notifications event
+  useEffect(() => {
+    const handleRefreshNotifications = () => {
+      console.log("Refreshing notifications from event");
+      fetchNotifications();
+    };
+
+    window.addEventListener('refresh-notifications', handleRefreshNotifications);
+    return () => {
+      window.removeEventListener('refresh-notifications', handleRefreshNotifications);
+    };
+  }, [fetchNotifications]);
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -31,7 +46,26 @@ export const NotificationButton = () => {
     }
   };
 
-  const handleMarkAsRead = async (notificationId: string) => {
+  const handleNotificationClick = async (notification: Notification) => {
+    await markAsRead(notification.id);
+    
+    // Navigate based on notification type
+    if (notification.type === 'course_created' && notification.related_id) {
+      navigate(`/courses/${notification.related_id}`);
+    } else if (notification.type === 'lesson_created' && notification.related_id) {
+      // For lesson notifications, we would need the course ID as well
+      // For now, we'll just mark it as read
+    } else if (notification.type === 'discussion_created' && notification.related_id) {
+      navigate(`/community?discussion=${notification.related_id}`);
+    } else if (notification.type === 'access_created' && notification.related_id) {
+      navigate('/access');
+    }
+    
+    setOpen(false);
+  };
+
+  const handleMarkAsRead = async (notificationId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
     await markAsRead(notificationId);
   };
 
@@ -75,7 +109,7 @@ export const NotificationButton = () => {
               <DropdownMenuItem 
                 key={notification.id} 
                 className={`flex flex-col items-start p-3 cursor-pointer ${!notification.read ? 'bg-blue-50 dark:bg-blue-900/10' : ''}`}
-                onClick={() => handleMarkAsRead(notification.id)}
+                onClick={() => handleNotificationClick(notification)}
               >
                 <div className="flex items-start gap-2 w-full">
                   <span className="text-lg" role="img" aria-label="notification type">

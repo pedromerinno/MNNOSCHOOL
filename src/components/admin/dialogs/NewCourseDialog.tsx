@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CourseForm } from "@/components/admin/CourseForm";
@@ -30,6 +31,11 @@ export const NewCourseDialog: React.FC<NewCourseDialogProps> = ({ open, onOpenCh
           data.companyIds.push(selectedCompany.id);
         }
       }
+      
+      console.log('Creating course with data:', {
+        ...data,
+        companyIds: data.companyIds || []
+      });
       
       const courseId = await createCourse(data);
       

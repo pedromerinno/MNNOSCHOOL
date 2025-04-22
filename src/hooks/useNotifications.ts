@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useCompanies } from "./useCompanies";
 import { toast } from "sonner";
 
@@ -41,8 +41,10 @@ export function useNotifications() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchNotifications = async (companyId?: string) => {
-    if (!companyId) {
+  const fetchNotifications = useCallback(async (companyId?: string) => {
+    const targetCompanyId = companyId || selectedCompany?.id;
+    
+    if (!targetCompanyId) {
       setIsLoading(false);
       return;
     }
@@ -51,14 +53,17 @@ export function useNotifications() {
       setIsLoading(true);
       setError(null);
 
+      console.log(`Fetching notifications for company ID: ${targetCompanyId}`);
+      
       const { data, error } = await supabase
         .from('user_notifications')
         .select('*')
-        .eq('company_id', companyId)
+        .eq('company_id', targetCompanyId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
+      console.log(`Retrieved ${data?.length || 0} notifications`);
       setNotifications(data || []);
     } catch (err: any) {
       console.error('Erro ao buscar notificações:', err);
@@ -66,7 +71,7 @@ export function useNotifications() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedCompany?.id]);
 
   const markAsRead = async (notificationId: string) => {
     try {
@@ -129,12 +134,13 @@ export function useNotifications() {
 
   useEffect(() => {
     if (selectedCompany?.id) {
+      console.log(`Company changed, fetching notifications for: ${selectedCompany.id}`);
       fetchNotifications(selectedCompany.id);
     } else {
       setNotifications([]);
       setIsLoading(false);
     }
-  }, [selectedCompany?.id]);
+  }, [selectedCompany?.id, fetchNotifications]);
 
   return {
     notifications,
