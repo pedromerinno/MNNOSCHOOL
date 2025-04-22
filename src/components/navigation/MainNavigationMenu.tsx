@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { NavMenuLinks } from "@/components/navigation/NavMenuLinks";
@@ -10,11 +9,9 @@ import { AuthButtons } from "@/components/navigation/AuthButtons";
 import { CompanySelector } from "@/components/navigation/CompanySelector";
 import { memo } from "react";
 
-// Usando memo para evitar renderizações desnecessárias do menu
 export const MainNavigationMenu = memo(() => {
   const { user, userProfile } = useAuth();
 
-  // Determinar o rótulo do Admin com base no tipo de usuário
   const getAdminLabel = () => {
     if (userProfile?.super_admin) {
       return "Super Admin";
@@ -24,7 +21,7 @@ export const MainNavigationMenu = memo(() => {
 
   return (
     <header 
-      className="sticky top-0 z-40 w-full border-b shadow-sm bg-[#F8F7F4] dark:bg-gray-950"
+      className="sticky top-0 z-40 w-full border-b shadow-sm bg-[#191919] dark:bg-[#191919]"
     >
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center space-x-8">
@@ -53,5 +50,4 @@ export const MainNavigationMenu = memo(() => {
   );
 });
 
-// Definir displayName para melhorar depuração
 MainNavigationMenu.displayName = 'MainNavigationMenu';
