@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -6,7 +7,7 @@
 
 @layer base {
   :root {
-    --background: 51 25% 97%;
+    --background: 51 25% 97%;  // Light mode background
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
@@ -29,14 +30,14 @@
   }
 
   .dark {
-    --background: 0 0% 10%;
+    --background: 0 0% 20%;  // Dark mode background: #333333
     --foreground: 0 0% 98%;
-    --card: 0 0% 10%;
+    --card: 0 0% 13.3%;  // Dark mode card: #222222
     --card-foreground: 0 0% 98%;
-    --popover: 0 0% 10%;
+    --popover: 0 0% 13.3%;
     --popover-foreground: 0 0% 98%;
     --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 10%;
+    --primary-foreground: 0 0% 13.3%;
     --secondary: 0 0% 15%;
     --secondary-foreground: 0 0% 98%;
     --muted: 0 0% 15%;

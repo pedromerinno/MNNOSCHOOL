@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -51,10 +52,6 @@ export default {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
-        },
-        merinno: {
-          blue: "#1EAEDB",
-          dark: "#221F26",
         },
       },
       borderRadius: {
