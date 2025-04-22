@@ -80,15 +80,21 @@ export const useJobRolesAPI = () => {
       
       if (role.id) {
         console.log("Updating existing role:", role.id);
+        const updateData = {
+          title: role.title,
+          description: role.description,
+          responsibilities: role.responsibilities,
+          requirements: role.requirements,
+          expectations: role.expectations,
+          // Não atualizamos o order_index aqui para não perder a ordem
+        };
+
+        // Log the exact data being sent for update
+        console.log("Sending update data:", updateData);
+        
         const { data, error } = await supabase
           .from('job_roles')
-          .update({
-            title: role.title,
-            description: role.description || null,
-            responsibilities: role.responsibilities || null,
-            requirements: role.requirements || null,
-            expectations: role.expectations || null
-          })
+          .update(updateData)
           .eq('id', role.id)
           .select();
           
@@ -100,7 +106,7 @@ export const useJobRolesAPI = () => {
         // Invalidate cache
         delete jobRolesCache[companyId];
         
-        console.log("Role updated:", data?.[0]);
+        console.log("Role updated, response:", data);
         return data?.[0] || null;
       }
       

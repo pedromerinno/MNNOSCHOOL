@@ -70,12 +70,14 @@ export const JobRoleForm = ({
     setIsSubmitting(true);
     
     try {
+      // Manter todos os campos do cargo original, mas atualizá-los com os novos valores
       const formattedValues = {
-        ...role, // Keep existing fields including ID
-        ...formValues,
-        responsibilities: formatBulletPoints(formValues.responsibilities),
-        requirements: formatBulletPoints(formValues.requirements),
-        expectations: formatBulletPoints(formValues.expectations)
+        ...role, // Mantém id, company_id, order_index e outros campos importantes
+        title: formValues.title.trim(),
+        description: formValues.description.trim() || null,
+        responsibilities: formatBulletPoints(formValues.responsibilities) || null,
+        requirements: formatBulletPoints(formValues.requirements) || null,
+        expectations: formatBulletPoints(formValues.expectations) || null
       };
       
       console.log("Submitting role data:", formattedValues);
