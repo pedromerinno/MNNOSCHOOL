@@ -20,6 +20,8 @@ export const useDocumentDeleteOperations = (
         // Atualizar o estado para remover o documento excluído
         setDocuments(currentDocs => currentDocs.filter(doc => doc.id !== documentId));
         console.log("Estado atualizado após exclusão bem-sucedida");
+      } else {
+        console.error("Falha na exclusão do documento");
       }
       
       return success;

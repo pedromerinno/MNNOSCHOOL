@@ -18,7 +18,7 @@ export const useStorageOperations = () => {
       
       if (!bucketExists) {
         console.error("Falha ao verificar/criar o bucket de documentos");
-        throw new Error("Não foi possível configurar o armazenamento de documentos");
+        throw new Error("Falha ao configurar sistema de armazenamento");
       }
       
       console.log("Bucket verificado/criado com sucesso, prosseguindo com upload...");
@@ -42,26 +42,19 @@ export const useStorageOperations = () => {
               upsert: true
             });
     
-          if (uploadError) {
-            console.error("Erro de upload:", uploadError);
-            
-            if (retries > 0 && (
-              uploadError.message.includes('timeout') || 
-              uploadError.message.includes('network') ||
-              uploadError.message.includes('failed')
-            )) {
-              console.log("Tentando novamente em 1 segundo...");
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              return await uploadWithRetry(retries - 1);
-            }
-            throw uploadError;
-          }
-          
+          if (uploadError) throw uploadError;
+    
           console.log("Upload realizado com sucesso!");
           return fileName;
-        } catch (err) {
-          if (retries > 0) {
-            console.log("Tentando novamente o upload...");
+        } catch (err: any) {
+          console.error("Erro de upload:", err);
+          
+          if (retries > 0 && (
+            err.message.includes('timeout') || 
+            err.message.includes('network') ||
+            err.message.includes('failed')
+          )) {
+            console.log("Tentando novamente em 1 segundo...");
             await new Promise(resolve => setTimeout(resolve, 1000));
             return await uploadWithRetry(retries - 1);
           }
@@ -86,34 +79,33 @@ export const useStorageOperations = () => {
       console.log(`Iniciando remoção do arquivo: ${filePath}`);
       
       // Verificar se o bucket existe
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const bucketExists = buckets?.some(bucket => bucket.name === 'documents');
+      const bucketExists = await createBucketIfNotExists();
       
       if (!bucketExists) {
-        console.warn("Bucket 'documents' não encontrado. Verifique se ele foi criado no Supabase.");
+        console.warn("Bucket 'documents' não encontrado ou não foi possível criar. Verifique se ele foi criado no Supabase.");
         return false;
       }
       
       // Verificar se o arquivo existe antes de tentar excluir
+      const folderPath = filePath.split('/').slice(0, -1).join('/');
+      const fileName = filePath.split('/').pop() || '';
+      
+      console.log(`Verificando se o arquivo existe em: ${folderPath}, arquivo: ${fileName}`);
+      
       try {
-        const folderPath = filePath.split('/').slice(0, -1).join('/');
-        const fileName = filePath.split('/').pop() || '';
-        
-        console.log(`Verificando se o arquivo existe em: ${folderPath}, arquivo: ${fileName}`);
-        
         const { data: files, error: listError } = await supabase.storage
           .from('documents')
           .list(folderPath, { search: fileName });
           
         if (listError) {
           console.error("Erro ao listar arquivos:", listError);
-          return false;
-        }
-        
-        const fileExists = files && files.some(file => file.name === fileName);
-        if (!fileExists) {
-          console.warn(`Arquivo ${fileName} não encontrado no storage.`);
-          return true; // Consideramos sucesso pois o arquivo já não existe
+          // Continuar mesmo com erro
+        } else {
+          const fileExists = files && files.some(file => file.name === fileName);
+          if (!fileExists) {
+            console.warn(`Arquivo ${fileName} não encontrado no storage.`);
+            return true; // Consideramos sucesso pois o arquivo já não existe
+          }
         }
       } catch (listErr) {
         console.warn("Erro ao verificar existência do arquivo:", listErr);
@@ -149,16 +141,15 @@ export const useStorageOperations = () => {
     if (!filePath) return false;
     
     try {
-      const folderPath = filePath.split('/').slice(0, -1).join('/');
-      const fileName = filePath.split('/').pop() || '';
-      
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const bucketExists = buckets?.some(bucket => bucket.name === 'documents');
+      const bucketExists = await createBucketIfNotExists();
       
       if (!bucketExists) {
         console.warn("Bucket 'documents' não encontrado ao verificar existência do arquivo.");
         return false;
       }
+      
+      const folderPath = filePath.split('/').slice(0, -1).join('/');
+      const fileName = filePath.split('/').pop() || '';
       
       const { data, error } = await supabase.storage
         .from('documents')

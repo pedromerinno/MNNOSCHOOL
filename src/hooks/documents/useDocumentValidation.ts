@@ -41,24 +41,40 @@ export const useDocumentValidation = () => {
     try {
       console.log("Criando bucket 'documents'...");
       
-      const { data, error } = await supabase.storage.createBucket('documents', {
-        public: true, // Bucket público para facilitar o acesso aos arquivos
-        fileSizeLimit: 10485760, // 10MB
-      });
+      // Tentar várias vezes a criação do bucket, em caso de falha
+      let attempts = 0;
+      const maxAttempts = 3;
       
-      if (error) {
+      while (attempts < maxAttempts) {
+        attempts++;
+        console.log(`Tentativa ${attempts} de criar bucket...`);
+        
+        const { data, error } = await supabase.storage.createBucket('documents', {
+          public: true, // Bucket público para facilitar o acesso aos arquivos
+          fileSizeLimit: 10485760, // 10MB
+        });
+        
+        if (!error) {
+          console.log("Bucket 'documents' criado com sucesso!");
+          return true;
+        }
+        
         // Se o erro for que o bucket já existe, consideramos um sucesso
         if (error.message.includes('already exists')) {
           console.log("Bucket 'documents' já existe!");
           return true;
         }
         
-        console.error("Erro ao criar bucket:", error);
-        return false;
+        console.error(`Tentativa ${attempts} falhou:`, error);
+        
+        // Aguardar um pouco antes de tentar novamente
+        if (attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
       }
       
-      console.log("Bucket 'documents' criado com sucesso!");
-      return true;
+      console.error(`Falha após ${maxAttempts} tentativas de criar bucket`);
+      return false;
     } catch (err) {
       console.error("Erro ao criar storage bucket:", err);
       return false;
@@ -68,7 +84,15 @@ export const useDocumentValidation = () => {
   // Função auxiliar para garantir que o bucket existe
   const createBucketIfNotExists = useCallback(async () => {
     try {
-      return await checkBucketExists();
+      // Verificar se o bucket existe, e criar se não existir
+      const bucketExists = await checkBucketExists();
+      
+      if (!bucketExists) {
+        console.log("Tentando criar bucket novamente...");
+        return await createBucket();
+      }
+      
+      return bucketExists;
     } catch (error) {
       console.error("Erro ao verificar/criar bucket:", error);
       return false;

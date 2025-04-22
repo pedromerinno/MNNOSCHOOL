@@ -4,7 +4,6 @@ import { DocumentType, UserDocument } from '@/types/document';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useDocumentPermissions } from './useDocumentPermissions';
-import { useUploadValidation } from './useUploadValidation';
 import { useStorageOperations } from './useStorageOperations';
 import { useDocumentValidation } from './useDocumentValidation';
 import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from './constants';
@@ -23,7 +22,6 @@ export const useDocumentUpload = (params?: {
   const [fileError, setFileError] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const { canDeleteDocument } = useDocumentPermissions(currentUserId);
-  const { validateUpload } = useUploadValidation();
   const { uploadToStorage } = useStorageOperations();
   const { createBucketIfNotExists } = useDocumentValidation();
 
@@ -96,13 +94,53 @@ export const useDocumentUpload = (params?: {
       
       if (!bucketExists) {
         console.error("Falha ao criar/verificar bucket de documentos");
-        toast.error("Não foi possível configurar o armazenamento de documentos. Contate o administrador.");
+        toast.error("Falha ao configurar sistema de armazenamento");
         return false;
       }
 
       // Fazer upload do arquivo para o storage
       console.log("Iniciando upload do arquivo...");
-      const filePath = await uploadToStorage(userId, file);
+      
+      // Criar um caminho único para o arquivo
+      const userDir = `user-documents/${userId}`;
+      const fileExt = file.name.split('.').pop();
+      const timestamp = new Date().getTime();
+      const uniqueId = Math.random().toString(36).substring(2, 8);
+      const fileName = `${userDir}/${timestamp}-${uniqueId}.${fileExt}`;
+
+      // Upload do arquivo para o storage com lógica de retry
+      const uploadWithRetry = async (retries = 3): Promise<string> => {
+        try {
+          console.log(`Tentando upload de arquivo (tentativa ${4-retries}/3)...`);
+          
+          const { data, error: uploadError } = await supabase.storage
+            .from('documents')
+            .upload(fileName, file, {
+              cacheControl: '3600',
+              upsert: true
+            });
+    
+          if (uploadError) throw uploadError;
+          
+          console.log("Upload realizado com sucesso!");
+          return fileName;
+        } catch (err: any) {
+          console.error("Erro de upload:", err);
+          
+          if (retries > 0 && (
+            err.message.includes('timeout') || 
+            err.message.includes('network') ||
+            err.message.includes('failed')
+          )) {
+            console.log("Tentando novamente em 1 segundo...");
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            return await uploadWithRetry(retries - 1);
+          }
+          throw err;
+        }
+      };
+      
+      const filePath = await uploadWithRetry();
       console.log("Arquivo enviado com sucesso para:", filePath);
 
       // Obter o usuário autenticado atual
@@ -147,7 +185,7 @@ export const useDocumentUpload = (params?: {
       let errorMessage = 'Erro ao enviar documento';
       
       if (error.message?.includes("storage/bucket-not-found")) {
-        errorMessage = "Sistema de armazenamento não está disponível. Por favor, tente novamente mais tarde.";
+        errorMessage = "Falha ao configurar sistema de armazenamento";
       } else if (error.message?.includes("already exists")) {
         errorMessage = "Um arquivo com este nome já existe. Tente novamente.";
       } else if (error.message?.includes("permission denied")) {

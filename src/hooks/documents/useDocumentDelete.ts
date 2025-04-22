@@ -3,9 +3,11 @@ import { useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useStorageOperations } from './useStorageOperations';
+import { useDocumentValidation } from './useDocumentValidation';
 
 export const useDocumentDelete = () => {
   const { deleteFromStorage } = useStorageOperations();
+  const { createBucketIfNotExists } = useDocumentValidation();
 
   const deleteDocument = useCallback(async (documentId: string): Promise<boolean> => {
     try {
@@ -36,16 +38,17 @@ export const useDocumentDelete = () => {
 
       console.log("Documento encontrado:", document);
 
+      // Verificar se o bucket existe
+      const bucketExists = await createBucketIfNotExists();
+      
+      if (!bucketExists) {
+        console.warn("Não foi possível verificar/criar o bucket. Tentando excluir apenas do banco de dados.");
+      }
+
       // Tentar remover o arquivo do storage, mas continuar mesmo se falhar
       try {
-        console.log("Tentando remover arquivo do storage:", document.file_path);
-        // Primeiro verificar se o bucket existe
-        const { data: buckets } = await supabase.storage.listBuckets();
-        const bucketExists = buckets?.some(bucket => bucket.name === 'documents');
-        
-        if (!bucketExists) {
-          console.warn("Bucket 'documents' não encontrado. Verificando se o arquivo pode ser excluído do banco de dados.");
-        } else {
+        if (bucketExists) {
+          console.log("Tentando remover arquivo do storage:", document.file_path);
           const result = await deleteFromStorage(document.file_path);
           console.log("Resultado da exclusão do arquivo no storage:", result);
         }
@@ -75,7 +78,7 @@ export const useDocumentDelete = () => {
       toast.error(`Erro ao excluir documento: ${error.message}`);
       return false;
     }
-  }, [deleteFromStorage]);
+  }, [deleteFromStorage, createBucketIfNotExists]);
 
   return { deleteDocument };
 };
