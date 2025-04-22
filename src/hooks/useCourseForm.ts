@@ -16,8 +16,13 @@ export const useCourseForm = (onSuccess: () => void) => {
         // Update existing course
         await updateCourse(selectedCourse.id, data);
       } else {
-        // Create new course
-        await createCourse(data);
+        // Create new course with logging for debugging notification issues
+        console.log('Creating new course with data:', {
+          ...data,
+          companyIds: data.companyIds || []
+        });
+        const courseId = await createCourse(data);
+        console.log('Course created with ID:', courseId);
       }
 
       setIsFormOpen(false);

@@ -22,12 +22,23 @@ export const NewCourseDialog: React.FC<NewCourseDialogProps> = ({ open, onOpenCh
   const handleFormSubmit = async (data: CourseFormValues) => {
     setIsSubmitting(true);
     try {
+      // Make sure the company ID is included in the companyIds array
+      if (selectedCompany?.id && (!data.companyIds || !data.companyIds.includes(selectedCompany.id))) {
+        if (!data.companyIds) {
+          data.companyIds = [selectedCompany.id];
+        } else {
+          data.companyIds.push(selectedCompany.id);
+        }
+      }
+      
       const courseId = await createCourse(data);
       
       if (courseId) {
+        console.log(`Course ${courseId} created successfully. Notifications should be triggered.`);
         toast.success("Curso criado com sucesso.");
         onOpenChange(false);
         
+        // Navigation occurs after successful course creation
         navigate(`/courses/${courseId}`);
       } else {
         toast.error("Erro ao criar curso. Tente novamente.");
