@@ -214,6 +214,8 @@ export const JobRolesManager: React.FC<JobRolesManagerProps> = ({ company }) => 
         <RoleUsersDialog 
           roleId={selectedRole.id}
           companyId={company.id}
+          open={showRoleUsersDialog}
+          onOpenChange={setShowRoleUsersDialog}
         />
       )}
     </div>

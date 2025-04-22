@@ -13,7 +13,7 @@ import { toast } from "sonner";
 interface RoleUsersDialogProps {
   roleId: string;
   companyId: string;
-  open: boolean; // Added this prop to match the usage
+  open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
@@ -35,22 +35,16 @@ const RoleUsersDialog: React.FC<RoleUsersDialogProps> = ({
   const fetchUsersWithRole = async () => {
     setLoading(true);
     try {
+      // Query to get users who have this role assigned
       const { data, error } = await supabase
-        .from('user_job_roles')
-        .select(`
-          user_id,
-          profiles:user_id (
-            id,
-            display_name,
-            avatar_url,
-            email
-          )
-        `)
-        .eq('job_role_id', roleId);
+        .from('profiles')
+        .select('id, display_name, avatar_url, email')
+        .eq('cargo_id', roleId);
 
       if (error) throw error;
 
-      setUsers(data.map(item => item.profiles) || []);
+      // Set the users
+      setUsers(data || []);
     } catch (error: any) {
       console.error("Error fetching users with role:", error);
       toast.error(`Erro ao buscar usuários: ${error.message}`);
