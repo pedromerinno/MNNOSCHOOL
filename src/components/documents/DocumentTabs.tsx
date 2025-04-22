@@ -1,4 +1,3 @@
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { File, FolderOpen, Files, FileText } from "lucide-react";
 import { DocumentUploadForm } from "@/components/documents/DocumentUploadForm";
@@ -7,10 +6,8 @@ import { Button } from "@/components/ui/button";
 import { useCompanies } from "@/hooks/useCompanies";
 import { UserDocument, DocumentType } from "@/types/document";
 
-// New component for Empty State
-const EmptyDocumentsState = ({ onUploadClick }: { onUploadClick: () => void }) => {
-  const { selectedCompany } = useCompanies();
-
+// Updated EmptyDocumentsState without the upload button
+const EmptyDocumentsState = () => {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center space-y-6">
       <FileText className="h-16 w-16 text-gray-400" />
@@ -21,15 +18,6 @@ const EmptyDocumentsState = ({ onUploadClick }: { onUploadClick: () => void }) =
         <p className="text-gray-600 dark:text-gray-400 mb-6">
           Aqui aparecerão documentos importantes quando eles estiverem prontos.
         </p>
-        <Button 
-          onClick={onUploadClick}
-          style={{ 
-            backgroundColor: selectedCompany?.cor_principal, 
-            color: 'white' 
-          }}
-        >
-          Adicionar Documento
-        </Button>
       </div>
     </div>
   );
@@ -144,7 +132,7 @@ export const DocumentTabs = ({
                 canDeleteDocument={canDeleteDocument}
               />
             ) : (
-              <EmptyDocumentsState onUploadClick={() => setUploadOpen(true)} />
+              <EmptyDocumentsState />
             )}
           </TabsContent>
         ))}
