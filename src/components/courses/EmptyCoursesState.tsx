@@ -19,7 +19,7 @@ export const EmptyCoursesState: React.FC<EmptyCoursesStateProps> = ({
       <div className="max-w-md">
         <h3 className="text-xl font-semibold mb-2">Nenhum curso disponível</h3>
         <p className="text-gray-500 dark:text-gray-400 text-lg mb-6">
-          Em breve, aqui estarão todos os cursos da {companyName}.
+          Não há cursos disponíveis para {companyName}.
         </p>
         {isAdmin && (
           <Button onClick={onCreateCourse} className="flex items-center gap-2">
