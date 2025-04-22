@@ -2,23 +2,33 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MAX_FILE_SIZE } from './constants';
-import { useDocumentValidation } from './useDocumentValidation';
 
 export const useStorageOperations = () => {
-  const { createBucketIfNotExists } = useDocumentValidation();
-  
   const uploadToStorage = async (userId: string, file: File): Promise<string> => {
     if (file.size > MAX_FILE_SIZE) {
       throw new Error("File size exceeds 10MB limit");
     }
     
     try {
-      // First, ensure the bucket exists
-      const bucketExists = await createBucketIfNotExists();
-      
-      if (!bucketExists) {
-        console.error("Falha ao criar ou verificar bucket 'documents'");
-        throw new Error("Sistema de armazenamento não está disponível. Por favor, tente novamente mais tarde.");
+      // Check if bucket exists by trying to get bucket details
+      const { data: bucketData, error: bucketError } = await supabase.storage
+        .getBucket('documents');
+        
+      if (bucketError) {
+        console.error("Error checking bucket:", bucketError);
+        
+        // If the bucket doesn't exist, try to create it
+        if (bucketError.message.includes('not found')) {
+          const { error: createError } = await supabase.storage
+            .createBucket('documents', { public: true });
+            
+          if (createError) {
+            console.error("Error creating bucket:", createError);
+            throw new Error("Storage system not available. Please try again later.");
+          }
+        } else {
+          throw new Error("Storage system not available. Please try again later.");
+        }
       }
       
       // Create a unique file path with timestamp to ensure uniqueness
@@ -73,14 +83,6 @@ export const useStorageOperations = () => {
   const deleteFromStorage = async (filePath: string): Promise<boolean> => {
     try {
       console.log(`Iniciando remoção do arquivo: ${filePath}`);
-      
-      // Ensure bucket exists before attempting deletion
-      const bucketExists = await createBucketIfNotExists();
-      
-      if (!bucketExists) {
-        console.error("Bucket 'documents' não existe ou não foi possível criar");
-        return false;
-      }
       
       const { error } = await supabase.storage
         .from('documents')

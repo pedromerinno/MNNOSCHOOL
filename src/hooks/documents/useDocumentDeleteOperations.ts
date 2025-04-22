@@ -2,14 +2,12 @@
 import { useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useDocumentValidation } from './useDocumentValidation';
 import { UserDocument } from '@/types/document';
 import { useStorageOperations } from './useStorageOperations';
 
 export const useDocumentDeleteOperations = (
   setDocuments: React.Dispatch<React.SetStateAction<UserDocument[]>>
 ) => {
-  const { createBucketIfNotExists } = useDocumentValidation();
   const { deleteFromStorage } = useStorageOperations();
 
   const deleteDocument = useCallback(async (documentId: string): Promise<boolean> => {
@@ -24,7 +22,7 @@ export const useDocumentDeleteOperations = (
       // Fetch document details
       const { data: document, error: fetchError } = await supabase
         .from('user_documents')
-        .select('file_path, uploaded_by, user_id, company_id')
+        .select('file_path')
         .eq('id', documentId)
         .single();
 
@@ -40,7 +38,7 @@ export const useDocumentDeleteOperations = (
 
       console.log("Documento encontrado:", document);
 
-      // Get current authenticated user
+      // Get current authenticated user to verify permissions
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       
       if (authError || !user) {
@@ -49,40 +47,9 @@ export const useDocumentDeleteOperations = (
         return false;
       }
 
-      console.log("Usuário autenticado:", user.id);
-
-      // Check if user is admin or super_admin
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('is_admin, super_admin')
-        .eq('id', user.id)
-        .single();
-        
-      if (profileError) {
-        console.error("Erro ao verificar perfil do usuário:", profileError);
-      }
-      
-      const isAdmin = profileData?.is_admin || profileData?.super_admin;
-      console.log("Usuário é admin:", isAdmin);
-
-      // Only allow deletion if user is the uploader, the owner, or an admin
-      const canDelete = document.uploaded_by === user.id || isAdmin || document.user_id === user.id;
-      
-      if (!canDelete) {
-        toast.error("Você não tem permissão para excluir este documento");
-        return false;
-      }
-
-      // Ensure storage bucket exists
-      const bucketExists = await createBucketIfNotExists();
-      if (!bucketExists) {
-        console.warn("Não foi possível garantir que o bucket existe, mas vamos tentar excluir o arquivo mesmo assim");
-      }
-
       console.log("Tentando remover arquivo:", document.file_path);
       
-      // Try to remove the file from storage, but continue even if it fails
-      // This separates storage operations from database operations
+      // Try to remove the file from storage
       try {
         await deleteFromStorage(document.file_path);
       } catch (storageError: any) {
@@ -93,7 +60,7 @@ export const useDocumentDeleteOperations = (
 
       console.log("Removendo registro do banco de dados...");
       
-      // Delete the database record
+      // Delete the database record - this will be checked against RLS policies
       const { error: deleteError } = await supabase
         .from('user_documents')
         .delete()
@@ -101,7 +68,12 @@ export const useDocumentDeleteOperations = (
 
       if (deleteError) {
         console.error("Erro ao excluir registro do documento:", deleteError);
-        throw new Error(`Falha ao excluir o registro do documento: ${deleteError.message}`);
+        
+        if (deleteError.message.includes("permission denied")) {
+          throw new Error("Você não tem permissão para excluir este documento");
+        } else {
+          throw new Error(`Falha ao excluir o registro do documento: ${deleteError.message}`);
+        }
       }
 
       console.log("Documento excluído com sucesso!");
@@ -115,7 +87,7 @@ export const useDocumentDeleteOperations = (
       toast.error(`Falha ao excluir o documento: ${error.message}`);
       return false;
     }
-  }, [createBucketIfNotExists, setDocuments, deleteFromStorage]);
+  }, [setDocuments, deleteFromStorage]);
 
   return { deleteDocument };
 };

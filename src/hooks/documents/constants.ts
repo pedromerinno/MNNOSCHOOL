@@ -1,11 +1,11 @@
 
-// Maximum file size in bytes (10MB)
+// Max file size is 10MB
 export const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
-// Allowed file types
+// Allowed file types for document uploads
 export const ALLOWED_FILE_TYPES = [
-  'application/pdf',
-  'application/msword',
+  'application/pdf', 
+  'application/msword', 
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'image/jpeg',
   'image/png'

@@ -3,7 +3,6 @@ import { useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { DocumentType, UserDocument } from "@/types/document";
-import { useDocumentValidation } from './useDocumentValidation';
 import { useUploadValidation } from './useUploadValidation';
 import { useStorageOperations } from './useStorageOperations';
 
@@ -13,7 +12,6 @@ export const useDocumentUploadOperations = (
   setDocuments: React.Dispatch<React.SetStateAction<UserDocument[]>>,
   setIsUploading: (loading: boolean) => void
 ) => {
-  const { createBucketIfNotExists } = useDocumentValidation();
   const { validateUpload } = useUploadValidation();
   const { uploadToStorage } = useStorageOperations();
 
@@ -28,16 +26,6 @@ export const useDocumentUploadOperations = (
 
     setIsUploading(true);
     try {
-      // Create the bucket if it doesn't exist
-      console.log("Verificando e garantindo que o bucket 'documents' existe...");
-      const bucketExists = await createBucketIfNotExists();
-      
-      if (!bucketExists) {
-        console.error("Falha ao criar ou verificar bucket de documentos");
-        toast.error("Sistema de armazenamento não está disponível. Por favor, tente novamente mais tarde.");
-        return null;
-      }
-
       // Get the current authenticated user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -88,6 +76,8 @@ export const useDocumentUploadOperations = (
         errorMessage = "Armazenamento não configurado. Contate o administrador.";
       } else if (error.message.includes("already exists")) {
         errorMessage = "Um arquivo com este nome já existe. Tente novamente.";
+      } else if (error.message.includes("permission denied")) {
+        errorMessage = "Você não tem permissão para fazer upload desse arquivo.";
       } else {
         errorMessage = `Erro no upload: ${error.message}`;
       }
@@ -100,7 +90,6 @@ export const useDocumentUploadOperations = (
   }, [
     userId, 
     companyId, 
-    createBucketIfNotExists, 
     setDocuments, 
     setIsUploading, 
     validateUpload, 
