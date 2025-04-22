@@ -1,10 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { useCompanies } from "@/hooks/useCompanies";
 import { LoadingState } from '@/components/integration/video-playlist/LoadingState';
 import { IntegrationLayout } from '@/components/integration/layout/IntegrationLayout';
 import { CompanyHeader } from '@/components/integration/header/CompanyHeader';
 import { IntegrationTabs } from '@/components/integration/tabs/IntegrationTabs';
-import { EditCompanyDialog } from '@/components/shared/EditCompanyDialog';
 import { Company } from "@/types/company";
 import { supabase } from "@/integrations/supabase/client";
 import { JobRole } from "@/types/job-roles";
@@ -66,6 +66,7 @@ const Integration = () => {
     }
   };
   
+  // Ouvir eventos para atualização de dados
   useEffect(() => {
     const handleCompanyUpdated = (event: CustomEvent<{company: Company}>) => {
       const updatedCompany = event.detail.company;
@@ -104,13 +105,10 @@ const Integration = () => {
         <LoadingState />
       ) : (
         <>
-          <div className="flex justify-between items-center mb-6">
-            <CompanyHeader 
-              company={localCompany} 
-              companyColor={companyColor}
-            />
-            <EditCompanyDialog company={localCompany} />
-          </div>
+          <CompanyHeader 
+            company={localCompany} 
+            companyColor={companyColor}
+          />
           <IntegrationTabs
             activeTab={activeTab}
             setActiveTab={setActiveTab}
