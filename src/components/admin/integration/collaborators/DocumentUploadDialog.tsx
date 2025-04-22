@@ -20,7 +20,9 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
   companyId,
   onUploadComplete
 }) => {
-  // Pass the parameters as an object to match the new hook signature
+  console.log("DocumentUploadDialog rendering with:", { userId, companyId });
+  
+  // Pass the parameters as an object to match the hook signature
   const { isUploading, fileError, uploadDocument } = useDocumentUpload({
     userId,
     companyId,
@@ -28,9 +30,13 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
   });
 
   const handleSubmit = async (file: File, documentType: DocumentType, description: string) => {
+    console.log("Attempting to upload document for user:", userId, "in company:", companyId);
     const success = await uploadDocument(file, documentType, description);
     if (success) {
+      console.log("Document upload successful");
       onOpenChange(false);
+    } else {
+      console.error("Document upload failed");
     }
   };
 
