@@ -34,9 +34,9 @@ export const createCourse = async (courseData: CourseFormValues): Promise<string
       // Create notifications for all users in the companies
       for (const companyId of courseData.companyIds) {
         const { data: users, error: usersError } = await supabase
-          .from('user_companies')
+          .from('user_empresa')
           .select('user_id')
-          .eq('company_id', companyId);
+          .eq('empresa_id', companyId);
         
         if (!usersError && users) {
           const notifications = users.map(user => ({
@@ -48,7 +48,7 @@ export const createCourse = async (courseData: CourseFormValues): Promise<string
           }));
 
           const { error: notificationError } = await supabase
-            .from('notifications')
+            .from('user_notifications')
             .insert(notifications);
 
           if (notificationError) {

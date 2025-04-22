@@ -4,6 +4,7 @@ import { Course } from "../../courses/types";
 
 // companyIds agora é um array obrigatório, sempre presente
 export const courseSchema = z.object({
+  id: z.string().optional(), // Add id field as optional
   title: z.string().min(1, "O título é obrigatório"),
   description: z.string().nullable().optional(),
   image_url: z.string().nullable().optional(),
