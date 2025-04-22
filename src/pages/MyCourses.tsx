@@ -1,4 +1,3 @@
-
 import React from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { useMyCourses } from "@/hooks/my-courses";
@@ -21,7 +20,7 @@ const MyCourses = () => {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto max-w-screen-2xl px-4 py-4">
+      <div className="container mx-auto max-w-screen-2xl px-4 py-4 bg-transparent dark:bg-[#191919]">
         {/* Filters */}
         <CourseFilters 
           activeFilter={activeFilter} 

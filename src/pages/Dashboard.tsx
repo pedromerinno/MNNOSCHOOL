@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -15,7 +14,6 @@ const Dashboard = () => {
   const { getUserCompanies, selectedCompany, isLoading, userCompanies } = useCompanies();
   const [isPageLoading, setIsPageLoading] = useState(true);
 
-  // Buscar empresas do usuário apenas se necessário
   useEffect(() => {
     const fetchUserCompanies = async () => {
       if (user?.id && userCompanies.length === 0) {
@@ -30,15 +28,12 @@ const Dashboard = () => {
     fetchUserCompanies();
   }, [user, getUserCompanies, userCompanies.length]);
 
-  // Atualizar estado de carregamento com base no estado real dos dados
   useEffect(() => {
-    // Se temos empresa selecionada ou os dados já foram carregados, não estamos mais carregando
     if (selectedCompany || !isLoading) {
       setIsPageLoading(false);
     }
   }, [isLoading, selectedCompany]);
 
-  // Melhorado o skeleton para mostrar estrutura similar à página final
   if (isPageLoading || isLoading) {
     return (
       <DashboardLayout>
@@ -60,14 +55,13 @@ const Dashboard = () => {
     );
   }
 
-  // Se usuário não tem empresas, mostrar tela sem empresas
   if (!isLoading && user && userCompanies.length === 0) {
     return <NoCompaniesAvailable />;
   }
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
+      <div className="space-y-8 bg-transparent dark:bg-[#191919]">
         <div>
           <h1 className="text-2xl font-semibold mb-2">Dashboard</h1>
           <p className="text-gray-500 dark:text-gray-400">
