@@ -69,15 +69,18 @@ export function useCompanyNotices() {
       
       // Format notices with author data - fix typing issues with proper type assertions
       const formattedNotices = (data || []).map(notice => {
-        // Handle the profiles data safely with proper typing
-        const profileData = notice.profiles as ProfileData | null;
+        // Use a type guard to safely handle the profiles data
+        const profileData = notice.profiles as unknown;
+        const typedProfileData = typeof profileData === 'object' && profileData !== null 
+          ? profileData as ProfileData 
+          : { display_name: null, avatar: null };
         
         return {
           ...notice,
           author: {
             id: notice.created_by,
-            display_name: profileData?.display_name || null,
-            avatar: profileData?.avatar || null
+            display_name: typedProfileData.display_name || null,
+            avatar: typedProfileData.avatar || null
           }
         };
       });
