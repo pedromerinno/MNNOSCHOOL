@@ -92,7 +92,7 @@ export const FeedbackWidget = memo(() => {
               <Skeleton className="h-32 w-full" />
             </div>
           ) : feedbacks.length > 0 && currentFeedback ? (
-            <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-6">
+            <div className="bg-green-50 dark:bg-[#2C2C2C] rounded-lg p-6">
               <p className="text-base mb-6 dark:text-gray-200">
                 {currentFeedback.content}
               </p>
@@ -123,7 +123,7 @@ export const FeedbackWidget = memo(() => {
                     toUser={mapToUserProfile(currentFeedback.from_profile)}
                     trigger={
                       <button 
-                        className="self-start px-8 py-3 rounded-full bg-white/80 dark:bg-white/10 text-black dark:text-white hover:bg-white dark:hover:bg-white/20 transition-colors"
+                        className="self-start px-8 py-3 rounded-full bg-white/80 dark:bg-[#1F1F1F] text-black dark:text-white hover:bg-white dark:hover:bg-[#2C2C2C] transition-colors"
                       >
                         retribuir
                       </button>

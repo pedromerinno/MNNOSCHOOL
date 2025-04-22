@@ -97,7 +97,7 @@ export const SearchBar = () => {
         onOpenChange={setOpen}
         className="search-dialog-position"
       >
-        <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-lg">
+        <div className="bg-white/95 dark:bg-[#222222] backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-lg">
           <Command className="rounded-lg border-none bg-transparent">
             <div className="flex flex-col">
               <DialogTitle className="sr-only">Pesquisar cursos</DialogTitle>
@@ -105,7 +105,7 @@ export const SearchBar = () => {
                 value={searchQuery}
                 onValueChange={handleInputChange}
                 placeholder="Digite para pesquisar cursos..."
-                className="border-b border-gray-200 dark:border-gray-700"
+                className="border-b border-gray-200 dark:border-[#333333]"
                 autoFocus
               />
               <CommandList className="max-h-[300px] overflow-y-auto">
@@ -125,7 +125,7 @@ export const SearchBar = () => {
                       <CommandItem
                         key={course.id}
                         onSelect={() => handleSelect(course.id)}
-                        className="flex items-center gap-3 cursor-pointer p-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        className="flex items-center gap-3 cursor-pointer p-2 hover:bg-gray-100 dark:hover:bg-[#2C2C2C]"
                       >
                         <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
                           {course.image_url ? (

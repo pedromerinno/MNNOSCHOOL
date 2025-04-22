@@ -208,14 +208,14 @@ export const NotificationsWidget = memo(() => {
             </div>
           ) : (
             <div>
-              <span className="inline-block px-6 py-1.5 rounded-full bg-amber-100 dark:bg-amber-900/50 text-yellow-700 dark:text-amber-100 text-xs font-semibold mb-4">
+              <span className="inline-block px-6 py-1.5 rounded-full bg-amber-100 dark:bg-[#2C2C2C] text-yellow-700 dark:text-amber-100 text-xs font-semibold mb-4">
                 {currentNotice.type.charAt(0).toUpperCase() + currentNotice.type.slice(1)}
               </span>
               <h4 className="text-lg font-bold mb-2 dark:text-white">{currentNotice.title}</h4>
               <p className="text-base text-gray-800 dark:text-gray-300 mb-5 line-clamp-3">
                 {currentNotice.content}
               </p>
-              <div className="flex items-center bg-amber-100/50 dark:bg-amber-900/20 p-3 rounded-lg space-y-1">
+              <div className="flex items-center bg-amber-100/50 dark:bg-[#1F1F1F] p-3 rounded-lg space-y-1">
                 <div className="flex items-center">
                   {currentNotice.author?.avatar ? (
                     <img 
