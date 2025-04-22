@@ -10,33 +10,29 @@ export const useStorageOperations = () => {
     }
     
     try {
-      // Check if bucket exists by trying to get bucket details
-      const { data: bucketData, error: bucketError } = await supabase.storage
-        .getBucket('documents');
-        
-      if (bucketError) {
-        console.error("Error checking bucket:", bucketError);
-        
-        // If the bucket doesn't exist, try to create it
-        if (bucketError.message.includes('not found')) {
-          const { error: createError } = await supabase.storage
-            .createBucket('documents', { public: true });
-            
-          if (createError) {
-            console.error("Error creating bucket:", createError);
-            throw new Error("Storage system not available. Please try again later.");
-          }
-        } else {
-          throw new Error("Storage system not available. Please try again later.");
-        }
-      }
-      
       // Create a unique file path with timestamp to ensure uniqueness
       const userDir = `user-documents/${userId}`;
       const fileExt = file.name.split('.').pop();
       const timestamp = new Date().getTime();
       const uniqueId = Math.random().toString(36).substring(2, 8);
       const fileName = `${userDir}/${timestamp}-${uniqueId}.${fileExt}`;
+
+      // Try to create the bucket before upload
+      try {
+        const { error: bucketError } = await supabase.storage.createBucket('documents', {
+          public: false,
+          fileSizeLimit: 10485760, // 10MB
+        });
+        
+        if (bucketError && !bucketError.message.includes('already exists')) {
+          console.warn("Aviso ao criar bucket (pode já existir):", bucketError);
+        } else {
+          console.log("Bucket criado ou já existente");
+        }
+      } catch (bucketErr) {
+        console.warn("Erro ao verificar/criar bucket (ignorando):", bucketErr);
+        // Continue anyway, as the bucket might already exist
+      }
 
       // Upload file to storage with retry logic
       const uploadWithRetry = async (retries = 2): Promise<string> => {
