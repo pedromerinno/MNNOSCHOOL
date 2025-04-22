@@ -74,6 +74,11 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
     setSelectedUser(user);
     setShowDocumentsDialog(true);
     setActiveTab("documents");
+    
+    // Force refresh documents when opening dialog
+    if (user?.id && company?.id) {
+      setTimeout(() => refreshDocuments(), 100);
+    }
   };
   
   // Handle role update success
@@ -249,6 +254,9 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
                   isLoading={isLoadingDocuments}
                   onDelete={deleteDocument}
                   onUploadClick={() => setShowUploadDialog(true)}
+                  userId={selectedUser.id}
+                  companyId={company.id}
+                  onRefresh={refreshDocuments}
                 />
               </TabsContent>
             </Tabs>

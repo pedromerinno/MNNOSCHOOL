@@ -1,8 +1,9 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { UserDocument } from "@/types/document";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useDocumentFetching } from './documents/useDocumentFetching';
 
 export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<boolean>) => {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
@@ -11,6 +12,17 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const { fetchDocumentsForUser } = useDocumentFetching();
+  
+  // Fetch the current user for permission checks
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const { data } = await supabase.auth.getUser();
+      setCurrentUserId(data.user?.id || null);
+    };
+    
+    fetchUserId();
+  }, []);
 
   const handleDownload = async (document: UserDocument) => {
     setDownloadingId(document.id);
@@ -65,21 +77,33 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
   };
 
   const confirmDelete = async (document: UserDocument) => {
-    if (document.uploaded_by !== currentUserId) {
-      toast.error("Você só pode excluir documentos que você mesmo enviou.");
-      return;
-    }
-
-    if (window.confirm(`Tem certeza que deseja excluir o documento "${document.name}"?`)) {
-      setDeletingId(document.id);
-      setError(null);
-      try {
-        await onDelete(document.id);
-      } catch (error: any) {
-        setError(`Falha ao excluir o documento: ${error.message}`);
-      } finally {
-        setDeletingId(null);
+    // Get the current user to check if they're an admin
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    // Check if the current user is allowed to delete this document
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('is_admin, super_admin')
+      .eq('id', user?.id)
+      .single();
+    
+    const isAdmin = profileData?.is_admin || profileData?.super_admin;
+    
+    // Allow deletion if the user is the owner or an admin
+    if (document.uploaded_by === user?.id || isAdmin) {
+      if (window.confirm(`Tem certeza que deseja excluir o documento "${document.name}"?`)) {
+        setDeletingId(document.id);
+        setError(null);
+        try {
+          await onDelete(document.id);
+        } catch (error: any) {
+          setError(`Falha ao excluir o documento: ${error.message}`);
+        } finally {
+          setDeletingId(null);
+        }
       }
+    } else {
+      toast.error("Você só pode excluir documentos que você mesmo enviou ou se for administrador.");
     }
   };
 
@@ -95,5 +119,6 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
     handleDownload,
     handlePreview,
     confirmDelete,
+    fetchDocumentsForUser,
   };
 };

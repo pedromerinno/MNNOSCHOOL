@@ -44,10 +44,35 @@ export const useDocumentFetching = () => {
     }
   }, [user, selectedCompany]);
 
+  // Add a special method to fetch documents for a specific user (for admins)
+  const fetchDocumentsForUser = useCallback(async (userId: string, companyId: string) => {
+    if (!userId || !companyId) {
+      return [];
+    }
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_documents')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('company_id', companyId)
+        .order('uploaded_at', { ascending: false });
+        
+      if (error) throw error;
+      
+      return data as UserDocument[];
+    } catch (error: any) {
+      console.error('Error fetching user documents:', error);
+      toast.error(`Erro ao carregar documentos: ${error.message}`);
+      return [];
+    }
+  }, []);
+
   return {
     documents,
     isLoading,
     error,
     fetchUserDocuments,
+    fetchDocumentsForUser,
   };
 };

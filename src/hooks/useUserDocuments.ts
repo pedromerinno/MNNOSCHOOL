@@ -1,14 +1,18 @@
-import { useState, useCallback } from 'react';
+
+import { useState, useCallback, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UserDocument, DocumentType } from "@/types/document";
+import { useDocumentFetching } from './documents/useDocumentFetching';
 
 export const useUserDocuments = (userId: string | null, companyId: string | null) => {
   const [documents, setDocuments] = useState<UserDocument[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { fetchDocumentsForUser } = useDocumentFetching();
 
+  // Function to check if storage bucket exists
   const checkBucketExists = useCallback(async () => {
     try {
       const { data: buckets, error } = await supabase.storage.listBuckets();
@@ -32,10 +36,12 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
     }
   }, []);
 
+  // Function to fetch documents for a specific user
   const fetchDocuments = useCallback(async () => {
     if (!userId || !companyId) {
       setDocuments([]);
       setError(null);
+      setIsLoading(false);
       return;
     }
 
@@ -45,17 +51,8 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
     try {
       console.log(`Fetching documents for user ${userId} in company ${companyId}`);
       
-      const { data, error } = await supabase
-        .from('user_documents')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('company_id', companyId)
-        .order('uploaded_at', { ascending: false });
-
-      if (error) throw error;
-      
-      console.log(`Found ${data?.length || 0} documents`);
-      setDocuments(data as unknown as UserDocument[]);
+      const docs = await fetchDocumentsForUser(userId, companyId);
+      setDocuments(docs);
     } catch (error: any) {
       console.error('Error fetching user documents:', error);
       setError(`Erro ao buscar documentos: ${error.message}`);
@@ -63,8 +60,14 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
     } finally {
       setIsLoading(false);
     }
-  }, [userId, companyId]);
+  }, [userId, companyId, fetchDocumentsForUser]);
 
+  // Initial document fetch
+  useEffect(() => {
+    fetchDocuments();
+  }, [fetchDocuments]);
+
+  // Function to upload document
   const uploadDocument = useCallback(async (
     file: File, 
     documentType: DocumentType, 
@@ -98,17 +101,25 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
 
       if (uploadError) throw uploadError;
 
+      // Get the current authenticated user
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      
+      if (!authUser) {
+        throw new Error("Usuário não autenticado");
+      }
+
+      // Insert document record - using the current user's ID as uploaded_by
       const { data, error } = await supabase
         .from('user_documents')
         .insert({
-          user_id: userId,
+          user_id: userId, // The user who owns the document
           company_id: companyId,
           name: file.name,
           file_path: filePath,
           file_type: file.type,
           document_type: documentType,
           description: description || null,
-          uploaded_by: (await supabase.auth.getUser()).data.user?.id || userId
+          uploaded_by: authUser.id // The admin who uploaded it
         })
         .select()
         .single();
@@ -136,6 +147,7 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
     }
   }, [userId, companyId, checkBucketExists]);
 
+  // Function to delete document
   const deleteDocument = useCallback(async (documentId: string): Promise<boolean> => {
     if (!documentId) {
       toast.error("ID do documento não fornecido");
@@ -145,23 +157,29 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
     try {
       const { data: document, error: fetchError } = await supabase
         .from('user_documents')
-        .select('file_path, uploaded_by')
+        .select('file_path')
         .eq('id', documentId)
         .single();
 
       if (fetchError) throw fetchError;
 
+      // Get current user profile to check admin status
       const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Usuário não autenticado");
+        return false;
+      }
       
-      if (!document || !user) {
-        toast.error("Documento não encontrado ou usuário não autenticado");
-        return false;
-      }
-
-      if (document.uploaded_by !== user.id) {
-        toast.error("Você só pode excluir documentos que você mesmo enviou");
-        return false;
-      }
+      // Check if user is admin
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('is_admin, super_admin')
+        .eq('id', user.id)
+        .single();
+        
+      const isAdmin = profileData?.is_admin || profileData?.super_admin;
+      
+      // Admin privilege check happens in the confirmDelete function now
 
       const bucketExists = await checkBucketExists();
       

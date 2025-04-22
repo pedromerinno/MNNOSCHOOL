@@ -1,11 +1,10 @@
 
-import React, { useEffect } from 'react';
-import { AlertCircle } from "lucide-react";
+import React, { useEffect, useState } from 'react';
+import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { UserDocument } from "@/types/document";
-import { supabase } from "@/integrations/supabase/client";
 import { DocumentCard } from './documents/DocumentCard';
 import { EmptyDocumentsList } from './documents/EmptyDocumentsList';
 import { useUserDocumentsList } from '@/hooks/useUserDocumentsList';
@@ -15,6 +14,9 @@ interface UserDocumentsListProps {
   isLoading: boolean;
   onDelete: (documentId: string) => Promise<boolean>;
   onUploadClick: () => void;
+  userId: string;
+  companyId: string;
+  onRefresh: () => Promise<void>;
 }
 
 export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
@@ -22,6 +24,9 @@ export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
   isLoading,
   onDelete,
   onUploadClick,
+  userId,
+  companyId,
+  onRefresh
 }) => {
   const {
     downloadingId,
@@ -31,20 +36,23 @@ export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
     previewOpen,
     setPreviewOpen,
     currentUserId,
-    setCurrentUserId,
     handleDownload,
     handlePreview,
     confirmDelete,
+    fetchDocumentsForUser
   } = useUserDocumentsList(onDelete);
+  
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    const fetchUserId = async () => {
-      const { data } = await supabase.auth.getUser();
-      setCurrentUserId(data.user?.id || null);
-    };
-    
-    fetchUserId();
-  }, [setCurrentUserId]);
+  // Handle manual refresh
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await onRefresh();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -65,7 +73,7 @@ export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
           variant="outline" 
           size="sm" 
           className="mt-3"
-          onClick={() => window.location.reload()}
+          onClick={handleRefresh}
         >
           Tentar novamente
         </Button>
@@ -74,18 +82,47 @@ export const UserDocumentsList: React.FC<UserDocumentsListProps> = ({
   }
 
   if (documents.length === 0) {
-    return <EmptyDocumentsList onUploadClick={onUploadClick} />;
+    return (
+      <div>
+        <div className="flex justify-end mb-4">
+          <Button 
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="mr-2"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            Atualizar
+          </Button>
+        </div>
+        <EmptyDocumentsList onUploadClick={onUploadClick} />
+      </div>
+    );
   }
 
   return (
     <div className="space-y-3">
+      <div className="flex justify-end mb-4">
+        <Button 
+          variant="outline"
+          size="sm"
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="mr-2"
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+          Atualizar
+        </Button>
+      </div>
+      
       {documents.map(document => (
         <DocumentCard
           key={document.id}
           document={document}
           downloadingId={downloadingId}
           deletingId={deletingId}
-          canDeleteDocument={document.uploaded_by === currentUserId}
+          canDeleteDocument={true} // Admins can delete all documents
           onPreview={() => handlePreview(document)}
           onDownload={() => handleDownload(document)}
           onDelete={() => confirmDelete(document)}
