@@ -77,14 +77,61 @@ export const useStorageOperations = () => {
   };
 
   const deleteFromStorage = async (filePath: string): Promise<boolean> => {
+    if (!filePath) {
+      console.warn("Caminho do arquivo não fornecido para exclusão");
+      return false;
+    }
+
     try {
       console.log(`Iniciando remoção do arquivo: ${filePath}`);
       
+      // Verificar se o bucket existe
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const bucketExists = buckets?.some(bucket => bucket.name === 'documents');
+      
+      if (!bucketExists) {
+        console.warn("Bucket 'documents' não encontrado. Verifique se ele foi criado no Supabase.");
+        return false;
+      }
+      
+      // Verificar se o arquivo existe antes de tentar excluir
+      try {
+        const folderPath = filePath.split('/').slice(0, -1).join('/');
+        const fileName = filePath.split('/').pop() || '';
+        
+        console.log(`Verificando se o arquivo existe em: ${folderPath}, arquivo: ${fileName}`);
+        
+        const { data: files, error: listError } = await supabase.storage
+          .from('documents')
+          .list(folderPath, { search: fileName });
+          
+        if (listError) {
+          console.error("Erro ao listar arquivos:", listError);
+          return false;
+        }
+        
+        const fileExists = files && files.some(file => file.name === fileName);
+        if (!fileExists) {
+          console.warn(`Arquivo ${fileName} não encontrado no storage.`);
+          return true; // Consideramos sucesso pois o arquivo já não existe
+        }
+      } catch (listErr) {
+        console.warn("Erro ao verificar existência do arquivo:", listErr);
+        // Continuamos com a exclusão mesmo se não pudermos verificar
+      }
+      
+      // Tentar remover o arquivo
       const { error } = await supabase.storage
         .from('documents')
         .remove([filePath]);
       
       if (error) {
+        // Se o erro for object not found, consideramos como sucesso
+        if (error.message.includes('Object not found')) {
+          console.log("Arquivo já não existe no storage.");
+          return true;
+        }
+        
         console.error("Erro ao remover arquivo:", error);
         return false;
       }
@@ -99,19 +146,30 @@ export const useStorageOperations = () => {
 
   // Método para verificar se um arquivo existe
   const fileExists = async (filePath: string): Promise<boolean> => {
+    if (!filePath) return false;
+    
     try {
+      const folderPath = filePath.split('/').slice(0, -1).join('/');
+      const fileName = filePath.split('/').pop() || '';
+      
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const bucketExists = buckets?.some(bucket => bucket.name === 'documents');
+      
+      if (!bucketExists) {
+        console.warn("Bucket 'documents' não encontrado ao verificar existência do arquivo.");
+        return false;
+      }
+      
       const { data, error } = await supabase.storage
         .from('documents')
-        .list(filePath.split('/').slice(0, -1).join('/'), {
-          search: filePath.split('/').pop() || ''
-        });
+        .list(folderPath, { search: fileName });
       
       if (error) {
         console.error("Erro ao verificar existência do arquivo:", error);
         return false;
       }
       
-      return data && data.length > 0;
+      return data && data.some(file => file.name === fileName);
     } catch (err) {
       console.error("Erro ao verificar existência do arquivo:", err);
       return false;

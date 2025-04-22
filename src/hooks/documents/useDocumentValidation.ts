@@ -11,26 +11,23 @@ export const useDocumentValidation = () => {
     try {
       console.log("Verificando se o bucket 'documents' existe...");
       
-      try {
-        const { data, error } = await supabase.storage.getBucket('documents');
-        
-        if (error) {
-          if (error.message.includes('not found')) {
-            console.log("Bucket 'documents' não encontrado. Tentando criar...");
-            return await createBucket();
-          }
-          
-          console.error("Erro ao verificar bucket:", error);
-          return false;
-        }
-        
+      // Lista todos os buckets para verificar se 'documents' existe
+      const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+      
+      if (listError) {
+        console.error("Erro ao listar buckets:", listError);
+        return false;
+      }
+      
+      const documentsBucket = buckets?.find(bucket => bucket.name === 'documents');
+      
+      if (documentsBucket) {
         console.log("Bucket 'documents' encontrado!");
         return true;
-      } catch (error: any) {
-        // Se ocorrer um erro ao verificar o bucket, tente criar de qualquer forma
-        console.log("Erro ao verificar bucket. Tentando criar mesmo assim...");
-        return await createBucket();
       }
+      
+      console.log("Bucket 'documents' não encontrado. Tentando criar...");
+      return await createBucket();
     } catch (err) {
       console.error("Erro ao verificar storage bucket:", err);
       return false;
@@ -44,8 +41,8 @@ export const useDocumentValidation = () => {
     try {
       console.log("Criando bucket 'documents'...");
       
-      const { error } = await supabase.storage.createBucket('documents', {
-        public: true, // Alterado para public: true para facilitar o acesso aos arquivos
+      const { data, error } = await supabase.storage.createBucket('documents', {
+        public: true, // Bucket público para facilitar o acesso aos arquivos
         fileSizeLimit: 10485760, // 10MB
       });
       
@@ -57,7 +54,6 @@ export const useDocumentValidation = () => {
         }
         
         console.error("Erro ao criar bucket:", error);
-        toast.error("Falha ao configurar sistema de armazenamento");
         return false;
       }
       
@@ -65,14 +61,18 @@ export const useDocumentValidation = () => {
       return true;
     } catch (err) {
       console.error("Erro ao criar storage bucket:", err);
-      toast.error("Falha ao configurar sistema de armazenamento");
       return false;
     }
   };
 
   // Função auxiliar para garantir que o bucket existe
   const createBucketIfNotExists = useCallback(async () => {
-    return await checkBucketExists();
+    try {
+      return await checkBucketExists();
+    } catch (error) {
+      console.error("Erro ao verificar/criar bucket:", error);
+      return false;
+    }
   }, []);
 
   return { checkBucketExists, createBucketIfNotExists, createBucket };

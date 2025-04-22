@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useDocumentFetching } from './documents/useDocumentFetching';
 import { useDocumentValidation } from './documents/useDocumentValidation';
+import { useDocumentDelete } from './documents/useDocumentDelete';
 
 export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<boolean>) => {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
@@ -16,6 +17,7 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
   const [currentUserIsAdmin, setCurrentUserIsAdmin] = useState<boolean>(false);
   const { fetchDocumentsForUser } = useDocumentFetching();
   const { createBucketIfNotExists } = useDocumentValidation();
+  const { deleteDocument } = useDocumentDelete();
   
   // Fetch the current user for permission checks
   useEffect(() => {
@@ -63,7 +65,7 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
         
         // Force bucket creation
         const { error } = await supabase.storage.createBucket('documents', {
-          public: false,
+          public: true,
           fileSizeLimit: 10485760, // 10MB
         });
         
@@ -125,7 +127,7 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
         
         // Force bucket creation
         const { error } = await supabase.storage.createBucket('documents', {
-          public: false,
+          public: true,
           fileSizeLimit: 10485760, // 10MB
         });
         
@@ -197,6 +199,7 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
         console.log("Iniciando processo de exclusão...");
         
         try {
+          // Usar a função onDelete que foi passada como prop
           const result = await onDelete(document.id);
           
           if (!result) {
@@ -231,6 +234,6 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
     handleDownload,
     handlePreview,
     confirmDelete,
-    fetchDocumentsForUser,
+    fetchDocumentsForUser
   };
 };

@@ -1,93 +1,34 @@
 
 import { useCallback } from 'react';
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UserDocument } from '@/types/document';
-import { useStorageOperations } from './useStorageOperations';
+import { useDocumentDelete } from './useDocumentDelete';
 
 export const useDocumentDeleteOperations = (
   setDocuments: React.Dispatch<React.SetStateAction<UserDocument[]>>
 ) => {
-  const { deleteFromStorage } = useStorageOperations();
+  const { deleteDocument } = useDocumentDelete();
 
-  const deleteDocument = useCallback(async (documentId: string): Promise<boolean> => {
-    if (!documentId) {
-      toast.error("ID do documento não fornecido");
-      return false;
-    }
-
+  const deleteDocumentWithState = useCallback(async (documentId: string): Promise<boolean> => {
     try {
-      console.log("Iniciando exclusão do documento:", documentId);
+      console.log("Iniciando exclusão do documento com atualização de estado:", documentId);
       
-      // Fetch document details
-      const { data: document, error: fetchError } = await supabase
-        .from('user_documents')
-        .select('file_path')
-        .eq('id', documentId)
-        .single();
-
-      if (fetchError) {
-        console.error("Erro ao buscar detalhes do documento:", fetchError);
-        throw new Error(`Não foi possível obter informações do documento: ${fetchError.message}`);
-      }
-
-      if (!document) {
-        toast.error("Documento não encontrado");
-        return false;
-      }
-
-      console.log("Documento encontrado:", document);
-
-      // Get current authenticated user to verify permissions
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      // Chamar a função de exclusão
+      const success = await deleteDocument(documentId);
       
-      if (authError || !user) {
-        console.error("Erro de autenticação:", authError);
-        toast.error("Usuário não autenticado");
-        return false;
+      if (success) {
+        // Atualizar o estado para remover o documento excluído
+        setDocuments(currentDocs => currentDocs.filter(doc => doc.id !== documentId));
+        console.log("Estado atualizado após exclusão bem-sucedida");
       }
-
-      console.log("Tentando remover arquivo:", document.file_path);
       
-      // Try to remove the file from storage
-      try {
-        await deleteFromStorage(document.file_path);
-      } catch (storageError: any) {
-        console.warn("Erro ao remover arquivo do storage:", storageError);
-        console.log("Continuando com exclusão do registro no banco de dados...");
-        // Continue with database record deletion even if file removal fails
-      }
-
-      console.log("Removendo registro do banco de dados...");
-      
-      // Delete the database record - this will be checked against RLS policies
-      const { error: deleteError } = await supabase
-        .from('user_documents')
-        .delete()
-        .eq('id', documentId);
-
-      if (deleteError) {
-        console.error("Erro ao excluir registro do documento:", deleteError);
-        
-        if (deleteError.message.includes("permission denied")) {
-          throw new Error("Você não tem permissão para excluir este documento");
-        } else {
-          throw new Error(`Falha ao excluir o registro do documento: ${deleteError.message}`);
-        }
-      }
-
-      console.log("Documento excluído com sucesso!");
-      
-      // Update the state to remove the deleted document
-      setDocuments(currentDocs => currentDocs.filter(doc => doc.id !== documentId));
-      toast.success('Documento excluído com sucesso');
-      return true;
+      return success;
     } catch (error: any) {
-      console.error('Error deleting document:', error);
+      console.error('Erro ao excluir documento com atualização de estado:', error);
       toast.error(`Falha ao excluir o documento: ${error.message}`);
       return false;
     }
-  }, [setDocuments, deleteFromStorage]);
+  }, [deleteDocument, setDocuments]);
 
-  return { deleteDocument };
+  return { deleteDocument: deleteDocumentWithState };
 };
