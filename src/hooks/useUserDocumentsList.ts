@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { UserDocument } from "@/types/document";
 import { supabase } from "@/integrations/supabase/client";

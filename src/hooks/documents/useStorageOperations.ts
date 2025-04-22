@@ -29,9 +29,12 @@ export const useStorageOperations = () => {
         setBucketReady(ready);
       }
 
-      // Obter usuário atual
+      // Check authentication
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuário não autenticado");
+      if (!user) {
+        toast.error("Você precisa estar autenticado para fazer upload de documentos");
+        throw new Error("Usuário não autenticado");
+      }
 
       // Criar um caminho único para o arquivo
       const fileExt = file.name.split('.').pop();

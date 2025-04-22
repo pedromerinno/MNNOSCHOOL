@@ -41,6 +41,15 @@ export const useDocumentValidation = () => {
     try {
       console.log("Criando bucket 'documents'...");
       
+      // Usar auth.getSession para obter o token de autenticação
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      if (!sessionData.session) {
+        console.error("Usuário não autenticado para criar bucket");
+        toast.error("Você precisa estar autenticado para realizar esta operação");
+        return false;
+      }
+
       // Tentar criar o bucket com configurações adequadas
       const { error } = await supabase.storage.createBucket('documents', {
         public: true, // Bucket público para facilitar o acesso aos arquivos
@@ -60,7 +69,15 @@ export const useDocumentValidation = () => {
           console.log("Bucket 'documents' já existe!");
           return true;
         }
-        console.error("Erro ao criar bucket:", error);
+        
+        if (error.message.includes('row-level security policy')) {
+          console.error("Erro de permissão ao criar bucket:", error);
+          toast.error("Você não tem permissão para criar buckets. Contate o administrador.");
+        } else {
+          console.error("Erro ao criar bucket:", error);
+          toast.error("Erro ao configurar sistema de armazenamento");
+        }
+        
         return false;
       }
       
