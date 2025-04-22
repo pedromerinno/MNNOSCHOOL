@@ -54,7 +54,7 @@ export const createCourse = async (courseData: CourseFormValues): Promise<string
     }));
     
     // Force refresh notifications
-    window.dispatchEvent(new CustomEvent('refresh-notifications'));
+    window.dispatchEvent(new Event('refresh-notifications'));
     
     return courseId;
   } catch (error: any) {
