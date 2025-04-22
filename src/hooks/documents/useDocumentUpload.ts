@@ -6,13 +6,18 @@ import { toast } from 'sonner';
 import { useDocumentPermissions } from './useDocumentPermissions';
 import { useUploadValidation } from './useUploadValidation';
 import { useStorageOperations } from './useStorageOperations';
+import { useDocumentValidation } from './useDocumentValidation';
 import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from './constants';
 
 // Make these constants available for import
 export { MAX_FILE_SIZE, ALLOWED_FILE_TYPES };
 
 // Add optional parameters to make the hook more flexible
-export const useDocumentUpload = (params?: { userId?: string, companyId?: string, onUploadComplete?: () => void }) => {
+export const useDocumentUpload = (params?: { 
+  userId?: string, 
+  companyId?: string, 
+  onUploadComplete?: () => void 
+}) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -20,6 +25,7 @@ export const useDocumentUpload = (params?: { userId?: string, companyId?: string
   const { canDeleteDocument } = useDocumentPermissions(currentUserId);
   const { validateUpload } = useUploadValidation();
   const { uploadToStorage } = useStorageOperations();
+  const { createBucketIfNotExists } = useDocumentValidation();
 
   // Fetch current user ID
   useEffect(() => {
@@ -53,7 +59,7 @@ export const useDocumentUpload = (params?: { userId?: string, companyId?: string
   const uploadDocument = async (file: File, documentType: DocumentType, description: string) => {
     if (!validateFile(file)) return false;
 
-    // Use provided userId or fetch it
+    // Determine the target user and company IDs
     let userId = params?.userId;
     let companyId = params?.companyId;
     
@@ -84,8 +90,29 @@ export const useDocumentUpload = (params?: { userId?: string, companyId?: string
     setFileError(null);
 
     try {
-      const filePath = await uploadToStorage(userId, file);
+      // Create the bucket if it doesn't exist
+      const bucketExists = await createBucketIfNotExists();
+      
+      if (!bucketExists) {
+        console.error("Falha ao criar bucket de documentos");
+        toast.error("Sistema de armazenamento não está disponível. Por favor, tente novamente mais tarde.");
+        return false;
+      }
 
+      // Upload the file to storage
+      console.log("Iniciando upload do arquivo...");
+      const filePath = await uploadToStorage(userId, file);
+      console.log("Arquivo enviado com sucesso para:", filePath);
+
+      // Get the current authenticated user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Usuário não autenticado");
+        return false;
+      }
+
+      // Create the document record in the database
+      console.log("Salvando registro do documento no banco de dados...");
       const { error } = await supabase
         .from('user_documents')
         .insert({
@@ -96,11 +123,15 @@ export const useDocumentUpload = (params?: { userId?: string, companyId?: string
           file_type: file.type,
           document_type: documentType,
           description: description || null,
-          uploaded_by: userId
+          uploaded_by: user.id
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao criar registro do documento:", error);
+        throw error;
+      }
 
+      console.log("Documento cadastrado com sucesso!");
       toast.success('Documento enviado com sucesso');
       
       // Call onUploadComplete if provided
@@ -111,7 +142,18 @@ export const useDocumentUpload = (params?: { userId?: string, companyId?: string
       return true;
     } catch (error: any) {
       console.error('Erro no upload do documento:', error);
-      toast.error(`Erro: ${error.message}`);
+      
+      let errorMessage = 'Erro ao enviar documento';
+      
+      if (error.message.includes("storage/bucket-not-found")) {
+        errorMessage = "Sistema de armazenamento não está disponível. Por favor, tente novamente mais tarde.";
+      } else if (error.message.includes("already exists")) {
+        errorMessage = "Um arquivo com este nome já existe. Tente novamente.";
+      } else {
+        errorMessage = `Erro: ${error.message}`;
+      }
+      
+      toast.error(errorMessage);
       return false;
     } finally {
       setIsUploading(false);

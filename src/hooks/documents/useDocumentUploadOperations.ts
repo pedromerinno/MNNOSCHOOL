@@ -13,7 +13,7 @@ export const useDocumentUploadOperations = (
   setDocuments: React.Dispatch<React.SetStateAction<UserDocument[]>>,
   setIsUploading: (loading: boolean) => void
 ) => {
-  const { checkBucketExists } = useDocumentValidation();
+  const { createBucketIfNotExists } = useDocumentValidation();
   const { validateUpload } = useUploadValidation();
   const { uploadToStorage } = useStorageOperations();
 
@@ -28,21 +28,31 @@ export const useDocumentUploadOperations = (
 
     setIsUploading(true);
     try {
-      const bucketExists = await checkBucketExists();
+      // Create the bucket if it doesn't exist
+      console.log("Verificando e garantindo que o bucket 'documents' existe...");
+      const bucketExists = await createBucketIfNotExists();
       
       if (!bucketExists) {
-        toast.error("Sistema de armazenamento não está disponível. Contate o administrador.");
+        console.error("Falha ao criar ou verificar bucket de documentos");
+        toast.error("Sistema de armazenamento não está disponível. Por favor, tente novamente mais tarde.");
         return null;
       }
 
+      // Get the current authenticated user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error("Usuário não autenticado");
         return null;
       }
 
+      console.log("Iniciando upload do arquivo para o storage...");
+      
+      // Upload the file to storage
       const filePath = await uploadToStorage(userId!, file);
 
+      console.log("Arquivo enviado com sucesso. Salvando registro no banco de dados...");
+      
+      // Create the document record in the database
       const { data, error } = await supabase
         .from('user_documents')
         .insert({
@@ -58,8 +68,13 @@ export const useDocumentUploadOperations = (
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao criar registro do documento:", error);
+        throw error;
+      }
 
+      console.log("Registro do documento criado com sucesso!");
+      
       const newDoc = data as UserDocument;
       setDocuments(prev => [...prev, newDoc]);
       toast.success('Documento enviado com sucesso');
@@ -67,19 +82,30 @@ export const useDocumentUploadOperations = (
     } catch (error: any) {
       console.error('Error uploading document:', error);
       
+      let errorMessage = 'Erro ao enviar documento';
+      
       if (error.message.includes("storage/bucket-not-found")) {
-        toast.error("Armazenamento não configurado. Contate o administrador.");
+        errorMessage = "Armazenamento não configurado. Contate o administrador.";
       } else if (error.message.includes("already exists")) {
-        toast.error("Um arquivo com este nome já existe. Tente novamente.");
+        errorMessage = "Um arquivo com este nome já existe. Tente novamente.";
       } else {
-        toast.error(`Erro no upload: ${error.message}`);
+        errorMessage = `Erro no upload: ${error.message}`;
       }
       
+      toast.error(errorMessage);
       return null;
     } finally {
       setIsUploading(false);
     }
-  }, [userId, companyId, checkBucketExists, setDocuments, setIsUploading, validateUpload, uploadToStorage]);
+  }, [
+    userId, 
+    companyId, 
+    createBucketIfNotExists, 
+    setDocuments, 
+    setIsUploading, 
+    validateUpload, 
+    uploadToStorage
+  ]);
 
   return { uploadDocument };
 };

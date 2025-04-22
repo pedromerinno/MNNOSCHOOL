@@ -17,43 +17,90 @@ export const useStorageOperations = () => {
       const bucketExists = await createBucketIfNotExists();
       
       if (!bucketExists) {
-        console.log("Bucket doesn't exist, trying to create it forcefully...");
-        const { error } = await supabase.storage.createBucket('documents', {
-          public: false,
-          fileSizeLimit: 10485760, // 10MB
-        });
-        
-        if (error) {
-          console.error("Forced bucket creation failed:", error);
-          throw new Error("Sistema de armazenamento não está disponível. Por favor, tente novamente mais tarde.");
-        }
+        console.error("Falha ao criar ou verificar bucket 'documents'");
+        throw new Error("Sistema de armazenamento não está disponível. Por favor, tente novamente mais tarde.");
       }
       
-      // Create a unique file path
+      // Create a unique file path with timestamp to ensure uniqueness
       const userDir = `user-documents/${userId}`;
       const fileExt = file.name.split('.').pop();
-      const fileName = `${userDir}/${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = fileName;
+      const timestamp = new Date().getTime();
+      const uniqueId = Math.random().toString(36).substring(2, 8);
+      const fileName = `${userDir}/${timestamp}-${uniqueId}.${fileExt}`;
 
-      // Upload file to storage
-      const { error: uploadError } = await supabase.storage
-        .from('documents')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true
-        });
-
-      if (uploadError) {
-        console.error("Upload error:", uploadError);
-        throw uploadError;
-      }
+      // Upload file to storage with retry logic
+      const uploadWithRetry = async (retries = 2): Promise<string> => {
+        try {
+          console.log(`Tentando upload de arquivo (tentativa ${3-retries}/3)...`);
+          
+          const { error: uploadError } = await supabase.storage
+            .from('documents')
+            .upload(fileName, file, {
+              cacheControl: '3600',
+              upsert: true
+            });
+    
+          if (uploadError) {
+            console.error("Erro de upload:", uploadError);
+            
+            if (retries > 0 && (uploadError.message.includes('timeout') || uploadError.message.includes('network'))) {
+              console.log("Tentando novamente em 1 segundo...");
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              return await uploadWithRetry(retries - 1);
+            }
+            throw uploadError;
+          }
+          
+          console.log("Upload realizado com sucesso!");
+          return fileName;
+        } catch (err) {
+          if (retries > 0) {
+            console.log("Tentando novamente o upload...");
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            return await uploadWithRetry(retries - 1);
+          }
+          throw err;
+        }
+      };
       
-      return filePath;
+      return await uploadWithRetry();
     } catch (error: any) {
       console.error("Error in uploadToStorage:", error);
       throw error;
     }
   };
 
-  return { uploadToStorage };
+  const deleteFromStorage = async (filePath: string): Promise<boolean> => {
+    try {
+      console.log(`Iniciando remoção do arquivo: ${filePath}`);
+      
+      // Ensure bucket exists before attempting deletion
+      const bucketExists = await createBucketIfNotExists();
+      
+      if (!bucketExists) {
+        console.error("Bucket 'documents' não existe ou não foi possível criar");
+        return false;
+      }
+      
+      const { error } = await supabase.storage
+        .from('documents')
+        .remove([filePath]);
+      
+      if (error) {
+        console.error("Erro ao remover arquivo:", error);
+        // Don't throw here - we'll still want to delete the database record
+        // even if the file removal fails
+        return false;
+      }
+      
+      console.log("Arquivo removido com sucesso!");
+      return true;
+    } catch (err) {
+      console.error("Erro em deleteFromStorage:", err);
+      // Return false but don't throw - allow database record deletion to proceed
+      return false;
+    }
+  };
+
+  return { uploadToStorage, deleteFromStorage };
 };

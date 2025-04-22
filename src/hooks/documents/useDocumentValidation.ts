@@ -36,13 +36,14 @@ export const useDocumentValidation = () => {
     try {
       console.log("Iniciando criação do bucket 'documents'...");
       
-      // First try without options - simpler approach may work in more environments
+      // Multiple attempts with different configurations to ensure bucket creation
+      // First, try creating without any options (works in most environments)
       const { data, error } = await supabase.storage.createBucket('documents');
       
       if (error) {
         console.error("Tentativa simples falhou:", error);
         
-        // If first attempt failed with simple approach, try with options
+        // If the simple approach fails, try with specific options
         console.log("Tentando criar bucket com opções específicas...");
         const { error: secondError } = await supabase.storage.createBucket('documents', {
           public: false,
@@ -52,7 +53,7 @@ export const useDocumentValidation = () => {
         if (secondError) {
           console.error("Falha também na criação com opções:", secondError);
           
-          // Try one more time with minimal options
+          // As a last resort, try with minimal public access
           console.log("Tentativa final com opções mínimas...");
           const { error: finalError } = await supabase.storage.createBucket('documents', {
             public: true // Try as public bucket as last resort
@@ -60,39 +61,51 @@ export const useDocumentValidation = () => {
           
           if (finalError) {
             console.error("Todas as tentativas de criação falharam:", finalError);
-            toast.error("Não foi possível criar o armazenamento de documentos. Contate o administrador.");
-            return false;
+            throw new Error("Não foi possível criar o armazenamento de documentos");
           }
         }
       }
       
       console.log("Bucket 'documents' criado com sucesso!");
       
-      // Add public policy to the bucket to ensure files can be accessed
+      // Verify bucket functionality with a test upload
       try {
-        const { error: policyError } = await supabase.storage.from('documents')
-          .createSignedUrl('test.txt', 60);
+        console.log("Validando funcionamento do bucket com arquivo de teste...");
+        const testBlob = new Blob(["test"], { type: 'text/plain' });
+        const testPath = `test-${Date.now()}.txt`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('documents')
+          .upload(testPath, testBlob);
           
-        if (policyError && policyError.message.includes('not found')) {
-          console.log("Criando arquivo de teste para validar o bucket...");
-          const testBlob = new Blob(["test"], { type: 'text/plain' });
-          await supabase.storage.from('documents').upload('test.txt', testBlob);
-          console.log("Arquivo de teste criado com sucesso!");
+        if (uploadError) {
+          console.error("Erro ao validar bucket com upload de teste:", uploadError);
+          throw new Error("Bucket criado mas não está funcional");
         }
-      } catch (policyErr) {
-        console.warn("Aviso na validação do bucket:", policyErr);
+        
+        console.log("Bucket validado com sucesso. Removendo arquivo de teste...");
+        
+        // Clean up test file
+        await supabase.storage.from('documents').remove([testPath]);
+      } catch (validationErr) {
+        console.warn("Aviso na validação do bucket:", validationErr);
         // Continue anyway, this is just a validation step
       }
       
       return true;
     } catch (err) {
       console.error("Erro ao criar storage bucket:", err);
+      toast.error("Não foi possível configurar o armazenamento de documentos. Contate o administrador.");
       return false;
     }
   };
 
   const createBucketIfNotExists = useCallback(async () => {
-    return await checkBucketExists();
+    const bucketExists = await checkBucketExists();
+    if (!bucketExists) {
+      return await createBucket();
+    }
+    return bucketExists;
   }, []);
 
   return { checkBucketExists, createBucketIfNotExists, createBucket };

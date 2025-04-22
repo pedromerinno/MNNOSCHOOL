@@ -4,11 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useDocumentValidation } from './useDocumentValidation';
 import { UserDocument } from '@/types/document';
+import { useStorageOperations } from './useStorageOperations';
 
 export const useDocumentDeleteOperations = (
   setDocuments: React.Dispatch<React.SetStateAction<UserDocument[]>>
 ) => {
   const { createBucketIfNotExists } = useDocumentValidation();
+  const { deleteFromStorage } = useStorageOperations();
 
   const deleteDocument = useCallback(async (documentId: string): Promise<boolean> => {
     if (!documentId) {
@@ -71,62 +73,22 @@ export const useDocumentDeleteOperations = (
         return false;
       }
 
-      // First, check if storage bucket exists
-      try {
-        console.log("Verificando bucket de armazenamento...");
-        
-        const { data: buckets, error: listError } = await supabase.storage.listBuckets();
-        
-        if (listError) {
-          console.error("Erro ao listar buckets:", listError);
-          throw new Error(`Erro ao listar buckets: ${listError.message}`);
-        }
-        
-        const documentsBucket = buckets?.find(b => b.name === 'documents');
-        
-        console.log("Buckets encontrados:", buckets?.map(b => b.name).join(', '));
-        
-        if (!documentsBucket) {
-          console.log("Bucket 'documents' não encontrado. Tentando criar...");
-          
-          const { error: createError } = await supabase.storage.createBucket('documents', {
-            public: false,
-            fileSizeLimit: 10485760, // 10MB
-          });
-          
-          if (createError) {
-            console.error("Erro ao criar bucket:", createError);
-            // Continue with DB deletion even if bucket creation fails
-          } else {
-            console.log("Bucket criado com sucesso");
-          }
-        } else {
-          console.log("Bucket 'documents' encontrado");
-        }
-      } catch (bucketError: any) {
-        console.error("Erro ao verificar/criar bucket:", bucketError);
-        // Continue with deletion anyway, just log the error
+      // Ensure storage bucket exists
+      const bucketExists = await createBucketIfNotExists();
+      if (!bucketExists) {
+        console.warn("Não foi possível garantir que o bucket existe, mas vamos tentar excluir o arquivo mesmo assim");
       }
 
       console.log("Tentando remover arquivo:", document.file_path);
       
       // Try to remove the file from storage, but continue even if it fails
+      // This separates storage operations from database operations
       try {
-        const { error: removeError } = await supabase.storage
-          .from('documents')
-          .remove([document.file_path]);
-
-        if (removeError) {
-          console.warn("Aviso durante remoção do arquivo:", removeError);
-          console.log("Continuando com exclusão do registro no banco de dados...");
-          // Continue with database record deletion even if file removal fails
-        } else {
-          console.log("Arquivo removido com sucesso!");
-        }
+        await deleteFromStorage(document.file_path);
       } catch (storageError: any) {
         console.warn("Erro ao remover arquivo do storage:", storageError);
         console.log("Continuando com exclusão do registro no banco de dados...");
-        // Don't return false here, we still want to delete the database record
+        // Continue with database record deletion even if file removal fails
       }
 
       console.log("Removendo registro do banco de dados...");
@@ -153,7 +115,7 @@ export const useDocumentDeleteOperations = (
       toast.error(`Falha ao excluir o documento: ${error.message}`);
       return false;
     }
-  }, [createBucketIfNotExists, setDocuments]);
+  }, [createBucketIfNotExists, setDocuments, deleteFromStorage]);
 
   return { deleteDocument };
 };
