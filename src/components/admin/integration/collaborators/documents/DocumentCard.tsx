@@ -1,4 +1,3 @@
-
 import { FileText, Download, Trash2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,6 +23,17 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
   onDownload,
   onDelete,
 }) => {
+  // Function to truncate long file names
+  const truncateFileName = (name: string, maxLength = 40) => {
+    if (name.length <= maxLength) return name;
+    
+    const extension = name.split('.').pop();
+    const nameWithoutExt = name.substring(0, name.lastIndexOf('.'));
+    
+    // Keep the file extension and truncate the name
+    return `${nameWithoutExt.substring(0, maxLength - extension!.length - 4)}...${extension ? `.${extension}` : ''}`;
+  };
+
   return (
     <Card key={document.id} className="hover:shadow-sm transition-shadow">
       <CardContent className="p-4">
@@ -33,7 +43,9 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
               <FileText className="h-5 w-5 text-blue-500" />
             </div>
             <div className="overflow-hidden">
-              <p className="font-medium truncate" title={document.name}>{document.name}</p>
+              <p className="font-medium truncate" title={document.name}>
+                {truncateFileName(document.name)}
+              </p>
               <div className="flex text-sm text-gray-500 space-x-2">
                 <span className="truncate">
                   {DOCUMENT_TYPE_LABELS[document.document_type] || document.document_type}

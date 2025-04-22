@@ -5,7 +5,7 @@ import { MAX_FILE_SIZE } from './constants';
 import { useDocumentValidation } from './useDocumentValidation';
 
 export const useStorageOperations = () => {
-  const { checkBucketExists } = useDocumentValidation();
+  const { createBucketIfNotExists } = useDocumentValidation();
   
   const uploadToStorage = async (userId: string, file: File): Promise<string> => {
     if (file.size > MAX_FILE_SIZE) {
@@ -14,7 +14,7 @@ export const useStorageOperations = () => {
     
     try {
       // First, ensure the bucket exists
-      const bucketExists = await checkBucketExists();
+      const bucketExists = await createBucketIfNotExists();
       
       if (!bucketExists) {
         throw new Error("Sistema de armazenamento não está disponível");

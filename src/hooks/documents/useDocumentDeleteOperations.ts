@@ -8,7 +8,7 @@ import { UserDocument } from '@/types/document';
 export const useDocumentDeleteOperations = (
   setDocuments: React.Dispatch<React.SetStateAction<UserDocument[]>>
 ) => {
-  const { checkBucketExists } = useDocumentValidation();
+  const { createBucketIfNotExists } = useDocumentValidation();
 
   const deleteDocument = useCallback(async (documentId: string): Promise<boolean> => {
     if (!documentId) {
@@ -46,24 +46,25 @@ export const useDocumentDeleteOperations = (
         return false;
       }
 
-      const bucketExists = await checkBucketExists();
+      // Ensure bucket exists
+      const bucketExists = await createBucketIfNotExists();
       
       if (!bucketExists) {
-        toast.error("Sistema de armazenamento não está disponível. Criando...");
-        const retryBucketCheck = await checkBucketExists();
+        toast.error("Sistema de armazenamento não está disponível. Tentando criar...");
+        const retryBucketCheck = await createBucketIfNotExists();
         
         if (!retryBucketCheck) {
-          toast.error("Não foi possível criar o armazenamento. Contate o administrador.");
+          toast.error("Não foi possível acessar o armazenamento. Contate o administrador.");
           return false;
         }
       }
 
       // Try to remove the file, but continue even if it fails (file might already be deleted)
-      const { error: storageError } = await supabase.storage
-        .from('documents')
-        .remove([document.file_path]);
-
-      if (storageError) {
+      try {
+        await supabase.storage
+          .from('documents')
+          .remove([document.file_path]);
+      } catch (storageError) {
         console.warn("Erro ao remover arquivo do storage:", storageError);
         // Don't return false here, we still want to delete the database record
       }
@@ -83,7 +84,7 @@ export const useDocumentDeleteOperations = (
       toast.error(`Erro ao excluir documento: ${error.message}`);
       return false;
     }
-  }, [checkBucketExists, setDocuments]);
+  }, [createBucketIfNotExists, setDocuments]);
 
   return { deleteDocument };
 };

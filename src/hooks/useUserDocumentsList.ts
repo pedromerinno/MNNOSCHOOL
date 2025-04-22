@@ -14,7 +14,7 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
   const [previewOpen, setPreviewOpen] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const { fetchDocumentsForUser } = useDocumentFetching();
-  const { checkBucketExists } = useDocumentValidation();
+  const { createBucketIfNotExists } = useDocumentValidation();
   
   // Fetch the current user for permission checks
   useEffect(() => {
@@ -32,7 +32,7 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
     
     try {
       // Ensure bucket exists before attempting download
-      const bucketExists = await checkBucketExists();
+      const bucketExists = await createBucketIfNotExists();
       
       if (!bucketExists) {
         throw new Error("Sistema de armazenamento não está disponível");
@@ -72,7 +72,7 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
   const handlePreview = async (document: UserDocument) => {
     try {
       // Ensure bucket exists before attempting preview
-      const bucketExists = await checkBucketExists();
+      const bucketExists = await createBucketIfNotExists();
       
       if (!bucketExists) {
         throw new Error("Sistema de armazenamento não está disponível");

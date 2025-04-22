@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Download, Eye, Trash2 } from "lucide-react";
@@ -20,6 +19,15 @@ export const DocumentList = ({
   onDelete,
   canDeleteDocument
 }: DocumentListProps) => {
+  const truncateFileName = (name: string, maxLength = 40) => {
+    if (name.length <= maxLength) return name;
+    
+    const extension = name.split('.').pop();
+    const nameWithoutExt = name.substring(0, name.lastIndexOf('.'));
+    
+    return `${nameWithoutExt.substring(0, maxLength - extension!.length - 4)}...${extension ? `.${extension}` : ''}`;
+  };
+
   const documentsByType = documents.reduce((acc, doc) => {
     if (!acc[doc.document_type]) {
       acc[doc.document_type] = [];
@@ -42,17 +50,19 @@ export const DocumentList = ({
                   key={doc.id}
                   className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 dark:hover:bg-gray-800"
                 >
-                  <div className="flex items-center">
-                    <FileText className="h-5 w-5 text-blue-500 mr-3" />
-                    <div>
-                      <p className="font-medium">{doc.name}</p>
+                  <div className="flex items-center overflow-hidden">
+                    <FileText className="h-5 w-5 text-blue-500 mr-3 flex-shrink-0" />
+                    <div className="overflow-hidden">
+                      <p className="font-medium truncate" title={doc.name}>
+                        {truncateFileName(doc.name)}
+                      </p>
                       <p className="text-sm text-gray-500">
                         {format(new Date(doc.uploaded_at), 'dd/MM/yyyy')}
                       </p>
                     </div>
                   </div>
                   
-                  <div className="flex space-x-2">
+                  <div className="flex space-x-2 flex-shrink-0">
                     <Button 
                       variant="ghost" 
                       size="icon"
