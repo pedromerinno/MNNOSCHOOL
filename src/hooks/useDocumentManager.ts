@@ -13,7 +13,9 @@ export const useDocumentManager = () => {
     uploadOpen, 
     setUploadOpen, 
     canDeleteDocument, 
-    handleDocumentUpload 
+    handleDocumentUpload,
+    fileError,
+    setFileError
   } = useDocumentUpload();
 
   return {
@@ -30,6 +32,8 @@ export const useDocumentManager = () => {
     handlePreview,
     handleDelete,
     handleDocumentUpload,
-    refreshDocuments
+    refreshDocuments,
+    fileError,
+    setFileError
   };
 };

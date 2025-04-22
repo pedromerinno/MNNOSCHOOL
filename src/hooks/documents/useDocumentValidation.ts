@@ -7,7 +7,7 @@ export const useDocumentValidation = () => {
   /**
    * Verifica se o bucket 'documents' existe e tenta criá-lo se não existir
    */
-  const checkBucketExists = async () => {
+  const checkBucketExists = useCallback(async () => {
     try {
       console.log("Verificando se o bucket 'documents' existe...");
       
@@ -32,72 +32,62 @@ export const useDocumentValidation = () => {
       console.error("Erro ao verificar storage bucket:", err);
       return false;
     }
-  };
+  }, []);
 
   /**
    * Cria o bucket 'documents' no storage do Supabase
    */
-  const createBucket = async () => {
+  const createBucket = useCallback(async () => {
     try {
       console.log("Criando bucket 'documents'...");
       
-      // Tentar várias vezes a criação do bucket, em caso de falha
-      let attempts = 0;
-      const maxAttempts = 3;
+      // Tentar criar o bucket com configurações adequadas
+      const { data, error } = await supabase.storage.createBucket('documents', {
+        public: true, // Bucket público para facilitar o acesso aos arquivos
+        fileSizeLimit: 10485760, // 10MB
+        allowedMimeTypes: [
+          'application/pdf', 
+          'application/msword', 
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'image/jpeg',
+          'image/png'
+        ]
+      });
       
-      while (attempts < maxAttempts) {
-        attempts++;
-        console.log(`Tentativa ${attempts} de criar bucket...`);
-        
-        const { data, error } = await supabase.storage.createBucket('documents', {
-          public: true, // Bucket público para facilitar o acesso aos arquivos
-          fileSizeLimit: 10485760, // 10MB
-        });
-        
-        if (!error) {
-          console.log("Bucket 'documents' criado com sucesso!");
-          return true;
-        }
-        
-        // Se o erro for que o bucket já existe, consideramos um sucesso
+      if (error) {
+        // Verificar se o erro é porque o bucket já existe
         if (error.message.includes('already exists')) {
           console.log("Bucket 'documents' já existe!");
           return true;
         }
-        
-        console.error(`Tentativa ${attempts} falhou:`, error);
-        
-        // Aguardar um pouco antes de tentar novamente
-        if (attempts < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
+        console.error("Erro ao criar bucket:", error);
+        return false;
       }
       
-      console.error(`Falha após ${maxAttempts} tentativas de criar bucket`);
-      return false;
+      console.log("Bucket 'documents' criado com sucesso!");
+      return true;
     } catch (err) {
       console.error("Erro ao criar storage bucket:", err);
       return false;
     }
-  };
-
-  // Função auxiliar para garantir que o bucket existe
-  const createBucketIfNotExists = useCallback(async () => {
-    try {
-      // Verificar se o bucket existe, e criar se não existir
-      const bucketExists = await checkBucketExists();
-      
-      if (!bucketExists) {
-        console.log("Tentando criar bucket novamente...");
-        return await createBucket();
-      }
-      
-      return bucketExists;
-    } catch (error) {
-      console.error("Erro ao verificar/criar bucket:", error);
-      return false;
-    }
   }, []);
 
-  return { checkBucketExists, createBucketIfNotExists, createBucket };
+  const ensureBucketExists = useCallback(async () => {
+    const exists = await checkBucketExists();
+    if (!exists) {
+      const created = await createBucket();
+      if (!created) {
+        toast.error("Falha ao configurar sistema de armazenamento");
+        console.error("Não foi possível criar o bucket 'documents'");
+        return false;
+      }
+    }
+    return true;
+  }, [checkBucketExists, createBucket]);
+
+  return { 
+    checkBucketExists, 
+    createBucket, 
+    ensureBucketExists 
+  };
 };

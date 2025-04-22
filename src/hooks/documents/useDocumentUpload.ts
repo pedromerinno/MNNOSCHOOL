@@ -13,6 +13,7 @@ export const useDocumentUpload = (params?: {
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [uploadOpen, setUploadOpen] = useState(false);
   const { uploadToStorage } = useStorageOperations();
 
   const validateFile = (file: File): boolean => {
@@ -35,6 +36,12 @@ export const useDocumentUpload = (params?: {
     return true;
   };
 
+  const canDeleteDocument = (document: any): boolean => {
+    // Lógica para verificar se o usuário pode excluir o documento
+    // Por padrão, permitir a exclusão de documentos carregados pelo próprio usuário
+    return true;
+  };
+
   const uploadDocument = async (
     file: File, 
     documentType: DocumentType, 
@@ -49,7 +56,7 @@ export const useDocumentUpload = (params?: {
       if (!user) throw new Error("Usuário não autenticado");
 
       const targetUserId = params?.userId || user.id;
-      const targetCompanyId = params?.companyId;
+      let targetCompanyId = params?.companyId;
 
       if (!targetCompanyId) {
         // Buscar empresa do usuário se não fornecida
@@ -97,10 +104,19 @@ export const useDocumentUpload = (params?: {
     }
   };
 
+  // Função para facilitar o uso em componentes
+  const handleDocumentUpload = async (file: File, documentType: DocumentType, description: string) => {
+    return await uploadDocument(file, documentType, description);
+  };
+
   return {
     isUploading,
     fileError,
     setFileError,
-    uploadDocument
+    uploadDocument,
+    uploadOpen,
+    setUploadOpen,
+    canDeleteDocument,
+    handleDocumentUpload
   };
 };

@@ -1,100 +1,120 @@
 
-import { useCallback } from 'react';
+import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { DocumentType, UserDocument } from "@/types/document";
-import { useUploadValidation } from './useUploadValidation';
+import { DocumentType, UserDocument } from '@/types/document';
 import { useStorageOperations } from './useStorageOperations';
+import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from './constants';
 
 export const useDocumentUploadOperations = (
   userId: string | null,
   companyId: string | null,
   setDocuments: React.Dispatch<React.SetStateAction<UserDocument[]>>,
-  setIsUploading: (loading: boolean) => void
+  setIsUploading: React.Dispatch<React.SetStateAction<boolean>>
 ) => {
-  const { validateUpload } = useUploadValidation();
+  const [fileError, setFileError] = useState<string | null>(null);
   const { uploadToStorage } = useStorageOperations();
 
-  const uploadDocument = useCallback(async (
-    file: File, 
-    documentType: DocumentType, 
-    description?: string
-  ): Promise<UserDocument | null> => {
-    if (!validateUpload(file, userId, companyId)) {
-      return null;
+  const validateFile = (file: File): boolean => {
+    if (!file) {
+      setFileError("Por favor, selecione um arquivo");
+      return false;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      setFileError("O arquivo não pode ser maior que 10MB");
+      return false;
+    }
+
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      setFileError("Tipo de arquivo não permitido. Use PDF, DOC, DOCX, JPG ou PNG.");
+      return false;
+    }
+
+    setFileError(null);
+    return true;
+  };
+
+  const uploadDocument = async (
+    file: File,
+    documentType: DocumentType,
+    description: string
+  ): Promise<boolean> => {
+    if (!validateFile(file)) return false;
+    
+    if (!userId) {
+      toast.error("Usuário não autenticado");
+      return false;
     }
 
     setIsUploading(true);
+    
     try {
-      // Get the current authenticated user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error("Usuário não autenticado");
-        return null;
+      // Buscar companyId se não fornecido
+      let targetCompanyId = companyId;
+      
+      if (!targetCompanyId) {
+        const { data: userCompany } = await supabase
+          .from('user_empresa')
+          .select('empresa_id')
+          .eq('user_id', userId)
+          .single();
+          
+        if (!userCompany) {
+          throw new Error("Empresa não encontrada");
+        }
+        
+        targetCompanyId = userCompany.empresa_id;
       }
-
-      console.log("Iniciando upload do arquivo para o storage...");
       
-      // Upload the file to storage
-      const filePath = await uploadToStorage(userId!, file);
-
-      console.log("Arquivo enviado com sucesso. Salvando registro no banco de dados...");
+      // Criar um diretório único para o usuário
+      const filePath = await uploadToStorage(file);
       
-      // Create the document record in the database
-      const { data, error } = await supabase
+      if (!filePath) {
+        throw new Error("Falha ao fazer upload do arquivo para o storage");
+      }
+      
+      // Inserir registro do documento
+      const { data: newDocument, error: insertError } = await supabase
         .from('user_documents')
         .insert({
           user_id: userId,
-          company_id: companyId,
+          company_id: targetCompanyId,
           name: file.name,
           file_path: filePath,
           file_type: file.type,
           document_type: documentType,
           description: description || null,
-          uploaded_by: user.id
+          uploaded_by: userId
         })
-        .select()
+        .select('*')
         .single();
-
-      if (error) {
-        console.error("Erro ao criar registro do documento:", error);
-        throw error;
-      }
-
-      console.log("Registro do documento criado com sucesso!");
+        
+      if (insertError) throw insertError;
       
-      const newDoc = data as UserDocument;
-      setDocuments(prev => [...prev, newDoc]);
-      toast.success('Documento enviado com sucesso');
-      return newDoc;
+      // Atualizar o estado local com o novo documento
+      if (newDocument) {
+        setDocuments(current => [newDocument, ...current]);
+      }
+      
+      toast.success("Documento enviado com sucesso");
+      return true;
     } catch (error: any) {
-      console.error('Error uploading document:', error);
-      
-      let errorMessage = 'Erro ao enviar documento';
-      
-      if (error.message.includes("storage/bucket-not-found")) {
-        errorMessage = "Armazenamento não configurado. Contate o administrador.";
-      } else if (error.message.includes("already exists")) {
-        errorMessage = "Um arquivo com este nome já existe. Tente novamente.";
-      } else if (error.message.includes("permission denied")) {
-        errorMessage = "Você não tem permissão para fazer upload desse arquivo.";
+      console.error("Erro ao fazer upload do documento:", error);
+      if (error.message.includes('storage')) {
+        toast.error("Erro no sistema de armazenamento. Verifique se o bucket 'documents' existe.");
       } else {
-        errorMessage = `Erro no upload: ${error.message}`;
+        toast.error(`Falha ao enviar documento: ${error.message}`);
       }
-      
-      toast.error(errorMessage);
-      return null;
+      return false;
     } finally {
       setIsUploading(false);
     }
-  }, [
-    userId, 
-    companyId, 
-    setDocuments, 
-    setIsUploading, 
-    validateUpload, 
-    uploadToStorage
-  ]);
+  };
 
-  return { uploadDocument };
+  return {
+    uploadDocument,
+    fileError,
+    setFileError
+  };
 };
