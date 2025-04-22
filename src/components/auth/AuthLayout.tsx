@@ -65,16 +65,16 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
   }, []);
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-white">
       {/* Left side - Background Media */}
       <div className="flex-1 relative overflow-hidden hidden lg:block">
         <div className="absolute top-8 left-8 z-10">
-          <h1 className="text-4xl font-medium text-white">MNNO</h1>
+          <h1 className="text-4xl font-medium text-black">MNNO</h1>
         </div>
         
         {isLoading ? (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-merinno-dark"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
           </div>
         ) : backgroundMedia.url ? (
           <>
@@ -99,8 +99,8 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
             )}
           </>
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-merinno-dark to-black flex items-center justify-center">
-            <div className="text-white/70 text-center px-4">
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+            <div className="text-black/70 text-center px-4">
               <p className="text-lg font-medium">Customize o background</p>
               <p className="text-sm mt-2">Configure uma imagem ou vídeo no painel administrativo</p>
             </div>
@@ -115,3 +115,4 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
     </div>
   );
 };
+
