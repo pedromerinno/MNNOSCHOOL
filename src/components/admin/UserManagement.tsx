@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { UserTable } from './UserTable';
 import { useUsers } from '@/hooks/useUsers';
@@ -7,6 +6,11 @@ import { PermissionError } from './user/PermissionError';
 import { AddAdminDialog } from './user/AddAdminDialog';
 import { UserManagementHeader } from './user/UserManagementHeader';
 import { UserManagementSkeleton } from './user/UserManagementSkeleton';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useCompanies } from '@/hooks/useCompanies';
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 
 export const UserManagement = () => {
   const { users, loading, fetchUsers, toggleAdminStatus } = useUsers();
@@ -15,6 +19,9 @@ export const UserManagement = () => {
   const [permissionError, setPermissionError] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false); // Controle do modal de convite
+  const [showInviteInfo, setShowInviteInfo] = useState(false);
+  const { selectedCompany } = useCompanies();
+  const { toast } = useToast();
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -33,8 +40,7 @@ export const UserManagement = () => {
 
   // EXEMPLO DE PLACEHOLDER: aqui abrimos um toast/alerta, mas idealmente seria um Dialog de convite real
   const handleInviteUser = () => {
-    alert('Função de convite de usuário em breve!'); // Substitua futuramente por Dialog real
-    // setIsInviteDialogOpen(true)
+    setShowInviteInfo(true);
   };
 
   return (
@@ -66,6 +72,49 @@ export const UserManagement = () => {
           onToggle={toggleAdminStatus} 
         />
       )}
+
+      <Dialog open={showInviteInfo} onOpenChange={setShowInviteInfo}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Informações para Convite</DialogTitle>
+            <DialogDescription>
+              Compartilhe este ID da empresa com o novo usuário durante o cadastro:
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="flex items-center space-x-2">
+              <Input 
+                value={selectedCompany?.id || ''} 
+                readOnly 
+                className="font-mono"
+              />
+              <Button
+                onClick={() => {
+                  navigator.clipboard.writeText(selectedCompany?.id || '');
+                  toast({
+                    title: "Sucesso",
+                    description: "ID copiado para a área de transferência!",
+                  });
+                }}
+                variant="outline"
+              >
+                Copiar
+              </Button>
+            </div>
+            
+            <p className="text-sm text-muted-foreground">
+              O novo usuário deve usar este ID ao se cadastrar para ser vinculado à empresa corretamente.
+            </p>
+          </div>
+          
+          <DialogFooter>
+            <Button onClick={() => setShowInviteInfo(false)}>
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AddAdminDialog
         isOpen={isDialogOpen}
