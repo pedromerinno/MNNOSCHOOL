@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { Navigate } from "react-router-dom";
 import { useCompanies } from "@/hooks/useCompanies";
 import { TeamMembersList } from "@/components/team/TeamMembersList";
 import { LoadingState } from "@/components/team/LoadingState";
@@ -9,11 +10,18 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { CompanyThemedBadge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Team = () => {
   const { selectedCompany } = useCompanies();
   const { members, isLoading, error } = useTeamMembers();
   const [showSlowLoadingMessage, setShowSlowLoadingMessage] = useState(false);
+  const { userProfile } = useAuth();
+
+  // Redirect if user is not an admin
+  if (!userProfile?.is_admin && !userProfile?.super_admin) {
+    return <Navigate to="/" replace />;
+  }
 
   // Show a message if loading takes too long
   useEffect(() => {
