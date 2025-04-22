@@ -41,14 +41,14 @@ export const WelcomeSection = () => {
         </p>
         
         <p 
-          className="text-[#000000] text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-5"
+          className="text-foreground text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-5"
         >
           {companyPhrase}
         </p>
         
         <Button 
           onClick={handleLearnMore} 
-          className="mt-1 flex items-center gap-2 text-white rounded-full text-sm transition-colors duration-300 bg-black hover:bg-black/90"
+          className="mt-1 flex items-center gap-2 text-white dark:text-black rounded-full text-sm transition-colors duration-300 bg-black dark:bg-white hover:bg-black/90 dark:hover:bg-white/90"
           variant="default"
         >
           Saiba mais

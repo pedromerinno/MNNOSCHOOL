@@ -1,4 +1,3 @@
-
 import { useEffect, useState, memo, useCallback } from "react";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,18 +22,15 @@ export const CompanySelector = memo(() => {
   
   const [displayName, setDisplayName] = useState<string>("merinno");
   
-  // Atualizar o nome da empresa quando mudar a seleção ou após eventos de empresa
   useEffect(() => {
     if (selectedCompany?.nome) {
       console.log(`CompanySelector: Atualizando nome para "${selectedCompany.nome}"`);
       setDisplayName(selectedCompany.nome);
       
-      // Atualizar o localStorage para persistência
       localStorage.setItem('selectedCompanyName', selectedCompany.nome);
     }
   }, [selectedCompany]);
 
-  // Listener para mudanças nas relações de empresa
   const handleCompanyRelationChange = useCallback(async () => {
     if (user?.id) {
       console.log('CompanySelector: Detectada mudança na relação de empresa, atualizando dados');
@@ -42,7 +38,6 @@ export const CompanySelector = memo(() => {
     }
   }, [user, forceGetUserCompanies]);
   
-  // Carregar nome da empresa do localStorage ao inicializar
   useEffect(() => {
     const cachedCompanyName = localStorage.getItem('selectedCompanyName');
     if (cachedCompanyName) {
@@ -50,7 +45,6 @@ export const CompanySelector = memo(() => {
     }
   }, []);
   
-  // Configurar ouvinte de eventos
   useEffect(() => {
     window.addEventListener('company-relation-changed', handleCompanyRelationChange);
     window.addEventListener('company-updated', (event: Event) => {
@@ -88,23 +82,22 @@ export const CompanySelector = memo(() => {
     toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
   }, [user?.id, selectedCompany?.id, selectCompany, userCompanies]);
 
-  // Manter a lógica de renderização existente
   if (isLoading && !selectedCompany) {
-    return <span className="text-lg font-bold text-merinno-dark">{displayName}</span>;
+    return <span className="text-lg font-bold text-foreground">{displayName}</span>;
   }
 
   if (!user || !userCompanies || userCompanies.length === 0) {
-    return <span className="text-lg font-bold text-merinno-dark">merinno</span>;
+    return <span className="text-lg font-bold text-foreground">merinno</span>;
   }
 
   if (userCompanies.length === 1) {
-    return <span className="text-lg font-bold text-merinno-dark">{displayName}</span>;
+    return <span className="text-lg font-bold text-foreground">{displayName}</span>;
   }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center text-lg font-bold text-merinno-dark focus:outline-none">
+        <button className="flex items-center text-lg font-bold text-foreground focus:outline-none">
           {displayName}
           <ChevronDown className="ml-1 h-4 w-4" />
         </button>
