@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { CourseCarousel } from "@/components/courses/CourseCarousel";
@@ -93,7 +94,7 @@ const Courses = () => {
             
             {allCoursesLoading ? (
               <CoursesLoadingSkeleton />
-            ) : filteredCourses?.length === 0 ? (
+            ) : !filteredCourses || filteredCourses.length === 0 ? (
               <EmptyCoursesState
                 companyName={selectedCompany.nome}
                 isAdmin={isAdmin}

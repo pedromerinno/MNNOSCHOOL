@@ -16,15 +16,18 @@ export const EmptyCoursesState: React.FC<EmptyCoursesStateProps> = ({
 }) => {
   return (
     <div className="col-span-3 flex flex-col items-center justify-center py-12 text-center">
-      <p className="text-gray-500 dark:text-gray-400 text-lg mb-6">
-        Em breve, aqui estarão todos os cursos da {companyName}.
-      </p>
-      {isAdmin && (
-        <Button onClick={onCreateCourse} className="flex items-center gap-2">
-          <PlusCircle className="h-4 w-4" />
-          Criar um novo curso
-        </Button>
-      )}
+      <div className="max-w-md">
+        <h3 className="text-xl font-semibold mb-2">Nenhum curso disponível</h3>
+        <p className="text-gray-500 dark:text-gray-400 text-lg mb-6">
+          Em breve, aqui estarão todos os cursos da {companyName}.
+        </p>
+        {isAdmin && (
+          <Button onClick={onCreateCourse} className="flex items-center gap-2">
+            <PlusCircle className="h-4 w-4" />
+            Criar um novo curso
+          </Button>
+        )}
+      </div>
     </div>
   );
 };
