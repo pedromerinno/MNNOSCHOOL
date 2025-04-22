@@ -1,5 +1,12 @@
 
 import React from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight, Play, Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useCompanies } from "@/hooks/useCompanies";
+import { CompanyThemedBadge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Carousel,
   CarouselContent,
@@ -7,12 +14,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { Button } from "@/components/ui/button";
-import { Play } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useCompanies } from "@/hooks/useCompanies";
-import { CompanyThemedBadge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface CourseCarouselProps {
@@ -30,6 +31,18 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], lo
     return (
       <div className="w-full h-[500px] rounded-2xl overflow-hidden relative">
         <Skeleton className="w-full h-full absolute inset-0" />
+        <div className="absolute inset-0 p-8 flex flex-col justify-end">
+          <Skeleton className="w-24 h-8 mb-4" />
+          <Skeleton className="w-3/4 h-12 mb-4" />
+          <Skeleton className="w-1/2 h-4 mb-2" />
+          <Skeleton className="w-1/3 h-4 mb-8" />
+          <div className="flex justify-between items-end">
+            <div className="space-y-2">
+              <Skeleton className="w-32 h-8" />
+            </div>
+            <Skeleton className="w-32 h-10" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -49,6 +62,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], lo
             onClick={() => navigate('/admin/courses')}
             className="bg-primary hover:bg-primary/90"
           >
+            <Plus className="w-4 h-4 mr-2" />
             Cadastrar Novo Curso
           </Button>
         )}
@@ -59,26 +73,17 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], lo
   // Normal carousel with courses
   return (
     <div className="w-full relative">
-      <Carousel 
-        opts={{
-          align: "start",
-          slidesToScroll: 1,
-        }}
-        className="w-full"
-      >
-        <CarouselContent className="-ml-4 flex">
+      <Carousel>
+        <CarouselContent>
           {courses.map((course) => (
-            <CarouselItem 
-              key={course.id} 
-              className="pl-4 basis-[90%] md:basis-[70%] shrink-0 grow-0"
-            >
-              <div className="relative h-[500px] rounded-2xl overflow-visible flex">
+            <CarouselItem key={course.id}>
+              <div className="relative h-[500px] rounded-2xl overflow-hidden">
                 <img
                   src={course.image_url || "https://source.unsplash.com/random"}
                   alt={course.title}
-                  className="w-full h-full object-cover rounded-2xl shadow-lg transition-transform duration-300 ease-in-out group-hover:scale-105"
+                  className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent rounded-2xl">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent">
                   {/* Company Logo */}
                   {selectedCompany?.logo && (
                     <div className="absolute top-8 left-8">
@@ -143,4 +148,3 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], lo
     </div>
   );
 };
-
