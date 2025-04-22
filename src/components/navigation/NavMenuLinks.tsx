@@ -85,11 +85,13 @@ export const NavMenuLinks = ({ adminLabel = "Admin" }) => {
           </Link>
         </NavigationMenuItem>
         
-        <NavigationMenuItem>
-          <Link to="/team" className={menuLinkClass('/team')}>
-            Equipe
-          </Link>
-        </NavigationMenuItem>
+        {(userProfile?.is_admin || userProfile?.super_admin) && (
+          <NavigationMenuItem>
+            <Link to="/team" className={menuLinkClass('/team')}>
+              Equipe
+            </Link>
+          </NavigationMenuItem>
+        )}
         
         {(userProfile?.is_admin || userProfile?.super_admin) && (
           <NavigationMenuItem>
