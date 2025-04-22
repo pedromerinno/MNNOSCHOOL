@@ -17,7 +17,16 @@ export const useStorageOperations = () => {
       const bucketExists = await createBucketIfNotExists();
       
       if (!bucketExists) {
-        throw new Error("Sistema de armazenamento não está disponível");
+        console.log("Bucket doesn't exist, trying to create it forcefully...");
+        const { error } = await supabase.storage.createBucket('documents', {
+          public: false,
+          fileSizeLimit: 10485760, // 10MB
+        });
+        
+        if (error) {
+          console.error("Forced bucket creation failed:", error);
+          throw new Error("Sistema de armazenamento não está disponível. Por favor, tente novamente mais tarde.");
+        }
       }
       
       // Create a unique file path
@@ -34,7 +43,10 @@ export const useStorageOperations = () => {
           upsert: true
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw uploadError;
+      }
       
       return filePath;
     } catch (error: any) {

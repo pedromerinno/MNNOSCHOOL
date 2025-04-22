@@ -17,18 +17,28 @@ export const useDocumentDeleteOperations = (
     }
 
     try {
+      // Fetch document details
       const { data: document, error: fetchError } = await supabase
         .from('user_documents')
-        .select('file_path, uploaded_by')
+        .select('file_path, uploaded_by, user_id')
         .eq('id', documentId)
         .single();
 
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        console.error("Erro ao buscar detalhes do documento:", fetchError);
+        throw fetchError;
+      }
 
+      if (!document) {
+        toast.error("Documento não encontrado");
+        return false;
+      }
+
+      // Get current authenticated user
       const { data: { user } } = await supabase.auth.getUser();
       
-      if (!document || !user) {
-        toast.error("Documento não encontrado ou usuário não autenticado");
+      if (!user) {
+        toast.error("Usuário não autenticado");
         return false;
       }
 
@@ -41,41 +51,57 @@ export const useDocumentDeleteOperations = (
         
       const isAdmin = profileData?.is_admin || profileData?.super_admin;
 
+      // Only allow deletion if user is the uploader or an admin
       if (document.uploaded_by !== user.id && !isAdmin) {
         toast.error("Você só pode excluir documentos que você mesmo enviou");
         return false;
       }
 
-      // Ensure bucket exists
+      // Create bucket if it doesn't exist - this is automatic now
       const bucketExists = await createBucketIfNotExists();
       
       if (!bucketExists) {
-        toast.error("Sistema de armazenamento não está disponível. Tentando criar...");
-        const retryBucketCheck = await createBucketIfNotExists();
+        // Retry once more with forceful creation
+        console.log("Retry bucket creation forcefully");
+        const { error } = await supabase.storage.createBucket('documents', {
+          public: false,
+          fileSizeLimit: 10485760, // 10MB
+        });
         
-        if (!retryBucketCheck) {
-          toast.error("Não foi possível acessar o armazenamento. Contate o administrador.");
+        if (error) {
+          console.error("Segunda tentativa falhou:", error);
+          toast.error("Não foi possível acessar o armazenamento. Tente novamente mais tarde.");
           return false;
         }
       }
 
-      // Try to remove the file, but continue even if it fails (file might already be deleted)
+      // Try to remove the file, but continue even if it fails
       try {
-        await supabase.storage
+        const { error: removeError } = await supabase.storage
           .from('documents')
           .remove([document.file_path]);
+
+        if (removeError) {
+          console.warn("Warning during file removal:", removeError);
+          // Continue with database record deletion even if file removal fails
+        }
       } catch (storageError) {
         console.warn("Erro ao remover arquivo do storage:", storageError);
         // Don't return false here, we still want to delete the database record
       }
 
+      // Delete the database record
       const { error: deleteError } = await supabase
         .from('user_documents')
         .delete()
         .eq('id', documentId);
 
-      if (deleteError) throw deleteError;
+      if (deleteError) {
+        console.error("Erro ao excluir registro do documento:", deleteError);
+        throw deleteError;
+      }
 
+      // Update the state to remove the deleted document
       setDocuments(currentDocs => currentDocs.filter(doc => doc.id !== documentId));
       toast.success('Documento excluído com sucesso');
       return true;

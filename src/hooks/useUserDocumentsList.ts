@@ -13,17 +13,29 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUserIsAdmin, setCurrentUserIsAdmin] = useState<boolean>(false);
   const { fetchDocumentsForUser } = useDocumentFetching();
   const { createBucketIfNotExists } = useDocumentValidation();
   
   // Fetch the current user for permission checks
   useEffect(() => {
-    const fetchUserId = async () => {
+    const fetchUserData = async () => {
       const { data } = await supabase.auth.getUser();
       setCurrentUserId(data.user?.id || null);
+      
+      if (data.user?.id) {
+        // Also check if user is admin
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('is_admin, super_admin')
+          .eq('id', data.user.id)
+          .single();
+          
+        setCurrentUserIsAdmin(!!profileData?.is_admin || !!profileData?.super_admin);
+      }
     };
     
-    fetchUserId();
+    fetchUserData();
   }, []);
 
   const handleDownload = async (document: UserDocument) => {
@@ -35,14 +47,25 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
       const bucketExists = await createBucketIfNotExists();
       
       if (!bucketExists) {
-        throw new Error("Sistema de armazenamento não está disponível");
+        const { error } = await supabase.storage.createBucket('documents', {
+          public: false,
+          fileSizeLimit: 10485760, // 10MB
+        });
+        
+        if (error) {
+          console.error("Storage bucket creation error:", error);
+          throw new Error("Sistema de armazenamento não está disponível");
+        }
       }
       
       const { data, error } = await supabase.storage
         .from('documents')
         .download(document.file_path);
         
-      if (error) throw error;
+      if (error) {
+        console.error("Download error:", error);
+        throw error;
+      }
       
       const url = URL.createObjectURL(data);
       const a = window.document.createElement('a');
@@ -75,14 +98,25 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
       const bucketExists = await createBucketIfNotExists();
       
       if (!bucketExists) {
-        throw new Error("Sistema de armazenamento não está disponível");
+        const { error } = await supabase.storage.createBucket('documents', {
+          public: false,
+          fileSizeLimit: 10485760, // 10MB
+        });
+        
+        if (error) {
+          console.error("Storage bucket creation error:", error);
+          throw new Error("Sistema de armazenamento não está disponível");
+        }
       }
       
       const { data, error } = await supabase.storage
         .from('documents')
         .createSignedUrl(document.file_path, 3600);
         
-      if (error) throw error;
+      if (error) {
+        console.error("Preview error:", error);
+        throw error;
+      }
       
       setPreviewUrl(data.signedUrl);
       setPreviewOpen(true);
@@ -95,6 +129,11 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
   const confirmDelete = async (document: UserDocument) => {
     // Get the current user to check if they're an admin
     const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      toast.error("Usuário não autenticado");
+      return;
+    }
     
     // Check if the current user is allowed to delete this document
     const { data: profileData } = await supabase
@@ -111,9 +150,14 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
         setDeletingId(document.id);
         setError(null);
         try {
-          await onDelete(document.id);
+          const result = await onDelete(document.id);
+          if (!result) {
+            throw new Error("Falha ao excluir o documento. Tente novamente.");
+          }
         } catch (error: any) {
+          console.error("Delete error:", error);
           setError(`Falha ao excluir o documento: ${error.message}`);
+          toast.error(`Falha ao excluir o documento: ${error.message}`);
         } finally {
           setDeletingId(null);
         }
@@ -131,7 +175,7 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
     previewOpen,
     setPreviewOpen,
     currentUserId,
-    setCurrentUserId,
+    currentUserIsAdmin,
     handleDownload,
     handlePreview,
     confirmDelete,

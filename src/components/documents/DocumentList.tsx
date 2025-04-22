@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Download, Eye, Trash2 } from "lucide-react";
@@ -19,7 +20,7 @@ export const DocumentList = ({
   onDelete,
   canDeleteDocument
 }: DocumentListProps) => {
-  const truncateFileName = (name: string, maxLength = 40) => {
+  const truncateFileName = (name: string, maxLength = 30) => {
     if (name.length <= maxLength) return name;
     
     const extension = name.split('.').pop();

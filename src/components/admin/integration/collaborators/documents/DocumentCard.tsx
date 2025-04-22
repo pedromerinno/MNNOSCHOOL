@@ -1,3 +1,4 @@
+
 import { FileText, Download, Trash2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,7 +25,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
   onDelete,
 }) => {
   // Function to truncate long file names
-  const truncateFileName = (name: string, maxLength = 40) => {
+  const truncateFileName = (name: string, maxLength = 35) => {
     if (name.length <= maxLength) return name;
     
     const extension = name.split('.').pop();
@@ -67,7 +68,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
             </Button>
             <Button 
               variant="outline" 
-              size="icon" 
+              size="icon"
               onClick={onDownload}
               title="Baixar documento"
               disabled={!!downloadingId}
