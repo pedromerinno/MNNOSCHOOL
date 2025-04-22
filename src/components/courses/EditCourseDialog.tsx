@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CourseForm } from '@/components/admin/CourseForm';
 import { CourseFormValues } from '@/components/admin/courses/form/CourseFormTypes';
@@ -28,6 +28,13 @@ export const EditCourseDialog: React.FC<EditCourseDialogProps> = ({
   userCompanies
 }) => {
   const navigate = useNavigate();
+
+  // Logging para debug
+  useEffect(() => {
+    if (open) {
+      console.log('Edit dialog opened with company IDs:', initialData.companyIds);
+    }
+  }, [open, initialData.companyIds]);
 
   const handleDeleteCourse = async () => {
     // Make sure we have a valid ID before trying to delete

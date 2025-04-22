@@ -9,12 +9,14 @@ export const useCourseEdit = (courseId: string | undefined) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [courseCompanyIds, setCourseCompanyIds] = useState<string[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Fetch course's associated companies when dialog opens
-  useEffect(() => {
-    const fetchCourseCompanies = async () => {
-      if (!courseId) return;
-      
+  // Função para buscar as empresas associadas
+  const fetchCourseCompanies = useCallback(async () => {
+    if (!courseId) return;
+    
+    console.log(`Fetching companies for course ID: ${courseId}`);
+    try {
       const { data, error } = await supabase
         .from('company_courses')
         .select('empresa_id')
@@ -27,14 +29,28 @@ export const useCourseEdit = (courseId: string | undefined) => {
       
       if (data) {
         const companyIds = data.map(item => item.empresa_id);
+        console.log(`Found ${companyIds.length} companies for course: ${courseId}`);
         setCourseCompanyIds(companyIds);
       }
-    };
-    
+    } catch (err) {
+      console.error('Exception fetching course companies:', err);
+    }
+  }, [courseId]);
+
+  // Inicializar dados quando courseId muda
+  useEffect(() => {
+    if (courseId && !isInitialized) {
+      fetchCourseCompanies();
+      setIsInitialized(true);
+    }
+  }, [courseId, fetchCourseCompanies, isInitialized]);
+
+  // Fetch course's associated companies when dialog opens
+  useEffect(() => {
     if (isEditDialogOpen) {
       fetchCourseCompanies();
     }
-  }, [courseId, isEditDialogOpen]);
+  }, [isEditDialogOpen, fetchCourseCompanies]);
 
   const handleEditCourse = useCallback(() => {
     setIsEditDialogOpen(true);
