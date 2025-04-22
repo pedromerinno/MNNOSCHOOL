@@ -39,12 +39,14 @@ export const createCourse = async (courseData: CourseFormValues): Promise<string
           .eq('empresa_id', companyId);
         
         if (!usersError && users) {
+          // Convert the notifications to match the expected schema
           const notifications = users.map(user => ({
             user_id: user.user_id,
+            company_id: companyId, // Required field from schema
             title: 'Novo curso disponível',
-            message: `Um novo curso "${courseData.title}" foi adicionado.`,
+            content: `Um novo curso "${courseData.title}" foi adicionado.`, // Using 'content' instead of 'message'
             type: 'course_created',
-            link: `/courses/${courseId}`
+            related_id: courseId // Using 'related_id' instead of 'link'
           }));
 
           const { error: notificationError } = await supabase
