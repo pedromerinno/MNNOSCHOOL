@@ -71,40 +71,47 @@ const Courses = () => {
     );
   }
 
+  // Show empty state if there are no courses
+  const hasNoCourses = !allCompanyCourses || allCompanyCourses.length === 0;
+
   return (
     <DashboardLayout>
       <div className="container mx-auto max-w-screen-2xl space-y-12 px-4 py-6">
-        <CourseCarousel 
-          courses={featuredCourses} 
-          loading={loading} 
-        />
-        
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Categorias</h2>
-          <CourseCategories 
-            activeCategory={activeCategory}
-            onCategoryChange={setActiveCategory}
-            availableCategories={availableCategories}
+        {hasNoCourses ? (
+          <EmptyCoursesState
+            companyName={selectedCompany.nome}
+            isAdmin={isAdmin}
+            onCreateCourse={() => setIsNewCourseDialogOpen(true)}
           />
-        </div>
-        
-        <div className="space-y-8">
-          <div className="space-y-8">
-            <h2 className="text-xl font-semibold">Todos os cursos</h2>
+        ) : (
+          <>
+            <CourseCarousel 
+              courses={featuredCourses} 
+              loading={loading} 
+            />
             
-            {allCoursesLoading ? (
-              <CoursesLoadingSkeleton />
-            ) : !filteredCourses || filteredCourses.length === 0 ? (
-              <EmptyCoursesState
-                companyName={selectedCompany.nome}
-                isAdmin={isAdmin}
-                onCreateCourse={() => setIsNewCourseDialogOpen(true)}
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold">Categorias</h2>
+              <CourseCategories 
+                activeCategory={activeCategory}
+                onCategoryChange={setActiveCategory}
+                availableCategories={availableCategories}
               />
-            ) : (
-              <CoursesGrid courses={filteredCourses} />
-            )}
-          </div>
-        </div>
+            </div>
+            
+            <div className="space-y-8">
+              <div className="space-y-8">
+                <h2 className="text-xl font-semibold">Todos os cursos</h2>
+                
+                {allCoursesLoading ? (
+                  <CoursesLoadingSkeleton />
+                ) : (
+                  <CoursesGrid courses={filteredCourses} />
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       <NewCourseDialog 
