@@ -6,6 +6,7 @@ import { toast } from "sonner";
 export const useJobRolesAPI = () => {
   const fetchJobRoles = async (companyId: string) => {
     try {
+      console.log("Fetching job roles for company:", companyId);
       const { data, error } = await supabase
         .from('job_roles')
         .select('*')
@@ -13,6 +14,7 @@ export const useJobRolesAPI = () => {
         .order('order_index');
         
       if (error) throw error;
+      console.log("Fetched job roles:", data);
       return data || [];
     } catch (error: any) {
       console.error("Error fetching job roles:", error);
@@ -23,12 +25,14 @@ export const useJobRolesAPI = () => {
 
   const saveRole = async (role: Partial<JobRole>, companyId: string, isNew: boolean) => {
     try {
+      console.log("Saving role with data:", role);
       if (!role.title) {
         toast.error("Título do cargo é obrigatório");
         return null;
       }
       
       if (isNew) {
+        console.log("Creating new role for company:", companyId);
         const { data, error } = await supabase
           .from('job_roles')
           .insert({
@@ -42,12 +46,17 @@ export const useJobRolesAPI = () => {
           })
           .select();
           
-        if (error) throw error;
-        toast.success("Cargo adicionado com sucesso");
+        if (error) {
+          console.error("Error creating role:", error);
+          throw error;
+        }
+        
+        console.log("New role created:", data?.[0]);
         return data?.[0] || null;
       } 
       
       if (role.id) {
+        console.log("Updating existing role:", role.id);
         const { data, error } = await supabase
           .from('job_roles')
           .update({
@@ -60,8 +69,12 @@ export const useJobRolesAPI = () => {
           .eq('id', role.id)
           .select();
           
-        if (error) throw error;
-        toast.success("Cargo atualizado com sucesso");
+        if (error) {
+          console.error("Error updating role:", error);
+          throw error;
+        }
+        
+        console.log("Role updated:", data?.[0]);
         return data?.[0] || null;
       }
       
@@ -75,6 +88,7 @@ export const useJobRolesAPI = () => {
 
   const deleteRole = async (roleId: string) => {
     try {
+      console.log("Checking if role can be deleted:", roleId);
       const { count, error } = await supabase
         .from('profiles')
         .select('id', { count: 'exact', head: true })
@@ -87,6 +101,7 @@ export const useJobRolesAPI = () => {
         return false;
       }
       
+      console.log("Deleting role:", roleId);
       const { error: deleteError } = await supabase
         .from('job_roles')
         .delete()
@@ -94,7 +109,6 @@ export const useJobRolesAPI = () => {
         
       if (deleteError) throw deleteError;
       
-      toast.success("Cargo excluído com sucesso");
       return true;
     } catch (error: any) {
       console.error("Error deleting job role:", error);
@@ -105,6 +119,7 @@ export const useJobRolesAPI = () => {
 
   const updateRoleOrder = async (roleId: string, newOrderIndex: number) => {
     try {
+      console.log("Updating role order:", roleId, "new index:", newOrderIndex);
       const { error } = await supabase
         .from('job_roles')
         .update({ order_index: newOrderIndex })

@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Plus, Briefcase } from "lucide-react";
 import { Company } from "@/types/company";
 import { JobRole } from "@/types/job-roles";
-import { useJobRoles } from "@/hooks/useJobRoles";
+import { useJobRoles } from "@/hooks/job-roles/useJobRoles";
 import { JobRolesList } from './JobRolesList';
 import { JobRoleForm } from './JobRoleForm';
 import { RoleDetailsDialog } from './dialogs/RoleDetailsDialog';

@@ -4,6 +4,7 @@ import { Company } from "@/types/company";
 import { JobRole } from "@/types/job-roles";
 import { useJobRolesState } from './useJobRolesState';
 import { useJobRolesAPI } from './useJobRolesAPI';
+import { toast } from "sonner";
 
 export const useJobRoles = (company: Company) => {
   const state = useJobRolesState();
@@ -18,38 +19,81 @@ export const useJobRoles = (company: Company) => {
     setEditingRole,
     newRole,
     setNewRole,
+    selectedRole,
+    setSelectedRole,
+    isFormOpen,
+    setIsFormOpen,
+    isSubmitting,
     setIsSubmitting,
-    isSubmitting
+    showRoleUsersDialog,
+    setShowRoleUsersDialog
   } = state;
 
   const fetchJobRoles = async () => {
     setIsLoading(true);
-    const data = await api.fetchJobRoles(company.id);
-    setJobRoles(data);
-    setIsLoading(false);
+    try {
+      const data = await api.fetchJobRoles(company.id);
+      setJobRoles(data);
+    } catch (error) {
+      console.error("Error fetching job roles:", error);
+      toast.error("Erro ao carregar cargos");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSaveRole = async (role: Partial<JobRole>, isNew: boolean) => {
     try {
       setIsSubmitting(true);
+      console.log("Saving role:", role, "isNew:", isNew);
+      
+      if (!role.title) {
+        toast.error("Título do cargo é obrigatório");
+        return false;
+      }
+      
       const savedRole = await api.saveRole(role, company.id, isNew);
+      
       if (savedRole) {
-        // Reset form state and refresh list
+        // Reset form state
         setEditingRole(null);
         setNewRole(null);
+        setIsFormOpen(false);
+        
+        // Refresh job roles list
         await fetchJobRoles();
+        
+        toast.success(isNew ? "Cargo adicionado com sucesso" : "Cargo atualizado com sucesso");
+        return true;
       }
+      return false;
+    } catch (error: any) {
+      console.error("Error saving job role:", error);
+      toast.error(`Erro ao salvar cargo: ${error.message}`);
+      return false;
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDeleteRole = async (roleId: string) => {
-    if (!confirm("Tem certeza que deseja excluir este cargo?")) return;
+    if (!confirm("Tem certeza que deseja excluir este cargo?")) {
+      return false;
+    }
     
-    const success = await api.deleteRole(roleId);
-    if (success) {
-      await fetchJobRoles();
+    try {
+      const success = await api.deleteRole(roleId);
+      
+      if (success) {
+        await fetchJobRoles();
+        toast.success("Cargo excluído com sucesso");
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      console.error("Error deleting job role:", error);
+      toast.error(`Erro ao excluir cargo: ${error.message}`);
+      return false;
     }
   };
 
@@ -73,17 +117,24 @@ export const useJobRoles = (company: Company) => {
     setJobRoles(newRoles);
     
     // Update in database
-    await Promise.all([
-      api.updateRoleOrder(newRoles[roleIndex].id, newRoles[roleIndex].order_index),
-      api.updateRoleOrder(newRoles[targetIndex].id, newRoles[targetIndex].order_index)
-    ]);
+    try {
+      await Promise.all([
+        api.updateRoleOrder(newRoles[roleIndex].id, newRoles[roleIndex].order_index),
+        api.updateRoleOrder(newRoles[targetIndex].id, newRoles[targetIndex].order_index)
+      ]);
+    } catch (error: any) {
+      console.error("Error reordering job roles:", error);
+      toast.error(`Erro ao reordenar cargos: ${error.message}`);
+      // Reload to get correct order
+      fetchJobRoles();
+    }
   };
 
   useEffect(() => {
-    if (company) {
+    if (company?.id) {
       fetchJobRoles();
     }
-  }, [company]);
+  }, [company?.id]);
 
   return {
     ...state,

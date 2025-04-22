@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Plus, Briefcase, Check } from "lucide-react";
 import { Company } from "@/types/company";
 import { JobRole } from "@/types/job-roles";
-import { useJobRoles } from "@/hooks/useJobRoles";
+import { useJobRoles } from "@/hooks/job-roles/useJobRoles";
 import { JobRolesList } from './job-roles/JobRolesList';
 import { JobRoleForm } from './job-roles/JobRoleForm';
 import RoleUsersDialog from './dialogs/RoleUsersDialog';
