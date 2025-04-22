@@ -27,7 +27,7 @@ export const RoleManagementDialog: React.FC<RoleManagementDialogProps> = ({
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Gerenciar Cargo</DialogTitle>
           <DialogDescription>
@@ -39,7 +39,11 @@ export const RoleManagementDialog: React.FC<RoleManagementDialogProps> = ({
           <UserRoleAssignment 
             user={user}
             companyId={companyId}
-            onSuccess={onSuccess}
+            onSuccess={() => {
+              // Dispatch event for other components to refresh
+              window.dispatchEvent(new Event('user-role-updated'));
+              onSuccess();
+            }}
           />
         )}
         

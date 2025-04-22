@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { JobRole } from "@/types/job-roles";
+import { JobRole, JobRoleFormData } from "@/types/job-roles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -70,9 +70,9 @@ export const JobRoleForm = ({
     setIsSubmitting(true);
     
     try {
-      // Manter todos os campos do cargo original, mas atualizá-los com os novos valores
-      const formattedValues = {
-        ...role, // Mantém id, company_id, order_index e outros campos importantes
+      // Create a new object with all the original role properties plus the updated ones
+      const formattedValues: Partial<JobRole> = {
+        ...role,
         title: formValues.title.trim(),
         description: formValues.description.trim() || null,
         responsibilities: formatBulletPoints(formValues.responsibilities) || null,
@@ -85,7 +85,6 @@ export const JobRoleForm = ({
     } catch (error) {
       console.error("Error submitting form:", error);
       toast.error("Erro ao salvar cargo");
-    } finally {
       setIsSubmitting(false);
     }
   };

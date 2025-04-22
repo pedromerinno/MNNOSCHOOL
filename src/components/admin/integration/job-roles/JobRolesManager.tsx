@@ -25,8 +25,6 @@ export const JobRolesManager: React.FC<JobRolesManagerProps> = ({ company }) => 
     setNewRole,
     selectedRole,
     setSelectedRole,
-    isFormOpen,
-    setIsFormOpen,
     showRoleUsersDialog,
     setShowRoleUsersDialog,
     handleSaveRole,
@@ -39,6 +37,7 @@ export const JobRolesManager: React.FC<JobRolesManagerProps> = ({ company }) => 
   const [assignedUsers, setAssignedUsers] = useState<{ id: string; display_name: string }[]>([]);
 
   const handleAddRole = useCallback(() => {
+    console.log("Adding new role for company:", company.id);
     setNewRole({
       title: '',
       description: '',
@@ -95,6 +94,19 @@ export const JobRolesManager: React.FC<JobRolesManagerProps> = ({ company }) => 
               <Plus className="h-4 w-4 mr-2" />
               Adicionar Cargo
             </Button>
+            {jobRoles.length > 0 && (
+              <Button 
+                variant="outline" 
+                onClick={() => refreshJobRoles(true)}
+                className="px-3"
+              >
+                <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2 12A10 10 0 1 0 12 2v4" />
+                  <path d="M2 22V16H8" />
+                  <path d="M2 16L5.5 19.5" />
+                </svg>
+              </Button>
+            )}
           </div>
         )}
       </div>
@@ -103,7 +115,7 @@ export const JobRolesManager: React.FC<JobRolesManagerProps> = ({ company }) => 
         <JobRoleForm
           role={newRole}
           isNew={true}
-          onSave={() => handleSaveRole(newRole, true)}
+          onSave={(roleData) => handleSaveRole(roleData, true)}
           onCancel={() => setNewRole(null)}
         />
       )}
@@ -112,7 +124,7 @@ export const JobRolesManager: React.FC<JobRolesManagerProps> = ({ company }) => 
         <JobRoleForm
           role={editingRole}
           isNew={false}
-          onSave={() => handleSaveRole(editingRole, false)}
+          onSave={(roleData) => handleSaveRole(roleData, false)}
           onCancel={() => setEditingRole(null)}
         />
       )}
@@ -136,17 +148,21 @@ export const JobRolesManager: React.FC<JobRolesManagerProps> = ({ company }) => 
         </Card>
       )}
 
-      <RoleDetailsDialog
-        role={selectedRole}
-        open={showDetailsDialog}
-        onOpenChange={setShowDetailsDialog}
-        assignedUsers={assignedUsers}
-      />
+      {selectedRole && (
+        <RoleDetailsDialog
+          role={selectedRole}
+          open={showDetailsDialog}
+          onOpenChange={setShowDetailsDialog}
+          assignedUsers={assignedUsers}
+        />
+      )}
 
       {selectedRole && (
         <RoleUsersDialog
           roleId={selectedRole.id}
           companyId={company.id}
+          open={showRoleUsersDialog}
+          onOpenChange={setShowRoleUsersDialog}
         />
       )}
     </div>

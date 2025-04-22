@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { JobRole } from "@/types/job-roles";
 import { Company } from "@/types/company";
@@ -60,7 +61,9 @@ export const useJobRoles = (company: Company) => {
     loadingRef.current = true;
     
     try {
+      console.log("Refreshing job roles for company:", company.id);
       const data = await fetchJobRoles(company.id, forceRefresh);
+      console.log("Refreshed job roles data:", data);
       setJobRoles(data);
     } catch (error) {
       console.error("Error refreshing job roles:", error);
@@ -84,28 +87,23 @@ export const useJobRoles = (company: Company) => {
       
       if (savedRole) {
         if (isNew) {
-          setJobRoles(prev => [...prev, savedRole]);
+          console.log("Role created successfully, updating local state");
           setNewRole(null);
-          toast.success("Cargo criado com sucesso");
         } else {
-          console.log("Updating local state with updated role:", savedRole);
-          setJobRoles(prev => 
-            prev.map(item => item.id === savedRole.id ? savedRole : item)
-          );
+          console.log("Role updated successfully, updating local state");
           setEditingRole(null);
-          toast.success("Cargo atualizado com sucesso");
         }
         
+        // Always refresh the roles list after a successful save
         await refreshJobRoles(true);
         
+        // Dispatch event for other components to refresh
         window.dispatchEvent(new Event('job-roles-updated'));
       } else {
         console.error("Failed to save role - no data returned");
-        toast.error(`Erro ao ${isNew ? 'criar' : 'atualizar'} cargo`);
       }
     } catch (error) {
       console.error("Error in handleSaveRole:", error);
-      toast.error(`Erro ao ${isNew ? 'criar' : 'atualizar'} cargo`);
     } finally {
       setIsLoading(false);
     }
@@ -121,8 +119,8 @@ export const useJobRoles = (company: Company) => {
         
         if (success) {
           setJobRoles(prev => prev.filter(role => role.id !== roleId));
-          toast.success("Cargo excluído com sucesso");
           
+          // Dispatch event for other components to refresh
           window.dispatchEvent(new Event('job-roles-updated'));
         }
       } catch (error) {
@@ -166,6 +164,7 @@ export const useJobRoles = (company: Company) => {
         
         setJobRoles(newRoles);
         
+        // Dispatch event for other components to refresh
         window.dispatchEvent(new Event('job-roles-updated'));
       }
     } catch (error) {
@@ -176,6 +175,7 @@ export const useJobRoles = (company: Company) => {
   }, [company?.id, jobRoles, setIsLoading, setJobRoles, updateRoleOrder]);
 
   useEffect(() => {
+    // Clear cache when component unmounts
     return () => {
       if (company?.id) {
         clearCache(company.id);

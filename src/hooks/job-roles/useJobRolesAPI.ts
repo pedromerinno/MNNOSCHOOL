@@ -46,6 +46,7 @@ export const useJobRolesAPI = () => {
   const saveRole = async (role: Partial<JobRole>, companyId: string, isNew: boolean) => {
     try {
       console.log("Saving role with data:", role);
+      
       if (!role.title) {
         toast.error("Título do cargo é obrigatório");
         return null;
@@ -75,18 +76,20 @@ export const useJobRolesAPI = () => {
         delete jobRolesCache[companyId];
         
         console.log("New role created:", data?.[0]);
+        toast.success("Cargo criado com sucesso!");
         return data?.[0] || null;
       } 
       
       if (role.id) {
         console.log("Updating existing role:", role.id);
+        
+        // Ensure we're not sending null values for text fields
         const updateData = {
           title: role.title,
           description: role.description,
           responsibilities: role.responsibilities,
           requirements: role.requirements,
-          expectations: role.expectations,
-          // Não atualizamos o order_index aqui para não perder a ordem
+          expectations: role.expectations
         };
 
         // Log the exact data being sent for update
@@ -107,6 +110,7 @@ export const useJobRolesAPI = () => {
         delete jobRolesCache[companyId];
         
         console.log("Role updated, response:", data);
+        toast.success("Cargo atualizado com sucesso!");
         return data?.[0] || null;
       }
       
@@ -143,6 +147,7 @@ export const useJobRolesAPI = () => {
       
       // Invalidate cache
       delete jobRolesCache[companyId];
+      toast.success("Cargo excluído com sucesso!");
       
       return true;
     } catch (error: any) {
