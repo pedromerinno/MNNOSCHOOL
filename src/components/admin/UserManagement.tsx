@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useCompanies } from '@/hooks/useCompanies';
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { CompanySelector } from '@/components/admin/integration/CompanySelector';
 
 export const UserManagement = () => {
   const { users, loading, fetchUsers, toggleAdminStatus } = useUsers();
@@ -18,9 +19,9 @@ export const UserManagement = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [permissionError, setPermissionError] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false); // Controle do modal de convite
   const [showInviteInfo, setShowInviteInfo] = useState(false);
-  const { selectedCompany } = useCompanies();
+  const { companies, userCompanies } = useCompanies();
+  const [selectedInviteCompany, setSelectedInviteCompany] = useState(null);
   const { toast } = useToast();
 
   const handleRefresh = async () => {
@@ -38,9 +39,14 @@ export const UserManagement = () => {
     }
   };
 
-  // EXEMPLO DE PLACEHOLDER: aqui abrimos um toast/alerta, mas idealmente seria um Dialog de convite real
   const handleInviteUser = () => {
+    setSelectedInviteCompany(null);
     setShowInviteInfo(true);
+  };
+
+  const handleCompanyChange = (companyId) => {
+    const company = (userCompanies || companies).find(c => c.id === companyId);
+    setSelectedInviteCompany(company);
   };
 
   return (
@@ -78,34 +84,49 @@ export const UserManagement = () => {
           <DialogHeader>
             <DialogTitle>Informações para Convite</DialogTitle>
             <DialogDescription>
-              Compartilhe este ID da empresa com o novo usuário durante o cadastro:
+              Selecione a empresa e compartilhe o ID com o novo usuário durante o cadastro:
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
-            <div className="flex items-center space-x-2">
-              <Input 
-                value={selectedCompany?.id || ''} 
-                readOnly 
-                className="font-mono"
-              />
-              <Button
-                onClick={() => {
-                  navigator.clipboard.writeText(selectedCompany?.id || '');
-                  toast({
-                    title: "Sucesso",
-                    description: "ID copiado para a área de transferência!",
-                  });
-                }}
-                variant="outline"
-              >
-                Copiar
-              </Button>
-            </div>
+            <CompanySelector 
+              companies={userCompanies || companies} 
+              selectedCompany={selectedInviteCompany}
+              onCompanyChange={handleCompanyChange}
+              disabled={loading}
+            />
             
-            <p className="text-sm text-muted-foreground">
-              O novo usuário deve usar este ID ao se cadastrar para ser vinculado à empresa corretamente.
-            </p>
+            {selectedInviteCompany ? (
+              <div className="space-y-4 mt-4">
+                <div className="flex items-center space-x-2">
+                  <Input 
+                    value={selectedInviteCompany?.id || ''} 
+                    readOnly 
+                    className="font-mono"
+                  />
+                  <Button
+                    onClick={() => {
+                      navigator.clipboard.writeText(selectedInviteCompany?.id || '');
+                      toast({
+                        title: "Sucesso",
+                        description: "ID copiado para a área de transferência!",
+                      });
+                    }}
+                    variant="outline"
+                  >
+                    Copiar
+                  </Button>
+                </div>
+                
+                <p className="text-sm text-muted-foreground">
+                  O novo usuário deve usar este ID ao se cadastrar para ser vinculado à empresa {selectedInviteCompany.nome} corretamente.
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Selecione uma empresa para ver o ID
+              </p>
+            )}
           </div>
           
           <DialogFooter>
