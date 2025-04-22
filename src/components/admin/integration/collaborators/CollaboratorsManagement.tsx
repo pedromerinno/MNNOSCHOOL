@@ -177,6 +177,9 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
                   isLoading={isLoadingDocuments}
                   onDelete={deleteDocument}
                   onUploadClick={() => setShowUploadDialog(true)}
+                  userId={selectedUser.id}
+                  companyId={company.id}
+                  onRefresh={refreshDocuments}
                 />
               </TabsContent>
             </Tabs>
