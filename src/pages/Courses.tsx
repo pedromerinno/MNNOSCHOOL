@@ -50,7 +50,7 @@ const Courses = () => {
   // Se estiver carregando a empresa ou não houver empresa selecionada, mostrar skeleton
   if (companyLoading || !selectedCompany) {
     return (
-      <DashboardLayout>
+      <DashboardLayout featuredFullWidth>
         <div className="container mx-auto max-w-screen-2xl space-y-12 px-4 py-6">
           <div className="w-full h-64">
             <Skeleton className="w-full h-full rounded-xl" />
@@ -78,7 +78,7 @@ const Courses = () => {
 
   // Conteúdo real só é mostrado quando dados estão prontos
   return (
-    <DashboardLayout>
+    <DashboardLayout featuredFullWidth>
       <div className="container mx-auto max-w-screen-2xl space-y-12 px-4 py-6">
         {/* Featured Courses Carousel */}
         <CourseCarousel 
