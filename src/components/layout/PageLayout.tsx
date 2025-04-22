@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { CompanyThemedBadge } from "@/components/ui/badge";
 import { useCompanies } from "@/hooks/useCompanies";
+import { AdminFloatingActionButton } from "@/components/admin/AdminFloatingActionButton";
 
 interface PageLayoutProps {
   title: string;
@@ -43,6 +44,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({ title, children }) => {
           {children}
         </div>
       </main>
+      <AdminFloatingActionButton />
     </div>
   );
 };
