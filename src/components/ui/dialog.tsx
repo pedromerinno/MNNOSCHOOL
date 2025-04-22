@@ -7,11 +7,22 @@ const Dialog = ({
   children,
   ...props
 }: DialogPrimitive.DialogProps) => {
-  // Reset pointer-events when dialog closes
+  // Improved handling of body styles when dialog opens/closes
   const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      document.body.style.pointerEvents = '';
+    if (open) {
+      // Apply immediately when opening to prevent flicker
+      document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = '0px'; // Prevent layout shift
+    } else {
+      // Wait a tiny bit before resetting styles when closing
+      // This helps with smooth transitions
+      setTimeout(() => {
+        document.body.style.pointerEvents = '';
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+      }, 50);
     }
+    
     // Call the original onOpenChange if provided
     props.onOpenChange?.(open);
   };
@@ -36,7 +47,7 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-black/20",
+      "fixed inset-0 z-50 bg-black/20 backdrop-blur-[0.5px] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className
     )}
     {...props}
@@ -53,11 +64,11 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-xl translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg sm:rounded-lg pointer-events-auto",
+        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-xl translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg sm:rounded-lg pointer-events-auto data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
         className
       )}
       onOpenAutoFocus={(e) => {
-        // Reset pointer-events when dialog opens
+        // Smooth handling when dialog opens
         document.body.style.pointerEvents = '';
         // Call original onOpenAutoFocus if provided
         if (props.onOpenAutoFocus) {
@@ -65,8 +76,10 @@ const DialogContent = React.forwardRef<
         }
       }}
       onCloseAutoFocus={(e) => {
-        // Reset pointer-events when dialog closes
-        document.body.style.pointerEvents = '';
+        // Smooth handling when dialog closes
+        setTimeout(() => {
+          document.body.style.pointerEvents = '';
+        }, 50);
         // Call original onCloseAutoFocus if provided
         if (props.onCloseAutoFocus) {
           props.onCloseAutoFocus(e);

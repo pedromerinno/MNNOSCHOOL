@@ -8,8 +8,15 @@ const AlertDialog = ({
   ...props
 }: AlertDialogPrimitive.AlertDialogProps) => {
   const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      document.body.style.pointerEvents = '';
+    if (open) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = '0px';
+    } else {
+      setTimeout(() => {
+        document.body.style.pointerEvents = '';
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+      }, 50);
     }
     props.onOpenChange?.(open);
   };
@@ -31,7 +38,7 @@ const AlertDialogOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Overlay
     className={cn(
-      "fixed inset-0 z-50 bg-black/20",
+      "fixed inset-0 z-50 bg-black/20 backdrop-blur-[0.5px] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className
     )}
     {...props}
@@ -60,7 +67,9 @@ const AlertDialogContent = React.forwardRef<
         }
       }}
       onCloseAutoFocus={(e) => {
-        document.body.style.pointerEvents = '';
+        setTimeout(() => {
+          document.body.style.pointerEvents = '';
+        }, 50);
         if (props.onCloseAutoFocus) {
           props.onCloseAutoFocus(e);
         }

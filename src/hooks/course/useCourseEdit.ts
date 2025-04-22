@@ -10,13 +10,16 @@ export const useCourseEdit = (courseId: string | undefined) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [courseCompanyIds, setCourseCompanyIds] = useState<string[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isFetchingCompanies, setIsFetchingCompanies] = useState(false);
 
   // Function to fetch associated companies
   const fetchCourseCompanies = useCallback(async () => {
     if (!courseId) return;
     
-    console.log(`Fetching companies for course ID: ${courseId}`);
     try {
+      setIsFetchingCompanies(true);
+      console.log(`Fetching companies for course ID: ${courseId}`);
+      
       const { data, error } = await supabase
         .from('company_courses')
         .select('empresa_id')
@@ -34,6 +37,8 @@ export const useCourseEdit = (courseId: string | undefined) => {
       }
     } catch (err) {
       console.error('Exception fetching course companies:', err);
+    } finally {
+      setIsFetchingCompanies(false);
     }
   }, [courseId]);
 
@@ -45,31 +50,25 @@ export const useCourseEdit = (courseId: string | undefined) => {
     }
   }, [courseId, fetchCourseCompanies, isInitialized]);
 
-  // Prefetch course's associated companies when dialog is about to open
+  // Prefetch course's associated companies before dialog opens
   useEffect(() => {
-    if (isEditDialogOpen) {
+    if (isEditDialogOpen && courseId) {
+      // Make sure data is fresh when dialog opens
       fetchCourseCompanies();
-      
-      // Prevent body scrolling when dialog opens
-      document.body.style.overflow = 'hidden';
-      
-      return () => {
-        // Restore body scrolling when dialog closes
-        document.body.style.overflow = '';
-      };
     }
-  }, [isEditDialogOpen, fetchCourseCompanies]);
+  }, [isEditDialogOpen, courseId, fetchCourseCompanies]);
 
   const handleEditCourse = useCallback(() => {
-    // Fetch companies before opening dialog
+    // Fetch companies before opening dialog to eliminate flickering
     if (courseId) {
+      // Start fetching asynchronously, but don't wait
       fetchCourseCompanies();
-    }
-    
-    // Use requestAnimationFrame to ensure smoother transition
-    requestAnimationFrame(() => {
+      
+      // Open dialog immediately to prevent any perceived delay
       setIsEditDialogOpen(true);
-    });
+      
+      // Dialog content will render with current data, and update once fetch completes
+    }
   }, [courseId, fetchCourseCompanies]);
 
   const handleCourseUpdate = async (data: CourseFormValues) => {
@@ -84,13 +83,15 @@ export const useCourseEdit = (courseId: string | undefined) => {
       const success = await updateCourse(courseId, data);
       
       if (success) {
-        // Smooth closing of dialog
+        // Close dialog first
         setIsEditDialogOpen(false);
         
-        // Trigger a course-updated event instead of a generic refresh
-        window.dispatchEvent(new CustomEvent('course-updated', { 
-          detail: { courseId } 
-        }));
+        // Then trigger a course-updated event
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('course-updated', { 
+            detail: { courseId } 
+          }));
+        }, 50); // Small delay to ensure dialog closes smoothly first
       }
     } catch (error) {
       console.error('Error updating course:', error);
@@ -105,6 +106,7 @@ export const useCourseEdit = (courseId: string | undefined) => {
     setIsEditDialogOpen,
     isSubmitting,
     courseCompanyIds,
+    isFetchingCompanies,
     handleEditCourse,
     handleCourseUpdate
   };

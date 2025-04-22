@@ -36,14 +36,19 @@ export const EditCourseDialog: React.FC<EditCourseDialogProps> = ({
     }
   }, [open, initialData.companyIds]);
 
-  // Prevent scrolling when dialog is open
+  // Prevent scrolling with improved handling
   useEffect(() => {
+    // Apply immediately when dialog opens to prevent any flickering
     if (open) {
+      // Apply these styles synchronously to prevent any visual jumps
       document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = '0px'; // Prevent layout shift
     }
     
     return () => {
+      // Only reset when dialog actually closes
       document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
     };
   }, [open]);
 

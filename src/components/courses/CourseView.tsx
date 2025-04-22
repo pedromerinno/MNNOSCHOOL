@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCourseData } from '@/hooks/useCourseData';
@@ -37,7 +36,7 @@ export const CourseView: React.FC = () => {
     handleCourseUpdate
   } = useCourseEdit(courseId);
   
-  // Listen for course update events
+  // Ensure data is refreshed once dialog closes (after an update)
   useEffect(() => {
     const handleCourseUpdated = (event: CustomEvent) => {
       if (event.detail?.courseId === courseId) {
@@ -52,14 +51,17 @@ export const CourseView: React.FC = () => {
     };
   }, [courseId, refreshCourseData]);
   
-  // Ensure course data is synced when showing the dialog
+  // Pre-load data when on course page to prevent any flickering
   useEffect(() => {
-    if (isEditDialogOpen && courseId) {
-      console.log('Edit dialog opened, ensuring fresh data');
-      // Fetch fresh data without triggering a full page update
-      refreshCourseData();
+    if (courseId && !loading && !error) {
+      // Keep data fresh by polling occasionally
+      const refreshInterval = setInterval(() => {
+        refreshCourseData();
+      }, 60000); // Refresh every minute
+      
+      return () => clearInterval(refreshInterval);
     }
-  }, [isEditDialogOpen, courseId, refreshCourseData]);
+  }, [courseId, refreshCourseData, loading, error]);
   
   if (loading) {
     return <CourseViewSkeleton />;
@@ -141,7 +143,7 @@ export const CourseView: React.FC = () => {
         />
       </div>
 
-      {/* Use EditCourseDialog with better transition handling */}
+      {/* Improved EditCourseDialog to prevent flickering */}
       <EditCourseDialog
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
