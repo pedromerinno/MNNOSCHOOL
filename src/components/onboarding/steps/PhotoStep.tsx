@@ -159,7 +159,7 @@ const PhotoStep: React.FC<PhotoStepProps> = ({ onNext, onBack }) => {
       <div className="pt-4 flex flex-col gap-3">
         <Button 
           type="button" 
-          className="w-full rounded-md bg-merinno-dark hover:bg-black text-white"
+          className="w-full rounded-md bg-black text-white hover:bg-gray-800"
           onClick={handleContinue}
         >
           Continuar
