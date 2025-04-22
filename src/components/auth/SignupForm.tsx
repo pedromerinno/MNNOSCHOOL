@@ -12,6 +12,7 @@ export const SignupForm = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const { signUp } = useAuth();
 
   const validatePasswords = () => {
@@ -39,23 +40,40 @@ export const SignupForm = () => {
     setIsRegistering(true);
     
     try {
-      // Sempre incluir a flag onboarding_incomplete para garantir que o usuário vá para o onboarding
       const metadataWithCompany = { 
         interests: ["onboarding_incomplete"] 
       };
       
-      // Usar o nome de exibição como o texto antes do @ no email, se não for fornecido
       const displayName = email.split('@')[0];
       
       console.log("Iniciando cadastro com metadata:", metadataWithCompany);
       await signUp(email, password, displayName, metadataWithCompany);
-      console.log("Usuário cadastrado com sucesso! Redirecionando para onboarding...");
+      console.log("Cadastro realizado com sucesso!");
+      setIsSuccess(true);
     } catch (error) {
       console.error("Erro no cadastro:", error);
     } finally {
       setIsRegistering(false);
     }
   };
+
+  if (isSuccess) {
+    return (
+      <div className="w-full max-w-sm mx-auto text-center">
+        <h1 className="text-3xl font-semibold mb-4">Cadastro realizado!</h1>
+        <p className="text-gray-600 mb-6">
+          Enviamos um e-mail para {email} com instruções para confirmar sua conta.
+          Por favor, verifique sua caixa de entrada e clique no link de confirmação.
+        </p>
+        <p className="text-gray-600">
+          Já confirmou seu e-mail?{" "}
+          <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
+            Faça login
+          </Link>
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-sm mx-auto">

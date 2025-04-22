@@ -138,6 +138,7 @@ export const LoginFormContent = ({
         <div className="mt-6 text-center">
           <button 
             onClick={onForgotPassword}
+            type="button"
             className="text-sm text-gray-600 hover:text-gray-900"
           >
             Esqueceu sua senha?
