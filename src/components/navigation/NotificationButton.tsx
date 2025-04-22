@@ -24,9 +24,13 @@ export const NotificationButton = () => {
       fetchNotifications();
     };
 
+    // Adiciona ouvintes para ambos os eventos
     window.addEventListener('refresh-notifications', handleRefreshNotifications);
+    window.addEventListener('course-created', handleRefreshNotifications);
+    
     return () => {
       window.removeEventListener('refresh-notifications', handleRefreshNotifications);
+      window.removeEventListener('course-created', handleRefreshNotifications);
     };
   }, [fetchNotifications]);
 

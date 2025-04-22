@@ -48,13 +48,13 @@ export const createCourse = async (courseData: CourseFormValues): Promise<string
       description: 'O novo curso foi criado com sucesso.',
     });
 
-    // Dispatch an event that can be listened to by other components for refreshing data
+    // Dispatch a custom event that can be listened to by other components for refreshing data
     window.dispatchEvent(new CustomEvent('course-created', { 
       detail: { courseId } 
     }));
     
-    // Force refresh notifications
-    window.dispatchEvent(new Event('refresh-notifications'));
+    // Force refresh notifications - usando CustomEvent em vez de Event
+    window.dispatchEvent(new CustomEvent('refresh-notifications'));
     
     return courseId;
   } catch (error: any) {

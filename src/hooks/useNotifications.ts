@@ -40,14 +40,24 @@ export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
 
-  const fetchNotifications = useCallback(async (companyId?: string) => {
+  const fetchNotifications = useCallback(async (companyId?: string, forceRefresh = false) => {
     const targetCompanyId = companyId || selectedCompany?.id;
     
     if (!targetCompanyId) {
       setIsLoading(false);
       return;
     }
+
+    // Para evitar múltiplas chamadas rápidas em sequência
+    const now = Date.now();
+    if (!forceRefresh && now - lastFetchTime < 1000) {
+      console.log("Evitando múltiplas requisições rápidas de notificações");
+      return;
+    }
+    
+    setLastFetchTime(now);
 
     try {
       setIsLoading(true);
@@ -71,7 +81,7 @@ export function useNotifications() {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedCompany?.id]);
+  }, [selectedCompany?.id, lastFetchTime]);
 
   const markAsRead = async (notificationId: string) => {
     try {

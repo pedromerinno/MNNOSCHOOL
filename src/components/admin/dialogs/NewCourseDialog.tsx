@@ -42,10 +42,18 @@ export const NewCourseDialog: React.FC<NewCourseDialogProps> = ({ open, onOpenCh
       if (courseId) {
         console.log(`Course ${courseId} created successfully. Notifications should be triggered.`);
         toast.success("Curso criado com sucesso.");
-        onOpenChange(false);
         
-        // Navigation occurs after successful course creation
-        navigate(`/courses/${courseId}`);
+        // Espera um breve momento para garantir que as notificações sejam processadas
+        setTimeout(() => {
+          // Dispara um evento para atualizar as notificações
+          window.dispatchEvent(new CustomEvent('refresh-notifications'));
+          
+          // Fecha o diálogo após o curso ser criado com sucesso
+          onOpenChange(false);
+          
+          // Navigation occurs after successful course creation
+          navigate(`/courses/${courseId}`);
+        }, 500);
       } else {
         toast.error("Erro ao criar curso. Tente novamente.");
       }
