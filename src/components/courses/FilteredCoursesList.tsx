@@ -5,6 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
+import { useCompanies } from "@/hooks/useCompanies";
+import { useAuth } from "@/contexts/AuthContext";
+import { PlusCircle } from "lucide-react";
+import { NewCourseDialog } from "@/components/admin/dialogs/NewCourseDialog";
 
 type FilterOption = 'all' | 'favorites' | 'completed' | 'in-progress';
 
@@ -22,6 +26,10 @@ export const FilteredCoursesList: React.FC<FilteredCoursesListProps> = ({
   companyColor
 }) => {
   const navigate = useNavigate();
+  const { selectedCompany } = useCompanies();
+  const { userProfile } = useAuth();
+  const [isNewCourseDialogOpen, setIsNewCourseDialogOpen] = React.useState(false);
+  const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
   
   return (
     <div className="mt-8">
@@ -54,9 +62,7 @@ export const FilteredCoursesList: React.FC<FilteredCoursesListProps> = ({
                       <Badge key={i} variant="outline" className="bg-gray-100 text-gray-700 text-xs px-2">{tag}</Badge>
                     ))
                   ) : (
-                    <>
-                      <Badge variant="outline" className="bg-gray-100 text-gray-700 text-xs px-2">Curso</Badge>
-                    </>
+                    <Badge variant="outline" className="bg-gray-100 text-gray-700 text-xs px-2">Curso</Badge>
                   )}
                 </div>
                 
@@ -98,9 +104,27 @@ export const FilteredCoursesList: React.FC<FilteredCoursesListProps> = ({
             </Card>
           ))
         ) : (
-          <p className="text-gray-500 col-span-3">Nenhum curso encontrado para este filtro.</p>
+          <div className="col-span-3 flex flex-col items-center justify-center py-12 text-center">
+            <p className="text-gray-500 dark:text-gray-400 text-lg mb-6">
+              Em breve, aqui estarão todos os cursos da {selectedCompany?.nome}.
+            </p>
+            {isAdmin && (
+              <Button
+                onClick={() => setIsNewCourseDialogOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <PlusCircle className="h-4 w-4" />
+                Criar um novo curso
+              </Button>
+            )}
+          </div>
         )}
       </div>
+
+      <NewCourseDialog 
+        open={isNewCourseDialogOpen}
+        onOpenChange={setIsNewCourseDialogOpen}
+      />
     </div>
   );
 };
