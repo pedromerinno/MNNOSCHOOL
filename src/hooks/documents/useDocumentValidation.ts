@@ -9,15 +9,29 @@ export const useDocumentValidation = () => {
       const { data: buckets, error } = await supabase.storage.listBuckets();
       
       if (error) {
-        console.warn("Erro ao verificar buckets:", error);
+        console.error("Erro ao verificar buckets:", error);
         return false;
       }
       
       const documentsBucket = buckets?.find(b => b.name === 'documents');
       
       if (!documentsBucket) {
-        console.warn("Bucket 'documents' não encontrado. Verifique se ele foi criado no Supabase.");
-        return false;
+        console.error("Bucket 'documents' não encontrado. Criando automaticamente...");
+        
+        // Attempt to create the bucket if it doesn't exist
+        const { error: createError } = await supabase.storage.createBucket('documents', {
+          public: false,
+          fileSizeLimit: 10485760, // 10MB
+        });
+        
+        if (createError) {
+          console.error("Erro ao criar bucket 'documents':", createError);
+          toast.error("Não foi possível criar o armazenamento de documentos. Contate o administrador.");
+          return false;
+        }
+        
+        toast.success("Armazenamento de documentos criado com sucesso!");
+        return true;
       }
       
       return true;

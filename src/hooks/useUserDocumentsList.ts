@@ -4,6 +4,7 @@ import { UserDocument } from "@/types/document";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useDocumentFetching } from './documents/useDocumentFetching';
+import { useDocumentValidation } from './documents/useDocumentValidation';
 
 export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<boolean>) => {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
@@ -13,6 +14,7 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
   const [previewOpen, setPreviewOpen] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const { fetchDocumentsForUser } = useDocumentFetching();
+  const { checkBucketExists } = useDocumentValidation();
   
   // Fetch the current user for permission checks
   useEffect(() => {
@@ -29,6 +31,13 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
     setError(null);
     
     try {
+      // Ensure bucket exists before attempting download
+      const bucketExists = await checkBucketExists();
+      
+      if (!bucketExists) {
+        throw new Error("Sistema de armazenamento não está disponível");
+      }
+      
       const { data, error } = await supabase.storage
         .from('documents')
         .download(document.file_path);
@@ -62,6 +71,13 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
 
   const handlePreview = async (document: UserDocument) => {
     try {
+      // Ensure bucket exists before attempting preview
+      const bucketExists = await checkBucketExists();
+      
+      if (!bucketExists) {
+        throw new Error("Sistema de armazenamento não está disponível");
+      }
+      
       const { data, error } = await supabase.storage
         .from('documents')
         .createSignedUrl(document.file_path, 3600);
