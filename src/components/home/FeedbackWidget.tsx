@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
@@ -133,7 +134,7 @@ export const FeedbackWidget = memo(() => {
               </div>
             </div>
           ) : (
-            <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-6 text-center">
+            <div className="bg-green-50 dark:bg-[#222222] rounded-lg p-6 text-center">
               <p className="text-gray-500 dark:text-gray-400">
                 Nenhum feedback recebido ainda
               </p>
