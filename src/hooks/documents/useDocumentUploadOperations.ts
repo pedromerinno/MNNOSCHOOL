@@ -35,6 +35,12 @@ export const useDocumentUploadOperations = (
         return null;
       }
 
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Usuário não autenticado");
+        return null;
+      }
+
       const filePath = await uploadToStorage(userId!, file);
 
       const { data, error } = await supabase
@@ -47,7 +53,7 @@ export const useDocumentUploadOperations = (
           file_type: file.type,
           document_type: documentType,
           description: description || null,
-          uploaded_by: (await supabase.auth.getUser()).data.user?.id || userId
+          uploaded_by: user.id
         })
         .select()
         .single();
