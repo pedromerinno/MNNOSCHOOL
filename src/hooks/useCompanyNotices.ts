@@ -5,6 +5,14 @@ import { useCompanies } from "./useCompanies";
 import { Notice } from "@/hooks/useNotifications";
 import { toast } from "sonner";
 
+// Add the missing NoticeFormData interface
+export interface NoticeFormData {
+  title: string;
+  content: string;
+  type: 'informativo' | 'urgente' | 'padrão';
+  companies: string[];
+}
+
 export function useCompanyNotices() {
   const [notices, setNotices] = useState<Notice[]>([]);
   const [currentNoticeIndex, setCurrentNoticeIndex] = useState(0);
@@ -58,6 +66,7 @@ export function useCompanyNotices() {
         ...notice,
         author: {
           id: notice.created_by,
+          // Fix type errors by using optional chaining and providing defaults
           display_name: notice.profiles?.display_name || null,
           avatar: notice.profiles?.avatar || null
         }
@@ -137,13 +146,87 @@ export function useCompanyNotices() {
         .eq('id', noticeId);
 
       if (deleteError) throw deleteError;
-
-      // Note: No need to manually update state as the realtime subscription will handle it
+      
       toast.success('Aviso removido com sucesso!');
+      return true;
       
     } catch (err: any) {
       console.error('Error deleting notice:', err);
       toast.error('Erro ao remover aviso');
+      return false;
+    }
+  };
+
+  // Add create notice function
+  const createNotice = async (formData: NoticeFormData): Promise<boolean> => {
+    if (!formData.companies || formData.companies.length === 0) {
+      toast.error('Selecione pelo menos uma empresa');
+      return false;
+    }
+
+    try {
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      if (!userId) {
+        toast.error('Usuário não autenticado');
+        return false;
+      }
+
+      // Process each company in the list
+      const promises = formData.companies.map(async (companyId) => {
+        const { error } = await supabase
+          .from('company_notices')
+          .insert({
+            title: formData.title,
+            content: formData.content,
+            type: formData.type,
+            company_id: companyId,
+            created_by: userId
+          });
+
+        if (error) throw error;
+      });
+
+      await Promise.all(promises);
+      
+      // Refresh notices
+      await fetchNotices(selectedCompany?.id, true);
+      
+      return true;
+    } catch (err: any) {
+      console.error('Error creating notice:', err);
+      toast.error(`Erro ao criar aviso: ${err.message}`);
+      return false;
+    }
+  };
+
+  // Add update notice function
+  const updateNotice = async (noticeId: string, formData: NoticeFormData): Promise<boolean> => {
+    if (!formData.companies || formData.companies.length === 0) {
+      toast.error('Selecione pelo menos uma empresa');
+      return false;
+    }
+
+    try {
+      // Update notice
+      const { error } = await supabase
+        .from('company_notices')
+        .update({
+          title: formData.title,
+          content: formData.content,
+          type: formData.type
+        })
+        .eq('id', noticeId);
+
+      if (error) throw error;
+      
+      // Refresh notices
+      await fetchNotices(selectedCompany?.id, true);
+      
+      return true;
+    } catch (err: any) {
+      console.error('Error updating notice:', err);
+      toast.error(`Erro ao atualizar aviso: ${err.message}`);
+      return false;
     }
   };
 
@@ -155,6 +238,8 @@ export function useCompanyNotices() {
     nextNotice,
     prevNotice,
     fetchNotices,
-    deleteNotice
+    deleteNotice,
+    createNotice, // Added this
+    updateNotice  // Added this
   };
 }
