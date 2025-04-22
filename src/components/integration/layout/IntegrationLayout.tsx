@@ -9,7 +9,7 @@ export const IntegrationLayout: React.FC<React.PropsWithChildren<{}>> = ({ child
   const { selectedCompany } = useCompanies();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background dark:bg-[#191919]">
       <main className="container mx-auto px-6 py-12">
         <div className="flex items-center mb-12 gap-4">
           <Button 
@@ -34,7 +34,7 @@ export const IntegrationLayout: React.FC<React.PropsWithChildren<{}>> = ({ child
           </div>
         </div>
         
-        <div className="bg-white dark:bg-card rounded-xl shadow-sm p-6">
+        <div className="bg-white dark:bg-[#191919] rounded-xl shadow-sm p-6">
           {children}
         </div>
       </main>
