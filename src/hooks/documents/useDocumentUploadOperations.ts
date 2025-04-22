@@ -94,7 +94,13 @@ export const useDocumentUploadOperations = (
       
       // Atualizar o estado local com o novo documento
       if (newDocument) {
-        setDocuments(current => [newDocument, ...current]);
+        // Ensure newDocument has the correct type
+        const typedNewDocument: UserDocument = {
+          ...newDocument,
+          document_type: newDocument.document_type as DocumentType
+        };
+        
+        setDocuments(current => [typedNewDocument, ...current]);
       }
       
       toast.success("Documento enviado com sucesso");

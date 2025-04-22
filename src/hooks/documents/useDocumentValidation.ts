@@ -42,7 +42,7 @@ export const useDocumentValidation = () => {
       console.log("Criando bucket 'documents'...");
       
       // Tentar criar o bucket com configurações adequadas
-      const { data, error } = await supabase.storage.createBucket('documents', {
+      const { error } = await supabase.storage.createBucket('documents', {
         public: true, // Bucket público para facilitar o acesso aos arquivos
         fileSizeLimit: 10485760, // 10MB
         allowedMimeTypes: [
@@ -85,9 +85,13 @@ export const useDocumentValidation = () => {
     return true;
   }, [checkBucketExists, createBucket]);
 
+  // Add createBucketIfNotExists as an alias to ensureBucketExists for backward compatibility
+  const createBucketIfNotExists = ensureBucketExists;
+
   return { 
     checkBucketExists, 
     createBucket, 
-    ensureBucketExists 
+    ensureBucketExists,
+    createBucketIfNotExists
   };
 };

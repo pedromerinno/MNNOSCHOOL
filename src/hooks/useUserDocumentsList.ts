@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { UserDocument } from "@/types/document";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,7 +15,7 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserIsAdmin, setCurrentUserIsAdmin] = useState<boolean>(false);
   const { fetchDocumentsForUser } = useDocumentFetching();
-  const { createBucketIfNotExists } = useDocumentValidation();
+  const { ensureBucketExists } = useDocumentValidation();
   const { deleteDocument } = useDocumentDelete();
   
   // Fetch the current user for permission checks
@@ -58,7 +57,7 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
       console.log("Iniciando download do documento:", document.id);
       
       // Ensure bucket exists before attempting download
-      const bucketExists = await createBucketIfNotExists();
+      const bucketExists = await ensureBucketExists();
       
       if (!bucketExists) {
         console.log("Bucket não existe, tentando criar...");
@@ -120,7 +119,7 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
       console.log("Iniciando visualização do documento:", document.id);
       
       // Ensure bucket exists before attempting preview
-      const bucketExists = await createBucketIfNotExists();
+      const bucketExists = await ensureBucketExists();
       
       if (!bucketExists) {
         console.log("Bucket não existe, tentando criar...");

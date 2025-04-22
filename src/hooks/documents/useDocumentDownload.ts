@@ -6,14 +6,14 @@ import { UserDocument } from "@/types/document";
 import { useDocumentValidation } from './useDocumentValidation';
 
 export const useDocumentDownload = () => {
-  const { createBucketIfNotExists } = useDocumentValidation();
+  const { ensureBucketExists } = useDocumentValidation();
 
   const downloadDocument = useCallback(async (document: UserDocument): Promise<void> => {
     try {
       console.log("Iniciando download do documento:", document.id);
       
       // Garantir que o bucket existe antes de tentar download
-      const bucketExists = await createBucketIfNotExists();
+      const bucketExists = await ensureBucketExists();
       
       if (!bucketExists) {
         console.error("Bucket não existe ou não pôde ser criado");
@@ -53,7 +53,7 @@ export const useDocumentDownload = () => {
         toast.error(`Erro ao baixar documento: ${error.message}`);
       }
     }
-  }, [createBucketIfNotExists]);
+  }, [ensureBucketExists]);
 
   return { downloadDocument };
 };
