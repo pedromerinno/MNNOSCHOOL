@@ -52,10 +52,11 @@ export const CourseView: React.FC = () => {
     };
   }, [courseId, refreshCourseData]);
   
-  // Certificar que os dados do curso estarão sincronizados ao exibir o diálogo
+  // Ensure course data is synced when showing the dialog
   useEffect(() => {
     if (isEditDialogOpen && courseId) {
       console.log('Edit dialog opened, ensuring fresh data');
+      // Fetch fresh data without triggering a full page update
       refreshCourseData();
     }
   }, [isEditDialogOpen, courseId, refreshCourseData]);
@@ -140,6 +141,7 @@ export const CourseView: React.FC = () => {
         />
       </div>
 
+      {/* Use EditCourseDialog with better transition handling */}
       <EditCourseDialog
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}

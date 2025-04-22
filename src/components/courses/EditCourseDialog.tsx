@@ -29,12 +29,23 @@ export const EditCourseDialog: React.FC<EditCourseDialogProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  // Logging para debug
+  // Debugging log
   useEffect(() => {
     if (open) {
       console.log('Edit dialog opened with company IDs:', initialData.companyIds);
     }
   }, [open, initialData.companyIds]);
+
+  // Prevent scrolling when dialog is open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [open]);
 
   const handleDeleteCourse = async () => {
     // Make sure we have a valid ID before trying to delete

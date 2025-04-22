@@ -20,6 +20,17 @@ export const NewCourseDialog: React.FC<NewCourseDialogProps> = ({ open, onOpenCh
   const { selectedCompany, userCompanies, selectCompany, user } = useCompanies();
   const navigate = useNavigate();
 
+  // Prevent body scrolling when dialog is open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [open]);
+
   const handleFormSubmit = async (data: CourseFormValues) => {
     setIsSubmitting(true);
     try {
@@ -43,14 +54,14 @@ export const NewCourseDialog: React.FC<NewCourseDialogProps> = ({ open, onOpenCh
         console.log(`Course ${courseId} created successfully. Notifications should be triggered.`);
         toast.success("Curso criado com sucesso.");
         
-        // Espera um breve momento para garantir que as notificações sejam processadas
-        setTimeout(() => {
-          // Fecha o diálogo após o curso ser criado com sucesso
+        // Use requestAnimationFrame for smoother transitions
+        requestAnimationFrame(() => {
+          // Close dialog after successful course creation
           onOpenChange(false);
           
           // Navigation occurs after successful course creation
           navigate(`/courses/${courseId}`);
-        }, 700);
+        });
       } else {
         toast.error("Erro ao criar curso. Tente novamente.");
       }

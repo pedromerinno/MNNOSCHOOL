@@ -24,11 +24,12 @@ export const useCourseForm = (onSuccess: () => void) => {
         const courseId = await createCourse(data);
         console.log('Course created with ID:', courseId);
         
-        // Garantir que o evento de notificação seja disparado
+        // Ensure notification event is triggered
         if (courseId) {
-          setTimeout(() => {
+          // Use requestAnimationFrame to ensure the event is dispatched after the UI updates
+          requestAnimationFrame(() => {
             window.dispatchEvent(new CustomEvent('refresh-notifications'));
-          }, 500);
+          });
         }
       }
 

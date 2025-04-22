@@ -11,7 +11,7 @@ export const useCourseEdit = (courseId: string | undefined) => {
   const [courseCompanyIds, setCourseCompanyIds] = useState<string[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Função para buscar as empresas associadas
+  // Function to fetch associated companies
   const fetchCourseCompanies = useCallback(async () => {
     if (!courseId) return;
     
@@ -37,7 +37,7 @@ export const useCourseEdit = (courseId: string | undefined) => {
     }
   }, [courseId]);
 
-  // Inicializar dados quando courseId muda
+  // Initialize data when courseId changes
   useEffect(() => {
     if (courseId && !isInitialized) {
       fetchCourseCompanies();
@@ -45,16 +45,32 @@ export const useCourseEdit = (courseId: string | undefined) => {
     }
   }, [courseId, fetchCourseCompanies, isInitialized]);
 
-  // Fetch course's associated companies when dialog opens
+  // Prefetch course's associated companies when dialog is about to open
   useEffect(() => {
     if (isEditDialogOpen) {
       fetchCourseCompanies();
+      
+      // Prevent body scrolling when dialog opens
+      document.body.style.overflow = 'hidden';
+      
+      return () => {
+        // Restore body scrolling when dialog closes
+        document.body.style.overflow = '';
+      };
     }
   }, [isEditDialogOpen, fetchCourseCompanies]);
 
   const handleEditCourse = useCallback(() => {
-    setIsEditDialogOpen(true);
-  }, []);
+    // Fetch companies before opening dialog
+    if (courseId) {
+      fetchCourseCompanies();
+    }
+    
+    // Use requestAnimationFrame to ensure smoother transition
+    requestAnimationFrame(() => {
+      setIsEditDialogOpen(true);
+    });
+  }, [courseId, fetchCourseCompanies]);
 
   const handleCourseUpdate = async (data: CourseFormValues) => {
     if (!courseId) {
@@ -68,7 +84,9 @@ export const useCourseEdit = (courseId: string | undefined) => {
       const success = await updateCourse(courseId, data);
       
       if (success) {
+        // Smooth closing of dialog
         setIsEditDialogOpen(false);
+        
         // Trigger a course-updated event instead of a generic refresh
         window.dispatchEvent(new CustomEvent('course-updated', { 
           detail: { courseId } 
