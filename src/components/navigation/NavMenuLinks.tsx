@@ -1,3 +1,4 @@
+
 import { Link, useLocation } from "react-router-dom";
 import { 
   NavigationMenu, 
@@ -33,12 +34,12 @@ export const NavMenuLinks = ({ adminLabel = "Admin" }) => {
         </NavigationMenuItem>
         
         <NavigationMenuItem>
-          <NavigationMenuTrigger className="text-gray-300 hover:text-white text-sm font-medium bg-transparent hover:bg-transparent px-4 py-2">
+          <NavigationMenuTrigger className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm font-medium bg-transparent hover:bg-transparent px-4 py-2">
             School
           </NavigationMenuTrigger>
-          <NavigationMenuContent className="min-w-[520px] bg-[#191919] dark:bg-[#191919] p-4 rounded-lg shadow-lg border border-gray-700/50">
+          <NavigationMenuContent className="min-w-[520px] bg-white dark:bg-gray-950 p-4 rounded-lg shadow-lg">
             <div className="grid grid-cols-2 gap-4">
-              <Link to="/courses" className="group p-4 hover:bg-[#222222] dark:hover:bg-[#222222] rounded-lg">
+              <Link to="/courses" className="group p-4 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-lg">
                 <div className="flex items-start gap-4">
                   <div className="mt-1">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -56,7 +57,7 @@ export const NavMenuLinks = ({ adminLabel = "Admin" }) => {
                 </div>
               </Link>
               
-              <Link to="/my-courses" className="group p-4 hover:bg-[#222222] dark:hover:bg-[#222222] rounded-lg">
+              <Link to="/my-courses" className="group p-4 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-lg">
                 <div className="flex items-start gap-4">
                   <div className="mt-1">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

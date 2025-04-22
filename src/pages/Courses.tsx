@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
@@ -22,12 +23,14 @@ const Courses = () => {
   const [activeCategory, setActiveCategory] = useState("all");
   const [showContent, setShowContent] = useState(false);
 
+  // Controle de exibição do conteúdo para evitar "piscar"
   useEffect(() => {
     if (!companyLoading && selectedCompany && isDataReady) {
       setShowContent(true);
     }
   }, [companyLoading, selectedCompany, isDataReady]);
 
+  // Extract unique categories from all courses
   const availableCategories = React.useMemo(() => {
     if (!allCompanyCourses) return [];
     
@@ -44,6 +47,7 @@ const Courses = () => {
     return course.tags?.includes(activeCategory);
   });
 
+  // Se estiver carregando a empresa ou não houver empresa selecionada, mostrar skeleton
   if (companyLoading || !selectedCompany) {
     return (
       <DashboardLayout>
@@ -72,14 +76,17 @@ const Courses = () => {
     );
   }
 
+  // Conteúdo real só é mostrado quando dados estão prontos
   return (
     <DashboardLayout>
-      <div className="container mx-auto max-w-screen-2xl space-y-12 px-4 py-6 bg-[#191919] dark:bg-[#191919]">
+      <div className="container mx-auto max-w-screen-2xl space-y-12 px-4 py-6">
+        {/* Featured Courses Carousel */}
         <CourseCarousel 
           courses={featuredCourses} 
           loading={loading} 
         />
         
+        {/* Categories - Right after the carousel */}
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Categorias</h2>
           <CourseCategories 
@@ -89,11 +96,13 @@ const Courses = () => {
           />
         </div>
         
+        {/* All Company Courses */}
         <div className="space-y-8">
           <div className="space-y-8">
             <h2 className="text-xl font-semibold">Todos os cursos</h2>
             
             {allCoursesLoading ? (
+              // Loading skeleton for courses grid
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {[1, 2, 3, 4, 5, 6].map((index) => (
                   <div key={index} className="aspect-[4/3] rounded-lg overflow-hidden">
@@ -102,12 +111,14 @@ const Courses = () => {
                 ))}
               </div>
             ) : filteredCourses?.length === 0 ? (
+              // Empty state
               <div className="py-12 text-center">
                 <p className="text-gray-500 dark:text-gray-400">
                   Nenhum curso disponível para esta categoria.
                 </p>
               </div>
             ) : (
+              // Courses grid
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {filteredCourses?.map((course) => (
                   <div 

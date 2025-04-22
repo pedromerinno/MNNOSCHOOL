@@ -1,3 +1,4 @@
+
 import { Search } from "lucide-react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { cn } from "@/lib/utils";
@@ -7,6 +8,7 @@ import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, Comma
 import { fetchCourses } from "@/services/course";
 import { DialogTitle } from "@/components/ui/dialog";
 
+// Definir um tipo para os cursos
 interface Course {
   id: string;
   title: string;
@@ -22,6 +24,7 @@ export const SearchBar = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
   
+  // Carregar cursos quando o componente montar ou a empresa mudar
   useEffect(() => {
     const loadCourses = async () => {
       if (!selectedCompany?.id) return;
@@ -42,6 +45,7 @@ export const SearchBar = () => {
     loadCourses();
   }, [selectedCompany?.id]);
 
+  // Filtrar cursos baseado na consulta de pesquisa (usando useMemo para performance)
   const filteredCourses = useMemo(() => {
     if (!searchQuery.trim()) return [];
     
@@ -49,14 +53,16 @@ export const SearchBar = () => {
     return courses.filter(course => 
       course.title.toLowerCase().includes(query) ||
       (course.tags && course.tags.some(tag => tag.toLowerCase().includes(query)))
-    ).slice(0, 5);
+    ).slice(0, 5); // Limitando a 5 resultados para melhor performance
   }, [searchQuery, courses]);
 
+  // Navegar para a página do curso quando um resultado for selecionado
   const handleSelect = (courseId: string) => {
     setOpen(false);
     navigate(`/courses/${courseId}`);
   };
 
+  // Enviar o formulário de pesquisa (quando o usuário pressionar Enter)
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -65,6 +71,7 @@ export const SearchBar = () => {
     }
   };
 
+  // Atualizar a consulta de pesquisa quando o usuário digitar
   const handleInputChange = (value: string) => {
     setSearchQuery(value);
   };
@@ -73,10 +80,11 @@ export const SearchBar = () => {
   
   return (
     <>
+      {/* Campo de pesquisa visível na interface */}
       <div className="relative w-64">
         <div 
           className={cn(
-            "flex items-center rounded-full bg-[#222222] dark:bg-[#222222] border border-gray-700/50 px-3 py-1 hover:border-gray-600 transition-all cursor-pointer",
+            "flex items-center rounded-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-1 hover:border-gray-300 dark:hover:border-gray-600 transition-all cursor-pointer",
             "focus-within:ring-2 focus-within:ring-offset-0",
             "focus-within:ring-opacity-50"
           )}
@@ -90,17 +98,18 @@ export const SearchBar = () => {
             value={searchQuery}
             onChange={(e) => handleInputChange(e.target.value)}
             placeholder="Pesquisar..."
-            className="w-full bg-transparent border-0 p-0 h-8 text-sm focus:outline-none text-gray-200"
+            className="w-full bg-transparent border-0 p-0 h-8 text-sm focus:outline-none"
           />
         </div>
       </div>
 
+      {/* Dialog de pesquisa que aparece quando o usuário clica no campo */}
       <CommandDialog 
         open={open} 
         onOpenChange={setOpen}
         className="search-dialog-position"
       >
-        <div className="bg-[#191919]/95 dark:bg-[#191919]/95 backdrop-blur-sm border border-gray-700/50 rounded-lg">
+        <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-lg">
           <Command className="rounded-lg border-none bg-transparent">
             <div className="flex flex-col">
               <DialogTitle className="sr-only">Pesquisar cursos</DialogTitle>
@@ -130,6 +139,7 @@ export const SearchBar = () => {
                         onSelect={() => handleSelect(course.id)}
                         className="flex items-center gap-3 cursor-pointer p-2 hover:bg-gray-100 dark:hover:bg-gray-800"
                       >
+                        {/* Course thumbnail */}
                         <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
                           {course.image_url ? (
                             <img 

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { useMyCourses } from "@/hooks/my-courses";
@@ -20,20 +21,24 @@ const MyCourses = () => {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto max-w-screen-2xl px-4 py-4 bg-[#191919] dark:bg-[#191919] min-h-screen">
+      <div className="container mx-auto max-w-screen-2xl px-4 py-4">
+        {/* Filters */}
         <CourseFilters 
           activeFilter={activeFilter} 
           onFilterChange={handleFilterChange} 
         />
         
+        {/* Main Content and Sidebar */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="md:col-span-2 space-y-6">
+            {/* Recent Courses */}
             <RecentCourses 
               courses={recentCourses} 
               loading={loading}
               companyColor={companyColor}
             />
             
+            {/* Filtered Courses */}
             <FilteredCoursesList 
               courses={filteredCourses} 
               loading={loading} 
@@ -42,6 +47,7 @@ const MyCourses = () => {
             />
           </div>
           
+          {/* Sidebar */}
           <div className="space-y-6 mt-0">
             <CourseSidebar 
               stats={stats} 
