@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from '@/hooks/use-toast';
 import { Lesson } from '@/components/courses/CourseLessonList';
@@ -15,52 +15,8 @@ export const useLessons = (courseId: string) => {
   const [selectedLesson, setSelectedLesson] = useState<ExtendedLesson | undefined>(undefined);
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (!courseId) return;
-
-    console.log("Setting up real-time subscription for course:", courseId);
-
-    // Set up real-time subscription
-    const channel = supabase
-      .channel(`lessons-${courseId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'lessons',
-          filter: `course_id=eq.${courseId}`,
-        },
-        (payload) => {
-          console.log('Received real-time update:', payload);
-          
-          // Handle different types of changes
-          if (payload.eventType === 'INSERT') {
-            setLessons(current => [...current, payload.new as Lesson].sort((a, b) => (a.order_index || 0) - (b.order_index || 0)));
-          } else if (payload.eventType === 'DELETE') {
-            setLessons(current => current.filter(lesson => lesson.id !== payload.old.id));
-          } else if (payload.eventType === 'UPDATE') {
-            setLessons(current => 
-              current.map(lesson => 
-                lesson.id === payload.new.id ? payload.new as Lesson : lesson
-              ).sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
-            );
-          }
-        }
-      )
-      .subscribe();
-
-    // Initial fetch of lessons
-    fetchLessons();
-
-    // Cleanup subscription on unmount
-    return () => {
-      console.log("Cleaning up real-time subscription");
-      supabase.removeChannel(channel);
-    };
-  }, [courseId]);
-
-  const fetchLessons = async () => {
+  // Memoized fetch function to prevent recreating on each render
+  const fetchLessons = useCallback(async () => {
     if (!courseId) return;
     
     setIsLoading(true);
@@ -87,7 +43,71 @@ export const useLessons = (courseId: string) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [courseId, toast]);
+
+  useEffect(() => {
+    if (!courseId) return;
+
+    console.log("Setting up real-time subscription for lessons hook:", courseId);
+
+    // Set up real-time subscription with a unique channel name that includes a random ID
+    const channelName = `lessons-hook-${courseId}-${Math.random().toString(36).substring(2, 9)}`;
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'lessons',
+          filter: `course_id=eq.${courseId}`,
+        },
+        (payload) => {
+          console.log('Received real-time update in lessons hook:', payload);
+          
+          // Handle different types of changes
+          if (payload.eventType === 'INSERT') {
+            // Add the new lesson and re-sort
+            setLessons(current => 
+              [...current, payload.new as Lesson].sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
+            );
+            
+            toast({
+              title: 'Aula adicionada',
+              description: 'Nova aula foi adicionada ao curso',
+            });
+          } else if (payload.eventType === 'DELETE') {
+            setLessons(current => current.filter(lesson => lesson.id !== payload.old.id));
+            
+            toast({
+              title: 'Aula removida',
+              description: 'Uma aula foi removida do curso',
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            setLessons(current => 
+              current.map(lesson => 
+                lesson.id === payload.new.id ? payload.new as Lesson : lesson
+              ).sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
+            );
+            
+            toast({
+              title: 'Aula atualizada',
+              description: 'Uma aula do curso foi atualizada',
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    // Initial fetch of lessons
+    fetchLessons();
+
+    // Cleanup subscription on unmount
+    return () => {
+      console.log("Cleaning up real-time subscription for lessons hook");
+      supabase.removeChannel(channel);
+    };
+  }, [courseId, fetchLessons]);
 
   const handleCreateLesson = async (lessonData: Omit<ExtendedLesson, 'id' | 'completed'>) => {
     if (!courseId) return;

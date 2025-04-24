@@ -8,6 +8,7 @@ import { LessonTable } from './LessonTable';
 import { LessonFormSheet } from './LessonFormSheet';
 import { DeleteLessonDialog } from './DeleteLessonDialog';
 import { Lesson } from '@/components/courses/CourseLessonList';
+import { supabase } from "@/integrations/supabase/client";
 
 interface LessonManagerProps {
   courseId: string;
@@ -38,11 +39,34 @@ export const LessonManager: React.FC<LessonManagerProps> = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Set up Supabase real-time subscription for lessons
   useEffect(() => {
-    if (courseId && open) {
-      fetchLessons();
-    }
-  }, [courseId, open]);
+    if (!courseId || !open) return;
+
+    console.log(`Setting up real-time subscription for lesson manager: ${courseId}`);
+    
+    const channel = supabase
+      .channel(`lesson-manager-${courseId}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'lessons',
+        filter: `course_id=eq.${courseId}`
+      }, (payload) => {
+        console.log('Lesson change detected in manager:', payload);
+        // Refresh the lesson list when there's any change
+        fetchLessons();
+      })
+      .subscribe();
+    
+    // Initial fetch when opening the manager
+    fetchLessons();
+    
+    return () => {
+      console.log("Cleaning up lesson manager real-time subscription");
+      supabase.removeChannel(channel);
+    };
+  }, [courseId, open, fetchLessons]);
 
   const handleAddLesson = () => {
     setSelectedLesson(undefined);
@@ -55,12 +79,16 @@ export const LessonManager: React.FC<LessonManagerProps> = ({
   };
 
   const handleLessonFormSubmit = async (data: any) => {
-    if (selectedLesson) {
-      await handleUpdateLesson(selectedLesson.id, data);
-    } else {
-      await handleCreateLesson(data);
+    try {
+      if (selectedLesson) {
+        await handleUpdateLesson(selectedLesson.id, data);
+      } else {
+        await handleCreateLesson(data);
+      }
+      setIsFormOpen(false);
+    } catch (error) {
+      console.error("Error submitting lesson form:", error);
     }
-    setIsFormOpen(false);
   };
 
   const confirmDeleteLesson = (lesson: Lesson) => {
@@ -71,9 +99,14 @@ export const LessonManager: React.FC<LessonManagerProps> = ({
   const executeDeleteLesson = async () => {
     if (selectedLesson) {
       setIsDeleting(true);
-      await handleDeleteLesson(selectedLesson.id);
-      setIsDeleting(false);
-      setIsDeleteDialogOpen(false);
+      try {
+        await handleDeleteLesson(selectedLesson.id);
+      } catch (error) {
+        console.error("Error deleting lesson:", error);
+      } finally {
+        setIsDeleting(false);
+        setIsDeleteDialogOpen(false);
+      }
     }
   };
 
@@ -129,6 +162,7 @@ export const LessonManager: React.FC<LessonManagerProps> = ({
         selectedLesson={selectedLesson}
         onSubmit={handleLessonFormSubmit}
         isSubmitting={isSubmitting}
+        courseId={courseId}
       />
 
       {/* Delete confirmation dialog */}

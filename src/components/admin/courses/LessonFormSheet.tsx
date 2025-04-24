@@ -16,6 +16,7 @@ interface LessonFormSheetProps {
   selectedLesson?: Lesson;
   onSubmit: (data: any) => Promise<void>;
   isSubmitting: boolean;
+  courseId: string;
 }
 
 export const LessonFormSheet: React.FC<LessonFormSheetProps> = ({
@@ -23,7 +24,8 @@ export const LessonFormSheet: React.FC<LessonFormSheetProps> = ({
   onClose,
   selectedLesson,
   onSubmit,
-  isSubmitting
+  isSubmitting,
+  courseId
 }) => {
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
@@ -44,6 +46,7 @@ export const LessonFormSheet: React.FC<LessonFormSheetProps> = ({
             onSubmit={onSubmit}
             isSubmitting={isSubmitting}
             onCancel={onClose}
+            courseId={courseId}
           />
         </div>
       </SheetContent>
