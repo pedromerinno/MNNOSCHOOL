@@ -41,8 +41,9 @@ export const LessonContentField: React.FC<LessonContentFieldProps> = ({
             <Alert variant="default" className="mb-4 border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950">
               <AlertCircle className="h-4 w-4 text-blue-500" />
               <AlertDescription className="text-blue-600 dark:text-blue-300">
-                Use URLs no formato <code>https://www.youtube.com/watch?v=XXXX</code> ou <code>https://youtu.be/XXXX</code>. 
-                O sistema automaticamente converterá para o formato de incorporação adequado.
+                Use URLs do YouTube (<code>youtube.com/watch?v=XXXX</code> ou <code>youtu.be/XXXX</code>) ou 
+                do Loom (<code>loom.com/share/XXXX</code>). 
+                O sistema converterá automaticamente para o formato adequado.
               </AlertDescription>
             </Alert>
           )}
@@ -51,7 +52,7 @@ export const LessonContentField: React.FC<LessonContentFieldProps> = ({
             <Textarea 
               placeholder={
                 selectedType === "video" 
-                  ? "https://www.youtube.com/watch?v=..." 
+                  ? "https://www.youtube.com/watch?v=... ou https://www.loom.com/share/..." 
                   : selectedType === "text" 
                     ? "Conteúdo detalhado da aula em texto..." 
                     : "Formato JSON com perguntas e respostas..."
@@ -64,7 +65,7 @@ export const LessonContentField: React.FC<LessonContentFieldProps> = ({
           
           {selectedType === "video" && (
             <FormDescription>
-              Para melhor compatibilidade, recomendamos usar vídeos do YouTube.
+              Para melhor compatibilidade, recomendamos usar vídeos do YouTube ou Loom.
             </FormDescription>
           )}
           
