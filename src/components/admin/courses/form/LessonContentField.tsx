@@ -11,7 +11,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { UseFormReturn } from "react-hook-form";
 import { LessonFormValues } from "./LessonFormTypes";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,41 +27,57 @@ export const LessonContentField: React.FC<LessonContentFieldProps> = ({
   selectedType 
 }) => {
   const { toast } = useToast();
+  const [isLoadingMetadata, setIsLoadingMetadata] = React.useState(false);
 
   const fetchLoomMetadata = useCallback(
     debounce(async (url: string) => {
+      if (!url || !url.includes("loom.com/share/")) return;
+      
+      setIsLoadingMetadata(true);
       try {
+        console.log("Fetching metadata for Loom URL:", url);
         const { data, error } = await supabase.functions.invoke('fetch-loom-metadata', {
           body: { url }
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Supabase function error:', error);
+          throw new Error(`Function error: ${error.message}`);
+        }
+
+        if (data?.error) {
+          console.error('Loom API error:', data.error);
+          throw new Error(data.error);
+        }
 
         if (data) {
+          console.log("Metadata fetched successfully:", data);
           // Update form fields with the fetched metadata
           form.setValue('title', data.title, { shouldDirty: true });
           form.setValue('description', data.description, { shouldDirty: true });
           form.setValue('duration', data.duration, { shouldDirty: true });
 
           toast({
-            title: "Video details fetched",
-            description: "Title and description have been updated from Loom.",
+            title: "Detalhes do vídeo obtidos",
+            description: "Título e descrição foram atualizados a partir do Loom.",
           });
         }
       } catch (error) {
         console.error('Error fetching Loom metadata:', error);
         toast({
-          title: "Error fetching video details",
-          description: "Please make sure you've entered a valid Loom URL.",
+          title: "Erro ao obter detalhes do vídeo",
+          description: "Verifique se você inseriu um URL válido do Loom e tente novamente.",
           variant: "destructive",
         });
+      } finally {
+        setIsLoadingMetadata(false);
       }
     }, 1000),
     [form, toast]
   );
 
   const handleUrlChange = (value: string) => {
-    if (selectedType === "video" && value.includes("loom.com")) {
+    if (selectedType === "video" && value.includes("loom.com/share/")) {
       fetchLoomMetadata(value);
     }
   };
@@ -86,7 +102,12 @@ export const LessonContentField: React.FC<LessonContentFieldProps> = ({
               <AlertDescription className="text-blue-600 dark:text-blue-300">
                 Use URLs do YouTube (<code>youtube.com/watch?v=XXXX</code> ou <code>youtu.be/XXXX</code>) ou 
                 do Loom (<code>loom.com/share/XXXX</code>). 
-                O sistema converterá automaticamente para o formato adequado.
+                {isLoadingMetadata && (
+                  <span className="ml-2 inline-flex items-center">
+                    <Loader2 className="h-3 w-3 animate-spin mr-1" /> 
+                    Buscando informações do vídeo...
+                  </span>
+                )}
               </AlertDescription>
             </Alert>
           )}
@@ -107,13 +128,14 @@ export const LessonContentField: React.FC<LessonContentFieldProps> = ({
                 handleUrlChange(e.target.value);
               }}
               value={field.value || ""}
+              disabled={isLoadingMetadata}
             />
           </FormControl>
           
           {selectedType === "video" && (
             <FormDescription>
               Para melhor compatibilidade, recomendamos usar vídeos do YouTube ou Loom.
-              {selectedType === "video" && " Cole um link do Loom para preencher automaticamente o título e descrição."}
+              Cole um link do Loom para preencher automaticamente o título e descrição.
             </FormDescription>
           )}
           
