@@ -26,9 +26,10 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
 }) => {
   const currentIndex = lessons.findIndex(lesson => lesson.id === currentLessonId);
 
-  const handleLessonClick = (e: React.MouseEvent, lessonId: string) => {
-    e.preventDefault(); // Prevent default navigation behavior
-    onLessonSelect(lessonId);
+  const handleLessonClick = (lessonId: string) => {
+    if (lessonId !== currentLessonId) {
+      onLessonSelect(lessonId);
+    }
   };
 
   return (
@@ -59,7 +60,7 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
                     ? "border-l-primary bg-accent"
                     : "border-l-transparent"
                 )}
-                onClick={(e) => handleLessonClick(e, lesson.id)}
+                onClick={() => handleLessonClick(lesson.id)}
               >
                 <div className="flex-shrink-0 w-8 h-8">
                   {lesson.completed ? (

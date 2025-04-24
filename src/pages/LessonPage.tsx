@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useLessonData } from '@/hooks/useLessonData';
 import { useAutoplayNavigation } from '@/hooks/lesson/useAutoplayNavigation';
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
@@ -17,7 +17,16 @@ import { LessonPlaylist } from '@/components/lessons/LessonPlaylist';
 const LessonPage = () => {
   const { courseId, lessonId } = useParams<{ courseId: string, lessonId: string }>();
   const location = useLocation();
+  const navigate = useNavigate();
   const [currentLessonId, setCurrentLessonId] = useState(lessonId);
+
+  // Effect to update current lesson ID when URL params change
+  useEffect(() => {
+    if (lessonId !== currentLessonId) {
+      setCurrentLessonId(lessonId);
+    }
+  }, [lessonId, currentLessonId]);
+
   const { 
     lesson, 
     loading, 
@@ -38,13 +47,6 @@ const LessonPage = () => {
     cancelAutoplay
   } = useAutoplayNavigation(nextLesson, courseId);
 
-  // Update current lesson ID when route params change
-  useEffect(() => {
-    if (lessonId !== currentLessonId) {
-      setCurrentLessonId(lessonId);
-    }
-  }, [lessonId, currentLessonId]);
-
   // Handle scroll to top when changing lessons
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -60,6 +62,8 @@ const LessonPage = () => {
 
   // Handle lesson selection from playlist
   const handleLessonSelect = (selectedLessonId: string) => {
+    if (selectedLessonId === currentLessonId) return;
+    
     setCurrentLessonId(selectedLessonId);
     navigateToLesson(selectedLessonId);
   };
