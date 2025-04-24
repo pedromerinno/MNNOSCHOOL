@@ -16,6 +16,7 @@ export const LessonForm: React.FC<LessonFormProps> = ({
   onSubmit,
   isSubmitting,
   onCancel,
+  courseId, // Added parameter here to match updated LessonFormProps
 }) => {
   const form = useForm<LessonFormValues>({
     resolver: zodResolver(lessonSchema),

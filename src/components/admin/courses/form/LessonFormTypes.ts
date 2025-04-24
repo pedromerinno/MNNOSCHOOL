@@ -24,4 +24,5 @@ export interface LessonFormProps {
   onSubmit: (data: LessonFormValues) => void;
   isSubmitting: boolean;
   onCancel: () => void;
+  courseId: string; // Added this property to fix the type error
 }
