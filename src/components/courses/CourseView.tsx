@@ -38,7 +38,7 @@ export const CourseView: React.FC = () => {
     handleCourseUpdate
   } = useCourseEdit(courseId);
   
-  // Setup real-time course updates subscription
+  // Setup real-time subscription for course data updates
   useEffect(() => {
     if (!courseId) return;
     
