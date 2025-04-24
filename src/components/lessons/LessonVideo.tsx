@@ -53,11 +53,13 @@ export const LessonVideo: React.FC<LessonVideoProps> = ({
   }, [onVideoEnd]);
 
   const handleVideoError = () => {
+    console.log('Video error occurred');
     setVideoError(true);
     setVideoLoading(false);
   };
 
   const handleVideoLoad = () => {
+    console.log('Video loaded successfully');
     setVideoLoading(false);
     setVideoError(false);
   };
@@ -72,6 +74,15 @@ export const LessonVideo: React.FC<LessonVideoProps> = ({
   const isYouTube = videoUrl && (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be'));
   const isLoom = videoUrl && videoUrl.includes('loom.com');
   const embedUrl = videoUrl ? getEmbedUrl(videoUrl) : null;
+  
+  // Log URL information for debugging
+  useEffect(() => {
+    if (videoUrl) {
+      console.log('Original video URL:', videoUrl);
+      console.log('Generated embed URL:', embedUrl);
+      console.log('Detected video type:', isYouTube ? 'YouTube' : isLoom ? 'Loom' : 'Other');
+    }
+  }, [videoUrl, embedUrl, isYouTube, isLoom]);
 
   return (
     <div className="relative w-full">
@@ -133,7 +144,9 @@ export const LessonVideo: React.FC<LessonVideoProps> = ({
                 onError={handleVideoError}
                 onLoad={handleVideoLoad}
                 onEnded={handleVideoEnded}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                referrerPolicy="origin"
+                loading="lazy"
               ></iframe>
             )}
           </>

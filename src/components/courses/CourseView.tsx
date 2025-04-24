@@ -17,6 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LessonManager } from '@/components/admin/courses/LessonManager';
 import { useCourseEdit } from '@/hooks/course/useCourseEdit';
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const CourseView: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -53,6 +54,9 @@ export const CourseView: React.FC = () => {
         filter: `id=eq.${courseId}`
       }, (payload) => {
         console.log('Course update detected:', payload);
+        toast.info("Curso atualizado", {
+          description: "As informações do curso foram atualizadas."
+        });
         refreshCourseData();
       })
       .on('postgres_changes', {
@@ -62,6 +66,22 @@ export const CourseView: React.FC = () => {
         filter: `course_id=eq.${courseId}`
       }, (payload) => {
         console.log('Lesson update for course detected:', payload);
+        
+        // Show different messages based on the event type
+        if (payload.eventType === 'INSERT') {
+          toast.info("Nova aula adicionada", {
+            description: "Uma nova aula foi adicionada ao curso."
+          });
+        } else if (payload.eventType === 'UPDATE') {
+          toast.info("Aula atualizada", {
+            description: "Uma aula do curso foi atualizada."
+          });
+        } else if (payload.eventType === 'DELETE') {
+          toast.info("Aula removida", {
+            description: "Uma aula foi removida do curso."
+          });
+        }
+        
         refreshCourseData();
       })
       .subscribe();
