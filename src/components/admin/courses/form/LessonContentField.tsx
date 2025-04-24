@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   FormField,
   FormItem,
@@ -13,6 +13,9 @@ import { UseFormReturn } from "react-hook-form";
 import { LessonFormValues } from "./LessonFormTypes";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import debounce from 'lodash/debounce';
 
 interface LessonContentFieldProps {
   form: UseFormReturn<LessonFormValues>;
@@ -23,6 +26,46 @@ export const LessonContentField: React.FC<LessonContentFieldProps> = ({
   form, 
   selectedType 
 }) => {
+  const { toast } = useToast();
+
+  const fetchLoomMetadata = useCallback(
+    debounce(async (url: string) => {
+      try {
+        const { data, error } = await supabase.functions.invoke('fetch-loom-metadata', {
+          body: { url }
+        });
+
+        if (error) throw error;
+
+        if (data) {
+          // Update form fields with the fetched metadata
+          form.setValue('title', data.title, { shouldDirty: true });
+          form.setValue('description', data.description, { shouldDirty: true });
+          form.setValue('duration', data.duration, { shouldDirty: true });
+
+          toast({
+            title: "Video details fetched",
+            description: "Title and description have been updated from Loom.",
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching Loom metadata:', error);
+        toast({
+          title: "Error fetching video details",
+          description: "Please make sure you've entered a valid Loom URL.",
+          variant: "destructive",
+        });
+      }
+    }, 1000),
+    [form, toast]
+  );
+
+  const handleUrlChange = (value: string) => {
+    if (selectedType === "video" && value.includes("loom.com")) {
+      fetchLoomMetadata(value);
+    }
+  };
+
   return (
     <FormField
       control={form.control}
@@ -59,6 +102,10 @@ export const LessonContentField: React.FC<LessonContentFieldProps> = ({
               }
               className="min-h-[150px]"
               {...field}
+              onChange={(e) => {
+                field.onChange(e);
+                handleUrlChange(e.target.value);
+              }}
               value={field.value || ""}
             />
           </FormControl>
@@ -66,6 +113,7 @@ export const LessonContentField: React.FC<LessonContentFieldProps> = ({
           {selectedType === "video" && (
             <FormDescription>
               Para melhor compatibilidade, recomendamos usar vídeos do YouTube ou Loom.
+              {selectedType === "video" && " Cole um link do Loom para preencher automaticamente o título e descrição."}
             </FormDescription>
           )}
           
