@@ -15,6 +15,7 @@ serve(async (req) => {
 
   try {
     const { url } = await req.json()
+    console.log(`Received request to fetch metadata for URL: ${url}`)
     
     // Extract video ID from Loom URL
     const videoIdMatch = url.match(/share\/([a-zA-Z0-9]+)/)
@@ -24,19 +25,23 @@ serve(async (req) => {
       throw new Error('Invalid Loom URL or could not extract video ID')
     }
 
-    console.log(`Trying to fetch Loom video with ID: ${videoId}`)
+    console.log(`Extracted Loom video ID: ${videoId}`)
 
     const apiKey = Deno.env.get('LOOM_API_KEY')
     if (!apiKey) {
       throw new Error('LOOM_API_KEY environment variable is not set')
     }
 
+    console.log('Sending request to Loom API...')
+    
     const response = await fetch(`https://api.loom.com/v1/videos/${videoId}`, {
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
     })
+
+    console.log(`Loom API response status: ${response.status}`)
 
     if (!response.ok) {
       const errorBody = await response.text()
@@ -46,14 +51,19 @@ serve(async (req) => {
     }
 
     const data = await response.json()
-    console.log('Loom metadata fetched successfully:', data)
+    console.log('Loom metadata fetched successfully')
+    
+    // Return only the required fields
+    const metadata = {
+      title: data.name,
+      description: data.description || '',
+      duration: data.duration ? `${Math.round(data.duration / 60)} min` : '0 min', // Convert seconds to minutes
+    }
+    
+    console.log('Returning processed metadata:', metadata)
 
     return new Response(
-      JSON.stringify({
-        title: data.name,
-        description: data.description || '',
-        duration: data.duration ? `${Math.round(data.duration / 60)} min` : '0 min', // Convert seconds to minutes
-      }),
+      JSON.stringify(metadata),
       {
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       },

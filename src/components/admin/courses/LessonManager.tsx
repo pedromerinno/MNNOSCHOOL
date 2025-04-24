@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -9,6 +8,7 @@ import { LessonFormSheet } from './LessonFormSheet';
 import { DeleteLessonDialog } from './DeleteLessonDialog';
 import { Lesson } from '@/components/courses/CourseLessonList';
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface LessonManagerProps {
   courseId: string;
@@ -56,8 +56,19 @@ export const LessonManager: React.FC<LessonManagerProps> = ({
         console.log('Lesson change detected in manager:', payload);
         // Refresh the lesson list when there's any change
         fetchLessons();
+        
+        // Show feedback to the user
+        if (payload.eventType === 'INSERT') {
+          toast.success("Aula adicionada com sucesso");
+        } else if (payload.eventType === 'UPDATE') {
+          toast.success("Aula atualizada com sucesso");
+        } else if (payload.eventType === 'DELETE') {
+          toast.success("Aula removida com sucesso");
+        }
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log(`Lesson manager subscription status: ${status}`);
+      });
     
     // Initial fetch when opening the manager
     fetchLessons();

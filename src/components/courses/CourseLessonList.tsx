@@ -53,13 +53,17 @@ export const CourseLessonList: React.FC<CourseLessonListProps> = ({
     }
   };
 
+  // Sort lessons by order_index to ensure they're always displayed in correct order
+  const sortedLessons = [...lessons].sort((a, b) => 
+    (a.order_index || 0) - (b.order_index || 0)
+  );
+
   return (
     <div className="space-y-4 mt-4">
-      {/* Removed duplicate title from here */}
       <Separator />
       
       <div className="space-y-2">
-        {lessons.map((lesson, index) => (
+        {sortedLessons.map((lesson, index) => (
           <div 
             key={lesson.id}
             className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
@@ -106,4 +110,3 @@ export const CourseLessonList: React.FC<CourseLessonListProps> = ({
     </div>
   );
 };
-

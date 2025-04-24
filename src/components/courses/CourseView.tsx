@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCourseData } from '@/hooks/useCourseData';
@@ -82,9 +81,12 @@ export const CourseView: React.FC = () => {
           });
         }
         
+        // Always refresh the course data to get updated lessons
         refreshCourseData();
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log(`Course view subscription status: ${status}`);
+      });
     
     return () => {
       console.log("Cleaning up course real-time subscription");
@@ -96,6 +98,7 @@ export const CourseView: React.FC = () => {
   useEffect(() => {
     const handleCourseUpdated = (event: CustomEvent) => {
       if (event.detail?.courseId === courseId) {
+        console.log("Course updated event detected, refreshing data");
         refreshCourseData();
       }
     };
@@ -118,6 +121,13 @@ export const CourseView: React.FC = () => {
       return () => clearInterval(refreshInterval);
     }
   }, [courseId, refreshCourseData, loading, error]);
+  
+  // Initial data fetch when component mounts
+  useEffect(() => {
+    if (courseId) {
+      refreshCourseData();
+    }
+  }, [courseId, refreshCourseData]);
   
   if (loading) {
     return <CourseViewSkeleton />;

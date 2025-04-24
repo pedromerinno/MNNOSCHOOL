@@ -21,6 +21,7 @@ export const useLessons = (courseId: string) => {
     
     setIsLoading(true);
     try {
+      console.log(`Fetching lessons for course: ${courseId}`);
       const { data, error } = await supabase
         .from('lessons')
         .select('*')
@@ -50,10 +51,12 @@ export const useLessons = (courseId: string) => {
 
     console.log("Setting up real-time subscription for lessons hook:", courseId);
 
-    // Set up real-time subscription with a unique channel name that includes a random ID
-    const channelName = `lessons-hook-${courseId}-${Math.random().toString(36).substring(2, 9)}`;
+    // Set up real-time subscription with a unique channel name 
+    const channelId = `lessons-hook-${courseId}-${Math.random().toString(36).substring(2, 9)}`;
+    console.log(`Creating channel: ${channelId}`);
+    
     const channel = supabase
-      .channel(channelName)
+      .channel(channelId)
       .on(
         'postgres_changes',
         {
@@ -97,14 +100,16 @@ export const useLessons = (courseId: string) => {
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log(`Subscription status for ${channelId}: ${status}`);
+      });
 
     // Initial fetch of lessons
     fetchLessons();
 
     // Cleanup subscription on unmount
     return () => {
-      console.log("Cleaning up real-time subscription for lessons hook");
+      console.log(`Cleaning up real-time subscription for lessons hook: ${channelId}`);
       supabase.removeChannel(channel);
     };
   }, [courseId, fetchLessons]);
@@ -137,6 +142,9 @@ export const useLessons = (courseId: string) => {
         description: 'A aula foi criada com sucesso',
       });
 
+      // Force refresh lessons list
+      await fetchLessons();
+      
       return data;
     } catch (error: any) {
       console.error("Erro ao criar aula:", error);
@@ -162,12 +170,17 @@ export const useLessons = (courseId: string) => {
       if (lessonData.type !== undefined) updateData.type = lessonData.type;
       if (lessonData.order_index !== undefined) updateData.order_index = lessonData.order_index;
 
+      console.log(`Updating lesson ${lessonId}:`, updateData);
+
       const { error } = await supabase
         .from('lessons')
         .update(updateData)
         .eq('id', lessonId);
 
       if (error) throw error;
+
+      // Force refresh lessons list
+      await fetchLessons();
 
       toast({
         title: 'Aula atualizada',
@@ -188,6 +201,8 @@ export const useLessons = (courseId: string) => {
 
   const handleDeleteLesson = async (lessonId: string) => {
     try {
+      console.log(`Deleting lesson ${lessonId}`);
+      
       const { error } = await supabase
         .from('lessons')
         .delete()
@@ -195,6 +210,9 @@ export const useLessons = (courseId: string) => {
 
       if (error) throw error;
 
+      // Force refresh lessons list
+      await fetchLessons();
+      
       toast({
         title: 'Aula excluída',
         description: 'A aula foi excluída com sucesso',
