@@ -13,7 +13,7 @@ import { UseFormReturn } from "react-hook-form";
 import { LessonFormValues } from "./LessonFormTypes";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import debounce from 'lodash/debounce';
 
@@ -26,16 +26,20 @@ export const LessonContentField: React.FC<LessonContentFieldProps> = ({
   form, 
   selectedType 
 }) => {
-  const { toast } = useToast();
   const [isLoadingMetadata, setIsLoadingMetadata] = React.useState(false);
+  const [lastProcessedUrl, setLastProcessedUrl] = React.useState<string>("");
 
   const fetchLoomMetadata = useCallback(
     debounce(async (url: string) => {
       if (!url || !url.includes("loom.com/share/")) return;
       
+      // Prevent duplicate fetches for the same URL
+      if (url === lastProcessedUrl) return;
+      
       setIsLoadingMetadata(true);
       try {
         console.log("Fetching metadata for Loom URL:", url);
+        
         const { data, error } = await supabase.functions.invoke('fetch-loom-metadata', {
           body: { url }
         });
@@ -50,34 +54,48 @@ export const LessonContentField: React.FC<LessonContentFieldProps> = ({
           throw new Error(data.error);
         }
 
-        if (data) {
-          console.log("Metadata fetched successfully:", data);
-          // Update form fields with the fetched metadata
-          form.setValue('title', data.title, { shouldDirty: true });
-          form.setValue('description', data.description, { shouldDirty: true });
-          form.setValue('duration', data.duration, { shouldDirty: true });
-
-          toast({
-            title: "Detalhes do vídeo obtidos",
-            description: "Título e descrição foram atualizados a partir do Loom.",
-          });
+        if (!data || !data.title) {
+          throw new Error('Received invalid response from Loom API');
         }
-      } catch (error) {
+
+        console.log("Metadata fetched successfully:", data);
+        
+        // Update form fields with the fetched metadata
+        form.setValue('title', data.title, { shouldDirty: true });
+        
+        if (data.description) {
+          form.setValue('description', data.description, { shouldDirty: true });
+        }
+        
+        if (data.duration) {
+          form.setValue('duration', data.duration, { shouldDirty: true });
+        }
+        
+        setLastProcessedUrl(url);
+
+        toast.success("Detalhes do vídeo obtidos", {
+          description: "Título e descrição foram atualizados a partir do Loom."
+        });
+      } catch (error: any) {
         console.error('Error fetching Loom metadata:', error);
-        toast({
-          title: "Erro ao obter detalhes do vídeo",
-          description: "Verifique se você inseriu um URL válido do Loom e tente novamente.",
-          variant: "destructive",
+        
+        toast.error("Erro ao obter detalhes do vídeo", {
+          description: "Verifique se você inseriu um URL válido do Loom e tente novamente."
         });
       } finally {
         setIsLoadingMetadata(false);
       }
     }, 1000),
-    [form, toast]
+    [form, lastProcessedUrl]
   );
 
+  const validateLoomUrl = (url: string): boolean => {
+    if (!url) return false;
+    return url.includes("loom.com/share/") && url.match(/loom\.com\/share\/[a-zA-Z0-9_-]+/) !== null;
+  };
+
   const handleUrlChange = (value: string) => {
-    if (selectedType === "video" && value.includes("loom.com/share/")) {
+    if (selectedType === "video" && validateLoomUrl(value)) {
       fetchLoomMetadata(value);
     }
   };
