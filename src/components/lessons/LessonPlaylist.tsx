@@ -11,7 +11,7 @@ interface LessonPlaylistProps {
     title: string;
     type: string;
     completed?: boolean;
-    duration?: string;
+    duration?: string | null;
   }>;
   currentLessonId: string;
   onLessonSelect: (lessonId: string) => void;
@@ -25,6 +25,11 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
   loading = false
 }) => {
   const currentIndex = lessons.findIndex(lesson => lesson.id === currentLessonId);
+
+  const handleLessonClick = (e: React.MouseEvent, lessonId: string) => {
+    e.preventDefault(); // Prevent default navigation behavior
+    onLessonSelect(lessonId);
+  };
 
   return (
     <Card>
@@ -54,7 +59,7 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
                     ? "border-l-primary bg-accent"
                     : "border-l-transparent"
                 )}
-                onClick={() => onLessonSelect(lesson.id)}
+                onClick={(e) => handleLessonClick(e, lesson.id)}
               >
                 <div className="flex-shrink-0 w-8 h-8">
                   {lesson.completed ? (

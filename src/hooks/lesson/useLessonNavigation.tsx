@@ -1,7 +1,7 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 type LessonNavigation = {
   id: string;
@@ -12,12 +12,16 @@ type LessonNavigation = {
 export const useLessonNavigation = (lessonId: string | undefined, courseId: string | undefined) => {
   const [previousLesson, setPreviousLesson] = useState<LessonNavigation | null>(null);
   const [nextLesson, setNextLesson] = useState<LessonNavigation | null>(null);
+  const [isNavigating, setIsNavigating] = useState(false);
   const navigate = useNavigate();
+  const { courseId: urlCourseId } = useParams<{ courseId: string }>();
+  const effectiveCourseId = courseId || urlCourseId;
 
+  // Fetch navigation lessons (previous and next)
   useEffect(() => {
     const fetchNavigationLessons = async () => {
-      if (!lessonId || !courseId) return;
-
+      if (!lessonId || !effectiveCourseId) return;
+      
       try {
         // Buscar dados da lição atual para obter order_index
         const { data: currentLesson, error: currentError } = await supabase
@@ -34,7 +38,7 @@ export const useLessonNavigation = (lessonId: string | undefined, courseId: stri
         const { data: prevData, error: prevError } = await supabase
           .from('lessons')
           .select('id, title, type')
-          .eq('course_id', courseId)
+          .eq('course_id', effectiveCourseId)
           .lt('order_index', currentOrderIndex)
           .order('order_index', { ascending: false })
           .limit(1)
@@ -48,7 +52,7 @@ export const useLessonNavigation = (lessonId: string | undefined, courseId: stri
         const { data: nextData, error: nextError } = await supabase
           .from('lessons')
           .select('id, title, type')
-          .eq('course_id', courseId)
+          .eq('course_id', effectiveCourseId)
           .gt('order_index', currentOrderIndex)
           .order('order_index', { ascending: true })
           .limit(1)
@@ -62,13 +66,25 @@ export const useLessonNavigation = (lessonId: string | undefined, courseId: stri
       }
     };
     
-    fetchNavigationLessons();
-  }, [lessonId, courseId]);
+    if (!isNavigating) {
+      fetchNavigationLessons();
+    }
+  }, [lessonId, effectiveCourseId, isNavigating]);
 
-  const navigateToLesson = (lessonId: string) => {
-    if (!courseId) return;
-    navigate(`/courses/${courseId}/lessons/${lessonId}`);
-  };
+  const navigateToLesson = useCallback((newLessonId: string) => {
+    if (!effectiveCourseId) return;
+    
+    setIsNavigating(true);
+    
+    // Update URL without full page refresh
+    navigate(`/courses/${effectiveCourseId}/lessons/${newLessonId}`, { 
+      replace: false,
+      state: { noRefresh: true }
+    });
+    
+    // Reset navigation state after URL update
+    setTimeout(() => setIsNavigating(false), 100);
+  }, [effectiveCourseId, navigate]);
 
   return { previousLesson, nextLesson, navigateToLesson };
 };

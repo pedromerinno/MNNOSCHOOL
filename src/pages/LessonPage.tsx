@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+
+import React, { useEffect, useState } from 'react';
+import { useParams, useLocation } from 'react-router-dom';
 import { useLessonData } from '@/hooks/useLessonData';
 import { useAutoplayNavigation } from '@/hooks/lesson/useAutoplayNavigation';
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
@@ -15,6 +16,8 @@ import { LessonPlaylist } from '@/components/lessons/LessonPlaylist';
 
 const LessonPage = () => {
   const { courseId, lessonId } = useParams<{ courseId: string, lessonId: string }>();
+  const location = useLocation();
+  const [currentLessonId, setCurrentLessonId] = useState(lessonId);
   const { 
     lesson, 
     loading, 
@@ -26,7 +29,7 @@ const LessonPage = () => {
     userLiked,
     toggleLikeLesson,
     completed
-  } = useLessonData(lessonId);
+  } = useLessonData(currentLessonId);
 
   const {
     showAutoplayPrompt,
@@ -35,16 +38,31 @@ const LessonPage = () => {
     cancelAutoplay
   } = useAutoplayNavigation(nextLesson, courseId);
 
+  // Update current lesson ID when route params change
+  useEffect(() => {
+    if (lessonId !== currentLessonId) {
+      setCurrentLessonId(lessonId);
+    }
+  }, [lessonId, currentLessonId]);
+
+  // Handle scroll to top when changing lessons
   useEffect(() => {
     window.scrollTo(0, 0);
     setShowAutoplayPrompt(false);
-  }, [lessonId, setShowAutoplayPrompt]);
+  }, [currentLessonId, setShowAutoplayPrompt]);
 
+  // Clean up autoplay on unmount
   useEffect(() => {
     return () => {
       cancelAutoplay();
     };
-  }, [lessonId, cancelAutoplay]);
+  }, [currentLessonId, cancelAutoplay]);
+
+  // Handle lesson selection from playlist
+  const handleLessonSelect = (selectedLessonId: string) => {
+    setCurrentLessonId(selectedLessonId);
+    navigateToLesson(selectedLessonId);
+  };
 
   if (loading) {
     return <LessonSkeleton />;
@@ -82,7 +100,7 @@ const LessonPage = () => {
               <LessonNavigation
                 previousLesson={previousLesson}
                 nextLesson={nextLesson}
-                onNavigate={navigateToLesson}
+                onNavigate={handleLessonSelect}
               />
               
               <div className="mt-8">
@@ -95,7 +113,7 @@ const LessonPage = () => {
             <LessonPlaylist
               lessons={lesson.course_lessons || []}
               currentLessonId={lesson.id}
-              onLessonSelect={navigateToLesson}
+              onLessonSelect={handleLessonSelect}
               loading={loading}
             />
           </div>
