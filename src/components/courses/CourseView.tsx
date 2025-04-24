@@ -66,6 +66,9 @@ export const CourseView: React.FC = () => {
       }, (payload) => {
         console.log('Lesson update for course detected:', payload);
         
+        // Always refresh the course data to get updated lessons
+        refreshCourseData();
+        
         // Show different messages based on the event type
         if (payload.eventType === 'INSERT') {
           toast.info("Nova aula adicionada", {
@@ -80,9 +83,6 @@ export const CourseView: React.FC = () => {
             description: "Uma aula foi removida do curso."
           });
         }
-        
-        // Always refresh the course data to get updated lessons
-        refreshCourseData();
       })
       .subscribe((status) => {
         console.log(`Course view subscription status: ${status}`);
@@ -206,6 +206,7 @@ export const CourseView: React.FC = () => {
           courseTitle={course.title}
           lessons={course.lessons}
           startLesson={startLesson}
+          refreshCourseData={refreshCourseData}
         />
       </div>
 

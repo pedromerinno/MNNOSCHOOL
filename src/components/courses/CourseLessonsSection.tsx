@@ -15,6 +15,7 @@ interface CourseLessonsSectionProps {
   courseTitle: string;
   lessons: any[];
   startLesson: (lessonId: string) => Promise<void>;
+  refreshCourseData: () => void;
 }
 
 export const CourseLessonsSection: React.FC<CourseLessonsSectionProps> = ({
@@ -25,6 +26,7 @@ export const CourseLessonsSection: React.FC<CourseLessonsSectionProps> = ({
   courseTitle,
   lessons,
   startLesson,
+  refreshCourseData
 }) => {
   // Setup real-time subscription for lessons
   useEffect(() => {
@@ -41,6 +43,9 @@ export const CourseLessonsSection: React.FC<CourseLessonsSectionProps> = ({
         filter: `course_id=eq.${courseId}`
       }, (payload) => {
         console.log('Lesson update detected:', payload);
+        
+        // Refresh the course data immediately to update the lessons list
+        refreshCourseData();
         
         switch (payload.eventType) {
           case 'INSERT':
@@ -68,7 +73,7 @@ export const CourseLessonsSection: React.FC<CourseLessonsSectionProps> = ({
       console.log("Cleaning up course lessons subscription");
       supabase.removeChannel(channel);
     };
-  }, [courseId]);
+  }, [courseId, refreshCourseData]);
 
   return (
     <div className="w-full md:w-4/12 mt-8 md:mt-0 relative">
@@ -105,4 +110,3 @@ export const CourseLessonsSection: React.FC<CourseLessonsSectionProps> = ({
     </div>
   );
 };
-
