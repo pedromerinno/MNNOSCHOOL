@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from '@/hooks/use-toast';
@@ -17,9 +18,11 @@ export const useLessons = (courseId: string) => {
   useEffect(() => {
     if (!courseId) return;
 
+    console.log("Setting up real-time subscription for course:", courseId);
+
     // Set up real-time subscription
     const channel = supabase
-      .channel('public:lessons')
+      .channel(`lessons-${courseId}`)
       .on(
         'postgres_changes',
         {
@@ -52,6 +55,7 @@ export const useLessons = (courseId: string) => {
 
     // Cleanup subscription on unmount
     return () => {
+      console.log("Cleaning up real-time subscription");
       supabase.removeChannel(channel);
     };
   }, [courseId]);
@@ -96,6 +100,8 @@ export const useLessons = (courseId: string) => {
         order_index: lessonData.order_index ?? 0,
       };
 
+      console.log("Creating new lesson:", lessonDataWithDefaults);
+
       const { data, error } = await supabase
         .from('lessons')
         .insert([lessonDataWithDefaults])
@@ -103,6 +109,8 @@ export const useLessons = (courseId: string) => {
         .single();
 
       if (error) throw error;
+
+      console.log("Lesson created successfully:", data);
 
       toast({
         title: 'Aula criada',
