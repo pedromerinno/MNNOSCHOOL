@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCourseData } from '@/hooks/useCourseData';
@@ -15,6 +16,7 @@ import { useCompanies } from '@/hooks/useCompanies';
 import { useAuth } from '@/contexts/AuthContext';
 import { LessonManager } from '@/components/admin/courses/LessonManager';
 import { useCourseEdit } from '@/hooks/course/useCourseEdit';
+import { supabase } from "@/integrations/supabase/client";
 
 export const CourseView: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -35,6 +37,40 @@ export const CourseView: React.FC = () => {
     handleEditCourse,
     handleCourseUpdate
   } = useCourseEdit(courseId);
+  
+  // Setup real-time course updates subscription
+  useEffect(() => {
+    if (!courseId) return;
+    
+    console.log(`Setting up realtime subscription for course: ${courseId}`);
+    
+    const channel = supabase
+      .channel(`course-details-${courseId}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'courses',
+        filter: `id=eq.${courseId}`
+      }, (payload) => {
+        console.log('Course update detected:', payload);
+        refreshCourseData();
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'lessons',
+        filter: `course_id=eq.${courseId}`
+      }, (payload) => {
+        console.log('Lesson update for course detected:', payload);
+        refreshCourseData();
+      })
+      .subscribe();
+    
+    return () => {
+      console.log("Cleaning up course real-time subscription");
+      supabase.removeChannel(channel);
+    };
+  }, [courseId, refreshCourseData]);
   
   // Ensure data is refreshed once dialog closes (after an update)
   useEffect(() => {
@@ -143,7 +179,7 @@ export const CourseView: React.FC = () => {
         />
       </div>
 
-      {/* Improved EditCourseDialog to prevent flickering */}
+      {/* EditCourseDialog */}
       <EditCourseDialog
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}

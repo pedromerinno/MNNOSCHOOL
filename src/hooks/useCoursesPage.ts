@@ -16,10 +16,49 @@ export const useCoursesPage = () => {
   const [lastSelectedCompanyId, setLastSelectedCompanyId] = useState<string | null>(null);
   const initialLoadDone = useRef(false);
   const fetchAttempts = useRef(0);
-  const maxRetries = 1; // Reduzido para apenas 1 tentativa
+  const maxRetries = 1; 
   const hasActiveRequest = useRef(false);
+  const realtimeChannel = useRef<any>(null);
 
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
+
+  // Setup and cleanup realtime subscription
+  useEffect(() => {
+    if (!selectedCompany?.id) return;
+    
+    console.log(`Setting up realtime subscription for company courses: ${selectedCompany.id}`);
+    
+    const companyId = selectedCompany.id;
+    const channel = supabase
+      .channel(`company-courses-${companyId}`)
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public',
+        table: 'company_courses',
+        filter: `empresa_id=eq.${companyId}`
+      }, (payload) => {
+        console.log('Company course change detected:', payload);
+        fetchCourseData();
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'courses'
+      }, (payload) => {
+        console.log('Course change detected:', payload);
+        fetchCourseData();
+      })
+      .subscribe();
+    
+    realtimeChannel.current = channel;
+    
+    return () => {
+      console.log('Cleaning up realtime subscription for company courses');
+      if (realtimeChannel.current) {
+        supabase.removeChannel(realtimeChannel.current);
+      }
+    };
+  }, [selectedCompany?.id]);
 
   // Memoized fetch function to prevent unnecessary re-renders
   const fetchCourseData = useCallback(async (retry = false) => {
@@ -51,7 +90,7 @@ export const useCoursesPage = () => {
     fetchAttempts.current = 0;
     
     // Skip if already fetched for this company
-    if (lastSelectedCompanyId === selectedCompany.id && initialLoadDone.current) {
+    if (lastSelectedCompanyId === selectedCompany.id && initialLoadDone.current && !retry) {
       console.log(`Already fetched data for company ${selectedCompany.id}`);
       return;
     }
@@ -164,6 +203,14 @@ export const useCoursesPage = () => {
     };
   }, [selectedCompany, fetchCourseData]);
 
+  // Expose refresh method
+  const refreshCourses = useCallback(() => {
+    if (selectedCompany) {
+      console.log("Manually refreshing courses data");
+      fetchCourseData(true);
+    }
+  }, [fetchCourseData, selectedCompany]);
+
   const getTitle = () => {
     return selectedCompany 
       ? `Todos os Cursos - ${selectedCompany.nome}` 
@@ -179,6 +226,7 @@ export const useCoursesPage = () => {
     allCoursesLoading,
     companyColor,
     getTitle,
-    isDataReady: initialLoadDone.current
+    isDataReady: initialLoadDone.current,
+    refreshCourses
   };
 };
