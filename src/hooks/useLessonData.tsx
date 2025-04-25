@@ -4,10 +4,11 @@ import { useLessonFetch } from './lesson/useLessonFetch';
 import { useLessonNavigation } from './lesson/useLessonNavigation';
 import { useLessonProgress } from './lesson/useLessonProgress';
 import { useLessonLikes } from './lesson/useLessonLikes';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export const useLessonData = (lessonId: string | undefined) => {
   const [currentLessonId, setCurrentLessonId] = useState<string | undefined>(lessonId);
+  const location = useLocation();
   
   // Use the currentLessonId in hooks to ensure they update when the lesson changes
   const { lesson, loading, error, refetch } = useLessonFetch(currentLessonId);
@@ -28,16 +29,30 @@ export const useLessonData = (lessonId: string | undefined) => {
     if (newLessonId === currentLessonId) return;
     
     if (lesson?.course_id) {
+      // Prevent default navigation behavior
+      const preventRefresh = true;
+      
       // Update URL without page refresh
       navigate(`/courses/${lesson.course_id}/lessons/${newLessonId}`, { 
         replace: true, // Use replace to prevent browser history buildup when navigating lessons
-        state: { noRefresh: true } 
+        state: { preventRefresh } 
       });
       
       // Update the current lesson ID to trigger data refetch
       setCurrentLessonId(newLessonId);
     }
   }, [navigate, lesson?.course_id, currentLessonId]);
+
+  // Prevent unwanted refetches
+  useEffect(() => {
+    const preventRefresh = location.state && (location.state as any).preventRefresh;
+    
+    // Only refetch if explicitly allowed
+    if (!preventRefresh && currentLessonId) {
+      console.log("Regular navigation detected, fetching lesson data");
+      refetch();
+    }
+  }, [location.pathname, refetch, currentLessonId]);
 
   return { 
     lesson, 

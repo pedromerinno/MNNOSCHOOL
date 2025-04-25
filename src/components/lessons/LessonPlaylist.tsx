@@ -28,8 +28,10 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
 
   // Prevent default click behavior and handle lesson selection
   const handleLessonClick = (lessonId: string, e: React.MouseEvent) => {
-    e.preventDefault();
+    // Only proceed if this isn't already the active lesson
     if (lessonId !== currentLessonId) {
+      e.preventDefault();
+      e.stopPropagation();
       onLessonSelect(lessonId);
     }
   };

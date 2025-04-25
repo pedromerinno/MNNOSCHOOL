@@ -15,7 +15,11 @@ export const LessonNavigation: React.FC<LessonNavigationProps> = ({
   onNavigate
 }) => {
   const handleNavigation = (lessonId: string, e: React.MouseEvent) => {
+    // Prevent default browser navigation
     e.preventDefault();
+    e.stopPropagation();
+    
+    // Use our custom navigation handler
     onNavigate(lessonId);
   };
 

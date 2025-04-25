@@ -17,6 +17,8 @@ import { toast } from 'sonner';
 
 const LessonPage = () => {
   const { courseId, lessonId } = useParams<{ courseId: string, lessonId: string }>();
+  const [localLoading, setLocalLoading] = useState(false);
+  const location = useLocation();
   
   // Use useLessonData with URL parameter
   const { 
@@ -57,11 +59,16 @@ const LessonPage = () => {
   const handleLessonSelect = (selectedLessonId: string) => {
     if (selectedLessonId === lessonId) return;
     
+    setLocalLoading(true);
     navigateToLesson(selectedLessonId);
-    toast.info("Carregando aula...");
+    
+    // Reset local loading state after a short delay
+    setTimeout(() => {
+      setLocalLoading(false);
+    }, 300);
   };
 
-  if (loading) {
+  if (loading || localLoading) {
     return <LessonSkeleton />;
   }
 
