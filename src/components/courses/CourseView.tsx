@@ -1,43 +1,41 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useParams } from 'react-router-dom';
-import { useCourseData } from '@/hooks/useCourseData';
-import { useLessonNavigation } from './useLessonNavigation';
 import { CourseHeader } from './CourseHeader';
 import { CourseHero } from './CourseHero';
 import { CourseNotFound } from './CourseNotFound';
 import { CourseLessonsSection } from './CourseLessonsSection';
 import { CourseViewSkeleton } from './CourseViewSkeleton';
 import { useCompanies } from '@/hooks/useCompanies';
-import { useAuth } from '@/contexts/AuthContext';
-import { useCourseEdit } from '@/hooks/course/useCourseEdit';
-import { useCourseRealtime } from '@/hooks/course/useCourseRealtime';
 import { CourseMainContent } from './view/CourseMainContent';
 import { CourseDialogs } from './view/CourseDialogs';
+import { useCourseView } from '@/hooks/course/useCourseView';
+import { calculateTotalDuration } from '@/utils/durationUtils';
 
 export const CourseView: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
-  const { course, loading, error, refreshCourseData } = useCourseData(courseId);
-  const { startLesson } = useLessonNavigation(courseId);
-  const [activeTab, setActiveTab] = useState<string>("description");
-  const { selectedCompany, userCompanies } = useCompanies();
-  const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
-  const [showLessonManager, setShowLessonManager] = useState(false);
-  const { userProfile } = useAuth();
-  const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
-
+  const { userCompanies } = useCompanies();
+  
   const {
+    course,
+    loading,
+    error,
+    activeTab,
+    setActiveTab,
+    showLessonManager,
+    setShowLessonManager,
+    startLesson,
+    isAdmin,
+    companyColor,
     isEditDialogOpen,
     setIsEditDialogOpen,
     isSubmitting,
     courseCompanyIds,
     handleEditCourse,
-    handleCourseUpdate
-  } = useCourseEdit(courseId);
+    handleCourseUpdate,
+    refreshCourseData
+  } = useCourseView(courseId);
 
-  // Setup real-time subscription for course data updates
-  useCourseRealtime(courseId, refreshCourseData);
-  
   if (loading) {
     return <CourseViewSkeleton />;
   }
@@ -46,18 +44,7 @@ export const CourseView: React.FC = () => {
     return <CourseNotFound />;
   }
 
-  const totalDuration = course.lessons?.reduce((total, lesson) => {
-    const minutes = lesson.duration 
-      ? parseInt(lesson.duration.replace(/[^0-9]/g, '')) 
-      : 0;
-    return total + minutes;
-  }, 0) || 0;
-  
-  const hours = Math.floor(totalDuration / 60);
-  const minutes = totalDuration % 60;
-  const formattedDuration = hours > 0 
-    ? `${hours}h ${minutes > 0 ? `${minutes} min` : ''}` 
-    : `${minutes} min`;
+  const formattedDuration = calculateTotalDuration(course.lessons);
 
   const initialFormData = {
     id: course.id,
