@@ -6,7 +6,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { UseFormReturn } from "react-hook-form";
 import { CourseFormValues } from "./CourseFormTypes";
 import { ImageUploadField } from "./ImageUploadField";
-import { InstructorField } from "./InstructorField";
 
 interface CourseFormFieldsProps {
   form: UseFormReturn<CourseFormValues>;
@@ -47,7 +46,23 @@ export const CourseFormFields: React.FC<CourseFormFieldsProps> = ({ form }) => {
         )}
       />
 
-      <InstructorField form={form} />
+      <FormField
+        control={form.control}
+        name="instructor"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Instrutor</FormLabel>
+            <FormControl>
+              <Input
+                placeholder="Nome do instrutor" 
+                {...field} 
+                value={field.value || ""} 
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
       <ImageUploadField 
         control={form.control}
