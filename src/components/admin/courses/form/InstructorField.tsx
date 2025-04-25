@@ -17,83 +17,10 @@ interface InstructorFieldProps {
 export const InstructorField: React.FC<InstructorFieldProps> = ({ form }) => {
   const [open, setOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState("");
-  const { members = [], isLoading = false } = useTeamMembers();
+  const { members } = useTeamMembers();
 
-  // Safely ensure we have valid arrays and objects
-  const memberNames = React.useMemo(() => {
-    if (!Array.isArray(members)) return [];
-    
-    try {
-      return members
-        .filter(member => member && typeof member === 'object' && member.display_name)
-        .map(member => member.display_name || '')
-        .filter(name => typeof name === 'string' && name.trim() !== '');
-    } catch (error) {
-      console.error("Error processing member names:", error);
-      return [];
-    }
-  }, [members]);
-
-  // Safely create options array
-  const allOptions = React.useMemo(() => {
-    try {
-      // Start with validated member names
-      const baseOptions = [...memberNames];
-      
-      // Only add input value if it's valid
-      if (inputValue && typeof inputValue === 'string' && inputValue.trim() !== '') {
-        const inputValueTrimmed = inputValue.trim();
-        if (!baseOptions.includes(inputValueTrimmed)) {
-          baseOptions.push(inputValueTrimmed);
-        }
-      }
-      
-      return baseOptions;
-    } catch (error) {
-      console.error("Error creating options list:", error);
-      return [];
-    }
-  }, [memberNames, inputValue]);
-
-  // Safely filter options
-  const filteredOptions = React.useMemo(() => {
-    try {
-      if (!inputValue || !inputValue.trim()) return allOptions;
-      
-      const searchTerm = inputValue.toLowerCase().trim();
-      return allOptions.filter(option => 
-        typeof option === 'string' && option.toLowerCase().includes(searchTerm)
-      );
-    } catch (error) {
-      console.error("Error filtering options:", error);
-      return [];
-    }
-  }, [allOptions, inputValue]);
-
-  // Show loading state
-  if (isLoading) {
-    return (
-      <FormField
-        control={form.control}
-        name="instructor"
-        render={({ field }) => (
-          <FormItem className="flex flex-col">
-            <FormLabel>Instrutor</FormLabel>
-            <FormControl>
-              <Button
-                variant="outline"
-                disabled={true}
-                className="justify-between"
-              >
-                Carregando instrutores...
-              </Button>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-    );
-  }
+  const memberNames = members.map(member => member.display_name || '').filter(Boolean);
+  const allOptions = [...new Set([...memberNames, inputValue])].filter(Boolean);
 
   return (
     <FormField
@@ -121,50 +48,34 @@ export const InstructorField: React.FC<InstructorFieldProps> = ({ form }) => {
                 <CommandInput 
                   placeholder="Busque um instrutor..." 
                   value={inputValue}
-                  onValueChange={(value) => {
-                    setInputValue(value || "");
-                  }}
+                  onValueChange={setInputValue}
                 />
                 <CommandEmpty>
-                  {inputValue && inputValue.trim() ? 
-                    <div 
-                      className="cursor-pointer px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
-                      onClick={() => {
-                        const trimmed = inputValue.trim();
-                        if (trimmed) {
-                          form.setValue("instructor", trimmed);
-                          setOpen(false);
-                        }
-                      }}
-                    >
-                      Usar "{inputValue.trim()}" como instrutor
-                    </div> : 
+                  {inputValue ? 
+                    `Usar "${inputValue}" como instrutor` : 
                     "Nenhum instrutor encontrado"
                   }
                 </CommandEmpty>
-                
-                {filteredOptions && filteredOptions.length > 0 && (
-                  <CommandGroup>
-                    {filteredOptions.map((name, index) => (
-                      <CommandItem
-                        key={`${name}-${index}`}
-                        value={name}
-                        onSelect={() => {
-                          form.setValue("instructor", name);
-                          setOpen(false);
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            field.value === name ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        {name}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                )}
+                <CommandGroup>
+                  {allOptions.map((name) => (
+                    <CommandItem
+                      key={name}
+                      value={name}
+                      onSelect={() => {
+                        form.setValue("instructor", name);
+                        setOpen(false);
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          field.value === name ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {name}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
               </Command>
             </PopoverContent>
           </Popover>
