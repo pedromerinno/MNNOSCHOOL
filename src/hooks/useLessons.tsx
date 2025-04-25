@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from '@/hooks/use-toast';
@@ -13,13 +12,23 @@ export const useLessons = (courseId: string) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<ExtendedLesson | undefined>(undefined);
+  const [lastRefreshTime, setLastRefreshTime] = useState<number>(0);
   const { toast } = useToast();
 
   // Memoized fetch function to prevent recreating on each render
-  const fetchLessons = useCallback(async () => {
+  const fetchLessons = useCallback(async (force = false) => {
     if (!courseId) return;
     
+    // Prevent multiple rapid refreshes (within 1 second)
+    const now = Date.now();
+    if (!force && now - lastRefreshTime < 1000) {
+      console.log(`Skipping lessons refresh for ${courseId} - too soon since last refresh`);
+      return;
+    }
+    
     setIsLoading(true);
+    setLastRefreshTime(now);
+    
     try {
       console.log(`Fetching lessons for course: ${courseId}`);
       const { data, error } = await supabase
@@ -44,15 +53,14 @@ export const useLessons = (courseId: string) => {
     } finally {
       setIsLoading(false);
     }
-  }, [courseId, toast]);
+  }, [courseId, toast, lastRefreshTime]);
 
   useEffect(() => {
     if (!courseId) return;
 
-    console.log("Setting up real-time subscription for lessons hook:", courseId);
-
-    // Set up real-time subscription with a unique channel name 
-    const channelId = `lessons-hook-${courseId}-${Math.random().toString(36).substring(2, 9)}`;
+    // Create a unique channel ID for this hook instance
+    const hookInstanceId = Math.random().toString(36).substring(2, 9);
+    const channelId = `lessons-hook-${courseId}-${hookInstanceId}`;
     console.log(`Creating channel: ${channelId}`);
     
     const channel = supabase
@@ -66,38 +74,11 @@ export const useLessons = (courseId: string) => {
           filter: `course_id=eq.${courseId}`,
         },
         (payload) => {
-          console.log('Received real-time update in lessons hook:', payload);
+          console.log(`Received real-time update in lessons hook (${channelId}):`, payload);
           
-          // Handle different types of changes
-          if (payload.eventType === 'INSERT') {
-            // Add the new lesson and re-sort
-            setLessons(current => 
-              [...current, payload.new as Lesson].sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
-            );
-            
-            toast({
-              title: 'Aula adicionada',
-              description: 'Nova aula foi adicionada ao curso',
-            });
-          } else if (payload.eventType === 'DELETE') {
-            setLessons(current => current.filter(lesson => lesson.id !== payload.old.id));
-            
-            toast({
-              title: 'Aula removida',
-              description: 'Uma aula foi removida do curso',
-            });
-          } else if (payload.eventType === 'UPDATE') {
-            setLessons(current => 
-              current.map(lesson => 
-                lesson.id === payload.new.id ? payload.new as Lesson : lesson
-              ).sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
-            );
-            
-            toast({
-              title: 'Aula atualizada',
-              description: 'Uma aula do curso foi atualizada',
-            });
-          }
+          // Instead of handling the updates here, just trigger a refresh
+          // This prevents race conditions with multiple subscriptions
+          fetchLessons(true);
         }
       )
       .subscribe((status) => {

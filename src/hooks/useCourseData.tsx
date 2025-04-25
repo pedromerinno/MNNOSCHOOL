@@ -7,15 +7,24 @@ export const useCourseData = (courseId: string | undefined) => {
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [lastRefreshTime, setLastRefreshTime] = useState<number>(0);
 
-  const fetchCourseData = useCallback(async () => {
+  const fetchCourseData = useCallback(async (force = false) => {
     if (!courseId) {
       setLoading(false);
       return;
     }
 
+    // Prevent multiple rapid refreshes (within 2 seconds)
+    const now = Date.now();
+    if (!force && now - lastRefreshTime < 2000) {
+      console.log('Skipping refresh - too soon since last refresh');
+      return;
+    }
+
     try {
       setLoading(true);
+      setLastRefreshTime(now);
       
       // Fetch course details
       const { data: courseData, error: courseError } = await supabase
@@ -73,15 +82,15 @@ export const useCourseData = (courseId: string | undefined) => {
     } finally {
       setLoading(false);
     }
-  }, [courseId]);
-
-  // Initial data fetch
-  useEffect(() => {
-    fetchCourseData();
-  }, [fetchCourseData]);
+  }, [courseId, lastRefreshTime]);
 
   // Add a function to refresh the course data
   const refreshCourseData = useCallback(() => {
+    fetchCourseData(true); // Force refresh
+  }, [fetchCourseData]);
+  
+  // Initial data fetch
+  useEffect(() => {
     fetchCourseData();
   }, [fetchCourseData]);
 

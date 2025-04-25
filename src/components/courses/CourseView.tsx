@@ -110,21 +110,10 @@ export const CourseView: React.FC = () => {
     };
   }, [courseId, refreshCourseData]);
   
-  // Pre-load data when on course page to prevent any flickering
-  useEffect(() => {
-    if (courseId && !loading && !error) {
-      // Keep data fresh by polling occasionally
-      const refreshInterval = setInterval(() => {
-        refreshCourseData();
-      }, 60000); // Refresh every minute
-      
-      return () => clearInterval(refreshInterval);
-    }
-  }, [courseId, refreshCourseData, loading, error]);
-  
-  // Initial data fetch when component mounts
+  // Initial data fetch when component mounts - fetch once, not repeatedly
   useEffect(() => {
     if (courseId) {
+      // Only fetch once on mount or when courseId changes
       refreshCourseData();
     }
   }, [courseId, refreshCourseData]);

@@ -28,14 +28,16 @@ export const CourseLessonsSection: React.FC<CourseLessonsSectionProps> = ({
   startLesson,
   refreshCourseData
 }) => {
-  // Setup real-time subscription for lessons
+  // Setup real-time subscription for lessons - with proper cleanup
   useEffect(() => {
     if (!courseId) return;
 
-    console.log(`Setting up real-time subscription for course lessons: ${courseId}`);
+    // Use a unique channel name to prevent duplicate subscriptions
+    const channelName = `course-lessons-${courseId}-${Math.random().toString(36).substring(2, 9)}`;
+    console.log(`Setting up real-time subscription for course lessons: ${courseId} (${channelName})`);
     
     const channel = supabase
-      .channel(`course-lessons-${courseId}`)
+      .channel(channelName)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
@@ -44,33 +46,15 @@ export const CourseLessonsSection: React.FC<CourseLessonsSectionProps> = ({
       }, (payload) => {
         console.log('Lesson update detected:', payload);
         
-        // Refresh the course data immediately to update the lessons list
+        // Don't show toast here - let parent component handle that
         refreshCourseData();
-        
-        switch (payload.eventType) {
-          case 'INSERT':
-            toast.success('Nova aula adicionada', {
-              description: 'A lista de aulas foi atualizada automaticamente.'
-            });
-            break;
-          case 'UPDATE':
-            toast.success('Aula atualizada', {
-              description: 'As alterações foram aplicadas com sucesso.'
-            });
-            break;
-          case 'DELETE':
-            toast.success('Aula removida', {
-              description: 'A aula foi removida com sucesso.'
-            });
-            break;
-        }
       })
       .subscribe((status) => {
-        console.log(`Course lessons subscription status: ${status}`);
+        console.log(`Course lessons subscription status (${channelName}): ${status}`);
       });
     
     return () => {
-      console.log("Cleaning up course lessons subscription");
+      console.log(`Cleaning up course lessons subscription (${channelName})`);
       supabase.removeChannel(channel);
     };
   }, [courseId, refreshCourseData]);
