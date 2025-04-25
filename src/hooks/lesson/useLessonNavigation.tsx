@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, useParams } from 'react-router-dom';
+import { useToast } from "@/hooks/use-toast";
 
 type LessonNavigation = {
   id: string;
@@ -12,8 +13,8 @@ type LessonNavigation = {
 export const useLessonNavigation = (lessonId: string | undefined, courseId: string | undefined) => {
   const [previousLesson, setPreviousLesson] = useState<LessonNavigation | null>(null);
   const [nextLesson, setNextLesson] = useState<LessonNavigation | null>(null);
-  const [isNavigating, setIsNavigating] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { courseId: urlCourseId } = useParams<{ courseId: string }>();
   const effectiveCourseId = courseId || urlCourseId;
 
@@ -28,9 +29,13 @@ export const useLessonNavigation = (lessonId: string | undefined, courseId: stri
           .from('lessons')
           .select('order_index')
           .eq('id', lessonId)
-          .single();
+          .maybeSingle();
         
         if (currentError) throw currentError;
+        if (!currentLesson) {
+          console.error('Lesson not found');
+          return;
+        }
         
         const currentOrderIndex = currentLesson.order_index;
         
@@ -46,7 +51,7 @@ export const useLessonNavigation = (lessonId: string | undefined, courseId: stri
         
         if (prevError) throw prevError;
         
-        setPreviousLesson(prevData || null);
+        setPreviousLesson(prevData);
         
         // Buscar próxima aula
         const { data: nextData, error: nextError } = await supabase
@@ -60,31 +65,26 @@ export const useLessonNavigation = (lessonId: string | undefined, courseId: stri
         
         if (nextError) throw nextError;
         
-        setNextLesson(nextData || null);
+        setNextLesson(nextData);
       } catch (error) {
         console.error('Erro ao buscar aulas para navegação:', error);
+        toast({
+          title: "Erro ao carregar navegação",
+          description: "Não foi possível carregar as aulas anterior e próxima",
+          variant: "destructive"
+        });
       }
     };
     
-    if (!isNavigating) {
+    if (lessonId && effectiveCourseId) {
       fetchNavigationLessons();
     }
-  }, [lessonId, effectiveCourseId, isNavigating]);
+  }, [lessonId, effectiveCourseId, toast]);
 
+  // Simplified navigateToLesson function - actual navigation happens in useLessonData
   const navigateToLesson = useCallback((newLessonId: string) => {
-    if (!effectiveCourseId) return;
-    
-    setIsNavigating(true);
-    
-    // Update URL without full page refresh
-    navigate(`/courses/${effectiveCourseId}/lessons/${newLessonId}`, { 
-      replace: false,
-      state: { noRefresh: true }
-    });
-    
-    // Reset navigation state after URL update
-    setTimeout(() => setIsNavigating(false), 100);
-  }, [effectiveCourseId, navigate]);
+    return newLessonId;
+  }, []);
 
   return { previousLesson, nextLesson, navigateToLesson };
 };

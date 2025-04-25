@@ -14,6 +14,11 @@ export const LessonNavigation: React.FC<LessonNavigationProps> = ({
   nextLesson,
   onNavigate
 }) => {
+  const handleNavigation = (lessonId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    onNavigate(lessonId);
+  };
+
   return (
     <div className="flex justify-between items-center border-t border-border mt-8 pt-6">
       {previousLesson ? (
@@ -21,7 +26,7 @@ export const LessonNavigation: React.FC<LessonNavigationProps> = ({
           <Button 
             variant="outline" 
             size="icon"
-            onClick={() => onNavigate(previousLesson.id)}
+            onClick={(e) => handleNavigation(previousLesson.id, e)}
             className="rounded-full h-10 w-10 flex items-center justify-center shadow-sm"
             aria-label="Aula anterior"
           >
@@ -30,7 +35,7 @@ export const LessonNavigation: React.FC<LessonNavigationProps> = ({
           
           <Button 
             variant="ghost" 
-            onClick={() => onNavigate(previousLesson.id)}
+            onClick={(e) => handleNavigation(previousLesson.id, e)}
             className="flex items-center gap-2 p-0 h-auto hover:bg-transparent"
           >
             <div>
@@ -47,7 +52,7 @@ export const LessonNavigation: React.FC<LessonNavigationProps> = ({
         <div className="flex items-center gap-3">
           <Button 
             variant="ghost" 
-            onClick={() => onNavigate(nextLesson.id)}
+            onClick={(e) => handleNavigation(nextLesson.id, e)}
             className="flex items-center gap-2 text-right p-0 h-auto hover:bg-transparent"
           >
             <div className="text-right">
@@ -59,7 +64,7 @@ export const LessonNavigation: React.FC<LessonNavigationProps> = ({
           <Button 
             variant="outline" 
             size="icon"
-            onClick={() => onNavigate(nextLesson.id)}
+            onClick={(e) => handleNavigation(nextLesson.id, e)}
             className="rounded-full h-10 w-10 flex items-center justify-center shadow-sm"
             aria-label="Próxima aula"
           >

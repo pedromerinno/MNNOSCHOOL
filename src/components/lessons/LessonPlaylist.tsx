@@ -26,7 +26,9 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
 }) => {
   const currentIndex = lessons.findIndex(lesson => lesson.id === currentLessonId);
 
-  const handleLessonClick = (lessonId: string) => {
+  // Prevent default click behavior and handle lesson selection
+  const handleLessonClick = (lessonId: string, e: React.MouseEvent) => {
+    e.preventDefault();
     if (lessonId !== currentLessonId) {
       onLessonSelect(lessonId);
     }
@@ -60,7 +62,7 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
                     ? "border-l-primary bg-accent"
                     : "border-l-transparent"
                 )}
-                onClick={() => handleLessonClick(lesson.id)}
+                onClick={(e) => handleLessonClick(lesson.id, e)}
               >
                 <div className="flex-shrink-0 w-8 h-8">
                   {lesson.completed ? (

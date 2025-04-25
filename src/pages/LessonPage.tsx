@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { useLessonData } from '@/hooks/useLessonData';
 import { useAutoplayNavigation } from '@/hooks/lesson/useAutoplayNavigation';
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
@@ -13,23 +13,16 @@ import { LessonSkeleton } from '@/components/lessons/LessonSkeleton';
 import { LessonNotFound } from '@/components/lessons/LessonNotFound';
 import { CourseDescription } from '@/components/courses/CourseDescription';
 import { LessonPlaylist } from '@/components/lessons/LessonPlaylist';
+import { toast } from 'sonner';
 
 const LessonPage = () => {
   const { courseId, lessonId } = useParams<{ courseId: string, lessonId: string }>();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [currentLessonId, setCurrentLessonId] = useState(lessonId);
-
-  // Effect to update current lesson ID when URL params change
-  useEffect(() => {
-    if (lessonId !== currentLessonId) {
-      setCurrentLessonId(lessonId);
-    }
-  }, [lessonId, currentLessonId]);
-
+  
+  // Use useLessonData with URL parameter
   const { 
     lesson, 
     loading, 
+    error,
     markLessonCompleted, 
     previousLesson, 
     nextLesson, 
@@ -38,7 +31,7 @@ const LessonPage = () => {
     userLiked,
     toggleLikeLesson,
     completed
-  } = useLessonData(currentLessonId);
+  } = useLessonData(lessonId);
 
   const {
     showAutoplayPrompt,
@@ -51,21 +44,21 @@ const LessonPage = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
     setShowAutoplayPrompt(false);
-  }, [currentLessonId, setShowAutoplayPrompt]);
+  }, [lessonId, setShowAutoplayPrompt]);
 
   // Clean up autoplay on unmount
   useEffect(() => {
     return () => {
       cancelAutoplay();
     };
-  }, [currentLessonId, cancelAutoplay]);
+  }, [cancelAutoplay]);
 
-  // Handle lesson selection from playlist
+  // Improved lesson selection handling
   const handleLessonSelect = (selectedLessonId: string) => {
-    if (selectedLessonId === currentLessonId) return;
+    if (selectedLessonId === lessonId) return;
     
-    setCurrentLessonId(selectedLessonId);
     navigateToLesson(selectedLessonId);
+    toast.info("Carregando aula...");
   };
 
   if (loading) {
