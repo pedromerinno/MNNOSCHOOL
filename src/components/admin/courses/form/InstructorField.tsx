@@ -19,8 +19,20 @@ export const InstructorField: React.FC<InstructorFieldProps> = ({ form }) => {
   const [inputValue, setInputValue] = React.useState("");
   const { members } = useTeamMembers();
 
-  const memberNames = members.map(member => member.display_name || '').filter(Boolean);
-  const allOptions = [...new Set([...memberNames, inputValue])].filter(Boolean);
+  // Garantir que estamos trabalhando com arrays válidos
+  const memberNames = React.useMemo(() => {
+    if (!members || members.length === 0) return [];
+    return members
+      .filter(member => member && member.display_name)
+      .map(member => member.display_name || '')
+      .filter(Boolean);
+  }, [members]);
+
+  // Criar opções combinadas garantindo que são arrays válidos
+  const allOptions = React.useMemo(() => {
+    const options = [...new Set([...(memberNames || []), inputValue])];
+    return options.filter(Boolean);
+  }, [memberNames, inputValue]);
 
   return (
     <FormField
@@ -48,34 +60,48 @@ export const InstructorField: React.FC<InstructorFieldProps> = ({ form }) => {
                 <CommandInput 
                   placeholder="Busque um instrutor..." 
                   value={inputValue}
-                  onValueChange={setInputValue}
+                  onValueChange={(value) => {
+                    setInputValue(value || "");
+                  }}
                 />
                 <CommandEmpty>
                   {inputValue ? 
-                    `Usar "${inputValue}" como instrutor` : 
+                    <div 
+                      className="cursor-pointer px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+                      onClick={() => {
+                        if (inputValue) {
+                          form.setValue("instructor", inputValue);
+                          setOpen(false);
+                        }
+                      }}
+                    >
+                      Usar "{inputValue}" como instrutor
+                    </div> : 
                     "Nenhum instrutor encontrado"
                   }
                 </CommandEmpty>
-                <CommandGroup>
-                  {allOptions.map((name) => (
-                    <CommandItem
-                      key={name}
-                      value={name}
-                      onSelect={() => {
-                        form.setValue("instructor", name);
-                        setOpen(false);
-                      }}
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          field.value === name ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                      {name}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
+                {allOptions.length > 0 && (
+                  <CommandGroup>
+                    {allOptions.map((name) => (
+                      <CommandItem
+                        key={name}
+                        value={name}
+                        onSelect={() => {
+                          form.setValue("instructor", name);
+                          setOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            field.value === name ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
               </Command>
             </PopoverContent>
           </Popover>
