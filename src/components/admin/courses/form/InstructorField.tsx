@@ -17,45 +17,60 @@ interface InstructorFieldProps {
 export const InstructorField: React.FC<InstructorFieldProps> = ({ form }) => {
   const [open, setOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState("");
-  const { members, isLoading } = useTeamMembers();
+  const { members = [], isLoading = false } = useTeamMembers();
 
-  // Garantir que estamos trabalhando com arrays válidos
+  // Safely ensure we have valid arrays and objects
   const memberNames = React.useMemo(() => {
-    if (!Array.isArray(members) || members.length === 0) return [];
+    if (!Array.isArray(members)) return [];
     
-    return members
-      .filter(member => member && typeof member === 'object' && member.display_name)
-      .map(member => member.display_name || '')
-      .filter(name => typeof name === 'string' && name.trim() !== '');
+    try {
+      return members
+        .filter(member => member && typeof member === 'object' && member.display_name)
+        .map(member => member.display_name || '')
+        .filter(name => typeof name === 'string' && name.trim() !== '');
+    } catch (error) {
+      console.error("Error processing member names:", error);
+      return [];
+    }
   }, [members]);
 
-  // Criar opções combinadas garantindo que são arrays válidos
+  // Safely create options array
   const allOptions = React.useMemo(() => {
-    // Iniciar com os nomes dos membros (já validados acima)
-    const baseOptions = [...memberNames];
-    
-    // Adicionar o valor de entrada atual se ele existir e não estiver vazio
-    if (inputValue && typeof inputValue === 'string' && inputValue.trim() !== '') {
-      const inputValueTrimmed = inputValue.trim();
-      if (!baseOptions.includes(inputValueTrimmed)) {
-        baseOptions.push(inputValueTrimmed);
+    try {
+      // Start with validated member names
+      const baseOptions = [...memberNames];
+      
+      // Only add input value if it's valid
+      if (inputValue && typeof inputValue === 'string' && inputValue.trim() !== '') {
+        const inputValueTrimmed = inputValue.trim();
+        if (!baseOptions.includes(inputValueTrimmed)) {
+          baseOptions.push(inputValueTrimmed);
+        }
       }
+      
+      return baseOptions;
+    } catch (error) {
+      console.error("Error creating options list:", error);
+      return [];
     }
-    
-    return baseOptions;
   }, [memberNames, inputValue]);
 
-  // Função para filtrar as opções com base no termo de busca
+  // Safely filter options
   const filteredOptions = React.useMemo(() => {
-    if (!inputValue.trim()) return allOptions;
-    
-    const searchTerm = inputValue.toLowerCase().trim();
-    return allOptions.filter(option => 
-      option.toLowerCase().includes(searchTerm)
-    );
+    try {
+      if (!inputValue || !inputValue.trim()) return allOptions;
+      
+      const searchTerm = inputValue.toLowerCase().trim();
+      return allOptions.filter(option => 
+        typeof option === 'string' && option.toLowerCase().includes(searchTerm)
+      );
+    } catch (error) {
+      console.error("Error filtering options:", error);
+      return [];
+    }
   }, [allOptions, inputValue]);
 
-  // Renderizar estado de carregamento
+  // Show loading state
   if (isLoading) {
     return (
       <FormField
@@ -111,12 +126,13 @@ export const InstructorField: React.FC<InstructorFieldProps> = ({ form }) => {
                   }}
                 />
                 <CommandEmpty>
-                  {inputValue.trim() ? 
+                  {inputValue && inputValue.trim() ? 
                     <div 
                       className="cursor-pointer px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
                       onClick={() => {
-                        if (inputValue.trim()) {
-                          form.setValue("instructor", inputValue.trim());
+                        const trimmed = inputValue.trim();
+                        if (trimmed) {
+                          form.setValue("instructor", trimmed);
                           setOpen(false);
                         }
                       }}
@@ -127,7 +143,7 @@ export const InstructorField: React.FC<InstructorFieldProps> = ({ form }) => {
                   }
                 </CommandEmpty>
                 
-                {filteredOptions.length > 0 && (
+                {filteredOptions && filteredOptions.length > 0 && (
                   <CommandGroup>
                     {filteredOptions.map((name, index) => (
                       <CommandItem
