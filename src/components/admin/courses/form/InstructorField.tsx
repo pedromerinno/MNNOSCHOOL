@@ -17,22 +17,68 @@ interface InstructorFieldProps {
 export const InstructorField: React.FC<InstructorFieldProps> = ({ form }) => {
   const [open, setOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState("");
-  const { members } = useTeamMembers();
+  const { members, isLoading } = useTeamMembers();
 
   // Garantir que estamos trabalhando com arrays válidos
   const memberNames = React.useMemo(() => {
-    if (!members || members.length === 0) return [];
+    if (!Array.isArray(members) || members.length === 0) return [];
+    
     return members
-      .filter(member => member && member.display_name)
+      .filter(member => member && typeof member === 'object' && member.display_name)
       .map(member => member.display_name || '')
-      .filter(Boolean);
+      .filter(name => typeof name === 'string' && name.trim() !== '');
   }, [members]);
 
   // Criar opções combinadas garantindo que são arrays válidos
   const allOptions = React.useMemo(() => {
-    const options = [...new Set([...(memberNames || []), inputValue])];
-    return options.filter(Boolean);
+    // Iniciar com os nomes dos membros (já validados acima)
+    const baseOptions = [...memberNames];
+    
+    // Adicionar o valor de entrada atual se ele existir e não estiver vazio
+    if (inputValue && typeof inputValue === 'string' && inputValue.trim() !== '') {
+      const inputValueTrimmed = inputValue.trim();
+      if (!baseOptions.includes(inputValueTrimmed)) {
+        baseOptions.push(inputValueTrimmed);
+      }
+    }
+    
+    return baseOptions;
   }, [memberNames, inputValue]);
+
+  // Função para filtrar as opções com base no termo de busca
+  const filteredOptions = React.useMemo(() => {
+    if (!inputValue.trim()) return allOptions;
+    
+    const searchTerm = inputValue.toLowerCase().trim();
+    return allOptions.filter(option => 
+      option.toLowerCase().includes(searchTerm)
+    );
+  }, [allOptions, inputValue]);
+
+  // Renderizar estado de carregamento
+  if (isLoading) {
+    return (
+      <FormField
+        control={form.control}
+        name="instructor"
+        render={({ field }) => (
+          <FormItem className="flex flex-col">
+            <FormLabel>Instrutor</FormLabel>
+            <FormControl>
+              <Button
+                variant="outline"
+                disabled={true}
+                className="justify-between"
+              >
+                Carregando instrutores...
+              </Button>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    );
+  }
 
   return (
     <FormField
@@ -65,26 +111,27 @@ export const InstructorField: React.FC<InstructorFieldProps> = ({ form }) => {
                   }}
                 />
                 <CommandEmpty>
-                  {inputValue ? 
+                  {inputValue.trim() ? 
                     <div 
                       className="cursor-pointer px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
                       onClick={() => {
-                        if (inputValue) {
-                          form.setValue("instructor", inputValue);
+                        if (inputValue.trim()) {
+                          form.setValue("instructor", inputValue.trim());
                           setOpen(false);
                         }
                       }}
                     >
-                      Usar "{inputValue}" como instrutor
+                      Usar "{inputValue.trim()}" como instrutor
                     </div> : 
                     "Nenhum instrutor encontrado"
                   }
                 </CommandEmpty>
-                {allOptions.length > 0 && (
+                
+                {filteredOptions.length > 0 && (
                   <CommandGroup>
-                    {allOptions.map((name) => (
+                    {filteredOptions.map((name, index) => (
                       <CommandItem
-                        key={name}
+                        key={`${name}-${index}`}
                         value={name}
                         onSelect={() => {
                           form.setValue("instructor", name);
