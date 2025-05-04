@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from "@/components/ui/card";
-import { Course } from './CourseList';
+import { Course } from './types/CourseTypes';
 import { CourseCardTags } from './card/CourseCardTags';
 import { CourseCardImage } from './card/CourseCardImage';
 import { CourseCardInstructor } from './card/CourseCardInstructor';
