@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useDocumentFetching } from './documents/useDocumentFetching';
 import { useDocumentValidation } from './documents/useDocumentValidation';
 import { useDocumentDelete } from './documents/useDocumentDelete';
+import { DOCUMENTS_BUCKET } from './documents/constants';
 
 export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<boolean>) => {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
