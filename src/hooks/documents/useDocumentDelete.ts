@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useStorageOperations } from './useStorageOperations';
+import { DOCUMENTS_BUCKET } from './constants';
 
 export const useDocumentDelete = () => {
   const { deleteFromStorage } = useStorageOperations();

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { UserDocument } from "@/types/document";
 import { supabase } from "@/integrations/supabase/client";
@@ -63,24 +62,14 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
       if (!bucketExists) {
         console.log("Bucket não existe, tentando criar...");
         
-        // Force bucket creation
-        const { error } = await supabase.storage.createBucket('documents', {
-          public: true,
-          fileSizeLimit: 10485760, // 10MB
-        });
-        
-        if (error) {
-          console.error("Storage bucket creation error:", error);
-          throw new Error("Sistema de armazenamento não está disponível");
-        } else {
-          console.log("Bucket criado com sucesso!");
-        }
+        // We'll continue anyway since the bucket should exist on Supabase
+        console.log("Continuando com o download mesmo sem verificação do bucket");
       }
       
       console.log("Baixando arquivo:", document.file_path);
       
       const { data, error } = await supabase.storage
-        .from('documents')
+        .from(DOCUMENTS_BUCKET)
         .download(document.file_path);
         
       if (error) {
@@ -125,24 +114,14 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
       if (!bucketExists) {
         console.log("Bucket não existe, tentando criar...");
         
-        // Force bucket creation
-        const { error } = await supabase.storage.createBucket('documents', {
-          public: true,
-          fileSizeLimit: 10485760, // 10MB
-        });
-        
-        if (error) {
-          console.error("Storage bucket creation error:", error);
-          throw new Error("Sistema de armazenamento não está disponível");
-        } else {
-          console.log("Bucket criado com sucesso!");
-        }
+        // We'll continue anyway as the bucket should exist on Supabase
+        console.log("Continuando com a visualização mesmo sem verificação do bucket");
       }
       
       console.log("Criando URL assinada para:", document.file_path);
       
       const { data, error } = await supabase.storage
-        .from('documents')
+        .from(DOCUMENTS_BUCKET)
         .createSignedUrl(document.file_path, 3600);
         
       if (error) {

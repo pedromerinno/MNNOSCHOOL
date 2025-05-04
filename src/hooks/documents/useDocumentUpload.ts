@@ -1,10 +1,10 @@
-
 import { useState } from 'react';
 import { DocumentType } from '@/types/document';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useStorageOperations } from './useStorageOperations';
 import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from './constants';
+import { DOCUMENTS_BUCKET } from './constants';
 
 export const useDocumentUpload = (params?: { 
   userId?: string, 

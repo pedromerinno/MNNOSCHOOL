@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UserDocument } from "@/types/document";
 import { useDocumentValidation } from './useDocumentValidation';
+import { DOCUMENTS_BUCKET } from './constants';
 
 export const useDocumentDownload = () => {
   const { ensureBucketExists } = useDocumentValidation();
@@ -21,7 +22,7 @@ export const useDocumentDownload = () => {
       }
       
       const { data, error } = await supabase.storage
-        .from('documents')
+        .from(DOCUMENTS_BUCKET)
         .download(document.file_path);
         
       if (error) {

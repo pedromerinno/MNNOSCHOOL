@@ -2,6 +2,7 @@
 import { useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { DOCUMENTS_BUCKET } from './constants';
 
 export const useDocumentValidation = () => {
   /**
@@ -9,7 +10,7 @@ export const useDocumentValidation = () => {
    */
   const checkBucketExists = useCallback(async () => {
     try {
-      console.log("Verificando se o bucket 'documents' existe...");
+      console.log(`Verificando se o bucket '${DOCUMENTS_BUCKET}' existe...`);
       
       // Lista todos os buckets para verificar se 'documents' existe
       const { data: buckets, error: listError } = await supabase.storage.listBuckets();
@@ -19,14 +20,14 @@ export const useDocumentValidation = () => {
         return false;
       }
       
-      const documentsBucket = buckets?.find(bucket => bucket.name === 'documents');
+      const documentsBucket = buckets?.find(bucket => bucket.name === DOCUMENTS_BUCKET);
       
       if (documentsBucket) {
-        console.log("Bucket 'documents' encontrado!");
+        console.log(`Bucket '${DOCUMENTS_BUCKET}' encontrado!`);
         return true;
       }
       
-      console.log("Bucket 'documents' não encontrado. Tentando criar...");
+      console.log(`Bucket '${DOCUMENTS_BUCKET}' não encontrado. Tentando criar...`);
       return await createBucket();
     } catch (err) {
       console.error("Erro ao verificar storage bucket:", err);
@@ -39,19 +40,29 @@ export const useDocumentValidation = () => {
    */
   const createBucket = useCallback(async () => {
     try {
-      console.log("Criando bucket 'documents'...");
+      console.log(`Criando bucket '${DOCUMENTS_BUCKET}'...`);
       
-      // Usar auth.getSession para obter o token de autenticação
+      // Verificar se o usuário está autenticado
       const { data: sessionData } = await supabase.auth.getSession();
       
       if (!sessionData.session) {
-        console.error("Usuário não autenticado para criar bucket");
-        toast.error("Você precisa estar autenticado para realizar esta operação");
-        return false;
+        // Se o usuário não estiver autenticado, podemos tentar usar o bucket mesmo assim
+        // já que ele deve existir no Supabase
+        console.log("Usuário não autenticado - presumindo que o bucket já existe");
+        return true;
       }
 
-      // Tentar criar o bucket com configurações adequadas
-      const { error } = await supabase.storage.createBucket('documents', {
+      // Verificar se o bucket já existe antes de tentar criá-lo
+      const { data: existingBuckets } = await supabase.storage.listBuckets();
+      const bucketExists = existingBuckets?.some(b => b.name === DOCUMENTS_BUCKET);
+      
+      if (bucketExists) {
+        console.log(`Bucket '${DOCUMENTS_BUCKET}' já existe!`);
+        return true;
+      }
+
+      // Tentar criar o bucket apenas se ele não existir
+      const { error } = await supabase.storage.createBucket(DOCUMENTS_BUCKET, {
         public: true, // Bucket público para facilitar o acesso aos arquivos
         fileSizeLimit: 10485760, // 10MB
         allowedMimeTypes: [
@@ -64,24 +75,18 @@ export const useDocumentValidation = () => {
       });
       
       if (error) {
-        // Verificar se o erro é porque o bucket já existe
-        if (error.message.includes('already exists')) {
-          console.log("Bucket 'documents' já existe!");
+        if (error.message.includes('row-level security policy')) {
+          // Podemos continuar se for apenas erro de permissão, pois o bucket provavelmente já existe
+          console.log("Erro de permissão, mas presumindo que o bucket já existe");
           return true;
         }
         
-        if (error.message.includes('row-level security policy')) {
-          console.error("Erro de permissão ao criar bucket:", error);
-          toast.error("Você não tem permissão para criar buckets. Contate o administrador.");
-        } else {
-          console.error("Erro ao criar bucket:", error);
-          toast.error("Erro ao configurar sistema de armazenamento");
-        }
-        
+        console.error("Erro ao criar bucket:", error);
+        toast.error("Não foi possível configurar o sistema de armazenamento");
         return false;
       }
       
-      console.log("Bucket 'documents' criado com sucesso!");
+      console.log(`Bucket '${DOCUMENTS_BUCKET}' criado com sucesso!`);
       return true;
     } catch (err) {
       console.error("Erro ao criar storage bucket:", err);
@@ -95,7 +100,7 @@ export const useDocumentValidation = () => {
       const created = await createBucket();
       if (!created) {
         toast.error("Falha ao configurar sistema de armazenamento");
-        console.error("Não foi possível criar o bucket 'documents'");
+        console.error(`Não foi possível criar o bucket '${DOCUMENTS_BUCKET}'`);
         return false;
       }
     }

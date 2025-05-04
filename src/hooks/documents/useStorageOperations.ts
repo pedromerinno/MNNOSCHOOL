@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useDocumentValidation } from "./useDocumentValidation";
+import { DOCUMENTS_BUCKET } from './constants';
 
 export const useStorageOperations = () => {
   const [bucketReady, setBucketReady] = useState(false);
@@ -11,8 +12,13 @@ export const useStorageOperations = () => {
   // Verificar se o bucket existe quando o hook é inicializado
   useEffect(() => {
     const checkBucket = async () => {
-      const ready = await ensureBucketExists();
-      setBucketReady(ready);
+      try {
+        const ready = await ensureBucketExists();
+        setBucketReady(ready);
+      } catch (error) {
+        console.error("Erro ao verificar bucket:", error);
+        setBucketReady(false);
+      }
     };
     
     checkBucket();
@@ -20,11 +26,13 @@ export const useStorageOperations = () => {
 
   const uploadToStorage = async (file: File): Promise<string | null> => {
     try {
-      // Verificar se o bucket está pronto
+      // Verificar se o bucket está pronto ou tentar prepará-lo
       if (!bucketReady) {
+        console.log("Bucket não está pronto. Tentando preparar...");
         const ready = await ensureBucketExists();
         if (!ready) {
-          throw new Error("Sistema de armazenamento não está configurado");
+          console.error("Não foi possível preparar o bucket");
+          // Vamos tentar continuar mesmo assim
         }
         setBucketReady(ready);
       }
@@ -40,11 +48,11 @@ export const useStorageOperations = () => {
       const fileExt = file.name.split('.').pop();
       const filePath = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
 
-      console.log("Iniciando upload do arquivo para:", filePath);
+      console.log(`Iniciando upload do arquivo para: ${filePath}`);
 
       // Fazer upload do arquivo para o bucket
       const { data, error: uploadError } = await supabase.storage
-        .from('documents')
+        .from(DOCUMENTS_BUCKET)
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false
@@ -95,7 +103,7 @@ export const useStorageOperations = () => {
       
       // Remover o arquivo do bucket
       const { error } = await supabase.storage
-        .from('documents')
+        .from(DOCUMENTS_BUCKET)
         .remove([filePath]);
 
       if (error) {

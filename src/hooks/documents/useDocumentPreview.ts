@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UserDocument } from "@/types/document";
+import { DOCUMENTS_BUCKET } from './constants';
 
 export const useDocumentPreview = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -14,7 +15,7 @@ export const useDocumentPreview = () => {
       
       // Create a signed URL for the document
       const { data, error } = await supabase.storage
-        .from('documents')
+        .from(DOCUMENTS_BUCKET)
         .createSignedUrl(document.file_path, 3600); // URL valid for 1 hour
         
       if (error) {

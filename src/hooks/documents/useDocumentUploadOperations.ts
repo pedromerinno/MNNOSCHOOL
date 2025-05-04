@@ -1,10 +1,10 @@
-
 import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { DocumentType, UserDocument } from '@/types/document';
 import { useStorageOperations } from './useStorageOperations';
 import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from './constants';
+import { DOCUMENTS_BUCKET } from './constants';
 
 export const useDocumentUploadOperations = (
   userId: string | null,
