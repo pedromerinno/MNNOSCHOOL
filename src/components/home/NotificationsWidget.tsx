@@ -53,7 +53,7 @@ export const NotificationsWidget = memo(() => {
       
       fetchTimeoutRef.current = window.setTimeout(() => {
         try {
-          fetchNotices(selectedCompany.id, true).catch(err => {
+          fetchNotices(selectedCompany.id, false).catch(err => {
             console.error("NotificationsWidget: Error fetching notices:", err);
           });
         } catch (err) {
@@ -96,29 +96,11 @@ export const NotificationsWidget = memo(() => {
 
   const handleAllNoticesDialogChange = (open: boolean) => {
     setNoticesDialogOpen(open);
-    if (!open && initialFetchDoneRef.current) {
-      console.log("All notices dialog closed, refreshing notices");
-      if (fetchTimeoutRef.current) {
-        clearTimeout(fetchTimeoutRef.current);
-      }
-      
-      fetchTimeoutRef.current = window.setTimeout(() => {
-        if (selectedCompany?.id) {
-          try {
-            fetchNotices(selectedCompany.id, true).catch(err => {
-              console.error("Error refreshing notices after all-notices dialog close:", err);
-            });
-          } catch (err) {
-            console.error("Exception in fetchNotices after all-notices dialog:", err);
-          }
-        }
-        fetchTimeoutRef.current = null;
-      }, 500);
-    }
+    // Removido o reload automático ao fechar o diálogo para evitar requisições extras
   };
 
   const handleRefresh = async () => {
-    if (!selectedCompany?.id) return;
+    if (!selectedCompany?.id || refreshing) return;
     
     setRefreshing(true);
     try {

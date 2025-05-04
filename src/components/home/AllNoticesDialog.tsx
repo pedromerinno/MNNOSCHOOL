@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -28,12 +27,16 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const refreshTimeoutRef = useRef<number | null>(null);
+  const hasInitialFetchRef = useRef<boolean>(false);
 
   const canManage = userProfile?.is_admin || userProfile?.super_admin;
 
   // Update notices when dialog is opened, with debounce to prevent multiple calls
   useEffect(() => {
-    if (open && selectedCompany?.id) {
+    if (open && selectedCompany?.id && !hasInitialFetchRef.current) {
+      // Marcar que a busca inicial foi feita para evitar múltiplas chamadas
+      hasInitialFetchRef.current = true;
+      
       if (refreshTimeoutRef.current) {
         clearTimeout(refreshTimeoutRef.current);
       }
@@ -48,6 +51,9 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
         }
         refreshTimeoutRef.current = null;
       }, 300);
+    } else if (!open) {
+      // Resetar o estado quando o diálogo fechar
+      hasInitialFetchRef.current = false;
     }
     
     return () => {
@@ -115,10 +121,6 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
         }
         refreshTimeoutRef.current = null;
       }, 300);
-      
-      // Notify the parent component to update the notifications widget
-      onOpenChange(false);
-      onOpenChange(true);
     } catch (err) {
       console.error("Error deleting notice:", err);
     } finally {
@@ -130,7 +132,7 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
   // Handler for when the edit dialog is closed
   const handleEditDialogClose = (open: boolean) => {
     setEditDialogOpen(open);
-    if (!open) {
+    if (!open && editNotice) {
       setEditNotice(null);
       // Re-fetch notices when dialog closes with debounce
       if (refreshTimeoutRef.current) {
@@ -149,7 +151,7 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
   };
 
   const handleRefresh = async () => {
-    if (!selectedCompany?.id) return;
+    if (!selectedCompany?.id || refreshing) return;
     
     setRefreshing(true);
     try {
