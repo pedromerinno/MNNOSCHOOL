@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { UserTable } from './UserTable';
 import { useUsers } from '@/hooks/useUsers';
@@ -80,21 +79,8 @@ export const UserManagement = () => {
         />
       )}
 
-      {/* Dialog para convite de usuário - Corrigido para garantir que seja desmontado corretamente */}
-      <Dialog 
-        open={showInviteInfo} 
-        onOpenChange={(open) => {
-          if (!open) {
-            // Aguardar um momento antes de limpar o estado para evitar problemas de desmontagem
-            setTimeout(() => {
-              setShowInviteInfo(false);
-            }, 0);
-          } else {
-            setShowInviteInfo(true);
-          }
-        }}
-      >
-        <DialogContent className="sm:max-w-md">
+      <Dialog open={showInviteInfo} onOpenChange={setShowInviteInfo}>
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Informações para Convite</DialogTitle>
             <DialogDescription>

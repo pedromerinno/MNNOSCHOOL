@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { UserProfile } from '@/types/user';
 
 interface UseAuthMethodsProps {
   fetchUserProfile: (userId: string) => Promise<void>;
@@ -26,7 +27,7 @@ export const useAuthMethods = ({
 
       if (data.session) {
         await fetchUserProfile(data.session.user.id);
-        navigate('/');
+        // Não redirecionamos aqui - deixamos ProtectedRoute fazer isso para verificar onboarding
       }
 
       return { data, error: null };
@@ -34,7 +35,7 @@ export const useAuthMethods = ({
       console.error('Erro no login:', error);
       return { data: null, error };
     }
-  }, [fetchUserProfile, navigate]);
+  }, [fetchUserProfile]);
 
   const signOut = useCallback(async () => {
     try {
@@ -56,7 +57,7 @@ export const useAuthMethods = ({
     email: string, 
     password: string, 
     displayName: string, 
-    metadata?: { interests?: string[], company_id?: string }
+    metadata?: { interests?: string[] }
   ) => {
     try {
       setLoading(true);
@@ -67,7 +68,6 @@ export const useAuthMethods = ({
           data: {
             display_name: displayName,
             interests: metadata?.interests || [],
-            company_id: metadata?.company_id || null,
           },
         },
       });
@@ -75,41 +75,21 @@ export const useAuthMethods = ({
       if (error) throw error;
 
       if (data.user) {
-        const userData: any = { 
-          display_name: displayName,
-          interesses: metadata?.interests || [],
-          primeiro_login: true
-        };
-        
         const { error: profileError } = await supabase
           .from('profiles')
-          .update(userData)
+          .update({ 
+            display_name: displayName,
+            interesses: metadata?.interests || [],
+            primeiro_login: true // Garantir que o primeiro_login esteja definido como true
+          })
           .eq('id', data.user.id);
           
         if (profileError) {
           console.error('Erro ao atualizar perfil:', profileError);
         }
 
-        // Se tiver company_id, criar relacionamento com a empresa
-        if (metadata?.company_id) {
-          const { error: companyRelationError } = await supabase
-            .from('user_empresa')
-            .insert({
-              user_id: data.user.id,
-              empresa_id: metadata.company_id,
-            });
-            
-          if (companyRelationError) {
-            console.error('Erro ao vincular usuário à empresa:', companyRelationError);
-          }
-        }
-
         // Aguardar um momento para garantir que o perfil foi criado corretamente
         await fetchUserProfile(data.user.id);
-        
-        // Redirecionar explicitamente para a tela de onboarding após cadastro
-        toast.success('Cadastro realizado com sucesso! Redirecionando para configuração inicial...');
-        navigate('/onboarding', { replace: true });
       }
     } catch (error: any) {
       console.error('Erro no cadastro:', error);
@@ -117,38 +97,39 @@ export const useAuthMethods = ({
     } finally {
       setLoading(false);
     }
-  }, [setLoading, navigate, fetchUserProfile]);
-  
-  // Adicionar método para identificar e lidar com usuários autenticados externamente
-  const handleExternalAuth = useCallback(async (session) => {
+  }, [setLoading, fetchUserProfile]);
+
+  // Nova função para lidar com login de provedores sociais
+  const handleExternalAuth = useCallback(async (provider: 'google') => {
     try {
-      if (!session?.user) return;
+      setLoading(true);
       
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('primeiro_login, interesses')
-        .eq('id', session.user.id)
-        .single();
+      // Set a flag in sessionStorage to indicate this is a new OAuth login
+      sessionStorage.setItem('oauth_login_processing', 'true');
       
-      if (profileError) {
-        console.error('Erro ao verificar perfil:', profileError);
-        return;
-      }
-      
-      const isNewUser = profile.primeiro_login === true || 
-                      (profile.interesses && profile.interesses.includes('onboarding_incomplete'));
-      
-      if (isNewUser) {
-        console.log('Novo usuário detectado, redirecionando para onboarding');
-        navigate('/onboarding', { replace: true });
-      } else {
-        navigate('/', { replace: true });
-      }
-    } catch (error) {
-      console.error('Erro ao processar autenticação externa:', error);
-      navigate('/', { replace: true });
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+          redirectTo: `${window.location.origin}/auth/callback`,
+        }
+      });
+
+      if (error) throw error;
+
+      // O redirecionamento é gerenciado pelo Supabase
+      return { data, error: null };
+    } catch (error: any) {
+      console.error('Erro no login social:', error);
+      toast.error('Erro ao fazer login: ' + error.message);
+      return { data: null, error };
+    } finally {
+      setLoading(false);
     }
-  }, [navigate]);
+  }, [setLoading]);
 
   return {
     signInWithPassword,

@@ -1,4 +1,3 @@
-
 import { Link, useLocation } from "react-router-dom";
 import { 
   NavigationMenu, 
@@ -23,12 +22,6 @@ export const NavMenuLinks = ({ adminLabel = "Admin" }) => {
       isCurrentPath(path) ? 'font-bold' : 'font-medium'
     }`;
   };
-  
-  // Debug: Verificar status de admin
-  console.log("NavMenuLinks: Status de admin do usuário:", {
-    is_admin: userProfile?.is_admin,
-    super_admin: userProfile?.super_admin
-  });
   
   return (
     <NavigationMenu>
@@ -99,7 +92,6 @@ export const NavMenuLinks = ({ adminLabel = "Admin" }) => {
           </NavigationMenuItem>
         )}
         
-        {/* Link para a página Admin, acessível para administradores */}
         {(userProfile?.is_admin || userProfile?.super_admin) && (
           <NavigationMenuItem>
             <Link to="/admin" className={menuLinkClass('/admin')}>
