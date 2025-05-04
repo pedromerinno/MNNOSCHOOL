@@ -106,7 +106,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], lo
                       <div className="space-y-4 max-w-xl">
                         <div>
                           <div className="flex gap-2 mb-4">
-                            {course.tags?.map((tag: string, index: number) => (
+                            {course.tags?.slice(0, 3).map((tag: string, index: number) => (
                               <CompanyThemedBadge 
                                 key={index} 
                                 variant="outline" 
@@ -115,12 +115,20 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], lo
                                 {tag}
                               </CompanyThemedBadge>
                             ))}
+                            {course.tags && course.tags.length > 3 && (
+                              <CompanyThemedBadge 
+                                variant="outline" 
+                                className="bg-transparent text-white border-white/40 px-4 py-1.5"
+                              >
+                                +{course.tags.length - 3}
+                              </CompanyThemedBadge>
+                            )}
                           </div>
                           <h2 className="text-4xl font-bold text-white mt-2">
                             {course.title}
                           </h2>
                         </div>
-                        <p className="text-white/90">
+                        <p className="text-white/90 line-clamp-3">
                           {course.description}
                         </p>
                       </div>

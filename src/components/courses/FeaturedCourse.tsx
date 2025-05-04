@@ -35,25 +35,30 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
               {course.title}
             </h1>
             
-            <div className="flex gap-2 mb-8">
-              <Badge 
-                variant="outline" 
-                className="bg-transparent text-white border-white/40"
-              >
-                IA
-              </Badge>
-              <Badge 
-                variant="outline" 
-                className="bg-transparent text-white border-white/40"
-              >
-                Ilustração
-              </Badge>
-              <Badge 
-                variant="outline" 
-                className="bg-transparent text-white border-white/40"
-              >
-                Conceitos
-              </Badge>
+            {course.description && (
+              <p className="text-white/80 mb-6 line-clamp-3">
+                {course.description}
+              </p>
+            )}
+            
+            <div className="flex flex-wrap gap-2 mb-8">
+              {course.tags?.slice(0, 3).map((tag: string, index: number) => (
+                <Badge 
+                  key={index}
+                  variant="outline" 
+                  className="bg-transparent text-white border-white/40"
+                >
+                  {tag}
+                </Badge>
+              ))}
+              {course.tags && course.tags.length > 3 && (
+                <Badge 
+                  variant="outline" 
+                  className="bg-transparent text-white border-white/40"
+                >
+                  +{course.tags.length - 3}
+                </Badge>
+              )}
             </div>
           </div>
           

@@ -29,7 +29,7 @@ export const FeaturedCourseHero: React.FC<FeaturedCourseHeroProps> = ({ course }
             <div>
               <h1 className="text-3xl font-bold text-white mb-2">{course.title}</h1>
               <div className="flex gap-2 mt-4">
-                {course.tags.map((tag, index) => (
+                {course.tags.slice(0, 3).map((tag, index) => (
                   <span 
                     key={index} 
                     className="px-3 py-1 text-xs rounded-full bg-black/30 text-white"
@@ -37,6 +37,13 @@ export const FeaturedCourseHero: React.FC<FeaturedCourseHeroProps> = ({ course }
                     {tag}
                   </span>
                 ))}
+                {course.tags.length > 3 && (
+                  <span 
+                    className="px-3 py-1 text-xs rounded-full bg-black/30 text-white"
+                  >
+                    +{course.tags.length - 3}
+                  </span>
+                )}
               </div>
             </div>
             <div className="flex items-center justify-between">
