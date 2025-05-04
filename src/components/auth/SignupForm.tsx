@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2 } from "lucide-react";
+import { Loader2, Mail } from "lucide-react";
 
 export const SignupForm = () => {
   const [email, setEmail] = useState("");
@@ -60,11 +60,21 @@ export const SignupForm = () => {
   if (isSuccess) {
     return (
       <div className="w-full max-w-sm mx-auto text-center">
-        <h1 className="text-3xl font-semibold mb-4">Cadastro realizado!</h1>
+        <div className="flex justify-center mb-6">
+          <div className="bg-green-100 p-3 rounded-full">
+            <Mail className="h-8 w-8 text-green-600" />
+          </div>
+        </div>
+        <h1 className="text-3xl font-semibold mb-4">Verifique seu e-mail</h1>
         <p className="text-gray-600 mb-6">
-          Enviamos um e-mail para {email} com instruções para confirmar sua conta.
-          Por favor, verifique sua caixa de entrada e clique no link de confirmação.
+          Enviamos um link de confirmação para <span className="font-medium">{email}</span>. 
+          Por favor, verifique sua caixa de entrada e clique no link de confirmação para ativar sua conta.
         </p>
+        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
+          <p className="text-sm text-gray-500">
+            Se você não encontrar o e-mail na caixa de entrada, verifique também sua pasta de spam ou lixo eletrônico.
+          </p>
+        </div>
         <p className="text-gray-600">
           Já confirmou seu e-mail?{" "}
           <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
