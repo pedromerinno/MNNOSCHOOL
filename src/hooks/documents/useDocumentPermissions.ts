@@ -7,11 +7,9 @@ export const useDocumentPermissions = (currentUserId: string | null) => {
   const canDeleteDocument = useCallback((document: UserDocument): boolean => {
     if (!currentUserId || !document) return false;
     
-    // A user can delete a document if they:
-    // 1. Uploaded it themselves
-    // 2. Are the owner of the document
-    // Note: Admins will be checked in a separate hook when needed
-    return document.uploaded_by === currentUserId || document.user_id === currentUserId;
+    // Um usuário só pode excluir um documento se ele:
+    // Foi quem fez o upload desse documento (uploaded_by)
+    return document.uploaded_by === currentUserId;
   }, [currentUserId]);
 
   return { canDeleteDocument };

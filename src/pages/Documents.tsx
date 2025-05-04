@@ -33,6 +33,12 @@ const Documents = () => {
   };
 
   const handleDocumentDelete = async (document: UserDocument) => {
+    // Verifica se o usuário tem permissão para excluir antes de continuar
+    if (!canDeleteDocument(document)) {
+      alert("Você só pode excluir documentos que você mesmo enviou.");
+      return;
+    }
+    
     await handleDelete(document.id);
     await refreshDocuments();
   };

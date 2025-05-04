@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { UserDocument } from "@/types/document";
 import { supabase } from "@/integrations/supabase/client";
@@ -168,8 +169,10 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
     const isAdmin = profileData?.is_admin || profileData?.super_admin;
     console.log("Usuário é admin:", isAdmin);
     
-    // Allow deletion if the user is the owner, the uploader, or an admin
-    const canDelete = document.uploaded_by === user?.id || document.user_id === user?.id || isAdmin;
+    // Um usuário só pode excluir um documento se:
+    // 1. Foi ele que fez o upload (uploaded_by)
+    // 2. É um administrador
+    const canDelete = document.uploaded_by === user?.id || isAdmin;
     
     if (canDelete) {
       if (window.confirm(`Tem certeza que deseja excluir o documento "${document.name}"?`)) {
