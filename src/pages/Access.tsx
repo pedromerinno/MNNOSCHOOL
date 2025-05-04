@@ -20,7 +20,7 @@ const Access = () => {
 
   if (!selectedCompany) {
     return (
-      <PageLayout title="Acessos">
+      <PageLayout title="Senhas e Acessos">
         <EmptyState 
           title="Selecione uma empresa"
           description="Selecione uma empresa no menu superior para visualizar os acessos cadastrados."
