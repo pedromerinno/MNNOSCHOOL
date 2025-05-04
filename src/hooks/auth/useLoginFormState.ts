@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 
 /**
  * Handles the local state for the login form,
@@ -8,18 +8,11 @@ import { useState, useCallback } from "react";
 export const useLoginFormState = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isResetMode, setIsResetMode] = useState(false);
-
-  const switchToResetMode = useCallback(() => setIsResetMode(true), []);
-  const switchToLoginMode = useCallback(() => setIsResetMode(false), []);
 
   return {
     email,
     setEmail,
     password,
-    setPassword,
-    isResetMode,
-    switchToResetMode,
-    switchToLoginMode,
+    setPassword
   };
 };

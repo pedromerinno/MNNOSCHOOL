@@ -12,6 +12,8 @@ import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import PasswordReset from "./pages/PasswordReset";
+import ResetPasswordConfirm from "./pages/ResetPasswordConfirm";
 import Onboarding from "./pages/Onboarding";
 import Courses from "./pages/Courses";
 import MyCourses from "./pages/MyCourses";
@@ -50,6 +52,8 @@ const App = () => {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/password-reset" element={<PasswordReset />} />
+              <Route path="/reset-password-confirm" element={<ResetPasswordConfirm />} />
               
               <Route element={<ProtectedRoute />}>
                 <Route path="/onboarding" element={<Onboarding />} />

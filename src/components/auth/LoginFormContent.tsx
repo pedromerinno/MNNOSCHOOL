@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -136,13 +135,12 @@ export const LoginFormContent = ({
         </div>
 
         <div className="mt-6 text-center">
-          <button 
-            onClick={onForgotPassword}
-            type="button"
+          <Link 
+            to="/password-reset"
             className="text-sm text-gray-600 hover:text-gray-900"
           >
             Esqueceu sua senha?
-          </button>
+          </Link>
         </div>
       </div>
     </div>

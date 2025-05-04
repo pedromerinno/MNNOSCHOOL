@@ -1,19 +1,16 @@
 
 import { LoginFormContent } from "./LoginFormContent";
-import { PasswordResetForm } from "./PasswordResetForm";
 import { useLoginForm } from "@/hooks/auth/useLoginForm";
 import { useLoginFormState } from "@/hooks/auth/useLoginFormState";
-import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 export const LoginFormContainer = () => {
+  const navigate = useNavigate();
   const {
     email,
     setEmail,
     password,
     setPassword,
-    isResetMode,
-    switchToResetMode,
-    switchToLoginMode,
   } = useLoginFormState();
 
   const { isLoggingIn, handleLogin } = useLoginForm();
@@ -23,15 +20,9 @@ export const LoginFormContainer = () => {
     await handleLogin(email, password);
   };
 
-  if (isResetMode) {
-    return (
-      <PasswordResetForm
-        email={email}
-        setEmail={setEmail}
-        onBack={switchToLoginMode}
-      />
-    );
-  }
+  const handleForgotPassword = () => {
+    navigate("/password-reset");
+  };
 
   return (
     <LoginFormContent
@@ -41,7 +32,7 @@ export const LoginFormContainer = () => {
       setPassword={setPassword}
       isLoggingIn={isLoggingIn}
       onSubmit={handleSubmit}
-      onForgotPassword={switchToResetMode}
+      onForgotPassword={handleForgotPassword}
     />
   );
 };
