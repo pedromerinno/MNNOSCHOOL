@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { UserProfile } from '@/types/user';
@@ -15,6 +16,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, displayName: string, metadata?: { interests?: string[] }) => Promise<void>;
   updateUserProfile: (userData: Partial<UserProfile>) => Promise<void>;
   updateUserData: (userData: Partial<UserProfile>) => Promise<void>;
+  handleExternalAuth: (provider: 'google') => Promise<{ data: any, error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -39,7 +41,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { 
     signInWithPassword, 
     signOut, 
-    signUp 
+    signUp,
+    handleExternalAuth
   } = useAuthMethods({ 
     fetchUserProfile, 
     setLoading: (isLoading) => setLoading(isLoading)
@@ -67,7 +70,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signOut,
     signUp,
     updateUserProfile,
-    updateUserData: handleUpdateUserData
+    updateUserData: handleUpdateUserData,
+    handleExternalAuth
   };
 
   return (

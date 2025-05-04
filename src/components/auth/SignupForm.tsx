@@ -13,7 +13,7 @@ export const SignupForm = () => {
   const [passwordError, setPasswordError] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const { signUp } = useAuth();
+  const { signUp, handleExternalAuth } = useAuth();
 
   const validatePasswords = () => {
     if (password !== confirmPassword) {
@@ -52,6 +52,18 @@ export const SignupForm = () => {
       setIsSuccess(true);
     } catch (error) {
       console.error("Erro no cadastro:", error);
+    } finally {
+      setIsRegistering(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsRegistering(true);
+    try {
+      await handleExternalAuth('google');
+      // O redirecionamento é gerenciado pelo Supabase
+    } catch (error) {
+      console.error("Erro no login com Google:", error);
     } finally {
       setIsRegistering(false);
     }
@@ -161,8 +173,14 @@ export const SignupForm = () => {
           <Button 
             variant="outline"
             className="w-full h-12 border border-gray-300 rounded-lg font-medium flex items-center justify-center gap-2"
+            onClick={handleGoogleSignIn}
+            disabled={isRegistering}
           >
-            Entrar com Google
+            {isRegistering ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              "Entrar com Google"
+            )}
           </Button>
           
           <Button 

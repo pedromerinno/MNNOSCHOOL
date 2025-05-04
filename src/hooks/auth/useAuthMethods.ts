@@ -27,7 +27,7 @@ export const useAuthMethods = ({
 
       if (data.session) {
         await fetchUserProfile(data.session.user.id);
-        navigate('/');
+        // Não redirecionamos aqui - deixamos ProtectedRoute fazer isso para verificar onboarding
       }
 
       return { data, error: null };
@@ -35,7 +35,7 @@ export const useAuthMethods = ({
       console.error('Erro no login:', error);
       return { data: null, error };
     }
-  }, [fetchUserProfile, navigate]);
+  }, [fetchUserProfile]);
 
   const signOut = useCallback(async () => {
     try {
@@ -90,10 +90,6 @@ export const useAuthMethods = ({
 
         // Aguardar um momento para garantir que o perfil foi criado corretamente
         await fetchUserProfile(data.user.id);
-        
-        // Redirecionar explicitamente para a tela de onboarding após cadastro
-        toast.success('Cadastro realizado com sucesso! Redirecionando para configuração inicial...');
-        navigate('/onboarding', { replace: true });
       }
     } catch (error: any) {
       console.error('Erro no cadastro:', error);
@@ -101,11 +97,40 @@ export const useAuthMethods = ({
     } finally {
       setLoading(false);
     }
-  }, [setLoading, navigate, fetchUserProfile]);
+  }, [setLoading, fetchUserProfile]);
+
+  // Nova função para lidar com login de provedores sociais
+  const handleExternalAuth = useCallback(async (provider: 'google') => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+          redirectTo: `${window.location.origin}/auth/callback`,
+        }
+      });
+
+      if (error) throw error;
+
+      // O redirecionamento é gerenciado pelo Supabase
+      return { data, error: null };
+    } catch (error: any) {
+      console.error('Erro no login social:', error);
+      toast.error('Erro ao fazer login: ' + error.message);
+      return { data: null, error };
+    } finally {
+      setLoading(false);
+    }
+  }, [setLoading]);
 
   return {
     signInWithPassword,
     signOut,
-    signUp
+    signUp,
+    handleExternalAuth
   };
 };
