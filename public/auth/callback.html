@@ -55,9 +55,21 @@
     <p>Você será redirecionado automaticamente em instantes.</p>
   </div>
   <script>
-    // Código para lidar com o callback do Supabase e redirecionar para a página principal
+    // Process Supabase authentication callback and redirect appropriately
     window.onload = function() {
-      window.location.href = "/";
+      try {
+        // Store a flag in session storage to identify this is a new Google login
+        // This will help the app recognize a fresh OAuth login
+        sessionStorage.setItem('oauth_login_processing', 'true');
+        
+        // Small delay to ensure authentication state is properly processed
+        setTimeout(function() {
+          window.location.href = "/";
+        }, 500);
+      } catch (e) {
+        console.error("Error in auth callback:", e);
+        window.location.href = "/";
+      }
     };
   </script>
 </body>

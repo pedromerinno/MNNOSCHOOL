@@ -103,6 +103,10 @@ export const useAuthMethods = ({
   const handleExternalAuth = useCallback(async (provider: 'google') => {
     try {
       setLoading(true);
+      
+      // Set a flag in sessionStorage to indicate this is a new OAuth login
+      sessionStorage.setItem('oauth_login_processing', 'true');
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {

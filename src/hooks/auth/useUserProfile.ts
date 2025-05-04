@@ -30,8 +30,19 @@ export const useUserProfile = () => {
           if (userData?.user) {
             const email = userData.user.email;
             const displayName = userData.user.user_metadata?.display_name || 
+                              userData.user.user_metadata?.full_name || 
+                              userData.user.user_metadata?.name ||
                               email?.split('@')[0] || 
                               'Usuário';
+            
+            // For users logging in via social providers, ensure onboarding flags are set
+            const isOauthLogin = sessionStorage.getItem('oauth_login_processing') === 'true';
+            console.log("OAuth login processing:", isOauthLogin);
+            
+            // Clear the OAuth flag
+            if (isOauthLogin) {
+              sessionStorage.removeItem('oauth_login_processing');
+            }
                               
             // Para login social, garante que o usuário faça onboarding
             const { error: insertError } = await supabase
