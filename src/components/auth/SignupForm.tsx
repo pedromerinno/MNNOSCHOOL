@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
@@ -10,10 +10,20 @@ export const SignupForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [companyId, setCompanyId] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const { signUp } = useAuth();
+
+  // Verificar se há um ID de empresa no URL ao carregar
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const companyIdParam = params.get('company');
+    if (companyIdParam) {
+      setCompanyId(companyIdParam);
+    }
+  }, []);
 
   const validatePasswords = () => {
     if (password !== confirmPassword) {
@@ -40,14 +50,19 @@ export const SignupForm = () => {
     setIsRegistering(true);
     
     try {
-      const metadataWithCompany = { 
+      const metadata: any = { 
         interests: ["onboarding_incomplete"] 
       };
       
+      // Adicionar o ID da empresa ao metadata, se estiver presente
+      if (companyId && companyId.trim() !== '') {
+        metadata.company_id = companyId.trim();
+      }
+      
       const displayName = email.split('@')[0];
       
-      console.log("Iniciando cadastro com metadata:", metadataWithCompany);
-      await signUp(email, password, displayName, metadataWithCompany);
+      console.log("Iniciando cadastro com metadata:", metadata);
+      await signUp(email, password, displayName, metadata);
       console.log("Cadastro realizado com sucesso!");
       setIsSuccess(true);
     } catch (error) {
@@ -132,6 +147,20 @@ export const SignupForm = () => {
           {passwordError && (
             <p className="text-sm text-red-500 mt-1">{passwordError}</p>
           )}
+        </div>
+
+        {/* Campo para ID da empresa */}
+        <div>
+          <Input
+            type="text"
+            value={companyId}
+            onChange={(e) => setCompanyId(e.target.value)}
+            placeholder="ID da empresa (opcional)"
+            className="w-full h-12 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <p className="text-sm text-gray-500 mt-1">
+            Se você recebeu um código de convite de uma empresa, insira-o aqui.
+          </p>
         </div>
         
         <Button

@@ -1,4 +1,5 @@
-import React, { createContext, useState, useContext } from 'react';
+
+import React, { createContext, useState, useContext, useEffect } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { UserProfile } from '@/types/user';
 import { useAuthSession } from '@/hooks/auth/useAuthSession';
@@ -12,7 +13,7 @@ interface AuthContextType {
   loading: boolean;
   signInWithPassword: (email: string, password: string) => Promise<{ data: any, error: Error | null }>;
   signOut: () => Promise<void>;
-  signUp: (email: string, password: string, displayName: string, metadata?: { interests?: string[] }) => Promise<void>;
+  signUp: (email: string, password: string, displayName: string, metadata?: { interests?: string[], company_id?: string }) => Promise<void>;
   updateUserProfile: (userData: Partial<UserProfile>) => Promise<void>;
   updateUserData: (userData: Partial<UserProfile>) => Promise<void>;
 }
@@ -21,6 +22,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [loading, setLoading] = useState(false);
+  const [authInitialized, setAuthInitialized] = useState(false);
+  
   const { 
     user, 
     session, 
@@ -39,19 +42,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { 
     signInWithPassword, 
     signOut, 
-    signUp 
+    signUp,
+    handleExternalAuth 
   } = useAuthMethods({ 
     fetchUserProfile, 
     setLoading: (isLoading) => setLoading(isLoading)
   });
 
-  React.useEffect(() => {
-    if (user) {
-      setTimeout(async () => {
-        await fetchUserProfile(user.id);
-      }, 0);
-    }
-  }, [user, fetchUserProfile]);
+  // Lidar com a autenticação inicial e possível redirecionamento
+  useEffect(() => {
+    const checkAuth = async () => {
+      // Se já inicializou a autenticação, não refaça o processo
+      if (authInitialized) return;
+      
+      if (user) {
+        // Verificar se o usuário acabou de fazer login com Google
+        const isExternalAuth = sessionStorage.getItem('external_auth') === 'true';
+        
+        if (isExternalAuth) {
+          // Limpar flag
+          sessionStorage.removeItem('external_auth');
+          
+          // Aguardar um momento para garantir que o perfil foi carregado
+          setTimeout(async () => {
+            await fetchUserProfile(user.id);
+            await handleExternalAuth(session);
+            setAuthInitialized(true);
+          }, 100);
+        } else {
+          await fetchUserProfile(user.id);
+          setAuthInitialized(true);
+        }
+      } else {
+        setAuthInitialized(true);
+      }
+    };
+
+    checkAuth();
+  }, [user, session, fetchUserProfile, handleExternalAuth, authInitialized]);
 
   const handleUpdateUserData = async (userData: Partial<UserProfile>) => {
     if (!user) return;
@@ -62,7 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     session,
     userProfile,
-    loading: loading || sessionLoading,
+    loading: loading || sessionLoading || !authInitialized,
     signInWithPassword,
     signOut,
     signUp,

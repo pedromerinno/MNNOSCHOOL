@@ -3,7 +3,6 @@ import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { UserProfile } from '@/types/user';
 
 interface UseAuthMethodsProps {
   fetchUserProfile: (userId: string) => Promise<void>;
@@ -57,7 +56,7 @@ export const useAuthMethods = ({
     email: string, 
     password: string, 
     displayName: string, 
-    metadata?: { interests?: string[] }
+    metadata?: { interests?: string[], company_id?: string }
   ) => {
     try {
       setLoading(true);
@@ -68,6 +67,7 @@ export const useAuthMethods = ({
           data: {
             display_name: displayName,
             interests: metadata?.interests || [],
+            company_id: metadata?.company_id || null,
           },
         },
       });
@@ -75,17 +75,33 @@ export const useAuthMethods = ({
       if (error) throw error;
 
       if (data.user) {
+        const userData: any = { 
+          display_name: displayName,
+          interesses: metadata?.interests || [],
+          primeiro_login: true
+        };
+        
         const { error: profileError } = await supabase
           .from('profiles')
-          .update({ 
-            display_name: displayName,
-            interesses: metadata?.interests || [],
-            primeiro_login: true // Garantir que o primeiro_login esteja definido como true
-          })
+          .update(userData)
           .eq('id', data.user.id);
           
         if (profileError) {
           console.error('Erro ao atualizar perfil:', profileError);
+        }
+
+        // Se tiver company_id, criar relacionamento com a empresa
+        if (metadata?.company_id) {
+          const { error: companyRelationError } = await supabase
+            .from('user_empresa')
+            .insert({
+              user_id: data.user.id,
+              empresa_id: metadata.company_id,
+            });
+            
+          if (companyRelationError) {
+            console.error('Erro ao vincular usuário à empresa:', companyRelationError);
+          }
         }
 
         // Aguardar um momento para garantir que o perfil foi criado corretamente
@@ -102,10 +118,42 @@ export const useAuthMethods = ({
       setLoading(false);
     }
   }, [setLoading, navigate, fetchUserProfile]);
+  
+  // Adicionar método para identificar e lidar com usuários autenticados externamente
+  const handleExternalAuth = useCallback(async (session) => {
+    try {
+      if (!session?.user) return;
+      
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('primeiro_login, interesses')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (profileError) {
+        console.error('Erro ao verificar perfil:', profileError);
+        return;
+      }
+      
+      const isNewUser = profile.primeiro_login === true || 
+                      (profile.interesses && profile.interesses.includes('onboarding_incomplete'));
+      
+      if (isNewUser) {
+        console.log('Novo usuário detectado, redirecionando para onboarding');
+        navigate('/onboarding', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
+    } catch (error) {
+      console.error('Erro ao processar autenticação externa:', error);
+      navigate('/', { replace: true });
+    }
+  }, [navigate]);
 
   return {
     signInWithPassword,
     signOut,
-    signUp
+    signUp,
+    handleExternalAuth
   };
 };
