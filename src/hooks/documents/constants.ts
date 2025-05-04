@@ -1,8 +1,8 @@
 
-// Max file size is 10MB
-export const MAX_FILE_SIZE = 10 * 1024 * 1024;
+// Maximum file size for uploads (10MB)
+export const MAX_FILE_SIZE = 10 * 1024 * 1024; 
 
-// Allowed file types for document uploads
+// Allowed MIME types for document uploads
 export const ALLOWED_FILE_TYPES = [
   'application/pdf', 
   'application/msword', 
@@ -10,3 +10,6 @@ export const ALLOWED_FILE_TYPES = [
   'image/jpeg',
   'image/png'
 ];
+
+// Bucket name for document storage
+export const DOCUMENTS_BUCKET = 'documents';
