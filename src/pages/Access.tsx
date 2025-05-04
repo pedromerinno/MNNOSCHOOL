@@ -20,7 +20,7 @@ const Access = () => {
 
   if (!selectedCompany) {
     return (
-      <PageLayout title="Acessos">
+      <PageLayout title="Senhas e Acessos">
         <EmptyState 
           title="Selecione uma empresa"
           description="Selecione uma empresa no menu superior para visualizar os acessos cadastrados."
@@ -31,7 +31,7 @@ const Access = () => {
 
   if (!hasPermission) {
     return (
-      <PageLayout title="Acessos">
+      <PageLayout title="Senhas e Acessos">
         <EmptyState 
           title="Acesso não autorizado"
           description={`Você não tem permissão para visualizar os acessos da empresa ${selectedCompany.nome}. Entre em contato com o administrador.`}
@@ -42,7 +42,7 @@ const Access = () => {
 
   if (accessItems.length === 0) {
     return (
-      <PageLayout title="Acessos">
+      <PageLayout title="Senhas e Acessos">
         <EmptyState 
           title="Nenhum acesso cadastrado"
           description={`Não há informações de acesso cadastradas para ${selectedCompany.nome}. Peça ao administrador para adicionar os acessos necessários.`}
@@ -52,7 +52,7 @@ const Access = () => {
   }
 
   return (
-    <PageLayout title="Acessos">
+    <PageLayout title="Senhas e Acessos">
       <AccessDescription companyName={selectedCompany.nome} />
       <AccessContent 
         items={accessItems}
