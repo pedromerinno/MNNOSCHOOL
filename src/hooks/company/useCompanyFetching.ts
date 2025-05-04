@@ -1,9 +1,9 @@
 
 import { useCallback, useRef } from "react";
 import { Company } from "@/types/company";
-import { useCompanyRequest } from "./fetch/useCompanyRequest";
+import { useCompanyRequest } from "./useCompanyRequest";
 import { useCompanyCache } from "./useCompanyCache";
-import { useCompanyRetry } from "./fetch/useCompanyRetry";
+import { useCompanyRetry } from "./useCompanyRetry";
 import { useCompanyFetch } from "./useCompanyFetch";
 import { UseCompanyFetchingProps } from "./types/fetchTypes";
 
