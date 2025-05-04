@@ -59,9 +59,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Verificar se o usuário acabou de fazer login com Google
         const isExternalAuth = sessionStorage.getItem('external_auth') === 'true';
         
+        console.log("AuthContext: Verificando autenticação", {
+          userId: user.id,
+          isExternalAuth,
+          session
+        });
+        
         if (isExternalAuth) {
           // Limpar flag
           sessionStorage.removeItem('external_auth');
+          
+          console.log("AuthContext: Detectada autenticação externa, processando...");
           
           // Aguardar um momento para garantir que o perfil foi carregado
           setTimeout(async () => {
@@ -70,6 +78,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setAuthInitialized(true);
           }, 100);
         } else {
+          console.log("AuthContext: Buscando perfil do usuário");
           await fetchUserProfile(user.id);
           setAuthInitialized(true);
         }
@@ -80,6 +89,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     checkAuth();
   }, [user, session, fetchUserProfile, handleExternalAuth, authInitialized]);
+
+  // Debug: Verificar status de admin depois que o perfil é carregado
+  useEffect(() => {
+    if (userProfile) {
+      console.log("AuthContext: Perfil do usuário carregado com status de admin:", {
+        is_admin: userProfile.is_admin,
+        super_admin: userProfile.super_admin,
+      });
+    }
+  }, [userProfile]);
 
   const handleUpdateUserData = async (userData: Partial<UserProfile>) => {
     if (!user) return;

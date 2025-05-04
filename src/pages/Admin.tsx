@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -29,6 +30,15 @@ const AdminPage = () => {
       setIsReady(true);
     }
   }, [authLoading]);
+  
+  // Debug: Verificar os valores de userProfile
+  useEffect(() => {
+    console.log("AdminPage: Perfil do usuário:", {
+      userProfile,
+      is_admin: userProfile?.is_admin,
+      super_admin: userProfile?.super_admin
+    });
+  }, [userProfile]);
 
   if (!isReady) {
     return (
@@ -39,6 +49,7 @@ const AdminPage = () => {
   }
 
   if (!userProfile?.is_admin && !userProfile?.super_admin) {
+    console.log("AdminPage: Redirecionando usuário sem permissão de admin");
     return <Navigate to="/" replace />;
   }
 

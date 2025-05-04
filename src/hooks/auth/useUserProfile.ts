@@ -13,7 +13,7 @@ export const useUserProfile = () => {
       
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, email, display_name, is_admin, super_admin, avatar, cargo_id, interesses, primeiro_login')
         .eq('id', userId)
         .single();
 
@@ -31,7 +31,8 @@ export const useUserProfile = () => {
           super_admin: data.super_admin,
           avatar: data.avatar,
           cargo_id: data.cargo_id,
-          interesses: data.interesses
+          interesses: data.interesses,
+          primeiro_login: data.primeiro_login
         };
         
         console.log('Perfil de usuário carregado:', profile);

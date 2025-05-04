@@ -12,6 +12,7 @@ export const ProtectedRoute = () => {
   const { user, loading, session, userProfile } = useAuth();
   const location = useLocation();
   const isOnboarding = location.pathname === "/onboarding";
+  const isAdminPage = location.pathname === "/admin" || location.pathname.startsWith("/admin/");
   
   // Só carrega os dados de empresas se não estiver na página de onboarding
   const { userCompanies, isLoading: companiesLoading } = useCompanies({
@@ -44,6 +45,17 @@ export const ProtectedRoute = () => {
     
     return () => clearTimeout(timeoutId);
   }, [loading]);
+
+  // Debug admin status
+  useEffect(() => {
+    if (userProfile) {
+      console.log("ProtectedRoute: Status de admin do usuário:", { 
+        is_admin: userProfile.is_admin, 
+        super_admin: userProfile.super_admin,
+        isAdminPage: isAdminPage 
+      });
+    }
+  }, [userProfile, isAdminPage]);
 
   // Mostrar um loading mais simplificado e rápido
   if (loading) {
@@ -94,7 +106,6 @@ export const ProtectedRoute = () => {
   }
 
   // Verificar se precisa fazer onboarding inicial
-  // IMPORTANTE: Precisamos ter certeza que esta verificação seja feita corretamente
   const needsOnboarding = userProfile?.primeiro_login === true || 
                          (userProfile?.interesses && userProfile.interesses.includes("onboarding_incomplete"));
                          
@@ -103,6 +114,12 @@ export const ProtectedRoute = () => {
     primeiro_login: userProfile?.primeiro_login,
     interesses: userProfile?.interesses
   });
+
+  // Verificar acesso à página de administração
+  if (isAdminPage && !userProfile?.is_admin && !userProfile?.super_admin) {
+    console.log("ProtectedRoute: Usuário sem permissão de admin tentando acessar página admin");
+    return <Navigate to="/" replace />;
+  }
                          
   // Redirecionar para onboarding se for a primeira vez
   if (needsOnboarding && !isOnboarding) {
