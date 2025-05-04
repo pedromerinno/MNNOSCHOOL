@@ -47,24 +47,19 @@ export const useDocumentUploadOperations = (
       return false;
     }
 
+    if (!companyId) {
+      toast.error("Empresa não encontrada. Verifique se você selecionou uma empresa.");
+      return false;
+    }
+
     setIsUploading(true);
     
     try {
-      // Buscar companyId se não fornecido
-      let targetCompanyId = companyId;
+      // Já temos o companyId passado como parâmetro, então não vamos buscar
+      const targetCompanyId = companyId;
       
       if (!targetCompanyId) {
-        const { data: userCompany } = await supabase
-          .from('user_empresa')
-          .select('empresa_id')
-          .eq('user_id', userId)
-          .single();
-          
-        if (!userCompany) {
-          throw new Error("Empresa não encontrada");
-        }
-        
-        targetCompanyId = userCompany.empresa_id;
+        throw new Error("Empresa não encontrada");
       }
       
       // Criar um diretório único para o usuário

@@ -33,7 +33,7 @@ const Documents = () => {
   };
 
   const handleDocumentDelete = async (document: UserDocument) => {
-    await handleDelete(document);
+    await handleDelete(document.id);
     await refreshDocuments();
   };
 

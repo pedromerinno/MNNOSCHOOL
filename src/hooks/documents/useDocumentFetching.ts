@@ -1,78 +1,57 @@
 
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { UserDocument } from "@/types/document";
-import { useAuth } from '@/contexts/AuthContext';
-import { useCompanies } from '@/hooks/useCompanies';
 
 export const useDocumentFetching = () => {
-  const { user } = useAuth();
-  const { selectedCompany } = useCompanies();
-  const [documents, setDocuments] = useState<UserDocument[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchUserDocuments = useCallback(async () => {
-    if (!user || !selectedCompany?.id) {
-      setDocuments([]);
-      setIsLoading(false);
-      setError(null);
-      return;
-    }
+  const fetchDocumentsForUser = useCallback(async (
+    userId: string,
+    companyId: string
+  ): Promise<UserDocument[]> => {
+    console.log(`Buscando documentos para usuário ${userId} na empresa ${companyId}`);
     
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const { data, error } = await supabase
-        .from('user_documents')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('company_id', selectedCompany.id)
-        .order('uploaded_at', { ascending: false });
-        
-      if (error) throw error;
-      
-      setDocuments(data as UserDocument[]);
-    } catch (error: any) {
-      console.error('Error fetching user documents:', error);
-      setError(`Erro ao carregar documentos: ${error.message}`);
-      toast.error(`Erro ao carregar documentos: ${error.message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user, selectedCompany]);
-
-  // Add a special method to fetch documents for a specific user (for admins)
-  const fetchDocumentsForUser = useCallback(async (userId: string, companyId: string) => {
     if (!userId || !companyId) {
+      console.error("ID do usuário ou da empresa não fornecido");
       return [];
     }
-    
+
     try {
-      const { data, error } = await supabase
-        .from('user_documents')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('company_id', companyId)
-        .order('uploaded_at', { ascending: false });
-        
-      if (error) throw error;
+      // Verificar se o usuário é admin
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('is_admin, super_admin')
+        .eq('id', userId)
+        .single();
       
+      const isAdmin = profileData?.is_admin || profileData?.super_admin;
+
+      // Se for admin, buscar todos os documentos da empresa
+      // Caso contrário, buscar apenas os documentos relacionados ao usuário
+      const query = supabase
+        .from('user_documents')
+        .select('*');
+
+      if (isAdmin) {
+        query.eq('company_id', companyId);
+      } else {
+        // Usuário normal vê apenas seus próprios documentos
+        query.eq('company_id', companyId)
+            .eq('user_id', userId);
+      }
+
+      const { data, error } = await query.order('uploaded_at', { ascending: false });
+
+      if (error) {
+        console.error("Erro ao buscar documentos:", error);
+        throw error;
+      }
+
       return data as UserDocument[];
-    } catch (error: any) {
-      console.error('Error fetching user documents:', error);
-      toast.error(`Erro ao carregar documentos: ${error.message}`);
-      return [];
+    } catch (error) {
+      console.error("Erro ao buscar documentos:", error);
+      throw error;
     }
   }, []);
 
-  return {
-    documents,
-    isLoading,
-    error,
-    fetchUserDocuments,
-    fetchDocumentsForUser,
-  };
+  return { fetchDocumentsForUser };
 };
