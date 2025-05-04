@@ -117,7 +117,22 @@ const Courses = () => {
           </div>
         </div>
 
-        {hasNoCourses ? (
+        {loading ? (
+          <>
+            <div className="w-full h-64">
+              <Skeleton className="w-full h-full rounded-xl" />
+            </div>
+            <div className="space-y-4">
+              <Skeleton className="h-8 w-40" />
+              <div className="flex gap-2">
+                {[1, 2, 3, 4].map((i) => (
+                  <Skeleton key={i} className="h-10 w-24 rounded-full" />
+                ))}
+              </div>
+            </div>
+            <CoursesLoadingSkeleton />
+          </>
+        ) : hasNoCourses ? (
           <EmptyCoursesState
             companyName={selectedCompany.nome}
             isAdmin={isAdmin}
