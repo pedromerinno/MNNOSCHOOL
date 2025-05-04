@@ -14,6 +14,8 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import PasswordReset from "./pages/PasswordReset";
 import ResetPasswordConfirm from "./pages/ResetPasswordConfirm";
+import TermsOfUse from "./pages/TermsOfUse";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Onboarding from "./pages/Onboarding";
 import Courses from "./pages/Courses";
 import MyCourses from "./pages/MyCourses";
@@ -54,6 +56,8 @@ const App = () => {
               <Route path="/signup" element={<Signup />} />
               <Route path="/password-reset" element={<PasswordReset />} />
               <Route path="/reset-password-confirm" element={<ResetPasswordConfirm />} />
+              <Route path="/termos" element={<TermsOfUse />} />
+              <Route path="/privacidade" element={<PrivacyPolicy />} />
               
               <Route element={<ProtectedRoute />}>
                 <Route path="/onboarding" element={<Onboarding />} />

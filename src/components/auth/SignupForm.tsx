@@ -165,8 +165,8 @@ export const SignupForm = () => {
 
         <div className="mt-4 text-xs text-center text-gray-500 px-4">
           Ao clicar em "Cadastrar", "Entrar com Google" ou "Usar Single Sign-On (SSO)", 
-          você concorda com nossos <Link to="/termos" className="underline">Termos de Uso</Link> e 
-          reconhece que leu e compreendeu nossa <Link to="/privacidade" className="underline">Política de Privacidade</Link>.
+          você concorda com nossos <Link to="/termos" className="underline hover:text-blue-600">Termos de Uso</Link> e 
+          reconhece que leu e compreendeu nossa <Link to="/privacidade" className="underline hover:text-blue-600">Política de Privacidade</Link>.
         </div>
       </div>
     </div>
