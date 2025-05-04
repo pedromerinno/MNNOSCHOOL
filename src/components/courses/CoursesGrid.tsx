@@ -35,7 +35,7 @@ export const CoursesGrid: React.FC<CoursesGridProps> = ({ courses }) => {
           />
           <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent">
             <div className="flex gap-2 mb-2">
-              {course.tags?.map((tag: string, index: number) => (
+              {course.tags?.slice(0, 3).map((tag: string, index: number) => (
                 <span 
                   key={index} 
                   className="px-4 py-1.5 text-xs rounded-xl bg-white/20 text-white border border-white/40"
@@ -43,6 +43,13 @@ export const CoursesGrid: React.FC<CoursesGridProps> = ({ courses }) => {
                   {tag}
                 </span>
               ))}
+              {course.tags && course.tags.length > 3 && (
+                <span 
+                  className="px-4 py-1.5 text-xs rounded-xl bg-white/20 text-white border border-white/40"
+                >
+                  +{course.tags.length - 3}
+                </span>
+              )}
             </div>
             <h3 className="text-white font-medium">{course.title}</h3>
           </div>

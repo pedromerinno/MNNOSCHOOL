@@ -58,9 +58,16 @@ export const FilteredCoursesList: React.FC<FilteredCoursesListProps> = ({
               <CardContent className="p-4">
                 <div className="flex gap-2 mb-2">
                   {course.tags && course.tags.length > 0 ? (
-                    course.tags.slice(0, 2).map((tag: string, i: number) => (
-                      <Badge key={i} variant="outline" className="bg-gray-100 text-gray-700 text-xs px-2">{tag}</Badge>
-                    ))
+                    <>
+                      {course.tags.slice(0, 3).map((tag: string, i: number) => (
+                        <Badge key={i} variant="outline" className="bg-gray-100 text-gray-700 text-xs px-2">{tag}</Badge>
+                      ))}
+                      {course.tags.length > 3 && (
+                        <Badge variant="outline" className="bg-gray-100 text-gray-700 text-xs px-2">
+                          +{course.tags.length - 3}
+                        </Badge>
+                      )}
+                    </>
                   ) : (
                     <Badge variant="outline" className="bg-gray-100 text-gray-700 text-xs px-2">Curso</Badge>
                   )}
