@@ -3,7 +3,7 @@ import { useEffect, useCallback, useRef } from "react";
 import { useCompanyState } from "./company/useCompanyState";
 import { useCompanyFetching } from "./company/useCompanyFetching";
 import { useCompanySelection } from "./company/useCompanySelection";
-import { useCompanyCreate } from "./company/useCompanyCreate";
+import { useCompanyCreate } from "./company/useCompanyCreateUpdates";
 import { useCompanyUpdate } from "./company/useCompanyUpdate";
 import { useCompanyDelete } from "./company/useCompanyDelete";
 import { useCompanyUserManagement } from "./company/useCompanyUserManagement";
@@ -60,7 +60,8 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     fetchCompanies
   } = useCompanyCreate({ 
     setIsLoading, 
-    setCompanies 
+    setCompanies,
+    setError 
   });
   
   const { 
@@ -115,16 +116,16 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     }
   }, [user?.id, setUserCompanies, setSelectedCompany]);
   
-  // Carregamento de dados global com memoização do callback para reduzir recriações
+  // Global data loading with memoized callback to reduce recreations
   const loadInitialData = useCallback(async () => {
-    // Se já carregamos os dados iniciais, não carregue novamente
+    // If we've already loaded initial data, don't load again
     if (initialDataLoaded.current) {
       return;
     }
     
-    // IMPORTANTE: Verificar se devemos pular o carregamento durante onboarding
+    // IMPORTANT: Check if we should skip loading during onboarding
     if (skipLoadingInOnboarding) {
-      console.log("[useCompanies] Pulando carregamento de empresas durante onboarding");
+      console.log("[useCompanies] Skipping company loading during onboarding");
       return;
     }
     
@@ -132,36 +133,36 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
       return;
     }
     
-    // Se já estamos carregando, não inicie outra requisição
+    // If we're already loading, don't start another request
     if (isLoading) {
       return;
     }
     
     try {
       initialDataLoaded.current = true;
-      console.log("[useCompanies] Carregando dados iniciais de empresas");
+      console.log("[useCompanies] Loading initial company data");
       
-      // Verificar se o usuário já está no cache antes de buscar
+      // Check if user companies are already cached before fetching
       const cachedData = localStorage.getItem('userCompanies');
       if (cachedData) {
         try {
           const companies = JSON.parse(cachedData);
           if (Array.isArray(companies) && companies.length > 0) {
             setUserCompanies(companies);
-            console.log("[useCompanies] Usando dados em cache durante carregamento inicial");
+            console.log("[useCompanies] Using cached data during initial load");
             
-            // Iniciar uma busca em segundo plano, sem mostrar loading
+            // Start a background fetch without showing loading
             getUserCompanies(user.id, false).catch(err => 
-              console.error('[useCompanies] Erro ao atualizar dados de empresas em background:', err)
+              console.error('[useCompanies] Error updating company data in background:', err)
             );
             return;
           }
         } catch (e) {
-          console.error('[useCompanies] Erro ao analisar cache de empresas:', e);
+          console.error('[useCompanies] Error parsing company cache:', e);
         }
       }
       
-      // Verificar se é super admin (uma única vez)
+      // Check if user is super admin (once)
       const { data: profileData } = await supabase
         .from('profiles')
         .select('super_admin')
@@ -178,26 +179,26 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
         await getUserCompanies(user.id);
       }
     } catch (error) {
-      console.error('[useCompanies] Erro ao carregar dados iniciais de empresas:', error);
+      console.error('[useCompanies] Error loading initial company data:', error);
     }
   }, [user?.id, isLoading, getUserCompanies, skipLoadingInOnboarding, setUserCompanies]);
   
-  // Carregar dados iniciais apenas quando necessário
+  // Load initial data only when needed
   useEffect(() => {
-    // IMPORTANTE: Verificar a opção skipLoadingInOnboarding antes de carregar dados
+    // IMPORTANT: Check skipLoadingInOnboarding option before loading data
     if (user?.id && !initialDataLoaded.current && !skipLoadingInOnboarding) {
       loadInitialData();
     }
   }, [loadInitialData, user?.id, skipLoadingInOnboarding]);
   
-  // Atualizar dados quando necessário (with better memoization)
+  // Update data when needed (with better memoization)
   const handleCompanyRelationChange = useCallback(async () => {
     if (user?.id) {
       try {
-        console.log('[useCompanies] Forçando atualização após mudança de relação de empresa');
+        console.log('[useCompanies] Forcing update after company relation change');
         await forceGetUserCompanies(user.id);
       } catch (error) {
-        console.error('[useCompanies] Erro ao atualizar empresas após mudança de relação:', error);
+        console.error('[useCompanies] Error updating companies after relation change:', error);
       }
     }
   }, [user?.id, forceGetUserCompanies]);
@@ -205,24 +206,24 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
   const handleForceReload = useCallback(async () => {
     if (user?.id) {
       try {
-        console.log('[useCompanies] Forçando recarregamento de empresas por solicitação do usuário');
+        console.log('[useCompanies] Forcing company reload at user request');
         await forceGetUserCompanies(user.id);
       } catch (error) {
-        console.error('[useCompanies] Erro ao forçar recarregamento de empresas:', error);
+        console.error('[useCompanies] Error forcing company reload:', error);
       }
     } else {
       try {
-        console.log('[useCompanies] Forçando recarregamento de todas as empresas por solicitação do usuário');
+        console.log('[useCompanies] Forcing all companies reload at user request');
         await fetchCompanies();
       } catch (error) {
-        console.error('[useCompanies] Erro ao forçar recarregamento de todas as empresas:', error);
+        console.error('[useCompanies] Error forcing all companies reload:', error);
       }
     }
   }, [user?.id, forceGetUserCompanies, fetchCompanies]);
   
-  // Configurar listeners apenas uma vez
+  // Set up listeners only once
   useEffect(() => {
-    // IMPORTANTE: Não configurar listeners se estivermos em modo onboarding
+    // IMPORTANT: Don't set up listeners if we're in onboarding mode
     if (skipLoadingInOnboarding) {
       return;
     }
@@ -236,82 +237,82 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     };
   }, [handleCompanyRelationChange, handleForceReload, skipLoadingInOnboarding]);
   
-  // Restaurar empresa selecionada previamente (memoizado para evitar recriações)
+  // Restore previously selected company (memoized to avoid recreations)
   const restoreSelectedCompany = useCallback(async () => {
-    // IMPORTANTE: Não restaurar empresa se estivermos em modo onboarding
+    // IMPORTANT: Don't restore company if we're in onboarding mode
     if (skipLoadingInOnboarding) {
       return;
     }
     
-    // Pular se já temos uma empresa selecionada
+    // Skip if we already have a selected company
     if (selectedCompany) return;
     
-    // Primeiro tentar obter o objeto completo de empresa do localStorage
+    // First try to get complete company object from localStorage
     const cachedCompany = getStoredCompany();
     if (cachedCompany) {
-      // Verificar se o usuário tem acesso a esta empresa
+      // Check if user has access to this company
       const hasAccess = userCompanies.some(company => company.id === cachedCompany.id);
       
       if (hasAccess) {
-        console.log('[useCompanies] Empresa selecionada restaurada do cache:', cachedCompany.nome);
+        console.log('[useCompanies] Restored selected company from cache:', cachedCompany.nome);
         setSelectedCompany(cachedCompany);
         return;
       } else {
-        console.log('[useCompanies] Usuário não tem acesso à empresa em cache, selecionando outra');
+        console.log('[useCompanies] User does not have access to cached company, selecting another');
         localStorage.removeItem('selectedCompany');
         localStorage.removeItem('selectedCompanyId');
       }
     }
     
-    // Se temos empresas de usuário mas nenhuma selecionada ainda
+    // If we have user companies but no selected company yet
     if (userCompanies.length > 0) {
       const storedCompanyId = getStoredCompanyId();
       
       if (storedCompanyId) {
-        // Tentar encontrar nas empresas de usuário já carregadas
+        // Try to find in already loaded user companies
         const storedCompany = userCompanies.find(company => company.id === storedCompanyId);
         
         if (storedCompany) {
           setSelectedCompany(storedCompany);
-          console.log('[useCompanies] Empresa selecionada restaurada do ID no localStorage:', storedCompany.nome);
+          console.log('[useCompanies] Restored selected company from localStorage ID:', storedCompany.nome);
         } else {
-          // Se não encontrada, tentar buscar
+          // If not found, try to fetch
           try {
             const company = await getCompanyById(storedCompanyId);
             if (company) {
-              // Verificar se o usuário tem acesso a esta empresa
+              // Check if user has access to this company
               const hasAccess = userCompanies.some(c => c.id === company.id);
               
               if (hasAccess) {
                 setSelectedCompany(company);
-                console.log('[useCompanies] Empresa selecionada restaurada do banco de dados:', company.nome);
+                console.log('[useCompanies] Restored selected company from database:', company.nome);
               } else {
                 localStorage.removeItem('selectedCompanyId');
-                // Selecionar a primeira empresa disponível
+                // Select first available company
                 setSelectedCompany(userCompanies[0]);
-                console.log('[useCompanies] Selecionando primeira empresa disponível após verificação de acesso:', userCompanies[0].nome);
+                console.log('[useCompanies] Selected first available company after access check:', userCompanies[0].nome);
               }
             } else {
-              // Se não encontrada, selecionar a primeira empresa
+              // If not found, select first company
               localStorage.removeItem('selectedCompanyId');
               setSelectedCompany(userCompanies[0]);
-              console.log('[useCompanies] Primeira empresa disponível selecionada após busca:', userCompanies[0].nome);
+              console.log('[useCompanies] Selected first available company after fetch:', userCompanies[0].nome);
             }
           } catch (error) {
-            console.error('[useCompanies] Falha ao restaurar empresa do localStorage', error);
+            console.error('[useCompanies] Failed to restore company from localStorage', error);
             localStorage.removeItem('selectedCompanyId');
             
-            // Se falhar e tivermos empresas de usuário, selecionar a primeira
+            // If failed and we have user companies, select first
             if (userCompanies.length > 0) {
               setSelectedCompany(userCompanies[0]);
-              console.log('[useCompanies] Primeira empresa disponível selecionada após falha:', userCompanies[0].nome);
+              console.log('[useCompanies] Selected first available company after failure:', userCompanies[0].nome);
             }
           }
         }
       } else if (userCompanies.length === 1) {
-        // Selecionar automaticamente a única empresa
+        // Automatically select the only company
         setSelectedCompany(userCompanies[0]);
-        console.log('[useCompanies] Única empresa disponível selecionada automaticamente:', userCompanies[0].nome);
+        console.log('[useCompanies] Auto-selected only available company:', userCompanies[0].nome);
       }
     }
   }, [
@@ -324,9 +325,9 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     skipLoadingInOnboarding
   ]);
 
-  // Restaurar empresa apenas quando necessário
+  // Restore company only when needed
   useEffect(() => {
-    // IMPORTANTE: Não restaurar empresa se estivermos em modo onboarding
+    // IMPORTANT: Don't restore company if we're in onboarding mode
     if (userCompanies.length > 0 && !selectedCompany && !skipLoadingInOnboarding) {
       restoreSelectedCompany();
     }

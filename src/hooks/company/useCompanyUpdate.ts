@@ -1,11 +1,11 @@
 
-import { useCallback } from "react";
-import { Company } from "@/types/company";
+import { useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
+import { Company } from '@/types/company';
 import { toast } from "sonner";
 
 interface UseCompanyUpdateProps {
-  setIsLoading: (isLoading: boolean) => void;
+  setIsLoading: (loading: boolean) => void;
   setCompanies: (companies: Company[] | ((prevCompanies: Company[]) => Company[])) => void;
   selectedCompany: Company | null;
   setSelectedCompany: (company: Company | null) => void;
@@ -13,65 +13,50 @@ interface UseCompanyUpdateProps {
 
 export const useCompanyUpdate = ({ 
   setIsLoading, 
-  setCompanies,
-  selectedCompany,
-  setSelectedCompany
+  setCompanies, 
+  selectedCompany, 
+  setSelectedCompany 
 }: UseCompanyUpdateProps) => {
-  /**
-   * Update an existing company
-   */
-  const updateCompany = useCallback(async (
-    companyId: string,
-    formData: Partial<Company>
-  ) => {
+  
+  const updateCompany = useCallback(async (companyId: string, data: Partial<Company>) => {
     setIsLoading(true);
-    
     try {
-      const { data, error } = await supabase
+      const { data: updatedCompany, error } = await supabase
         .from('empresas')
-        .update(formData)
+        .update(data)
         .eq('id', companyId)
         .select()
         .single();
+  
+      if (error) throw error;
+  
+      if (updatedCompany) {
+        // Update companies list
+        setCompanies(prevCompanies => prevCompanies.map(company => 
+          company.id === companyId ? { ...company, ...updatedCompany } : company
+        ));
         
-      if (error) {
-        console.error('Error updating company:', error);
-        toast.error("Erro ao atualizar empresa");
-        return null;
-      }
-      
-      const updatedCompany = data as Company;
-      
-      toast.success(`Empresa ${updatedCompany.nome} atualizada com sucesso`);
-      
-      // Update the list of companies
-      setCompanies((prevCompanies: Company[]) => 
-        prevCompanies.map(company => 
-          company.id === companyId ? updatedCompany : company
-        )
-      );
-      
-      // If this is the currently selected company, update it
-      if (selectedCompany && selectedCompany.id === companyId) {
-        setSelectedCompany(updatedCompany);
+        // Update selected company if it's the one being updated
+        if (selectedCompany?.id === companyId) {
+          const newSelectedCompany = { ...selectedCompany, ...updatedCompany };
+          setSelectedCompany(newSelectedCompany);
+          localStorage.setItem('selectedCompany', JSON.stringify(newSelectedCompany));
+        }
         
-        // Update in localStorage
-        localStorage.setItem('selectedCompany', JSON.stringify(updatedCompany));
-        
-        // Trigger company-updated event
-        window.dispatchEvent(new CustomEvent('company-updated', { 
+        // Dispatch event so other components can update
+        const event = new CustomEvent('company-updated', { 
           detail: { company: updatedCompany } 
-        }));
+        });
+        window.dispatchEvent(event);
+        
+        toast.success(`Empresa ${updatedCompany.nome} atualizada com sucesso!`);
       }
       
-      // Trigger refresh event
-      window.dispatchEvent(new Event('company-relation-changed'));
-      
-      return updatedCompany;
+      return updatedCompany as Company;
     } catch (error) {
-      console.error('Unexpected error updating company:', error);
-      toast.error("Erro inesperado ao atualizar empresa");
-      return null;
+      console.error('Error updating company:', error);
+      toast.error("Erro ao atualizar empresa");
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -79,4 +64,3 @@ export const useCompanyUpdate = ({
   
   return { updateCompany };
 };
-

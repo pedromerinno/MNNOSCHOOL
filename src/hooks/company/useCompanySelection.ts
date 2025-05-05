@@ -1,14 +1,13 @@
 
 import { useCallback } from 'react';
 import { Company } from '@/types/company';
-import { toast } from 'sonner';
 
 interface UseCompanySelectionProps {
   setSelectedCompany: (company: Company | null) => void;
 }
 
 export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionProps) => {
-  // Get the stored company ID from localStorage
+  // Buscar ID da empresa armazenado
   const getStoredCompanyId = useCallback((): string | null => {
     try {
       return localStorage.getItem('selectedCompanyId');
@@ -17,13 +16,13 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
       return null;
     }
   }, []);
-
-  // Get the stored company object from localStorage
+  
+  // Buscar empresa armazenada completa
   const getStoredCompany = useCallback((): Company | null => {
     try {
-      const companyData = localStorage.getItem('selectedCompany');
-      if (companyData) {
-        return JSON.parse(companyData);
+      const storedCompany = localStorage.getItem('selectedCompany');
+      if (storedCompany) {
+        return JSON.parse(storedCompany);
       }
       return null;
     } catch (error) {
@@ -31,30 +30,25 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
       return null;
     }
   }, []);
-
-  // Select a company and store it in localStorage
-  const selectCompany = useCallback((userId: string, company: Company | null) => {
+  
+  // Selecionar empresa
+  const selectCompany = useCallback((userId: string, company: Company) => {
+    setSelectedCompany(company);
+    
     try {
-      if (company) {
-        localStorage.setItem('selectedCompanyId', company.id);
-        localStorage.setItem('selectedCompany', JSON.stringify(company));
-        setSelectedCompany(company);
-        
-        // Dispatch custom event for other components to react
-        window.dispatchEvent(new CustomEvent('company-selected', { 
-          detail: { company }
-        }));
-      } else {
-        localStorage.removeItem('selectedCompanyId');
-        localStorage.removeItem('selectedCompany');
-        setSelectedCompany(null);
-      }
+      localStorage.setItem('selectedCompanyId', company.id);
+      localStorage.setItem('selectedCompany', JSON.stringify(company));
+      
+      // Dispatch custom event for other components to listen
+      const event = new CustomEvent('company-selected', { 
+        detail: { userId, company } 
+      });
+      window.dispatchEvent(event);
     } catch (error) {
-      console.error('Error selecting company:', error);
-      toast.error('Erro ao selecionar empresa. Por favor, tente novamente.');
+      console.error('Error saving selected company:', error);
     }
   }, [setSelectedCompany]);
-
+  
   return {
     selectCompany,
     getStoredCompanyId,

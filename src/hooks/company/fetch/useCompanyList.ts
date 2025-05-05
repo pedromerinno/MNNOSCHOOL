@@ -1,15 +1,16 @@
 
-import { useCallback } from "react";
+import { useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Company } from "@/types/company";
 import { UseCompanyFetchProps } from "../types/fetchTypes";
 
 export const useCompanyList = ({ 
   setIsLoading, 
-  setCompanies = () => {}, 
+  setCompanies, 
   setError 
 }: UseCompanyFetchProps) => {
-  const fetchCompanies = useCallback(async () => {
+  
+  const fetchCompanies = useCallback(async (): Promise<Company[]> => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -19,9 +20,9 @@ export const useCompanyList = ({
 
       if (error) throw error;
       
-      console.log("Successfully fetched", data?.length || 0, "companies");
-      setCompanies(data as Company[]);
-      return data as Company[];
+      const companies = data as Company[];
+      if (setCompanies) setCompanies(companies);
+      return companies;
     } catch (error) {
       console.error('Error fetching companies:', error);
       setError(error instanceof Error ? error : new Error('Failed to fetch companies'));
