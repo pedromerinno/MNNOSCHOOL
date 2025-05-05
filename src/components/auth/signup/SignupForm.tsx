@@ -46,11 +46,12 @@ export const SignupForm = () => {
       return;
     }
     
+    // Reset all state flags before starting the signup process
     setIsRegistering(true);
     setSignupError(null);
     setEmailAlreadyRegistered(false);
-    setNeedsEmailConfirmation(false); // Reset this flag to prevent automatic redirection
-    setIsSuccess(false); // Reset success state
+    setNeedsEmailConfirmation(false);
+    setIsSuccess(false);
     
     try {
       const metadataWithCompany = { 
@@ -62,11 +63,14 @@ export const SignupForm = () => {
       console.log("Iniciando cadastro com metadata:", metadataWithCompany);
       const result = await signUp(email, password, displayName, metadataWithCompany);
       
+      console.log("Resultado do cadastro:", result);
+      
       if (result.success) {
         if (result.needsEmailConfirmation) {
           console.log("Cadastro feito com sucesso! Email de confirmação enviado.");
           setNeedsEmailConfirmation(true);
           setIsSuccess(true);
+          setEmailAlreadyRegistered(false); // Garantir que esta flag esteja falsa
         } else {
           console.log("Cadastro realizado com sucesso e sessão iniciada!");
           // Navegação feita pelo useAuthMethods
@@ -74,18 +78,20 @@ export const SignupForm = () => {
       } else {
         console.error("Erro no cadastro:", result.error);
         setSignupError(result.error);
+        setIsSuccess(false);
+        setNeedsEmailConfirmation(false);
         
-        // Verificar se o e-mail já está cadastrado
-        if (result.emailAlreadyRegistered) {
+        // Verificar explicitamente se o e-mail já está cadastrado
+        if (result.emailAlreadyRegistered || (result.error?.code === 'email_already_registered')) {
+          console.log("Email já registrado detectado!");
           setEmailAlreadyRegistered(true);
-          setIsSuccess(false); // Ensure we don't show success screen
-          setNeedsEmailConfirmation(false); // Don't need email confirmation for existing accounts
           toast.error("Este e-mail já está cadastrado. Por favor, faça login.");
         }
       }
     } catch (error) {
       console.error("Erro no cadastro:", error);
       setIsSuccess(false);
+      setNeedsEmailConfirmation(false);
     } finally {
       setIsRegistering(false);
     }
@@ -98,14 +104,17 @@ export const SignupForm = () => {
     setEmailResent(false);
     try {
       const result = await resendConfirmationEmail(email);
+      console.log("Resultado do reenvio:", result);
+      
       if (result.success) {
         setEmailResent(true);
         setTimeout(() => {
           setEmailResent(false);
-        }, 5000); // Reset after 5 seconds
+        }, 5000);
       } else if (result.error?.code === 'email_already_registered') {
         setEmailAlreadyRegistered(true);
-        setNeedsEmailConfirmation(false); // Don't need email confirmation for existing accounts
+        setNeedsEmailConfirmation(false);
+        setIsSuccess(false); // Garantir que a tela de sucesso não seja mostrada
         toast.error("Este e-mail já está cadastrado. Por favor, faça login.");
       }
     } finally {
@@ -113,11 +122,17 @@ export const SignupForm = () => {
     }
   };
 
-  // Verificação explícita: apenas mostrar a tela de confirmação se:
-  // 1. O cadastro foi bem-sucedido
-  // 2. Requer confirmação de e-mail
-  // 3. O e-mail NÃO está já registrado
+  // Lógica de renderização condicional
+  console.log("Estado atual:", { 
+    isSuccess, 
+    needsEmailConfirmation, 
+    emailAlreadyRegistered,
+    signupError
+  });
+
+  // APENAS mostrar a tela de confirmação se todas estas condições forem verdadeiras
   if (isSuccess && needsEmailConfirmation && !emailAlreadyRegistered) {
+    console.log("Mostrando tela de confirmação de email");
     return (
       <EmailConfirmationView
         email={email}
@@ -130,6 +145,7 @@ export const SignupForm = () => {
   }
 
   // Formulário principal de registro
+  console.log("Mostrando formulário de cadastro");
   return (
     <div className="w-full max-w-sm mx-auto">
       <div className="text-center mb-8">

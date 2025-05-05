@@ -61,6 +61,28 @@ export const useAuthMethods = ({
   ) => {
     try {
       setLoading(true);
+      
+      // Verificar primeiro se o usuário já existe antes de tentar criar
+      const { data: existingUser } = await supabase.auth.signInWithPassword({
+        email,
+        password: "checkonly" // Senha inválida para checar apenas existência
+      });
+      
+      // Se há uma resposta sem erro, significa que o usuário existe
+      if (existingUser.user) {
+        console.log("Usuário já existe, retornando erro específico");
+        return {
+          success: false,
+          needsEmailConfirmation: false,
+          emailAlreadyRegistered: true,
+          error: {
+            message: 'E-mail já cadastrado. Tente fazer login ou recuperar sua senha.',
+            code: 'email_already_registered'
+          }
+        };
+      }
+      
+      // Continua com o cadastro normal
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -75,6 +97,7 @@ export const useAuthMethods = ({
       if (error) {
         // Handle specific error types
         if (error.message.includes('User already registered')) {
+          console.log("Erro de usuário já registrado detectado");
           return {
             success: false,
             needsEmailConfirmation: false,
@@ -82,7 +105,7 @@ export const useAuthMethods = ({
               message: 'E-mail já cadastrado. Tente fazer login ou recuperar sua senha.',
               code: 'email_already_registered'
             },
-            emailAlreadyRegistered: true // Flag to indicate this specific condition
+            emailAlreadyRegistered: true
           };
         }
         throw error;
@@ -95,7 +118,8 @@ export const useAuthMethods = ({
           success: true,
           needsEmailConfirmation: true,
           error: null,
-          user: data.user
+          user: data.user,
+          emailAlreadyRegistered: false
         };
       }
 
@@ -126,13 +150,15 @@ export const useAuthMethods = ({
           needsEmailConfirmation: false,
           error: null,
           user: data.user,
-          session: data.session
+          session: data.session,
+          emailAlreadyRegistered: false
         };
       }
 
       return {
         success: false,
         needsEmailConfirmation: false,
+        emailAlreadyRegistered: false,
         error: {
           message: 'Erro desconhecido no cadastro',
           code: 'unknown_error'
@@ -140,9 +166,24 @@ export const useAuthMethods = ({
       };
     } catch (error: any) {
       console.error('Erro no cadastro:', error);
+      
+      // Verificar explicitamente mensagens de erro sobre email já cadastrado
+      if (error.message && error.message.includes('User already registered')) {
+        return {
+          success: false,
+          needsEmailConfirmation: false,
+          emailAlreadyRegistered: true,
+          error: {
+            message: 'E-mail já cadastrado. Tente fazer login ou recuperar sua senha.',
+            code: 'email_already_registered'
+          }
+        };
+      }
+      
       return {
         success: false,
         needsEmailConfirmation: false,
+        emailAlreadyRegistered: false,
         error: {
           message: error.message || 'Falha no cadastro',
           code: 'signup_error'
@@ -156,6 +197,24 @@ export const useAuthMethods = ({
   const resendConfirmationEmail = useCallback(async (email: string) => {
     try {
       setLoading(true);
+      
+      // Verificar primeiro se o usuário já tem conta ativa
+      const { data: checkUser } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle();
+      
+      if (checkUser) {
+        return { 
+          success: false, 
+          error: {
+            message: 'E-mail já cadastrado. Por favor, tente fazer login.',
+            code: 'email_already_registered'
+          }
+        };
+      }
+      
       const { error } = await supabase.auth.resend({
         type: 'signup',
         email: email
