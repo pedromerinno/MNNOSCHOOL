@@ -159,7 +159,7 @@ export const useSignUp = ({
     } finally {
       setLoading(false);
     }
-  }, [setLoading, navigate, fetchUserProfile]);
+  }, [setLoading, navigate, fetchUserProfile, checkEmailExists]);
 
   return { signUp };
 };
