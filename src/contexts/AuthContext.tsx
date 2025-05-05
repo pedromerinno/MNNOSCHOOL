@@ -14,9 +14,10 @@ interface AuthContextType {
   refreshError: Error | null;
   signInWithPassword: (email: string, password: string) => Promise<{ data: any, error: Error | null }>;
   signOut: () => Promise<void>;
-  signUp: (email: string, password: string, displayName: string, metadata?: { interests?: string[] }) => Promise<void>;
+  signUp: (email: string, password: string, displayName: string, metadata?: { interests?: string[] }) => Promise<any>;
   updateUserProfile: (userData: Partial<UserProfile>) => Promise<void>;
   updateUserData: (userData: Partial<UserProfile>) => Promise<void>;
+  resendConfirmationEmail: (email: string) => Promise<{ success: boolean, error: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -42,7 +43,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { 
     signInWithPassword, 
     signOut, 
-    signUp 
+    signUp,
+    resendConfirmationEmail 
   } = useAuthMethods({ 
     fetchUserProfile, 
     setLoading: (isLoading) => setLoading(isLoading)
@@ -71,7 +73,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signOut,
     signUp,
     updateUserProfile,
-    updateUserData: handleUpdateUserData
+    updateUserData: handleUpdateUserData,
+    resendConfirmationEmail
   };
 
   return (

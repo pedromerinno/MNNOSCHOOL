@@ -72,15 +72,40 @@ export const useAuthMethods = ({
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Handle specific error types
+        if (error.message.includes('User already registered')) {
+          return {
+            success: false,
+            needsEmailConfirmation: false,
+            error: {
+              message: 'E-mail já cadastrado. Tente fazer login ou recuperar sua senha.',
+              code: 'email_already_registered'
+            }
+          };
+        }
+        throw error;
+      }
 
-      if (data.user) {
+      // User signed up but needs email confirmation (no session available yet)
+      if (data.user && !data.session) {
+        console.log('Usuário cadastrado, esperando confirmação de e-mail');
+        return {
+          success: true,
+          needsEmailConfirmation: true,
+          error: null,
+          user: data.user
+        };
+      }
+
+      // User signed up and session available (email confirmation not required)
+      if (data.user && data.session) {
         const { error: profileError } = await supabase
           .from('profiles')
           .update({ 
             display_name: displayName,
             interesses: metadata?.interests || [],
-            primeiro_login: true // Garantir que o primeiro_login esteja definido como true
+            primeiro_login: true
           })
           .eq('id', data.user.id);
           
@@ -94,18 +119,67 @@ export const useAuthMethods = ({
         // Redirecionar explicitamente para a tela de onboarding após cadastro
         toast.success('Cadastro realizado com sucesso! Redirecionando para configuração inicial...');
         navigate('/onboarding', { replace: true });
+
+        return {
+          success: true,
+          needsEmailConfirmation: false,
+          error: null,
+          user: data.user,
+          session: data.session
+        };
       }
+
+      return {
+        success: false,
+        needsEmailConfirmation: false,
+        error: {
+          message: 'Erro desconhecido no cadastro',
+          code: 'unknown_error'
+        }
+      };
     } catch (error: any) {
       console.error('Erro no cadastro:', error);
-      toast.error(error.error_description || error.message || 'Falha no cadastro');
+      return {
+        success: false,
+        needsEmailConfirmation: false,
+        error: {
+          message: error.message || 'Falha no cadastro',
+          code: 'signup_error'
+        }
+      };
     } finally {
       setLoading(false);
     }
   }, [setLoading, navigate, fetchUserProfile]);
 
+  const resendConfirmationEmail = useCallback(async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email
+      });
+      
+      if (error) throw error;
+      
+      toast.success('E-mail de confirmação reenviado com sucesso!');
+      return { success: true, error: null };
+    } catch (error: any) {
+      console.error('Erro ao reenviar e-mail de confirmação:', error);
+      toast.error('Erro ao reenviar e-mail: ' + error.message);
+      return { 
+        success: false, 
+        error: {
+          message: error.message,
+          code: 'resend_email_error'
+        }
+      };
+    }
+  }, []);
+
   return {
     signInWithPassword,
     signOut,
-    signUp
+    signUp,
+    resendConfirmationEmail
   };
 };

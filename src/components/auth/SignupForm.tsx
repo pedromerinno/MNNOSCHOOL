@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, Mail } from "lucide-react";
+import { Loader2, Mail, RefreshCw } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export const SignupForm = () => {
   const [email, setEmail] = useState("");
@@ -12,8 +13,11 @@ export const SignupForm = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const { signUp } = useAuth();
+  const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false);
+  const [signupError, setSignupError] = useState<{message: string, code: string} | null>(null);
+  const { signUp, resendConfirmationEmail } = useAuth();
 
   const validatePasswords = () => {
     if (password !== confirmPassword) {
@@ -38,6 +42,7 @@ export const SignupForm = () => {
     }
     
     setIsRegistering(true);
+    setSignupError(null);
     
     try {
       const metadataWithCompany = { 
@@ -47,9 +52,21 @@ export const SignupForm = () => {
       const displayName = email.split('@')[0];
       
       console.log("Iniciando cadastro com metadata:", metadataWithCompany);
-      await signUp(email, password, displayName, metadataWithCompany);
-      console.log("Cadastro realizado com sucesso!");
-      setIsSuccess(true);
+      const result = await signUp(email, password, displayName, metadataWithCompany);
+      
+      if (result.success) {
+        if (result.needsEmailConfirmation) {
+          console.log("Cadastro feito com sucesso! Email de confirmação enviado.");
+          setNeedsEmailConfirmation(true);
+          setIsSuccess(true);
+        } else {
+          console.log("Cadastro realizado com sucesso e sessão iniciada!");
+          // Navegação feita pelo useAuthMethods
+        }
+      } else {
+        console.error("Erro no cadastro:", result.error);
+        setSignupError(result.error);
+      }
     } catch (error) {
       console.error("Erro no cadastro:", error);
     } finally {
@@ -57,7 +74,18 @@ export const SignupForm = () => {
     }
   };
 
-  if (isSuccess) {
+  const handleResendEmail = async () => {
+    if (!email) return;
+    
+    setIsResending(true);
+    try {
+      await resendConfirmationEmail(email);
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  if (isSuccess && needsEmailConfirmation) {
     return (
       <div className="w-full max-w-sm mx-auto text-center">
         <div className="flex justify-center mb-6">
@@ -75,6 +103,21 @@ export const SignupForm = () => {
             Se você não encontrar o e-mail na caixa de entrada, verifique também sua pasta de spam ou lixo eletrônico.
           </p>
         </div>
+        
+        <Button 
+          onClick={handleResendEmail}
+          disabled={isResending}
+          variant="outline"
+          className="mb-6 flex items-center gap-2"
+        >
+          {isResending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4" />
+          )}
+          Reenviar e-mail de confirmação
+        </Button>
+        
         <p className="text-gray-600">
           Já confirmou seu e-mail?{" "}
           <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
@@ -96,6 +139,12 @@ export const SignupForm = () => {
           </Link>
         </p>
       </div>
+      
+      {signupError && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertDescription>{signupError.message}</AlertDescription>
+        </Alert>
+      )}
       
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
