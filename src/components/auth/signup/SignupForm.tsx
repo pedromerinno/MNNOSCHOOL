@@ -49,6 +49,8 @@ export const SignupForm = () => {
     setIsRegistering(true);
     setSignupError(null);
     setEmailAlreadyRegistered(false);
+    setNeedsEmailConfirmation(false); // Reset this flag to prevent automatic redirection
+    setIsSuccess(false); // Reset success state
     
     try {
       const metadataWithCompany = { 
@@ -76,12 +78,14 @@ export const SignupForm = () => {
         // Verificar se o e-mail já está cadastrado
         if (result.emailAlreadyRegistered) {
           setEmailAlreadyRegistered(true);
-          // Não redirecionar para a tela de confirmação de e-mail se o e-mail já estiver cadastrado
+          setIsSuccess(false); // Ensure we don't show success screen
+          setNeedsEmailConfirmation(false); // Don't need email confirmation for existing accounts
           toast.error("Este e-mail já está cadastrado. Por favor, faça login.");
         }
       }
     } catch (error) {
       console.error("Erro no cadastro:", error);
+      setIsSuccess(false);
     } finally {
       setIsRegistering(false);
     }
@@ -101,6 +105,7 @@ export const SignupForm = () => {
         }, 5000); // Reset after 5 seconds
       } else if (result.error?.code === 'email_already_registered') {
         setEmailAlreadyRegistered(true);
+        setNeedsEmailConfirmation(false); // Don't need email confirmation for existing accounts
         toast.error("Este e-mail já está cadastrado. Por favor, faça login.");
       }
     } finally {
@@ -108,8 +113,10 @@ export const SignupForm = () => {
     }
   };
 
-  // Se o cadastro foi bem-sucedido, requer confirmação de e-mail E o e-mail NÃO está já registrado
-  // então mostrar a tela de confirmação de e-mail
+  // Verificação explícita: apenas mostrar a tela de confirmação se:
+  // 1. O cadastro foi bem-sucedido
+  // 2. Requer confirmação de e-mail
+  // 3. O e-mail NÃO está já registrado
   if (isSuccess && needsEmailConfirmation && !emailAlreadyRegistered) {
     return (
       <EmailConfirmationView

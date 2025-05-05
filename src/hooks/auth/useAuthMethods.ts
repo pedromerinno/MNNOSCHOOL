@@ -1,3 +1,4 @@
+
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -160,7 +161,19 @@ export const useAuthMethods = ({
         email: email
       });
       
-      if (error) throw error;
+      if (error) {
+        // Check specifically for already registered users
+        if (error.message.includes('User already registered')) {
+          return { 
+            success: false, 
+            error: {
+              message: 'E-mail já cadastrado. Por favor, tente fazer login.',
+              code: 'email_already_registered'
+            }
+          };
+        }
+        throw error;
+      }
       
       toast.success('E-mail de confirmação reenviado com sucesso!');
       return { success: true, error: null };
@@ -169,12 +182,15 @@ export const useAuthMethods = ({
       
       // Melhorar as mensagens de erro com base no tipo de erro
       let errorMessage = 'Erro ao reenviar e-mail.';
+      let errorCode = 'resend_email_error';
+      
       if (error.message.includes('too many requests')) {
         errorMessage = 'Muitas tentativas. Tente novamente em alguns minutos.';
       } else if (error.message.includes('Invalid')) {
         errorMessage = 'Endereço de e-mail inválido ou não encontrado.';
       } else if (error.message.includes('User already registered')) {
         errorMessage = 'E-mail já cadastrado. Por favor, tente fazer login.';
+        errorCode = 'email_already_registered';
       }
       
       toast.error(errorMessage);
@@ -182,7 +198,7 @@ export const useAuthMethods = ({
         success: false, 
         error: {
           message: errorMessage,
-          code: 'resend_email_error'
+          code: errorCode
         }
       };
     } finally {
