@@ -37,11 +37,11 @@ export const useCompanyRequest = () => {
     pendingRequestsRef.current = 0;
   }, []);
   
-  // Add a debounced request function
-  const debouncedRequest = useCallback((callback: () => Promise<any> | void, delay: number = 300) => {
+  // Add a debounced request function that properly types the arguments
+  const debouncedRequest = useCallback(<T extends any[]>(callback: (...args: T) => Promise<any> | void, delay: number = 300) => {
     let timeoutId: ReturnType<typeof setTimeout>;
     
-    return (...args: any[]) => {
+    return (...args: T) => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
         callback(...args);
