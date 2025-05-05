@@ -56,24 +56,19 @@ export const useAuthMethods = ({
   // Função para verificar se um e-mail já está cadastrado
   const checkEmailExists = useCallback(async (email: string): Promise<boolean> => {
     try {
-      // Verifica primeiro na tabela de autenticação
-      const { data, error } = await supabase.auth.admin.listUsers({
-        filter: {
-          email: email
-        }
+      // Verificar usando o método signInWithPassword com uma senha inválida
+      // para ver se o usuário existe (retornará um erro específico)
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password: "check_only_not_a_real_password"
       });
       
-      if (error) {
-        console.error('Erro ao verificar e-mail:', error);
-        return false;
-      }
-      
-      // Se encontrar um usuário com este e-mail, retorna true
-      if (data && data.users && data.users.length > 0) {
+      // Se o erro mencionar "Invalid login credentials", o e-mail provavelmente existe
+      if (error && error.message.includes('Invalid login credentials')) {
         return true;
       }
       
-      // Verifica também na tabela de perfis
+      // Verificar na tabela de perfis como backup
       const { data: profileData } = await supabase
         .from('profiles')
         .select('id')
