@@ -43,28 +43,27 @@ export const NotificationsWidget = memo(() => {
   }, []);
 
   useEffect(() => {
+    // Initial fetch - only once when component mounts and company is selected
     if (selectedCompany?.id && !initialFetchDoneRef.current) {
-      console.log("NotificationsWidget: Primeira busca de avisos");
       initialFetchDoneRef.current = true;
       
-      if (fetchTimeoutRef.current) {
-        clearTimeout(fetchTimeoutRef.current);
+      // Use setTimeout to avoid triggering fetch on every render
+      if (fetchTimeoutRef.current === null) {
+        fetchTimeoutRef.current = window.setTimeout(() => {
+          try {
+            fetchNotices(selectedCompany.id, false).catch(err => {
+              console.error("Error fetching notices:", err);
+            });
+          } catch (err) {
+            console.error("Exception in fetchNotices:", err);
+          }
+          fetchTimeoutRef.current = null;
+        }, 500);
       }
-      
-      fetchTimeoutRef.current = window.setTimeout(() => {
-        try {
-          fetchNotices(selectedCompany.id, false).catch(err => {
-            console.error("NotificationsWidget: Error fetching notices:", err);
-          });
-        } catch (err) {
-          console.error("NotificationsWidget: Exception in fetchNotices:", err);
-        }
-        fetchTimeoutRef.current = null;
-      }, 500);
     }
     
     return () => {
-      if (fetchTimeoutRef.current) {
+      if (fetchTimeoutRef.current !== null) {
         clearTimeout(fetchTimeoutRef.current);
         fetchTimeoutRef.current = null;
       }
@@ -73,14 +72,12 @@ export const NotificationsWidget = memo(() => {
 
   const handleDialogOpenChange = (open: boolean) => {
     setDialogOpen(open);
-    if (!open && initialFetchDoneRef.current) {
-      console.log("Notice dialog closed, refreshing notices");
-      if (fetchTimeoutRef.current) {
-        clearTimeout(fetchTimeoutRef.current);
-      }
-      
-      fetchTimeoutRef.current = window.setTimeout(() => {
-        if (selectedCompany?.id) {
+    
+    // Only refresh when dialog closes and we've done initial fetch
+    if (!open && initialFetchDoneRef.current && selectedCompany?.id) {
+      // Refresh with a slight delay to allow server operations to complete
+      if (fetchTimeoutRef.current === null) {
+        fetchTimeoutRef.current = window.setTimeout(() => {
           try {
             fetchNotices(selectedCompany.id, true).catch(err => {
               console.error("Error refreshing notices after dialog close:", err);
@@ -88,15 +85,15 @@ export const NotificationsWidget = memo(() => {
           } catch (err) {
             console.error("Exception in fetchNotices after dialog:", err);
           }
-        }
-        fetchTimeoutRef.current = null;
-      }, 500);
+          fetchTimeoutRef.current = null;
+        }, 500);
+      }
     }
   };
 
   const handleAllNoticesDialogChange = (open: boolean) => {
     setNoticesDialogOpen(open);
-    // Removido o reload automático ao fechar o diálogo para evitar requisições extras
+    // Removed auto-refresh on dialog close to prevent excessive requests
   };
 
   const handleRefresh = async () => {
@@ -241,3 +238,5 @@ export const NotificationsWidget = memo(() => {
     </Card>
   );
 });
+
+NotificationsWidget.displayName = 'NotificationsWidget';

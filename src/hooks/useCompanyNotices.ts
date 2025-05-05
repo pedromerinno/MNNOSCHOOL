@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -34,6 +35,7 @@ export function useCompanyNotices() {
   const fetchingRef = useRef(false);
   const cleanupInProgressRef = useRef(false);
   const lastCleanupTimeRef = useRef(0);
+  const noticesInstanceIdRef = useRef<string>(`notices-${Math.random().toString(36).substring(2, 9)}`);
 
   const cleanupInvalidRelations = useCallback(async (companyId: string, noticeIds: string[]) => {
     if (cleanupInProgressRef.current) return;
@@ -79,9 +81,9 @@ export function useCompanyNotices() {
     const cachedData = getCache({ key: cacheKey });
     const hasLocalData = !!cachedData && Array.isArray(cachedData) && cachedData.length > 0;
     
-    if (!shouldMakeRequest(forceRefresh, hasLocalData) || fetchingRef.current) {
+    if (!shouldMakeRequest(forceRefresh, hasLocalData, noticesInstanceIdRef.current, cacheKey) || fetchingRef.current) {
       if (hasLocalData) {
-        console.log(`Usando dados em cache para avisos da empresa ${targetCompanyId}`);
+        console.log(`[${noticesInstanceIdRef.current}] Using cached data for notices of company ${targetCompanyId}`);
         setNotices(cachedData);
         if (cachedData.length > 0) {
           setCurrentNotice(cachedData[0]);
@@ -96,7 +98,7 @@ export function useCompanyNotices() {
       setIsLoading(true);
       setError(null);
       fetchingRef.current = true;
-      startRequest();
+      startRequest(cacheKey);
       
       console.log(`Fetching notices for company: ${targetCompanyId}`);
       
@@ -498,11 +500,16 @@ export function useCompanyNotices() {
     if (selectedCompany?.id) {
       console.log(`Selected company changed to: ${selectedCompany.id}, will fetch notices`);
       
-      const delayedFetch = debouncedRequest(() => {
-        fetchNotices(selectedCompany.id);
-      }, 500);
+      // Use instance-specific key for debouncing to avoid conflicts
+      const debounceFn = debouncedRequest(
+        () => {
+          fetchNotices(selectedCompany.id);
+        }, 
+        800, 
+        `notices-fetch-${selectedCompany.id}`
+      );
       
-      delayedFetch();
+      debounceFn();
     } else {
       setNotices([]);
       setCurrentNotice(null);
