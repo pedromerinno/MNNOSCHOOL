@@ -1,80 +1,62 @@
 
-import { useRef, useCallback, useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
+import { requestService } from '@/services/RequestService';
 
 export const useCompanyRequest = () => {
-  const pendingRequestsRef = useRef<number>(0);
-  const lastRequestTimeRef = useRef<number>(0);
-  const debounceTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-  const throttleTimestampsRef = useRef<Record<string, number>>({});
-  
-  const shouldMakeRequest = useCallback((forceRefresh: boolean, hasCachedData: boolean, requestingComponent?: string, cacheKey?: string): boolean => {
-    if (forceRefresh) return true;
-    
-    if (pendingRequestsRef.current > 0) {
-      console.log(`[useCompanyRequest${requestingComponent ? '-' + requestingComponent : ''}] Request already in progress, skipping`);
-      return false;
-    }
-    
-    const now = Date.now();
-    const THROTTLE_MS = 5000; // 5 seconds
-    
-    // If we have a cache key, use more specific throttling
-    if (cacheKey && throttleTimestampsRef.current[cacheKey]) {
-      const timeSinceLastRequest = now - throttleTimestampsRef.current[cacheKey];
-      if (hasCachedData && timeSinceLastRequest < THROTTLE_MS) {
-        console.log(`[useCompanyRequest${requestingComponent ? '-' + requestingComponent : ''}] Request throttled for key ${cacheKey}, using cached data`);
-        return false;
-      }
-    } else if (hasCachedData && lastRequestTimeRef.current > 0 && now - lastRequestTimeRef.current < THROTTLE_MS) {
-      console.log(`[useCompanyRequest${requestingComponent ? '-' + requestingComponent : ''}] Request throttled, using cached data`);
-      return false;
-    }
-    
-    return true;
+  /**
+   * Verifica se uma requisição deve ser executada
+   */
+  const shouldMakeRequest = useCallback((
+    forceRefresh: boolean,
+    hasCachedData: boolean,
+    requestingComponent?: string,
+    cacheKey?: string
+  ): boolean => {
+    return requestService.shouldMakeRequest({
+      requestId: cacheKey || `company-request-${requestingComponent || 'default'}`,
+      force: forceRefresh,
+      throttleMs: 5000 // 5 segundos
+    });
   }, []);
   
+  /**
+   * Marca o início de uma requisição
+   */
   const startRequest = useCallback((cacheKey?: string) => {
-    pendingRequestsRef.current += 1;
-    lastRequestTimeRef.current = Date.now();
-    
-    if (cacheKey) {
-      throttleTimestampsRef.current[cacheKey] = Date.now();
-    }
+    const requestId = cacheKey || 'company-request-default';
+    requestService.startRequest(requestId);
   }, []);
   
-  const completeRequest = useCallback((wasSuccessful: boolean = true) => {
-    pendingRequestsRef.current = Math.max(0, pendingRequestsRef.current - 1);
+  /**
+   * Marca o fim de uma requisição
+   */
+  const completeRequest = useCallback((_wasSuccessful: boolean = true) => {
+    // Parâmetro _wasSuccessful mantido para compatibilidade, mas não é utilizado
+    // A marcação é feita por ID, não por status
   }, []);
   
+  /**
+   * Reseta o estado de todas as requisições
+   */
   const resetRequestState = useCallback(() => {
-    pendingRequestsRef.current = 0;
+    requestService.resetAllRequests();
   }, []);
   
-  // Add a debounced request function that properly types the arguments
-  const debouncedRequest = useCallback(<T extends any[]>(callback: (...args: T) => Promise<any> | void, delay: number = 300, key?: string) => {
-    const timerKey = key || 'default';
-    
-    return (...args: T) => {
-      // Clear any existing timers for this key
-      if (debounceTimersRef.current[timerKey]) {
-        clearTimeout(debounceTimersRef.current[timerKey]);
-      }
-      
-      debounceTimersRef.current[timerKey] = setTimeout(() => {
-        delete debounceTimersRef.current[timerKey];
-        callback(...args);
-      }, delay);
-    };
+  /**
+   * Cria uma função com debounce
+   */
+  const debouncedRequest = useCallback(<T extends any[]>(
+    callback: (...args: T) => Promise<any> | void,
+    delay: number = 300,
+    key?: string
+  ) => {
+    return requestService.debounce(callback, delay, key);
   }, []);
   
-  // Clean up any pending timeouts on unmount
+  // Limpa recursos ao desmontar o componente
   useEffect(() => {
     return () => {
-      // Clean up any pending debounce timers
-      Object.values(debounceTimersRef.current).forEach(timer => {
-        clearTimeout(timer);
-      });
-      debounceTimersRef.current = {};
+      requestService.clearAllDebouncers();
     };
   }, []);
   
@@ -83,7 +65,7 @@ export const useCompanyRequest = () => {
     startRequest,
     completeRequest,
     resetRequestState,
-    pendingRequestsRef,
+    pendingRequestsRef: { current: 0 }, // Mantido para compatibilidade
     debouncedRequest
   };
 };
