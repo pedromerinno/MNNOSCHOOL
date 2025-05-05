@@ -154,6 +154,7 @@ export const useAuthMethods = ({
 
   const resendConfirmationEmail = useCallback(async (email: string) => {
     try {
+      setLoading(true);
       const { error } = await supabase.auth.resend({
         type: 'signup',
         email: email
@@ -165,16 +166,27 @@ export const useAuthMethods = ({
       return { success: true, error: null };
     } catch (error: any) {
       console.error('Erro ao reenviar e-mail de confirmação:', error);
-      toast.error('Erro ao reenviar e-mail: ' + error.message);
+      
+      // Melhorar as mensagens de erro com base no tipo de erro
+      let errorMessage = 'Erro ao reenviar e-mail.';
+      if (error.message.includes('too many requests')) {
+        errorMessage = 'Muitas tentativas. Tente novamente em alguns minutos.';
+      } else if (error.message.includes('Invalid')) {
+        errorMessage = 'Endereço de e-mail inválido ou não encontrado.';
+      }
+      
+      toast.error(errorMessage);
       return { 
         success: false, 
         error: {
-          message: error.message,
+          message: errorMessage,
           code: 'resend_email_error'
         }
       };
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  }, [setLoading]);
 
   return {
     signInWithPassword,

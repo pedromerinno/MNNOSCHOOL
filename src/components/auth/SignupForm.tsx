@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, Mail, RefreshCw } from "lucide-react";
+import { Loader2, Mail, RefreshCw, CheckCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export const SignupForm = () => {
@@ -17,6 +17,7 @@ export const SignupForm = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false);
   const [signupError, setSignupError] = useState<{message: string, code: string} | null>(null);
+  const [emailResent, setEmailResent] = useState(false);
   const { signUp, resendConfirmationEmail } = useAuth();
 
   const validatePasswords = () => {
@@ -78,8 +79,15 @@ export const SignupForm = () => {
     if (!email) return;
     
     setIsResending(true);
+    setEmailResent(false);
     try {
-      await resendConfirmationEmail(email);
+      const result = await resendConfirmationEmail(email);
+      if (result.success) {
+        setEmailResent(true);
+        setTimeout(() => {
+          setEmailResent(false);
+        }, 5000); // Reset after 5 seconds
+      }
     } finally {
       setIsResending(false);
     }
@@ -104,19 +112,31 @@ export const SignupForm = () => {
           </p>
         </div>
         
-        <Button 
-          onClick={handleResendEmail}
-          disabled={isResending}
-          variant="outline"
-          className="mb-6 flex items-center gap-2"
-        >
-          {isResending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <RefreshCw className="h-4 w-4" />
-          )}
-          Reenviar e-mail de confirmação
-        </Button>
+        {emailResent ? (
+          <div className="mb-6 p-3 bg-green-50 border border-green-100 rounded-md flex items-center gap-2 justify-center text-green-700">
+            <CheckCircle className="h-5 w-5" />
+            <span>E-mail de confirmação reenviado com sucesso!</span>
+          </div>
+        ) : (
+          <Button 
+            onClick={handleResendEmail}
+            disabled={isResending}
+            variant="outline"
+            className="mb-6 flex items-center gap-2 w-full justify-center"
+          >
+            {isResending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Enviando...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-4 w-4" />
+                Reenviar e-mail de confirmação
+              </>
+            )}
+          </Button>
+        )}
         
         <p className="text-gray-600">
           Já confirmou seu e-mail?{" "}
