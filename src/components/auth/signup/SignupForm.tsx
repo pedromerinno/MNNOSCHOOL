@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 import { SignupErrorAlerts } from "./SignupErrorAlerts";
 import { EmailConfirmationView } from "./EmailConfirmationView";
 import { SignupFormFields } from "./SignupFormFields";
+import { toast } from "sonner";
 
 export const SignupForm = () => {
   const [email, setEmail] = useState("");
@@ -72,9 +73,11 @@ export const SignupForm = () => {
         console.error("Erro no cadastro:", result.error);
         setSignupError(result.error);
         
-        // Check if email is already registered
+        // Verificar se o e-mail já está cadastrado
         if (result.emailAlreadyRegistered) {
           setEmailAlreadyRegistered(true);
+          // Não redirecionar para a tela de confirmação de e-mail se o e-mail já estiver cadastrado
+          toast.error("Este e-mail já está cadastrado. Por favor, faça login.");
         }
       }
     } catch (error) {
@@ -96,14 +99,18 @@ export const SignupForm = () => {
         setTimeout(() => {
           setEmailResent(false);
         }, 5000); // Reset after 5 seconds
+      } else if (result.error?.code === 'email_already_registered') {
+        setEmailAlreadyRegistered(true);
+        toast.error("Este e-mail já está cadastrado. Por favor, faça login.");
       }
     } finally {
       setIsResending(false);
     }
   };
 
-  // If registration succeeded and needs email confirmation, show the email confirmation view
-  if (isSuccess && needsEmailConfirmation) {
+  // Se o cadastro foi bem-sucedido, requer confirmação de e-mail E o e-mail NÃO está já registrado
+  // então mostrar a tela de confirmação de e-mail
+  if (isSuccess && needsEmailConfirmation && !emailAlreadyRegistered) {
     return (
       <EmailConfirmationView
         email={email}
@@ -115,7 +122,7 @@ export const SignupForm = () => {
     );
   }
 
-  // Main registration form
+  // Formulário principal de registro
   return (
     <div className="w-full max-w-sm mx-auto">
       <div className="text-center mb-8">
