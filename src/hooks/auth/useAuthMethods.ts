@@ -53,6 +53,41 @@ export const useAuthMethods = ({
     }
   }, [navigate, setLoading]);
 
+  // Função para verificar se um e-mail já está cadastrado
+  const checkEmailExists = useCallback(async (email: string): Promise<boolean> => {
+    try {
+      // Verifica primeiro na tabela de autenticação
+      const { data, error } = await supabase.auth.admin.listUsers({
+        filter: {
+          email: email
+        }
+      });
+      
+      if (error) {
+        console.error('Erro ao verificar e-mail:', error);
+        return false;
+      }
+      
+      // Se encontrar um usuário com este e-mail, retorna true
+      if (data && data.users && data.users.length > 0) {
+        return true;
+      }
+      
+      // Verifica também na tabela de perfis
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle();
+        
+      return !!profileData;  // Retorna true se encontrar um perfil com este e-mail
+      
+    } catch (error) {
+      console.error('Erro ao verificar e-mail:', error);
+      return false;
+    }
+  }, []);
+
   const signUp = useCallback(async (
     email: string, 
     password: string, 
@@ -62,7 +97,9 @@ export const useAuthMethods = ({
     try {
       setLoading(true);
       
-      // Verificar primeiro se o usuário já existe antes de tentar criar
+      console.log("Verificando se o e-mail já existe antes de tentar criar");
+      
+      // Primeiro tentamos ver se conseguimos encontrar o e-mail já cadastrado diretamente
       const { data: existingUser } = await supabase.auth.signInWithPassword({
         email,
         password: "checkonly" // Senha inválida para checar apenas existência
@@ -82,7 +119,8 @@ export const useAuthMethods = ({
         };
       }
       
-      // Continua com o cadastro normal
+      // Alternativas para checar se e-mail existe
+      // 1. Tentamos fazer signup e verificamos se retorna erro de usuário já existente
       const { data, error } = await supabase.auth.signUp({
         email,
         password,

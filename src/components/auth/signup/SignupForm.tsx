@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -173,6 +172,7 @@ export const SignupForm = () => {
         passwordError={passwordError}
         handleSubmit={handleSubmit}
         isRegistering={isRegistering}
+        emailAlreadyRegistered={emailAlreadyRegistered}
       />
     </div>
   );
