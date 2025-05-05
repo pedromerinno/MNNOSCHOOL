@@ -79,7 +79,7 @@ export function useCompanyNotices() {
     const cachedData = getCache({ key: cacheKey });
     const hasLocalData = !!cachedData && Array.isArray(cachedData) && cachedData.length > 0;
     
-    if (!shouldMakeRequest(forceRefresh, hasLocalData, undefined, cacheKey) || fetchingRef.current) {
+    if (!shouldMakeRequest(forceRefresh, hasLocalData) || fetchingRef.current) {
       if (hasLocalData) {
         console.log(`Usando dados em cache para avisos da empresa ${targetCompanyId}`);
         setNotices(cachedData);
@@ -96,7 +96,7 @@ export function useCompanyNotices() {
       setIsLoading(true);
       setError(null);
       fetchingRef.current = true;
-      startRequest(cacheKey);
+      startRequest();
       
       console.log(`Fetching notices for company: ${targetCompanyId}`);
       
@@ -114,7 +114,7 @@ export function useCompanyNotices() {
         setNotices([]);
         setCurrentNotice(null);
         setIsLoading(false);
-        completeRequest(false);
+        completeRequest();
         fetchingRef.current = false;
         setCache({ key: cacheKey }, []);
         return;
@@ -199,7 +199,7 @@ export function useCompanyNotices() {
         setCurrentNotice(null);
       }
       
-      completeRequest(false);
+      completeRequest();
     } catch (err: any) {
       console.error('Erro ao buscar avisos:', err);
       setError(err.message || 'Erro ao buscar avisos');
@@ -498,15 +498,17 @@ export function useCompanyNotices() {
     if (selectedCompany?.id) {
       console.log(`Selected company changed to: ${selectedCompany.id}, will fetch notices`);
       
-      debouncedRequest(() => {
+      const delayedFetch = debouncedRequest(() => {
         fetchNotices(selectedCompany.id);
       }, 500);
+      
+      delayedFetch();
     } else {
       setNotices([]);
       setCurrentNotice(null);
       setIsLoading(false);
     }
-  }, [selectedCompany?.id, debouncedRequest]);
+  }, [selectedCompany?.id, debouncedRequest, fetchNotices]);
 
   return {
     notices,
