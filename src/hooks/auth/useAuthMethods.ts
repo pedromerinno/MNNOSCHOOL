@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -81,7 +80,8 @@ export const useAuthMethods = ({
             error: {
               message: 'E-mail já cadastrado. Tente fazer login ou recuperar sua senha.',
               code: 'email_already_registered'
-            }
+            },
+            emailAlreadyRegistered: true // Flag to indicate this specific condition
           };
         }
         throw error;
@@ -173,6 +173,8 @@ export const useAuthMethods = ({
         errorMessage = 'Muitas tentativas. Tente novamente em alguns minutos.';
       } else if (error.message.includes('Invalid')) {
         errorMessage = 'Endereço de e-mail inválido ou não encontrado.';
+      } else if (error.message.includes('User already registered')) {
+        errorMessage = 'E-mail já cadastrado. Por favor, tente fazer login.';
       }
       
       toast.error(errorMessage);

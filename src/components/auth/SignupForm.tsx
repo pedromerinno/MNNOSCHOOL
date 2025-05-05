@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, Mail, RefreshCw, CheckCircle } from "lucide-react";
+import { Loader2, Mail, RefreshCw, CheckCircle, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export const SignupForm = () => {
@@ -18,6 +18,7 @@ export const SignupForm = () => {
   const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false);
   const [signupError, setSignupError] = useState<{message: string, code: string} | null>(null);
   const [emailResent, setEmailResent] = useState(false);
+  const [emailAlreadyRegistered, setEmailAlreadyRegistered] = useState(false);
   const { signUp, resendConfirmationEmail } = useAuth();
 
   const validatePasswords = () => {
@@ -44,6 +45,7 @@ export const SignupForm = () => {
     
     setIsRegistering(true);
     setSignupError(null);
+    setEmailAlreadyRegistered(false);
     
     try {
       const metadataWithCompany = { 
@@ -67,6 +69,11 @@ export const SignupForm = () => {
       } else {
         console.error("Erro no cadastro:", result.error);
         setSignupError(result.error);
+        
+        // Check if email is already registered
+        if (result.emailAlreadyRegistered) {
+          setEmailAlreadyRegistered(true);
+        }
       }
     } catch (error) {
       console.error("Erro no cadastro:", error);
@@ -120,7 +127,7 @@ export const SignupForm = () => {
         ) : (
           <Button 
             onClick={handleResendEmail}
-            disabled={isResending}
+            disabled={isResending || emailAlreadyRegistered}
             variant="outline"
             className="mb-6 flex items-center gap-2 w-full justify-center"
           >
@@ -136,6 +143,13 @@ export const SignupForm = () => {
               </>
             )}
           </Button>
+        )}
+        
+        {emailAlreadyRegistered && (
+          <div className="mb-6 p-3 bg-amber-50 border border-amber-100 rounded-md flex items-center gap-2 justify-center text-amber-700">
+            <AlertTriangle className="h-5 w-5" />
+            <span>Este e-mail já está cadastrado. Por favor, faça login.</span>
+          </div>
         )}
         
         <p className="text-gray-600">
@@ -163,6 +177,15 @@ export const SignupForm = () => {
       {signupError && (
         <Alert variant="destructive" className="mb-6">
           <AlertDescription>{signupError.message}</AlertDescription>
+        </Alert>
+      )}
+      
+      {emailAlreadyRegistered && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertDescription className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            Este e-mail já está cadastrado. Por favor, faça login.
+          </AlertDescription>
         </Alert>
       )}
       
