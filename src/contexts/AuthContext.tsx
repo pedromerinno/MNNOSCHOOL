@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { UserProfile } from '@/types/user';
@@ -10,6 +11,7 @@ interface AuthContextType {
   session: Session | null;
   userProfile: UserProfile | null;
   loading: boolean;
+  refreshError: Error | null;
   signInWithPassword: (email: string, password: string) => Promise<{ data: any, error: Error | null }>;
   signOut: () => Promise<void>;
   signUp: (email: string, password: string, displayName: string, metadata?: { interests?: string[] }) => Promise<void>;
@@ -26,7 +28,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     session, 
     loading: sessionLoading, 
     setUser, 
-    setSession 
+    setSession,
+    refreshError
   } = useAuthSession();
   
   const { 
@@ -63,6 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     session,
     userProfile,
     loading: loading || sessionLoading,
+    refreshError,
     signInWithPassword,
     signOut,
     signUp,
