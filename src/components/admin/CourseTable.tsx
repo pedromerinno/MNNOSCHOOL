@@ -81,16 +81,16 @@ export const CourseTable: React.FC<CourseTableProps> = ({
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-gray-800 shadow-sm">
+      <div className="rounded-md border border-gray-100 dark:border-gray-800 overflow-hidden bg-white dark:bg-gray-800 shadow-sm">
         <Table>
-          <TableHeader className="bg-gray-50 dark:bg-gray-900">
+          <TableHeader className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-800">
             <TableRow>
-              <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Título</TableHead>
-              <TableHead className="font-semibold text-gray-700 dark:text-gray-300 hidden md:table-cell">Descrição</TableHead>
-              <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Instrutor</TableHead>
-              <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Empresas</TableHead>
-              <TableHead className="font-semibold text-gray-700 dark:text-gray-300 hidden md:table-cell">Data de Criação</TableHead>
-              <TableHead className="text-right font-semibold text-gray-700 dark:text-gray-300">Ações</TableHead>
+              <TableHead className="text-[#8E9196] dark:text-gray-400 font-medium text-xs uppercase tracking-wider py-4">Título</TableHead>
+              <TableHead className="text-[#8E9196] dark:text-gray-400 font-medium text-xs uppercase tracking-wider py-4 hidden md:table-cell">Descrição</TableHead>
+              <TableHead className="text-[#8E9196] dark:text-gray-400 font-medium text-xs uppercase tracking-wider py-4">Instrutor</TableHead>
+              <TableHead className="text-[#8E9196] dark:text-gray-400 font-medium text-xs uppercase tracking-wider py-4">Empresas</TableHead>
+              <TableHead className="text-[#8E9196] dark:text-gray-400 font-medium text-xs uppercase tracking-wider py-4 hidden md:table-cell">Data de Criação</TableHead>
+              <TableHead className="text-right text-[#8E9196] dark:text-gray-400 font-medium text-xs uppercase tracking-wider py-4">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -117,29 +117,29 @@ export const CourseTable: React.FC<CourseTableProps> = ({
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-gray-800 shadow-sm">
+    <div className="rounded-md border border-gray-100 dark:border-gray-800 overflow-hidden bg-white dark:bg-gray-800 shadow-sm">
       <Table>
-        <TableHeader className="bg-gray-50 dark:bg-gray-900">
+        <TableHeader className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-800">
           <TableRow>
-            <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Título</TableHead>
-            <TableHead className="font-semibold text-gray-700 dark:text-gray-300 hidden md:table-cell">Descrição</TableHead>
-            <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Instrutor</TableHead>
-            <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Empresas</TableHead>
-            <TableHead className="font-semibold text-gray-700 dark:text-gray-300 hidden md:table-cell">Data de Criação</TableHead>
-            <TableHead className="text-right font-semibold text-gray-700 dark:text-gray-300">Ações</TableHead>
+            <TableHead className="text-[#8E9196] dark:text-gray-400 font-medium text-xs uppercase tracking-wider py-4">Título</TableHead>
+            <TableHead className="text-[#8E9196] dark:text-gray-400 font-medium text-xs uppercase tracking-wider py-4 hidden md:table-cell">Descrição</TableHead>
+            <TableHead className="text-[#8E9196] dark:text-gray-400 font-medium text-xs uppercase tracking-wider py-4">Instrutor</TableHead>
+            <TableHead className="text-[#8E9196] dark:text-gray-400 font-medium text-xs uppercase tracking-wider py-4">Empresas</TableHead>
+            <TableHead className="text-[#8E9196] dark:text-gray-400 font-medium text-xs uppercase tracking-wider py-4 hidden md:table-cell">Data de Criação</TableHead>
+            <TableHead className="text-right text-[#8E9196] dark:text-gray-400 font-medium text-xs uppercase tracking-wider py-4">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {courses.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+              <TableCell colSpan={6} className="text-center py-8 text-gray-500 dark:text-gray-400">
                 Nenhum curso encontrado
               </TableCell>
             </TableRow>
           ) : (
             courses.map((course) => (
-              <TableRow key={course.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                <TableCell className="font-medium text-gray-900 dark:text-gray-100 py-3">{course.title}</TableCell>
+              <TableRow key={course.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors border-b border-gray-100 dark:border-gray-800 last:border-0">
+                <TableCell className="font-medium text-gray-900 dark:text-gray-100 py-4">{course.title}</TableCell>
                 <TableCell className="text-gray-600 dark:text-gray-300 hidden md:table-cell">
                   {course.description 
                     ? course.description.length > 60 
@@ -160,38 +160,34 @@ export const CourseTable: React.FC<CourseTableProps> = ({
                         variant="outline" 
                         size="sm" 
                         onClick={() => onViewLessons(course)}
-                        className="h-9 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                        className="h-8 px-2 bg-transparent dark:bg-transparent border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
                       >
-                        <FileText className="h-4 w-4 mr-1" />
-                        <span className="hidden sm:inline">Aulas</span>
+                        <FileText className="h-4 w-4" />
                       </Button>
                     )}
                     <Button 
                       variant="outline" 
                       size="sm" 
                       onClick={() => onManageCompanies(course)}
-                      className="h-9 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                      className="h-8 px-2 bg-transparent dark:bg-transparent border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
                     >
-                      <Building className="h-4 w-4 mr-1" />
-                      <span className="hidden sm:inline">Empresas</span>
+                      <Building className="h-4 w-4" />
                     </Button>
                     <Button 
                       variant="outline" 
                       size="sm" 
                       onClick={() => onEdit(course)}
-                      className="h-9 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                      className="h-8 px-2 bg-transparent dark:bg-transparent border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
                     >
-                      <Pencil className="h-4 w-4 mr-1" />
-                      <span className="hidden sm:inline">Editar</span>
+                      <Pencil className="h-4 w-4" />
                     </Button>
                     <Button 
-                      variant="destructive" 
+                      variant="outline" 
                       size="sm"
                       onClick={() => handleDelete(course.id)}
-                      className="h-9"
+                      className="h-8 px-2 text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 dark:border-red-800/50 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300 bg-transparent dark:bg-transparent"
                     >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      <span className="hidden sm:inline">Excluir</span>
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </TableCell>
