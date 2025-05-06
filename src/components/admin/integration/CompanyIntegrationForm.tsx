@@ -54,7 +54,7 @@ export const CompanyIntegrationForm: React.FC<CompanyIntegrationFormProps> = ({
   };
   return <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
           <div className="space-y-6">
             <TextInputField control={form.control} name="nome" label="Nome da Empresa" placeholder="Digite o nome da empresa" />
             
