@@ -101,8 +101,8 @@ export const IntegrationVideosManager: React.FC<IntegrationVideosManagerProps> =
               aspectRatio: '16/9'
             }} allowFullScreen frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" title="Video Institucional" />
               </div> : <Card>
-                <CardContent className="p-6 text-center">
-                  <Video className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                <CardContent className="p-6 text-center py-[60px]">
+                  <Video className="h-12 w-8 mx-auto text-gray-400 mb-4" />
                   <p className="text-gray-500 dark:text-gray-400">
                     Adicione uma URL do YouTube válida para visualizar o vídeo
                   </p>
