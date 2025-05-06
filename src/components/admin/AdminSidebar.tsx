@@ -45,10 +45,10 @@ export const AdminSidebar = ({
   ];
 
   return (
-    <Sidebar className="border-r border-gray-200 dark:border-gray-800 z-10">
-      <SidebarContent className="py-2">
+    <Sidebar className="border-r border-gray-200 dark:border-gray-800">
+      <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupContent>
+          <SidebarGroupContent className="pt-4">
             <SidebarMenu>
               {menuItems.map(item => (
                 <SidebarMenuItem key={item.value}>
@@ -56,10 +56,10 @@ export const AdminSidebar = ({
                     data-active={activeTab === item.value} 
                     onClick={() => onTabChange(item.value)} 
                     tooltip={item.label} 
-                    className="py-3 px-4"
+                    className="py-[30px] px-[30px]"
                   >
                     <item.icon className={`h-5 w-5 ${activeTab === item.value ? 'text-primary' : 'text-gray-500 dark:text-gray-400'}`} />
-                    <span className="ml-2">{item.label}</span>
+                    <span>{item.label}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
