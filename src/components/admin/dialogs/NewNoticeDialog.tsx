@@ -42,7 +42,6 @@ const NewNoticeDialog = ({
   const { toast } = useToast();
   const { createNotice, updateNotice } = useCompanyNotices();
   const { userCompanies, selectedCompany } = useCompanies();
-  const [dialogOpen, setDialogOpen] = useState(open);
   const [submitting, setSubmitting] = useState(false);
 
   const formSchema = z.object({
@@ -69,13 +68,13 @@ const NewNoticeDialog = ({
     mode: "onChange",
   });
 
-  const { reset, watch, setValue } = form;
+  const { reset, setValue } = form;
 
+  // Simplificamos o useEffect para configurar o formulário quando o diálogo é aberto
   useEffect(() => {
-    setDialogOpen(open);
     if (open) {
       if (initialData) {
-        // For editing existing notice
+        // Configuração do formulário para edição
         Object.keys(initialData).forEach(key => {
           if (key === 'companies' && Array.isArray(initialData[key])) {
             setValue(key as keyof NoticeFormData, initialData[key]);
@@ -84,22 +83,19 @@ const NewNoticeDialog = ({
           }
         });
       } else if (selectedCompany) {
-        // For new notice, pre-select current company
+        // Para novo aviso, pré-selecionar empresa atual
         setValue("companies", [selectedCompany.id]);
       }
-    }
-  }, [open, initialData, setValue, selectedCompany]);
-
-  useEffect(() => {
-    if (!dialogOpen) {
+    } else {
+      // Reset do formulário quando o diálogo é fechado
       reset({
-        title: initialData?.title || "",
-        content: initialData?.content || "",
-        type: initialData?.type || "informativo",
-        companies: initialData?.companies || (selectedCompany ? [selectedCompany.id] : []),
+        title: "",
+        content: "",
+        type: "informativo",
+        companies: selectedCompany ? [selectedCompany.id] : [],
       });
     }
-  }, [dialogOpen, reset, initialData, selectedCompany]);
+  }, [open, initialData, selectedCompany, setValue, reset]);
 
   const onSubmit = async (data: NoticeFormData) => {
     if (!data.companies || data.companies.length === 0) {
@@ -124,9 +120,7 @@ const NewNoticeDialog = ({
             title: "Sucesso",
             description: "Aviso atualizado com sucesso"
           });
-          setDialogOpen(false);
           onOpenChange(false);
-          reset();
         }
       } else {
         console.log("Creating new notice for companies:", data.companies);
@@ -136,9 +130,7 @@ const NewNoticeDialog = ({
             title: "Sucesso",
             description: "Aviso criado com sucesso"
           });
-          setDialogOpen(false);
           onOpenChange(false);
-          reset();
         }
       }
     } catch (error) {
@@ -154,7 +146,7 @@ const NewNoticeDialog = ({
   };
 
   return (
-    <Dialog open={dialogOpen} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
           <DialogTitle>{editingNoticeId ? "Editar Aviso" : "Novo Aviso"}</DialogTitle>

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -286,15 +287,17 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
         </DialogContent>
       </Dialog>
 
-      {/* Edit Notice Modal */}
-      <NewNoticeDialog
-        open={editDialogOpen}
-        onOpenChange={handleEditDialogClose}
-        initialData={editNotice}
-        editingNoticeId={editNotice?.id || null}
-      />
+      {/* Renderiza o diálogo de edição apenas quando está aberto */}
+      {editDialogOpen && (
+        <NewNoticeDialog
+          open={editDialogOpen}
+          onOpenChange={handleEditDialogClose}
+          initialData={editNotice}
+          editingNoticeId={editNotice?.id || null}
+        />
+      )}
 
-      {/* Delete confirm dialog */}
+      {/* Diálogo de confirmação de exclusão */}
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>

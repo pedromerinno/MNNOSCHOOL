@@ -77,11 +77,12 @@ export const NotificationsWidget = memo(() => {
   }, [selectedCompany?.id, fetchNotices]);
 
   const handleDialogOpenChange = (open: boolean) => {
+    // Atualiza o estado do diálogo imediatamente
     setDialogOpen(open);
     
-    // Only refresh when dialog closes and we've done initial fetch
+    // Só atualiza quando o diálogo fecha e fizemos o fetch inicial
     if (!open && initialFetchDoneRef.current && selectedCompany?.id) {
-      // Refresh with a slight delay to allow server operations to complete
+      // Refresh com um pequeno atraso para permitir que operações do servidor sejam concluídas
       if (fetchTimeoutRef.current === null) {
         fetchTimeoutRef.current = window.setTimeout(() => {
           try {
@@ -92,14 +93,13 @@ export const NotificationsWidget = memo(() => {
             console.error("Exception in fetchNotices after dialog:", err);
           }
           fetchTimeoutRef.current = null;
-        }, 500);
+        }, 800);
       }
     }
   };
 
   const handleAllNoticesDialogChange = (open: boolean) => {
     setNoticesDialogOpen(open);
-    // Removed auto-refresh on dialog close to prevent excessive requests
   };
 
   const handleRefresh = async () => {
@@ -239,8 +239,21 @@ export const NotificationsWidget = memo(() => {
         </div>
       </CardContent>
       
-      {dialogOpen && <NewNoticeDialog open={dialogOpen} onOpenChange={handleDialogOpenChange} />}
-      {noticesDialogOpen && <AllNoticesDialog open={noticesDialogOpen} onOpenChange={handleAllNoticesDialogChange} />}
+      {/* Renderizamos o diálogo apenas quando ele estiver aberto */}
+      {dialogOpen && (
+        <NewNoticeDialog 
+          open={dialogOpen} 
+          onOpenChange={handleDialogOpenChange}
+        />
+      )}
+      
+      {/* Mesmo para o diálogo de todos os avisos */}
+      {noticesDialogOpen && (
+        <AllNoticesDialog 
+          open={noticesDialogOpen} 
+          onOpenChange={handleAllNoticesDialogChange}
+        />
+      )}
     </Card>
   );
 });
