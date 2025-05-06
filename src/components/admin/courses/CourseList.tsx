@@ -94,7 +94,7 @@ export const CourseList: React.FC<CourseListProps> = ({
         <h3 className="text-lg font-medium">
           {showAllCourses ? "Todos os Cursos" : "Cursos Disponíveis"}
         </h3>
-        <Button onClick={handleNewCourse} className="rounded-xl">
+        <Button onClick={handleNewCourse} className="rounded-xl py-[25px] px-[20px]">
           <PlusCircle className="h-4 w-4 mr-2" />
           Novo Curso
         </Button>
