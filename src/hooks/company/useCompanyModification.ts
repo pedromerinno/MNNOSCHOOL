@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { useCompanyUpdate } from "./useCompanyUpdate";
 import { useCompanyDelete } from "./useCompanyDelete";
 import { useCompanyUserRelationship } from "./useCompanyUserRelationship";
-import { eventService, EVENTS } from "@/services";
 
 interface UseCompanyModificationProps {
   setIsLoading: (loading: boolean) => void;
@@ -44,11 +43,6 @@ export const useCompanyModification = ({
     setSelectedCompany(company);
     localStorage.setItem('selectedCompanyId', company.id);
     
-    // Disparar evento com o EventService
-    console.log('useCompanyModification: Disparando evento company-selected');
-    eventService.dispatch(EVENTS.COMPANY_SELECTED, company);
-    
-    // Manter compatibilidade com o sistema antigo de eventos
     const event = new CustomEvent('company-selected', { 
       detail: { userId, company } 
     });
@@ -69,9 +63,6 @@ export const useCompanyModification = ({
       if (newCompany) {
         setCompanies(prevCompanies => [...prevCompanies, newCompany as Company]);
         toast.success(`Empresa ${newCompany.nome} criada com sucesso!`);
-        
-        // Disparar evento de alteração nas relações de empresa
-        eventService.dispatch(EVENTS.COMPANY_RELATION_CHANGED, {});
       }
     } catch (error) {
       console.error(error);

@@ -1,10 +1,8 @@
-
 import { useEffect, useState, memo, useCallback } from "react";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { toast } from "sonner";
-import { eventService, EVENTS } from "@/services";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,30 +46,17 @@ export const CompanySelector = memo(() => {
   }, []);
   
   useEffect(() => {
-    // Usar o EventService para escutar eventos
-    const handleCompanyUpdated = (detail: any) => {
-      const updatedCompany = detail.company;
+    window.addEventListener('company-relation-changed', handleCompanyRelationChange);
+    window.addEventListener('company-updated', (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const updatedCompany = customEvent.detail.company;
       if (updatedCompany) {
         setDisplayName(updatedCompany.nome);
         localStorage.setItem('selectedCompanyName', updatedCompany.nome);
       }
-    };
-    
-    eventService.on(EVENTS.COMPANY_RELATION_CHANGED, handleCompanyRelationChange, CompanySelector);
-    eventService.on(EVENTS.COMPANY_UPDATED, handleCompanyUpdated, CompanySelector);
-    
-    // Ainda manter suporte para eventos DOM legados
-    window.addEventListener('company-relation-changed', handleCompanyRelationChange);
-    window.addEventListener('company-updated', (event: Event) => {
-      const customEvent = event as CustomEvent;
-      if (customEvent.detail?.company) {
-        setDisplayName(customEvent.detail.company.nome);
-        localStorage.setItem('selectedCompanyName', customEvent.detail.company.nome);
-      }
     });
     
     return () => {
-      eventService.clearListeners(CompanySelector);
       window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
       window.removeEventListener('company-updated', () => {});
     };
