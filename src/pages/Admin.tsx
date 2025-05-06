@@ -68,7 +68,7 @@ const AdminPage = () => {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-0 lg:px-4 py-6">
         <SidebarProvider defaultOpen={true}>
-          <div className="flex w-full min-h-[calc(100vh-120px)] rounded-lg overflow-hidden">
+          <div className="flex w-full min-h-[calc(100vh-120px)] rounded-lg overflow-hidden bg-white dark:bg-gray-800 shadow-sm">
             <AdminSidebar 
               activeTab={activeTab} 
               onTabChange={setActiveTab} 
