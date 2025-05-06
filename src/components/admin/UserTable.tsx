@@ -68,7 +68,7 @@ export const UserTable: React.FC<UserTableProps> = ({
             <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Email</TableHead>
             <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Empresas</TableHead>
             <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Status</TableHead>
-            <TableHead className="text-right font-semibold text-gray-700 dark:text-gray-300">Ações</TableHead>
+            <TableHead className="text-right font-semibold px-[30px]">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
