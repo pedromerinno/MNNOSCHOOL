@@ -7,7 +7,6 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarGroupContent,
   SidebarFooter
 } from "@/components/ui/sidebar";
@@ -62,10 +61,7 @@ export const AdminSidebar = ({ activeTab, onTabChange }: AdminSidebarProps) => {
     <Sidebar className="border-r border-gray-200 dark:border-gray-800">
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="px-2 py-1.5 text-sm font-semibold">
-            Painel Administrativo
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
+          <SidebarGroupContent className="pt-4">
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.value}>
