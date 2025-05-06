@@ -85,7 +85,7 @@ export const CompanySelector: React.FC<CompanySelectorProps> = memo(({
           {hasCompanies && companies.map(company => (
             <SelectItem key={company.id} value={company.id}>
               <div className="flex items-center">
-                {company.logo && (
+                {company.logo ? (
                   <img
                     src={company.logo}
                     alt={company.nome}
@@ -96,6 +96,10 @@ export const CompanySelector: React.FC<CompanySelectorProps> = memo(({
                       target.onerror = null;
                     }}
                   />
+                ) : (
+                  <div className="h-4 w-4 mr-2 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary font-medium">
+                    {company.nome.charAt(0).toUpperCase()}
+                  </div>
                 )}
                 {company.nome}
               </div>

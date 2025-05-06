@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -35,15 +36,26 @@ export const CompanyTable: React.FC<CompanyTableProps> = ({
               </TableCell>
             </TableRow> : companies.map(company => <TableRow key={company.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                 <TableCell className="p-3 px-[20px] py-[20px]">
-                  {company.logo ? <div className="h-12 w-12 rounded-md border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-white dark:bg-gray-800 overflow-hidden">
-                      <img src={company.logo} alt={`${company.nome} logo`} className="h-10 w-10 object-contain" onError={e => {
-                const target = e.target as HTMLImageElement;
-                target.src = "/placeholder.svg";
-                target.onerror = null;
-              }} />
-                    </div> : <div className="h-12 w-12 rounded-md border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
-                      <img src="/placeholder.svg" alt="Placeholder logo" className="h-8 w-8 object-contain opacity-50" />
-                    </div>}
+                  {company.logo ? (
+                    <div className="h-12 w-12 rounded-md border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-white dark:bg-gray-800 overflow-hidden">
+                      <img 
+                        src={company.logo} 
+                        alt={`${company.nome} logo`} 
+                        className="h-10 w-10 object-contain" 
+                        onError={e => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "/placeholder.svg";
+                          target.onerror = null;
+                        }} 
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-12 w-12 rounded-md border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-primary/10">
+                      <span className="text-xl font-semibold text-primary">
+                        {company.nome.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
                 </TableCell>
                 <TableCell className="font-medium text-gray-900 dark:text-gray-100">{company.nome}</TableCell>
                 <TableCell className="text-gray-600 dark:text-gray-300 hidden md:table-cell">

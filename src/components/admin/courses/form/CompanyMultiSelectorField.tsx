@@ -48,12 +48,21 @@ export const CompanyMultiSelectorField: React.FC<CompanyMultiSelectorFieldProps>
                     style={{ minWidth: 0, fontWeight: selected ? 600 : 500 }}
                     aria-pressed={selected}
                   >
-                    {company.logo && (
+                    {company.logo ? (
                       <img
                         src={company.logo}
                         alt={company.nome}
                         className="h-5 w-5 rounded-full object-contain"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "/placeholder.svg";
+                          target.onerror = null;
+                        }}
                       />
+                    ) : (
+                      <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary font-medium">
+                        {company.nome.charAt(0).toUpperCase()}
+                      </div>
                     )}
                     <span className="truncate max-w-[110px]">{company.nome}</span>
                   </button>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogOut, User, ChevronDown, Building } from "lucide-react";
@@ -118,12 +119,21 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
                         onClick={() => handleCompanySelect(company)}
                       >
                         <div className="flex items-center w-full">
-                          {company.logo && (
+                          {company.logo ? (
                             <img 
                               src={company.logo} 
                               alt={company.nome} 
                               className="h-4 w-4 mr-2 object-contain rounded-lg"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = "/placeholder.svg";
+                                target.onerror = null;
+                              }}
                             />
+                          ) : (
+                            <div className="h-4 w-4 mr-2 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary font-medium">
+                              {company.nome.charAt(0).toUpperCase()}
+                            </div>
                           )}
                           <span className="truncate">{company.nome}</span>
                         </div>

@@ -10,6 +10,14 @@ interface ProfileCardProps {
 }
 
 export const ProfileCard = ({ member }: ProfileCardProps) => {
+  // Extract first letter of display name for avatar fallback
+  const getInitial = () => {
+    if (member?.display_name) {
+      return member.display_name.substring(0, 1).toUpperCase();
+    }
+    return null;
+  };
+
   return (
     <Card className="border-0 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <CardContent className="p-6 space-y-6">
@@ -17,7 +25,7 @@ export const ProfileCard = ({ member }: ProfileCardProps) => {
           <Avatar className="h-24 w-24 border-2 border-primary/10">
             <AvatarImage src={member?.avatar || undefined} alt={member?.display_name || ''} />
             <AvatarFallback className="bg-primary/10 text-primary text-xl">
-              {member?.display_name?.substring(0, 2).toUpperCase() || <UserRound className="h-8 w-8" />}
+              {getInitial() || <UserRound className="h-8 w-8" />}
             </AvatarFallback>
           </Avatar>
           

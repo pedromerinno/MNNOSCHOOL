@@ -85,7 +85,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], lo
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent">
                   {/* Company Logo */}
-                  {selectedCompany?.logo && (
+                  {selectedCompany?.logo ? (
                     <div className="absolute top-8 left-8">
                       <div className="w-12 h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center p-1">
                         <img 
@@ -97,6 +97,14 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({ courses = [], lo
                             target.src = "/placeholder.svg";
                           }}
                         />
+                      </div>
+                    </div>
+                  ) : selectedCompany?.nome && (
+                    <div className="absolute top-8 left-8">
+                      <div className="w-12 h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
+                        <span className="text-xl font-bold text-white">
+                          {selectedCompany.nome.charAt(0).toUpperCase()}
+                        </span>
                       </div>
                     </div>
                   )}

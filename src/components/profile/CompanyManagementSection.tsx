@@ -1,3 +1,4 @@
+
 import { AlertTriangle, Building, Link, X } from "lucide-react";
 import { useState } from "react";
 import { Company } from "@/types/company";
@@ -91,12 +92,21 @@ export const CompanyManagementSection = ({
               className="flex items-center justify-between p-3 rounded-lg border bg-card"
             >
               <div className="flex items-center gap-3">
-                {company.logo && (
+                {company.logo ? (
                   <img
                     src={company.logo}
                     alt={company.nome}
                     className="h-8 w-8 rounded-lg object-contain"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = "/placeholder.svg";
+                      target.onerror = null;
+                    }}
                   />
+                ) : (
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-medium">
+                    {company.nome.charAt(0).toUpperCase()}
+                  </div>
                 )}
                 <span className="text-sm font-medium">{company.nome}</span>
               </div>

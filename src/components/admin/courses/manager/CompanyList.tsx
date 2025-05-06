@@ -28,18 +28,36 @@ export const CompanyList: React.FC<CompanyListProps> = ({
   return (
     <div className="max-h-96 overflow-y-auto space-y-2 border rounded-md p-4">
       {companiesList.map(company => (
-        <div key={company.id} className="flex items-center space-x-2 py-2">
+        <div key={company.id} className="flex items-center space-x-3 py-2">
           <Checkbox 
             id={`company-${company.id}`}
             checked={selectedCompanies.includes(company.id)}
             onCheckedChange={() => onToggleCompany(company.id)}
           />
-          <label 
-            htmlFor={`company-${company.id}`}
-            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-          >
-            {company.nome}
-          </label>
+          <div className="flex items-center space-x-2">
+            {company.logo ? (
+              <img 
+                src={company.logo} 
+                alt={company.nome}
+                className="h-5 w-5 rounded object-contain"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "/placeholder.svg";
+                  target.onerror = null;
+                }}
+              />
+            ) : (
+              <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary font-medium">
+                {company.nome.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <label 
+              htmlFor={`company-${company.id}`}
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+            >
+              {company.nome}
+            </label>
+          </div>
         </div>
       ))}
     </div>

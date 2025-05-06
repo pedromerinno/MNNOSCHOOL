@@ -1,3 +1,4 @@
+
 import { useEffect, useState, memo, useCallback } from "react";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -110,7 +111,7 @@ export const CompanySelector = memo(() => {
             className={`cursor-pointer ${selectedCompany?.id === company.id ? 'bg-gray-100 dark:bg-gray-700' : ''}`}
           >
             <div className="flex items-center">
-              {company.logo && (
+              {company.logo ? (
                 <img
                   src={company.logo}
                   alt={company.nome}
@@ -121,6 +122,10 @@ export const CompanySelector = memo(() => {
                     target.onerror = null;
                   }}
                 />
+              ) : (
+                <div className="h-4 w-4 mr-2 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary font-medium">
+                  {company.nome.charAt(0).toUpperCase()}
+                </div>
               )}
               <span>{company.nome}</span>
             </div>
