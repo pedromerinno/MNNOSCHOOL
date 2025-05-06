@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
@@ -10,14 +11,17 @@ const Dialog = ({
   // Improved handling of body styles when dialog opens/closes
   const handleOpenChange = (open: boolean) => {
     if (open) {
-      // Apply immediately when opening to prevent flicker
       document.body.style.overflow = 'hidden';
       document.body.style.paddingRight = '0px'; // Prevent layout shift
     } else {
-      // Reset styles immediately when closing
-      document.body.style.pointerEvents = '';
-      document.body.style.overflow = '';
-      document.body.style.paddingRight = '';
+      // Small delay to ensure animations complete before resetting styles
+      setTimeout(() => {
+        // Only reset if no other dialogs are open
+        if (!document.querySelector('[data-state="open"][role="dialog"]')) {
+          document.body.style.overflow = '';
+          document.body.style.paddingRight = '';
+        }
+      }, 300);
     }
     
     // Call the original onOpenChange if provided

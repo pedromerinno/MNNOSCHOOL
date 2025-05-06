@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Plus, RefreshCw } from "lucide-react";
@@ -64,7 +63,7 @@ export const NotificationsWidget = memo(() => {
             console.error("Exception in fetchNotices:", err);
           }
           fetchTimeoutRef.current = null;
-        }, 1000); // Aumentado para 1000ms para evitar colisões
+        }, 1000);
       }
     }
     
@@ -77,24 +76,17 @@ export const NotificationsWidget = memo(() => {
   }, [selectedCompany?.id, fetchNotices]);
 
   const handleDialogOpenChange = (open: boolean) => {
-    // Atualiza o estado do diálogo imediatamente
     setDialogOpen(open);
     
-    // Só atualiza quando o diálogo fecha e fizemos o fetch inicial
+    // Refresh notices when dialog closes
     if (!open && initialFetchDoneRef.current && selectedCompany?.id) {
-      // Refresh com um pequeno atraso para permitir que operações do servidor sejam concluídas
-      if (fetchTimeoutRef.current === null) {
-        fetchTimeoutRef.current = window.setTimeout(() => {
-          try {
-            fetchNotices(selectedCompany.id, true).catch(err => {
-              console.error("Error refreshing notices after dialog close:", err);
-            });
-          } catch (err) {
-            console.error("Exception in fetchNotices after dialog:", err);
-          }
-          fetchTimeoutRef.current = null;
-        }, 800);
-      }
+      setTimeout(() => {
+        if (selectedCompany?.id) {
+          fetchNotices(selectedCompany.id, true).catch(err => {
+            console.error("Error refreshing notices after dialog close:", err);
+          });
+        }
+      }, 800);
     }
   };
 
@@ -239,7 +231,7 @@ export const NotificationsWidget = memo(() => {
         </div>
       </CardContent>
       
-      {/* Renderizamos o diálogo apenas quando ele estiver aberto */}
+      {/* Only render the dialog components when they need to be shown */}
       {dialogOpen && (
         <NewNoticeDialog 
           open={dialogOpen} 
@@ -247,7 +239,6 @@ export const NotificationsWidget = memo(() => {
         />
       )}
       
-      {/* Mesmo para o diálogo de todos os avisos */}
       {noticesDialogOpen && (
         <AllNoticesDialog 
           open={noticesDialogOpen} 

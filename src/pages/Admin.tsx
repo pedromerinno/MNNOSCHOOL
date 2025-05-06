@@ -1,21 +1,19 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { UserManagement } from '@/components/admin/UserManagement';
 import { CompanyManagement } from '@/components/admin/CompanyManagement';
 import { SettingsManagement } from '@/components/admin/integration/SettingsManagement';
 import { BackgroundManager } from '@/components/admin/BackgroundManager';
 import { useAuth } from '@/contexts/AuthContext';
-import { Building, Users, Book, Settings, LayoutDashboard, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { CourseManagement } from '@/components/admin/CourseManagement';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 import { Button } from '@/components/ui/button';
 import { CompanyNoticesAdminList } from '@/components/admin/CompanyNoticesAdminList';
-
-const ADMIN_MAIN_COLOR = "#1EAEDB";
-const getLighterAdminColor = (opacity = 0.1) =>
-  `rgba(30, 174, 219, ${opacity})`; // azul #1EAEDB
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AdminSidebar } from '@/components/admin/AdminSidebar';
 
 const AdminPage = () => {
   const { userProfile, loading: authLoading } = useAuth();
@@ -42,51 +40,34 @@ const AdminPage = () => {
     return <Navigate to="/" replace />;
   }
 
-  // Tabs definition (order and label)
-  const tabs = [
-    ...(userProfile?.super_admin ? [{
-      value: "platform",
-      label: "Plataforma",
-      icon: LayoutDashboard,
-      content: <BackgroundManager />,
-    }] : []),
-    {
-      value: "companies",
-      label: "Empresas",
-      icon: Building,
-      content: (
-        <div>
-          <CompanyManagement />
-          <div className="mt-10">
-            <CompanyNoticesAdminList />
+  const getActiveContent = () => {
+    switch (activeTab) {
+      case "platform":
+        return <BackgroundManager />;
+      case "companies":
+        return (
+          <div>
+            <CompanyManagement />
+            <div className="mt-10">
+              <CompanyNoticesAdminList />
+            </div>
           </div>
-        </div>
-      )
-    },
-    {
-      value: "users",
-      label: "Usuários",
-      icon: Users,
-      content: <UserManagement />
-    },
-    {
-      value: "allcourses",
-      label: "Cursos",
-      icon: Book,
-      content: <CourseManagement />
-    },
-    {
-      value: "settings",
-      label: "Configurações da Empresa",
-      icon: Settings,
-      content: <SettingsManagement />
+        );
+      case "users":
+        return <UserManagement />;
+      case "allcourses":
+        return <CourseManagement />;
+      case "settings":
+        return <SettingsManagement />;
+      default:
+        return null;
     }
-  ];
+  };
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-6 py-12">
-        <div className="flex items-center gap-4 mb-12">
+      <div className="container mx-auto px-0 lg:px-4 py-6">
+        <div className="flex items-center gap-4 mb-6 px-6">
           <Button 
             variant="ghost" 
             size="sm" 
@@ -95,51 +76,27 @@ const AdminPage = () => {
           >
             <ArrowLeft className="h-5 w-5 text-gray-500" />
           </Button>
-          <h1 className="text-3xl md:text-4xl font-bold dark:text-white text-gray-900 tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-bold dark:text-white text-gray-900 tracking-tight">
             Painel Administrativo
           </h1>
         </div>
 
-        <Card className="mb-8 shadow-sm border border-gray-100 dark:border-gray-800">
-          <CardContent className="p-8">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <div className="border-b border-gray-100 dark:border-gray-800 py-2 px-2 bg-transparent">
-                <TabsList className="flex gap-2 rounded-2xl p-1.5 bg-transparent dark:bg-transparent w-full justify-start">
-                  {tabs.map(tab => (
-                    <TabsTrigger
-                      key={tab.value}
-                      value={tab.value}
-                      className={`flex items-center gap-2 rounded-xl py-3 px-6 transition-colors border border-transparent 
-                        ${activeTab === tab.value
-                          ? "bg-black text-white"
-                          : "text-gray-600 dark:text-gray-300 hover:bg-[rgba(30,174,219,0.05)]"
-                        }
-                      `}
-                      style={{
-                        backgroundColor: activeTab === tab.value ? 'black' : undefined,
-                        borderColor: "transparent",
-                        color: activeTab === tab.value ? 'white' : undefined,
-                      }}
-                    >
-                      <tab.icon className={`h-4 w-4 mr-2 ${activeTab === tab.value ? "text-white" : ""}`} />
-                      {tab.label}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </div>
-              <div className="p-4">
+        <SidebarProvider defaultOpen={true}>
+          <div className="flex w-full min-h-[calc(100vh-120px)] rounded-lg overflow-hidden">
+            <AdminSidebar 
+              activeTab={activeTab} 
+              onTabChange={setActiveTab} 
+            />
+            <div className="flex-1 overflow-auto">
+              <div className="p-6">
                 <ErrorBoundary>
-                  {tabs.map(tab => (
-                    <TabsContent key={tab.value} value={tab.value} className="m-0">
-                      {tab.content}
-                    </TabsContent>
-                  ))}
+                  {getActiveContent()}
                 </ErrorBoundary>
               </div>
-            </Tabs>
-          </CardContent>
-        </Card>
-      </main>
+            </div>
+          </div>
+        </SidebarProvider>
+      </div>
     </div>
   );
 };
