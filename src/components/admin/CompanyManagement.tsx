@@ -101,7 +101,7 @@ export const CompanyManagement: React.FC = () => {
   const displayCompanies = isSuperAdmin ? Array.isArray(companies) ? companies : [] : Array.isArray(userCompanies) ? userCompanies : [];
   return <div className="space-y-4">
       <div className="flex justify-between items-center py-[20px]">
-        <h2 className="text-xl font-semibold">Gerenciamento de Empresas</h2>
+        <h2 className="font-semibold text-2xl">Gerenciamento de Empresas</h2>
         <Button onClick={handleCreateCompany} className="rounded-2xl">
           <Plus className="h-4 w-4 mr-2" />
           Nova Empresa
