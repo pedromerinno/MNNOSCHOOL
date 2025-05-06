@@ -111,9 +111,9 @@ export const CourseTable: React.FC<CourseTableProps> = ({
             courses.map((course) => (
               <TableRow key={course.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors border-b border-gray-100 dark:border-gray-800 last:border-0">
                 <TableCell className="py-3">
-                  {course.thumbnail ? (
+                  {course.image_url ? (
                     <img 
-                      src={course.thumbnail} 
+                      src={course.image_url} 
                       alt={course.title} 
                       className="w-12 h-12 object-cover rounded-md border border-gray-200 dark:border-gray-700"
                     />
