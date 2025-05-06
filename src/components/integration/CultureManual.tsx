@@ -66,7 +66,7 @@ export const CultureManual: React.FC<CultureManualProps> = ({
             <CardTitle className="text-lg text-zinc-400 font-normal">Missão</CardTitle>
           </CardHeader>
           <CardContent className="px-[20px] py-[30px]">
-            <p className="leading-relaxed font-semibold text-zinc-950 text-3xl text-center py-[20px]">
+            <p className="leading-relaxed font-semibold text-zinc-950 text-3xl text-center py-[20px] px-[240px]">
               {companyMission || "Transformar criatividade em estratégia. Marcas em movimento. Ideias em legado."}
             </p>
           </CardContent>
