@@ -1,6 +1,6 @@
 
-import React, { useEffect, useState } from "react";
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import React from "react";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { AlertTriangle } from "lucide-react";
@@ -8,9 +8,13 @@ import { Button } from "@/components/ui/button";
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 import { toast } from "sonner";
 
-export const ProtectedRoute = () => {
-  const { user, loading, session, userProfile } = useAuth();
-  const location = useLocation();
+interface ProtectedRouteProps {
+  element: React.ReactElement;
+}
+
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ element }) => {
+  const { user, loading, userProfile } = useAuth();
+  const location = window.location;
   const isOnboarding = location.pathname === "/onboarding";
   
   // Só carrega os dados de empresas se não estiver na página de onboarding
@@ -18,11 +22,11 @@ export const ProtectedRoute = () => {
     skipLoadingInOnboarding: isOnboarding
   });
   
-  const [initialLoadDone, setInitialLoadDone] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
+  const [initialLoadDone, setInitialLoadDone] = React.useState(false);
+  const [authError, setAuthError] = React.useState<string | null>(null);
 
   // Verificação de estado de autenticação
-  useEffect(() => {
+  React.useEffect(() => {
     console.log("ProtectedRoute: Verificando autenticação");
     
     // Define um timeout mais curto para o carregamento da autenticação (5 segundos)
@@ -123,7 +127,7 @@ export const ProtectedRoute = () => {
   console.log("ProtectedRoute: Usuário autenticado, renderizando rotas protegidas");
   return (
     <ErrorBoundary fallback={ErrorFallback}>
-      <Outlet />
+      {element}
     </ErrorBoundary>
   );
 };
