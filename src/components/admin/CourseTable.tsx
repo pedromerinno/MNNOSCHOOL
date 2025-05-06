@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, Building, FileText, Image, MoreHorizontal } from "lucide-react";
+import { FileText, Pencil, Trash2, Building, Image, MoreHorizontal } from "lucide-react";
 import { Course } from './CourseManagement';
 import { Skeleton } from "@/components/ui/skeleton";
 import { deleteCourse } from '@/services/course';
@@ -63,7 +63,7 @@ export const CourseTable: React.FC<CourseTableProps> = ({
         <Table>
           <TableHeader className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-800">
             <TableRow>
-              <TableHead className="text-[#8E9196] dark:text-gray-400 font-medium text-xs uppercase tracking-wider py-4 w-16"></TableHead>
+              <TableHead className="text-[#8E9196] dark:text-gray-400 font-medium text-xs uppercase tracking-wider py-4 w-16">Capa</TableHead>
               <TableHead className="text-[#8E9196] dark:text-gray-400 font-medium text-xs uppercase tracking-wider py-4">Título</TableHead>
               <TableHead className="text-[#8E9196] dark:text-gray-400 font-medium text-xs uppercase tracking-wider py-4">Instrutor</TableHead>
               <TableHead className="text-[#8E9196] dark:text-gray-400 font-medium text-xs uppercase tracking-wider py-4 hidden md:table-cell">Descrição</TableHead>
