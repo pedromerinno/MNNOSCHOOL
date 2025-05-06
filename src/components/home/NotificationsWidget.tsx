@@ -143,7 +143,7 @@ export const NotificationsWidget = memo(() => {
               <p className="text-base text-gray-800 dark:text-gray-300 mb-5 line-clamp-3">
                 {currentNotice.content}
               </p>
-              <div className="flex items-center bg-amber-100/50 dark:bg-[#1F1F1F] p-3 rounded-lg space-y-1">
+              <div className="flex items-center p-3 rounded-lg space-y-1 bg-amber-100/0">
                 <div className="flex items-center">
                   {currentNotice.author?.avatar ? <img src={currentNotice.author.avatar} alt="Autor do aviso" className="h-6 w-6 rounded-full mr-3 object-cover" loading="lazy" onError={e => {
                 (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMiIgZmlsbD0iI2UyZThmMCIvPjxwYXRoIGQ9Ik04IDhoOHY4SDh6IiBmaWxsPSIjOTRhM2IzIi8+PC9zdmc+';
