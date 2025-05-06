@@ -61,14 +61,7 @@ const AdminPage = () => {
             <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />
             <div className="flex-1 overflow-auto">
               <div className="p-6">
-                <div className="flex items-center gap-3 mb-8 py-[10px]">
-                  <Button variant="ghost" size="sm" className="p-0 hover:bg-transparent" onClick={() => window.history.back()} aria-label="Voltar">
-                    <ArrowLeft className="h-5 w-5 text-gray-500" />
-                  </Button>
-                  <h1 className="text-2xl md:text-3xl font-bold dark:text-white text-gray-900 tracking-tight">
-                    Painel Administrativo
-                  </h1>
-                </div>
+                
                 <ErrorBoundary>
                   {getActiveContent()}
                 </ErrorBoundary>

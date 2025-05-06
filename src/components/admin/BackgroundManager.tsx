@@ -78,7 +78,7 @@ export const BackgroundManager = () => {
   };
   return <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium mb-2 px-0 py-[10px]">Background da Página de Login</h3>
+        <h3 className="mb-2 px-0 py-[10px] font-bold text-2xl">Background da Página de Login</h3>
         <p className="mb-4 text-gray-400 text-sm">
           Configure o background da página de login com uma imagem ou vídeo
         </p>
