@@ -15,14 +15,20 @@ class ErrorService {
   private constructor() {
     // Configura handler global
     window.addEventListener('error', (event) => {
-      this.handleError(new Error(event.message), { source: 'window.onerror', event });
+      this.handleError(new Error(event.message), { 
+        context: { type: 'window.onerror', event },
+        showToast: true 
+      });
     });
 
     window.addEventListener('unhandledrejection', (event) => {
       const error = event.reason instanceof Error 
         ? event.reason 
         : new Error(String(event.reason));
-      this.handleError(error, { source: 'unhandledRejection', event });
+      this.handleError(error, { 
+        context: { type: 'unhandledRejection', event },
+        showToast: true 
+      });
     });
   }
 
