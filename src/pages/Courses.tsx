@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { CourseCarousel } from "@/components/courses/CourseCarousel";
@@ -11,6 +12,7 @@ import { CoursesGrid } from "@/components/courses/CoursesGrid";
 import { CoursesLoadingSkeleton } from "@/components/courses/CoursesLoadingSkeleton";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, RefreshCw } from "lucide-react";
+
 const Courses = () => {
   const {
     selectedCompany,
@@ -31,16 +33,19 @@ const Courses = () => {
   const [isNewCourseDialogOpen, setIsNewCourseDialogOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const isAdmin = user?.is_admin || user?.super_admin;
+  
   useEffect(() => {
     if (!companyLoading && selectedCompany && isDataReady) {
       setShowContent(true);
     }
   }, [companyLoading, selectedCompany, isDataReady]);
+  
   const handleRefresh = () => {
     setIsRefreshing(true);
     refreshCourses();
     setTimeout(() => setIsRefreshing(false), 1000);
   };
+  
   const availableCategories = React.useMemo(() => {
     if (!allCompanyCourses) return [];
     const categories = new Set<string>();
@@ -49,10 +54,12 @@ const Courses = () => {
     });
     return Array.from(categories);
   }, [allCompanyCourses]);
+  
   const filteredCourses = allCompanyCourses?.filter(course => {
     if (activeCategory === "all") return true;
     return course.tags?.includes(activeCategory);
   });
+  
   if (companyLoading || !selectedCompany) {
     return <DashboardLayout>
         <div className="container mx-auto max-w-screen-2xl space-y-12 px-4 py-6">
@@ -69,11 +76,32 @@ const Courses = () => {
         </div>
       </DashboardLayout>;
   }
+  
   const hasNoCourses = !allCompanyCourses || allCompanyCourses.length === 0;
+  
   return <DashboardLayout>
       <div className="container mx-auto max-w-screen-2xl space-y-12 px-4 py-6">
         {/* Header with Admin & Refresh Actions */}
-        
+        <div className="flex justify-end gap-2">
+          {isAdmin && (
+            <Button 
+              onClick={() => setIsNewCourseDialogOpen(true)}
+              className="gap-2"
+            >
+              <PlusCircle className="h-4 w-4" />
+              Novo Curso
+            </Button>
+          )}
+          <Button 
+            variant="outline" 
+            onClick={handleRefresh} 
+            disabled={isRefreshing}
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Atualizar
+          </Button>
+        </div>
 
         {loading ? <>
             <div className="w-full h-64">
@@ -91,7 +119,11 @@ const Courses = () => {
             
             <div className="space-y-4">
               <h2 className="text-xl font-semibold">Categorias</h2>
-              <CourseCategories activeCategory={activeCategory} onCategoryChange={setActiveCategory} availableCategories={availableCategories} />
+              <CourseCategories 
+                activeCategory={activeCategory} 
+                onCategoryChange={setActiveCategory} 
+                availableCategories={availableCategories} 
+              />
             </div>
             
             <div className="space-y-8">
@@ -107,4 +139,5 @@ const Courses = () => {
       <NewCourseDialog open={isNewCourseDialogOpen} onOpenChange={setIsNewCourseDialogOpen} />
     </DashboardLayout>;
 };
+
 export default Courses;
