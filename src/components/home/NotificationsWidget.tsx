@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Plus, RefreshCw } from "lucide-react";
@@ -27,6 +28,7 @@ export const NotificationsWidget = memo(() => {
   const [refreshing, setRefreshing] = useState(false);
   const initialFetchDoneRef = useRef(false);
   const fetchTimeoutRef = useRef<number | null>(null);
+  const lastSelectedCompanyIdRef = useRef<string | null>(null);
   
   const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
   
@@ -44,13 +46,17 @@ export const NotificationsWidget = memo(() => {
 
   useEffect(() => {
     // Initial fetch - only once when component mounts and company is selected
-    if (selectedCompany?.id && !initialFetchDoneRef.current) {
+    if (selectedCompany?.id && 
+        (!initialFetchDoneRef.current || selectedCompany.id !== lastSelectedCompanyIdRef.current)) {
+      
       initialFetchDoneRef.current = true;
+      lastSelectedCompanyIdRef.current = selectedCompany.id;
       
       // Use setTimeout to avoid triggering fetch on every render
       if (fetchTimeoutRef.current === null) {
         fetchTimeoutRef.current = window.setTimeout(() => {
           try {
+            console.log(`NotificationsWidget: Initial fetch for company ${selectedCompany.id}`);
             fetchNotices(selectedCompany.id, false).catch(err => {
               console.error("Error fetching notices:", err);
             });
@@ -58,7 +64,7 @@ export const NotificationsWidget = memo(() => {
             console.error("Exception in fetchNotices:", err);
           }
           fetchTimeoutRef.current = null;
-        }, 500);
+        }, 1000); // Aumentado para 1000ms para evitar colisões
       }
     }
     

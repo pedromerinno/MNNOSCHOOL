@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -36,6 +35,8 @@ export function useCompanyNotices() {
   const cleanupInProgressRef = useRef(false);
   const lastCleanupTimeRef = useRef(0);
   const noticesInstanceIdRef = useRef<string>(`notices-${Math.random().toString(36).substring(2, 9)}`);
+  const lastFetchedCompanyIdRef = useRef<string | null>(null);
+  const pendingFetchTimeoutRef = useRef<number | null>(null);
 
   const cleanupInvalidRelations = useCallback(async (companyId: string, noticeIds: string[]) => {
     if (cleanupInProgressRef.current) return;
@@ -75,6 +76,18 @@ export function useCompanyNotices() {
       setIsLoading(false);
       return;
     }
+    
+    // Evitar requisições duplicadas para a mesma empresa em um curto período de tempo
+    if (lastFetchedCompanyIdRef.current === targetCompanyId && !forceRefresh) {
+      console.log(`Ignorando fetch duplicado para empresa: ${targetCompanyId}`);
+      return;
+    }
+    
+    // Limpar qualquer timeout pendente
+    if (pendingFetchTimeoutRef.current !== null) {
+      clearTimeout(pendingFetchTimeoutRef.current);
+      pendingFetchTimeoutRef.current = null;
+    }
 
     const cacheKey = `notices_${targetCompanyId}`;
     
@@ -99,6 +112,7 @@ export function useCompanyNotices() {
       setError(null);
       fetchingRef.current = true;
       startRequest(cacheKey);
+      lastFetchedCompanyIdRef.current = targetCompanyId;
       
       console.log(`Fetching notices for company: ${targetCompanyId}`);
       
@@ -500,22 +514,28 @@ export function useCompanyNotices() {
     if (selectedCompany?.id) {
       console.log(`Selected company changed to: ${selectedCompany.id}, will fetch notices`);
       
-      // Use instance-specific key for debouncing to avoid conflicts
-      const debounceFn = debouncedRequest(
-        () => {
-          fetchNotices(selectedCompany.id);
-        }, 
-        800, 
-        `notices-fetch-${selectedCompany.id}`
-      );
+      // Usar um timeout para debounce
+      if (pendingFetchTimeoutRef.current !== null) {
+        clearTimeout(pendingFetchTimeoutRef.current);
+      }
       
-      debounceFn();
+      pendingFetchTimeoutRef.current = window.setTimeout(() => {
+        fetchNotices(selectedCompany.id);
+        pendingFetchTimeoutRef.current = null;
+      }, 800);
     } else {
       setNotices([]);
       setCurrentNotice(null);
       setIsLoading(false);
     }
-  }, [selectedCompany?.id, debouncedRequest, fetchNotices]);
+    
+    return () => {
+      if (pendingFetchTimeoutRef.current !== null) {
+        clearTimeout(pendingFetchTimeoutRef.current);
+        pendingFetchTimeoutRef.current = null;
+      }
+    };
+  }, [selectedCompany?.id, fetchNotices]);
 
   return {
     notices,
