@@ -42,8 +42,8 @@ export const CompanyNoticesAdminList: React.FC = () => {
   };
   return <div>
       <div className="mb-4">
-        <h2 className="text-lg font-bold">Administração de Avisos</h2>
-        <p className="text-sm text-muted-foreground mb-2">Gerencie todos os avisos cadastrados da sua empresa</p>
+        <h2 className="text-lg font-bold py-[10px]">Administração de Avisos</h2>
+        <p className="text-sm text-muted-foreground mb-2 py-[10px]">Gerencie todos os avisos cadastrados da sua empresa</p>
       </div>
       {isLoading ? <div>Carregando avisos...</div> : notices.length === 0 ? <div>Nenhum aviso encontrado.</div> : <div className="space-y-4">
           {notices.map(notice => <div key={notice.id} className="rounded-xl bg-amber-50/60 dark:bg-amber-950/10 border p-4 flex flex-col gap-2 relative py-[30px] px-[40px]">
