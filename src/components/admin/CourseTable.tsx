@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   Table,
@@ -40,16 +41,16 @@ const CourseCompaniesCell: React.FC<{ companies?: { logo: string | null, nome: s
             key={company.nome + idx}
             src={company.logo}
             alt={company.nome}
-            className="w-7 h-7 rounded-md object-contain border"
+            className="w-7 h-7 rounded-md object-contain border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-0.5"
           />
         ) : (
-          <span key={company.nome + idx} className="rounded-md bg-gray-100 text-gray-400 flex items-center justify-center w-7 h-7 border">
+          <span key={company.nome + idx} className="rounded-md bg-gray-100 dark:bg-gray-800 text-gray-400 flex items-center justify-center w-7 h-7 border border-gray-200 dark:border-gray-700">
             <Image className="w-4 h-4" />
           </span>
         )
       )}
       {extra > 0 && (
-        <span className="ml-1 text-xs px-2 py-0.5 bg-gray-200 rounded-full text-gray-600">+{extra}</span>
+        <span className="ml-1 text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700">+{extra}</span>
       )}
     </div>
   );
@@ -80,31 +81,31 @@ export const CourseTable: React.FC<CourseTableProps> = ({
 
   if (loading) {
     return (
-      <div className="rounded-md border overflow-hidden">
+      <div className="rounded-md border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-gray-800 shadow-sm">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-gray-50 dark:bg-gray-900">
             <TableRow>
-              <TableHead>Título</TableHead>
-              <TableHead>Descrição</TableHead>
-              <TableHead>Instrutor</TableHead>
-              <TableHead>Empresas</TableHead>
-              <TableHead>Data de Criação</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
+              <TableHead className="font-medium text-gray-600 dark:text-gray-300">Título</TableHead>
+              <TableHead className="font-medium text-gray-600 dark:text-gray-300 hidden md:table-cell">Descrição</TableHead>
+              <TableHead className="font-medium text-gray-600 dark:text-gray-300">Instrutor</TableHead>
+              <TableHead className="font-medium text-gray-600 dark:text-gray-300">Empresas</TableHead>
+              <TableHead className="font-medium text-gray-600 dark:text-gray-300 hidden md:table-cell">Data de Criação</TableHead>
+              <TableHead className="text-right font-medium text-gray-600 dark:text-gray-300">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {[...Array(3)].map((_, index) => (
               <TableRow key={index}>
                 <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
-                <TableCell><Skeleton className="h-5 w-full" /></TableCell>
+                <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
                 <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
                 <TableCell><Skeleton className="h-7 w-28" /></TableCell>
-                <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-24" /></TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end space-x-2">
-                    <Skeleton className="h-9 w-24" />
-                    <Skeleton className="h-9 w-20" />
-                    <Skeleton className="h-9 w-20" />
+                    <Skeleton className="h-8 w-24" />
+                    <Skeleton className="h-8 w-20" />
+                    <Skeleton className="h-8 w-20" />
                   </div>
                 </TableCell>
               </TableRow>
@@ -116,16 +117,16 @@ export const CourseTable: React.FC<CourseTableProps> = ({
   }
 
   return (
-    <div className="rounded-md border overflow-hidden">
+    <div className="rounded-md border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-gray-800 shadow-sm">
       <Table>
-        <TableHeader>
+        <TableHeader className="bg-gray-50 dark:bg-gray-900">
           <TableRow>
-            <TableHead>Título</TableHead>
-            <TableHead>Descrição</TableHead>
-            <TableHead>Instrutor</TableHead>
-            <TableHead>Empresas</TableHead>
-            <TableHead>Data de Criação</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
+            <TableHead className="font-medium text-gray-600 dark:text-gray-300">Título</TableHead>
+            <TableHead className="font-medium text-gray-600 dark:text-gray-300 hidden md:table-cell">Descrição</TableHead>
+            <TableHead className="font-medium text-gray-600 dark:text-gray-300">Instrutor</TableHead>
+            <TableHead className="font-medium text-gray-600 dark:text-gray-300">Empresas</TableHead>
+            <TableHead className="font-medium text-gray-600 dark:text-gray-300 hidden md:table-cell">Data de Criação</TableHead>
+            <TableHead className="text-right font-medium text-gray-600 dark:text-gray-300">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -137,9 +138,9 @@ export const CourseTable: React.FC<CourseTableProps> = ({
             </TableRow>
           ) : (
             courses.map((course) => (
-              <TableRow key={course.id}>
-                <TableCell className="font-medium">{course.title}</TableCell>
-                <TableCell>
+              <TableRow key={course.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                <TableCell className="font-medium text-gray-900 dark:text-gray-100">{course.title}</TableCell>
+                <TableCell className="text-gray-600 dark:text-gray-300 hidden md:table-cell">
                   {course.description 
                     ? course.description.length > 80 
                       ? `${course.description.substring(0, 80)}...` 
@@ -147,46 +148,50 @@ export const CourseTable: React.FC<CourseTableProps> = ({
                     : '-'
                   }
                 </TableCell>
-                <TableCell>{course.instructor || '-'}</TableCell>
+                <TableCell className="text-gray-600 dark:text-gray-300">{course.instructor || '-'}</TableCell>
                 <TableCell>
                   <CourseCompaniesCell companies={course.companies} />
                 </TableCell>
-                <TableCell>{new Date(course.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                <TableCell className="text-gray-600 dark:text-gray-300 hidden md:table-cell">{new Date(course.created_at).toLocaleDateString('pt-BR')}</TableCell>
                 <TableCell className="text-right">
-                  <div className="flex justify-end space-x-2">
+                  <div className="flex justify-end gap-1">
                     {onViewLessons && (
                       <Button 
                         variant="outline" 
                         size="sm" 
                         onClick={() => onViewLessons(course)}
+                        className="h-8 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
                       >
                         <FileText className="h-4 w-4 mr-1" />
-                        Aulas
+                        <span className="hidden sm:inline">Aulas</span>
                       </Button>
                     )}
                     <Button 
                       variant="outline" 
                       size="sm" 
                       onClick={() => onManageCompanies(course)}
+                      className="h-8 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
                     >
                       <Building className="h-4 w-4 mr-1" />
-                      Empresas
+                      <span className="hidden sm:inline">Empresas</span>
                     </Button>
                     <Button 
                       variant="outline" 
                       size="sm" 
                       onClick={() => onEdit(course)}
+                      className="h-8 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
                     >
                       <Pencil className="h-4 w-4 mr-1" />
-                      Editar
+                      <span className="hidden sm:inline">Editar</span>
                     </Button>
                     <Button 
                       variant="destructive" 
                       size="sm"
                       onClick={() => handleDelete(course.id)}
+                      className="h-8"
                     >
                       <Trash2 className="h-4 w-4 mr-1" />
-                      Excluir
+                      <span className="hidden sm:inline">Excluir</span>
                     </Button>
                   </div>
                 </TableCell>

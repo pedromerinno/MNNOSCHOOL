@@ -38,16 +38,16 @@ const CompanyLogosCell: React.FC<{companies?: { logo: string | null, nome: strin
             key={company.nome + idx}
             src={company.logo}
             alt={company.nome}
-            className="w-7 h-7 rounded-md object-contain border"
+            className="w-7 h-7 rounded-md object-contain border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-0.5"
           />
         ) : (
-          <span key={company.nome + idx} className="rounded-md bg-gray-100 text-gray-400 flex items-center justify-center w-7 h-7 border">
+          <span key={company.nome + idx} className="rounded-md bg-gray-100 dark:bg-gray-800 text-gray-400 flex items-center justify-center w-7 h-7 border border-gray-200 dark:border-gray-700">
             <Image className="w-4 h-4" />
           </span>
         )
       )}
       {extra > 0 && (
-        <span className="ml-1 text-xs px-2 py-0.5 bg-gray-200 rounded-full text-gray-600">+{extra}</span>
+        <span className="ml-1 text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700">+{extra}</span>
       )}
     </div>
   );
@@ -80,10 +80,10 @@ export const UserTable: React.FC<UserTableProps> = ({ users, loading, onToggle }
   };
 
   return (
-    <div className="rounded-md border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-gray-800">
+    <div className="rounded-md border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-gray-800 shadow-sm">
       <Table>
-        <TableHeader>
-          <TableRow className="bg-gray-50 dark:bg-gray-900">
+        <TableHeader className="bg-gray-50 dark:bg-gray-900">
+          <TableRow>
             <TableHead className="font-medium text-gray-600 dark:text-gray-300">Nome</TableHead>
             <TableHead className="font-medium text-gray-600 dark:text-gray-300">Email</TableHead>
             <TableHead className="font-medium text-gray-600 dark:text-gray-300">Empresas</TableHead>

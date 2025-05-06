@@ -67,15 +67,6 @@ const AdminPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-0 lg:px-4 py-6">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="p-0 hover:bg-transparent ml-6 mb-4" 
-          onClick={() => window.history.back()}
-        >
-          <ArrowLeft className="h-5 w-5 text-gray-500" />
-        </Button>
-
         <SidebarProvider defaultOpen={true}>
           <div className="flex w-full min-h-[calc(100vh-120px)] rounded-lg overflow-hidden">
             <AdminSidebar 
@@ -84,9 +75,19 @@ const AdminPage = () => {
             />
             <div className="flex-1 overflow-auto">
               <div className="p-6">
-                <h1 className="text-2xl md:text-3xl font-bold dark:text-white text-gray-900 tracking-tight mb-8">
-                  Painel Administrativo
-                </h1>
+                <div className="flex items-center gap-3 mb-8">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="p-0 hover:bg-transparent" 
+                    onClick={() => window.history.back()}
+                  >
+                    <ArrowLeft className="h-5 w-5 text-gray-500" />
+                  </Button>
+                  <h1 className="text-2xl md:text-3xl font-bold dark:text-white text-gray-900 tracking-tight">
+                    Painel Administrativo
+                  </h1>
+                </div>
                 <ErrorBoundary>
                   {getActiveContent()}
                 </ErrorBoundary>
