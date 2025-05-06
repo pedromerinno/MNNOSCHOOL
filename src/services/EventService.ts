@@ -11,9 +11,11 @@ class EventService {
   private static instance: EventService;
   private listeners: Map<string, Set<EventCallback>> = new Map();
   private subscriptions: Map<object, EventSubscription[]> = new Map();
+  private isDebugEnabled: boolean = false;
 
   private constructor() {
     // Singleton
+    this.isDebugEnabled = process.env.NODE_ENV === 'development';
   }
 
   public static getInstance(): EventService {
@@ -24,12 +26,21 @@ class EventService {
   }
 
   /**
+   * Ativa/desativa logs de debug
+   */
+  public enableDebug(enable: boolean = true): void {
+    this.isDebugEnabled = enable;
+  }
+
+  /**
    * Dispara um evento customizado
    * @param eventName Nome do evento
    * @param detail Detalhes do evento (payload)
    */
   public dispatch(eventName: string, detail: any): void {
-    console.log(`[EventService] Disparando evento: ${eventName}`, detail);
+    if (this.isDebugEnabled) {
+      console.log(`[EventService] Disparando evento: ${eventName}`, detail);
+    }
 
     // Dispara o evento usando CustomEvent para compatibilidade com listeners DOM
     const event = new CustomEvent(eventName, { detail });
@@ -68,6 +79,22 @@ class EventService {
       }
       this.subscriptions.get(owner)?.push({ event: eventName, callback });
     }
+    
+    // Também configura um listener DOM para compatibilidade com código legado
+    const domListener = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      callback(customEvent.detail);
+    };
+    
+    window.addEventListener(eventName, domListener);
+    
+    // Registra o listener DOM para remoção posterior se houver owner
+    if (owner) {
+      this.subscriptions.get(owner)?.push({ 
+        event: `dom:${eventName}`, 
+        callback: domListener as any 
+      });
+    }
   }
 
   /**
@@ -83,6 +110,12 @@ class EventService {
         this.listeners.delete(eventName);
       }
     }
+    
+    // Também remove listeners DOM correspondentes
+    if (eventName.startsWith('dom:')) {
+      const actualEvent = eventName.substring(4);
+      window.removeEventListener(actualEvent, callback as any);
+    }
   }
 
   /**
@@ -93,24 +126,28 @@ class EventService {
     const subscriptions = this.subscriptions.get(owner);
     if (subscriptions) {
       subscriptions.forEach(sub => {
-        this.off(sub.event, sub.callback);
+        if (sub.event.startsWith('dom:')) {
+          const actualEvent = sub.event.substring(4);
+          window.removeEventListener(actualEvent, sub.callback as any);
+        } else {
+          this.off(sub.event, sub.callback);
+        }
       });
       this.subscriptions.delete(owner);
     }
   }
-
-  // Constantes para eventos padrão da aplicação
-  public static readonly EVENTS = {
-    COMPANY_RELATION_CHANGED: 'company-relation-changed',
-    COMPANY_SELECTED: 'company-selected',
-    COMPANY_UPDATED: 'company-updated',
-    FORCE_RELOAD_COMPANIES: 'force-reload-companies',
-    USER_PROFILE_UPDATED: 'user-profile-updated',
-    NOTIFICATION_RECEIVED: 'notification-received',
-    NOTIFICATIONS_READ: 'notifications-read'
-  };
 }
+
+// Constantes para eventos padrão da aplicação
+export const EVENTS = {
+  COMPANY_RELATION_CHANGED: 'company-relation-changed',
+  COMPANY_SELECTED: 'company-selected',
+  COMPANY_UPDATED: 'company-updated',
+  FORCE_RELOAD_COMPANIES: 'force-reload-companies',
+  USER_PROFILE_UPDATED: 'user-profile-updated',
+  NOTIFICATION_RECEIVED: 'notification-received',
+  NOTIFICATIONS_READ: 'notifications-read'
+};
 
 // Exporta a instância singleton
 export const eventService = EventService.getInstance();
-export const EVENTS = EventService.EVENTS;
