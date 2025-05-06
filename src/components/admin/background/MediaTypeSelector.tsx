@@ -1,17 +1,16 @@
-
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Camera, Video } from "lucide-react";
-
 interface MediaTypeSelectorProps {
   mediaType: "video" | "image";
   onMediaTypeChange: (value: "video" | "image") => void;
 }
-
-export const MediaTypeSelector = ({ mediaType, onMediaTypeChange }: MediaTypeSelectorProps) => {
-  return (
-    <div className="space-y-2">
-      <Label>Tipo de Background</Label>
+export const MediaTypeSelector = ({
+  mediaType,
+  onMediaTypeChange
+}: MediaTypeSelectorProps) => {
+  return <div className="space-y-2 py-0">
+      <Label className="py-0">Tipo de Background</Label>
       <Select value={mediaType} onValueChange={onMediaTypeChange}>
         <SelectTrigger>
           <SelectValue placeholder="Selecione o tipo de mídia" />
@@ -29,6 +28,5 @@ export const MediaTypeSelector = ({ mediaType, onMediaTypeChange }: MediaTypeSel
           </SelectItem>
         </SelectContent>
       </Select>
-    </div>
-  );
+    </div>;
 };

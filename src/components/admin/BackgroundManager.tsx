@@ -78,15 +78,15 @@ export const BackgroundManager = () => {
   };
   return <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium mb-2">Background da Página de Login</h3>
-        <p className="text-gray-500 dark:text-gray-400 mb-4">
+        <h3 className="text-lg font-medium mb-2 px-0 py-[10px]">Background da Página de Login</h3>
+        <p className="mb-4 text-gray-400 text-sm">
           Configure o background da página de login com uma imagem ou vídeo
         </p>
       </div>
 
       <Card>
         <CardContent className="p-6 px-[40px] py-[40px] rounded-sm">
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4 py-0">
             <MediaTypeSelector mediaType={mediaType} onMediaTypeChange={setMediaType} />
 
             <FileUpload mediaType={mediaType} onFileUpload={handleFileUpload} isUploading={isUploading} />
