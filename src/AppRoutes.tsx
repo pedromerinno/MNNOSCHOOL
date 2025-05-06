@@ -39,21 +39,96 @@ export const AppRoutes = () => {
       <Route path="/onboarding" element={<Onboarding />} />
       
       {/* Protected Routes */}
-      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-      <Route path="/courses" element={<ProtectedRoute><Courses /></ProtectedRoute>} />
-      <Route path="/courses/:courseId" element={<ProtectedRoute><CourseDetails /></ProtectedRoute>} />
-      <Route path="/lessons/:lessonId" element={<ProtectedRoute><LessonPage /></ProtectedRoute>} />
-      <Route path="/my-courses" element={<ProtectedRoute><MyCourses /></ProtectedRoute>} />
-      <Route path="/community" element={<ProtectedRoute><Community /></ProtectedRoute>} />
-      <Route path="/integration" element={<ProtectedRoute><Integration /></ProtectedRoute>} />
-      <Route path="/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
-      <Route path="/team/:userId" element={<ProtectedRoute><TeamMemberProfile /></ProtectedRoute>} />
-      <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
-      <Route path="/notes" element={<ProtectedRoute><Notes /></ProtectedRoute>} />
-      <Route path="/school" element={<ProtectedRoute><School /></ProtectedRoute>} />
-      <Route path="/access" element={<ProtectedRoute><Access /></ProtectedRoute>} />
-      <Route path="/company" element={<ProtectedRoute><CompanyPage /></ProtectedRoute>} />
-      <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+      <Route 
+        path="/dashboard" 
+        element={
+          <ProtectedRoute element={<Dashboard />} />
+        } 
+      />
+      <Route 
+        path="/courses" 
+        element={
+          <ProtectedRoute element={<Courses />} />
+        } 
+      />
+      <Route 
+        path="/courses/:courseId" 
+        element={
+          <ProtectedRoute element={<CourseDetails />} />
+        } 
+      />
+      <Route 
+        path="/lessons/:lessonId" 
+        element={
+          <ProtectedRoute element={<LessonPage />} />
+        } 
+      />
+      <Route 
+        path="/my-courses" 
+        element={
+          <ProtectedRoute element={<MyCourses />} />
+        } 
+      />
+      <Route 
+        path="/community" 
+        element={
+          <ProtectedRoute element={<Community />} />
+        } 
+      />
+      <Route 
+        path="/integration" 
+        element={
+          <ProtectedRoute element={<Integration />} />
+        } 
+      />
+      <Route 
+        path="/team" 
+        element={
+          <ProtectedRoute element={<Team />} />
+        } 
+      />
+      <Route 
+        path="/team/:userId" 
+        element={
+          <ProtectedRoute element={<TeamMemberProfile />} />
+        } 
+      />
+      <Route 
+        path="/documents" 
+        element={
+          <ProtectedRoute element={<Documents />} />
+        } 
+      />
+      <Route 
+        path="/notes" 
+        element={
+          <ProtectedRoute element={<Notes />} />
+        } 
+      />
+      <Route 
+        path="/school" 
+        element={
+          <ProtectedRoute element={<School />} />
+        } 
+      />
+      <Route 
+        path="/access" 
+        element={
+          <ProtectedRoute element={<Access />} />
+        } 
+      />
+      <Route 
+        path="/company" 
+        element={
+          <ProtectedRoute element={<CompanyPage />} />
+        } 
+      />
+      <Route 
+        path="/admin" 
+        element={
+          <ProtectedRoute element={<Admin />} />
+        } 
+      />
       
       {/* Public routes */}
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
