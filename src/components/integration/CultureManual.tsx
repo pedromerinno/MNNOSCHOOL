@@ -111,7 +111,7 @@ export const CultureManual: React.FC<CultureManualProps> = ({
               Vídeo Institucional
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-[40px] py-[40px]">
             {videoUrl ? <VideoPlayer videoUrl={videoUrl} description={videoDescription || ''} /> : <div className="text-center py-12">
                 <p className="text-gray-600 dark:text-gray-400">
                   Vídeo institucional não disponível no momento.
@@ -133,7 +133,7 @@ export const CultureManual: React.FC<CultureManualProps> = ({
           </span>
         </Button>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 py-[20px] px-[20px]">
           <input type="checkbox" id="culture-accept" checked={accepted} onChange={e => setAccepted(e.target.checked)} className="rounded border-gray-300" />
           <label htmlFor="culture-accept" className="text-sm text-gray-600 dark:text-gray-400">
             Li e estou alinhado com a cultura da empresa
