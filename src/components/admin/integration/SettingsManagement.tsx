@@ -18,9 +18,9 @@ export const SettingsManagement: React.FC = () => {
     handleFormSubmit
   } = useSettingsManagement();
   return <div className="space-y-6">
-      <div className="">
+      <div className="flex flex-col  gap-4 justify-left">
         <div>
-          
+          <h2 className="text-xl font-semibold mb-1">Configurações da Empresa</h2>
           
         </div>
         {/* Organizar seletor de empresa para ficar mais harmonico */}
