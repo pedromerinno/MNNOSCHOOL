@@ -28,34 +28,34 @@ export const CompanyTable: React.FC<CompanyTableProps> = ({
   onManageUsers
 }) => {
   return (
-    <div className="rounded-md border overflow-hidden bg-white dark:bg-gray-800 shadow-sm">
+    <div className="rounded-xl border overflow-hidden bg-white dark:bg-gray-800 shadow-sm">
       <Table>
         <TableHeader className="bg-gray-50 dark:bg-gray-900">
           <TableRow>
-            <TableHead className="w-16 font-medium text-gray-600 dark:text-gray-300">Logo</TableHead>
-            <TableHead className="font-medium text-gray-600 dark:text-gray-300">Nome</TableHead>
-            <TableHead className="font-medium text-gray-600 dark:text-gray-300 hidden md:table-cell">Frase Institucional</TableHead>
-            <TableHead className="font-medium text-gray-600 dark:text-gray-300 hidden md:table-cell">Data de Criação</TableHead>
-            <TableHead className="text-right font-medium text-gray-600 dark:text-gray-300">Ações</TableHead>
+            <TableHead className="w-16 font-semibold text-gray-700 dark:text-gray-300">Logo</TableHead>
+            <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Nome</TableHead>
+            <TableHead className="font-semibold text-gray-700 dark:text-gray-300 hidden md:table-cell">Frase Institucional</TableHead>
+            <TableHead className="font-semibold text-gray-700 dark:text-gray-300 hidden md:table-cell">Data de Criação</TableHead>
+            <TableHead className="text-right font-semibold text-gray-700 dark:text-gray-300">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {companies.length === 0 && !loading ? (
             <TableRow>
-              <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
+              <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                 Nenhuma empresa encontrada
               </TableCell>
             </TableRow>
           ) : (
             companies.map((company) => (
-              <TableRow key={company.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                <TableCell className="p-2">
+              <TableRow key={company.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                <TableCell className="p-3">
                   {company.logo ? (
-                    <div className="h-10 w-10 rounded-md border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-white dark:bg-gray-800 overflow-hidden">
+                    <div className="h-12 w-12 rounded-md border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-white dark:bg-gray-800 overflow-hidden">
                       <img 
                         src={company.logo} 
                         alt={`${company.nome} logo`} 
-                        className="h-8 w-8 object-contain"
+                        className="h-10 w-10 object-contain"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.src = "/placeholder.svg";
@@ -64,25 +64,31 @@ export const CompanyTable: React.FC<CompanyTableProps> = ({
                       />
                     </div>
                   ) : (
-                    <div className="h-10 w-10 rounded-md border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+                    <div className="h-12 w-12 rounded-md border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
                       <img 
                         src="/placeholder.svg" 
                         alt="Placeholder logo" 
-                        className="h-6 w-6 object-contain opacity-50"
+                        className="h-8 w-8 object-contain opacity-50"
                       />
                     </div>
                   )}
                 </TableCell>
                 <TableCell className="font-medium text-gray-900 dark:text-gray-100">{company.nome}</TableCell>
-                <TableCell className="text-gray-600 dark:text-gray-300 hidden md:table-cell">{company.frase_institucional || '-'}</TableCell>
-                <TableCell className="text-gray-600 dark:text-gray-300 hidden md:table-cell">{new Date(company.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                <TableCell className="text-gray-600 dark:text-gray-300 hidden md:table-cell">
+                  {company.frase_institucional && company.frase_institucional.length > 60 
+                    ? `${company.frase_institucional.substring(0, 60)}...` 
+                    : company.frase_institucional || '-'}
+                </TableCell>
+                <TableCell className="text-gray-600 dark:text-gray-300 hidden md:table-cell">
+                  {new Date(company.created_at).toLocaleDateString('pt-BR')}
+                </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Button 
                       variant="outline" 
                       size="sm" 
                       onClick={() => onManageUsers(company)}
-                      className="h-8 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                      className="h-9 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
                       <Users className="h-4 w-4 mr-1" />
                       <span className="hidden sm:inline">Usuários</span>
@@ -91,7 +97,7 @@ export const CompanyTable: React.FC<CompanyTableProps> = ({
                       variant="outline" 
                       size="sm" 
                       onClick={() => onEdit(company)}
-                      className="h-8 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                      className="h-9 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
                       <Pencil className="h-4 w-4 mr-1" />
                       <span className="hidden sm:inline">Editar</span>
@@ -100,7 +106,7 @@ export const CompanyTable: React.FC<CompanyTableProps> = ({
                       variant="destructive" 
                       size="sm"
                       onClick={() => onDelete(company.id)}
-                      className="h-8"
+                      className="h-9"
                     >
                       <Trash2 className="h-4 w-4 mr-1" />
                       <span className="hidden sm:inline">Excluir</span>
