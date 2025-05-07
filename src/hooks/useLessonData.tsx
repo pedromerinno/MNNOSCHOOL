@@ -1,7 +1,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useLessonFetch } from './lesson/useLessonFetch';
-import { useLessonNavigation } from './lesson/useLessonNavigation';
 import { useLessonProgress } from './lesson/useLessonProgress';
 import { useLessonLikes } from './lesson/useLessonLikes';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -12,7 +11,6 @@ export const useLessonData = (lessonId: string | undefined) => {
   
   // Use the currentLessonId in hooks to ensure they update when the lesson changes
   const { lesson, loading, error, refetch } = useLessonFetch(currentLessonId);
-  const { previousLesson, nextLesson, navigateToLesson } = useLessonNavigation(currentLessonId, lesson?.course_id);
   const { completed, markLessonCompleted } = useLessonProgress(currentLessonId, lesson?.course_id, lesson?.completed);
   const { likes, userLiked, toggleLikeLesson } = useLessonLikes(lesson?.likes || 0, lesson?.user_liked || false);
   const navigate = useNavigate();
@@ -59,8 +57,6 @@ export const useLessonData = (lessonId: string | undefined) => {
     loading, 
     error, 
     markLessonCompleted,
-    previousLesson,
-    nextLesson,
     navigateToLesson: handleNavigateToLesson,
     likes,
     userLiked,

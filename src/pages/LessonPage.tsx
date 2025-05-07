@@ -1,24 +1,21 @@
 
 import React, { useEffect, useState } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useLessonData } from '@/hooks/useLessonData';
 import { useAutoplayNavigation } from '@/hooks/lesson/useAutoplayNavigation';
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { LessonHeader } from '@/components/lessons/LessonHeader';
 import { LessonContent } from '@/components/lessons/LessonContent';
 import { LessonActions } from '@/components/courses/LessonActions';
-import { LessonNavigation } from '@/components/courses/LessonNavigation';
 import { LessonComments } from '@/components/courses/LessonComments';
 import { LessonSkeleton } from '@/components/lessons/LessonSkeleton';
 import { LessonNotFound } from '@/components/lessons/LessonNotFound';
 import { CourseDescription } from '@/components/courses/CourseDescription';
 import { LessonPlaylist } from '@/components/lessons/LessonPlaylist';
-import { toast } from 'sonner';
 
 const LessonPage = () => {
   const { courseId, lessonId } = useParams<{ courseId: string, lessonId: string }>();
   const [localLoading, setLocalLoading] = useState(false);
-  const location = useLocation();
   
   // Use useLessonData with URL parameter
   const { 
@@ -26,8 +23,6 @@ const LessonPage = () => {
     loading, 
     error,
     markLessonCompleted, 
-    previousLesson, 
-    nextLesson, 
     navigateToLesson,
     likes,
     userLiked,
@@ -40,7 +35,7 @@ const LessonPage = () => {
     handleVideoEnd,
     setShowAutoplayPrompt,
     cancelAutoplay
-  } = useAutoplayNavigation(nextLesson, courseId);
+  } = useAutoplayNavigation(null, courseId); // Passing null to disable autoplay functionality
 
   // Handle scroll to top when changing lessons
   useEffect(() => {
@@ -77,20 +72,21 @@ const LessonPage = () => {
   }
 
   return (
-    <DashboardLayout>
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <LessonHeader lesson={lesson} courseId={courseId} />
+    <DashboardLayout fullWidth>
+      <div className="mx-auto px-0 py-6 max-w-full">
+        <div className="px-6">
+          <LessonHeader lesson={lesson} courseId={courseId} />
+        </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div className="lg:col-span-3 space-y-8">
             <LessonContent 
               lesson={lesson}
               onVideoEnd={handleVideoEnd}
-              showAutoplayPrompt={showAutoplayPrompt}
-              nextLessonTitle={nextLesson?.title}
+              showAutoplayPrompt={false}
             />
             
-            <div className="max-w-full">
+            <div className="px-6 max-w-full">
               <CourseDescription description={lesson.description || null} />
               
               <LessonActions
@@ -101,19 +97,13 @@ const LessonPage = () => {
                 onToggleLike={toggleLikeLesson}
               />
               
-              <LessonNavigation
-                previousLesson={previousLesson}
-                nextLesson={nextLesson}
-                onNavigate={handleLessonSelect}
-              />
-              
               <div className="mt-8">
                 <LessonComments lessonId={lesson.id} />
               </div>
             </div>
           </div>
 
-          <div className="lg:sticky lg:top-4 lg:self-start">
+          <div className="lg:sticky lg:top-4 lg:self-start px-6 lg:px-0">
             <LessonPlaylist
               lessons={lesson.course_lessons || []}
               currentLessonId={lesson.id}

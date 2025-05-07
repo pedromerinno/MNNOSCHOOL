@@ -41,6 +41,7 @@ export const LessonVideo: React.FC<LessonVideoProps> = ({
             }
           }
         } catch (e) {
+          // Ignore parsing errors for non-YouTube messages
         }
       }
     };
@@ -74,24 +75,15 @@ export const LessonVideo: React.FC<LessonVideoProps> = ({
   const isYouTube = videoUrl && (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be'));
   const isLoom = videoUrl && videoUrl.includes('loom.com');
   const embedUrl = videoUrl ? getEmbedUrl(videoUrl) : null;
-  
-  // Log URL information for debugging
-  useEffect(() => {
-    if (videoUrl) {
-      console.log('Original video URL:', videoUrl);
-      console.log('Generated embed URL:', embedUrl);
-      console.log('Detected video type:', isYouTube ? 'YouTube' : isLoom ? 'Loom' : 'Other');
-    }
-  }, [videoUrl, embedUrl, isYouTube, isLoom]);
 
   return (
     <div className="relative w-full">
-      <div className="aspect-video bg-muted rounded-lg overflow-hidden relative w-full max-w-[1200px] mx-auto">
+      <div className="aspect-video bg-black rounded-none overflow-hidden relative w-full max-w-full mx-auto">
         {videoUrl ? (
           <>
             {videoLoading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-muted">
-                <div className="animate-spin h-8 w-8 border-t-2 border-primary border-r-2 rounded-full"></div>
+              <div className="absolute inset-0 flex items-center justify-center bg-black">
+                <div className="animate-spin h-12 w-12 border-t-2 border-primary border-r-2 rounded-full"></div>
               </div>
             )}
             
