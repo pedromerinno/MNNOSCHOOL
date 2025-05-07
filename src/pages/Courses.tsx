@@ -62,7 +62,7 @@ const Courses = () => {
   
   if (companyLoading || !selectedCompany) {
     return <DashboardLayout>
-        <div className="container mx-auto max-w-screen-2xl space-y-12 px-4 py-6">
+        <div className="w-full max-w-screen-2xl mx-auto px-4 py-6 space-y-12">
           <div className="w-full h-64">
             <Skeleton className="w-full h-full rounded-xl" />
           </div>
@@ -80,7 +80,7 @@ const Courses = () => {
   const hasNoCourses = !allCompanyCourses || allCompanyCourses.length === 0;
   
   return <DashboardLayout>
-      <div className="container mx-auto max-w-screen-2xl space-y-12 px-4 py-6">
+      <div className="w-full max-w-screen-2xl mx-auto px-4 py-6 space-y-12">
         {/* Header with Admin & Refresh Actions */}
         <div className="flex justify-end gap-2">
           {isAdmin && (
