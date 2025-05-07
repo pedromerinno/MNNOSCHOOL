@@ -12,6 +12,8 @@ import { LessonSkeleton } from '@/components/lessons/LessonSkeleton';
 import { LessonNotFound } from '@/components/lessons/LessonNotFound';
 import { CourseDescription } from '@/components/courses/CourseDescription';
 import { LessonPlaylist } from '@/components/lessons/LessonPlaylist';
+import { Button } from "@/components/ui/button";
+import { ChevronLeft } from "lucide-react";
 
 const LessonPage = () => {
   const { courseId, lessonId } = useParams<{ courseId: string, lessonId: string }>();
@@ -76,13 +78,28 @@ const LessonPage = () => {
       <div className="flex flex-col lg:flex-row w-full min-h-[calc(100vh-80px)]">
         {/* Sidebar moved to left side and made full height */}
         <div className="lg:w-1/4 lg:min-h-full border-r border-border">
-          <div className="sticky top-4 p-4">
-            <LessonPlaylist
-              lessons={lesson.course_lessons || []}
-              currentLessonId={lesson.id}
-              onLessonSelect={handleLessonSelect}
-              loading={loading}
-            />
+          <div className="sticky top-0 pt-6 h-full max-h-screen overflow-y-auto pb-6">
+            {/* Back to course button moved to top of sidebar */}
+            <div className="px-4 mb-4">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full justify-start" 
+                onClick={() => window.location.href = `/courses/${courseId}`}
+              >
+                <ChevronLeft className="mr-1 h-4 w-4" />
+                Voltar para o Curso
+              </Button>
+            </div>
+            
+            <div className="px-4">
+              <LessonPlaylist
+                lessons={lesson.course_lessons || []}
+                currentLessonId={lesson.id}
+                onLessonSelect={handleLessonSelect}
+                loading={loading}
+              />
+            </div>
           </div>
         </div>
         
