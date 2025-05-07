@@ -77,8 +77,8 @@ export const LessonVideo: React.FC<LessonVideoProps> = ({
   const embedUrl = videoUrl ? getEmbedUrl(videoUrl) : null;
 
   return (
-    <div className="relative w-full">
-      <div className="aspect-video bg-black rounded-none overflow-hidden relative w-full max-w-full mx-auto">
+    <div className="w-full">
+      <div className="aspect-video bg-black overflow-hidden relative w-full max-w-full mx-auto">
         {videoUrl ? (
           <>
             {videoLoading && (

@@ -73,43 +73,46 @@ const LessonPage = () => {
 
   return (
     <DashboardLayout fullWidth>
-      <div className="mx-auto px-0 py-6 max-w-full">
-        <div className="px-6">
-          <LessonHeader lesson={lesson} courseId={courseId} />
-        </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          <div className="lg:col-span-3 space-y-8">
-            <LessonContent 
-              lesson={lesson}
-              onVideoEnd={handleVideoEnd}
-              showAutoplayPrompt={false}
-            />
-            
-            <div className="px-6 max-w-full">
-              <CourseDescription description={lesson.description || null} />
-              
-              <LessonActions
-                completed={completed}
-                onMarkCompleted={markLessonCompleted}
-                likes={likes}
-                userLiked={userLiked}
-                onToggleLike={toggleLikeLesson}
-              />
-              
-              <div className="mt-8">
-                <LessonComments lessonId={lesson.id} />
-              </div>
-            </div>
-          </div>
-
-          <div className="lg:sticky lg:top-4 lg:self-start px-6 lg:px-0">
+      <div className="flex flex-col lg:flex-row w-full min-h-[calc(100vh-80px)]">
+        {/* Sidebar moved to left side and made full height */}
+        <div className="lg:w-1/4 lg:min-h-full border-r border-border">
+          <div className="sticky top-4 p-4">
             <LessonPlaylist
               lessons={lesson.course_lessons || []}
               currentLessonId={lesson.id}
               onLessonSelect={handleLessonSelect}
               loading={loading}
             />
+          </div>
+        </div>
+        
+        {/* Content area moved to right side with padding */}
+        <div className="flex-1 p-6 lg:px-8">
+          <LessonHeader lesson={lesson} courseId={courseId} />
+          
+          <div className="mt-6 space-y-8">
+            {/* Added padding to video container */}
+            <div className="rounded-lg overflow-hidden">
+              <LessonContent 
+                lesson={lesson}
+                onVideoEnd={handleVideoEnd}
+                showAutoplayPrompt={false}
+              />
+            </div>
+            
+            <CourseDescription description={lesson.description || null} />
+            
+            <LessonActions
+              completed={completed}
+              onMarkCompleted={markLessonCompleted}
+              likes={likes}
+              userLiked={userLiked}
+              onToggleLike={toggleLikeLesson}
+            />
+            
+            <div className="mt-8">
+              <LessonComments lessonId={lesson.id} />
+            </div>
           </div>
         </div>
       </div>

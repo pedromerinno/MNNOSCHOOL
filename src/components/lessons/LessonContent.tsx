@@ -47,7 +47,7 @@ export const LessonContent: React.FC<LessonContentProps> = ({
   };
 
   return (
-    <Card className="mb-12 p-0 border-0 border-border overflow-hidden w-full max-w-full shadow-none">
+    <Card className="border rounded-lg overflow-hidden shadow-sm">
       {renderLessonContent()}
     </Card>
   );
