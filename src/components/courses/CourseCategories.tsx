@@ -6,7 +6,7 @@ import {
   PopoverTrigger 
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { ChevronRight } from "lucide-react";
+import { Plus } from "lucide-react";
 
 const bgColors = [
   'bg-blue-100',
@@ -49,10 +49,10 @@ export const CourseCategories: React.FC<CourseCategoriesProps> = ({
 
       const containerWidth = containerRef.current.offsetWidth;
       const categoryWidth = 140; // Estimated average width including margins
-      const seeMoreButtonWidth = 180; // Width of the "See more" button
+      const plusButtonWidth = 50; // Width of the "+" button
       
-      // Calculate max items that can fit in one row while leaving space for "See more" button
-      const maxItems = Math.floor((containerWidth - seeMoreButtonWidth) / categoryWidth);
+      // Calculate max items that can fit in one row while leaving space for "+" button
+      const maxItems = Math.floor((containerWidth - plusButtonWidth) / categoryWidth);
       
       // Ensure we display at least 1 category (plus the "All" category)
       const itemsToShow = Math.max(1, Math.min(maxItems, categories.length - 1));
@@ -70,7 +70,7 @@ export const CourseCategories: React.FC<CourseCategoriesProps> = ({
   }, [categories.length]);
 
   return (
-    <div ref={containerRef} className="flex flex-wrap items-center gap-3">
+    <div ref={containerRef} className="flex items-center gap-3 flex-nowrap overflow-x-auto">
       {/* Visible categories */}
       {categories.filter(category => visibleCategories.includes(category.id)).map((category, index) => {
         const isActive = activeCategory === category.id;
@@ -90,7 +90,7 @@ export const CourseCategories: React.FC<CourseCategoriesProps> = ({
         return (
           <div 
             key={category.id} 
-            className={`inline-flex items-center gap-3 px-6 py-3 cursor-pointer transition-all rounded-3xl
+            className={`inline-flex items-center gap-3 px-6 py-3 cursor-pointer transition-all rounded-3xl shrink-0
               ${isActive 
                 ? 'bg-black text-white' 
                 : `${randomBg} ${textColorMap[randomBg]} hover:opacity-80`
@@ -102,16 +102,16 @@ export const CourseCategories: React.FC<CourseCategoriesProps> = ({
         );
       })}
 
-      {/* See more button, only show if there are more categories than we can display */}
+      {/* "+" button, only show if there are more categories than we can display */}
       {categories.length > visibleCategories.length && (
         <Popover open={isOpen} onOpenChange={setIsOpen}>
           <PopoverTrigger asChild>
             <Button 
               variant="outline" 
-              className="rounded-3xl inline-flex items-center gap-2 px-5 py-6 h-auto"
+              className="rounded-full flex-shrink-0 w-10 h-10 p-0"
+              aria-label="Mais categorias"
             >
-              Ver mais categorias
-              <ChevronRight className="h-4 w-4" />
+              <Plus className="h-5 w-5" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-[400px] max-h-[400px] overflow-y-auto p-4">

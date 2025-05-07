@@ -24,7 +24,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
 
   // Loading state with Skeleton UI
   if (loading) {
-    return <div className="w-full h-[500px] rounded-2xl overflow-hidden relative">
+    return <div className="w-full h-[600px] rounded-2xl overflow-hidden relative">
         <Skeleton className="w-full h-full absolute inset-0" />
         <div className="absolute inset-0 p-8 flex flex-col justify-end">
           <Skeleton className="w-24 h-8 mb-4" />
@@ -43,7 +43,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
 
   // Empty state with better messaging and button
   if (!courses || courses.length === 0) {
-    return <div className="w-full h-[500px] rounded-2xl bg-gray-100 dark:bg-gray-800 flex flex-col items-center justify-center p-8 text-center">
+    return <div className="w-full h-[600px] rounded-2xl bg-gray-100 dark:bg-gray-800 flex flex-col items-center justify-center p-8 text-center">
         <h3 className="text-2xl font-semibold mb-3 text-gray-900 dark:text-gray-100">
           Nenhum curso em destaque disponível
         </h3>
@@ -69,7 +69,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
         <CarouselContent className="flex -ml-4">
           {courses.map(course => (
             <CarouselItem key={course.id} className="basis-full md:basis-[80%] lg:basis-[70%] pl-4 transition-opacity duration-300">
-              <div className="relative h-[500px] rounded-2xl overflow-hidden cursor-pointer group">
+              <div className="relative h-[600px] rounded-2xl overflow-hidden cursor-pointer group">
                 <img 
                   src={course.image_url || "https://source.unsplash.com/random"}
                   alt={course.title}
