@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { CourseCarousel } from "@/components/courses/CourseCarousel";
@@ -12,7 +11,6 @@ import { CoursesGrid } from "@/components/courses/CoursesGrid";
 import { CoursesLoadingSkeleton } from "@/components/courses/CoursesLoadingSkeleton";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
-
 const Courses = () => {
   const {
     selectedCompany,
@@ -32,18 +30,16 @@ const Courses = () => {
   const [showContent, setShowContent] = useState(false);
   const [isNewCourseDialogOpen, setIsNewCourseDialogOpen] = useState(false);
   const isAdmin = user?.is_admin || user?.super_admin;
-  
   useEffect(() => {
     if (!companyLoading && selectedCompany && isDataReady) {
       setShowContent(true);
     }
   }, [companyLoading, selectedCompany, isDataReady]);
-  
+
   // Auto-refresh data when component mounts
   useEffect(() => {
     refreshCourses();
   }, [refreshCourses]);
-  
   const availableCategories = React.useMemo(() => {
     if (!allCompanyCourses) return [];
     const categories = new Set<string>();
@@ -52,12 +48,10 @@ const Courses = () => {
     });
     return Array.from(categories);
   }, [allCompanyCourses]);
-  
   const filteredCourses = allCompanyCourses?.filter(course => {
     if (activeCategory === "all") return true;
     return course.tags?.includes(activeCategory);
   });
-  
   if (companyLoading || !selectedCompany) {
     return <DashboardLayout>
         <div className="w-full max-w-screen-2xl mx-auto px-4 py-6 space-y-12">
@@ -74,74 +68,39 @@ const Courses = () => {
         </div>
       </DashboardLayout>;
   }
-  
   const hasNoCourses = !allCompanyCourses || allCompanyCourses.length === 0;
-  
   return <DashboardLayout fullWidth>
       {/* Header with Admin Actions */}
-      <div className="w-full max-w-screen-2xl mx-auto px-4 py-6">
-        <div className="flex justify-end gap-2">
-          {isAdmin && (
-            <Button 
-              onClick={() => setIsNewCourseDialogOpen(true)}
-              className="gap-2"
-            >
-              <PlusCircle className="h-4 w-4" />
-              Novo Curso
-            </Button>
-          )}
-        </div>
-      </div>
+      
 
       {/* Full width featured courses section */}
-      {loading ? (
-        <div className="w-full px-4 py-6">
+      {loading ? <div className="w-full px-4 py-6">
           <div className="w-full h-64">
             <Skeleton className="w-full h-full rounded-xl" />
           </div>
-        </div>
-      ) : hasNoCourses ? (
-        <div className="w-full max-w-screen-2xl mx-auto px-4">
-          <EmptyCoursesState 
-            companyName={selectedCompany.nome} 
-            isAdmin={isAdmin} 
-            onCreateCourse={() => setIsNewCourseDialogOpen(true)} 
-          />
-        </div>
-      ) : (
-        <div className="w-full px-0">
+        </div> : hasNoCourses ? <div className="w-full max-w-screen-2xl mx-auto px-4">
+          <EmptyCoursesState companyName={selectedCompany.nome} isAdmin={isAdmin} onCreateCourse={() => setIsNewCourseDialogOpen(true)} />
+        </div> : <div className="w-full px-0">
           <CourseCarousel courses={featuredCourses} loading={loading} />
-        </div>
-      )}
+        </div>}
       
       {/* Centered content with smaller width */}
-      {!loading && !hasNoCourses && (
-        <div className="w-full max-w-screen-xl mx-auto px-4 py-10 space-y-12">
+      {!loading && !hasNoCourses && <div className="w-full max-w-screen-xl mx-auto space-y-12 py-0 px-0">
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Categorias</h2>
-            <CourseCategories 
-              activeCategory={activeCategory} 
-              onCategoryChange={setActiveCategory} 
-              availableCategories={availableCategories} 
-            />
+            <h2 className="text-xl font-semibold py-0">Categorias</h2>
+            <CourseCategories activeCategory={activeCategory} onCategoryChange={setActiveCategory} availableCategories={availableCategories} />
           </div>
           
           <div className="space-y-8">
             <div className="space-y-8">
               <h2 className="text-xl font-semibold">Todos os cursos</h2>
               
-              {allCoursesLoading ? (
-                <CoursesLoadingSkeleton />
-              ) : (
-                <CoursesGrid courses={filteredCourses} />
-              )}
+              {allCoursesLoading ? <CoursesLoadingSkeleton /> : <CoursesGrid courses={filteredCourses} />}
             </div>
           </div>
-        </div>
-      )}
+        </div>}
 
       <NewCourseDialog open={isNewCourseDialogOpen} onOpenChange={setIsNewCourseDialogOpen} />
     </DashboardLayout>;
 };
-
 export default Courses;
