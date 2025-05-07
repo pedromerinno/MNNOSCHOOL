@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { CourseCarousel } from "@/components/courses/CourseCarousel";
@@ -79,9 +78,9 @@ const Courses = () => {
   
   const hasNoCourses = !allCompanyCourses || allCompanyCourses.length === 0;
   
-  return <DashboardLayout>
-      <div className="w-full max-w-screen-2xl mx-auto px-4 py-6 space-y-12">
-        {/* Header with Admin & Refresh Actions */}
+  return <DashboardLayout fullWidth>
+      {/* Header with Admin & Refresh Actions */}
+      <div className="w-full max-w-screen-2xl mx-auto px-4 py-6">
         <div className="flex justify-end gap-2">
           {isAdmin && (
             <Button 
@@ -102,39 +101,54 @@ const Courses = () => {
             Atualizar
           </Button>
         </div>
-
-        {loading ? <>
-            <div className="w-full h-64">
-              <Skeleton className="w-full h-full rounded-xl" />
-            </div>
-            <div className="space-y-4">
-              <Skeleton className="h-8 w-40" />
-              <div className="flex gap-2">
-                {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-10 w-24 rounded-full" />)}
-              </div>
-            </div>
-            <CoursesLoadingSkeleton />
-          </> : hasNoCourses ? <EmptyCoursesState companyName={selectedCompany.nome} isAdmin={isAdmin} onCreateCourse={() => setIsNewCourseDialogOpen(true)} /> : <>
-            <CourseCarousel courses={featuredCourses} loading={loading} />
-            
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold">Categorias</h2>
-              <CourseCategories 
-                activeCategory={activeCategory} 
-                onCategoryChange={setActiveCategory} 
-                availableCategories={availableCategories} 
-              />
-            </div>
-            
-            <div className="space-y-8">
-              <div className="space-y-8">
-                <h2 className="text-xl font-semibold">Todos os cursos</h2>
-                
-                {allCoursesLoading ? <CoursesLoadingSkeleton /> : <CoursesGrid courses={filteredCourses} />}
-              </div>
-            </div>
-          </>}
       </div>
+
+      {/* Full width featured courses section */}
+      {loading ? (
+        <div className="w-full px-4 py-6">
+          <div className="w-full h-64">
+            <Skeleton className="w-full h-full rounded-xl" />
+          </div>
+        </div>
+      ) : hasNoCourses ? (
+        <div className="w-full max-w-screen-2xl mx-auto px-4">
+          <EmptyCoursesState 
+            companyName={selectedCompany.nome} 
+            isAdmin={isAdmin} 
+            onCreateCourse={() => setIsNewCourseDialogOpen(true)} 
+          />
+        </div>
+      ) : (
+        <div className="w-full px-0">
+          <CourseCarousel courses={featuredCourses} loading={loading} />
+        </div>
+      )}
+      
+      {/* Centered content with smaller width */}
+      {!loading && !hasNoCourses && (
+        <div className="w-full max-w-screen-xl mx-auto px-4 py-10 space-y-12">
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">Categorias</h2>
+            <CourseCategories 
+              activeCategory={activeCategory} 
+              onCategoryChange={setActiveCategory} 
+              availableCategories={availableCategories} 
+            />
+          </div>
+          
+          <div className="space-y-8">
+            <div className="space-y-8">
+              <h2 className="text-xl font-semibold">Todos os cursos</h2>
+              
+              {allCoursesLoading ? (
+                <CoursesLoadingSkeleton />
+              ) : (
+                <CoursesGrid courses={filteredCourses} />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <NewCourseDialog open={isNewCourseDialogOpen} onOpenChange={setIsNewCourseDialogOpen} />
     </DashboardLayout>;
