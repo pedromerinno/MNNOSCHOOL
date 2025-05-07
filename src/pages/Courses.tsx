@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { CourseCarousel } from "@/components/courses/CourseCarousel";
@@ -10,7 +11,7 @@ import { EmptyCoursesState } from "@/components/courses/EmptyCoursesState";
 import { CoursesGrid } from "@/components/courses/CoursesGrid";
 import { CoursesLoadingSkeleton } from "@/components/courses/CoursesLoadingSkeleton";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, RefreshCw } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 
 const Courses = () => {
   const {
@@ -30,7 +31,6 @@ const Courses = () => {
   const [activeCategory, setActiveCategory] = useState("all");
   const [showContent, setShowContent] = useState(false);
   const [isNewCourseDialogOpen, setIsNewCourseDialogOpen] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const isAdmin = user?.is_admin || user?.super_admin;
   
   useEffect(() => {
@@ -39,11 +39,10 @@ const Courses = () => {
     }
   }, [companyLoading, selectedCompany, isDataReady]);
   
-  const handleRefresh = () => {
-    setIsRefreshing(true);
+  // Auto-refresh data when component mounts
+  useEffect(() => {
     refreshCourses();
-    setTimeout(() => setIsRefreshing(false), 1000);
-  };
+  }, [refreshCourses]);
   
   const availableCategories = React.useMemo(() => {
     if (!allCompanyCourses) return [];
@@ -79,7 +78,7 @@ const Courses = () => {
   const hasNoCourses = !allCompanyCourses || allCompanyCourses.length === 0;
   
   return <DashboardLayout fullWidth>
-      {/* Header with Admin & Refresh Actions */}
+      {/* Header with Admin Actions */}
       <div className="w-full max-w-screen-2xl mx-auto px-4 py-6">
         <div className="flex justify-end gap-2">
           {isAdmin && (
@@ -91,15 +90,6 @@ const Courses = () => {
               Novo Curso
             </Button>
           )}
-          <Button 
-            variant="outline" 
-            onClick={handleRefresh} 
-            disabled={isRefreshing}
-            className="gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            Atualizar
-          </Button>
         </div>
       </div>
 

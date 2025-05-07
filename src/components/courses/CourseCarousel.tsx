@@ -1,28 +1,26 @@
+
 import React from "react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Play, Plus } from "lucide-react";
+import { Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useCompanies } from "@/hooks/useCompanies";
 import { CompanyThemedBadge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useAuth } from "@/contexts/AuthContext";
+
 interface CourseCarouselProps {
   courses: any[];
   loading: boolean;
 }
+
 export const CourseCarousel: React.FC<CourseCarouselProps> = ({
   courses = [],
   loading
 }) => {
   const navigate = useNavigate();
-  const {
-    selectedCompany
-  } = useCompanies();
-  const {
-    user
-  } = useAuth();
+  const { selectedCompany } = useCompanies();
+  const { user } = useAuth();
 
   // Loading state with Skeleton UI
   if (loading) {
@@ -53,47 +51,80 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
           Esta empresa ainda não possui cursos em destaque ou você não tem acesso a eles.
         </p>
         {user?.is_admin && <Button onClick={() => navigate('/admin/courses')} className="bg-primary hover:bg-primary/90">
-            <Plus className="w-4 h-4 mr-2" />
             Cadastrar Novo Curso
           </Button>}
       </div>;
   }
 
-  // Normal carousel with courses
-  return <div className="w-full relative">
-      <Carousel>
-        <CarouselContent>
-          {courses.map(course => <CarouselItem key={course.id}>
-              <div className="relative h-[500px] rounded-2xl overflow-hidden">
-                <img src={course.image_url || "https://source.unsplash.com/random"} alt={course.title} className="w-full h-full object-cover" />
+  // Normal carousel with courses - modified to show peeks of adjacent slides
+  return (
+    <div className="w-full relative overflow-hidden py-8">
+      <Carousel
+        opts={{
+          align: "center",
+          loop: true,
+        }}
+        className="mx-auto"
+      >
+        <CarouselContent className="flex -ml-4">
+          {courses.map(course => (
+            <CarouselItem key={course.id} className="basis-full md:basis-[80%] lg:basis-[70%] pl-4 transition-opacity duration-300">
+              <div className="relative h-[500px] rounded-2xl overflow-hidden cursor-pointer group">
+                <img 
+                  src={course.image_url || "https://source.unsplash.com/random"}
+                  alt={course.title}
+                  className="w-full h-full object-cover"
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent">
                   {/* Company Logo */}
-                  {selectedCompany?.logo ? <div className="absolute top-8 left-8">
+                  {selectedCompany?.logo ? (
+                    <div className="absolute top-8 left-8">
                       <div className="w-12 h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center p-1">
-                        <img src={selectedCompany.logo} alt={selectedCompany.nome} className="w-full h-full object-cover rounded-full" onError={e => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = "/placeholder.svg";
-                  }} />
+                        <img 
+                          src={selectedCompany.logo} 
+                          alt={selectedCompany.nome} 
+                          className="w-full h-full object-cover rounded-full"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = "/placeholder.svg";
+                          }}
+                        />
                       </div>
-                    </div> : selectedCompany?.nome && <div className="absolute top-8 left-8">
-                      <div className="w-12 h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
-                        <span className="text-xl font-bold text-white">
-                          {selectedCompany.nome.charAt(0).toUpperCase()}
-                        </span>
+                    </div>
+                  ) : (
+                    selectedCompany?.nome && (
+                      <div className="absolute top-8 left-8">
+                        <div className="w-12 h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
+                          <span className="text-xl font-bold text-white">
+                            {selectedCompany.nome.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
                       </div>
-                    </div>}
+                    )
+                  )}
                   
                   <div className="absolute bottom-0 left-0 right-0 p-8 py-[40px] px-[40px]">
                     <div className="flex justify-between items-end">
                       <div className="space-y-4 max-w-xl">
                         <div>
                           <div className="flex gap-2 mb-4">
-                            {course.tags?.slice(0, 3).map((tag: string, index: number) => <CompanyThemedBadge key={index} variant="outline" className="bg-transparent text-white border-white/40 px-4 py-1.5">
+                            {course.tags?.slice(0, 3).map((tag: string, index: number) => (
+                              <CompanyThemedBadge 
+                                key={index} 
+                                variant="outline" 
+                                className="bg-transparent text-white border-white/40 px-4 py-1.5"
+                              >
                                 {tag}
-                              </CompanyThemedBadge>)}
-                            {course.tags && course.tags.length > 3 && <CompanyThemedBadge variant="outline" className="bg-transparent text-white border-white/40 px-4 py-1.5">
+                              </CompanyThemedBadge>
+                            ))}
+                            {course.tags && course.tags.length > 3 && (
+                              <CompanyThemedBadge 
+                                variant="outline" 
+                                className="bg-transparent text-white border-white/40 px-4 py-1.5"
+                              >
                                 +{course.tags.length - 3}
-                              </CompanyThemedBadge>}
+                              </CompanyThemedBadge>
+                            )}
                           </div>
                           <h2 className="text-4xl font-bold text-white mt-2">
                             {course.title}
@@ -103,7 +134,10 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
                           {course.description}
                         </p>
                       </div>
-                      <Button onClick={() => navigate(`/courses/${course.id}`)} className="bg-white text-black hover:bg-gray-100 rounded-2xl px-[20px] py-[22px]">
+                      <Button 
+                        onClick={() => navigate(`/courses/${course.id}`)} 
+                        className="bg-white text-black hover:bg-gray-100 rounded-2xl px-[20px] py-[22px]"
+                      >
                         Assistir
                         <Play className="w-4 h-4 ml-2" />
                       </Button>
@@ -111,12 +145,17 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
                   </div>
                 </div>
               </div>
-            </CarouselItem>)}
+            </CarouselItem>
+          ))}
         </CarouselContent>
-        {courses.length > 1 && <>
-            <CarouselPrevious className="absolute left-[-20px] md:left-[-50px] top-1/2 -translate-y-1/2" />
-            <CarouselNext className="absolute right-[-20px] md:right-[-50px] top-1/2 -translate-y-1/2" />
-          </>}
+        
+        {courses.length > 1 && (
+          <>
+            <CarouselPrevious className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2" />
+            <CarouselNext className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2" />
+          </>
+        )}
       </Carousel>
-    </div>;
+    </div>
+  );
 };
