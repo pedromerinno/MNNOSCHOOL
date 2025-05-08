@@ -135,15 +135,15 @@ export const NotificationsWidget = memo(() => {
               {isAdmin && <Button variant="outline" size="sm" onClick={() => setDialogOpen(true)} className="px-[20px] py-[25px] bg-zinc-950 hover:bg-zinc-800 text-zinc-50 rounded-full my-[20px]">
                   Criar aviso
                 </Button>}
-            </div> : <div className="px-[50px] py-0">
+            </div> : <div className="px-[50px] py-0 flex flex-col items-center text-center">
               <span className="inline-block px-6 py-1.5 rounded-full bg-amber-100 dark:bg-[#2C2C2C] text-yellow-700 dark:text-amber-100 text-xs font-semibold mb-4">
                 {currentNotice.type.charAt(0).toUpperCase() + currentNotice.type.slice(1)}
               </span>
               <h4 className="text-lg font-bold mb-2 dark:text-white">{currentNotice.title}</h4>
-              <p className="text-base text-gray-800 dark:text-gray-300 mb-5 line-clamp-3">
+              <p className="text-base text-gray-800 dark:text-gray-300 mb-5 line-clamp-2 max-w-xs mx-auto">
                 {currentNotice.content}
               </p>
-              <div className="flex items-center p-3 rounded-lg space-y-1 bg-amber-100/0">
+              <div className="flex items-center justify-center p-3 rounded-lg space-y-1 bg-amber-100/0">
                 <div className="flex items-center">
                   {currentNotice.author?.avatar ? <img src={currentNotice.author.avatar} alt="Autor do aviso" className="h-6 w-6 rounded-full mr-3 object-cover" loading="lazy" onError={e => {
                 (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMiIgZmlsbD0iI2UyZThmMCIvPjxwYXRoIGQ9Ik04IDhoOHY4SDh6IiBmaWxsPSIjOTRhM2IzIi8+PC9zdmc+';
