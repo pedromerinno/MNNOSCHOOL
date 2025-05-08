@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BriefcaseBusiness, User } from "lucide-react";
 import { UserProfile } from "@/types/user";
 import { UserRoleProfile } from "./UserRoleProfile";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface UserRoleProps {
   role: {
@@ -18,15 +19,35 @@ interface UserRoleProps {
 }
 
 export const UserRole: React.FC<UserRoleProps> = ({ role, companyColor, userProfile }) => {
+  // Function to get user's initials for avatar fallback
+  const getInitials = (name: string | null): string => {
+    if (!name) return "U";
+    return name
+      .split(" ")
+      .map(part => part[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2);
+  };
+  
   return (
     <div className="space-y-8">
       {/* Introduction Card */}
       <Card className="transition-all duration-200 shadow-sm bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800">
         <CardContent className="p-6 md:p-8">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-              <User className="h-5 w-5 text-gray-500" />
-            </div>
+            {userProfile && userProfile.avatar ? (
+              <Avatar className="w-10 h-10">
+                <AvatarImage src={userProfile.avatar} alt={userProfile.display_name || ""} />
+                <AvatarFallback className="bg-gray-200 text-gray-700">
+                  {getInitials(userProfile.display_name)}
+                </AvatarFallback>
+              </Avatar>
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                <User className="h-5 w-5 text-gray-500" />
+              </div>
+            )}
             <h2 className="text-xl font-semibold">Descrição do Cargo</h2>
           </div>
           
