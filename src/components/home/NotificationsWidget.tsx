@@ -108,7 +108,7 @@ export const NotificationsWidget = memo(() => {
               </Button>}
           </div>
           <div className="flex space-x-2">
-            <Button size="icon" variant="ghost" onClick={handleRefresh} disabled={refreshing || isLoading} title="Atualizar avisos" className="h-7 w-7 rounded-full px-[25px] py-[25px] text-zinc-950 bg-zinc-50">
+            <Button size="icon" variant="ghost" onClick={handleRefresh} disabled={refreshing || isLoading} title="Atualizar avisos" className="h-7 w-7 rounded-full px-[25px] py-[25px] text-zinc-950 bg-[#ad7878]/0">
               <RefreshCw className={`h-4 w-4 ${refreshing || isLoading ? 'animate-spin' : ''}`} />
             </Button>
             <Button size="icon" variant="ghost" className="h-12 w-12 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-amber-50 dark:hover:bg-amber-900/20" onClick={prevNotice} disabled={isLoading || !currentNotice}>
