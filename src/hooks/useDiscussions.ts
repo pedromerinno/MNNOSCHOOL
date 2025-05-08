@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useCompanies } from '@/hooks/useCompanies';
@@ -214,17 +213,24 @@ export const useDiscussions = () => {
       const { data, error } = await supabase
         .from('discussion_replies')
         .insert([replyData])
-        .select(`*, profiles:author_id(id, display_name, avatar)`)
+        .select()
         .single();
 
       if (error) throw error;
       
+      // Fix: Get the profile data separately to avoid type issues
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar')
+        .eq('id', user.id)
+        .single();
+
       // If the insertion was successful and we received data back
       if (data) {
         // Find the discussion to update
         setDiscussions(prev => prev.map(discussion => {
           if (discussion.id === discussionId) {
-            // Format the new reply to match the expected structure
+            // Format the new reply to match the expected structure with proper profile data
             const newReply: DiscussionReply = {
               id: data.id,
               discussion_id: data.discussion_id,
@@ -233,7 +239,7 @@ export const useDiscussions = () => {
               created_at: data.created_at,
               image_url: data.image_url,
               video_url: data.video_url,
-              profiles: data.profiles
+              profiles: profileData || { display_name: 'Usuário', avatar: null }
             };
             
             // Add the new reply to the discussion
