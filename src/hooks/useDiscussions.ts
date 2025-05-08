@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Discussion, DiscussionReply } from "@/types/discussions";
@@ -54,7 +55,7 @@ export const useDiscussions = () => {
         
         return {
           ...item,
-          // Fixed: Add proper null check before accessing properties of item.profiles
+          // Fixed: Ensure item.profiles is properly handled and won't cause null reference errors
           profiles: item.profiles && typeof item.profiles === 'object' && !('error' in item.profiles) 
             ? item.profiles 
             : null,
@@ -149,13 +150,16 @@ export const useDiscussions = () => {
       if (error) throw error;
       
       if (data && data.length > 0) {
-        // Fixed: Add proper null check before accessing properties of data[0].profiles
+        // Fixed: Ensure data[0].profiles is properly handled with null checks
+        const profilesData = data[0].profiles && 
+                           typeof data[0].profiles === 'object' && 
+                           !('error' in data[0].profiles) 
+                           ? data[0].profiles 
+                           : null;
+
         const processedReply = {
           ...data[0],
-          // If profiles contains an error, set it to null
-          profiles: data[0].profiles && typeof data[0].profiles === 'object' && !('error' in data[0].profiles) 
-            ? data[0].profiles 
-            : null
+          profiles: profilesData
         } as DiscussionReply;
         
         // Update the local state
