@@ -6,12 +6,24 @@ import { Mail, UserRound, Calendar, MessageSquare, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useCompanies } from "@/hooks/useCompanies";
+import { useState, useEffect } from "react";
 
 interface ProfileCardProps {
   member: UserProfile;
 }
 
 export const ProfileCard = ({ member }: ProfileCardProps) => {
+  const { selectedCompany } = useCompanies();
+  const [companyColor, setCompanyColor] = useState("#1EAEDB");
+
+  // Update color whenever the selected company changes
+  useEffect(() => {
+    if (selectedCompany?.cor_principal) {
+      setCompanyColor(selectedCompany.cor_principal);
+    }
+  }, [selectedCompany]);
+  
   // Extract first letter of display name for avatar fallback
   const getInitial = () => {
     if (member?.display_name) {
@@ -32,14 +44,25 @@ export const ProfileCard = ({ member }: ProfileCardProps) => {
 
   return (
     <Card className="overflow-hidden border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-xl shadow-sm">
-      <div className="h-32 bg-gradient-to-r from-amber-100 to-amber-50 dark:from-amber-900/30 dark:to-amber-800/20"></div>
+      <div 
+        className="h-32"
+        style={{ 
+          background: `linear-gradient(to right, ${companyColor}20, ${companyColor}10)`
+        }}
+      ></div>
       <CardContent className="p-6 pt-0">
         <div className="flex flex-col">
           {/* Profile section */}
           <div className="flex items-start -mt-16">
             <Avatar className="h-32 w-32 border-4 border-white dark:border-gray-900 rounded-full shadow-md">
               <AvatarImage src={member?.avatar || undefined} alt={member?.display_name || ''} />
-              <AvatarFallback className="bg-amber-100 text-amber-800 text-3xl">
+              <AvatarFallback 
+                className="text-3xl"
+                style={{ 
+                  backgroundColor: `${companyColor}20`,
+                  color: companyColor
+                }}
+              >
                 {getInitial() || <UserRound className="h-12 w-12" />}
               </AvatarFallback>
             </Avatar>
@@ -53,7 +76,13 @@ export const ProfileCard = ({ member }: ProfileCardProps) => {
               </h2>
               
               {member?.is_admin && (
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
+                <span 
+                  className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                  style={{ 
+                    backgroundColor: `${companyColor}20`,
+                    color: companyColor
+                  }}
+                >
                   Admin
                 </span>
               )}
@@ -80,7 +109,12 @@ export const ProfileCard = ({ member }: ProfileCardProps) => {
             <div className="grid grid-cols-2 gap-4 mt-6">
               <Button
                 variant="outline"
-                className="gap-2 rounded-xl py-6 bg-white dark:bg-gray-800 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                className="gap-2 rounded-xl py-6 bg-white dark:bg-gray-800"
+                style={{
+                  ":hover": {
+                    backgroundColor: `${companyColor}10`
+                  }
+                }}
                 onClick={() => window.location.href = `mailto:${member?.email}`}
               >
                 <Mail className="h-5 w-5" />
@@ -88,7 +122,10 @@ export const ProfileCard = ({ member }: ProfileCardProps) => {
               </Button>
               
               <Button
-                className="gap-2 rounded-xl py-6 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white"
+                className="gap-2 rounded-xl py-6 text-white"
+                style={{ 
+                  background: `linear-gradient(to right, ${companyColor}, ${companyColor}DD)`
+                }}
               >
                 <MessageSquare className="h-5 w-5" />
                 Enviar feedback
@@ -97,7 +134,7 @@ export const ProfileCard = ({ member }: ProfileCardProps) => {
             
             {/* Team stats */}
             <div className="flex items-center gap-2 mt-6 pt-6 border-t border-gray-100 dark:border-gray-800">
-              <Users className="h-4 w-4 text-amber-500" />
+              <Users className="h-4 w-4" style={{ color: companyColor }} />
               <span className="text-sm text-gray-600 dark:text-gray-300">Parte da equipe</span>
             </div>
           </div>

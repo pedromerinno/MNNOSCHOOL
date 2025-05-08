@@ -9,6 +9,7 @@ import { useTeamMembers } from "@/hooks/team/useTeamMembers";
 import { toast } from "sonner";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { useAuth } from "@/contexts/AuthContext";
+import { CompanyThemedBadge } from "@/components/ui/badge";
 
 const Team = () => {
   const { selectedCompany } = useCompanies();
@@ -74,8 +75,10 @@ const Team = () => {
           </p>
           
           {userProfile?.is_admin && (
-            <div className="text-sm text-amber-600 dark:text-amber-400">
-              Clique em um card para ver o perfil completo do membro
+            <div className="text-sm">
+              <CompanyThemedBadge variant="default">
+                Clique em um card para ver o perfil completo do membro
+              </CompanyThemedBadge>
             </div>
           )}
         </div>

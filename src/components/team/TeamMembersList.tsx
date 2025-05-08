@@ -7,6 +7,8 @@ import { useNavigate } from "react-router-dom";
 import { UserProfile } from "@/hooks/useUsers";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useCompanies } from "@/hooks/useCompanies";
+import { useState, useEffect } from "react";
 
 interface TeamMembersListProps {
   members: UserProfile[];
@@ -14,6 +16,15 @@ interface TeamMembersListProps {
 
 export const TeamMembersList = ({ members }: TeamMembersListProps) => {
   const navigate = useNavigate();
+  const { selectedCompany } = useCompanies();
+  const [companyColor, setCompanyColor] = useState("#1EAEDB");
+
+  // Update color whenever the selected company changes
+  useEffect(() => {
+    if (selectedCompany?.cor_principal) {
+      setCompanyColor(selectedCompany.cor_principal);
+    }
+  }, [selectedCompany]);
 
   // Format date for social media style display
   const formatJoinDate = (dateString?: string) => {
@@ -33,14 +44,25 @@ export const TeamMembersList = ({ members }: TeamMembersListProps) => {
           className="group overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-xl"
           onClick={() => navigate(`/team/${member.id}`)}
         >
-          <div className="h-24 bg-gradient-to-r from-amber-100 to-amber-50 dark:from-amber-900/30 dark:to-amber-800/20"></div>
+          <div 
+            className="h-24" 
+            style={{ 
+              background: `linear-gradient(to right, ${companyColor}20, ${companyColor}10)`,
+            }}
+          ></div>
           <CardContent className="pt-0">
             <div className="flex flex-col">
               {/* Profile section */}
               <div className="flex items-start -mt-8">
                 <Avatar className="h-16 w-16 border-4 border-white dark:border-gray-900 rounded-full shadow-sm">
                   <AvatarImage src={member.avatar || undefined} alt={member.display_name || ''} />
-                  <AvatarFallback className="bg-amber-100 text-amber-800 text-xl">
+                  <AvatarFallback 
+                    className="text-xl"
+                    style={{ 
+                      backgroundColor: `${companyColor}20`,
+                      color: companyColor
+                    }}
+                  >
                     {member.display_name?.substring(0, 2).toUpperCase() || <UserRound className="h-6 w-6" />}
                   </AvatarFallback>
                 </Avatar>
@@ -54,7 +76,13 @@ export const TeamMembersList = ({ members }: TeamMembersListProps) => {
                   </h3>
                   
                   {member.is_admin && (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
+                    <span 
+                      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                      style={{ 
+                        backgroundColor: `${companyColor}20`,
+                        color: companyColor
+                      }}
+                    >
                       Admin
                     </span>
                   )}
@@ -75,7 +103,12 @@ export const TeamMembersList = ({ members }: TeamMembersListProps) => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1 rounded-full gap-1.5 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                    className="flex-1 rounded-full gap-1.5 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700"
+                    style={{
+                      ":hover": {
+                        backgroundColor: `${companyColor}10`
+                      }
+                    }}
                     onClick={(e) => {
                       e.stopPropagation();
                       navigate(`/team/${member.id}`);
@@ -88,7 +121,12 @@ export const TeamMembersList = ({ members }: TeamMembersListProps) => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1 rounded-full gap-1.5 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                    className="flex-1 rounded-full gap-1.5 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700"
+                    style={{
+                      ":hover": {
+                        backgroundColor: `${companyColor}10`
+                      }
+                    }}
                     onClick={(e) => {
                       e.stopPropagation();
                       window.location.href = `mailto:${member.email}`;
