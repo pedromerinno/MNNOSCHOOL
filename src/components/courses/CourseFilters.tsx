@@ -1,9 +1,8 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { ListCheck, Star, CheckCircle, Play } from "lucide-react";
-
-type FilterOption = 'all' | 'favorites' | 'completed' | 'in-progress';
+import { cn } from "@/lib/utils";
+import { FilterOption } from "@/hooks/my-courses";
 
 interface CourseFiltersProps {
   activeFilter: FilterOption;
@@ -12,36 +11,33 @@ interface CourseFiltersProps {
 
 export const CourseFilters: React.FC<CourseFiltersProps> = ({
   activeFilter,
-  onFilterChange
+  onFilterChange,
 }) => {
+  const filters: { label: string; value: FilterOption }[] = [
+    { label: "Todos", value: "all" },
+    { label: "Favoritos", value: "favorites" },
+    { label: "Em progresso", value: "in-progress" },
+    { label: "Concluídos", value: "completed" },
+  ];
+
   return (
-    <div className="mb-8">
-      <div className="flex overflow-x-auto pb-2 gap-3">
-        <Button variant="outline" 
-            className={`rounded-full px-4 py-2 ${activeFilter === 'all' ? 'bg-black text-white' : 'bg-gray-100 text-gray-700'} border-none hover:bg-gray-800 hover:text-white`}
-            onClick={() => onFilterChange('all')}>
-          <ListCheck className="mr-2 h-4 w-4" />
-          Todos
+    <div className="flex overflow-x-auto hide-scrollbar gap-2">
+      {filters.map((filter) => (
+        <Button
+          key={filter.value}
+          onClick={() => onFilterChange(filter.value)}
+          variant="outline"
+          size="sm"
+          className={cn(
+            "whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all",
+            activeFilter === filter.value
+              ? "bg-primary text-primary-foreground"
+              : "hover:bg-secondary"
+          )}
+        >
+          {filter.label}
         </Button>
-        <Button variant="outline" 
-            className={`rounded-full px-4 py-2 ${activeFilter === 'favorites' ? 'bg-orange-400 text-white' : 'bg-gray-100 text-gray-700'} border-none hover:bg-orange-500 hover:text-white`}
-            onClick={() => onFilterChange('favorites')}>
-          <Star className="mr-2 h-4 w-4" />
-          Favoritados
-        </Button>
-        <Button variant="outline" 
-            className={`rounded-full px-4 py-2 ${activeFilter === 'completed' ? 'bg-green-400 text-white' : 'bg-gray-100 text-gray-700'} border-none hover:bg-green-500 hover:text-white`}
-            onClick={() => onFilterChange('completed')}>
-          <CheckCircle className="mr-2 h-4 w-4" />
-          Concluídos
-        </Button>
-        <Button variant="outline" 
-            className={`rounded-full px-4 py-2 ${activeFilter === 'in-progress' ? 'bg-blue-400 text-white' : 'bg-gray-100 text-gray-700'} border-none hover:bg-blue-500 hover:text-white`}
-            onClick={() => onFilterChange('in-progress')}>
-          <Play className="mr-2 h-4 w-4" />
-          Iniciados
-        </Button>
-      </div>
+      ))}
     </div>
   );
 };
