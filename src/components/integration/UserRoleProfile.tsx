@@ -88,7 +88,7 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
           <div className="space-y-10">
             {/* User information section */}
             <div>
-              <div className="rounded-md py-2 px-4 mb-6" style={{ 
+              <div className="rounded-md py-2 px-4 mb-8" style={{ 
                 backgroundColor: getLighterColor(companyColor, 0.15),
               }}>
                 <h3 style={{
@@ -98,10 +98,10 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
                 </h3>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10 px-4">
                 <div>
-                  <p className="text-gray-500 text-sm mb-1">Nome</p>
-                  <p className="text-blue-600" style={{
+                  <p className="text-gray-500 text-sm mb-2">Nome</p>
+                  <p className="text-blue-600 font-medium" style={{
                   color: companyColor
                 }}>
                     {userProfile.display_name || "Não informado"}
@@ -109,30 +109,32 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
                 </div>
 
                 <div>
-                  <p className="text-gray-500 text-sm mb-1">Email</p>
-                  <p className="text-gray-700 dark:text-gray-300">{userProfile.email || "Não informado"}</p>
-                </div>
-
-                <div>
-                  <p className="text-gray-500 text-sm mb-1">ID</p>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm">
-                    {userProfile.id.substring(0, 8)}...
+                  <p className="text-gray-500 text-sm mb-2">Cidade</p>
+                  <p className="text-gray-700 dark:text-gray-300 font-medium">
+                    São Paulo
                   </p>
                 </div>
 
                 <div>
-                  <p className="text-gray-500 text-sm mb-1">Formato de Trabalho</p>
-                  <p className="text-gray-700 dark:text-gray-300">Remoto</p>
+                  <p className="text-gray-500 text-sm mb-2">Aniversário</p>
+                  <p className="text-gray-700 dark:text-gray-300 font-medium">
+                    15 de Março
+                  </p>
                 </div>
 
                 <div>
-                  <p className="text-gray-500 text-sm mb-1">Tipo de Contrato</p>
-                  <p className="text-gray-700 dark:text-gray-300">CLT</p>
+                  <p className="text-gray-500 text-sm mb-2">Formato de Trabalho</p>
+                  <p className="text-gray-700 dark:text-gray-300 font-medium">Remoto</p>
                 </div>
 
                 <div>
-                  <p className="text-gray-500 text-sm mb-1">Data de Início</p>
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-gray-500 text-sm mb-2">Tipo de Contrato</p>
+                  <p className="text-gray-700 dark:text-gray-300 font-medium">CLT</p>
+                </div>
+
+                <div>
+                  <p className="text-gray-500 text-sm mb-2">Data de Início</p>
+                  <p className="text-gray-700 dark:text-gray-300 font-medium">
                     {formatDate(userProfile.created_at)}
                   </p>
                 </div>
