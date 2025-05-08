@@ -8,17 +8,32 @@ const Dialog = ({
   children,
   ...props
 }: DialogPrimitive.DialogProps) => {
+  const [previousOverflow, setPreviousOverflow] = React.useState<string>('');
+  const [previousPointerEvents, setPreviousPointerEvents] = React.useState<string>('');
+
   // Improved handling of body styles when dialog opens/closes
   const handleOpenChange = (open: boolean) => {
     if (open) {
+      // Save the current styles before modifying
+      setPreviousOverflow(document.body.style.overflow);
+      setPreviousPointerEvents(document.body.style.pointerEvents);
+      
+      // Apply dialog styles
       document.body.style.overflow = 'hidden';
       document.body.style.paddingRight = '0px'; // Prevent layout shift
-      document.body.style.pointerEvents = ''; // Make sure pointer events are enabled
     } else {
-      // Ensure we properly reset styles
-      document.body.style.overflow = '';
+      // Reset to previous styles or clear them completely
+      document.body.style.overflow = previousOverflow || '';
       document.body.style.paddingRight = '';
-      document.body.style.pointerEvents = ''; // Make sure pointer events are enabled
+      document.body.style.pointerEvents = previousPointerEvents || '';
+      
+      // Force a small delay to ensure styles are fully applied
+      setTimeout(() => {
+        // Double-check that pointer-events is correctly reset
+        if (document.body.style.pointerEvents === 'none') {
+          document.body.style.pointerEvents = '';
+        }
+      }, 10);
     }
     
     // Call the original onOpenChange if provided
