@@ -1,5 +1,5 @@
 
-export function useCoursesPageUtils(selectedCompany: any | null) {
+export function useCoursesPageUtils(selectedCompany: any) {
   const getTitle = () => {
     return selectedCompany 
       ? `Todos os Cursos - ${selectedCompany.nome}` 
