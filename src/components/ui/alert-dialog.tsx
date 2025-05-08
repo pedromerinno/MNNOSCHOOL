@@ -8,32 +8,34 @@ const AlertDialog = ({
   children,
   ...props
 }: AlertDialogPrimitive.AlertDialogProps) => {
+  // Referência para armazenar os estilos originais do body
+  const originalBodyStyleRef = React.useRef<CSSStyleDeclaration | null>(null);
+  
   const handleOpenChange = (open: boolean) => {
     if (open) {
+      // Armazena os estilos atuais antes de modificar
+      originalBodyStyleRef.current = window.getComputedStyle(document.body);
       document.body.style.overflow = 'hidden';
-      document.body.style.paddingRight = '0px';
     } else {
-      // Immediate cleanup of all body styles
+      // Restaura o overflow
       document.body.style.overflow = '';
-      document.body.style.pointerEvents = '';
-      document.body.style.paddingRight = '';
       
-      // Force clean pointer-events from inline style
-      document.body.setAttribute(
-        'style', 
-        document.body.getAttribute('style')?.replace(/pointer-events:\s*none;?/gi, '') || ''
-      );
+      // Força a remoção do pointer-events: none
+      if (document.body.style.pointerEvents === 'none') {
+        document.body.style.pointerEvents = '';
+      }
       
-      // Add a class that will force pointer-events to auto
+      // Remove qualquer inline style do pointer-events
+      document.body.style.removeProperty('pointer-events');
+      
+      // Adiciona temporariamente uma classe que força pointer-events auto
       document.body.classList.add('pointer-events-auto');
-      
-      // Remove the class after animation completes
       setTimeout(() => {
         document.body.classList.remove('pointer-events-auto');
-      }, 500);
+      }, 100);
     }
     
-    // Call original handler if exists
+    // Chama o handler original, se existir
     props.onOpenChange?.(open);
   };
 
@@ -72,18 +74,16 @@ const AlertDialogContent = React.forwardRef<
     <AlertDialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg pointer-events-auto",
         className
       )}
       {...props}
       onCloseAutoFocus={(e) => {
-        // Force cleanup on close
+        // Forçar limpeza no fechamento
+        document.body.style.removeProperty('pointer-events');
         document.body.style.pointerEvents = '';
-        document.body.setAttribute(
-          'style', 
-          document.body.getAttribute('style')?.replace(/pointer-events:\s*none;?/gi, '') || ''
-        );
         
+        // Chama handler original, se existir
         if (props.onCloseAutoFocus) {
           props.onCloseAutoFocus(e);
         }
