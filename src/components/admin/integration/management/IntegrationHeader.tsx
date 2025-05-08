@@ -26,22 +26,21 @@ export const IntegrationHeader: React.FC<IntegrationHeaderProps> = ({
         </p>
       </div>
       
-      <div className="w-full md:w-80">
+      <div className="w-full md:w-72">
         <Select 
           value={selectedCompany?.id} 
           onValueChange={onCompanyChange}
           disabled={isDisabled}
         >
-          <SelectTrigger className="w-full h-12 text-base">
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Selecione uma empresa">
               {selectedCompany && (
                 <div className="flex items-center">
-                  <Avatar className="h-6 w-6 mr-2 rounded-full">
+                  <Avatar className="h-5 w-5 mr-2">
                     {selectedCompany.logo ? (
                       <AvatarImage 
                         src={selectedCompany.logo} 
                         alt={selectedCompany.nome}
-                        className="rounded-full"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.src = "/placeholder.svg";
@@ -49,25 +48,24 @@ export const IntegrationHeader: React.FC<IntegrationHeaderProps> = ({
                         }}
                       />
                     ) : null}
-                    <AvatarFallback className="text-xs rounded-full">
+                    <AvatarFallback className="text-xs">
                       {selectedCompany.nome.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-base">{selectedCompany.nome}</span>
+                  {selectedCompany.nome}
                 </div>
               )}
             </SelectValue>
           </SelectTrigger>
-          <SelectContent className="bg-white dark:bg-gray-800 w-full min-w-[320px]">
+          <SelectContent>
             {companies.map(company => (
-              <SelectItem key={company.id} value={company.id} className="py-3">
+              <SelectItem key={company.id} value={company.id}>
                 <div className="flex items-center">
-                  <Avatar className="h-6 w-6 mr-2 rounded-full">
+                  <Avatar className="h-5 w-5 mr-2">
                     {company.logo ? (
                       <AvatarImage 
                         src={company.logo} 
                         alt={company.nome} 
-                        className="rounded-full"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.src = "/placeholder.svg";
@@ -75,11 +73,11 @@ export const IntegrationHeader: React.FC<IntegrationHeaderProps> = ({
                         }}
                       />
                     ) : null}
-                    <AvatarFallback className="text-xs rounded-full">
+                    <AvatarFallback className="text-xs">
                       {company.nome.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-base">{company.nome}</span>
+                  {company.nome}
                 </div>
               </SelectItem>
             ))}
