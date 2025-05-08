@@ -42,10 +42,10 @@ export const LessonSkeleton: React.FC = () => {
           {/* Lesson header skeleton */}
           <Skeleton className="h-10 w-3/4 mb-4" /> {/* Title */}
           
-          {/* Action buttons skeleton - now in a single row */}
+          {/* Action buttons skeleton - in a single row */}
           <div className="flex items-center gap-3 mb-6">
             <Skeleton className="h-8 w-20" /> {/* Lesson type */}
-            <Skeleton className="h-8 w-20" /> {/* Duration */}
+            <Skeleton className="h-8 w-24" /> {/* Duration with proper formatting */}
             <div className="flex-1"></div>
             <Skeleton className="h-8 w-32" /> {/* Like button */}
             <Skeleton className="h-8 w-44" /> {/* Complete button */}

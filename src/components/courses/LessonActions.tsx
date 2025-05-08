@@ -4,6 +4,7 @@ import { LikeButton } from './LikeButton';
 import { CompleteButton } from './CompleteButton';
 import { Badge } from "@/components/ui/badge";
 import { Clock, FileText, Play } from 'lucide-react';
+import { formatDuration } from '@/utils/durationUtils';
 
 interface LessonActionsProps {
   completed: boolean;
@@ -47,7 +48,7 @@ export const LessonActions: React.FC<LessonActionsProps> = ({
       {lessonDuration && (
         <Badge variant="outline" className="flex items-center gap-1 px-2 py-1 font-normal">
           <Clock className="h-4 w-4 mr-1" />
-          <span>{lessonDuration}</span>
+          <span>{formatDuration(lessonDuration)}</span>
         </Badge>
       )}
       

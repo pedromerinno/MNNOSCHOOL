@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Play, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { calculateTotalDuration } from "@/utils/durationUtils";
+import { calculateTotalDuration, formatDuration } from "@/utils/durationUtils";
 
 interface LessonPlaylistProps {
   lessons: Array<{
@@ -89,7 +89,7 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
                   </h4>
                   {lesson.duration && (
                     <div className="text-xs text-muted-foreground mt-0.5">
-                      {lesson.duration}
+                      {formatDuration(lesson.duration)}
                     </div>
                   )}
                 </div>
