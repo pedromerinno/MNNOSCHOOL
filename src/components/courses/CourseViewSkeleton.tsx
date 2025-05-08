@@ -18,11 +18,11 @@ export const CourseViewSkeleton: React.FC = () => {
       </Button>
       
       <div className="space-y-8">
-        {/* Hero section skeleton */}
-        <div className="relative h-[400px] rounded-xl overflow-hidden bg-gradient-to-r from-gray-800 to-gray-900">
+        {/* Hero section skeleton with improved gradient and dimensions */}
+        <div className="relative h-[400px] rounded-xl overflow-hidden bg-gradient-to-r from-gray-800 to-gray-700">
           <div className="absolute inset-0 bg-gradient-to-tr from-black/70 to-transparent"></div>
           <div className="relative z-10 h-full p-8 flex flex-col justify-between">
-            <div className="w-1/2">
+            <div className="w-1/2 space-y-4">
               <Skeleton className="h-10 w-3/4 mb-4" />
               <Skeleton className="h-5 w-2/3 mb-2" />
               <Skeleton className="h-5 w-1/2" />
@@ -38,28 +38,32 @@ export const CourseViewSkeleton: React.FC = () => {
           </div>
         </div>
         
-        {/* Content grid */}
+        {/* Content grid with more realistic layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main content */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Course stats */}
+            {/* Course stats with improved appearance */}
             <div className="flex gap-4 flex-wrap">
               {[...Array(3)].map((_, i) => (
-                <Skeleton key={i} className="h-8 w-24" />
+                <div key={i} className="flex items-center gap-2">
+                  <Skeleton className="h-5 w-5 rounded-full" />
+                  <Skeleton className="h-5 w-16" />
+                </div>
               ))}
             </div>
             
-            {/* Description */}
+            {/* Description with better structure */}
             <div className="space-y-4">
               <Skeleton className="h-7 w-40" />
               <div className="space-y-2">
                 <Skeleton className="h-5 w-full" />
                 <Skeleton className="h-5 w-full" />
                 <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-5 w-5/6" />
               </div>
             </div>
             
-            {/* Instructor */}
+            {/* Instructor section with improved layout */}
             <div className="space-y-4">
               <Skeleton className="h-7 w-48" />
               <div className="flex items-center space-x-4">
@@ -67,20 +71,22 @@ export const CourseViewSkeleton: React.FC = () => {
                 <div className="space-y-2">
                   <Skeleton className="h-6 w-40" />
                   <Skeleton className="h-4 w-60" />
+                  <Skeleton className="h-4 w-32" />
                 </div>
               </div>
             </div>
           </div>
           
-          {/* Lessons sidebar */}
+          {/* Lessons sidebar with improved card design */}
           <div>
-            <Card className="h-full">
+            <Card className="h-full border border-gray-200 dark:border-gray-800">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
                     <BookOpen className="h-5 w-5 text-muted-foreground" />
                     <Skeleton className="h-6 w-32" />
                   </CardTitle>
+                  <Skeleton className="h-5 w-12 rounded-md" />
                 </div>
               </CardHeader>
               
