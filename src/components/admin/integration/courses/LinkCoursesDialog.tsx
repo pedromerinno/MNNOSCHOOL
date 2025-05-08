@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Loader2, Link, Check } from 'lucide-react';
+import { Loader2, BookPlus, Check } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -19,6 +19,7 @@ interface LinkCoursesDialogProps {
   onOpenChange: (open: boolean) => void;
   companyId: string;
   companyName: string;
+  companyColor?: string;
   onCoursesLinked: () => void;
 }
 
@@ -27,6 +28,7 @@ export const LinkCoursesDialog: React.FC<LinkCoursesDialogProps> = ({
   onOpenChange,
   companyId,
   companyName,
+  companyColor,
   onCoursesLinked
 }) => {
   const [allCourses, setAllCourses] = useState<Course[]>([]);
@@ -34,6 +36,27 @@ export const LinkCoursesDialog: React.FC<LinkCoursesDialogProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [existingLinks, setExistingLinks] = useState<string[]>([]);
+
+  // Use company color with fallback to purple
+  const primaryColor = companyColor || "#9b87f5";
+  
+  // CSS style objects for elements using company color
+  const headerStyle = {
+    color: primaryColor
+  };
+  
+  const selectedItemStyle = {
+    borderColor: primaryColor,
+    backgroundColor: `${primaryColor}10` // 10% opacity
+  };
+  
+  const buttonStyle = {
+    backgroundColor: primaryColor,
+    ":hover": {
+      backgroundColor: primaryColor,
+      opacity: 0.9
+    }
+  };
 
   // Fetch all courses and existing company-course relationships when dialog opens
   useEffect(() => {
@@ -138,14 +161,14 @@ export const LinkCoursesDialog: React.FC<LinkCoursesDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold flex items-center gap-2">
-            <Link className="h-5 w-5" /> Vincular Cursos a {companyName}
+          <DialogTitle className="text-xl font-semibold flex items-center gap-2" style={headerStyle}>
+            <BookPlus className="h-5 w-5" /> Vincular Cursos a {companyName}
           </DialogTitle>
         </DialogHeader>
 
         {isLoading ? (
           <div className="flex justify-center items-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
+            <Loader2 className="h-8 w-8 animate-spin" style={headerStyle} />
           </div>
         ) : allCourses.length === 0 ? (
           <div className="text-center py-8">
@@ -161,10 +184,18 @@ export const LinkCoursesDialog: React.FC<LinkCoursesDialogProps> = ({
                   key={course.id}
                   className={`p-4 border rounded-lg cursor-pointer transition-all ${
                     selectedCourses.includes(course.id)
-                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                      ? 'border-[color:var(--company-color)] bg-[color:var(--company-bg)]'
                       : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
                   }`}
                   onClick={() => handleToggleCourse(course.id)}
+                  style={{
+                    ...(selectedCourses.includes(course.id) ? {
+                      '--company-color': primaryColor,
+                      '--company-bg': `${primaryColor}15`,
+                      borderColor: primaryColor,
+                      backgroundColor: `${primaryColor}15`
+                    } : {})
+                  } as React.CSSProperties}
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -176,7 +207,7 @@ export const LinkCoursesDialog: React.FC<LinkCoursesDialogProps> = ({
                       )}
                     </div>
                     {selectedCourses.includes(course.id) && (
-                      <Check className="h-5 w-5 text-purple-500" />
+                      <Check className="h-5 w-5" style={{ color: primaryColor }} />
                     )}
                   </div>
                 </div>
@@ -190,13 +221,15 @@ export const LinkCoursesDialog: React.FC<LinkCoursesDialogProps> = ({
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={isSaving}
+            className="border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600"
           >
             Cancelar
           </Button>
           <Button 
             onClick={handleSave} 
             disabled={isSaving || isLoading}
-            className="bg-purple-600 hover:bg-purple-700"
+            style={{ backgroundColor: primaryColor }}
+            className="hover:opacity-90"
           >
             {isSaving ? (
               <>

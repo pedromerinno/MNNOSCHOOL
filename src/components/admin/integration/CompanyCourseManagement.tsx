@@ -8,7 +8,7 @@ import { CourseList } from '../courses/CourseList';
 import { useCourses } from '../courses/useCourses';
 import { Company } from '@/types/company';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, BookPlus } from 'lucide-react';
 import { LinkCoursesDialog } from './courses/LinkCoursesDialog';
 
 interface CompanyCourseManagementProps {
@@ -53,12 +53,22 @@ export const CompanyCourseManagement: React.FC<CompanyCourseManagementProps> = (
           </p>
         </div>
         
-        <Button 
-          onClick={() => setIsLinkDialogOpen(true)} 
-          className="bg-purple-600 hover:bg-purple-700"
-        >
-          <Plus className="mr-2 h-4 w-4" /> Vincular Curso
-        </Button>
+        <div className="flex space-x-3">
+          <Button 
+            onClick={() => setIsLinkDialogOpen(true)} 
+            variant="outline"
+            className="border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600 bg-transparent"
+          >
+            <BookPlus className="mr-2 h-4 w-4" /> Vincular Curso
+          </Button>
+          
+          <Button 
+            onClick={() => setIsFormOpen(true)} 
+            className="bg-purple-600 hover:bg-purple-700"
+          >
+            <Plus className="mr-2 h-4 w-4" /> Novo Curso
+          </Button>
+        </div>
       </div>
       
       <Card>
@@ -85,6 +95,7 @@ export const CompanyCourseManagement: React.FC<CompanyCourseManagementProps> = (
         onOpenChange={setIsLinkDialogOpen}
         companyId={currentCompanyId} 
         companyName={company.nome}
+        companyColor={company.cor_principal}
         onCoursesLinked={() => {
           fetchCourses();
         }}
