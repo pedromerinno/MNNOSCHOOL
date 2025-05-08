@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Discussion, DiscussionReply } from "@/types/discussions";
@@ -157,10 +156,10 @@ export const useDiscussions = () => {
                            ? data[0].profiles 
                            : null;
 
-        const processedReply = {
+        const processedReply: DiscussionReply = {
           ...data[0],
           profiles: profilesData
-        } as DiscussionReply;
+        };
         
         // Update the local state
         setDiscussions(prev => 
