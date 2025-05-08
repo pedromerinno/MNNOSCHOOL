@@ -1,8 +1,6 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { RefreshCw, UserPlus, Plus } from 'lucide-react';
-
 interface UserManagementHeaderProps {
   onAddAdminClick: () => void;
   onRefreshClick: () => void;
@@ -10,7 +8,6 @@ interface UserManagementHeaderProps {
   isRefreshing: boolean;
   onInviteUser?: () => void;
 }
-
 export const UserManagementHeader: React.FC<UserManagementHeaderProps> = ({
   onAddAdminClick,
   onRefreshClick,
@@ -20,7 +17,7 @@ export const UserManagementHeader: React.FC<UserManagementHeaderProps> = ({
 }) => {
   return <div className="space-y-6">
       <div>
-        <h3 className="mb-2 px-0 py-[10px] font-bold text-2xl">Gerenciamento de Usuários</h3>
+        <h3 className="mb-2 px-0 py-[10px] font-bold text-xl">Gerenciamento de Usuários</h3>
         <p className="mb-4 text-gray-400 text-sm">
           Gerencie os usuários do sistema e suas permissões
         </p>
