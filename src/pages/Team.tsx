@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -10,6 +11,8 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { CompanyThemedBadge } from "@/components/ui/badge";
 import { TeamMetricsDashboard } from "@/components/team/TeamMetricsDashboard";
+import { Progress } from "@/components/ui/progress";
+
 const Team = () => {
   const {
     selectedCompany
@@ -17,7 +20,8 @@ const Team = () => {
   const {
     members,
     isLoading,
-    error
+    error,
+    loadProgress
   } = useTeamMembers();
   const [showSlowLoadingMessage, setShowSlowLoadingMessage] = useState(false);
   const {
@@ -44,28 +48,46 @@ const Team = () => {
       if (timer) clearTimeout(timer);
     };
   }, [isLoading]);
+
   if (!selectedCompany) {
     return <PageLayout title="Equipe">
         <EmptyState title="Selecione uma empresa" description="Selecione uma empresa no menu superior para visualizar a equipe." />
       </PageLayout>;
   }
+
   if (isLoading) {
-    return <LoadingState slowLoading={showSlowLoadingMessage} />;
+    return (
+      <>
+        <LoadingState slowLoading={showSlowLoadingMessage} />
+        {loadProgress > 0 && loadProgress < 100 && (
+          <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg z-50 w-64">
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-gray-500 dark:text-gray-400">Carregando membros...</span>
+                <span className="text-xs font-medium">{loadProgress}%</span>
+              </div>
+              <Progress value={loadProgress} className="h-2" />
+            </div>
+          </div>
+        )}
+      </>
+    );
   }
+
   if (error) {
     return <PageLayout title="Equipe">
         <EmptyState title="Erro ao carregar equipe" description="Ocorreu um erro ao carregar os membros da equipe. Tente novamente mais tarde." />
       </PageLayout>;
   }
+
   return <PageLayout title="Equipe">
       <div className="space-y-6">
         {/* Add metrics dashboard */}
         <TeamMetricsDashboard members={members} />
         
-        
-        
         <TeamMembersList members={members} />
       </div>
     </PageLayout>;
 };
+
 export default Team;
