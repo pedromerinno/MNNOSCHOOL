@@ -51,10 +51,7 @@ const AdminPage = () => {
         return <CourseManagement />;
       case "notices":
         return <div>
-            <h3 className="mb-2 px-0 py-[10px] text-xl font-semibold">Administração de Avisos</h3>
-            <p className="mb-4 text-gray-400 text-sm">
-              Gerencie os avisos das empresas
-            </p>
+            <h3 className="mb-6 text-2xl font-semibold">Avisos</h3>
             <CompanyNoticesAdminList />
           </div>;
       case "settings":
