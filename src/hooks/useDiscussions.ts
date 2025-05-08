@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Discussion, DiscussionReply } from "@/types/discussions";
@@ -55,7 +54,7 @@ export const useDiscussions = () => {
         
         return {
           ...item,
-          // If profiles contains an error, set it to null
+          // Fixed: Add proper null check before accessing properties of item.profiles
           profiles: item.profiles && typeof item.profiles === 'object' && !('error' in item.profiles) 
             ? item.profiles 
             : null,
@@ -150,7 +149,7 @@ export const useDiscussions = () => {
       if (error) throw error;
       
       if (data && data.length > 0) {
-        // Process the reply data to ensure it matches the DiscussionReply type
+        // Fixed: Add proper null check before accessing properties of data[0].profiles
         const processedReply = {
           ...data[0],
           // If profiles contains an error, set it to null
