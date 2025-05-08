@@ -130,7 +130,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
                             {course.title}
                           </h2>
                         </div>
-                        <p className="text-white/90 line-clamp-3">
+                        <p className="text-white/90 line-clamp-2">
                           {course.description}
                         </p>
                       </div>

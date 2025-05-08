@@ -82,8 +82,8 @@ const Courses = () => {
   return (
     <DashboardLayout fullWidth>
       {/* Header with Admin Actions */}
-      <div className="w-full max-w-screen-xl mx-auto px-4 py-6 flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Todos os Cursos</h1>
+      <div className="w-full max-w-screen-xl mx-auto px-4 py-4 flex justify-between items-center">
+        <h1 className="text-xl font-bold">Todos os Cursos</h1>
         {isAdmin && (
           <Button 
             onClick={() => setIsNewCourseDialogOpen(true)}
