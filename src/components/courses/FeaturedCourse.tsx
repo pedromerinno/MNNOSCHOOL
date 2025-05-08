@@ -36,7 +36,7 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
             </h1>
             
             {course.description && (
-              <p className="text-white/80 mb-6 line-clamp-2 max-h-12 overflow-hidden">
+              <p className="text-white/80 mb-6 line-clamp-3">
                 {course.description}
               </p>
             )}
@@ -62,7 +62,7 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
             </div>
           </div>
           
-          <div className="flex justify-between items-center">
+          <div className="flex flex-wrap justify-between items-center">
             <div className="flex items-center space-x-3 mb-4 md:mb-0">
               <div className="h-10 w-10 rounded-full bg-gray-500 flex items-center justify-center text-white text-lg font-medium overflow-hidden">
                 {course.instructor ? (
