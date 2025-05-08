@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useCompanyNotices } from "@/hooks/useCompanyNotices";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +11,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useCompanies } from "@/hooks/useCompanies";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 export const CompanyNoticesAdminList: React.FC = () => {
   const {
     notices,
@@ -18,15 +21,24 @@ export const CompanyNoticesAdminList: React.FC = () => {
     fetchNotices
   } = useCompanyNotices();
   const {
-    userCompanies
+    userCompanies,
+    selectedCompany,
+    selectCompany
   } = useCompanies();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingNotice, setEditingNotice] = useState<any | null>(null);
+  const [filterCompanyId, setFilterCompanyId] = useState<string | null>(null);
 
-  // Re-fetch notices when component mounts
+  // Re-fetch notices when component mounts or when filter changes
   useEffect(() => {
-    fetchNotices();
-  }, []);
+    const companyId = filterCompanyId || selectedCompany?.id;
+    if (companyId) {
+      fetchNotices(companyId);
+    } else {
+      fetchNotices();
+    }
+  }, [filterCompanyId, selectedCompany?.id]);
+
   const handleEdit = (notice: any) => {
     setEditingNotice({
       ...notice,
@@ -34,6 +46,7 @@ export const CompanyNoticesAdminList: React.FC = () => {
     });
     setEditDialogOpen(true);
   };
+  
   const handleDelete = async (noticeId: string) => {
     if (window.confirm("Deseja realmente apagar este aviso?")) {
       await deleteNotice(noticeId);
@@ -45,8 +58,18 @@ export const CompanyNoticesAdminList: React.FC = () => {
     setEditDialogOpen(open);
     if (!open) {
       // Re-fetch notices when dialog closes
-      fetchNotices();
+      const companyId = filterCompanyId || selectedCompany?.id;
+      if (companyId) {
+        fetchNotices(companyId);
+      } else {
+        fetchNotices();
+      }
     }
+  };
+
+  // Company filter change handler
+  const handleCompanyChange = (companyId: string) => {
+    setFilterCompanyId(companyId);
   };
 
   // Helper function to get company name from company id
@@ -77,9 +100,51 @@ export const CompanyNoticesAdminList: React.FC = () => {
       return dateString;
     }
   };
+  
   return <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Avisos</h2>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+          <h2 className="text-2xl font-bold">Avisos</h2>
+          
+          {/* Company Dropdown Filter */}
+          {userCompanies.length > 0 && (
+            <Select 
+              value={filterCompanyId || (selectedCompany?.id || '')} 
+              onValueChange={handleCompanyChange}
+            >
+              <SelectTrigger className="w-full md:w-[250px]">
+                <SelectValue placeholder="Filtrar por empresa" />
+              </SelectTrigger>
+              <SelectContent>
+                {userCompanies.map((company) => (
+                  <SelectItem key={company.id} value={company.id}>
+                    <div className="flex items-center gap-2">
+                      {company.logo ? (
+                        <div className="h-5 w-5 rounded-full overflow-hidden flex-shrink-0">
+                          <img 
+                            src={company.logo} 
+                            alt={company.nome} 
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary flex-shrink-0">
+                          {company.nome.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      {company.nome}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+        
         <Button onClick={() => setEditDialogOpen(true)} className="bg-primary hover:bg-primary/90">
           Novo Aviso
         </Button>
@@ -148,7 +213,7 @@ export const CompanyNoticesAdminList: React.FC = () => {
                     color: companyColor,
                     borderColor: `${companyColor}30` // Slightly darker border (30% opacity)
                   }}>
-                              {companyLogo ? <img src={companyLogo} alt={getCompanyName(companyId)} className="w-3.5 h-3.5 rounded-full mr-1.5 object-contain" onError={e => {
+                              {companyLogo ? <img src={companyLogo} alt={getCompanyName(companyId)} className="w-3.5 h-3.5 rounded-full mr-1.5 object-cover" onError={e => {
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';
                     }} /> : <span className="w-3.5 h-3.5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] mr-1.5">
