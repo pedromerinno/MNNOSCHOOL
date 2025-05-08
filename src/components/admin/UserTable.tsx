@@ -77,7 +77,7 @@ export const UserTable: React.FC<UserTableProps> = ({
                 Nenhum usuário encontrado
               </TableCell>
             </TableRow> : users.map(user => <TableRow key={user.id} className={`${loading ? "opacity-60" : ""} hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors`}>
-                <TableCell className="py-[30px] px-[30px]">
+                <TableCell className="px-[30px] py-[20px]">
                   {loading ? <Skeleton className="h-5 w-24" /> : user.display_name}
                 </TableCell>
                 <TableCell className="text-gray-600 dark:text-gray-300">
