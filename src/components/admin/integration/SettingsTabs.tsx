@@ -1,10 +1,12 @@
+
 import React from 'react';
 import { Tabs, TabsList } from "@/components/ui/tabs";
-import { Book, Briefcase, Key, Users, Video, Building } from "lucide-react";
+import { Book, Briefcase, Key, Users, Video, Building, BellRing } from "lucide-react";
 import { SettingsTabTrigger } from './settings/SettingsTabTrigger';
 import { SettingsTabContent } from './settings/SettingsTabContent';
 import { SettingsTabsProps } from './settings/types';
 import { useAuth } from '@/contexts/AuthContext';
+
 export const SettingsTabs: React.FC<SettingsTabsProps> = ({
   company,
   activeTab,
@@ -37,7 +39,12 @@ export const SettingsTabs: React.FC<SettingsTabsProps> = ({
     value: "collaborators",
     label: "Colaboradores",
     icon: Users
+  }, {
+    value: "notices",
+    label: "Avisos",
+    icon: BellRing
   }];
+  
   return <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <div className="border-b border-gray-100 dark:border-gray-800 py-2 px-2 bg-transparent">
         <TabsList className="flex gap-2 rounded-2xl p-1.5 bg-transparent dark:bg-transparent w-full justify-start">

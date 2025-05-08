@@ -11,7 +11,6 @@ import { ArrowLeft } from 'lucide-react';
 import { CourseManagement } from '@/components/admin/CourseManagement';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 import { Button } from '@/components/ui/button';
-import { CompanyNoticesAdminList } from '@/components/admin/CompanyNoticesAdminList';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 
@@ -46,9 +45,6 @@ const AdminPage = () => {
       case "companies":
         return <div>
             <CompanyManagement />
-            <div className="mt-10">
-              <CompanyNoticesAdminList />
-            </div>
           </div>;
       case "users":
         return <UserManagement />;
@@ -79,4 +75,5 @@ const AdminPage = () => {
       </div>
     </div>;
 };
+
 export default AdminPage;

@@ -1,11 +1,14 @@
+
 import React from 'react';
 import { Sidebar, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupContent, SidebarFooter } from "@/components/ui/sidebar";
 import { LayoutDashboard, Building, Users, Book, Settings, ArrowLeftRight } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
+
 interface AdminSidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
 }
+
 export const AdminSidebar = ({
   activeTab,
   onTabChange
@@ -21,7 +24,7 @@ export const AdminSidebar = ({
     icon: LayoutDashboard
   }] : []), {
     value: "companies",
-    label: "Todas as Empresas",
+    label: "Empresas",
     icon: Building
   }, {
     value: "users",
@@ -33,9 +36,10 @@ export const AdminSidebar = ({
     icon: Book
   }, {
     value: "settings",
-    label: "Minhas Empresas",
+    label: "Configurações",
     icon: Settings
   }];
+  
   return <Sidebar className="border-r border-gray-200 dark:border-gray-800">
       <SidebarContent className="mx-0 py-[70px]">
         <SidebarGroup>

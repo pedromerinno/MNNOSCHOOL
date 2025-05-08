@@ -1,84 +1,45 @@
 
-import React, { useEffect, useState, useCallback } from 'react';
 import { TabsContent } from "@/components/ui/tabs";
-import { Company } from "@/types/company";
-import { CompanyIntegrationForm } from '../CompanyIntegrationForm';
-import { IntegrationVideosManager } from '../IntegrationVideosManager';
-import { JobRolesManager } from '../job-roles/JobRolesManager';
-import { AccessManagement } from '../AccessManagement';
-import { CollaboratorsManagement } from '../collaborators/CollaboratorsManagement';
-import { CompanyCourseManagement } from '../CompanyCourseManagement';
+import { SettingsInfoTab } from "./SettingsInfoTab";
+import { SettingsVideosTab } from "./SettingsVideosTab";
+import { SettingsCoursesTab } from "./SettingsCoursesTab";
+import { SettingsJobRolesTab } from "./SettingsJobRolesTab";
+import { SettingsAccessTab } from "./SettingsAccessTab";
+import { SettingsCollaboratorsTab } from "./SettingsCollaboratorsTab";
+import { CompanyNoticesTab } from "./CompanyNoticesTab";
+import { SettingsTabContentProps } from "./types";
 
-interface SettingsTabContentProps {
-  value: string;
-  company: Company;
-  onSubmit?: (formData: any) => Promise<void>;
-  isSaving?: boolean;
-}
-
-export const SettingsTabContent: React.FC<SettingsTabContentProps> = ({
-  value,
-  company,
+export function SettingsTabContent({ 
+  value, 
+  company, 
   onSubmit,
-  isSaving
-}) => {
-  const [refreshKey, setRefreshKey] = useState(0);
-  
-  // More efficient event handler using useCallback
-  const handleJobRolesUpdated = useCallback(() => {
-    console.log("Job roles updated event detected, refreshing tab content");
-    // Only refresh if we're on the roles tab
-    if (value === "cargo") {
-      setRefreshKey(prev => prev + 1);
-    }
-  }, [value]);
-  
-  // Listen for job role updates
-  useEffect(() => {
-    window.addEventListener('job-roles-updated', handleJobRolesUpdated);
-    
-    return () => {
-      window.removeEventListener('job-roles-updated', handleJobRolesUpdated);
-    };
-  }, [handleJobRolesUpdated]);
-
-  // Only generate key when needed, not on every render
-  const getKey = useCallback((tabValue: string) => {
-    if (tabValue === "cargo") {
-      return `roles-${company.id}-${refreshKey}`;
-    }
-    return `${tabValue}-${company.id}`;
-  }, [company.id, refreshKey]);
-
-  const getContent = () => {
+  isSaving 
+}: SettingsTabContentProps) {
+  // Render different content based on tab value
+  const getTabContent = () => {
     switch (value) {
       case "info":
-        return (
-          <CompanyIntegrationForm 
-            key={getKey("info")}
-            company={company}
-            onSubmit={onSubmit!}
-            isSaving={isSaving!}
-          />
-        );
+        return <SettingsInfoTab company={company} onSubmit={onSubmit} isSaving={isSaving} />;
       case "videos":
-        return <IntegrationVideosManager key={getKey("videos")} company={company} />;
-      case "cargo":
-        return <JobRolesManager key={getKey("cargo")} company={company} />;
-      case "access":
-        return <AccessManagement key={getKey("access")} company={company} />;
-      case "collaborators":
-        return <CollaboratorsManagement key={getKey("collaborators")} company={company} />;
+        return <SettingsVideosTab company={company} />;
       case "courses":
-        return <CompanyCourseManagement key={getKey("courses")} company={company} />;
+        return <SettingsCoursesTab company={company} />;
+      case "cargo":
+        return <SettingsJobRolesTab company={company} />;
+      case "access":
+        return <SettingsAccessTab company={company} />;
+      case "collaborators":
+        return <SettingsCollaboratorsTab company={company} />;
+      case "notices":
+        return <CompanyNoticesTab />;
       default:
-        return null;
+        return <div>Tab content not implemented.</div>;
     }
   };
 
   return (
-    <TabsContent value={value} className="m-0">
-      {getContent()}
+    <TabsContent value={value} className="mt-4">
+      {getTabContent()}
     </TabsContent>
   );
-};
+}
