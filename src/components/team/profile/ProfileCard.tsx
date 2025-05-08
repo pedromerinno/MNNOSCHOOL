@@ -109,11 +109,10 @@ export const ProfileCard = ({ member }: ProfileCardProps) => {
             <div className="grid grid-cols-2 gap-4 mt-6">
               <Button
                 variant="outline"
-                className="gap-2 rounded-xl py-6 bg-white dark:bg-gray-800"
+                className="gap-2 rounded-xl py-6 bg-white dark:bg-gray-800 hover:bg-opacity-10"
                 style={{
-                  ":hover": {
-                    backgroundColor: `${companyColor}10`
-                  }
+                  backgroundColor: "transparent",
+                  borderColor: `${companyColor}30`
                 }}
                 onClick={() => window.location.href = `mailto:${member?.email}`}
               >

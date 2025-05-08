@@ -103,11 +103,11 @@ export const TeamMembersList = ({ members }: TeamMembersListProps) => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1 rounded-full gap-1.5 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700"
+                    className="flex-1 rounded-full gap-1.5 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-opacity-10"
                     style={{
-                      ":hover": {
-                        backgroundColor: `${companyColor}10`
-                      }
+                      backgroundColor: "transparent",
+                      borderColor: `${companyColor}30`,
+                      color: "currentColor"
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -121,11 +121,11 @@ export const TeamMembersList = ({ members }: TeamMembersListProps) => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1 rounded-full gap-1.5 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700"
+                    className="flex-1 rounded-full gap-1.5 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-opacity-10"
                     style={{
-                      ":hover": {
-                        backgroundColor: `${companyColor}10`
-                      }
+                      backgroundColor: "transparent",
+                      borderColor: `${companyColor}30`,
+                      color: "currentColor"
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
