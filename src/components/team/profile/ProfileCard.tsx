@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useState, useEffect } from "react";
+import { ReturnFeedbackDialog } from "@/components/feedback/ReturnFeedbackDialog";
 
 interface ProfileCardProps {
   member: UserProfile;
@@ -120,15 +121,20 @@ export const ProfileCard = ({ member }: ProfileCardProps) => {
                 Enviar email
               </Button>
               
-              <Button
-                className="gap-2 rounded-xl py-6 text-white"
-                style={{ 
-                  background: `linear-gradient(to right, ${companyColor}, ${companyColor}DD)`
-                }}
-              >
-                <MessageSquare className="h-5 w-5" />
-                Enviar feedback
-              </Button>
+              <ReturnFeedbackDialog
+                toUser={member}
+                trigger={
+                  <Button
+                    className="gap-2 rounded-xl py-6 text-white"
+                    style={{ 
+                      background: `linear-gradient(to right, ${companyColor}, ${companyColor}DD)`
+                    }}
+                  >
+                    <MessageSquare className="h-5 w-5" />
+                    Enviar feedback
+                  </Button>
+                }
+              />
             </div>
             
             {/* Team stats */}

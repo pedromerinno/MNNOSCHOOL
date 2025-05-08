@@ -3,19 +3,18 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { MessageSquare, UserRound, Mail, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
 import { UserProfile } from "@/hooks/useUsers";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useState, useEffect } from "react";
+import { ReturnFeedbackDialog } from "@/components/feedback/ReturnFeedbackDialog";
 
 interface TeamMembersListProps {
   members: UserProfile[];
 }
 
 export const TeamMembersList = ({ members }: TeamMembersListProps) => {
-  const navigate = useNavigate();
   const { selectedCompany } = useCompanies();
   const [companyColor, setCompanyColor] = useState("#1EAEDB");
 
@@ -42,7 +41,6 @@ export const TeamMembersList = ({ members }: TeamMembersListProps) => {
         <Card 
           key={member.id} 
           className="group overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-xl"
-          onClick={() => navigate(`/team/${member.id}`)}
         >
           <div 
             className="h-24" 
@@ -100,23 +98,25 @@ export const TeamMembersList = ({ members }: TeamMembersListProps) => {
                 
                 {/* Social actions */}
                 <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1 rounded-full gap-1.5 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-opacity-10"
-                    style={{
-                      backgroundColor: "transparent",
-                      borderColor: `${companyColor}30`,
-                      color: "currentColor"
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/team/${member.id}`);
-                    }}
-                  >
-                    <MessageSquare className="h-4 w-4" />
-                    Feedback
-                  </Button>
+                  <ReturnFeedbackDialog
+                    toUser={member}
+                    trigger={
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 rounded-full gap-1.5 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-opacity-10"
+                        style={{
+                          backgroundColor: "transparent",
+                          borderColor: `${companyColor}30`,
+                          color: "currentColor"
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                        Feedback
+                      </Button>
+                    }
+                  />
                   
                   <Button
                     variant="outline"
