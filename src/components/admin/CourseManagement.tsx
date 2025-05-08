@@ -19,7 +19,7 @@ export const CourseManagement: React.FC = () => {
   } = useCourses();
   return <div className="space-y-4">
       <div className="mb-4">
-        <h2 className="text-xl font-semibold">Gerenciamento de Cursos</h2>
+        <h2 className="text-xl font-semibold py-[10px]">Gerenciamento de Cursos</h2>
         
       </div>
       
