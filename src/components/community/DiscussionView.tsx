@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MessageSquare, Trash2, Image as ImageIcon, X, Video } from "lucide-react";
-import { Discussion, DiscussionReply } from "@/types/discussions";
+import { Discussion, DiscussionReply } from '@/types/discussions';
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
