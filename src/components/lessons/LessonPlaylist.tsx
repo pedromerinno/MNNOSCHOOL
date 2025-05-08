@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Play, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { calculateTotalDuration } from "@/utils/durationUtils";
 
 interface LessonPlaylistProps {
   lessons: Array<{
@@ -25,6 +26,7 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
   loading = false
 }) => {
   const currentIndex = lessons.findIndex(lesson => lesson.id === currentLessonId);
+  const totalDuration = calculateTotalDuration(lessons);
 
   // Prevent default click behavior and handle lesson selection
   const handleLessonClick = (lessonId: string, e: React.MouseEvent) => {
@@ -40,8 +42,8 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
     <div className="bg-background rounded-lg">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-base font-medium">Aulas do Curso</h3>
-        <span className="text-sm text-muted-foreground">
-          {currentIndex + 1} / {lessons.length}
+        <span className="text-xs text-muted-foreground">
+          {totalDuration}
         </span>
       </div>
       

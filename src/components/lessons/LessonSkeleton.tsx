@@ -12,20 +12,20 @@ export const LessonSkeleton: React.FC = () => {
       <div className="flex flex-col lg:flex-row w-full min-h-[calc(100vh-80px)]">
         {/* Sidebar skeleton */}
         <div className="lg:w-1/4 lg:min-h-full border-r border-border">
-          <div className="sticky top-0 pt-6 h-full max-h-screen pb-6 px-4">
+          <div className="fixed lg:w-[calc(25%-1px)] top-[80px] h-[calc(100vh-80px)] overflow-y-auto pb-6">
             {/* Back button skeleton */}
-            <div className="mb-4">
+            <div className="px-4 pt-6 mb-4">
               <Skeleton className="h-9 w-full" />
             </div>
             
             {/* Playlist header skeleton */}
-            <div className="mb-4 flex items-center justify-between">
+            <div className="px-4 mb-4 flex items-center justify-between">
               <Skeleton className="h-6 w-32" />
               <Skeleton className="h-4 w-12" />
             </div>
             
             {/* Playlist items skeleton */}
-            <div className="space-y-3">
+            <div className="px-4 space-y-3">
               {[1, 2, 3, 4, 5].map((i) => (
                 <div key={i} className="flex items-center gap-3 p-2.5">
                   <Skeleton className="h-6 w-6 rounded-full" />

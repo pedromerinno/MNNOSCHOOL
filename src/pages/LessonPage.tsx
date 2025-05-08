@@ -76,11 +76,11 @@ const LessonPage = () => {
   return (
     <DashboardLayout fullWidth>
       <div className="flex flex-col lg:flex-row w-full min-h-[calc(100vh-80px)]">
-        {/* Sidebar moved to left side and made full height */}
+        {/* Sidebar moved to left side and made full height and fixed */}
         <div className="lg:w-1/4 lg:min-h-full border-r border-border">
-          <div className="sticky top-0 pt-6 h-full max-h-screen overflow-y-auto pb-6">
+          <div className="fixed lg:w-[calc(25%-1px)] top-[80px] h-[calc(100vh-80px)] overflow-y-auto pb-6">
             {/* Back to course button moved to top of sidebar */}
-            <div className="px-4 mb-4">
+            <div className="px-4 pt-6 mb-4">
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -105,7 +105,7 @@ const LessonPage = () => {
         
         {/* Content area moved to right side with padding */}
         <div className="flex-1 p-6 lg:px-8">
-          <LessonHeader lesson={lesson} courseId={courseId} />
+          <LessonHeader lesson={lesson} courseId={courseId} hideBackButton={true} />
           
           <div className="mt-6 space-y-8">
             {/* Added padding to video container */}
