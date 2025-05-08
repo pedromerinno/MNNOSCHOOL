@@ -59,7 +59,7 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
                 <img 
                   src={window.localStorage.getItem('selectedCompanyLogo') || "/placeholder.svg"} 
                   alt="Company Logo" 
-                  className="w-full h-full object-contain p-1" 
+                  className="w-full h-full object-cover p-0" 
                   onError={e => {
                     const target = e.target as HTMLImageElement;
                     target.src = "/placeholder.svg";
