@@ -100,7 +100,7 @@ export const CompanyManagement: React.FC = () => {
   // Determinar quais empresas mostrar baseado no perfil do usuário
   const displayCompanies = isSuperAdmin ? Array.isArray(companies) ? companies : [] : Array.isArray(userCompanies) ? userCompanies : [];
   return <div className="space-y-4">
-      <div className="flex justify-between items-center py-[20px]">
+      <div className="flex justify-between items-center py-[10px]">
         <h2 className="font-semibold text-xl">Gerenciamento de Empresas</h2>
         <Button onClick={handleCreateCompany} className="rounded-2xl">
           <Plus className="h-4 w-4 mr-2" />
