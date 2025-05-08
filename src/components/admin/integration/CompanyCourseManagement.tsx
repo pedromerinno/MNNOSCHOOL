@@ -64,7 +64,7 @@ export const CompanyCourseManagement: React.FC<CompanyCourseManagementProps> = (
           
           <Button 
             onClick={() => setIsFormOpen(true)} 
-            className="bg-purple-600 hover:bg-purple-700"
+            className="bg-blue-600 hover:bg-blue-700"
           >
             <Plus className="mr-2 h-4 w-4" /> Novo Curso
           </Button>
