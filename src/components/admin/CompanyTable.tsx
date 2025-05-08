@@ -1,10 +1,17 @@
+
 import React, { useEffect, useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, Users } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, Users } from "lucide-react";
 import { Company } from "@/types/company";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface CompanyTableProps {
   companies: Company[];
@@ -66,7 +73,7 @@ export const CompanyTable: React.FC<CompanyTableProps> = ({
             <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Nome</TableHead>
             <TableHead className="font-semibold text-gray-700 dark:text-gray-300 hidden md:table-cell">Frase Institucional</TableHead>
             <TableHead className="font-semibold text-gray-700 dark:text-gray-300 hidden md:table-cell">Data de Criação</TableHead>
-            <TableHead className="text-right font-semibold text-gray-700 dark:text-gray-300">Ações</TableHead>
+            <TableHead className="text-right font-semibold text-gray-700 dark:text-gray-300 w-20">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -104,23 +111,39 @@ export const CompanyTable: React.FC<CompanyTableProps> = ({
                 <TableCell className="text-gray-600 dark:text-gray-300 hidden md:table-cell">
                   {new Date(company.created_at).toLocaleDateString('pt-BR')}
                 </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" size="sm" onClick={() => onManageUsers(company)} className="h-9 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <Users className="h-4 w-4 mr-1" />
-                      <span className="hidden sm:inline">Usuários</span>
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => onEdit(company)} className="h-9 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <Pencil className="h-4 w-4 mr-1" />
-                      <span className="hidden sm:inline">Editar</span>
-                    </Button>
-                    {(userProfile?.super_admin || deletableCompanies[company.id]) && (
-                      <Button variant="destructive" size="sm" onClick={() => onDelete(company.id)} className="h-9">
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        <span className="hidden sm:inline">Excluir</span>
+                <TableCell className="text-right p-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <MoreHorizontal className="h-4 w-4" />
                       </Button>
-                    )}
-                  </div>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="bg-white dark:bg-gray-800">
+                      <DropdownMenuItem 
+                        className="cursor-pointer flex items-center gap-2"
+                        onClick={() => onManageUsers(company)}
+                      >
+                        <Users className="h-4 w-4" />
+                        <span>Usuários</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        className="cursor-pointer flex items-center gap-2"
+                        onClick={() => onEdit(company)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                        <span>Editar</span>
+                      </DropdownMenuItem>
+                      {(userProfile?.super_admin || deletableCompanies[company.id]) && (
+                        <DropdownMenuItem 
+                          className="cursor-pointer flex items-center gap-2 text-red-600 dark:text-red-400"
+                          onClick={() => onDelete(company.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span>Excluir</span>
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>)}
         </TableBody>
