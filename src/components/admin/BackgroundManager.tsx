@@ -8,7 +8,6 @@ import { MediaTypeSelector } from './background/MediaTypeSelector';
 import { FileUpload } from './background/FileUpload';
 import { UrlInput } from './background/UrlInput';
 import { MediaPreview } from './background/MediaPreview';
-
 export const BackgroundManager = () => {
   const [mediaUrl, setMediaUrl] = useState("");
   const [mediaType, setMediaType] = useState<"video" | "image">("video");
@@ -17,7 +16,6 @@ export const BackgroundManager = () => {
     uploadFile,
     isUploading
   } = useBackgroundUpload();
-
   useEffect(() => {
     const fetchCurrentBackground = async () => {
       try {
@@ -35,7 +33,6 @@ export const BackgroundManager = () => {
     };
     fetchCurrentBackground();
   }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
@@ -62,7 +59,6 @@ export const BackgroundManager = () => {
       setIsSaving(false);
     }
   };
-
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -80,10 +76,9 @@ export const BackgroundManager = () => {
       handleSubmit(new Event('submit') as any);
     }
   };
-
   return <div className="space-y-6">
       <div>
-        <h3 className="mb-2 px-0 py-[10px] font-bold text-2xl">Interface de Login</h3>
+        <h3 className="mb-2 px-0 py-[10px] font-bold text-xl">Interface de Login</h3>
         <p className="mb-4 text-gray-400 text-sm">
           Configure o background da página de login com uma imagem ou vídeo
         </p>
