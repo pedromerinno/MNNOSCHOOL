@@ -32,7 +32,22 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
       return "";
     }
   };
-  return <Card className="border border-blue-100 dark:border-blue-900/30 bg-blue-50/50 dark:bg-blue-900/10 shadow-sm">
+  
+  // Calculate lighter color for background
+  const getLighterColor = (color: string, opacity: number = 0.1): string => {
+    // If color is a hex code
+    if (color.startsWith('#')) {
+      return `${color}${Math.round(opacity * 255).toString(16).padStart(2, '0')}`;
+    }
+    // If color is an RGB value
+    return `${color.split(')')[0]}, ${opacity})`;
+  };
+  
+  return <Card className="border border-blue-100 dark:border-blue-900/30 shadow-sm" 
+         style={{ 
+           backgroundColor: getLighterColor(companyColor, 0.05),
+           borderColor: getLighterColor(companyColor, 0.2)
+         }}>
       <CardContent className="p-6 md:p-8">
         <div className="flex flex-col">
           {/* Header with user name and role */}
@@ -45,14 +60,14 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
               </h2>
               <p className="text-gray-600 dark:text-gray-400">{roleTitle}</p>
             </div>
-            <div className="flex items-center gap-3">
-              <Avatar className="h-16 w-16">
+            <div className="flex items-center gap-1">
+              <Avatar className="h-16 w-16 z-10 relative right-2">
                 <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.display_name || "User"} />
                 <AvatarFallback className="bg-gray-200 text-gray-700">
                   {getInitials(userProfile.display_name)}
                 </AvatarFallback>
               </Avatar>
-              <div className="h-16 w-16 rounded-full flex items-center justify-center overflow-hidden bg-white" style={{
+              <div className="h-16 w-16 rounded-full flex items-center justify-center overflow-hidden bg-white z-0" style={{
               border: `2px solid ${companyColor}`
             }}>
                 {/* Use company logo from the selected company */}
@@ -73,7 +88,9 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
           <div className="space-y-10">
             {/* User information section */}
             <div>
-              <div className="bg-blue-100/70 dark:bg-blue-900/20 rounded-md py-2 px-4 mb-6">
+              <div className="rounded-md py-2 px-4 mb-6" style={{ 
+                backgroundColor: getLighterColor(companyColor, 0.15),
+              }}>
                 <h3 style={{
                 color: companyColor
               }} className="text-sm font-semibold text-blue-600 text-center py-[20px]">
@@ -129,3 +146,4 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
       </CardContent>
     </Card>;
 };
+
