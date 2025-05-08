@@ -71,8 +71,8 @@ const Community = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedDiscussion, setSelectedDiscussion] = useState<DiscussionType | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
-  const handleCreateDiscussion = async (title: string, content: string, imageUrl?: string, videoUrl?: string) => {
-    await createDiscussion(title, content, imageUrl, videoUrl);
+  const handleCreateDiscussion = async (title: string, content: string, imageUrl?: string) => {
+    await createDiscussion(title, content, imageUrl);
   };
   const handleViewDiscussion = (discussion: DiscussionType) => {
     setSelectedDiscussion(discussion);

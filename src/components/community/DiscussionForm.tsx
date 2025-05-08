@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useForm } from "react-hook-form";
 import { Image as ImageIcon, Video } from "lucide-react";
+import { getEmbedUrl } from "@/components/integration/video-playlist/utils";
 
 interface DiscussionFormProps {
   isOpen: boolean;
@@ -21,14 +22,16 @@ export const DiscussionForm: React.FC<DiscussionFormProps> = ({
   const { register, handleSubmit, reset } = useForm();
   const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
   const [videoUrl, setVideoUrl] = useState<string | undefined>(undefined);
-  const [videoError, setVideoError] = useState<string | null>(null);
+  const [showVideoInput, setShowVideoInput] = useState(false);
+  const [videoInputValue, setVideoInputValue] = useState("");
 
   const onFormSubmit = async (data: any) => {
     await onSubmit(data.title, data.content, imageUrl, videoUrl);
     reset();
     setImageUrl(undefined);
     setVideoUrl(undefined);
-    setVideoError(null);
+    setVideoInputValue("");
+    setShowVideoInput(false);
     onOpenChange(false);
   };
 
@@ -43,25 +46,30 @@ export const DiscussionForm: React.FC<DiscussionFormProps> = ({
     }
   };
 
-  const validateVideoUrl = (url: string): boolean => {
-    // Check if URL is from YouTube, Vimeo, or Loom
-    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)[a-zA-Z0-9_-]{11}/;
-    const vimeoRegex = /^(https?:\/\/)?(www\.)?(vimeo\.com\/|player\.vimeo\.com\/video\/)[0-9]+/;
-    const loomRegex = /^(https?:\/\/)?(www\.)?(loom\.com\/share\/)[a-zA-Z0-9]+/;
-    
-    return youtubeRegex.test(url) || vimeoRegex.test(url) || loomRegex.test(url);
+  const handleVideoUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setVideoInputValue(e.target.value);
   };
 
-  const handleVideoUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const url = e.target.value;
-    setVideoUrl(url);
-    
-    if (url && !validateVideoUrl(url)) {
-      setVideoError("URL inválida. Por favor, insira um link do YouTube, Vimeo ou Loom.");
-    } else {
-      setVideoError(null);
+  const addVideoUrl = () => {
+    if (videoInputValue.trim()) {
+      setVideoUrl(videoInputValue);
+      setShowVideoInput(false);
     }
   };
+
+  const isYoutubeUrl = videoUrl && (
+    videoUrl.includes("youtube.com") || 
+    videoUrl.includes("youtu.be") || 
+    videoUrl.includes("youtube-nocookie.com")
+  );
+  
+  const isLoomUrl = videoUrl && (
+    videoUrl.includes("loom.com")
+  );
+  
+  const isVimeoUrl = videoUrl && (
+    videoUrl.includes("vimeo.com")
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -108,7 +116,52 @@ export const DiscussionForm: React.FC<DiscussionFormProps> = ({
               </Button>
             </div>
           )}
-          <div className="space-y-2">
+          
+          {videoUrl && (
+            <div className="relative">
+              <iframe
+                src={getEmbedUrl(videoUrl)}
+                className="w-full h-64 rounded-lg"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+              <Button
+                variant="destructive"
+                size="sm"
+                className="absolute top-2 right-2"
+                onClick={() => setVideoUrl(undefined)}
+              >
+                Remover
+              </Button>
+              <div className="mt-2 text-sm text-gray-500">
+                {isYoutubeUrl && "YouTube"}
+                {isLoomUrl && "Loom"}
+                {isVimeoUrl && "Vimeo"}
+                {!isYoutubeUrl && !isLoomUrl && !isVimeoUrl && "Vídeo"}
+                : {videoUrl}
+              </div>
+            </div>
+          )}
+          
+          {showVideoInput && (
+            <div className="flex gap-2">
+              <Input
+                value={videoInputValue}
+                onChange={handleVideoUrlChange}
+                placeholder="Cole a URL do vídeo (YouTube, Vimeo ou Loom)"
+                className="flex-1"
+              />
+              <Button type="button" onClick={addVideoUrl}>
+                Adicionar
+              </Button>
+              <Button type="button" variant="ghost" onClick={() => setShowVideoInput(false)}>
+                Cancelar
+              </Button>
+            </div>
+          )}
+          
+          <div className="flex gap-4">
             <div>
               <input 
                 type="file" 
@@ -126,30 +179,26 @@ export const DiscussionForm: React.FC<DiscussionFormProps> = ({
               </label>
             </div>
             
-            <div className="pt-2">
-              <label 
-                htmlFor="video-url" 
-                className="flex items-center text-gray-500 mb-2"
-              >
-                <Video className="h-5 w-5 mr-2" />
-                Link do vídeo (YouTube, Vimeo ou Loom)
-              </label>
-              <Input
-                id="video-url"
-                value={videoUrl || ''}
-                onChange={handleVideoUrlChange}
-                placeholder="Ex: https://youtube.com/watch?v=..."
-              />
-              {videoError && (
-                <p className="text-sm text-red-500 mt-1">{videoError}</p>
-              )}
-            </div>
+            {!videoUrl && !showVideoInput && (
+              <div>
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  className="flex items-center text-gray-500 hover:text-gray-700 p-0"
+                  onClick={() => setShowVideoInput(true)}
+                >
+                  <Video className="h-5 w-5 mr-2" />
+                  Adicionar vídeo
+                </Button>
+              </div>
+            )}
           </div>
+          
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={videoUrl ? videoError !== null : false}>Criar discussão</Button>
+            <Button type="submit">Criar discussão</Button>
           </DialogFooter>
         </form>
       </DialogContent>

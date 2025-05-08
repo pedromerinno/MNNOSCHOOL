@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useCompanies } from "@/hooks/useCompanies";
 import { Input } from "@/components/ui/input";
+import { getEmbedUrl } from "@/components/integration/video-playlist/utils";
 
 interface DiscussionViewProps {
   discussion: Discussion | null;
@@ -33,17 +34,17 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
   const [replyContent, setReplyContent] = React.useState("");
   const [replyImageUrl, setReplyImageUrl] = React.useState<string | undefined>(undefined);
   const [replyVideoUrl, setReplyVideoUrl] = React.useState<string | undefined>(undefined);
-  const [videoError, setVideoError] = React.useState<string | null>(null);
+  const [showVideoInput, setShowVideoInput] = React.useState(false);
+  const [videoInputValue, setVideoInputValue] = React.useState("");
 
   const handleSubmitReply = async () => {
     if (!discussion || (!replyContent.trim() && !replyImageUrl && !replyVideoUrl)) return;
-    if (replyVideoUrl && videoError) return;
-    
     await onReply(discussion.id, replyContent, replyImageUrl, replyVideoUrl);
     setReplyContent("");
     setReplyImageUrl(undefined);
     setReplyVideoUrl(undefined);
-    setVideoError(null);
+    setVideoInputValue("");
+    setShowVideoInput(false);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,50 +58,15 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
     }
   };
 
-  const validateVideoUrl = (url: string): boolean => {
-    // Check if URL is from YouTube, Vimeo, or Loom
-    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)[a-zA-Z0-9_-]{11}/;
-    const vimeoRegex = /^(https?:\/\/)?(www\.)?(vimeo\.com\/|player\.vimeo\.com\/video\/)[0-9]+/;
-    const loomRegex = /^(https?:\/\/)?(www\.)?(loom\.com\/share\/)[a-zA-Z0-9]+/;
-    
-    return youtubeRegex.test(url) || vimeoRegex.test(url) || loomRegex.test(url);
-  };
-
   const handleVideoUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const url = e.target.value;
-    setReplyVideoUrl(url);
-    
-    if (url && !validateVideoUrl(url)) {
-      setVideoError("URL inválida. Por favor, insira um link do YouTube, Vimeo ou Loom.");
-    } else {
-      setVideoError(null);
-    }
+    setVideoInputValue(e.target.value);
   };
 
-  // Function to convert video URL to embed URL
-  const getEmbedUrl = (url: string): string => {
-    // YouTube
-    const youtubeRegex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/;
-    const youtubeMatch = url.match(youtubeRegex);
-    if (youtubeMatch) {
-      return `https://www.youtube.com/embed/${youtubeMatch[1]}`;
+  const addVideoUrl = () => {
+    if (videoInputValue.trim()) {
+      setReplyVideoUrl(videoInputValue);
+      setShowVideoInput(false);
     }
-    
-    // Vimeo
-    const vimeoRegex = /(?:vimeo\.com\/|player\.vimeo\.com\/video\/)([0-9]+)/;
-    const vimeoMatch = url.match(vimeoRegex);
-    if (vimeoMatch) {
-      return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
-    }
-    
-    // Loom
-    const loomRegex = /loom\.com\/share\/([a-zA-Z0-9]+)/;
-    const loomMatch = url.match(loomRegex);
-    if (loomMatch) {
-      return `https://www.loom.com/embed/${loomMatch[1]}`;
-    }
-    
-    return url;
   };
 
   if (!discussion) return null;
@@ -148,18 +114,16 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
               />
             </div>
           )}
-          
+
           {discussion.video_url && (
             <div className="mb-6">
-              <div className="relative pt-[56.25%] w-full">
-                <iframe
-                  className="absolute top-0 left-0 w-full h-full rounded-lg"
-                  src={getEmbedUrl(discussion.video_url)}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  title="Embedded video"
-                ></iframe>
-              </div>
+              <iframe
+                src={getEmbedUrl(discussion.video_url)}
+                className="w-full h-96 rounded-lg"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
             </div>
           )}
           
@@ -207,7 +171,6 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
                       <span className="mx-2">•</span>
                       <span>{format(new Date(reply.created_at), 'dd/MM/yyyy')}</span>
                     </div>
-                    
                     {reply.image_url && (
                       <div className="mb-4">
                         <img 
@@ -217,21 +180,17 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
                         />
                       </div>
                     )}
-                    
                     {reply.video_url && (
                       <div className="mb-4">
-                        <div className="relative pt-[56.25%] w-full">
-                          <iframe
-                            className="absolute top-0 left-0 w-full h-full rounded-lg"
-                            src={getEmbedUrl(reply.video_url)}
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                            title="Embedded video"
-                          ></iframe>
-                        </div>
+                        <iframe
+                          src={getEmbedUrl(reply.video_url)}
+                          className="w-full h-64 rounded-lg"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
                       </div>
                     )}
-                    
                     {reply.content && (
                       <p className="text-gray-700 dark:text-gray-300 pr-6">{reply.content}</p>
                     )}
@@ -260,18 +219,16 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
               </Button>
             </div>
           )}
-          
-          {replyVideoUrl && !videoError && (
-            <div className="mb-4">
-              <div className="relative pt-[56.25%] w-full">
-                <iframe
-                  className="absolute top-0 left-0 w-full h-full rounded-lg"
-                  src={getEmbedUrl(replyVideoUrl)}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  title="Video preview"
-                ></iframe>
-              </div>
+
+          {replyVideoUrl && (
+            <div className="mb-4 relative">
+              <iframe
+                src={getEmbedUrl(replyVideoUrl)}
+                className="w-full h-48 rounded-lg"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
               <Button
                 variant="destructive"
                 size="sm"
@@ -282,7 +239,24 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
               </Button>
             </div>
           )}
-          
+
+          {showVideoInput && (
+            <div className="flex gap-2 mb-4">
+              <Input
+                value={videoInputValue}
+                onChange={handleVideoUrlChange}
+                placeholder="Cole a URL do vídeo (YouTube, Vimeo ou Loom)"
+                className="flex-1"
+              />
+              <Button type="button" onClick={addVideoUrl}>
+                Adicionar
+              </Button>
+              <Button type="button" variant="ghost" onClick={() => setShowVideoInput(false)}>
+                Cancelar
+              </Button>
+            </div>
+          )}
+
           <Textarea 
             placeholder="Escreva sua resposta..." 
             rows={3}
@@ -290,7 +264,6 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
             onChange={(e) => setReplyContent(e.target.value)}
             className="resize-none"
           />
-          
           <div className="flex justify-between items-center mt-3">
             <div className="flex gap-4">
               <input 
@@ -307,28 +280,24 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
                 <ImageIcon className="h-5 w-5 mr-2" />
                 Adicionar imagem
               </label>
-              
-              <div className="flex flex-col">
-                <div className="cursor-pointer flex items-center text-gray-500 hover:text-gray-700">
+
+              {!replyVideoUrl && !showVideoInput && (
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  className="flex items-center text-gray-500 hover:text-gray-700 p-0"
+                  onClick={() => setShowVideoInput(true)}
+                >
                   <Video className="h-5 w-5 mr-2" />
-                  <Input 
-                    placeholder="URL do vídeo"
-                    className="h-7 px-2 w-[200px]"
-                    value={replyVideoUrl || ''}
-                    onChange={handleVideoUrlChange}
-                  />
-                </div>
-                {videoError && (
-                  <p className="text-xs text-red-500 mt-1 ml-7">{videoError}</p>
-                )}
-              </div>
+                  Adicionar vídeo
+                </Button>
+              )}
             </div>
-            
+
             <Button 
               onClick={handleSubmitReply} 
               className="rounded-full px-5"
               style={{ backgroundColor: companyColor }}
-              disabled={replyVideoUrl ? videoError !== null : false}
             >
               Responder
             </Button>

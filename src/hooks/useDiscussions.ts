@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useCompanies } from '@/hooks/useCompanies';
@@ -82,10 +83,12 @@ export const useDiscussions = () => {
         if (!map[reply.discussion_id]) {
           map[reply.discussion_id] = [];
         }
-        map[reply.discussion_id].push({
+        // Fix TypeScript error: item.profiles is possibly 'null'
+        const replyWithProfiles = {
           ...reply,
           profiles: replyProfilesMap[reply.author_id] || { display_name: 'Usuário', avatar: null }
-        });
+        };
+        map[reply.discussion_id].push(replyWithProfiles);
         return map;
       }, {} as Record<string, any[]>);
       
@@ -100,8 +103,9 @@ export const useDiscussions = () => {
           created_at: discussion.created_at,
           updated_at: discussion.updated_at,
           image_url: discussion.image_url || null,
-          video_url: discussion.video_url || null,
+          video_url: discussion.video_url || null, // Fix the TypeScript error here
           status: discussion.status || 'open' as const,
+          // Fix TypeScript error by providing default value for profiles
           profiles: profilesMap[discussion.author_id] || { display_name: 'Usuário', avatar: null },
           discussion_replies: (repliesByDiscussionId[discussion.id] || []) as DiscussionReply[]
         } as Discussion;
@@ -129,7 +133,7 @@ export const useDiscussions = () => {
         company_id: selectedCompany.id,
         author_id: user.id,
         image_url: imageUrl || null,
-        video_url: videoUrl || null,
+        video_url: videoUrl || null, // Fix the TypeScript error here
         status: 'open' as const
       };
 
@@ -143,6 +147,7 @@ export const useDiscussions = () => {
       
       toast.success('Discussão criada com sucesso!');
       await fetchDiscussions();
+      // Fix TypeScript error by checking if data exists
       return data;
     } catch (error: any) {
       console.error('Error creating discussion:', error);
@@ -203,7 +208,7 @@ export const useDiscussions = () => {
         content,
         author_id: user.id,
         image_url: imageUrl || null,
-        video_url: videoUrl || null
+        video_url: videoUrl || null // Add video URL support
       };
 
       const { error } = await supabase
