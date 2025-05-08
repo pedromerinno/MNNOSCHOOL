@@ -40,11 +40,9 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
 
   return (
     <div className="bg-background rounded-lg">
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-base font-medium">Aulas do Curso</h3>
-        <span className="text-xs text-muted-foreground">
-          {totalDuration}
-        </span>
+      <div className="mb-4">
+        <h3 className="text-base font-medium mb-1">Aulas do Curso</h3>
+        <span className="text-xs text-muted-foreground">{totalDuration}</span>
       </div>
       
       <div className="max-h-[calc(100vh-180px)] overflow-y-auto pr-2">

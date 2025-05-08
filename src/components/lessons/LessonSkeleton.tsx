@@ -3,8 +3,6 @@ import React from 'react';
 import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft } from "lucide-react";
 
 export const LessonSkeleton: React.FC = () => {
   return (
@@ -19,8 +17,8 @@ export const LessonSkeleton: React.FC = () => {
             </div>
             
             {/* Playlist header skeleton */}
-            <div className="px-4 mb-4 flex items-center justify-between">
-              <Skeleton className="h-6 w-32" />
+            <div className="px-4 mb-4">
+              <Skeleton className="h-6 w-32 mb-1" />
               <Skeleton className="h-4 w-12" />
             </div>
             
@@ -42,18 +40,15 @@ export const LessonSkeleton: React.FC = () => {
         {/* Content area skeleton */}
         <div className="flex-1 p-6 lg:px-8">
           {/* Lesson header skeleton */}
-          <div className="mb-4">
-            <Skeleton className="h-10 w-3/4 mb-4" /> {/* Title */}
-            <div className="flex items-center gap-4 mb-4">
-              <Skeleton className="h-6 w-20" /> {/* Lesson type */}
-              <Skeleton className="h-6 w-24" /> {/* Duration */}
-            </div>
-          </div>
-
-          {/* Action buttons skeleton */}
-          <div className="flex items-center justify-between mb-6">
-            <Skeleton className="h-10 w-32" /> {/* Like button */}
-            <Skeleton className="h-10 w-44" /> {/* Complete button */}
+          <Skeleton className="h-10 w-3/4 mb-4" /> {/* Title */}
+          
+          {/* Action buttons skeleton - now in a single row */}
+          <div className="flex items-center gap-3 mb-6">
+            <Skeleton className="h-8 w-20" /> {/* Lesson type */}
+            <Skeleton className="h-8 w-20" /> {/* Duration */}
+            <div className="flex-1"></div>
+            <Skeleton className="h-8 w-32" /> {/* Like button */}
+            <Skeleton className="h-8 w-44" /> {/* Complete button */}
           </div>
           
           <div className="mt-6 space-y-8">
@@ -71,7 +66,6 @@ export const LessonSkeleton: React.FC = () => {
             
             {/* Comments skeleton */}
             <div className="mt-8">
-              <Skeleton className="h-8 w-32 mb-4" /> {/* Comments title */}
               <Card className="p-6 border">
                 {/* Comment form skeleton */}
                 <div className="flex gap-3 mb-8">
@@ -81,16 +75,6 @@ export const LessonSkeleton: React.FC = () => {
 
                 {/* Comments list skeleton */}
                 <div className="space-y-6">
-                  <div className="flex gap-3">
-                    <Skeleton className="h-8 w-8 rounded-full flex-shrink-0" />
-                    <div className="flex-1">
-                      <div className="flex justify-between mb-1">
-                        <Skeleton className="h-4 w-32" /> {/* Username */}
-                        <Skeleton className="h-3 w-24" /> {/* Date */}
-                      </div>
-                      <Skeleton className="h-16 w-full" /> {/* Comment content */}
-                    </div>
-                  </div>
                   <div className="flex gap-3">
                     <Skeleton className="h-8 w-8 rounded-full flex-shrink-0" />
                     <div className="flex-1">
