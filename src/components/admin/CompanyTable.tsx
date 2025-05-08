@@ -41,7 +41,7 @@ export const CompanyTable: React.FC<CompanyTableProps> = ({
                       <img 
                         src={company.logo} 
                         alt={`${company.nome} logo`} 
-                        className="h-10 w-10 object-contain" 
+                        className="h-full w-full object-cover" 
                         onError={e => {
                           const target = e.target as HTMLImageElement;
                           target.src = "/placeholder.svg";
@@ -85,3 +85,4 @@ export const CompanyTable: React.FC<CompanyTableProps> = ({
       </Table>
     </div>;
 };
+
