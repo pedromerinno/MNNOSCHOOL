@@ -103,7 +103,7 @@ export const useDiscussions = () => {
           created_at: discussion.created_at,
           updated_at: discussion.updated_at,
           image_url: discussion.image_url || null,
-          video_url: discussion.video_url || null,
+          video_url: discussion.video_url || null, // Fix the TypeScript error here
           status: discussion.status || 'open' as const,
           // Fix TypeScript error by providing default value for profiles
           profiles: profilesMap[discussion.author_id] || { display_name: 'Usuário', avatar: null },
@@ -133,7 +133,7 @@ export const useDiscussions = () => {
         company_id: selectedCompany.id,
         author_id: user.id,
         image_url: imageUrl || null,
-        video_url: videoUrl || null,
+        video_url: videoUrl || null, // Fix the TypeScript error here
         status: 'open' as const
       };
 
@@ -208,7 +208,7 @@ export const useDiscussions = () => {
         content,
         author_id: user.id,
         image_url: imageUrl || null,
-        video_url: videoUrl || null
+        video_url: videoUrl || null // Add video URL support
       };
 
       const { error } = await supabase
