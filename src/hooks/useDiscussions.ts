@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useCompanies } from '@/hooks/useCompanies';
@@ -100,13 +99,10 @@ export const useDiscussions = () => {
           company_id: discussion.company_id,
           created_at: discussion.created_at,
           updated_at: discussion.updated_at,
-          // Use the image_url from the database or null if it doesn't exist
           image_url: discussion.image_url || null,
-          // Use the status from the database or 'open' as default
+          video_url: discussion.video_url || null,
           status: discussion.status || 'open' as const,
-          // Use the profile from our map, or a default if not found
           profiles: profilesMap[discussion.author_id] || { display_name: 'Usuário', avatar: null },
-          // Use the grouped replies or an empty array
           discussion_replies: (repliesByDiscussionId[discussion.id] || []) as DiscussionReply[]
         } as Discussion;
       });
@@ -120,7 +116,7 @@ export const useDiscussions = () => {
     }
   };
 
-  const createDiscussion = async (title: string, content: string, imageUrl?: string) => {
+  const createDiscussion = async (title: string, content: string, imageUrl?: string, videoUrl?: string) => {
     if (!selectedCompany?.id || !user?.id) {
       toast.error('Nenhuma empresa selecionada');
       return;
@@ -133,6 +129,7 @@ export const useDiscussions = () => {
         company_id: selectedCompany.id,
         author_id: user.id,
         image_url: imageUrl || null,
+        video_url: videoUrl || null,
         status: 'open' as const
       };
 
@@ -194,7 +191,7 @@ export const useDiscussions = () => {
     }
   };
 
-  const addReply = async (discussionId: string, content: string, imageUrl?: string) => {
+  const addReply = async (discussionId: string, content: string, imageUrl?: string, videoUrl?: string) => {
     if (!user?.id) {
       toast.error('Você precisa estar logado para responder');
       return;
@@ -205,7 +202,8 @@ export const useDiscussions = () => {
         discussion_id: discussionId,
         content,
         author_id: user.id,
-        image_url: imageUrl || null
+        image_url: imageUrl || null,
+        video_url: videoUrl || null
       };
 
       const { error } = await supabase
