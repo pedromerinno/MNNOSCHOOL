@@ -85,7 +85,7 @@ const Courses = () => {
         </div>}
       
       {/* Centered content with smaller width */}
-      {!loading && !hasNoCourses && <div className="w-full max-w-screen-xl mx-auto space-y-12 py-6 px-4">
+      {!loading && !hasNoCourses && <div className="w-full max-w-screen-xl mx-auto space-y-5 px-0 py-0">
           <div className="space-y-4 py-[30px]">
             <h2 className="text-xl font-semibold">Categorias</h2>
             <CourseCategories activeCategory={activeCategory} onCategoryChange={setActiveCategory} availableCategories={availableCategories} />
