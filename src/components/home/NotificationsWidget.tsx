@@ -100,7 +100,7 @@ export const NotificationsWidget = memo(() => {
   };
   return <Card className="border-0 shadow-none overflow-hidden bg-[#F1EDE4] dark:bg-[#222222] rounded-[30px]">
       <CardContent className="p-0 flex flex-col h-full">
-        <div className="p-8 flex justify-between items-center">
+        <div className="p-8 flex justify-between items-center py-[24px]">
           <div className="flex items-center gap-3">
             <h3 className="text-xl font-medium text-black dark:text-white">Avisos</h3>
             {isAdmin && <Button variant="ghost" size="icon" className="rounded-full h-7 w-7" onClick={() => setDialogOpen(true)}>
