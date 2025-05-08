@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useCompanyNotices } from "@/hooks/useCompanyNotices";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, MoreHorizontal } from "lucide-react";
+import { Pencil, Trash2, MoreHorizontal, Calendar, User } from "lucide-react";
 import NewNoticeDialog from "./dialogs/NewNoticeDialog";
 import { Notice } from "@/hooks/useNotifications";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,6 +14,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useCompanies } from "@/hooks/useCompanies";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export const CompanyNoticesAdminList: React.FC = () => {
   const {
@@ -60,16 +62,37 @@ export const CompanyNoticesAdminList: React.FC = () => {
     return company?.nome || companyId;
   };
 
-  return <div>
+  // Helper function to get company logo from company id
+  const getCompanyLogo = (companyId: string) => {
+    const company = userCompanies.find(c => c.id === companyId);
+    return company?.logo || null;
+  };
+
+  // Helper function to get company color from company id
+  const getCompanyColor = (companyId: string) => {
+    const company = userCompanies.find(c => c.id === companyId);
+    return company?.cor_principal || "#1EAEDB";
+  };
+
+  // Format date to display in PT-BR format
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+    } catch (e) {
+      return dateString;
+    }
+  };
+
+  return (
+    <div>
       <div className="flex justify-between items-center mb-6">
-        <div className="flex-1">
-          <Button 
-            onClick={() => setEditDialogOpen(true)} 
-            className="bg-primary hover:bg-primary/90"
-          >
-            Novo Aviso
-          </Button>
-        </div>
+        <h2 className="text-2xl font-bold">Avisos</h2>
+        <Button 
+          onClick={() => setEditDialogOpen(true)} 
+          className="bg-primary hover:bg-primary/90"
+        >
+          Novo Aviso
+        </Button>
       </div>
       
       {isLoading ? (
@@ -78,7 +101,7 @@ export const CompanyNoticesAdminList: React.FC = () => {
         </div>
       ) : notices.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-10">
+          <CardContent className="flex flex-col items-center justify-center py-8">
             <p className="text-muted-foreground mb-4">Nenhum aviso encontrado.</p>
             <Button onClick={() => setEditDialogOpen(true)}>Criar Primeiro Aviso</Button>
           </CardContent>
@@ -86,48 +109,92 @@ export const CompanyNoticesAdminList: React.FC = () => {
       ) : (
         <div className="grid gap-4">
           {notices.map(notice => (
-            <Card key={notice.id} className="overflow-hidden">
-              <CardContent className="p-0">
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <Badge variant="outline" className="px-3 py-1 capitalize">
-                      {notice.type.charAt(0).toUpperCase() + notice.type.slice(1)}
-                    </Badge>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Ações</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(notice)}>
-                          <Pencil className="mr-2 h-4 w-4" />
-                          <span>Editar</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={() => handleDelete(notice.id)}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          <span>Apagar</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+            <Card key={notice.id} className="overflow-hidden border border-gray-200 dark:border-gray-800">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <Badge variant="outline" className="px-2 py-1 capitalize text-xs">
+                    {notice.type.charAt(0).toUpperCase() + notice.type.slice(1)}
+                  </Badge>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="sr-only">Ações</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleEdit(notice)}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        <span>Editar</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => handleDelete(notice.id)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        <span>Apagar</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+                
+                <h3 className="text-lg font-semibold mb-1">{notice.title}</h3>
+                <p className="text-muted-foreground mb-3 line-clamp-2">{notice.content}</p>
+                
+                <div className="flex flex-col gap-3 mt-3 text-sm text-muted-foreground">
+                  {/* Date and author info */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5" />
+                      <span>{formatDate(notice.created_at)}</span>
+                    </div>
+                    {notice.author && (
+                      <div className="flex items-center gap-1">
+                        <User className="h-3.5 w-3.5" />
+                        <span>{notice.author.display_name || "Usuário"}</span>
+                      </div>
+                    )}
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">{notice.title}</h3>
-                  <p className="text-muted-foreground mb-4">{notice.content}</p>
                   
                   {/* Companies list */}
                   {notice.companies && notice.companies.length > 0 && (
-                    <div className="mt-4">
-                      <p className="text-sm text-muted-foreground mb-1">Empresas:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {notice.companies.map((companyId: string) => (
-                          <Badge key={companyId} variant="secondary" className="text-xs">
-                            {getCompanyName(companyId)}
-                          </Badge>
-                        ))}
+                    <div className="mt-2">
+                      <p className="text-xs text-muted-foreground mb-1.5">Empresas:</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {notice.companies.map((companyId: string) => {
+                          const companyColor = getCompanyColor(companyId);
+                          const companyLogo = getCompanyLogo(companyId);
+                          
+                          return (
+                            <Badge 
+                              key={companyId} 
+                              variant="secondary" 
+                              className="text-xs flex items-center px-2 py-1"
+                              style={{
+                                backgroundColor: `${companyColor}15`, // Light background (10% opacity)
+                                color: companyColor,
+                                borderColor: `${companyColor}30` // Slightly darker border (30% opacity)
+                              }}
+                            >
+                              {companyLogo ? (
+                                <img 
+                                  src={companyLogo} 
+                                  alt={getCompanyName(companyId)}
+                                  className="w-3.5 h-3.5 rounded-full mr-1.5 object-contain"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                  }}
+                                />
+                              ) : (
+                                <span className="w-3.5 h-3.5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] mr-1.5">
+                                  {getCompanyName(companyId).charAt(0).toUpperCase()}
+                                </span>
+                              )}
+                              {getCompanyName(companyId)}
+                            </Badge>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -145,5 +212,6 @@ export const CompanyNoticesAdminList: React.FC = () => {
         initialData={editingNotice} 
         editingNoticeId={editingNotice?.id || null} 
       />
-    </div>;
+    </div>
+  );
 };

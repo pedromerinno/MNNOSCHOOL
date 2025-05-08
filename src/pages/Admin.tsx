@@ -50,10 +50,7 @@ const AdminPage = () => {
       case "allcourses":
         return <CourseManagement />;
       case "notices":
-        return <div>
-            <h3 className="mb-6 text-2xl font-semibold">Avisos</h3>
-            <CompanyNoticesAdminList />
-          </div>;
+        return <CompanyNoticesAdminList />;
       case "settings":
         return <SettingsManagement />;
       default:
