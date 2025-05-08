@@ -91,7 +91,7 @@ export const CourseLessonsSection: React.FC<CourseLessonsSectionProps> = ({
           onClose={() => setShowLessonManager(false)}
         />
         
-        <ScrollArea className="max-h-[400px] pr-2">
+        <ScrollArea className="h-auto max-h-[calc(100vh-280px)]">
           <CourseLessonList 
             lessons={lessons} 
             courseId={courseId}

@@ -53,7 +53,7 @@ export const CourseViewSkeleton: React.FC = () => {
             </CardHeader>
             
             <CardContent>
-              <ScrollArea className="max-h-[400px]">
+              <ScrollArea className="h-auto max-h-[calc(100vh-280px)]">
                 <div className="space-y-3">
                   {[1, 2, 3, 4, 5, 6].map(i => (
                     <Skeleton key={i} className="h-16 w-full" />
