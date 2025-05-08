@@ -1,23 +1,21 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { MessageSquare, Trash2, Image as ImageIcon, X, Youtube, Video } from "lucide-react";
+import { MessageSquare, Trash2, Image as ImageIcon, X } from "lucide-react";
 import { Discussion, DiscussionReply } from "@/types/discussions";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useCompanies } from "@/hooks/useCompanies";
-import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface DiscussionViewProps {
   discussion: Discussion | null;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onReply: (discussionId: string, content: string, imageUrl?: string, videoUrl?: string) => Promise<void>;
+  onReply: (discussionId: string, content: string, imageUrl?: string) => Promise<void>;
   onDeleteReply: (replyId: string) => Promise<void>;
 }
 
@@ -31,18 +29,14 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
   const { userProfile } = useAuth();
   const { selectedCompany } = useCompanies();
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
-  const [replyContent, setReplyContent] = useState("");
-  const [replyImageUrl, setReplyImageUrl] = useState<string | undefined>(undefined);
-  const [videoUrl, setVideoUrl] = useState<string>("");
-  const [showVideoInput, setShowVideoInput] = useState(false);
+  const [replyContent, setReplyContent] = React.useState("");
+  const [replyImageUrl, setReplyImageUrl] = React.useState<string | undefined>(undefined);
 
   const handleSubmitReply = async () => {
-    if (!discussion || (!replyContent.trim() && !replyImageUrl && !videoUrl)) return;
-    await onReply(discussion.id, replyContent, replyImageUrl, videoUrl);
+    if (!discussion || (!replyContent.trim() && !replyImageUrl)) return;
+    await onReply(discussion.id, replyContent, replyImageUrl);
     setReplyContent("");
     setReplyImageUrl(undefined);
-    setVideoUrl("");
-    setShowVideoInput(false);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,67 +50,11 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
     }
   };
 
-  const renderEmbeddedVideo = (url: string) => {
-    // Extract video ID and platform
-    let videoId: string | null = null;
-    let platform: 'youtube' | 'vimeo' | 'loom' | null = null;
-    
-    // YouTube
-    if (url.includes('youtube.com') || url.includes('youtu.be')) {
-      platform = 'youtube';
-      if (url.includes('youtube.com/watch?v=')) {
-        videoId = url.split('v=')[1]?.split('&')[0];
-      } else if (url.includes('youtu.be/')) {
-        videoId = url.split('youtu.be/')[1]?.split('?')[0];
-      }
-    } 
-    // Vimeo
-    else if (url.includes('vimeo.com')) {
-      platform = 'vimeo';
-      videoId = url.split('vimeo.com/')[1]?.split('?')[0];
-    } 
-    // Loom
-    else if (url.includes('loom.com')) {
-      platform = 'loom';
-      videoId = url.split('loom.com/share/')[1]?.split('?')[0];
-    }
-    
-    if (!videoId || !platform) return null;
-    
-    let embedUrl = '';
-    let aspectRatio = 'aspect-w-16 aspect-h-9';
-    
-    switch (platform) {
-      case 'youtube':
-        embedUrl = `https://www.youtube.com/embed/${videoId}`;
-        break;
-      case 'vimeo':
-        embedUrl = `https://player.vimeo.com/video/${videoId}`;
-        break;
-      case 'loom':
-        embedUrl = `https://www.loom.com/embed/${videoId}`;
-        break;
-    }
-
-    return (
-      <div className="relative w-full overflow-hidden rounded-lg mb-4">
-        <div className={aspectRatio}>
-          <iframe 
-            src={embedUrl}
-            className="absolute w-full h-full top-0 left-0 border-0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          ></iframe>
-        </div>
-      </div>
-    );
-  };
-
   if (!discussion) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[800px] max-h-[85vh] p-0 overflow-hidden rounded-xl">
+      <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden rounded-xl">
         <div className="sticky top-0 bg-white dark:bg-gray-800 z-10 px-6 pt-5 pb-4 border-b">
           <DialogHeader>
             <div className="flex items-center justify-between">
@@ -147,9 +85,7 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
           </DialogHeader>
         </div>
         
-        <div className="p-6 overflow-y-auto" style={{ maxHeight: "calc(85vh - 180px)" }}>
-          {discussion.video_url && renderEmbeddedVideo(discussion.video_url)}
-          
+        <div className="p-6 max-h-[70vh] overflow-y-auto">
           {discussion.image_url && (
             <div className="mb-6">
               <img 
@@ -204,9 +140,6 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
                       <span className="mx-2">•</span>
                       <span>{format(new Date(reply.created_at), 'dd/MM/yyyy')}</span>
                     </div>
-                    
-                    {reply.video_url && renderEmbeddedVideo(reply.video_url)}
-                    
                     {reply.image_url && (
                       <div className="mb-4">
                         <img 
@@ -216,7 +149,6 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
                         />
                       </div>
                     )}
-                    
                     {reply.content && (
                       <p className="text-gray-700 dark:text-gray-300 pr-6">{reply.content}</p>
                     )}
@@ -245,38 +177,6 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
               </Button>
             </div>
           )}
-          
-          {showVideoInput && (
-            <div className="mb-4">
-              <div className="flex gap-2">
-                <Input
-                  type="text"
-                  placeholder="Cole a URL do vídeo (YouTube, Vimeo ou Loom)"
-                  value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
-                  className="flex-1"
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setShowVideoInput(false);
-                    setVideoUrl("");
-                  }}
-                >
-                  Cancelar
-                </Button>
-              </div>
-              {videoUrl && (
-                <div className="mt-2 text-xs text-gray-500">
-                  {videoUrl.includes('youtube') || videoUrl.includes('youtu.be') ? 'YouTube' : 
-                   videoUrl.includes('vimeo') ? 'Vimeo' : 
-                   videoUrl.includes('loom') ? 'Loom' : 'URL inválida'}
-                </div>
-              )}
-            </div>
-          )}
-          
           <Textarea 
             placeholder="Escreva sua resposta..." 
             rows={3}
@@ -285,32 +185,20 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
             className="resize-none"
           />
           <div className="flex justify-between items-center mt-3">
-            <div className="flex items-center gap-3">
-              <input 
-                type="file" 
-                accept="image/*" 
-                onChange={handleImageUpload}
-                className="hidden" 
-                id="image-upload"
-              />
-              <label 
-                htmlFor="image-upload" 
-                className="cursor-pointer flex items-center text-gray-500 hover:text-gray-700"
-              >
-                <ImageIcon className="h-5 w-5 mr-1" />
-                Imagem
-              </label>
-              
-              <Button
-                variant="ghost"
-                className="flex items-center text-gray-500 hover:text-gray-700 p-0"
-                onClick={() => setShowVideoInput(!showVideoInput)}
-              >
-                <Youtube className="h-5 w-5 mr-1" />
-                Vídeo
-              </Button>
-            </div>
-            
+            <input 
+              type="file" 
+              accept="image/*" 
+              onChange={handleImageUpload}
+              className="hidden" 
+              id="image-upload"
+            />
+            <label 
+              htmlFor="image-upload" 
+              className="cursor-pointer flex items-center text-gray-500 hover:text-gray-700"
+            >
+              <ImageIcon className="h-5 w-5 mr-2" />
+              Adicionar imagem
+            </label>
             <Button 
               onClick={handleSubmitReply} 
               className="rounded-full px-5"

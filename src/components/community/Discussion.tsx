@@ -43,14 +43,6 @@ export const Discussion: React.FC<DiscussionProps> = ({
 
   // Calculate the inverted number (oldest = #1)
   const discussionNumber = totalCount - index;
-  
-  // Get lighter version of company color for hover effects
-  const getLighterColor = (opacity = 0.1) => {
-    if (companyColor.startsWith("#")) {
-      return `${companyColor}${Math.round(opacity * 255).toString(16).padStart(2, '0')}`;
-    }
-    return `rgba(var(--company-color-rgb), ${opacity})`;
-  };
 
   return (
     <Card 
@@ -58,11 +50,10 @@ export const Discussion: React.FC<DiscussionProps> = ({
         "hover:shadow-md transition-shadow border-l-4 cursor-pointer",
         discussion.status === 'closed' 
           ? "border-l-green-500 bg-green-50/50 dark:bg-green-900/10" 
-          : ""
+          : `border-l-[${companyColor}]`
       )}
       style={{
-        borderLeftColor: discussion.status === 'closed' ? 'rgb(34 197 94)' : companyColor,
-        backgroundColor: discussion.status === 'closed' ? undefined : getLighterColor(0.05),
+        borderLeftColor: discussion.status === 'closed' ? 'rgb(34 197 94)' : companyColor
       }}
       onClick={() => onView(discussion)}
     >
