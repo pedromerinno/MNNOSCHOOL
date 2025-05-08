@@ -135,7 +135,7 @@ export const NotificationsWidget = memo(() => {
               {isAdmin && <Button variant="outline" size="sm" onClick={() => setDialogOpen(true)} className="px-[20px] py-[25px] bg-zinc-950 hover:bg-zinc-800 text-zinc-50 rounded-full my-[20px]">
                   Criar aviso
                 </Button>}
-            </div> : <div className="px-[50px] py-[20px] ">
+            </div> : <div className="px-[50px] py-0">
               <span className="inline-block px-6 py-1.5 rounded-full bg-amber-100 dark:bg-[#2C2C2C] text-yellow-700 dark:text-amber-100 text-xs font-semibold mb-4">
                 {currentNotice.type.charAt(0).toUpperCase() + currentNotice.type.slice(1)}
               </span>
