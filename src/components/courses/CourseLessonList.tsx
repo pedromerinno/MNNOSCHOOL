@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Play, Clock, CheckCircle } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
+import { cn } from "@/lib/utils";
+import { formatDuration } from "@/utils/durationUtils";
 
 export interface Lesson {
   id: string;
@@ -58,55 +60,64 @@ export const CourseLessonList: React.FC<CourseLessonListProps> = ({
     (a.order_index || 0) - (b.order_index || 0)
   );
 
-  return (
-    <div className="space-y-4 mt-4">
-      <Separator />
-      
-      <div className="space-y-2">
-        {sortedLessons.map((lesson, index) => (
-          <div 
-            key={lesson.id}
-            className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
-            onClick={() => handleLessonClick(lesson.id)}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex-shrink-0">
-                  {lesson.completed ? (
-                    <div className="w-8 h-8 rounded-full bg-green-500/20 text-green-500 flex items-center justify-center">
-                      <CheckCircle className="w-5 h-5" />
-                    </div>
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                      {index + 1}
-                    </div>
-                  )}
-                </div>
-                
-                <div>
-                  <h4 className="font-medium">{lesson.title}</h4>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                    <span className="capitalize">{lesson.type}</span>
-                    {lesson.duration && (
-                      <>
-                        <span>•</span>
-                        <div className="flex items-center">
-                          <Clock className="w-3 h-3 mr-1" />
-                          <span>{lesson.duration}</span>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-              
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <Play className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        ))}
+  if (sortedLessons.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-muted-foreground">Este curso ainda não tem aulas.</p>
       </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3 mt-2">
+      {sortedLessons.map((lesson, index) => (
+        <div 
+          key={lesson.id}
+          className={cn(
+            "p-3 rounded-lg border hover:bg-accent/30 transition-all cursor-pointer group",
+            lesson.completed && "border-green-100/40 bg-green-50/30 dark:bg-green-900/5"
+          )}
+          onClick={() => handleLessonClick(lesson.id)}
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0">
+              {lesson.completed ? (
+                <div className="w-8 h-8 rounded-full bg-green-500/20 text-green-500 flex items-center justify-center">
+                  <CheckCircle className="w-5 h-5" />
+                </div>
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                  {index + 1}
+                </div>
+              )}
+            </div>
+            
+            <div className="flex-1 min-w-0">
+              <h4 className="font-medium truncate">{lesson.title}</h4>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                <span className="capitalize">{lesson.type}</span>
+                {lesson.duration && (
+                  <>
+                    <span>•</span>
+                    <div className="flex items-center">
+                      <Clock className="w-3 h-3 mr-1" />
+                      <span>{formatDuration(lesson.duration)}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+            
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <Play className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      ))}
     </div>
   );
 };

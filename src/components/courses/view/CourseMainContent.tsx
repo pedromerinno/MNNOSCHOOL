@@ -26,7 +26,7 @@ export const CourseMainContent: React.FC<CourseMainContentProps> = ({
   companyColor
 }) => {
   return (
-    <div className="w-full md:w-8/12 space-y-8">
+    <div className="space-y-8">
       <CourseStatsBar
         duration={totalDuration}
         lessonCount={lessonCount}

@@ -3,7 +3,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, BookOpen } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 export const CourseViewSkeleton: React.FC = () => {
   const navigate = useNavigate();
@@ -18,19 +19,48 @@ export const CourseViewSkeleton: React.FC = () => {
       <Skeleton className="h-8 w-2/3 mb-4" />
       <Skeleton className="h-4 w-1/2 mb-8" />
       
-      <div className="grid md:grid-cols-3 gap-6">
-        <div className="md:col-span-2">
-          <Skeleton className="h-64 w-full mb-6" />
-          <Skeleton className="h-4 w-full mb-2" />
-          <Skeleton className="h-4 w-full mb-2" />
-          <Skeleton className="h-4 w-2/3" />
+      <div className="h-64 w-full rounded-lg overflow-hidden mb-8">
+        <Skeleton className="h-full w-full" />
+      </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          <div className="space-y-2">
+            <Skeleton className="h-6 w-full" />
+            <Skeleton className="h-6 w-3/4" />
+            <Skeleton className="h-6 w-1/2" />
+          </div>
+          
+          <Skeleton className="h-24 w-full rounded-lg" />
+          
+          <div className="space-y-4">
+            <div className="flex space-x-4">
+              <Skeleton className="h-10 w-24" />
+              <Skeleton className="h-10 w-24" />
+            </div>
+            <Skeleton className="h-32 w-full rounded-lg" />
+          </div>
         </div>
         
-        <div>
-          <Skeleton className="h-10 w-full mb-4" />
-          <Skeleton className="h-16 w-full mb-2" />
-          <Skeleton className="h-16 w-full mb-2" />
-          <Skeleton className="h-16 w-full" />
+        <div className="lg:col-span-1">
+          <Card className="h-full">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-muted-foreground" />
+                  <Skeleton className="h-6 w-32" />
+                </CardTitle>
+              </div>
+            </CardHeader>
+            
+            <CardContent>
+              <div className="space-y-3">
+                {[1, 2, 3, 4].map(i => (
+                  <Skeleton key={i} className="h-16 w-full" />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

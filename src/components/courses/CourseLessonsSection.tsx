@@ -1,10 +1,11 @@
 
 import React, { useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, BookOpen } from "lucide-react";
 import { LessonManager } from '@/components/admin/courses/LessonManager';
 import { CourseLessonList } from './CourseLessonList';
 import { supabase } from "@/integrations/supabase/client";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 
 interface CourseLessonsSectionProps {
@@ -60,24 +61,29 @@ export const CourseLessonsSection: React.FC<CourseLessonsSectionProps> = ({
   }, [courseId, refreshCourseData]);
 
   return (
-    <div className="w-full md:w-4/12 mt-8 md:mt-0 relative">
-      <div className="space-y-4 mt-4">
+    <Card className="h-full">
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold">Aulas do Curso</h3>
+          <CardTitle className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-primary" />
+            Aulas do Curso
+          </CardTitle>
+          
           {isAdmin && (
             <Button 
-              className="bg-primary text-white gap-2 rounded-xl font-normal text-sm py-2 shadow-none"
+              className="gap-1 rounded-lg font-normal text-sm shadow-none"
               onClick={() => setShowLessonManager(true)}
-              variant="default"
+              variant="outline"
               size="sm"
-              aria-label="Gerenciar aulas"
             >
               <Plus className="h-4 w-4" />
-              Gerenciar aulas
+              Gerenciar
             </Button>
           )}
         </div>
-
+      </CardHeader>
+      
+      <CardContent>
         <LessonManager
           courseId={courseId}
           courseTitle={courseTitle}
@@ -90,7 +96,7 @@ export const CourseLessonsSection: React.FC<CourseLessonsSectionProps> = ({
           courseId={courseId}
           onStartLesson={startLesson}
         />
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };

@@ -76,28 +76,32 @@ export const CourseView: React.FC = () => {
         />
       </div>
       
-      <div className="flex flex-col md:flex-row items-start gap-8">
-        <CourseMainContent
-          totalDuration={formattedDuration}
-          lessonCount={course.lessons?.length || 0}
-          tags={course.tags}
-          progress={course.progress}
-          description={course.description}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          companyColor={companyColor}
-        />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+          <CourseMainContent
+            totalDuration={formattedDuration}
+            lessonCount={course.lessons?.length || 0}
+            tags={course.tags}
+            progress={course.progress}
+            description={course.description}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            companyColor={companyColor}
+          />
+        </div>
         
-        <CourseLessonsSection
-          isAdmin={isAdmin}
-          showLessonManager={showLessonManager}
-          setShowLessonManager={setShowLessonManager}
-          courseId={course.id}
-          courseTitle={course.title}
-          lessons={course.lessons}
-          startLesson={startLesson}
-          refreshCourseData={refreshCourseData}
-        />
+        <div className="lg:col-span-1">
+          <CourseLessonsSection
+            isAdmin={isAdmin}
+            showLessonManager={showLessonManager}
+            setShowLessonManager={setShowLessonManager}
+            courseId={course.id}
+            courseTitle={course.title}
+            lessons={course.lessons}
+            startLesson={startLesson}
+            refreshCourseData={refreshCourseData}
+          />
+        </div>
       </div>
 
       <CourseDialogs
