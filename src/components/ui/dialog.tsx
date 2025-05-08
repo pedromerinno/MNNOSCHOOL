@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
@@ -12,10 +13,12 @@ const Dialog = ({
     if (open) {
       document.body.style.overflow = 'hidden';
       document.body.style.paddingRight = '0px'; // Prevent layout shift
+      document.body.style.pointerEvents = ''; // Make sure pointer events are enabled
     } else {
       // Ensure we properly reset styles
       document.body.style.overflow = '';
       document.body.style.paddingRight = '';
+      document.body.style.pointerEvents = ''; // Make sure pointer events are enabled
     }
     
     // Call the original onOpenChange if provided
