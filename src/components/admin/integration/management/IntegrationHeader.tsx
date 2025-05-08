@@ -2,6 +2,7 @@
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Company } from "@/types/company";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface IntegrationHeaderProps {
   companies: Company[];
@@ -32,12 +33,52 @@ export const IntegrationHeader: React.FC<IntegrationHeaderProps> = ({
           disabled={isDisabled}
         >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Selecione uma empresa" />
+            <SelectValue placeholder="Selecione uma empresa">
+              {selectedCompany && (
+                <div className="flex items-center">
+                  <Avatar className="h-5 w-5 mr-2">
+                    {selectedCompany.logo ? (
+                      <AvatarImage 
+                        src={selectedCompany.logo} 
+                        alt={selectedCompany.nome}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "/placeholder.svg";
+                          target.onerror = null;
+                        }}
+                      />
+                    ) : null}
+                    <AvatarFallback className="text-xs">
+                      {selectedCompany.nome.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  {selectedCompany.nome}
+                </div>
+              )}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {companies.map(company => (
               <SelectItem key={company.id} value={company.id}>
-                {company.nome}
+                <div className="flex items-center">
+                  <Avatar className="h-5 w-5 mr-2">
+                    {company.logo ? (
+                      <AvatarImage 
+                        src={company.logo} 
+                        alt={company.nome} 
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "/placeholder.svg";
+                          target.onerror = null;
+                        }}
+                      />
+                    ) : null}
+                    <AvatarFallback className="text-xs">
+                      {company.nome.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  {company.nome}
+                </div>
               </SelectItem>
             ))}
           </SelectContent>

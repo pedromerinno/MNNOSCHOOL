@@ -5,6 +5,7 @@ import { Company } from "@/types/company";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface CompanySelectorProps {
   companies: Company[];
@@ -79,28 +80,50 @@ export const CompanySelector: React.FC<CompanySelectorProps> = memo(({
         disabled={disabled || !hasCompanies}
       >
         <SelectTrigger className="w-full">
-          <SelectValue placeholder="Selecione uma empresa" />
+          <SelectValue placeholder="Selecione uma empresa">
+            {selectedCompany && (
+              <div className="flex items-center">
+                <Avatar className="h-5 w-5 mr-2">
+                  {selectedCompany.logo ? (
+                    <AvatarImage 
+                      src={selectedCompany.logo} 
+                      alt={selectedCompany.nome}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = "/placeholder.svg";
+                        target.onerror = null;
+                      }}
+                    />
+                  ) : null}
+                  <AvatarFallback className="text-xs">
+                    {selectedCompany.nome.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                {selectedCompany.nome}
+              </div>
+            )}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {hasCompanies && companies.map(company => (
             <SelectItem key={company.id} value={company.id}>
               <div className="flex items-center">
-                {company.logo ? (
-                  <img
-                    src={company.logo}
-                    alt={company.nome}
-                    className="h-4 w-4 mr-2 object-contain"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = "/placeholder.svg";
-                      target.onerror = null;
-                    }}
-                  />
-                ) : (
-                  <div className="h-4 w-4 mr-2 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary font-medium">
+                <Avatar className="h-5 w-5 mr-2">
+                  {company.logo ? (
+                    <AvatarImage 
+                      src={company.logo} 
+                      alt={company.nome}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = "/placeholder.svg";
+                        target.onerror = null;
+                      }}
+                    />
+                  ) : null}
+                  <AvatarFallback className="text-xs">
                     {company.nome.charAt(0).toUpperCase()}
-                  </div>
-                )}
+                  </AvatarFallback>
+                </Avatar>
                 {company.nome}
               </div>
             </SelectItem>
