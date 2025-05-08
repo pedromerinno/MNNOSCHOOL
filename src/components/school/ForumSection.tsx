@@ -3,6 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useCompanies } from "@/hooks/useCompanies";
 
 interface ForumTopic {
   id: string;
@@ -15,6 +16,9 @@ interface ForumSectionProps {
 }
 
 export const ForumSection: React.FC<ForumSectionProps> = ({ topics }) => {
+  const { selectedCompany } = useCompanies();
+  const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
+
   return (
     <div className="mb-12">
       <div className="flex justify-between items-center mb-4">
@@ -30,13 +34,20 @@ export const ForumSection: React.FC<ForumSectionProps> = ({ topics }) => {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {topics.map((topic, index) => (
-          <Card key={topic.id} className="overflow-hidden border shadow-sm hover:shadow-md transition-all duration-200">
+          <Card 
+            key={topic.id} 
+            className="overflow-hidden border shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
+          >
             <CardContent className="p-5">
-              <div className="flex gap-2 mb-3">
-                {topic.tags.map((tag, index) => (
+              <div className="flex gap-2 mb-3 flex-wrap">
+                {topic.tags.map((tag, i) => (
                   <span 
-                    key={index} 
-                    className="px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600"
+                    key={i} 
+                    className="px-2.5 py-1 text-xs font-medium rounded-full"
+                    style={{ 
+                      backgroundColor: `${companyColor}20`, 
+                      color: companyColor 
+                    }}
                   >
                     {tag}
                   </span>
@@ -47,7 +58,11 @@ export const ForumSection: React.FC<ForumSectionProps> = ({ topics }) => {
                 <div className="flex items-center gap-1">
                   <div className="flex -space-x-2">
                     {[1, 2, 3].map((num) => (
-                      <div key={num} className="w-7 h-7 bg-gray-300 rounded-full overflow-hidden border-2 border-white">
+                      <div 
+                        key={num} 
+                        className="w-7 h-7 overflow-hidden border-2 border-white rounded-full"
+                        style={{ backgroundColor: `${companyColor}${num * 20}` }}
+                      >
                         <img 
                           src={`https://i.pravatar.cc/100?img=${index * 3 + num}`} 
                           alt="User avatar" 
@@ -62,6 +77,7 @@ export const ForumSection: React.FC<ForumSectionProps> = ({ topics }) => {
                   variant="ghost" 
                   size="sm"
                   className="text-xs rounded-full px-3 hover:bg-gray-100"
+                  style={{ color: companyColor }}
                 >
                   Ver discussão
                 </Button>
@@ -72,4 +88,4 @@ export const ForumSection: React.FC<ForumSectionProps> = ({ topics }) => {
       </div>
     </div>
   );
-};
+}
