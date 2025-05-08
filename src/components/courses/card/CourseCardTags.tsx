@@ -23,7 +23,8 @@ export const CourseCardTags: React.FC<CourseCardTagsProps> = ({ tags, className 
 
   return (
     <div className={`flex flex-wrap gap-2 ${className}`}>
-      {tags.slice(0, 3).map((tag, index) => (
+      {/* Show only 2 tags */}
+      {tags.slice(0, 2).map((tag, index) => (
         <CompanyThemedBadge 
           key={index} 
           variant="beta" 
@@ -32,12 +33,13 @@ export const CourseCardTags: React.FC<CourseCardTagsProps> = ({ tags, className 
           {tag}
         </CompanyThemedBadge>
       ))}
-      {tags.length > 3 && (
+      {/* Show "+" indicator if there are more than 2 tags */}
+      {tags.length > 2 && (
         <CompanyThemedBadge 
           variant="beta" 
           className="text-xs font-normal text-white bg-white/30 border-white/40"
         >
-          +{tags.length - 3}
+          +{tags.length - 2}
         </CompanyThemedBadge>
       )}
     </div>
