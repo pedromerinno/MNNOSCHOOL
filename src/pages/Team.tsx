@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -11,12 +10,19 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { CompanyThemedBadge } from "@/components/ui/badge";
 import { TeamMetricsDashboard } from "@/components/team/TeamMetricsDashboard";
-
 const Team = () => {
-  const { selectedCompany } = useCompanies();
-  const { members, isLoading, error } = useTeamMembers();
+  const {
+    selectedCompany
+  } = useCompanies();
+  const {
+    members,
+    isLoading,
+    error
+  } = useTeamMembers();
   const [showSlowLoadingMessage, setShowSlowLoadingMessage] = useState(false);
-  const { userProfile } = useAuth();
+  const {
+    userProfile
+  } = useAuth();
 
   // Redirect if user is not an admin
   if (!userProfile?.is_admin && !userProfile?.super_admin) {
@@ -26,7 +32,6 @@ const Team = () => {
   // Show a message if loading takes too long
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    
     if (isLoading) {
       timer = setTimeout(() => {
         setShowSlowLoadingMessage(true);
@@ -35,62 +40,32 @@ const Team = () => {
     } else {
       setShowSlowLoadingMessage(false);
     }
-    
     return () => {
       if (timer) clearTimeout(timer);
     };
   }, [isLoading]);
-
   if (!selectedCompany) {
-    return (
-      <PageLayout title="Equipe">
-        <EmptyState 
-          title="Selecione uma empresa"
-          description="Selecione uma empresa no menu superior para visualizar a equipe."
-        />
-      </PageLayout>
-    );
+    return <PageLayout title="Equipe">
+        <EmptyState title="Selecione uma empresa" description="Selecione uma empresa no menu superior para visualizar a equipe." />
+      </PageLayout>;
   }
-
   if (isLoading) {
     return <LoadingState slowLoading={showSlowLoadingMessage} />;
   }
-
   if (error) {
-    return (
-      <PageLayout title="Equipe">
-        <EmptyState 
-          title="Erro ao carregar equipe"
-          description="Ocorreu um erro ao carregar os membros da equipe. Tente novamente mais tarde."
-        />
-      </PageLayout>
-    );
+    return <PageLayout title="Equipe">
+        <EmptyState title="Erro ao carregar equipe" description="Ocorreu um erro ao carregar os membros da equipe. Tente novamente mais tarde." />
+      </PageLayout>;
   }
-
-  return (
-    <PageLayout title="Equipe">
+  return <PageLayout title="Equipe">
       <div className="space-y-6">
         {/* Add metrics dashboard */}
         <TeamMetricsDashboard members={members} />
         
-        <div className="flex items-center justify-between">
-          <p className="text-muted-foreground">
-            {members.length} {members.length === 1 ? 'membro' : 'membros'} fazem parte da equipe {selectedCompany.nome}
-          </p>
-          
-          {userProfile?.is_admin && (
-            <div className="text-sm">
-              <CompanyThemedBadge variant="default">
-                Clique em um card para ver o perfil completo do membro
-              </CompanyThemedBadge>
-            </div>
-          )}
-        </div>
+        
         
         <TeamMembersList members={members} />
       </div>
-    </PageLayout>
-  );
+    </PageLayout>;
 };
-
 export default Team;
