@@ -1,8 +1,10 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import { VideoPlayer } from './video-playlist/VideoPlayer';
+
 interface CultureManualProps {
   companyValues: any;
   companyMission: string;
@@ -11,6 +13,7 @@ interface CultureManualProps {
   videoUrl?: string;
   videoDescription?: string;
 }
+
 export const CultureManual: React.FC<CultureManualProps> = ({
   companyValues,
   companyMission,
@@ -58,7 +61,9 @@ export const CultureManual: React.FC<CultureManualProps> = ({
     }
     return [];
   };
+
   const values = getValues();
+
   return <div className="space-y-12"> {/* Removed pb-12 to let the container spacing handle it */}
       <div className="grid gap-8 md:grid-cols-2 mt-8">
         <Card className="transition-all duration-200 shadow-none rounded-xl md:col-span-2 bg-gray-50 dark:bg-gray-900">
@@ -121,20 +126,40 @@ export const CultureManual: React.FC<CultureManualProps> = ({
         </Card>
       </div>
 
-      <div className="flex flex-col items-center gap-6 pt-8">
-        <Button className="relative group overflow-hidden rounded-xl px-8 py-6 text-lg font-medium" style={{
-        backgroundColor: companyColor || '#1EAEDB'
-      }} onClick={() => setAccepted(!accepted)}>
-          <span className="relative z-10 flex items-center gap-2">
-            {accepted ? <>
-                <Sparkles className="h-5 w-5" />
+      <div className="flex flex-col items-center gap-4 pt-8">
+        {/* Redesigned button with animation effect */}
+        <Button 
+          className={`relative w-64 h-14 overflow-hidden rounded-xl text-lg font-medium transition-all duration-300 
+                    ${accepted ? 'bg-green-500 hover:bg-green-600' : ''}`}
+          style={{
+            backgroundColor: accepted ? undefined : companyColor || '#1EAEDB',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+          }} 
+          onClick={() => setAccepted(!accepted)}
+        >
+          <span className="relative z-10 flex items-center justify-center gap-2">
+            {accepted ? (
+              <>
+                <Sparkles className="h-5 w-5 animate-pulse" />
                 Cultura aceita
-              </> : "Quero fazer parte disso"}
+              </>
+            ) : (
+              "Quero fazer parte disso"
+            )}
           </span>
+          {!accepted && (
+            <span className="absolute inset-0 bg-black bg-opacity-10 transform translate-y-full transition-transform duration-300 group-hover:translate-y-0"></span>
+          )}
         </Button>
         
-        <div className="flex items-center gap-2 py-[20px] px-[20px]">
-          <input type="checkbox" id="culture-accept" checked={accepted} onChange={e => setAccepted(e.target.checked)} className="rounded border-gray-300" />
+        <div className="flex items-center gap-2 mt-2">
+          <input 
+            type="checkbox" 
+            id="culture-accept" 
+            checked={accepted} 
+            onChange={e => setAccepted(e.target.checked)} 
+            className="rounded border-gray-300" 
+          />
           <label htmlFor="culture-accept" className="text-sm text-gray-600 dark:text-gray-400">
             Li e estou alinhado com a cultura da empresa
           </label>
