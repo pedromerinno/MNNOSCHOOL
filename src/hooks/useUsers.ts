@@ -13,6 +13,7 @@ export interface UserProfile {
   super_admin?: boolean | null;
   avatar?: string | null;
   cargo_id?: string | null;
+  created_at?: string | null;
 }
 
 export function useUsers() {

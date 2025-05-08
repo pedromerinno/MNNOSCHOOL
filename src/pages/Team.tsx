@@ -7,9 +7,7 @@ import { LoadingState } from "@/components/team/LoadingState";
 import { EmptyState } from "@/components/team/EmptyState";
 import { useTeamMembers } from "@/hooks/team/useTeamMembers";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import { CompanyThemedBadge } from "@/components/ui/badge";
+import { PageLayout } from "@/components/layout/PageLayout";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Team = () => {
@@ -43,14 +41,12 @@ const Team = () => {
 
   if (!selectedCompany) {
     return (
-      <div className="min-h-screen bg-background">
-        <main className="container mx-auto px-4 py-8">
-          <EmptyState 
-            title="Selecione uma empresa"
-            description="Selecione uma empresa no menu superior para visualizar a equipe."
-          />
-        </main>
-      </div>
+      <PageLayout title="Equipe">
+        <EmptyState 
+          title="Selecione uma empresa"
+          description="Selecione uma empresa no menu superior para visualizar a equipe."
+        />
+      </PageLayout>
     );
   }
 
@@ -60,51 +56,33 @@ const Team = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background">
-        <main className="container mx-auto px-4 py-8">
-          <EmptyState 
-            title="Erro ao carregar equipe"
-            description="Ocorreu um erro ao carregar os membros da equipe. Tente novamente mais tarde."
-          />
-        </main>
-      </div>
+      <PageLayout title="Equipe">
+        <EmptyState 
+          title="Erro ao carregar equipe"
+          description="Ocorreu um erro ao carregar os membros da equipe. Tente novamente mais tarde."
+        />
+      </PageLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-6 py-12">
-        <div className="flex items-center mb-12 gap-4">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="p-0 hover:bg-transparent" 
-            onClick={() => window.history.back()}
-          >
-            <ArrowLeft className="h-5 w-5 text-gray-500" />
-          </Button>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold dark:text-white">
-              Equipe
-            </h1>
-            {selectedCompany && (
-              <CompanyThemedBadge 
-                variant="beta"
-              >
-                {selectedCompany.nome}
-              </CompanyThemedBadge>
-            )}
-          </div>
-        </div>
-        
-        <div className="space-y-8">
+    <PageLayout title="Equipe">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
           <p className="text-muted-foreground">
             {members.length} {members.length === 1 ? 'membro' : 'membros'} fazem parte da equipe {selectedCompany.nome}
           </p>
-          <TeamMembersList members={members} />
+          
+          {userProfile?.is_admin && (
+            <div className="text-sm text-amber-600 dark:text-amber-400">
+              Clique em um card para ver o perfil completo do membro
+            </div>
+          )}
         </div>
-      </main>
-    </div>
+        
+        <TeamMembersList members={members} />
+      </div>
+    </PageLayout>
   );
 };
 

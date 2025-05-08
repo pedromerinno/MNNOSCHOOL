@@ -44,7 +44,8 @@ export const useTeamMembers = () => {
         email: member.email,
         is_admin: member.is_admin,
         cargo_id: member.cargo_id,
-        avatar: member.avatar
+        avatar: member.avatar,
+        created_at: member.created_at
       }));
 
       // Limit the number of entries to cache if there are too many
@@ -104,7 +105,7 @@ export const useTeamMembers = () => {
           const batchIds = userIds.slice(i, i + batchSize);
           const { data: profilesData, error: profilesError } = await supabase
             .from('profiles')
-            .select('id, display_name, email, cargo_id, avatar, is_admin')
+            .select('id, display_name, email, cargo_id, avatar, is_admin, created_at')
             .in('id', batchIds);
 
           if (profilesError) throw profilesError;
@@ -120,7 +121,8 @@ export const useTeamMembers = () => {
           email: profile.email,
           cargo_id: profile.cargo_id,
           avatar: profile.avatar,
-          is_admin: profile.is_admin
+          is_admin: profile.is_admin,
+          created_at: profile.created_at
         }));
 
         setMembers(teamMembers);
