@@ -8,3 +8,16 @@ export interface SettingsTabsProps {
   handleFormSubmit: (formData: any) => Promise<void>;
   isSaving: boolean;
 }
+
+export interface SettingsTabContentProps {
+  value: string;
+  company: Company | null;
+  onSubmit?: (formData: any) => Promise<void>;
+  isSaving?: boolean;
+}
+
+export interface SettingsTabProps {
+  company: Company | null;
+  onSubmit?: (formData: any) => Promise<void>;
+  isSaving?: boolean;
+}
