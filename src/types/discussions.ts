@@ -8,7 +8,6 @@ export interface Discussion {
   created_at: string;
   updated_at: string;
   image_url: string | null;
-  video_url: string | null;
   status: 'open' | 'closed';
   profiles?: {
     display_name: string | null;
@@ -24,7 +23,6 @@ export interface DiscussionReply {
   content: string;
   created_at: string;
   image_url: string | null;
-  video_url: string | null;
   profiles?: {
     display_name: string | null;
     avatar: string | null;
