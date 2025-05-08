@@ -8,64 +8,44 @@ const Dialog = ({
   children,
   ...props
 }: DialogPrimitive.DialogProps) => {
-  const originalBodyStyles = React.useRef({
-    overflow: '',
-    pointerEvents: '',
-    paddingRight: ''
-  });
+  // Store original body style when dialog opens
+  const originalStyles = React.useRef<{
+    overflow: string;
+    pointerEvents: string;
+    paddingRight: string;
+  } | null>(null);
 
-  // Completely reimplemented handling of body styles
   const handleOpenChange = (open: boolean) => {
     if (open) {
-      // Store original body styles before modifying
-      originalBodyStyles.current = {
+      // Store current body styles before modifying
+      originalStyles.current = {
         overflow: document.body.style.overflow,
         pointerEvents: document.body.style.pointerEvents,
         paddingRight: document.body.style.paddingRight
       };
       
-      // Apply dialog styles
+      // Apply modal styles
       document.body.style.overflow = 'hidden';
       document.body.style.paddingRight = '0px';
     } else {
-      // Reset all body styles immediately
-      document.body.style.removeProperty('overflow');
-      document.body.style.removeProperty('pointerEvents');
-      document.body.style.removeProperty('paddingRight');
+      // Force clean all body styles that might interfere with interactions
+      document.body.style.overflow = '';
+      document.body.style.pointerEvents = '';
+      document.body.style.paddingRight = '';
+
+      // Force inline style cleanup for pointer-events specifically
+      document.body.setAttribute(
+        'style', 
+        document.body.getAttribute('style')?.replace(/pointer-events:\s*none;?/gi, '') || ''
+      );
       
-      // Add a force-enable pointer-events class
+      // Add a class that will force pointer-events to auto
       document.body.classList.add('pointer-events-auto');
       
-      // Create a reliable cleanup mechanism using MutationObserver
-      const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-          if (mutation.attributeName === 'style') {
-            const bodyStyle = window.getComputedStyle(document.body);
-            if (bodyStyle.pointerEvents === 'none') {
-              console.log('MutationObserver: detected pointer-events: none - fixing');
-              document.body.style.removeProperty('pointerEvents');
-              document.body.setAttribute('style', document.body.getAttribute('style')?.replace(/pointer-events:\s*none;?/gi, '') || '');
-            }
-          }
-        });
-      });
-      
-      // Start observing style changes on body
-      observer.observe(document.body, { attributes: true, attributeFilter: ['style'] });
-      
-      // Cleanup after a short delay
+      // Remove the class after animation completes
       setTimeout(() => {
-        // Force reset pointerEvents
-        if (window.getComputedStyle(document.body).pointerEvents === 'none') {
-          console.log('Timeout cleanup: fixing pointer-events');
-          document.body.style.removeProperty('pointerEvents');
-          document.body.setAttribute('style', document.body.getAttribute('style')?.replace(/pointer-events:\s*none;?/gi, '') || '');
-        }
-        
-        // Stop observing and remove the class
-        observer.disconnect();
         document.body.classList.remove('pointer-events-auto');
-      }, 300);
+      }, 500);
     }
     
     // Call the original onOpenChange if provided
@@ -112,17 +92,41 @@ const DialogContent = React.forwardRef<
         "fixed left-[50%] top-[50%] z-50 grid w-full max-w-xl translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg sm:rounded-lg pointer-events-auto data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
         className
       )}
-      onCloseAutoFocus={(event) => {
-        // Força a remoção do pointer-events no body ao fechar
+      onEscapeKeyDown={() => {
+        // Extra cleanup when escape key is used
         document.body.style.pointerEvents = '';
-        document.body.style.removeProperty('pointerEvents');
+      }}
+      onInteractOutside={() => {
+        // Extra cleanup when clicking outside
+        document.body.style.pointerEvents = '';
+      }}
+      onCloseAutoFocus={(event) => {
+        // Cleanup pointer-events when dialog closes
+        document.body.style.pointerEvents = '';
+        
+        // Force remove any pointer-events: none that might still exist
+        document.body.setAttribute(
+          'style', 
+          document.body.getAttribute('style')?.replace(/pointer-events:\s*none;?/gi, '') || ''
+        );
+        
+        // Prevent default focus to allow our custom handling
         event.preventDefault();
+        
+        // Call original handler if exists
+        if (props.onCloseAutoFocus) {
+          props.onCloseAutoFocus(event);
+        }
       }}
       {...props}
     >
       {children}
       <DialogPrimitive.Close 
         className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+        onClick={() => {
+          // Extra cleanup when close button is clicked
+          document.body.style.pointerEvents = '';
+        }}
       >
         <X className="h-4 w-4" />
         <span className="sr-only">Close</span>
@@ -199,4 +203,3 @@ export {
   DialogTitle,
   DialogDescription,
 }
-

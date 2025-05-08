@@ -12,12 +12,27 @@ const AlertDialog = ({
       document.body.style.overflow = 'hidden';
       document.body.style.paddingRight = '0px';
     } else {
+      // Immediate cleanup of all body styles
+      document.body.style.overflow = '';
+      document.body.style.pointerEvents = '';
+      document.body.style.paddingRight = '';
+      
+      // Force clean pointer-events from inline style
+      document.body.setAttribute(
+        'style', 
+        document.body.getAttribute('style')?.replace(/pointer-events:\s*none;?/gi, '') || ''
+      );
+      
+      // Add a class that will force pointer-events to auto
+      document.body.classList.add('pointer-events-auto');
+      
+      // Remove the class after animation completes
       setTimeout(() => {
-        document.body.style.pointerEvents = '';
-        document.body.style.overflow = '';
-        document.body.style.paddingRight = '';
-      }, 50);
+        document.body.classList.remove('pointer-events-auto');
+      }, 500);
     }
+    
+    // Call original handler if exists
     props.onOpenChange?.(open);
   };
 
@@ -60,16 +75,29 @@ const AlertDialogContent = React.forwardRef<
         className
       )}
       {...props}
+      onEscapeKeyDown={() => {
+        // Extra cleanup when escape key is used
+        document.body.style.pointerEvents = '';
+      }}
+      onInteractOutside={() => {
+        // Extra cleanup when clicking outside
+        document.body.style.pointerEvents = '';
+      }}
       onOpenAutoFocus={(e) => {
+        // Ensure pointer-events is clean
         document.body.style.pointerEvents = '';
         if (props.onOpenAutoFocus) {
           props.onOpenAutoFocus(e);
         }
       }}
       onCloseAutoFocus={(e) => {
-        setTimeout(() => {
-          document.body.style.pointerEvents = '';
-        }, 50);
+        // Force cleanup on close
+        document.body.style.pointerEvents = '';
+        document.body.setAttribute(
+          'style', 
+          document.body.getAttribute('style')?.replace(/pointer-events:\s*none;?/gi, '') || ''
+        );
+        
         if (props.onCloseAutoFocus) {
           props.onCloseAutoFocus(e);
         }
