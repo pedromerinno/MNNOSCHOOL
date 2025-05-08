@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { useSettingsManagement } from './useSettingsManagement';
@@ -6,6 +7,7 @@ import { SettingsTabs } from './SettingsTabs';
 import { NoCompanySelected } from './NoCompanySelected';
 import { LoadingState } from './LoadingState';
 import { toast } from 'sonner';
+
 export const SettingsManagement: React.FC = () => {
   const {
     companies,
@@ -17,11 +19,14 @@ export const SettingsManagement: React.FC = () => {
     handleCompanyChange,
     handleFormSubmit
   } = useSettingsManagement();
+
   return <div className="space-y-6">
-      <div className="">
+      <div className="flex justify-between items-center">
         <div>
-          
-          
+          <h3 className="mb-2 px-0 py-[10px] font-bold text-2xl">Configurações de Integração</h3>
+          <p className="mb-4 text-gray-400 text-sm">
+            Gerencie as configurações de integração da empresa
+          </p>
         </div>
         {/* Organizar seletor de empresa para ficar mais harmonico */}
         <div className="flex w-full md:w-auto items-end justify-end">
