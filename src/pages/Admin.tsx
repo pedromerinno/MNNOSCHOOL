@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { CompanyNoticesAdminList } from '@/components/admin/CompanyNoticesAdminList';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
+
 const AdminPage = () => {
   const {
     userProfile,
@@ -20,19 +22,23 @@ const AdminPage = () => {
   } = useAuth();
   const [activeTab, setActiveTab] = useState(userProfile?.super_admin ? "platform" : "companies");
   const [isReady, setIsReady] = useState(false);
+
   useEffect(() => {
     if (!authLoading) {
       setIsReady(true);
     }
   }, [authLoading]);
+
   if (!isReady) {
     return <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
       </div>;
   }
+
   if (!userProfile?.is_admin && !userProfile?.super_admin) {
     return <Navigate to="/" replace />;
   }
+
   const getActiveContent = () => {
     switch (activeTab) {
       case "platform":
@@ -54,8 +60,9 @@ const AdminPage = () => {
         return null;
     }
   };
+
   return <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-0 lg:px-4 py-6">
+      <div className="container mx-auto px-0 lg:px-4 py-6 max-w-[1500px]">
         <SidebarProvider defaultOpen={true}>
           <div className="flex w-full min-h-[calc(100vh-120px)] rounded-lg overflow-hidden">
             <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />
