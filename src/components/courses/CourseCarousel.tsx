@@ -64,7 +64,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
       loop: true
     }} className="mx-auto">
         <CarouselContent className="flex -ml-4">
-          {courses.map(course => <CarouselItem key={course.id} className="basis-full md:basis-[80%] lg:basis-[70%] pl-4 transition-opacity duration-300">
+          {courses.map(course => <CarouselItem key={course.id} className="basis-full md:basis-[80%] lg:basis-[70%] pl-4 transition-opacity duration-300 py-[20px]">
               <div className="relative h-[600px] rounded-2xl overflow-hidden cursor-pointer group">
                 <img src={course.image_url || "https://source.unsplash.com/random"} alt={course.title} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent">

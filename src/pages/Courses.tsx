@@ -71,15 +71,7 @@ const Courses = () => {
   const hasNoCourses = !allCompanyCourses || allCompanyCourses.length === 0;
   return <DashboardLayout fullWidth>
       {/* Header with Admin Actions */}
-      <div className="w-full max-w-screen-xl mx-auto px-4 flex justify-between items-center py-[30px]">
-        <h1 className="text-xl font-bold">Cursos</h1>
-        {isAdmin && <Button onClick={() => setIsNewCourseDialogOpen(true)} className="flex items-center gap-2 rounded-full" style={{
-        backgroundColor: companyColor
-      }}>
-            <PlusCircle className="h-4 w-4" />
-            Adicionar curso
-          </Button>}
-      </div>
+      
 
       {/* Full width featured courses section */}
       {loading ? <div className="w-full px-4 py-6">
