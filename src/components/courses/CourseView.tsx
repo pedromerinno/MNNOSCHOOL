@@ -57,7 +57,7 @@ export const CourseView: React.FC = () => {
   };
 
   return (
-    <div className="container max-w-7xl mx-auto px-4 py-8">
+    <div className="container max-w-8xl mx-auto px-4 py-8">
       <CourseHeader 
         title={course.title} 
         instructor={course.instructor} 

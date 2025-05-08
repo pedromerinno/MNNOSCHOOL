@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, BookOpen } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const CourseViewSkeleton: React.FC = () => {
   const navigate = useNavigate();
   
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container max-w-8xl mx-auto px-4 py-8">
       <Button variant="ghost" className="mb-6" onClick={() => navigate('/courses')}>
         <ArrowLeft className="h-4 w-4 mr-2" />
         Voltar para Cursos
@@ -21,7 +22,7 @@ export const CourseViewSkeleton: React.FC = () => {
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         <div className="lg:col-span-2">
-          <Skeleton className="h-[350px] w-full rounded-lg" />
+          <Skeleton className="h-[400px] w-full rounded-lg" />
           
           {/* Course stats skeleton */}
           <div className="mt-8 space-y-8">
@@ -51,12 +52,14 @@ export const CourseViewSkeleton: React.FC = () => {
               </div>
             </CardHeader>
             
-            <CardContent className="max-h-[350px]">
-              <div className="space-y-3">
-                {[1, 2, 3, 4].map(i => (
-                  <Skeleton key={i} className="h-16 w-full" />
-                ))}
-              </div>
+            <CardContent>
+              <ScrollArea className="max-h-[400px]">
+                <div className="space-y-3">
+                  {[1, 2, 3, 4, 5, 6].map(i => (
+                    <Skeleton key={i} className="h-16 w-full" />
+                  ))}
+                </div>
+              </ScrollArea>
             </CardContent>
           </Card>
         </div>

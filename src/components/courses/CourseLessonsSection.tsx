@@ -6,7 +6,7 @@ import { LessonManager } from '@/components/admin/courses/LessonManager';
 import { CourseLessonList } from './CourseLessonList';
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { toast } from "sonner";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface CourseLessonsSectionProps {
   isAdmin: boolean;
@@ -83,19 +83,21 @@ export const CourseLessonsSection: React.FC<CourseLessonsSectionProps> = ({
         </div>
       </CardHeader>
       
-      <CardContent className="max-h-[350px] overflow-y-auto pr-2">
+      <CardContent className="pb-6">
         <LessonManager
           courseId={courseId}
           courseTitle={courseTitle}
           open={showLessonManager}
           onClose={() => setShowLessonManager(false)}
         />
-
-        <CourseLessonList 
-          lessons={lessons} 
-          courseId={courseId}
-          onStartLesson={startLesson}
-        />
+        
+        <ScrollArea className="max-h-[400px] pr-2">
+          <CourseLessonList 
+            lessons={lessons} 
+            courseId={courseId}
+            onStartLesson={startLesson}
+          />
+        </ScrollArea>
       </CardContent>
     </Card>
   );
