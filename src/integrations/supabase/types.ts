@@ -215,6 +215,7 @@ export type Database = {
           discussion_id: string
           id: string
           image_url: string | null
+          video_url: string | null
         }
         Insert: {
           author_id: string
@@ -223,6 +224,7 @@ export type Database = {
           discussion_id: string
           id?: string
           image_url?: string | null
+          video_url?: string | null
         }
         Update: {
           author_id?: string
@@ -231,6 +233,7 @@ export type Database = {
           discussion_id?: string
           id?: string
           image_url?: string | null
+          video_url?: string | null
         }
         Relationships: [
           {
@@ -253,6 +256,7 @@ export type Database = {
           status: string | null
           title: string
           updated_at: string
+          video_url: string | null
         }
         Insert: {
           author_id: string
@@ -264,6 +268,7 @@ export type Database = {
           status?: string | null
           title: string
           updated_at?: string
+          video_url?: string | null
         }
         Update: {
           author_id?: string
@@ -275,6 +280,7 @@ export type Database = {
           status?: string | null
           title?: string
           updated_at?: string
+          video_url?: string | null
         }
         Relationships: [
           {
