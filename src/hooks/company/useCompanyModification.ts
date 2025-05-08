@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useCompanyUpdate } from "./useCompanyUpdate";
 import { useCompanyDelete } from "./useCompanyDelete";
 import { useCompanyUserRelationship } from "./useCompanyUserRelationship";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface UseCompanyModificationProps {
   setIsLoading: (loading: boolean) => void;
@@ -20,6 +21,7 @@ export const useCompanyModification = ({
   setSelectedCompany,
   setError
 }: UseCompanyModificationProps) => {
+  const { userProfile } = useAuth();
   
   const fetchCompanies = useCallback(async () => {
     setIsLoading(true);
@@ -52,9 +54,15 @@ export const useCompanyModification = ({
   const createCompany = useCallback(async (data: Partial<Company> & { nome: string }) => {
     setIsLoading(true);
     try {
+      // Add the creator ID to the company data
+      const companyData = {
+        ...data,
+        created_by: userProfile?.id
+      };
+      
       const { data: newCompany, error } = await supabase
         .from('empresas')
-        .insert(data)
+        .insert(companyData)
         .select()
         .single();
   
@@ -71,7 +79,7 @@ export const useCompanyModification = ({
     } finally {
       setIsLoading(false);
     }
-  }, [setIsLoading, setCompanies, setError]);
+  }, [setIsLoading, setCompanies, setError, userProfile]);
 
   const { updateCompany } = useCompanyUpdate({ 
     setIsLoading, 

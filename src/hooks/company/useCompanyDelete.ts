@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Company } from '@/types/company';
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface UseCompanyDeleteProps {
   setIsLoading: (loading: boolean) => void;
@@ -17,10 +18,34 @@ export const useCompanyDelete = ({
   selectedCompany, 
   setSelectedCompany 
 }: UseCompanyDeleteProps) => {
+  const { userProfile } = useAuth();
   
   const deleteCompany = useCallback(async (companyId: string) => {
     setIsLoading(true);
     try {
+      // First check if the user has permission to delete this company
+      if (!userProfile?.super_admin) {
+        // Regular admins can only delete companies they created
+        const { data: companyCreator, error: creatorError } = await supabase
+          .from('empresas')
+          .select('created_by')
+          .eq('id', companyId)
+          .single();
+          
+        if (creatorError) {
+          console.error('Error checking company creator:', creatorError);
+          toast.error("Erro ao verificar permissões");
+          setIsLoading(false);
+          return;
+        }
+        
+        if (companyCreator.created_by !== userProfile?.id) {
+          toast.error("Você não tem permissão para excluir esta empresa");
+          setIsLoading(false);
+          return;
+        }
+      }
+      
       const { error } = await supabase
         .from('empresas')
         .delete()
@@ -46,7 +71,32 @@ export const useCompanyDelete = ({
     } finally {
       setIsLoading(false);
     }
-  }, [setIsLoading, setCompanies, selectedCompany, setSelectedCompany]);
+  }, [setIsLoading, setCompanies, selectedCompany, setSelectedCompany, userProfile]);
   
-  return { deleteCompany };
+  const canDeleteCompany = useCallback(async (companyId: string): Promise<boolean> => {
+    if (userProfile?.super_admin) {
+      return true; // Super admins can delete any company
+    }
+    
+    try {
+      // Check if this company was created by the current user
+      const { data, error } = await supabase
+        .from('empresas')
+        .select('created_by')
+        .eq('id', companyId)
+        .single();
+        
+      if (error) {
+        console.error('Error checking company creator:', error);
+        return false;
+      }
+      
+      return data.created_by === userProfile?.id;
+    } catch (error) {
+      console.error('Error checking delete permissions:', error);
+      return false;
+    }
+  }, [userProfile]);
+  
+  return { deleteCompany, canDeleteCompany };
 };

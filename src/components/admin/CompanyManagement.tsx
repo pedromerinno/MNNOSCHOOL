@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,8 @@ import { Company } from '@/types/company';
 import { UserCompanyManager } from './UserCompanyManager';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+
 export const CompanyManagement: React.FC = () => {
   const {
     companies,
@@ -65,8 +68,29 @@ export const CompanyManagement: React.FC = () => {
       toast.error("Você não tem permissão para excluir empresas");
       return;
     }
-    if (confirm('Tem certeza que deseja excluir esta empresa? Esta ação não pode ser desfeita.')) {
-      await deleteCompany(companyId);
+    
+    try {
+      // Check if user has permission to delete this company
+      if (!userProfile.super_admin) {
+        // Regular admins can only delete companies they created
+        const { data, error } = await supabase
+          .from('empresas')
+          .select('created_by')
+          .eq('id', companyId)
+          .single();
+          
+        if (error || data.created_by !== userProfile.id) {
+          toast.error("Você não tem permissão para excluir esta empresa");
+          return;
+        }
+      }
+      
+      if (confirm('Tem certeza que deseja excluir esta empresa? Esta ação não pode ser desfeita.')) {
+        await deleteCompany(companyId);
+      }
+    } catch (error) {
+      console.error('Error checking company permissions:', error);
+      toast.error("Erro ao verificar permissões");
     }
   };
   const handleManageUsers = (company: Company) => {
@@ -87,7 +111,12 @@ export const CompanyManagement: React.FC = () => {
       if (selectedCompany) {
         await updateCompany(selectedCompany.id, data);
       } else {
-        await createCompany(data);
+        // Include the current user as the creator of the company
+        const companyData = {
+          ...data,
+          created_by: userProfile.id
+        };
+        await createCompany(companyData);
       }
       setIsFormOpen(false);
     } catch (error) {

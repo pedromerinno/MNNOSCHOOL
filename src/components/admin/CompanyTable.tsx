@@ -1,9 +1,11 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, Users } from "lucide-react";
 import { Company } from "@/types/company";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+
 interface CompanyTableProps {
   companies: Company[];
   loading: boolean;
@@ -11,6 +13,7 @@ interface CompanyTableProps {
   onDelete: (companyId: string) => void;
   onManageUsers: (company: Company) => void;
 }
+
 export const CompanyTable: React.FC<CompanyTableProps> = ({
   companies,
   loading,
@@ -18,6 +21,43 @@ export const CompanyTable: React.FC<CompanyTableProps> = ({
   onDelete,
   onManageUsers
 }) => {
+  const { userProfile } = useAuth();
+  const [deletableCompanies, setDeletableCompanies] = useState<Record<string, boolean>>({});
+  
+  useEffect(() => {
+    const checkDeletableCompanies = async () => {
+      // If user is a super admin, they can delete all companies
+      if (userProfile?.super_admin) {
+        const allDeletable = companies.reduce((acc, company) => {
+          acc[company.id] = true;
+          return acc;
+        }, {} as Record<string, boolean>);
+        
+        setDeletableCompanies(allDeletable);
+        return;
+      }
+      
+      // Otherwise, check which companies the user can delete
+      const deletableMap: Record<string, boolean> = {};
+      
+      for (const company of companies) {
+        const { data, error } = await supabase
+          .from('empresas')
+          .select('created_by')
+          .eq('id', company.id)
+          .single();
+          
+        deletableMap[company.id] = !error && data && data.created_by === userProfile?.id;
+      }
+      
+      setDeletableCompanies(deletableMap);
+    };
+    
+    if (companies.length > 0 && userProfile) {
+      checkDeletableCompanies();
+    }
+  }, [companies, userProfile]);
+
   return <div className="rounded-xl border overflow-hidden bg-white dark:bg-gray-800 shadow-sm">
       <Table>
         <TableHeader className="bg-gray-50 dark:bg-gray-900">
@@ -74,10 +114,12 @@ export const CompanyTable: React.FC<CompanyTableProps> = ({
                       <Pencil className="h-4 w-4 mr-1" />
                       <span className="hidden sm:inline">Editar</span>
                     </Button>
-                    <Button variant="destructive" size="sm" onClick={() => onDelete(company.id)} className="h-9">
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      <span className="hidden sm:inline">Excluir</span>
-                    </Button>
+                    {(userProfile?.super_admin || deletableCompanies[company.id]) && (
+                      <Button variant="destructive" size="sm" onClick={() => onDelete(company.id)} className="h-9">
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        <span className="hidden sm:inline">Excluir</span>
+                      </Button>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>)}
@@ -85,4 +127,3 @@ export const CompanyTable: React.FC<CompanyTableProps> = ({
       </Table>
     </div>;
 };
-
