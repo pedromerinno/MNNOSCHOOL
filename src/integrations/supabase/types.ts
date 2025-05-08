@@ -290,6 +290,7 @@ export type Database = {
         Row: {
           cor_principal: string | null
           created_at: string
+          created_by: string | null
           descricao_video: string | null
           frase_institucional: string | null
           historia: string | null
@@ -304,6 +305,7 @@ export type Database = {
         Insert: {
           cor_principal?: string | null
           created_at?: string
+          created_by?: string | null
           descricao_video?: string | null
           frase_institucional?: string | null
           historia?: string | null
@@ -318,6 +320,7 @@ export type Database = {
         Update: {
           cor_principal?: string | null
           created_at?: string
+          created_by?: string | null
           descricao_video?: string | null
           frase_institucional?: string | null
           historia?: string | null
@@ -858,6 +861,7 @@ export type Database = {
         Returns: {
           cor_principal: string | null
           created_at: string
+          created_by: string | null
           descricao_video: string | null
           frase_institucional: string | null
           historia: string | null
@@ -899,6 +903,7 @@ export type Database = {
         Returns: {
           cor_principal: string | null
           created_at: string
+          created_by: string | null
           descricao_video: string | null
           frase_institucional: string | null
           historia: string | null
@@ -916,6 +921,7 @@ export type Database = {
         Returns: {
           cor_principal: string | null
           created_at: string
+          created_by: string | null
           descricao_video: string | null
           frase_institucional: string | null
           historia: string | null

@@ -26,7 +26,7 @@ export const useCompanyDelete = ({
       // First check if the user has permission to delete this company
       if (!userProfile?.super_admin) {
         // Regular admins can only delete companies they created
-        const { data: companyCreator, error: creatorError } = await supabase
+        const { data: companyData, error: creatorError } = await supabase
           .from('empresas')
           .select('created_by')
           .eq('id', companyId)
@@ -39,7 +39,7 @@ export const useCompanyDelete = ({
           return;
         }
         
-        if (companyCreator.created_by !== userProfile?.id) {
+        if (companyData.created_by !== userProfile?.id) {
           toast.error("Você não tem permissão para excluir esta empresa");
           setIsLoading(false);
           return;
