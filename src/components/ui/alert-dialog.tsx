@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
 import { cn } from "@/lib/utils"
@@ -75,21 +76,6 @@ const AlertDialogContent = React.forwardRef<
         className
       )}
       {...props}
-      onEscapeKeyDown={() => {
-        // Extra cleanup when escape key is used
-        document.body.style.pointerEvents = '';
-      }}
-      onInteractOutside={() => {
-        // Extra cleanup when clicking outside
-        document.body.style.pointerEvents = '';
-      }}
-      onOpenAutoFocus={(e) => {
-        // Ensure pointer-events is clean
-        document.body.style.pointerEvents = '';
-        if (props.onOpenAutoFocus) {
-          props.onOpenAutoFocus(e);
-        }
-      }}
       onCloseAutoFocus={(e) => {
         // Force cleanup on close
         document.body.style.pointerEvents = '';
