@@ -36,7 +36,7 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
             </h1>
             
             {course.description && (
-              <p className="text-white/80 mb-6 line-clamp-3">
+              <p className="text-white/80 mb-6 line-clamp-2 max-h-12 overflow-hidden">
                 {course.description}
               </p>
             )}
