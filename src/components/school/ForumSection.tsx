@@ -28,34 +28,43 @@ export const ForumSection: React.FC<ForumSectionProps> = ({ topics }) => {
           </Button>
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {topics.map((topic, index) => (
-          <Card key={topic.id} className="overflow-hidden border shadow-sm">
-            <CardContent className="p-4">
-              <div className="flex gap-2 mb-2">
+          <Card key={topic.id} className="overflow-hidden border shadow-sm hover:shadow-md transition-all duration-200">
+            <CardContent className="p-5">
+              <div className="flex gap-2 mb-3">
                 {topic.tags.map((tag, index) => (
                   <span 
                     key={index} 
-                    className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600"
+                    className="px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600"
                   >
                     {tag}
                   </span>
                 ))}
               </div>
-              <h3 className="font-medium text-sm">{topic.title}</h3>
-              <div className="flex items-center gap-1 mt-4">
-                <div className="flex -space-x-2">
-                  {[1, 2, 3].map((num) => (
-                    <div key={num} className="w-6 h-6 bg-gray-300 rounded-full overflow-hidden border border-white">
-                      <img 
-                        src={`https://i.pravatar.cc/100?img=${index * 3 + num}`} 
-                        alt="User avatar" 
-                        className="w-full h-full object-cover" 
-                      />
-                    </div>
-                  ))}
+              <h3 className="font-medium text-base mb-4">{topic.title}</h3>
+              <div className="flex items-center justify-between mt-4">
+                <div className="flex items-center gap-1">
+                  <div className="flex -space-x-2">
+                    {[1, 2, 3].map((num) => (
+                      <div key={num} className="w-7 h-7 bg-gray-300 rounded-full overflow-hidden border-2 border-white">
+                        <img 
+                          src={`https://i.pravatar.cc/100?img=${index * 3 + num}`} 
+                          alt="User avatar" 
+                          className="w-full h-full object-cover" 
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <span className="text-xs text-gray-500 ml-1">+5</span>
                 </div>
-                <span className="text-xs text-gray-500">+5</span>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="text-xs rounded-full px-3 hover:bg-gray-100"
+                >
+                  Ver discussão
+                </Button>
               </div>
             </CardContent>
           </Card>
