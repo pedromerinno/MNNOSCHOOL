@@ -1,33 +1,59 @@
 
-import { useEffect } from 'react';
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useCompanies } from "@/hooks/useCompanies";
 
 export function useCoursesEvents(
   selectedCompany: any,
   fetchCourseData: (forceRefresh?: boolean) => Promise<void>
 ) {
-  // Set up event listeners for company selection and course updates
+  // Listen for the course-created event
   useEffect(() => {
-    const handleCompanySelected = () => {
+    const handleCourseCreated = () => {
+      console.log("Course created event detected, refreshing courses");
       if (selectedCompany) {
-        console.log("Company selection event detected, refreshing course data");
-        fetchCourseData();
+        fetchCourseData(true);
       }
     };
-    
-    const handleCourseUpdated = (event: Event) => {
-      console.log("Course updated event detected, refreshing course data", event);
-      fetchCourseData(true);
-    };
-    
-    // Listen for company selection events
-    window.addEventListener('company-selected', handleCompanySelected);
-    
-    // Listen for course update events
-    window.addEventListener('course-updated', handleCourseUpdated);
+
+    window.addEventListener('course-created', handleCourseCreated);
     
     return () => {
-      window.removeEventListener('company-selected', handleCompanySelected);
-      window.removeEventListener('course-updated', handleCourseUpdated);
+      window.removeEventListener('course-created', handleCourseCreated);
     };
-  }, [selectedCompany, fetchCourseData]);
+  }, [fetchCourseData, selectedCompany]);
+
+  // Setup and cleanup realtime subscription
+  useEffect(() => {
+    if (!selectedCompany?.id) return;
+    
+    console.log(`Setting up realtime subscription for company courses: ${selectedCompany.id}`);
+    
+    const companyId = selectedCompany.id;
+    const channel = supabase
+      .channel(`company-courses-${companyId}`)
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public',
+        table: 'company_courses',
+        filter: `empresa_id=eq.${companyId}`
+      }, (payload) => {
+        console.log('Company course change detected:', payload);
+        fetchCourseData();
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'courses'
+      }, (payload) => {
+        console.log('Course change detected:', payload);
+        fetchCourseData();
+      })
+      .subscribe();
+    
+    return () => {
+      console.log('Cleaning up realtime subscription for company courses');
+      supabase.removeChannel(channel);
+    };
+  }, [selectedCompany?.id, fetchCourseData]);
 }
