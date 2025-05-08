@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
@@ -14,14 +13,9 @@ const Dialog = ({
       document.body.style.overflow = 'hidden';
       document.body.style.paddingRight = '0px'; // Prevent layout shift
     } else {
-      // Small delay to ensure animations complete before resetting styles
-      setTimeout(() => {
-        // Only reset if no other dialogs are open
-        if (!document.querySelector('[data-state="open"][role="dialog"]')) {
-          document.body.style.overflow = '';
-          document.body.style.paddingRight = '';
-        }
-      }, 300);
+      // Ensure we properly reset styles
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
     }
     
     // Call the original onOpenChange if provided
