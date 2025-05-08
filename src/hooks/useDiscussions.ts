@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useCompanies } from '@/hooks/useCompanies';
@@ -7,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export const useDiscussions = () => {
   const { selectedCompany } = useCompanies();
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const [discussions, setDiscussions] = useState<Discussion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -210,17 +211,47 @@ export const useDiscussions = () => {
         video_url: videoUrl || null
       };
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('discussion_replies')
-        .insert([replyData]);
+        .insert([replyData])
+        .select(`*, profiles:author_id(id, display_name, avatar)`)
+        .single();
 
       if (error) throw error;
       
+      // If the insertion was successful and we received data back
+      if (data) {
+        // Find the discussion to update
+        setDiscussions(prev => prev.map(discussion => {
+          if (discussion.id === discussionId) {
+            // Format the new reply to match the expected structure
+            const newReply: DiscussionReply = {
+              id: data.id,
+              discussion_id: data.discussion_id,
+              author_id: data.author_id,
+              content: data.content,
+              created_at: data.created_at,
+              image_url: data.image_url,
+              video_url: data.video_url,
+              profiles: data.profiles
+            };
+            
+            // Add the new reply to the discussion
+            return {
+              ...discussion,
+              discussion_replies: [...discussion.discussion_replies, newReply]
+            };
+          }
+          return discussion;
+        }));
+      }
+      
       toast.success('Resposta enviada com sucesso!');
-      await fetchDiscussions();
     } catch (error) {
       console.error('Error adding reply:', error);
       toast.error('Erro ao enviar resposta');
+      // In case of error, refresh all discussions to ensure consistent state
+      await fetchDiscussions();
     }
   };
 
@@ -233,11 +264,18 @@ export const useDiscussions = () => {
 
       if (error) throw error;
       
+      // Update local state to remove the deleted reply
+      setDiscussions(prev => prev.map(discussion => ({
+        ...discussion,
+        discussion_replies: discussion.discussion_replies.filter(reply => reply.id !== replyId)
+      })));
+      
       toast.success('Resposta excluída com sucesso!');
-      await fetchDiscussions();
     } catch (error) {
       console.error('Error deleting reply:', error);
       toast.error('Erro ao excluir resposta');
+      // In case of error, refresh all discussions to ensure consistent state
+      await fetchDiscussions();
     }
   };
 

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,15 +35,27 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
   const [replyVideoUrl, setReplyVideoUrl] = React.useState<string | undefined>(undefined);
   const [showVideoInput, setShowVideoInput] = React.useState(false);
   const [videoInputValue, setVideoInputValue] = React.useState("");
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const handleSubmitReply = async () => {
-    if (!discussion || (!replyContent.trim() && !replyImageUrl && !replyVideoUrl)) return;
-    await onReply(discussion.id, replyContent, replyImageUrl, replyVideoUrl);
-    setReplyContent("");
-    setReplyImageUrl(undefined);
-    setReplyVideoUrl(undefined);
-    setVideoInputValue("");
-    setShowVideoInput(false);
+    if (!discussion || (!replyContent.trim() && !replyImageUrl && !replyVideoUrl) || isSubmitting) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      await onReply(discussion.id, replyContent, replyImageUrl, replyVideoUrl);
+      
+      // Clear form fields but keep dialog open
+      setReplyContent("");
+      setReplyImageUrl(undefined);
+      setReplyVideoUrl(undefined);
+      setVideoInputValue("");
+      setShowVideoInput(false);
+    } catch (error) {
+      console.error("Error submitting reply:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,7 +84,7 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden rounded-xl">
+      <DialogContent className="sm:max-w-[800px] p-0 overflow-hidden rounded-xl">
         <div className="sticky top-0 bg-white dark:bg-gray-800 z-10 px-6 pt-5 pb-4 border-b">
           <DialogHeader>
             <div className="flex items-center justify-between">
@@ -104,13 +115,13 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
           </DialogHeader>
         </div>
         
-        <div className="p-6 max-h-[60vh] overflow-y-auto">
+        <div className="p-6 max-h-[65vh] overflow-y-auto">
           {discussion.image_url && (
             <div className="mb-6">
               <img 
                 src={discussion.image_url} 
                 alt={discussion.title} 
-                className="w-full h-auto max-h-[300px] object-cover rounded-lg"
+                className="w-full h-auto max-h-[350px] object-cover rounded-lg"
               />
             </div>
           )}
@@ -119,7 +130,7 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
             <div className="mb-6">
               <iframe
                 src={getEmbedUrl(discussion.video_url)}
-                className="w-full max-h-[300px] h-64 rounded-lg"
+                className="w-full max-h-[350px] h-72 rounded-lg"
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
@@ -176,7 +187,7 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
                         <img 
                           src={reply.image_url} 
                           alt="Reply image" 
-                          className="w-full h-auto max-h-[250px] object-cover rounded-lg"
+                          className="w-full h-auto max-h-[280px] object-cover rounded-lg"
                         />
                       </div>
                     )}
@@ -184,7 +195,7 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
                       <div className="mb-4">
                         <iframe
                           src={getEmbedUrl(reply.video_url)}
-                          className="w-full h-56 max-h-[250px] rounded-lg"
+                          className="w-full h-60 max-h-[280px] rounded-lg"
                           frameBorder="0"
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                           allowFullScreen
@@ -298,8 +309,9 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
               onClick={handleSubmitReply} 
               className="rounded-full px-5"
               style={{ backgroundColor: companyColor }}
+              disabled={isSubmitting}
             >
-              Responder
+              {isSubmitting ? "Enviando..." : "Responder"}
             </Button>
           </div>
         </div>
