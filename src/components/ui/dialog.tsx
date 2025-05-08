@@ -22,18 +22,37 @@ const Dialog = ({
       document.body.style.overflow = 'hidden';
       document.body.style.paddingRight = '0px'; // Prevent layout shift
     } else {
-      // Reset to previous styles or clear them completely
+      // Reset the styles immediately
       document.body.style.overflow = previousOverflow || '';
       document.body.style.paddingRight = '';
-      document.body.style.pointerEvents = previousPointerEvents || '';
-      
-      // Force a small delay to ensure styles are fully applied
+      document.body.style.pointerEvents = ''; // Force enable pointer events
+
+      // Create a more aggressive cleanup approach with multiple attempts
+      for (let i = 0; i < 3; i++) {
+        setTimeout(() => {
+          // Force pointer-events to be enabled
+          if (document.body.style.pointerEvents === 'none') {
+            console.log(`Dialog cleanup attempt ${i + 1}: removing pointer-events: none`);
+            document.body.style.pointerEvents = '';
+          }
+          
+          // Force overflow to be reset if still hidden
+          if (document.body.style.overflow === 'hidden') {
+            document.body.style.overflow = '';
+          }
+        }, i * 100); // Try at 0ms, 100ms, and 200ms
+      }
+
+      // Final cleanup with a longer delay for more stubborn cases
       setTimeout(() => {
-        // Double-check that pointer-events is correctly reset
         if (document.body.style.pointerEvents === 'none') {
+          console.log('Final Dialog cleanup: removing pointer-events: none');
           document.body.style.pointerEvents = '';
+          // Also perform a body style reset via className modification as a fallback
+          document.body.classList.add('pointer-events-auto');
+          setTimeout(() => document.body.classList.remove('pointer-events-auto'), 100);
         }
-      }, 10);
+      }, 500);
     }
     
     // Call the original onOpenChange if provided
