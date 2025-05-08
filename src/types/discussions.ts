@@ -13,7 +13,7 @@ export interface Discussion {
   profiles?: {
     display_name: string | null;
     avatar: string | null;
-  };
+  } | null;
   discussion_replies: DiscussionReply[];
 }
 
@@ -28,5 +28,5 @@ export interface DiscussionReply {
   profiles?: {
     display_name: string | null;
     avatar: string | null;
-  };
+  } | null;
 }

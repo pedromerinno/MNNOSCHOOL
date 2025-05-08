@@ -40,7 +40,30 @@ export const useDiscussions = () => {
       
       if (error) throw error;
       
-      setDiscussions(data as Discussion[]);
+      // Cast the data to the Discussion[] type after checking for validity
+      const processedData = data?.map(item => {
+        // Handle discussion_replies conversion as well
+        const processedReplies = (item.discussion_replies || []).map((reply: any) => {
+          return {
+            ...reply,
+            // If profiles contains an error, set it to null
+            profiles: reply.profiles && typeof reply.profiles === 'object' && !('error' in reply.profiles) 
+              ? reply.profiles 
+              : null
+          } as DiscussionReply;
+        });
+        
+        return {
+          ...item,
+          // If profiles contains an error, set it to null
+          profiles: item.profiles && typeof item.profiles === 'object' && !('error' in item.profiles) 
+            ? item.profiles 
+            : null,
+          discussion_replies: processedReplies
+        } as Discussion;
+      }) || [];
+      
+      setDiscussions(processedData);
     } catch (error) {
       console.error('Error fetching discussions:', error);
       toast.error("Não foi possível carregar as discussões.");
@@ -126,20 +149,31 @@ export const useDiscussions = () => {
       
       if (error) throw error;
       
-      // Update the local state
-      setDiscussions(prev => 
-        prev.map(discussion => {
-          if (discussion.id === discussionId) {
-            return {
-              ...discussion,
-              discussion_replies: [...discussion.discussion_replies, data[0] as DiscussionReply]
-            };
-          }
-          return discussion;
-        })
-      );
-      
-      toast.success("Resposta enviada com sucesso!");
+      if (data && data.length > 0) {
+        // Process the reply data to ensure it matches the DiscussionReply type
+        const processedReply = {
+          ...data[0],
+          // If profiles contains an error, set it to null
+          profiles: data[0].profiles && typeof data[0].profiles === 'object' && !('error' in data[0].profiles) 
+            ? data[0].profiles 
+            : null
+        } as DiscussionReply;
+        
+        // Update the local state
+        setDiscussions(prev => 
+          prev.map(discussion => {
+            if (discussion.id === discussionId) {
+              return {
+                ...discussion,
+                discussion_replies: [...discussion.discussion_replies, processedReply]
+              };
+            }
+            return discussion;
+          })
+        );
+        
+        toast.success("Resposta enviada com sucesso!");
+      }
     } catch (error) {
       console.error('Error adding reply:', error);
       toast.error("Não foi possível enviar a resposta.");
