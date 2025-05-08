@@ -8,51 +8,64 @@ const Dialog = ({
   children,
   ...props
 }: DialogPrimitive.DialogProps) => {
-  const [previousOverflow, setPreviousOverflow] = React.useState<string>('');
-  const [previousPointerEvents, setPreviousPointerEvents] = React.useState<string>('');
+  const originalBodyStyles = React.useRef({
+    overflow: '',
+    pointerEvents: '',
+    paddingRight: ''
+  });
 
-  // Improved handling of body styles when dialog opens/closes
+  // Completely reimplemented handling of body styles
   const handleOpenChange = (open: boolean) => {
     if (open) {
-      // Save the current styles before modifying
-      setPreviousOverflow(document.body.style.overflow);
-      setPreviousPointerEvents(document.body.style.pointerEvents);
+      // Store original body styles before modifying
+      originalBodyStyles.current = {
+        overflow: document.body.style.overflow,
+        pointerEvents: document.body.style.pointerEvents,
+        paddingRight: document.body.style.paddingRight
+      };
       
       // Apply dialog styles
       document.body.style.overflow = 'hidden';
-      document.body.style.paddingRight = '0px'; // Prevent layout shift
+      document.body.style.paddingRight = '0px';
     } else {
-      // Reset the styles immediately
-      document.body.style.overflow = previousOverflow || '';
-      document.body.style.paddingRight = '';
-      document.body.style.pointerEvents = ''; // Force enable pointer events
-
-      // Create a more aggressive cleanup approach with multiple attempts
-      for (let i = 0; i < 3; i++) {
-        setTimeout(() => {
-          // Force pointer-events to be enabled
-          if (document.body.style.pointerEvents === 'none') {
-            console.log(`Dialog cleanup attempt ${i + 1}: removing pointer-events: none`);
-            document.body.style.pointerEvents = '';
+      // Reset all body styles immediately
+      document.body.style.removeProperty('overflow');
+      document.body.style.removeProperty('pointerEvents');
+      document.body.style.removeProperty('paddingRight');
+      
+      // Add a force-enable pointer-events class
+      document.body.classList.add('pointer-events-auto');
+      
+      // Create a reliable cleanup mechanism using MutationObserver
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.attributeName === 'style') {
+            const bodyStyle = window.getComputedStyle(document.body);
+            if (bodyStyle.pointerEvents === 'none') {
+              console.log('MutationObserver: detected pointer-events: none - fixing');
+              document.body.style.removeProperty('pointerEvents');
+              document.body.setAttribute('style', document.body.getAttribute('style')?.replace(/pointer-events:\s*none;?/gi, '') || '');
+            }
           }
-          
-          // Force overflow to be reset if still hidden
-          if (document.body.style.overflow === 'hidden') {
-            document.body.style.overflow = '';
-          }
-        }, i * 100); // Try at 0ms, 100ms, and 200ms
-      }
-
-      // Final cleanup with a longer delay for more stubborn cases
+        });
+      });
+      
+      // Start observing style changes on body
+      observer.observe(document.body, { attributes: true, attributeFilter: ['style'] });
+      
+      // Cleanup after a short delay
       setTimeout(() => {
-        if (document.body.style.pointerEvents === 'none') {
-          console.log('Final Dialog cleanup: removing pointer-events: none');
-          document.body.style.pointerEvents = '';
-          // Also perform a body style reset via className modification as a fallback
-          document.body.classList.add('pointer-events-auto');
-          setTimeout(() => document.body.classList.remove('pointer-events-auto'), 100);
+        // Force reset pointerEvents
+        if (window.getComputedStyle(document.body).pointerEvents === 'none') {
+          console.log('Timeout cleanup: fixing pointer-events');
+          document.body.style.removeProperty('pointerEvents');
+          document.body.setAttribute('style', document.body.getAttribute('style')?.replace(/pointer-events:\s*none;?/gi, '') || '');
         }
-      }, 500);
+        
+        // Stop observing and remove the class
+        observer.disconnect();
+        document.body.classList.remove('pointer-events-auto');
+      }, 300);
     }
     
     // Call the original onOpenChange if provided
@@ -99,6 +112,12 @@ const DialogContent = React.forwardRef<
         "fixed left-[50%] top-[50%] z-50 grid w-full max-w-xl translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg sm:rounded-lg pointer-events-auto data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
         className
       )}
+      onCloseAutoFocus={(event) => {
+        // Força a remoção do pointer-events no body ao fechar
+        document.body.style.pointerEvents = '';
+        document.body.style.removeProperty('pointerEvents');
+        event.preventDefault();
+      }}
       {...props}
     >
       {children}
@@ -180,3 +199,4 @@ export {
   DialogTitle,
   DialogDescription,
 }
+

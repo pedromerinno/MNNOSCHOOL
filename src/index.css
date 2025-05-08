@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -92,4 +91,9 @@ body {
   100% {
     transform: translateY(0px);
   }
+}
+
+/* Utility class to force pointer events */
+.pointer-events-auto {
+  pointer-events: auto !important;
 }
