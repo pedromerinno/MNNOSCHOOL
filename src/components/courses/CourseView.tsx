@@ -65,6 +65,7 @@ export const CourseView: React.FC = () => {
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         <div className="lg:col-span-2">
+          {/* Course Hero with contained width */}
           <CourseHero 
             imageUrl={course.image_url} 
             title={course.title}
@@ -75,6 +76,20 @@ export const CourseView: React.FC = () => {
             showEditButton={isAdmin}
             onEditCourse={handleEditCourse}
           />
+          
+          {/* Course content now contained within the hero section's width */}
+          <div className="mt-8">
+            <CourseMainContent
+              totalDuration={formattedDuration}
+              lessonCount={course.lessons?.length || 0}
+              tags={course.tags}
+              progress={course.progress}
+              description={course.description}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              companyColor={companyColor}
+            />
+          </div>
         </div>
         
         <div className="lg:col-span-1">
@@ -89,19 +104,6 @@ export const CourseView: React.FC = () => {
             refreshCourseData={refreshCourseData}
           />
         </div>
-      </div>
-      
-      <div className="lg:col-span-2">
-        <CourseMainContent
-          totalDuration={formattedDuration}
-          lessonCount={course.lessons?.length || 0}
-          tags={course.tags}
-          progress={course.progress}
-          description={course.description}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          companyColor={companyColor}
-        />
       </div>
 
       <CourseDialogs

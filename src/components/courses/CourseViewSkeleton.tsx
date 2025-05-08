@@ -21,7 +21,23 @@ export const CourseViewSkeleton: React.FC = () => {
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         <div className="lg:col-span-2">
-          <Skeleton className="h-[300px] w-full rounded-lg" />
+          <Skeleton className="h-[350px] w-full rounded-lg" />
+          
+          {/* Course stats skeleton */}
+          <div className="mt-8 space-y-8">
+            <div className="flex gap-4">
+              <Skeleton className="h-6 w-24" />
+              <Skeleton className="h-6 w-24" />
+              <Skeleton className="h-6 w-24" />
+            </div>
+            
+            <Skeleton className="h-32 w-full" />
+            
+            <div className="space-y-4">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-24 w-full" />
+            </div>
+          </div>
         </div>
         
         <div className="lg:col-span-1">
@@ -35,7 +51,7 @@ export const CourseViewSkeleton: React.FC = () => {
               </div>
             </CardHeader>
             
-            <CardContent className="max-h-[250px]">
+            <CardContent className="max-h-[350px]">
               <div className="space-y-3">
                 {[1, 2, 3, 4].map(i => (
                   <Skeleton key={i} className="h-16 w-full" />
@@ -43,24 +59,6 @@ export const CourseViewSkeleton: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </div>
-      
-      <div className="space-y-8">
-        <div className="space-y-2">
-          <Skeleton className="h-6 w-full" />
-          <Skeleton className="h-6 w-3/4" />
-          <Skeleton className="h-6 w-1/2" />
-        </div>
-        
-        <Skeleton className="h-24 w-full rounded-lg" />
-        
-        <div className="space-y-4">
-          <div className="flex space-x-4">
-            <Skeleton className="h-10 w-24" />
-            <Skeleton className="h-10 w-24" />
-          </div>
-          <Skeleton className="h-32 w-full rounded-lg" />
         </div>
       </div>
     </div>
