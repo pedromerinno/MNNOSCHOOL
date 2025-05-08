@@ -25,16 +25,18 @@ export const CommentItem: React.FC<CommentItemProps> = ({ comment }) => {
 
   return (
     <div className="flex gap-3">
-      <Avatar className="h-8 w-8">
+      <Avatar className="h-8 w-8 border">
         <AvatarImage src={comment.profile?.avatar_url || ''} />
-        <AvatarFallback>{getInitials(comment.profile?.username || 'User')}</AvatarFallback>
+        <AvatarFallback className="bg-primary/10 text-primary text-xs">
+          {getInitials(comment.profile?.username || 'User')}
+        </AvatarFallback>
       </Avatar>
       <div className="flex-1 space-y-1">
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium">{comment.profile?.username || 'Usuário'}</p>
           <span className="text-xs text-muted-foreground">{formatDate(comment.created_at)}</span>
         </div>
-        <p className="text-sm text-muted-foreground">{comment.content}</p>
+        <p className="text-sm">{comment.content}</p>
       </div>
     </div>
   );

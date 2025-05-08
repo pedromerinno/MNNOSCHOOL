@@ -26,14 +26,14 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
     !connectionError.includes('relationship');
 
   return (
-    <Card className="border border-border">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2">
+    <Card className="border border-border shadow-sm">
+      <CardHeader className="border-b border-border bg-muted/30 pb-3">
+        <CardTitle className="flex items-center gap-2 text-lg">
           <MessageSquare className="h-5 w-5" />
           Comentários
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6">
         {shouldShowError && (
           <div className="mb-4 p-2 border border-amber-200 bg-amber-50 text-amber-700 rounded-md flex items-center gap-2 dark:bg-amber-900/20 dark:border-amber-800/50 dark:text-amber-500">
             <AlertTriangle className="h-4 w-4 flex-shrink-0" />
@@ -41,11 +41,13 @@ export const LessonComments: React.FC<LessonCommentsProps> = ({ lessonId }) => {
           </div>
         )}
         
-        <div className="space-y-6 mb-6">
-          <CommentList comments={comments} loading={loading} />
+        <div className="mb-8">
+          <CommentForm onSubmit={submitComment} isSubmitting={submitting} />
         </div>
 
-        <CommentForm onSubmit={submitComment} isSubmitting={submitting} />
+        <div className="space-y-6">
+          <CommentList comments={comments} loading={loading} />
+        </div>
       </CardContent>
     </Card>
   );

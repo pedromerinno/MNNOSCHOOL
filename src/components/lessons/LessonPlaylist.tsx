@@ -89,15 +89,11 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
                   )}>
                     {lesson.title}
                   </h4>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                    <span className="capitalize">{lesson.type}</span>
-                    {lesson.duration && (
-                      <>
-                        <span>•</span>
-                        <span>{lesson.duration}</span>
-                      </>
-                    )}
-                  </div>
+                  {lesson.duration && (
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {lesson.duration}
+                    </div>
+                  )}
                 </div>
 
                 {lesson.id === currentLessonId && (

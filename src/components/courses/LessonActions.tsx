@@ -19,7 +19,7 @@ export const LessonActions: React.FC<LessonActionsProps> = ({
   onToggleLike
 }) => {
   return (
-    <div className="flex justify-between items-center my-6">
+    <div className="flex justify-between items-center mb-6">
       <LikeButton 
         likes={likes} 
         userLiked={userLiked} 

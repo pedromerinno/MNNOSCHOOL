@@ -3,6 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Clock, CheckCircle, FileText, Play } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Lesson } from '@/components/courses/CourseLessonList';
 
 interface LessonHeaderProps {
@@ -42,24 +43,24 @@ export const LessonHeader: React.FC<LessonHeaderProps> = ({
       
       <h1 className="text-3xl font-bold mb-4">{lesson.title}</h1>
       
-      <div className="flex items-center text-sm text-muted-foreground mb-6">
-        <div className="flex items-center mr-4">
+      <div className="flex items-center flex-wrap gap-2 mb-6">
+        <Badge variant="outline" className="flex items-center gap-1 px-2 py-1 font-normal">
           {getLessonTypeIcon()}
           <span className="capitalize">{lesson.type}</span>
-        </div>
+        </Badge>
         
         {lesson.duration && (
-          <div className="flex items-center">
+          <Badge variant="outline" className="flex items-center gap-1 px-2 py-1 font-normal">
             <Clock className="h-4 w-4 mr-1" />
             <span>{lesson.duration}</span>
-          </div>
+          </Badge>
         )}
         
         {lesson.completed && (
-          <div className="flex items-center ml-4 text-green-500">
+          <Badge variant="outline" className="flex items-center gap-1 px-2 py-1 font-normal text-green-500 border-green-200 bg-green-50">
             <CheckCircle className="h-4 w-4 mr-1" />
             <span>Concluído</span>
-          </div>
+          </Badge>
         )}
       </div>
     </>

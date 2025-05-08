@@ -2,6 +2,7 @@
 import React from 'react';
 import { CommentItem } from './CommentItem';
 import { Comment } from '@/hooks/useComments';
+import { MessageSquare } from 'lucide-react';
 
 interface CommentListProps {
   comments: Comment[];
@@ -10,11 +11,20 @@ interface CommentListProps {
 
 export const CommentList: React.FC<CommentListProps> = ({ comments, loading }) => {
   if (loading) {
-    return <p className="text-center text-muted-foreground py-4">Carregando comentários...</p>;
+    return (
+      <div className="flex justify-center items-center py-8 text-muted-foreground">
+        <div className="animate-pulse">Carregando comentários...</div>
+      </div>
+    );
   }
   
   if (comments.length === 0) {
-    return <p className="text-center text-muted-foreground py-4">Seja o primeiro a comentar nesta aula!</p>;
+    return (
+      <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+        <MessageSquare className="h-10 w-10 mb-3 text-muted-foreground/50" />
+        <p>Seja o primeiro a comentar nesta aula!</p>
+      </div>
+    );
   }
 
   return (

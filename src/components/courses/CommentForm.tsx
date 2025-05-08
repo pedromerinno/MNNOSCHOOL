@@ -24,7 +24,7 @@ export const CommentForm: React.FC<CommentFormProps> = ({ onSubmit, isSubmitting
   return (
     <div className="flex gap-3">
       <Textarea 
-        placeholder="Adicione um comentário..." 
+        placeholder="Adicione seu comentário..." 
         value={content}
         onChange={(e) => setContent(e.target.value)}
         className="min-h-[80px] resize-none"
@@ -32,7 +32,8 @@ export const CommentForm: React.FC<CommentFormProps> = ({ onSubmit, isSubmitting
       <Button 
         onClick={handleSubmit} 
         disabled={!content.trim() || isSubmitting}
-        className="self-end"
+        size="icon"
+        className="self-end h-10 w-10 rounded-full"
       >
         <Send className="h-4 w-4" />
       </Button>

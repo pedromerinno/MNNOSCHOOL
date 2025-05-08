@@ -106,6 +106,15 @@ const LessonPage = () => {
         {/* Content area moved to right side with padding */}
         <div className="flex-1 p-6 lg:px-8">
           <LessonHeader lesson={lesson} courseId={courseId} hideBackButton={true} />
+
+          {/* Actions moved above the video */}
+          <LessonActions
+            completed={completed}
+            onMarkCompleted={markLessonCompleted}
+            likes={likes}
+            userLiked={userLiked}
+            onToggleLike={toggleLikeLesson}
+          />
           
           <div className="mt-6 space-y-8">
             {/* Added padding to video container */}
@@ -118,14 +127,6 @@ const LessonPage = () => {
             </div>
             
             <CourseDescription description={lesson.description || null} />
-            
-            <LessonActions
-              completed={completed}
-              onMarkCompleted={markLessonCompleted}
-              likes={likes}
-              userLiked={userLiked}
-              onToggleLike={toggleLikeLesson}
-            />
             
             <div className="mt-8">
               <LessonComments lessonId={lesson.id} />
