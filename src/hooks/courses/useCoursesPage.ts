@@ -1,6 +1,5 @@
 
 import { useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client"; 
 import { useCompanies } from "@/hooks/useCompanies";
 import { useCoursesState } from "./useCoursesState";
 import { useCoursesFetching } from "./useCoursesFetching";

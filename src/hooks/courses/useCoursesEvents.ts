@@ -14,8 +14,8 @@ export function useCoursesEvents(
       }
     };
     
-    const handleCourseUpdated = (event: CustomEvent) => {
-      console.log("Course updated event detected, refreshing course data", event.detail);
+    const handleCourseUpdated = (event: Event) => {
+      console.log("Course updated event detected, refreshing course data", event);
       fetchCourseData(true);
     };
     
@@ -23,11 +23,11 @@ export function useCoursesEvents(
     window.addEventListener('company-selected', handleCompanySelected);
     
     // Listen for course update events
-    window.addEventListener('course-updated', handleCourseUpdated as EventListener);
+    window.addEventListener('course-updated', handleCourseUpdated);
     
     return () => {
       window.removeEventListener('company-selected', handleCompanySelected);
-      window.removeEventListener('course-updated', handleCourseUpdated as EventListener);
+      window.removeEventListener('course-updated', handleCourseUpdated);
     };
   }, [selectedCompany, fetchCourseData]);
 }
