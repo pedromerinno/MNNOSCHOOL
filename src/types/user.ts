@@ -9,4 +9,5 @@ export interface UserProfile {
   cargo_id?: string | null;
   interesses?: string[] | null;  // Adicionado o campo de interesses
   primeiro_login?: boolean | null; // Adicionado o campo primeiro_login
+  created_at?: string | null; // Campo para data de criação do perfil
 }

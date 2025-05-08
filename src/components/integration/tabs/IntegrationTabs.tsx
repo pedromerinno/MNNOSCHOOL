@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, PlayCircle, BriefcaseBusiness } from "lucide-react";
@@ -7,6 +8,8 @@ import { UserRole } from '@/components/integration/UserRole';
 import { Card, CardContent } from "@/components/ui/card";
 import { Company } from "@/types/company";
 import { JobRole } from "@/types/job-roles";
+import { useAuth } from "@/contexts/AuthContext";
+
 interface IntegrationTabsProps {
   activeTab: string;
   setActiveTab: (value: string) => void;
@@ -16,6 +19,7 @@ interface IntegrationTabsProps {
   isLoadingRoles?: boolean;
   userRole: JobRole | null;
 }
+
 export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
   activeTab,
   setActiveTab,
@@ -25,6 +29,8 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
   isLoadingRoles = false,
   userRole
 }) => {
+  const { userProfile } = useAuth();
+
   return <div className="w-full">
       <Tabs defaultValue="culture" value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid grid-cols-3 w-full rounded-2xl p-1.5 bg-transparent dark:bg-transparent gap-2">
@@ -68,7 +74,7 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
                 <CardContent className="p-6 flex items-center justify-center">
                   <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
                 </CardContent>
-              </Card> : userRole ? <UserRole key={userRole.id} role={userRole} companyColor={companyColor} /> : <Card>
+              </Card> : userRole ? <UserRole key={userRole.id} role={userRole} companyColor={companyColor} userProfile={userProfile} /> : <Card>
                 <CardContent className="p-6 text-center py-[80px] px-[80px]">
                   <BriefcaseBusiness className="h-8 w-8 mx-auto text-gray-400 mb-4" />
                   <p className="text-gray-500 dark:text-gray-400">
