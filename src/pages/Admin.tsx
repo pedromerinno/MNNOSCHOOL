@@ -44,16 +44,19 @@ const AdminPage = () => {
       case "platform":
         return <BackgroundManager />;
       case "companies":
-        return <div>
-            <CompanyManagement />
-            <div className="mt-10">
-              <CompanyNoticesAdminList />
-            </div>
-          </div>;
+        return <CompanyManagement />;
       case "users":
         return <UserManagement />;
       case "allcourses":
         return <CourseManagement />;
+      case "notices":
+        return <div>
+            <h3 className="mb-2 px-0 py-[10px] text-xl font-semibold">Administração de Avisos</h3>
+            <p className="mb-4 text-gray-400 text-sm">
+              Gerencie os avisos das empresas
+            </p>
+            <CompanyNoticesAdminList />
+          </div>;
       case "settings":
         return <SettingsManagement />;
       default:
