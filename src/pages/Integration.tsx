@@ -24,6 +24,13 @@ const Integration = () => {
     if (selectedCompany) {
       setLocalCompany(selectedCompany);
       fetchJobRoles(selectedCompany.id);
+      
+      // Store the company logo in localStorage for use in UserRoleProfile
+      if (selectedCompany.logo) {
+        localStorage.setItem('selectedCompanyLogo', selectedCompany.logo);
+      } else {
+        localStorage.setItem('selectedCompanyLogo', '/placeholder.svg');
+      }
     }
   }, [selectedCompany]);
   

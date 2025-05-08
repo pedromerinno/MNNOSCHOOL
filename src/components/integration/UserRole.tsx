@@ -30,23 +30,29 @@ export const UserRole: React.FC<UserRoleProps> = ({ role, companyColor, userProf
       .substring(0, 2);
   };
   
+  // Store the company logo in localStorage when the component mounts
+  React.useEffect(() => {
+    const companyLogo = localStorage.getItem('selectedCompanyLogo');
+    if (!companyLogo) {
+      // If no logo is stored, try to get it from another source or use a default
+      const logoUrl = localStorage.getItem('selectedCompanyLogo') || "/placeholder.svg";
+      localStorage.setItem('selectedCompanyLogo', logoUrl);
+    }
+  }, []);
+  
   return (
     <div className="space-y-8">
       {/* Introduction Card */}
       <Card className="transition-all duration-200 shadow-sm bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800">
         <CardContent className="p-6 md:p-8">
           <div className="flex items-center gap-4 mb-4">
-            {userProfile && userProfile.avatar ? (
+            {userProfile && (
               <Avatar className="w-10 h-10">
-                <AvatarImage src={userProfile.avatar} alt={userProfile.display_name || ""} />
+                <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.display_name || ""} />
                 <AvatarFallback className="bg-gray-200 text-gray-700">
                   {getInitials(userProfile.display_name)}
                 </AvatarFallback>
               </Avatar>
-            ) : (
-              <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                <User className="h-5 w-5 text-gray-500" />
-              </div>
             )}
             <h2 className="text-xl font-semibold">Descrição do Cargo</h2>
           </div>

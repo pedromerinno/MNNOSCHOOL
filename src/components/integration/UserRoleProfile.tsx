@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { UserProfile } from "@/types/user";
@@ -54,11 +55,16 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
               <div className="h-16 w-16 rounded-full flex items-center justify-center overflow-hidden bg-white" style={{
               border: `2px solid ${companyColor}`
             }}>
-                {/* Company logo placeholder */}
-                <img src="/placeholder.svg" alt="Company Logo" className="w-full h-full object-contain p-1" onError={e => {
-                const target = e.target as HTMLImageElement;
-                target.src = "/placeholder.svg";
-              }} />
+                {/* Use company logo from the selected company */}
+                <img 
+                  src={window.localStorage.getItem('selectedCompanyLogo') || "/placeholder.svg"} 
+                  alt="Company Logo" 
+                  className="w-full h-full object-contain p-1" 
+                  onError={e => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = "/placeholder.svg";
+                  }} 
+                />
               </div>
             </div>
           </div>
