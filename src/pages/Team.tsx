@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { CompanyThemedBadge } from "@/components/ui/badge";
+import { TeamMetricsDashboard } from "@/components/team/TeamMetricsDashboard";
 
 const Team = () => {
   const { selectedCompany } = useCompanies();
@@ -69,6 +70,9 @@ const Team = () => {
   return (
     <PageLayout title="Equipe">
       <div className="space-y-6">
+        {/* Add metrics dashboard */}
+        <TeamMetricsDashboard members={members} />
+        
         <div className="flex items-center justify-between">
           <p className="text-muted-foreground">
             {members.length} {members.length === 1 ? 'membro' : 'membros'} fazem parte da equipe {selectedCompany.nome}
