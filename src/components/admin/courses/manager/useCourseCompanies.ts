@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from '@/hooks/use-toast';
 import { Company } from '@/types/company';
 import { Course } from '../types';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useCourseCompanies = (course: Course) => {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -11,6 +11,7 @@ export const useCourseCompanies = (course: Course) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const { userProfile } = useAuth();
 
   // Usar useEffect com dependência course.id para evitar carregamentos desnecessários
   useEffect(() => {
@@ -24,13 +25,26 @@ export const useCourseCompanies = (course: Course) => {
       try {
         console.log("Buscando empresas para o curso:", course.title);
         
-        // Buscar todas as empresas
-        const { data: companiesData, error: companiesError } = await supabase
-          .from('empresas')
-          .select('*')
-          .order('nome');
-
-        if (companiesError) throw companiesError;
+        let companiesData;
+        
+        // Fetch companies based on user role
+        if (userProfile?.super_admin) {
+          // Super admins see all companies
+          const { data, error } = await supabase
+            .from('empresas')
+            .select('*')
+            .order('nome');
+            
+          if (error) throw error;
+          companiesData = data;
+        } else {
+          // Regular admins only see companies they're related to
+          const { data, error } = await supabase
+            .rpc('get_user_companies', { user_id: userProfile?.id })
+            
+          if (error) throw error;
+          companiesData = data;
+        }
 
         // Garantir que temos um array válido com valores padrão
         const companiesWithDefaults = Array.isArray(companiesData) ? companiesData.map(company => ({
@@ -82,7 +96,7 @@ export const useCourseCompanies = (course: Course) => {
     };
 
     fetchData();
-  }, [course.id, toast]);
+  }, [course.id, toast, userProfile]);
 
   const handleSave = async () => {
     setIsSaving(true);

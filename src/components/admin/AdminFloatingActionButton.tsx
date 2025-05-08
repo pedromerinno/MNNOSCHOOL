@@ -1,9 +1,11 @@
+
 import React, { useState } from "react";
 import { Plus, FilePlus, Link, BookPlus, MessageSquarePlus, BellPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAuth } from "@/contexts/AuthContext";
 import { NewCourseDialog, NewNoticeDialog, NewDiscussionDialog, NewAccessDialog, AddDocumentDialog } from "./dialogs";
+
 const FAB_OPTIONS = [{
   label: "Novo Curso",
   icon: <BookPlus className="h-5 w-5 mr-2" />,
@@ -25,6 +27,7 @@ const FAB_OPTIONS = [{
   icon: <FilePlus className="h-5 w-5 mr-2" />,
   action: "openDocument" as const
 }];
+
 export const AdminFloatingActionButton = () => {
   const [open, setOpen] = useState(false);
   const {
@@ -35,7 +38,10 @@ export const AdminFloatingActionButton = () => {
   const [discussionDialogOpen, setDiscussionDialogOpen] = useState(false);
   const [accessDialogOpen, setAccessDialogOpen] = useState(false);
   const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
+  
+  // Only render for admin or super_admin users
   if (!userProfile?.is_admin && !userProfile?.super_admin) return null;
+  
   const handleOption = (option: (typeof FAB_OPTIONS)[number]) => {
     setOpen(false);
     switch (option.action) {
@@ -56,6 +62,7 @@ export const AdminFloatingActionButton = () => {
         break;
     }
   };
+  
   return <>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
