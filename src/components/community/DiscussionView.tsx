@@ -104,13 +104,13 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
           </DialogHeader>
         </div>
         
-        <div className="p-6 max-h-[70vh] overflow-y-auto">
+        <div className="p-6 max-h-[60vh] overflow-y-auto">
           {discussion.image_url && (
             <div className="mb-6">
               <img 
                 src={discussion.image_url} 
                 alt={discussion.title} 
-                className="w-full h-auto max-h-[400px] object-cover rounded-lg"
+                className="w-full h-auto max-h-[300px] object-cover rounded-lg"
               />
             </div>
           )}
@@ -119,7 +119,7 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
             <div className="mb-6">
               <iframe
                 src={getEmbedUrl(discussion.video_url)}
-                className="w-full h-96 rounded-lg"
+                className="w-full max-h-[300px] h-64 rounded-lg"
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
@@ -176,7 +176,7 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
                         <img 
                           src={reply.image_url} 
                           alt="Reply image" 
-                          className="w-full h-auto max-h-[300px] object-cover rounded-lg"
+                          className="w-full h-auto max-h-[250px] object-cover rounded-lg"
                         />
                       </div>
                     )}
@@ -184,7 +184,7 @@ export const DiscussionView: React.FC<DiscussionViewProps> = ({
                       <div className="mb-4">
                         <iframe
                           src={getEmbedUrl(reply.video_url)}
-                          className="w-full h-64 rounded-lg"
+                          className="w-full h-56 max-h-[250px] rounded-lg"
                           frameBorder="0"
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                           allowFullScreen
