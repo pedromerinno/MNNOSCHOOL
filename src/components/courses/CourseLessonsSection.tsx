@@ -83,7 +83,7 @@ export const CourseLessonsSection: React.FC<CourseLessonsSectionProps> = ({
         </div>
       </CardHeader>
       
-      <CardContent>
+      <CardContent className="max-h-[250px] overflow-y-auto pr-2">
         <LessonManager
           courseId={courseId}
           courseTitle={courseTitle}

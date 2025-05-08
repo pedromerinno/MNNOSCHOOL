@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Share, PencilLine } from 'lucide-react';
@@ -34,7 +35,7 @@ export const CourseHero: React.FC<CourseHeroProps> = ({
   };
 
   return (
-    <div className="relative rounded-xl overflow-hidden h-[400px] bg-[#1A1F2C] text-white">
+    <div className="relative rounded-xl overflow-hidden h-[300px] bg-[#1A1F2C] text-white">
       {showEditButton && (
         <div className="absolute top-6 right-8 z-20">
           <Button

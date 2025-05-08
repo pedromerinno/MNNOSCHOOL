@@ -63,30 +63,17 @@ export const CourseView: React.FC = () => {
         instructor={course.instructor} 
       />
       
-      <div className="mb-8">
-        <CourseHero 
-          imageUrl={course.image_url} 
-          title={course.title}
-          instructor={course.instructor || ""}
-          favorite={course.favorite || false}
-          courseId={course.id}
-          firstLessonId={course.lessons?.[0]?.id}
-          showEditButton={isAdmin}
-          onEditCourse={handleEditCourse}
-        />
-      </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         <div className="lg:col-span-2">
-          <CourseMainContent
-            totalDuration={formattedDuration}
-            lessonCount={course.lessons?.length || 0}
-            tags={course.tags}
-            progress={course.progress}
-            description={course.description}
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            companyColor={companyColor}
+          <CourseHero 
+            imageUrl={course.image_url} 
+            title={course.title}
+            instructor={course.instructor || ""}
+            favorite={course.favorite || false}
+            courseId={course.id}
+            firstLessonId={course.lessons?.[0]?.id}
+            showEditButton={isAdmin}
+            onEditCourse={handleEditCourse}
           />
         </div>
         
@@ -102,6 +89,19 @@ export const CourseView: React.FC = () => {
             refreshCourseData={refreshCourseData}
           />
         </div>
+      </div>
+      
+      <div className="lg:col-span-2">
+        <CourseMainContent
+          totalDuration={formattedDuration}
+          lessonCount={course.lessons?.length || 0}
+          tags={course.tags}
+          progress={course.progress}
+          description={course.description}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          companyColor={companyColor}
+        />
       </div>
 
       <CourseDialogs
