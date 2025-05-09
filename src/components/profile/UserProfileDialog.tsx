@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from "react";
-import { User } from "@supabase/supabase-js";
 import { Upload, CheckCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
