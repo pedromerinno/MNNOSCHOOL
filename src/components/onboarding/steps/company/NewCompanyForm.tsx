@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import NewCompanyValuesField, { ValueItem } from "./NewCompanyValuesField";
 import OnboardingLogoUploadField from "./OnboardingLogoUploadField";
 import OnboardingColorPickerField from "./OnboardingColorPickerField";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 
 interface CompanyDetails {
   name: string;
@@ -18,13 +20,27 @@ interface CompanyDetails {
 }
 
 interface NewCompanyFormProps {
-  companyDetails: CompanyDetails;
-  onCompanyDetailsChange: (details: CompanyDetails) => void;
+  companyDetails?: CompanyDetails;
+  onCompanyDetailsChange?: (details: CompanyDetails) => void;
+  onBack?: () => void;
+  onComplete?: () => void;
 }
 
 const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
-  companyDetails,
-  onCompanyDetailsChange,
+  companyDetails = {
+    name: "",
+    logo: "",
+    frase_institucional: "",
+    cor_principal: "#000000",
+    missao: "",
+    valores: [],
+    video_institucional: "",
+    descricao_video: "",
+    historia: ""
+  },
+  onCompanyDetailsChange = () => {},
+  onBack,
+  onComplete,
 }) => {
 
   const handleChange = <K extends keyof CompanyDetails>(field: K, value: CompanyDetails[K]) => {
@@ -42,6 +58,19 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
 
   return (
     <div className="space-y-5">
+      {/* Back button */}
+      {onBack && (
+        <Button 
+          type="button" 
+          variant="ghost"
+          className="mb-4 flex items-center justify-center gap-2 text-gray-500"
+          onClick={onBack}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Voltar
+        </Button>
+      )}
+
       {/* 1. Nome da Empresa */}
       <div className="space-y-1">
         <label htmlFor="companyName" className="text-sm text-gray-500">
@@ -131,9 +160,19 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
           placeholder="Conte a história da sua empresa"
         />
       </div>
+
+      {/* Complete button */}
+      {onComplete && (
+        <Button 
+          type="button" 
+          className="w-full mt-8"
+          onClick={onComplete}
+        >
+          Concluir
+        </Button>
+      )}
     </div>
   );
 };
 
 export default NewCompanyForm;
-

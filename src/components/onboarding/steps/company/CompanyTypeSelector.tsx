@@ -3,19 +3,30 @@ import React from "react";
 import { Building, Plus } from "lucide-react";
 
 interface CompanyTypeSelectorProps {
-  companyType: 'existing' | 'new';
-  onTypeChange: (type: 'existing' | 'new') => void;
+  companyType?: 'existing' | 'new';
+  onTypeChange?: (type: 'existing' | 'new') => void;
+  onSelect?: (type: 'existing' | 'new') => void;
 }
 
 const CompanyTypeSelector: React.FC<CompanyTypeSelectorProps> = ({
   companyType,
   onTypeChange,
+  onSelect,
 }) => {
+  // Use either onSelect or onTypeChange, with onSelect taking priority
+  const handleTypeSelection = (type: 'existing' | 'new') => {
+    if (onSelect) {
+      onSelect(type);
+    } else if (onTypeChange) {
+      onTypeChange(type);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 gap-4 mt-4">
       <button
         type="button"
-        onClick={() => onTypeChange('existing')}
+        onClick={() => handleTypeSelection('existing')}
         className={`flex items-center p-6 border-2 rounded-xl transition-all ${
           companyType === 'existing'
             ? 'border-merinno-dark bg-gray-50'
@@ -39,7 +50,7 @@ const CompanyTypeSelector: React.FC<CompanyTypeSelectorProps> = ({
 
       <button
         type="button"
-        onClick={() => onTypeChange('new')}
+        onClick={() => handleTypeSelection('new')}
         className={`flex items-center p-6 border-2 rounded-xl transition-all ${
           companyType === 'new'
             ? 'border-merinno-dark bg-gray-50'
