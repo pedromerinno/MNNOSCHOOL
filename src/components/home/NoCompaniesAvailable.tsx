@@ -1,11 +1,9 @@
 
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
-import { OnboardingProvider } from "@/contexts/OnboardingContext";
-import CompanyStep from "@/components/onboarding/steps/CompanyStep";
 import { useCompanies } from "@/hooks/useCompanies";
+import { CompanySelectionDialog } from "./CompanySelectionDialog";
 
 export const NoCompaniesAvailable = () => {
   const [showDialog, setShowDialog] = useState(false);
@@ -24,28 +22,14 @@ export const NoCompaniesAvailable = () => {
 
   return (
     <>
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-2xl p-0 h-[90vh] overflow-hidden flex flex-col">
-          <DialogTitle className="sr-only">Configuração de Empresa</DialogTitle>
-          <div className="bg-white rounded-t-lg flex-1 overflow-auto">
-            <div className="p-6 md:p-8">
-              <OnboardingProvider>
-                <CompanyStep 
-                  onNext={() => {
-                    setShowDialog(false);
-                    if (user?.id) {
-                      forceGetUserCompanies(user.id);
-                    }
-                  }}
-                  onBack={() => setShowDialog(false)}
-                  onCompanyTypeSelect={handleCompanyTypeSelect}
-                  onCompanyCreated={handleCompanyCreated}
-                />
-              </OnboardingProvider>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <CompanySelectionDialog
+        open={showDialog}
+        onOpenChange={setShowDialog}
+        onCompanyTypeSelect={handleCompanyTypeSelect}
+        onCompanyCreated={handleCompanyCreated}
+        userId={user?.id}
+        forceGetUserCompanies={forceGetUserCompanies}
+      />
 
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
         <div className="text-center max-w-md mx-auto">

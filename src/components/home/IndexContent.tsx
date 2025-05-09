@@ -1,14 +1,15 @@
 
 import { useCompanyInitialization } from "@/hooks/home/useCompanyInitialization";
+import { useProfileCompletionCheck } from "@/hooks/home/useProfileCompletionCheck";
 import { IndexLoadingState } from "./IndexLoadingState";
 import { HomeContent } from "./HomeContent";
 import { EmptyCompanyState } from "./EmptyCompanyState";
+import { UserProfileDialog } from "./UserProfileDialog";
+import { CompanySelectionDialog } from "./CompanySelectionDialog";
 
 export const IndexContent = () => {
   const {
     isPageLoading,
-    showCompanyDialog,
-    setShowCompanyDialog,
     userCompanies,
     isLoading,
     user,
@@ -18,6 +19,15 @@ export const IndexContent = () => {
     hasCachedCompany
   } = useCompanyInitialization();
 
+  const {
+    showProfileDialog,
+    setShowProfileDialog,
+    showCompanyDialog,
+    setShowCompanyDialog,
+    handleProfileComplete,
+    handleCompanyComplete
+  } = useProfileCompletionCheck();
+
   // Loading state
   if ((isPageLoading && !hasCachedCompany) || (user && isLoading && !hasCachedCompany)) {
     return <IndexLoadingState />;
@@ -26,17 +36,47 @@ export const IndexContent = () => {
   // No companies state
   if (user && !isLoading && userCompanies.length === 0) {
     return (
-      <EmptyCompanyState
-        showDialog={showCompanyDialog}
-        onOpenChange={setShowCompanyDialog}
-        onCompanyTypeSelect={handleCompanyTypeSelect}
-        onCompanyCreated={handleCompanyCreated}
-        userId={user?.id}
-        forceGetUserCompanies={forceGetUserCompanies}
-      />
+      <>
+        {/* User Profile Dialog */}
+        <UserProfileDialog
+          open={showProfileDialog}
+          onOpenChange={setShowProfileDialog}
+          onProfileComplete={handleProfileComplete}
+        />
+        
+        {/* Company Selection Dialog */}
+        <CompanySelectionDialog
+          open={showCompanyDialog}
+          onOpenChange={setShowCompanyDialog}
+          onCompanyTypeSelect={handleCompanyTypeSelect}
+          onCompanyCreated={handleCompanyComplete}
+          userId={user?.id}
+          forceGetUserCompanies={forceGetUserCompanies}
+        />
+        
+        <EmptyCompanyState
+          showDialog={false} // We're handling dialogs with our custom hook now
+          onOpenChange={setShowCompanyDialog}
+          onCompanyTypeSelect={handleCompanyTypeSelect}
+          onCompanyCreated={handleCompanyCreated}
+          userId={user?.id}
+          forceGetUserCompanies={forceGetUserCompanies}
+        />
+      </>
     );
   }
 
   // Default state with companies
-  return <HomeContent />;
+  return (
+    <>
+      {/* User Profile Dialog - visible only when profile is incomplete */}
+      <UserProfileDialog
+        open={showProfileDialog}
+        onOpenChange={setShowProfileDialog}
+        onProfileComplete={handleProfileComplete}
+      />
+      
+      <HomeContent />
+    </>
+  );
 };
