@@ -30,7 +30,7 @@ export const CompanySelectionDialog: React.FC<CompanySelectionDialogProps> = ({
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl p-0 h-[80vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-2xl p-0 max-h-[90vh] h-auto overflow-hidden flex flex-col">
         <div className="bg-white dark:bg-gray-900 rounded-t-lg flex-1 overflow-auto">
           <div className="p-6 md:p-8">
             <DialogHeader className="mb-6">
