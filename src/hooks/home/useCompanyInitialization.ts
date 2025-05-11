@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanyCache } from "@/hooks/company/useCompanyCache";
@@ -17,10 +17,31 @@ export const useCompanyInitialization = () => {
   const { user, userProfile } = useAuth();
   const { getInitialSelectedCompany } = useCompanyCache();
   
+  // Create a ref to handle the circular dependency
+  const companyDialogTriggeredByProfileRef = useRef(false);
+  
   // Get the cached company status
   const hasCachedCompany = getInitialSelectedCompany() !== null;
   
-  // Initialize the hasRedirectedToOnboarding ref first so it can be passed to other hooks
+  // Use the profile completion check first
+  const {
+    showProfileDialog,
+    setShowProfileDialog,
+    showCompanyDialog: profileShowCompanyDialog,
+    setShowCompanyDialog: profileSetShowCompanyDialog,
+    handleProfileComplete,
+    handleCompanyComplete,
+    companyDialogTriggeredByProfile
+  } = useProfileCompletionCheck();
+
+  // We need to fix a circular dependency issue by creating this function here
+  // This also ensures both dialog states are updated together
+  function setShowDialog(show: boolean) {
+    profileSetShowCompanyDialog(show);
+    setCompanyDialogState(show);
+  }
+  
+  // Now we can use onboarding check with the right dependencies
   const { hasAttemptedForceLoad, hasRedirectedToOnboarding } = useOnboardingCheck(
     user, 
     userProfile, 
@@ -32,18 +53,7 @@ export const useCompanyInitialization = () => {
     companyDialogTriggeredByProfile
   );
   
-  // Use the profile completion check
-  const {
-    showProfileDialog,
-    setShowProfileDialog,
-    showCompanyDialog: profileShowCompanyDialog,
-    setShowCompanyDialog: profileSetShowCompanyDialog,
-    handleProfileComplete,
-    handleCompanyComplete,
-    companyDialogTriggeredByProfile
-  } = useProfileCompletionCheck();
-
-  // Use the company dialog state - now we can pass hasRedirectedToOnboarding
+  // Use the company dialog state with the onboarding ref
   const { showCompanyDialog: companyDialogState, setShowCompanyDialog: setCompanyDialogState } = useCompanyDialogState(
     userCompanies, 
     isLoading, 
@@ -76,13 +86,6 @@ export const useCompanyInitialization = () => {
     hasAttemptedForceLoad,
     getUserCompanies
   );
-
-  // We need to fix a circular dependency issue by creating this function here
-  // This also ensures both dialog states are updated together
-  function setShowDialog(show: boolean) {
-    profileSetShowCompanyDialog(show);
-    setCompanyDialogState(show);
-  }
 
   return {
     isPageLoading: pageLoading,
