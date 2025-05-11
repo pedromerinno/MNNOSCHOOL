@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { CompanySelectionDialog } from "./CompanySelectionDialog";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const NoCompaniesAvailable = () => {
   const [showDialog, setShowDialog] = useState(false);
@@ -32,27 +33,32 @@ export const NoCompaniesAvailable = () => {
       />
 
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
-        <div className="text-center max-w-md mx-auto">
-          <div className="flex justify-center mb-6">
-            <AlertTriangle className="h-16 w-16 text-amber-500" />
-          </div>
+        <Card className="w-full max-w-md shadow-lg border-0 overflow-hidden animate-fade-in">
+          <div className="bg-gradient-to-r from-blue-500 to-purple-600 h-3" />
           
-          <h1 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">
-            Nenhuma empresa disponível
-          </h1>
+          <CardHeader className="pt-8 pb-4 text-center">
+            <div className="mx-auto bg-amber-100 rounded-full p-4 mb-4 inline-flex">
+              <AlertTriangle className="h-8 w-8 text-amber-500" />
+            </div>
+            <CardTitle className="text-2xl font-bold">Nenhuma empresa disponível</CardTitle>
+            <CardDescription className="text-base mt-2">
+              Por enquanto não há nenhuma empresa disponível no momento, solicite seu acesso.
+            </CardDescription>
+          </CardHeader>
           
-          <p className="text-gray-600 dark:text-gray-300 mb-6">
-            Por enquanto não há nenhuma empresa disponível no momento, solicite seu acesso.
-          </p>
+          <CardContent className="flex justify-center pb-0">
+            <Button 
+              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90 transition-all px-6 py-5 rounded-full shadow"
+              onClick={() => setShowDialog(true)}
+            >
+              Configurar Acesso
+            </Button>
+          </CardContent>
           
-          <Button 
-            variant="outline" 
-            className="border-black hover:bg-black/5"
-            onClick={() => setShowDialog(true)}
-          >
-            Configurar Acesso
-          </Button>
-        </div>
+          <CardFooter className="text-center text-xs text-gray-500 pt-8 pb-6">
+            Crie sua primeira conexão para começar
+          </CardFooter>
+        </Card>
       </div>
     </>
   );
