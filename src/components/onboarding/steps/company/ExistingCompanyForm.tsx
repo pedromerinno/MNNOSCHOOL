@@ -186,11 +186,11 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
         </div>
       )}
 
-      {/* Complete button */}
+      {/* Complete button - now with minimal black style */}
       {onComplete && (
         <Button 
           type="button" 
-          className="w-full mt-8"
+          className="w-full mt-8 bg-black hover:bg-black/90 text-white"
           onClick={handleComplete}
           disabled={!companyInfo}
         >
