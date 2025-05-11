@@ -90,7 +90,7 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
       )}
 
       <div className="space-y-3">
-        <label htmlFor="companyId" className="text-sm text-gray-500">
+        <label htmlFor="companyId" className="text-sm text-gray-500 font-medium">
           ID da empresa
         </label>
         <div className="relative">
@@ -98,7 +98,7 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
             id="companyId"
             value={localId}
             onChange={e => handleInputChange(e.target.value)}
-            className="border border-gray-200 rounded-md px-3 py-2 focus-visible:ring-gray-400"
+            className="border border-gray-200 rounded-lg px-4 py-2 focus-visible:ring-gray-400 w-full"
             placeholder="Digite o ID da empresa"
           />
         </div>
@@ -113,7 +113,7 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
       )}
 
       {!loading && companyInfo && (
-        <div className="mt-4 p-4 border border-emerald-100 rounded-md bg-emerald-50 flex items-center gap-3 transition-all duration-300 animate-in fade-in">
+        <div className="mt-4 p-4 border border-emerald-100 rounded-lg bg-emerald-50 flex items-center gap-3 transition-all duration-300 animate-in fade-in">
           {companyInfo.logo ? (
             <img 
               src={companyInfo.logo} 
@@ -121,7 +121,7 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
               className="h-8 w-8 object-contain rounded"
             />
           ) : (
-            <div className="h-8 w-8 rounded-md bg-emerald-100 flex items-center justify-center">
+            <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center">
               <Building2 className="h-4 w-4 text-emerald-600" />
             </div>
           )}
@@ -133,8 +133,8 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
       )}
 
       {!loading && localId && localId.length >= 10 && !companyInfo && (
-        <div className="mt-4 p-4 border border-amber-100 rounded-md bg-amber-50 flex items-center gap-3 transition-all duration-300 animate-in fade-in">
-          <div className="h-8 w-8 rounded-md bg-amber-100 flex items-center justify-center">
+        <div className="mt-4 p-4 border border-amber-100 rounded-lg bg-amber-50 flex items-center gap-3 transition-all duration-300 animate-in fade-in">
+          <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center">
             <Building2 className="h-4 w-4 text-amber-600" />
           </div>
           <div>
@@ -161,7 +161,7 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
               toast.error("Digite um ID de empresa válido.");
             }
           }}
-          disabled={!companyInfo && localId.length >= 1}
+          disabled={!companyInfo}
         >
           Concluir
         </Button>
