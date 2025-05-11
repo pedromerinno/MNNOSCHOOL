@@ -28,6 +28,7 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
   onBack,
   onComplete,
 }) => {
+  // State to track the ID internally
   const [localId, setLocalId] = useState(companyId);
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
   const [idValidated, setIdValidated] = useState(false);
@@ -36,7 +37,9 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
   const { companyInfo, loading, error, fetchCompany } = useQuickCompanyLookup();
   
   // Handle input change with debounce
-  const handleInputChange = (value: string) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    
     // Clear validation flag when input changes
     setIdValidated(false);
     
@@ -121,7 +124,7 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
           <Input
             id="companyId"
             value={localId}
-            onChange={e => handleInputChange(e.target.value)}
+            onChange={handleInputChange}
             className="border border-gray-200 rounded-lg px-4 py-2 focus-visible:ring-gray-400 w-full"
             placeholder="Digite o ID da empresa"
             autoFocus
