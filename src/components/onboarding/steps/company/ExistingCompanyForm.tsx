@@ -38,23 +38,23 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
   
   // Handle input change with debounce
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+    const newValue = e.target.value;
     
     // Clear validation flag when input changes
     setIdValidated(false);
     
     // Update local state and parent
-    setLocalId(value);
-    onCompanyIdChange(value);
+    setLocalId(newValue);
+    onCompanyIdChange(newValue);
     
     // Clear previous timer
     if (debounceTimer) clearTimeout(debounceTimer);
     
     // Set up new timer for lookup
-    if (value.length >= 10) {
+    if (newValue.length >= 10) {
       const timer = setTimeout(() => {
-        console.log("Fetching company with ID:", value);
-        fetchCompany(value);
+        console.log("Fetching company with ID:", newValue);
+        fetchCompany(newValue);
         setIdValidated(true);
       }, 500);
       setDebounceTimer(timer);
@@ -123,6 +123,7 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
         <div className="relative">
           <Input
             id="companyId"
+            type="text"
             value={localId}
             onChange={handleInputChange}
             className="border border-gray-200 rounded-lg px-4 py-2 focus-visible:ring-gray-400 w-full"
