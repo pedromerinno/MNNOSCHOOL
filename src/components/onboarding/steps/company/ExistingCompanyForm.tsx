@@ -3,7 +3,9 @@ import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Building2 } from "lucide-react";
+import { useQuickCompanyLookup } from "@/hooks/company/useQuickCompanyLookup";
+import { toast } from "sonner";
 
 interface CompanyInfo {
   id: string;
@@ -27,67 +29,50 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
   onComplete,
 }) => {
   const [localId, setLocalId] = useState(companyId);
-  const [lookupPending, setLookupPending] = useState(false);
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
-  const [company, setCompany] = useState<CompanyInfo | null>(null);
-
-  // Para debounce enquanto o usuário digita
+  
+  // Use the hook for company lookup
+  const { companyInfo, loading, error, fetchCompany } = useQuickCompanyLookup();
+  
+  // Handle input change with debounce
   const handleInputChange = (value: string) => {
     setLocalId(value);
     onCompanyIdChange(value);
     
-    if (onCompanyLookup) {
-      onCompanyLookup(null, true);
-      
-      // Limpa timer anterior se houver
+    // Clear previous timer
+    if (debounceTimer) clearTimeout(debounceTimer);
+    
+    // Set up new timer for lookup
+    if (value.length >= 10) {
+      const timer = setTimeout(() => {
+        fetchCompany(value);
+      }, 500);
+      setDebounceTimer(timer);
+    }
+  };
+
+  // When component unmounts, clear any pending timers
+  useEffect(() => {
+    return () => {
       if (debounceTimer) clearTimeout(debounceTimer);
-      
-      // Configura novo timer para buscar após um curto período de tempo
-      if (value.length >= 10) {
-        const timer = setTimeout(() => {
-          handleBlur();
-        }, 500);
-        setDebounceTimer(timer);
-      }
-    }
-  };
+    };
+  }, [debounceTimer]);
 
-  // Para evitar buscas excessivas, debounce ao sair do campo (onBlur)
-  const handleBlur = async () => {
-    if (onCompanyLookup) {
-      setLookupPending(true);
-      const res = await fetchCompany(localId);
-      onCompanyLookup(res, false);
-      setCompany(res);
-      setLookupPending(false);
-    }
-  };
-
-  // Busca rápida pelo id preenchido
-  const fetchCompany = async (id: string): Promise<CompanyInfo | null> => {
-    if (!id || id.length < 10) return null;
-    try {
-      const { data } = await fetch("/api/companies/lookup?id=" + id).then(res => res.json());
-      if (!data) return null;
-      return data as CompanyInfo;
-    } catch {
-      return null;
-    }
-  };
-
+  // Initial lookup if companyId is provided
   useEffect(() => {
     setLocalId(companyId);
     
-    // Se já temos um ID válido ao montar o componente, buscar imediatamente
-    if (companyId && companyId.length >= 10 && onCompanyLookup) {
-      handleBlur();
+    if (companyId && companyId.length >= 10) {
+      fetchCompany(companyId);
     }
-    
-    return () => {
-      // Limpa qualquer timer pendente ao desmontar
-      if (debounceTimer) clearTimeout(debounceTimer);
-    };
-  }, [companyId]);
+  }, [companyId, fetchCompany]);
+
+  // Notify parent component about lookup results
+  useEffect(() => {
+    if (onCompanyLookup) {
+      onCompanyLookup(companyInfo, loading);
+    }
+  }, [companyInfo, loading, onCompanyLookup]);
 
   return (
     <div className="space-y-5">
@@ -108,34 +93,56 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
         <label htmlFor="companyId" className="text-sm text-gray-500">
           ID da empresa
         </label>
-        <Input
-          id="companyId"
-          value={localId}
-          onChange={e => handleInputChange(e.target.value)}
-          onBlur={handleBlur}
-          className="border-b border-gray-300 rounded-md px-3 py-2 focus-visible:ring-merinno-dark"
-          placeholder="Digite o ID da empresa"
-        />
+        <div className="relative">
+          <Input
+            id="companyId"
+            value={localId}
+            onChange={e => handleInputChange(e.target.value)}
+            className="border border-gray-200 rounded-md px-3 py-2 focus-visible:ring-gray-400"
+            placeholder="Digite o ID da empresa"
+          />
+        </div>
       </div>
 
       {/* Company lookup result */}
-      {lookupPending && (
-        <div className="mt-4 space-y-2">
-          <Skeleton className="h-6 w-3/4" />
+      {loading && (
+        <div className="mt-4">
+          <Skeleton className="h-6 w-3/4 mb-2" />
           <Skeleton className="h-4 w-1/2" />
         </div>
       )}
 
-      {!lookupPending && company && (
-        <div className="mt-4 p-4 border border-green-200 rounded-md bg-green-50">
-          <h4 className="font-medium text-green-800">Empresa encontrada!</h4>
-          <p className="text-sm text-green-700">{company.nome}</p>
+      {!loading && companyInfo && (
+        <div className="mt-4 p-4 border border-emerald-100 rounded-md bg-emerald-50 flex items-center gap-3 transition-all duration-300 animate-in fade-in">
+          {companyInfo.logo ? (
+            <img 
+              src={companyInfo.logo} 
+              alt={companyInfo.nome}
+              className="h-8 w-8 object-contain rounded"
+            />
+          ) : (
+            <div className="h-8 w-8 rounded-md bg-emerald-100 flex items-center justify-center">
+              <Building2 className="h-4 w-4 text-emerald-600" />
+            </div>
+          )}
+          <div>
+            <h4 className="font-medium text-emerald-800">Empresa encontrada</h4>
+            <p className="text-sm text-emerald-600">{companyInfo.nome}</p>
+          </div>
         </div>
       )}
 
-      {!lookupPending && localId && localId.length >= 10 && !company && (
-        <div className="mt-4 p-4 border border-red-200 rounded-md bg-red-50">
-          <p className="text-sm text-red-700">Nenhuma empresa encontrada com este ID.</p>
+      {!loading && localId && localId.length >= 10 && !companyInfo && (
+        <div className="mt-4 p-4 border border-amber-100 rounded-md bg-amber-50 flex items-center gap-3 transition-all duration-300 animate-in fade-in">
+          <div className="h-8 w-8 rounded-md bg-amber-100 flex items-center justify-center">
+            <Building2 className="h-4 w-4 text-amber-600" />
+          </div>
+          <div>
+            <h4 className="font-medium text-amber-800">Empresa não encontrada</h4>
+            <p className="text-sm text-amber-600">
+              Verifique o ID informado ou crie uma nova empresa.
+            </p>
+          </div>
         </div>
       )}
 
@@ -144,8 +151,17 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
         <Button 
           type="button" 
           className="w-full mt-8"
-          onClick={onComplete}
-          disabled={!company && localId.length >= 1}
+          onClick={() => {
+            if (companyInfo) {
+              onComplete();
+              toast.success(`Empresa ${companyInfo.nome} selecionada com sucesso!`);
+            } else if (localId && localId.length >= 10) {
+              toast.error("Empresa não encontrada. Verifique o ID informado.");
+            } else {
+              toast.error("Digite um ID de empresa válido.");
+            }
+          }}
+          disabled={!companyInfo && localId.length >= 1}
         >
           Concluir
         </Button>
