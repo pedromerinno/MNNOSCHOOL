@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Building2 } from "lucide-react";
+import { ArrowLeft, Building2, Check } from "lucide-react";
 import { useQuickCompanyLookup } from "@/hooks/company/useQuickCompanyLookup";
 import { toast } from "sonner";
 
@@ -30,12 +30,17 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
 }) => {
   const [localId, setLocalId] = useState(companyId);
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+  const [idValidated, setIdValidated] = useState(false);
   
   // Use the hook for company lookup
   const { companyInfo, loading, error, fetchCompany } = useQuickCompanyLookup();
   
   // Handle input change with debounce
   const handleInputChange = (value: string) => {
+    // Clear validation flag when input changes
+    setIdValidated(false);
+    
+    // Update local state and parent
     setLocalId(value);
     onCompanyIdChange(value);
     
@@ -45,7 +50,9 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
     // Set up new timer for lookup
     if (value.length >= 10) {
       const timer = setTimeout(() => {
+        console.log("Fetching company with ID:", value);
         fetchCompany(value);
+        setIdValidated(true);
       }, 500);
       setDebounceTimer(timer);
     }
@@ -60,10 +67,15 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
 
   // Initial lookup if companyId is provided
   useEffect(() => {
-    setLocalId(companyId);
+    // Only update localId if companyId changes from parent
+    if (companyId !== localId) {
+      setLocalId(companyId);
+    }
     
     if (companyId && companyId.length >= 10) {
+      console.log("Initial company lookup with ID:", companyId);
       fetchCompany(companyId);
+      setIdValidated(true);
     }
   }, [companyId, fetchCompany]);
 
@@ -73,6 +85,18 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
       onCompanyLookup(companyInfo, loading);
     }
   }, [companyInfo, loading, onCompanyLookup]);
+
+  // Handle form submission
+  const handleComplete = () => {
+    if (onComplete && companyInfo) {
+      onComplete();
+      toast.success(`Empresa ${companyInfo.nome} selecionada com sucesso!`);
+    } else if (localId && localId.length >= 10 && !companyInfo) {
+      toast.error("Empresa não encontrada. Verifique o ID informado.");
+    } else {
+      toast.error("Digite um ID de empresa válido.");
+    }
+  };
 
   return (
     <div className="space-y-5">
@@ -100,11 +124,20 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
             onChange={e => handleInputChange(e.target.value)}
             className="border border-gray-200 rounded-lg px-4 py-2 focus-visible:ring-gray-400 w-full"
             placeholder="Digite o ID da empresa"
+            autoFocus
           />
+          {idValidated && companyInfo && (
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-emerald-500">
+              <Check className="h-4 w-4" />
+            </div>
+          )}
         </div>
+        <p className="text-xs text-gray-500 mt-1">
+          Insira o ID da empresa para se vincular a uma empresa existente
+        </p>
       </div>
 
-      {/* Company lookup result */}
+      {/* Loading state */}
       {loading && (
         <div className="mt-4">
           <Skeleton className="h-6 w-3/4 mb-2" />
@@ -112,6 +145,7 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
         </div>
       )}
 
+      {/* Company found state */}
       {!loading && companyInfo && (
         <div className="mt-4 p-4 border border-emerald-100 rounded-lg bg-emerald-50 flex items-center gap-3 transition-all duration-300 animate-in fade-in">
           {companyInfo.logo ? (
@@ -119,6 +153,11 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
               src={companyInfo.logo} 
               alt={companyInfo.nome}
               className="h-8 w-8 object-contain rounded"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.onerror = null;
+                target.src = "/placeholder.svg";
+              }}
             />
           ) : (
             <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center">
@@ -132,7 +171,8 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
         </div>
       )}
 
-      {!loading && localId && localId.length >= 10 && !companyInfo && (
+      {/* Company not found state - only show after validation and when ID is valid length */}
+      {!loading && idValidated && localId && localId.length >= 10 && !companyInfo && (
         <div className="mt-4 p-4 border border-amber-100 rounded-lg bg-amber-50 flex items-center gap-3 transition-all duration-300 animate-in fade-in">
           <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center">
             <Building2 className="h-4 w-4 text-amber-600" />
@@ -151,16 +191,7 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
         <Button 
           type="button" 
           className="w-full mt-8"
-          onClick={() => {
-            if (companyInfo) {
-              onComplete();
-              toast.success(`Empresa ${companyInfo.nome} selecionada com sucesso!`);
-            } else if (localId && localId.length >= 10) {
-              toast.error("Empresa não encontrada. Verifique o ID informado.");
-            } else {
-              toast.error("Digite um ID de empresa válido.");
-            }
-          }}
+          onClick={handleComplete}
           disabled={!companyInfo}
         >
           Concluir
