@@ -15,6 +15,7 @@ export const useOnboardingCheck = (
   const navigate = useNavigate();
   const hasAttemptedForceLoad = useRef(false);
   const hasRedirectedToOnboarding = useRef(false);
+  const hasOpenedDialogAfterForceLoad = useRef(false);
 
   // Check for onboarding status and redirect if needed
   useEffect(() => {
@@ -37,12 +38,11 @@ export const useOnboardingCheck = (
           hasAttemptedForceLoad.current = true;
           
           forceGetUserCompanies(user.id).then(companies => {
-            if (companies.length === 0) {
-              if (!hasRedirectedToOnboarding.current) {
-                console.log("[Index] Mesmo após forçar carregamento, não há empresas. Abrindo diálogo de criação de empresa...");
-                setShowCompanyDialog(true);
-              }
-            } else {
+            if (companies.length === 0 && !hasOpenedDialogAfterForceLoad.current) {
+              hasOpenedDialogAfterForceLoad.current = true;
+              console.log("[Index] Mesmo após forçar carregamento, não há empresas. Abrindo diálogo de criação de empresa...");
+              setShowCompanyDialog(true);
+            } else if (companies.length > 0) {
               toast.success("Empresas carregadas com sucesso!");
             }
           }).catch(err => {

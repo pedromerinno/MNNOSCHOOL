@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 
@@ -10,6 +10,7 @@ export const useProfileCompletionCheck = () => {
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [showCompanyDialog, setShowCompanyDialog] = useState(false);
   const [profileChecked, setProfileChecked] = useState(false);
+  const hasInitializedDialogs = useRef(false);
   
   const isProfileComplete = () => {
     // Profile is complete if display_name exists
@@ -18,19 +19,18 @@ export const useProfileCompletionCheck = () => {
   
   const hasCompany = userCompanies.length > 0;
   
-  // Check profile completion status
+  // Check profile completion status - only once
   useEffect(() => {
-    if (user && userProfile && !profileChecked) {
+    if (user && userProfile && !profileChecked && !hasInitializedDialogs.current) {
       setProfileChecked(true);
+      hasInitializedDialogs.current = true;
       
       // Check if profile is incomplete
       if (!isProfileComplete()) {
         setShowProfileDialog(true);
-      } else {
-        // If profile is complete but user has no companies
-        if (!hasCompany) {
-          setShowCompanyDialog(true);
-        }
+      } else if (!hasCompany) {
+        // Only open company dialog if profile is complete but user has no companies
+        setShowCompanyDialog(true);
       }
     }
   }, [user, userProfile, hasCompany, profileChecked]);
@@ -56,6 +56,7 @@ export const useProfileCompletionCheck = () => {
     setShowCompanyDialog,
     handleProfileComplete,
     handleCompanyComplete,
-    isProfileComplete: isProfileComplete()
+    isProfileComplete: isProfileComplete(),
+    hasInitializedDialogs
   };
 };

@@ -6,6 +6,7 @@ import { HomeContent } from "./HomeContent";
 import { EmptyCompanyState } from "./EmptyCompanyState";
 import { UserProfileDialog } from "./UserProfileDialog";
 import { CompanySelectionDialog } from "./CompanySelectionDialog";
+import { useRef } from "react";
 
 export const IndexContent = () => {
   const {
@@ -18,6 +19,8 @@ export const IndexContent = () => {
     forceGetUserCompanies,
     hasCachedCompany
   } = useCompanyInitialization();
+
+  const hasRenderedDialogs = useRef(false);
 
   const {
     showProfileDialog,
@@ -35,6 +38,7 @@ export const IndexContent = () => {
 
   // No companies state
   if (user && !isLoading && userCompanies.length === 0) {
+    hasRenderedDialogs.current = true;
     return (
       <>
         {/* User Profile Dialog */}
@@ -55,7 +59,7 @@ export const IndexContent = () => {
         />
         
         <EmptyCompanyState
-          showDialog={false} // We're handling dialogs with our custom hook now
+          showDialog={false} // We're handling dialogs with our custom hooks now
           onOpenChange={setShowCompanyDialog}
           onCompanyTypeSelect={handleCompanyTypeSelect}
           onCompanyCreated={handleCompanyCreated}
