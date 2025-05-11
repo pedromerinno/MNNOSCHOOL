@@ -10,7 +10,8 @@ export const useOnboardingCheck = (
   userCompanies: any[], 
   fetchCount: number,
   forceGetUserCompanies: (userId: string) => Promise<any>,
-  setShowCompanyDialog: (show: boolean) => void
+  setShowCompanyDialog: (show: boolean) => void,
+  companyDialogTriggeredByProfile?: React.MutableRefObject<boolean>
 ) => {
   const navigate = useNavigate();
   const hasAttemptedForceLoad = useRef(false);
@@ -22,36 +23,48 @@ export const useOnboardingCheck = (
     if (!user) return;
     
     if (userProfile?.interesses?.includes("onboarding_incomplete")) {
-      console.log("[Index] Usuário precisa completar onboarding, redirecionando...");
+      console.log("[useOnboardingCheck] Usuário precisa completar onboarding, redirecionando...");
       navigate("/onboarding", { replace: true });
       hasRedirectedToOnboarding.current = true;
       return;
     }
     
-    if (user && !isLoading && userCompanies.length === 0 && fetchCount > 0) {
-      console.log("[Index] Usuário não tem empresas após carregamento. Verificando se precisa de onboarding...");
+    // Only proceed if we're not redirecting to onboarding
+    // and the company dialog wasn't already triggered by the profile check
+    const profileAlreadyTriggeredDialog = companyDialogTriggeredByProfile && companyDialogTriggeredByProfile.current;
+    
+    if (user && 
+        !isLoading && 
+        userCompanies.length === 0 && 
+        fetchCount > 0 && 
+        !profileAlreadyTriggeredDialog) {
+      console.log("[useOnboardingCheck] Usuário não tem empresas após carregamento. Verificando se precisa de onboarding...");
       
       if (!userProfile?.interesses?.includes("onboarding_incomplete")) {
-        console.log("[Index] Usuário não tem flag de onboarding incompleto mas não tem empresas. Tentar forçar carregamento...");
+        console.log("[useOnboardingCheck] Usuário não tem flag de onboarding incompleto mas não tem empresas. Tentar forçar carregamento...");
         
         if (!hasAttemptedForceLoad.current && user.id) {
           hasAttemptedForceLoad.current = true;
           
           forceGetUserCompanies(user.id).then(companies => {
-            if (companies.length === 0 && !hasOpenedDialogAfterForceLoad.current) {
+            // Only show company dialog if user has no companies after forcing load
+            // and if dialog hasn't been triggered by profile check
+            if (companies.length === 0 && 
+                !hasOpenedDialogAfterForceLoad.current && 
+                !profileAlreadyTriggeredDialog) {
               hasOpenedDialogAfterForceLoad.current = true;
-              console.log("[Index] Mesmo após forçar carregamento, não há empresas. Abrindo diálogo de criação de empresa...");
+              console.log("[useOnboardingCheck] Mesmo após forçar carregamento, não há empresas. Abrindo diálogo de criação de empresa...");
               setShowCompanyDialog(true);
             } else if (companies.length > 0) {
               toast.success("Empresas carregadas com sucesso!");
             }
           }).catch(err => {
-            console.error("[Index] Erro ao tentar forçar carregamento de empresas:", err);
+            console.error("[useOnboardingCheck] Erro ao tentar forçar carregamento de empresas:", err);
           });
         }
       }
     }
-  }, [user, userProfile, navigate, isLoading, userCompanies, fetchCount, forceGetUserCompanies, setShowCompanyDialog]);
+  }, [user, userProfile, navigate, isLoading, userCompanies, fetchCount, forceGetUserCompanies, setShowCompanyDialog, companyDialogTriggeredByProfile]);
 
   return {
     hasAttemptedForceLoad,

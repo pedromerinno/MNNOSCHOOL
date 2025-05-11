@@ -1,6 +1,5 @@
 
 import { useCompanyInitialization } from "@/hooks/home/useCompanyInitialization";
-import { useProfileCompletionCheck } from "@/hooks/home/useProfileCompletionCheck";
 import { IndexLoadingState } from "./IndexLoadingState";
 import { HomeContent } from "./HomeContent";
 import { EmptyCompanyState } from "./EmptyCompanyState";
@@ -17,19 +16,16 @@ export const IndexContent = () => {
     handleCompanyCreated,
     handleCompanyTypeSelect,
     forceGetUserCompanies,
-    hasCachedCompany
-  } = useCompanyInitialization();
-
-  const hasRenderedDialogs = useRef(false);
-
-  const {
+    hasCachedCompany,
     showProfileDialog,
     setShowProfileDialog,
     showCompanyDialog,
     setShowCompanyDialog,
     handleProfileComplete,
     handleCompanyComplete
-  } = useProfileCompletionCheck();
+  } = useCompanyInitialization();
+
+  const hasRenderedDialogs = useRef(false);
 
   // Loading state
   if ((isPageLoading && !hasCachedCompany) || (user && isLoading && !hasCachedCompany)) {

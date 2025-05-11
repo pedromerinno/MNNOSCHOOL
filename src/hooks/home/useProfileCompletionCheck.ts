@@ -11,6 +11,7 @@ export const useProfileCompletionCheck = () => {
   const [showCompanyDialog, setShowCompanyDialog] = useState(false);
   const [profileChecked, setProfileChecked] = useState(false);
   const hasInitializedDialogs = useRef(false);
+  const companyDialogTriggeredByProfile = useRef(false);
   
   const isProfileComplete = () => {
     // Profile is complete if display_name exists
@@ -22,15 +23,19 @@ export const useProfileCompletionCheck = () => {
   // Check profile completion status - only once
   useEffect(() => {
     if (user && userProfile && !profileChecked && !hasInitializedDialogs.current) {
+      console.log("[useProfileCompletionCheck] Checking profile completion");
       setProfileChecked(true);
       hasInitializedDialogs.current = true;
       
       // Check if profile is incomplete
       if (!isProfileComplete()) {
+        console.log("[useProfileCompletionCheck] Profile incomplete, showing profile dialog");
         setShowProfileDialog(true);
       } else if (!hasCompany) {
         // Only open company dialog if profile is complete but user has no companies
+        console.log("[useProfileCompletionCheck] Profile complete but no companies, showing company dialog");
         setShowCompanyDialog(true);
+        companyDialogTriggeredByProfile.current = true;
       }
     }
   }, [user, userProfile, hasCompany, profileChecked]);
@@ -41,7 +46,9 @@ export const useProfileCompletionCheck = () => {
     
     // Open company dialog if user has no companies
     if (!hasCompany) {
+      console.log("[useProfileCompletionCheck] Profile completed, showing company dialog");
       setShowCompanyDialog(true);
+      companyDialogTriggeredByProfile.current = true;
     }
   };
   
@@ -57,6 +64,7 @@ export const useProfileCompletionCheck = () => {
     handleProfileComplete,
     handleCompanyComplete,
     isProfileComplete: isProfileComplete(),
-    hasInitializedDialogs
+    hasInitializedDialogs,
+    companyDialogTriggeredByProfile
   };
 };
