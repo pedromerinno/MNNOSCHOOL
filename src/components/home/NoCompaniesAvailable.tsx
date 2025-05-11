@@ -1,5 +1,5 @@
 
-import { AlertTriangle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -32,26 +32,35 @@ export const NoCompaniesAvailable = () => {
       />
 
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
-        <div className="text-center max-w-md mx-auto">
+        <div className="max-w-sm w-full mx-auto bg-card border border-border rounded-lg p-6 shadow-sm animate-fade-in">
           <div className="flex justify-center mb-6">
-            <AlertTriangle className="h-16 w-16 text-amber-500" />
+            <div className="p-3 rounded-full bg-muted">
+              <AlertCircle className="h-6 w-6 text-muted-foreground" />
+            </div>
           </div>
           
-          <h1 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">
+          <h1 className="text-xl font-medium text-center mb-3 text-foreground">
             Nenhuma empresa disponível
           </h1>
           
-          <p className="text-gray-600 dark:text-gray-300 mb-6">
+          <p className="text-sm text-center text-muted-foreground mb-6">
             Por enquanto não há nenhuma empresa disponível no momento, solicite seu acesso.
           </p>
           
-          <Button 
-            variant="outline" 
-            className="border-black hover:bg-black/5"
-            onClick={() => setShowDialog(true)}
-          >
-            Configurar Acesso
-          </Button>
+          <div className="flex justify-center">
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="hover:bg-accent transition-colors"
+              onClick={() => setShowDialog(true)}
+            >
+              Configurar Acesso
+            </Button>
+          </div>
+          
+          <p className="text-xs text-center text-muted-foreground mt-8">
+            Crie sua primeira conexão
+          </p>
         </div>
       </div>
     </>
