@@ -20,6 +20,18 @@ export const useCompanyInitialization = () => {
   // Get the cached company status
   const hasCachedCompany = getInitialSelectedCompany() !== null;
   
+  // Initialize the hasRedirectedToOnboarding ref first so it can be passed to other hooks
+  const { hasAttemptedForceLoad, hasRedirectedToOnboarding } = useOnboardingCheck(
+    user, 
+    userProfile, 
+    isLoading, 
+    userCompanies, 
+    fetchCount, 
+    forceGetUserCompanies,
+    setShowDialog,
+    companyDialogTriggeredByProfile
+  );
+  
   // Use the profile completion check
   const {
     showProfileDialog,
@@ -31,7 +43,7 @@ export const useCompanyInitialization = () => {
     companyDialogTriggeredByProfile
   } = useProfileCompletionCheck();
 
-  // Use the company dialog state
+  // Use the company dialog state - now we can pass hasRedirectedToOnboarding
   const { showCompanyDialog: companyDialogState, setShowCompanyDialog: setCompanyDialogState } = useCompanyDialogState(
     userCompanies, 
     isLoading, 
@@ -41,18 +53,6 @@ export const useCompanyInitialization = () => {
   
   // We need to merge the state from both hooks
   const showCompanyDialog = profileShowCompanyDialog || companyDialogState;
-  
-  // Use the separated hooks
-  const { hasAttemptedForceLoad, hasRedirectedToOnboarding } = useOnboardingCheck(
-    user, 
-    userProfile, 
-    isLoading, 
-    userCompanies, 
-    fetchCount, 
-    forceGetUserCompanies,
-    setShowDialog,
-    companyDialogTriggeredByProfile
-  );
   
   const { isPageLoading: pageLoading, setIsPageLoading: setPageLoading } = usePageLoadingState(
     hasCachedCompany,
