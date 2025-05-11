@@ -36,25 +36,25 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
   // Use the hook for company lookup
   const { companyInfo, loading, error, fetchCompany } = useQuickCompanyLookup();
   
-  // Handle input change with debounce - fixed to properly handle input
+  // Handle input change with debounce - corrigido para manter o valor digitado
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+    const newValue = e.target.value;
     
     // Clear validation flag when input changes
     setIdValidated(false);
     
     // Update local state and parent
-    setLocalId(value);
-    onCompanyIdChange(value);
+    setLocalId(newValue);
+    onCompanyIdChange(newValue);
     
     // Clear previous timer
     if (debounceTimer) clearTimeout(debounceTimer);
     
     // Set up new timer for lookup
-    if (value.length >= 10) {
+    if (newValue.length >= 10) {
       const timer = setTimeout(() => {
-        console.log("Fetching company with ID:", value);
-        fetchCompany(value);
+        console.log("Fetching company with ID:", newValue);
+        fetchCompany(newValue);
         setIdValidated(true);
       }, 500);
       setDebounceTimer(timer);
