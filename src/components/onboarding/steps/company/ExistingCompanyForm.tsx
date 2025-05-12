@@ -28,27 +28,30 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
   onBack,
   onComplete,
 }) => {
-  // State para armazenar o ID localmente
-  const [localId, setLocalId] = useState(companyId);
+  // Estado local para o input
+  const [inputValue, setInputValue] = useState(companyId);
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
   const [idValidated, setIdValidated] = useState(false);
   
-  // Use o hook para buscar informações da empresa
+  // Hook para buscar informações da empresa
   const { companyInfo, loading, error, fetchCompany } = useQuickCompanyLookup();
   
-  // Função para lidar com mudanças no input com debounce
+  // Função para lidar com mudanças no input
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
+    // Atualizamos diretamente o valor do input
+    setInputValue(newValue);
     
     // Limpar a flag de validação quando o input muda
     setIdValidated(false);
     
-    // Atualizar o state local e o parent
-    setLocalId(newValue);
+    // Notify parent component
     onCompanyIdChange(newValue);
     
     // Limpar o timer anterior
-    if (debounceTimer) clearTimeout(debounceTimer);
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+    }
     
     // Configurar novo timer para buscar a empresa
     if (newValue.length >= 10) {
@@ -64,23 +67,25 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
   // Limpar timers pendentes quando o componente desmontar
   useEffect(() => {
     return () => {
-      if (debounceTimer) clearTimeout(debounceTimer);
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
     };
   }, [debounceTimer]);
 
-  // Busca inicial se companyId for fornecido
+  // Sincronizar com props quando companyId mudar externamente
   useEffect(() => {
-    // Atualizar localId apenas se companyId mudar do parent
-    if (companyId !== localId) {
-      setLocalId(companyId);
+    if (companyId !== inputValue) {
+      setInputValue(companyId);
     }
     
-    if (companyId && companyId.length >= 10) {
+    // Busca inicial se companyId for fornecido
+    if (companyId && companyId.length >= 10 && !idValidated) {
       console.log("Busca inicial de empresa com ID:", companyId);
       fetchCompany(companyId);
       setIdValidated(true);
     }
-  }, [companyId, fetchCompany]);
+  }, [companyId, fetchCompany, idValidated, inputValue]);
 
   // Notificar o componente pai sobre os resultados da busca
   useEffect(() => {
@@ -94,7 +99,7 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
     if (onComplete && companyInfo) {
       onComplete();
       toast.success(`Empresa ${companyInfo.nome} selecionada com sucesso!`);
-    } else if (localId && localId.length >= 10 && !companyInfo) {
+    } else if (inputValue && inputValue.length >= 10 && !companyInfo) {
       toast.error("Empresa não encontrada. Verifique o ID informado.");
     } else {
       toast.error("Digite um ID de empresa válido.");
@@ -124,12 +129,11 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
           <Input
             id="companyId"
             type="text"
-            value={localId}
+            value={inputValue}
             onChange={handleInputChange}
             className="border border-gray-200 rounded-lg px-4 py-2 w-full"
             placeholder="Digite o ID da empresa"
             autoComplete="off"
-            autoFocus
           />
           {idValidated && companyInfo && (
             <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-emerald-500">
@@ -177,7 +181,7 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
       )}
 
       {/* Estado de empresa não encontrada - mostrar apenas após validação e quando o ID tiver comprimento válido */}
-      {!loading && idValidated && localId && localId.length >= 10 && !companyInfo && (
+      {!loading && idValidated && inputValue && inputValue.length >= 10 && !companyInfo && (
         <div className="mt-4 p-4 border border-amber-100 rounded-lg bg-amber-50 flex items-center gap-3 transition-all duration-300 animate-in fade-in">
           <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center">
             <Building2 className="h-4 w-4 text-amber-600" />
@@ -191,7 +195,7 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
         </div>
       )}
 
-      {/* Botão Concluir - estilo preto sem width total */}
+      {/* Botão Concluir */}
       {onComplete && (
         <Button 
           type="button" 
