@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,7 +29,7 @@ const AdminPage = () => {
   }, [authLoading]);
 
   if (!isReady) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">
+    return <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919] flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
       </div>;
   }
@@ -58,14 +57,13 @@ const AdminPage = () => {
     }
   };
 
-  return <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
       <div className="container mx-auto px-0 lg:px-4 py-6 max-w-[1500px]">
         <SidebarProvider defaultOpen={true}>
           <div className="flex w-full min-h-[calc(100vh-120px)] rounded-lg overflow-hidden">
             <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />
             <div className="flex-1 overflow-auto">
               <div className="p-6">
-                
                 <ErrorBoundary>
                   {getActiveContent()}
                 </ErrorBoundary>
