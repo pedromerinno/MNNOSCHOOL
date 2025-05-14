@@ -101,10 +101,6 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
       if (onComplete) {
         onComplete();
       }
-      
-      // Force reload to refresh company data
-      window.location.reload();
-      
     } catch (error: any) {
       console.error("Erro ao criar empresa:", error);
       toast.error(`Erro ao criar empresa: ${error.message}`);

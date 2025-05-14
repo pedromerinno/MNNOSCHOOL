@@ -155,9 +155,6 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
             onComplete();
           }
           toast.success(`Empresa ${companyInfo.nome} selecionada com sucesso!`);
-          
-          // Force reload to refresh company data
-          window.location.reload();
         }
       } catch (error: any) {
         console.error("Error during completion:", error);
