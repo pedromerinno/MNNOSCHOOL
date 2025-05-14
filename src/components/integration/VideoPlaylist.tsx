@@ -1,4 +1,4 @@
 
-import { VideoPlaylist } from './video-playlist/VideoPlaylist';
+import { VideoPlaylist } from './video-playlist';
 
 export { VideoPlaylist };

@@ -12,11 +12,10 @@ export const ProtectedRoute = () => {
   const { user, loading, session, userProfile } = useAuth();
   const location = useLocation();
   const isOnboarding = location.pathname === "/onboarding";
-  const isLoginPage = location.pathname === "/login";
   
-  // Apenas carrega dados de empresas se for necessário
+  // Só carrega os dados de empresas se não estiver na página de onboarding
   const { userCompanies, isLoading: companiesLoading } = useCompanies({
-    skipLoadingInOnboarding: isOnboarding || isLoginPage
+    skipLoadingInOnboarding: isOnboarding
   });
   
   const [initialLoadDone, setInitialLoadDone] = useState(false);
@@ -95,16 +94,15 @@ export const ProtectedRoute = () => {
   }
 
   // Verificar se precisa fazer onboarding inicial
+  // IMPORTANTE: Precisamos ter certeza que esta verificação seja feita corretamente
   const needsOnboarding = userProfile?.primeiro_login === true || 
                          (userProfile?.interesses && userProfile.interesses.includes("onboarding_incomplete"));
                          
-  if (process.env.NODE_ENV !== 'production') {
-    console.log("ProtectedRoute: Verificando necessidade de onboarding:", { 
-      userProfile,
-      primeiro_login: userProfile?.primeiro_login,
-      interesses: userProfile?.interesses
-    });
-  }
+  console.log("ProtectedRoute: Verificando necessidade de onboarding:", { 
+    userProfile,
+    primeiro_login: userProfile?.primeiro_login,
+    interesses: userProfile?.interesses
+  });
                          
   // Redirecionar para onboarding se for a primeira vez
   if (needsOnboarding && !isOnboarding) {
@@ -113,6 +111,12 @@ export const ProtectedRoute = () => {
       interesses: userProfile?.interesses
     });
     return <Navigate to="/onboarding" replace />;
+  }
+
+  // Se não precisa de onboarding mas não tem empresas, permitir acesso à home
+  // O componente NoCompaniesAvailable será mostrado na home
+  if (!needsOnboarding && !isOnboarding && (!userCompanies || userCompanies.length === 0) && !companiesLoading) {
+    console.log("ProtectedRoute: Usuário sem empresas mas já fez onboarding");
   }
 
   // Renderiza rotas protegidas se autenticado

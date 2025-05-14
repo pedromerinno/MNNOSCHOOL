@@ -13,8 +13,7 @@ const Login = () => {
   useEffect(() => {
     if (user) {
       console.log("Usuário já autenticado, redirecionando para home");
-      // Use replace instead of push to avoid adding to history stack
-      navigate('/', { replace: true });
+      navigate('/');
     }
   }, [user, navigate]);
   

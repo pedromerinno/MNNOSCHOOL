@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { CourseCarousel } from "@/components/courses/CourseCarousel";
@@ -12,7 +11,6 @@ import { CoursesGrid } from "@/components/courses/CoursesGrid";
 import { CoursesLoadingSkeleton } from "@/components/courses/CoursesLoadingSkeleton";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
-
 const Courses = () => {
   const {
     selectedCompany,
@@ -32,7 +30,6 @@ const Courses = () => {
   const [showContent, setShowContent] = useState(false);
   const [isNewCourseDialogOpen, setIsNewCourseDialogOpen] = useState(false);
   const isAdmin = user?.is_admin || user?.super_admin;
-  
   useEffect(() => {
     if (!companyLoading && selectedCompany && isDataReady) {
       setShowContent(true);
@@ -43,7 +40,6 @@ const Courses = () => {
   useEffect(() => {
     refreshCourses();
   }, [refreshCourses]);
-  
   const availableCategories = React.useMemo(() => {
     if (!allCompanyCourses) return [];
     const categories = new Set<string>();
@@ -52,12 +48,10 @@ const Courses = () => {
     });
     return Array.from(categories);
   }, [allCompanyCourses]);
-  
   const filteredCourses = allCompanyCourses?.filter(course => {
     if (activeCategory === "all") return true;
     return course.tags?.includes(activeCategory);
   });
-  
   if (companyLoading || !selectedCompany) {
     return <DashboardLayout>
         <div className="w-full max-w-screen-2xl mx-auto px-4 py-6 space-y-12">
@@ -74,10 +68,7 @@ const Courses = () => {
         </div>
       </DashboardLayout>;
   }
-  
   const hasNoCourses = !allCompanyCourses || allCompanyCourses.length === 0;
-  const hasSingleCourse = allCompanyCourses && allCompanyCourses.length === 1;
-  
   return <DashboardLayout fullWidth>
       {/* Header with Admin Actions */}
       
@@ -89,7 +80,7 @@ const Courses = () => {
           </div>
         </div> : hasNoCourses ? <div className="w-full max-w-screen-2xl mx-auto px-4">
           <EmptyCoursesState companyName={selectedCompany.nome} isAdmin={isAdmin} onCreateCourse={() => setIsNewCourseDialogOpen(true)} />
-        </div> : <div className={`w-full px-0 ${hasSingleCourse ? 'flex justify-center' : ''}`}>
+        </div> : <div className="w-full px-0">
           <CourseCarousel courses={featuredCourses} loading={loading} />
         </div>}
       
@@ -112,5 +103,4 @@ const Courses = () => {
       <NewCourseDialog open={isNewCourseDialogOpen} onOpenChange={setIsNewCourseDialogOpen} />
     </DashboardLayout>;
 };
-
 export default Courses;
