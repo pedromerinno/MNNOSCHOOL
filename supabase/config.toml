@@ -1,3 +1,5 @@
 
+
 [realtime]
 tables = ["lessons", "user_documents"]
+
