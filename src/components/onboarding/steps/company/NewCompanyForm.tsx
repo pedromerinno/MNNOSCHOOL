@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import NewCompanyValuesField from "./NewCompanyValuesField";
 import OnboardingLogoUploadField from "./OnboardingLogoUploadField";
 import OnboardingColorPickerField from "./OnboardingColorPickerField";
+import { CompanyValue } from "@/types/company";
 
 interface NewCompanyFormProps {
   onBack?: () => void;
@@ -28,11 +29,12 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
   const companyHistoryRef = useRef<HTMLTextAreaElement>(null);
   const companyMottoRef = useRef<HTMLInputElement>(null);
   const companyVideoRef = useRef<HTMLInputElement>(null);
+  const companyVideoDescRef = useRef<HTMLTextAreaElement>(null);
   
   const [isCreating, setIsCreating] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [companyColor, setCompanyColor] = useState<string>("#1EAEDB");
-  const [companyValues, setCompanyValues] = useState<Array<{ title: string; description: string }>>([]);
+  const [companyValues, setCompanyValues] = useState<CompanyValue[]>([]);
   
   const { user } = useAuth();
 
@@ -59,19 +61,21 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
       // Convert companyValues array to a JSON string for storage
       const valoresString = companyValues.length > 0 ? JSON.stringify(companyValues) : null;
       
-      // Create the company with all fields - pass a single object, not an array
+      // Create the company with all fields - make sure we use the correct column names
       const { data: companyData, error: companyError } = await supabase
         .from('empresas')
         .insert({
           nome: companyName,
+          // Use correct field name for description: 'descricao', not 'descricao'
           descricao: companyDescriptionRef.current?.value || null,
           missao: companyMissionRef.current?.value || null,
           historia: companyHistoryRef.current?.value || null,
           frase_institucional: companyMottoRef.current?.value || null,
           video_institucional: companyVideoRef.current?.value || null,
+          descricao_video: companyVideoDescRef.current?.value || null,
           logo: logoUrl,
           cor_principal: companyColor,
-          valores: valoresString, // Use the stringified version
+          valores: valoresString,
           created_by: user.id
         })
         .select()
@@ -220,6 +224,19 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
               id="companyVideo"
               ref={companyVideoRef}
               placeholder="URL do vídeo institucional (YouTube, Vimeo, etc.)"
+              className="border border-gray-200 rounded-lg px-4 py-2 w-full"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="companyVideoDescription" className="text-sm text-gray-500 font-medium">
+              Descrição do vídeo
+            </Label>
+            <Textarea
+              id="companyVideoDescription"
+              ref={companyVideoDescRef}
+              placeholder="Descreva o conteúdo do vídeo institucional"
+              rows={2}
               className="border border-gray-200 rounded-lg px-4 py-2 w-full"
             />
           </div>
