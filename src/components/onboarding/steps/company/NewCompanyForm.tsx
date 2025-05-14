@@ -56,10 +56,13 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
     try {
       console.log("Criando empresa:", companyName);
       
-      // Create the company with all fields
+      // Convert companyValues array to a JSON string for storage
+      const valoresString = companyValues.length > 0 ? JSON.stringify(companyValues) : null;
+      
+      // Create the company with all fields - pass a single object, not an array
       const { data: companyData, error: companyError } = await supabase
         .from('empresas')
-        .insert([{
+        .insert({
           nome: companyName,
           descricao: companyDescriptionRef.current?.value || null,
           missao: companyMissionRef.current?.value || null,
@@ -68,9 +71,9 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
           video_institucional: companyVideoRef.current?.value || null,
           logo: logoUrl,
           cor_principal: companyColor,
-          valores: companyValues.length > 0 ? companyValues : null,
+          valores: valoresString, // Use the stringified version
           created_by: user.id
-        }])
+        })
         .select()
         .single();
       
@@ -81,11 +84,11 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
       // Associate user with company as admin
       const { error: relationError } = await supabase
         .from('user_empresa')
-        .insert([{
+        .insert({
           user_id: user.id,
           empresa_id: companyData.id,
           is_admin: true
-        }]);
+        });
       
       if (relationError) throw relationError;
       
