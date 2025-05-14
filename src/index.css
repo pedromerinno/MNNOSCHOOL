@@ -1,110 +1,107 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
+ 
 @layer base {
   :root {
-    --background: 51 25% 97%; /* Light mode background */
+    --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
+
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
+ 
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
+ 
+    --primary: 222.2 47.4% 11.2%;
     --primary-foreground: 210 40% 98%;
+ 
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
+ 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
+ 
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
+ 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
+
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --ring: 222.2 84% 4.9%;
+ 
     --radius: 0.5rem;
   }
-
+ 
   .dark {
-    --background: 0 0% 10%; /* Dark mode background: #191919 */
-    --foreground: 0 0% 98%;
-    --card: 0 0% 13.3%; /* Dark mode card: #222222 */
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 13.3%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 10%; /* Updated from #111827 to #191919 */
-    --secondary: 0 0% 10%; /* Updated from #111827 to #191919 */
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;
-    --accent: 0 0% 15%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 0% 45%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 17%; /* #2b2b2b */
-    --input: 0 0% 10%; /* Adjusted to match background */
-    --ring: 0 0% 83.9%;
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+ 
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+ 
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+ 
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+ 
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+ 
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+ 
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+ 
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+ 
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+ 
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
   }
 }
 
-* {
-  @apply border-border;
+.loading {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-radius: 50%;
+  border-top-color: #3498db;
+  animation: spin 1s ease-in-out infinite;
 }
 
-body {
-  @apply bg-background text-foreground font-sans;
-  font-family: 'Inter', sans-serif;
-  cursor: url('/lovable-uploads/custom-cursor.png') 25 25, auto;
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
-.custom-cursor-area {
-  cursor: url('/lovable-uploads/custom-cursor.png') 25 25, auto !important;
+/* Custom cursor for dragging */
+.drag-cursor {
+  cursor: url('/lovable-uploads/custom-cursor.png'), move;
 }
 
-.company-themed-color {
-  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+/* Style for drag active state */
+.drag-active {
+  border-color: hsl(var(--primary));
+  background-color: hsl(var(--primary) / 0.1);
 }
 
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-.hide-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.floating-bubble {
-  animation: float 6s ease-in-out infinite;
-}
-
-.floating-bubble-delay-1 {
-  animation-delay: 1s;
-}
-
-.floating-bubble-delay-2 {
-  animation-delay: 2s;
-}
-
-@keyframes float {
-  0% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-  100% {
-    transform: translateY(0px);
-  }
-}
-
-/* Utility class to force pointer events */
+/* Make pointer-events work properly with Radix Dialog */
 .pointer-events-auto {
   pointer-events: auto !important;
 }
-
