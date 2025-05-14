@@ -23,14 +23,14 @@ export const CompanySelectionDialog: React.FC<CompanySelectionDialogProps> = ({
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl p-0 max-h-[90vh] h-auto overflow-hidden flex flex-col">
+      <DialogContent className="max-w-3xl p-0 max-h-[90vh] h-auto overflow-hidden flex flex-col">
         <div className="bg-white dark:bg-gray-900 rounded-t-lg flex-1 overflow-auto">
-          <div className="p-6 md:p-16 px-[44px] py-[44px] rounded-xl">
+          <div className="p-6 md:p-8">
             <DialogHeader className="mb-6">
-              <DialogTitle className="text-xl font-semibold text-center py-[10px]">
+              <DialogTitle className="text-xl font-semibold text-center">
                 Configuração da Empresa
               </DialogTitle>
-              <p className="text-center text-gray-500 dark:text-gray-400 text-sm py-0">
+              <p className="text-center text-gray-500 dark:text-gray-400 text-sm">
                 Escolha entre criar uma nova empresa ou vincular-se a uma existente
               </p>
             </DialogHeader>

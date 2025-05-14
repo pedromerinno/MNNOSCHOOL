@@ -2,10 +2,15 @@
 import React, { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { Label } from "@/components/ui/label";
+import NewCompanyValuesField from "./NewCompanyValuesField";
+import OnboardingLogoUploadField from "./OnboardingLogoUploadField";
+import OnboardingColorPickerField from "./OnboardingColorPickerField";
 
 interface NewCompanyFormProps {
   onBack?: () => void;
@@ -18,7 +23,17 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
 }) => {
   // Manage form value with refs instead of controlled inputs
   const companyNameRef = useRef<HTMLInputElement>(null);
+  const companyDescriptionRef = useRef<HTMLTextAreaElement>(null);
+  const companyMissionRef = useRef<HTMLTextAreaElement>(null);
+  const companyHistoryRef = useRef<HTMLTextAreaElement>(null);
+  const companyMottoRef = useRef<HTMLInputElement>(null);
+  const companyVideoRef = useRef<HTMLInputElement>(null);
+  
   const [isCreating, setIsCreating] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [companyColor, setCompanyColor] = useState<string>("#1EAEDB");
+  const [companyValues, setCompanyValues] = useState<Array<{ title: string; description: string }>>([]);
+  
   const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,11 +56,19 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
     try {
       console.log("Criando empresa:", companyName);
       
-      // Create the company
+      // Create the company with all fields
       const { data: companyData, error: companyError } = await supabase
         .from('empresas')
         .insert([{
           nome: companyName,
+          descricao: companyDescriptionRef.current?.value || null,
+          missao: companyMissionRef.current?.value || null,
+          historia: companyHistoryRef.current?.value || null,
+          frase_institucional: companyMottoRef.current?.value || null,
+          video_institucional: companyVideoRef.current?.value || null,
+          logo: logoUrl,
+          cor_principal: companyColor,
+          valores: companyValues.length > 0 ? companyValues : null,
           created_by: user.id
         }])
         .select()
@@ -102,26 +125,106 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <label htmlFor="companyName" className="text-sm text-gray-500 font-medium">
-            Nome da empresa
-          </label>
-          <Input
-            id="companyName"
-            ref={companyNameRef}
-            placeholder="Digite o nome da sua empresa"
-            className="border border-gray-200 rounded-lg px-4 py-2 w-full"
-            autoComplete="off"
-            autoFocus
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="companyName" className="text-sm text-gray-500 font-medium">
+              Nome da empresa*
+            </Label>
+            <Input
+              id="companyName"
+              ref={companyNameRef}
+              placeholder="Digite o nome da sua empresa"
+              className="border border-gray-200 rounded-lg px-4 py-2 w-full"
+              autoComplete="off"
+              autoFocus
+            />
+            <p className="text-xs text-gray-500">
+              Digite o nome da sua empresa para criar um perfil
+            </p>
+          </div>
+          
+          <OnboardingLogoUploadField 
+            value={logoUrl} 
+            onChange={setLogoUrl} 
           />
-          <p className="text-xs text-gray-500">
-            Digite o nome da sua empresa para criar um perfil
-          </p>
+          
+          <OnboardingColorPickerField 
+            value={companyColor} 
+            onChange={setCompanyColor} 
+          />
+          
+          <div className="space-y-2">
+            <Label htmlFor="companyMotto" className="text-sm text-gray-500 font-medium">
+              Frase institucional
+            </Label>
+            <Input
+              id="companyMotto"
+              ref={companyMottoRef}
+              placeholder="Digite a frase institucional da empresa"
+              className="border border-gray-200 rounded-lg px-4 py-2 w-full"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="companyDescription" className="text-sm text-gray-500 font-medium">
+              Descrição
+            </Label>
+            <Textarea
+              id="companyDescription"
+              ref={companyDescriptionRef}
+              placeholder="Descreva brevemente sua empresa"
+              rows={3}
+              className="border border-gray-200 rounded-lg px-4 py-2 w-full"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="companyMission" className="text-sm text-gray-500 font-medium">
+              Missão
+            </Label>
+            <Textarea
+              id="companyMission"
+              ref={companyMissionRef}
+              placeholder="Qual é a missão da sua empresa"
+              rows={3}
+              className="border border-gray-200 rounded-lg px-4 py-2 w-full"
+            />
+          </div>
+          
+          <NewCompanyValuesField 
+            values={companyValues} 
+            onChange={setCompanyValues} 
+          />
+          
+          <div className="space-y-2">
+            <Label htmlFor="companyHistory" className="text-sm text-gray-500 font-medium">
+              História
+            </Label>
+            <Textarea
+              id="companyHistory"
+              ref={companyHistoryRef}
+              placeholder="Conte a história da sua empresa"
+              rows={4}
+              className="border border-gray-200 rounded-lg px-4 py-2 w-full"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="companyVideo" className="text-sm text-gray-500 font-medium">
+              Vídeo institucional (URL)
+            </Label>
+            <Input
+              id="companyVideo"
+              ref={companyVideoRef}
+              placeholder="URL do vídeo institucional (YouTube, Vimeo, etc.)"
+              className="border border-gray-200 rounded-lg px-4 py-2 w-full"
+            />
+          </div>
         </div>
 
         <Button 
           type="submit" 
-          className="mt-8 bg-black hover:bg-black/90 text-white"
+          className="mt-8 bg-black hover:bg-black/90 text-white w-full"
           disabled={isCreating}
         >
           {isCreating ? "Criando..." : "Criar empresa"}
