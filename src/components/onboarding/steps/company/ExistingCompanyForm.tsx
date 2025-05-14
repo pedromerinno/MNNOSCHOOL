@@ -31,9 +31,9 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
 }) => {
   console.log("ExistingCompanyForm rendered with companyId:", companyId);
   
-  // Estado local para o input com um valor inicial
+  // Estado local para o input
   const [inputValue, setInputValue] = useState(companyId);
-  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+  const [lookupDebounceTimer, setLookupDebounceTimer] = useState<NodeJS.Timeout | null>(null);
   const [idValidated, setIdValidated] = useState(false);
   
   // Hook para buscar informações da empresa
@@ -43,7 +43,7 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
   const handleInputChange = (newValue: string) => {
     console.log("ExistingCompanyForm - handleInputChange:", newValue);
     
-    // Atualizamos diretamente o valor do input
+    // Atualizamos o estado local
     setInputValue(newValue);
     
     // Limpar a flag de validação quando o input muda
@@ -53,8 +53,8 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
     onCompanyIdChange(newValue);
     
     // Limpar o timer anterior
-    if (debounceTimer) {
-      clearTimeout(debounceTimer);
+    if (lookupDebounceTimer) {
+      clearTimeout(lookupDebounceTimer);
     }
     
     // Configurar novo timer para buscar a empresa
@@ -64,35 +64,18 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
         fetchCompany(newValue);
         setIdValidated(true);
       }, 500);
-      setDebounceTimer(timer);
+      setLookupDebounceTimer(timer);
     }
   };
 
   // Limpar timers pendentes quando o componente desmontar
   useEffect(() => {
     return () => {
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
+      if (lookupDebounceTimer) {
+        clearTimeout(lookupDebounceTimer);
       }
     };
-  }, [debounceTimer]);
-
-  // Sincronizar com props quando companyId mudar externamente
-  useEffect(() => {
-    console.log("ExistingCompanyForm - companyId changed:", companyId);
-    
-    if (companyId !== inputValue) {
-      console.log("ExistingCompanyForm - updating inputValue from companyId");
-      setInputValue(companyId);
-    }
-    
-    // Busca inicial se companyId for fornecido
-    if (companyId && companyId.length >= 10 && !idValidated) {
-      console.log("Busca inicial de empresa com ID:", companyId);
-      fetchCompany(companyId);
-      setIdValidated(true);
-    }
-  }, [companyId, fetchCompany, idValidated, inputValue]);
+  }, [lookupDebounceTimer]);
 
   // Notificar o componente pai sobre os resultados da busca
   useEffect(() => {

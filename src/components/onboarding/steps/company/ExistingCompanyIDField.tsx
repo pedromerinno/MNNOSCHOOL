@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Check } from "lucide-react";
 
@@ -16,24 +16,26 @@ const ExistingCompanyIDField: React.FC<ExistingCompanyIDFieldProps> = ({
   isValidated,
   isCompanyFound
 }) => {
-  // Create a managed input with direct reference to DOM
-  const [internalValue, setInternalValue] = useState(inputValue);
+  // Create an uncontrolled input with ref
+  const inputRef = useRef<HTMLInputElement>(null);
   
-  // Sync internal value with parent when it changes from outside
+  // Local state to track the input value
+  const [localValue, setLocalValue] = useState(inputValue);
+  
   useEffect(() => {
-    console.log("ExistingCompanyIDField - inputValue changed:", inputValue);
-    if (inputValue !== internalValue) {
-      setInternalValue(inputValue);
+    if (inputRef.current && inputValue !== inputRef.current.value) {
+      console.log("Setting input ref value to:", inputValue);
+      inputRef.current.value = inputValue;
     }
   }, [inputValue]);
 
-  // Handle changes from the input element
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle changes directly from the DOM element
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
-    console.log("ExistingCompanyIDField - handleChange:", newValue);
-    setInternalValue(newValue);
+    console.log("ExistingCompanyIDField - Input changed:", newValue);
+    setLocalValue(newValue);
     onInputChange(newValue);
-  }, [onInputChange]);
+  };
 
   return (
     <div className="space-y-3">
@@ -43,8 +45,9 @@ const ExistingCompanyIDField: React.FC<ExistingCompanyIDFieldProps> = ({
       <div className="relative">
         <Input
           id="companyId"
+          ref={inputRef}
           type="text"
-          value={internalValue}
+          defaultValue={inputValue}
           onChange={handleChange}
           className="border border-gray-200 rounded-lg px-4 py-2 w-full"
           placeholder="Digite o ID da empresa"
