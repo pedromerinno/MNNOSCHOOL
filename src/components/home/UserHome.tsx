@@ -34,7 +34,7 @@ export const UserHome = () => {
   }
   
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
       <main className="container mx-auto px-4 py-8">
         <WelcomeSection />
         <QuickLinks />
