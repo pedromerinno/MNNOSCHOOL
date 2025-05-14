@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -15,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Company } from "@/types/company";
+import { DragDropImageUpload } from '@/components/shared/DragDropImageUpload';
 
 const companySchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
@@ -78,9 +78,13 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
           name="logo"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>URL do Logo</FormLabel>
+              <FormLabel>Logo da Empresa</FormLabel>
               <FormControl>
-                <Input placeholder="URL da imagem do logo" {...field} value={field.value || ""} />
+                <DragDropImageUpload 
+                  value={field.value || ""} 
+                  onChange={field.onChange}
+                  companyName={initialData?.nome}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
