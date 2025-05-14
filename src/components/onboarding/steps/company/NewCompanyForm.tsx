@@ -226,13 +226,15 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
           </div>
         </div>
 
-        <Button 
-          type="submit" 
-          className="mt-8 bg-black hover:bg-black/90 text-white w-full"
-          disabled={isCreating}
-        >
-          {isCreating ? "Criando..." : "Criar empresa"}
-        </Button>
+        <div className="flex justify-end pt-4">
+          <Button 
+            type="submit" 
+            className="bg-black hover:bg-black/90 text-white"
+            disabled={isCreating}
+          >
+            {isCreating ? "Criando..." : "Criar empresa"}
+          </Button>
+        </div>
       </form>
     </div>
   );

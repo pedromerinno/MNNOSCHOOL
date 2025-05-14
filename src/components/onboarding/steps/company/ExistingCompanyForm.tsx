@@ -216,14 +216,16 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
 
       {/* Botão Concluir */}
       {onComplete && (
-        <Button 
-          type="button" 
-          className="mt-8 bg-black hover:bg-black/90 text-white"
-          onClick={handleComplete}
-          disabled={!companyInfo || isAssociating}
-        >
-          {isAssociating ? "Processando..." : "Concluir"}
-        </Button>
+        <div className="flex justify-end pt-4">
+          <Button 
+            type="button" 
+            className="bg-black hover:bg-black/90 text-white"
+            onClick={handleComplete}
+            disabled={!companyInfo || isAssociating}
+          >
+            {isAssociating ? "Processando..." : "Concluir"}
+          </Button>
+        </div>
       )}
     </div>
   );
