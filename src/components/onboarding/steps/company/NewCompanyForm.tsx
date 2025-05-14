@@ -1,11 +1,12 @@
 
-import React from "react";
+import React, { useRef } from "react";
 import { Input } from "@/components/ui/input";
 import NewCompanyValuesField, { ValueItem } from "./NewCompanyValuesField";
 import OnboardingLogoUploadField from "./OnboardingLogoUploadField";
 import OnboardingColorPickerField from "./OnboardingColorPickerField";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
 
 interface CompanyDetails {
   name: string;
@@ -42,19 +43,43 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
   onBack,
   onComplete,
 }) => {
+  // Referências para os campos de entrada
+  const nameRef = useRef<HTMLInputElement>(null);
+  const fraseRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLInputElement>(null);
+  const missaoRef = useRef<HTMLTextAreaElement>(null);
+  const historiaRef = useRef<HTMLTextAreaElement>(null);
+  
+  // Estado local para valores
+  const [companyData, setCompanyData] = React.useState(companyDetails);
 
+  // Função para atualizar o estado local e propagar a mudança
   const handleChange = <K extends keyof CompanyDetails>(field: K, value: CompanyDetails[K]) => {
-    onCompanyDetailsChange({
-      ...companyDetails,
+    const updatedData = {
+      ...companyData,
       [field]: value,
-    });
+    };
+    setCompanyData(updatedData);
+    onCompanyDetailsChange(updatedData);
   };
 
+  // Inicializa o array de valores se necessário
   React.useEffect(() => {
-    if (!Array.isArray(companyDetails.valores)) {
+    if (!Array.isArray(companyData.valores)) {
       handleChange("valores", []);
     }
   }, []);
+
+  // Handler para o botão de complete
+  const handleComplete = () => {
+    if (!companyData.name.trim()) {
+      toast.error("O nome da empresa é obrigatório");
+      return;
+    }
+    if (onComplete) {
+      onComplete();
+    }
+  };
 
   return (
     <div className="space-y-5">
@@ -78,8 +103,9 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
         </label>
         <Input
           id="companyName"
-          value={companyDetails.name}
-          onChange={e => handleChange('name', e.target.value)}
+          ref={nameRef}
+          defaultValue={companyData.name}
+          onChange={() => nameRef.current && handleChange('name', nameRef.current.value)}
           className="border-b border-gray-300 rounded-md px-3 py-2 focus-visible:ring-merinno-dark"
           placeholder="Digite o nome da empresa"
           required
@@ -92,9 +118,9 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
           Logo da empresa
         </label>
         <OnboardingLogoUploadField
-          value={companyDetails.logo ?? ""}
+          value={companyData.logo ?? ""}
           onChange={url => handleChange('logo', url)}
-          companyName={companyDetails.name}
+          companyName={companyData.name}
         />
       </div>
 
@@ -103,8 +129,9 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
         <label htmlFor="fraseInstitucional" className="text-sm text-gray-500">Frase institucional</label>
         <Input
           id="fraseInstitucional"
-          value={companyDetails.frase_institucional}
-          onChange={e => handleChange('frase_institucional', e.target.value)}
+          ref={fraseRef}
+          defaultValue={companyData.frase_institucional}
+          onChange={() => fraseRef.current && handleChange('frase_institucional', fraseRef.current.value)}
           className="border-b border-gray-300 rounded-md px-3 py-2 focus-visible:ring-merinno-dark"
           placeholder="Digite a frase institucional da empresa"
         />
@@ -114,7 +141,7 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
       <div className="space-y-1">
         <label htmlFor="corPrincipal" className="text-sm text-gray-500">Cor principal</label>
         <OnboardingColorPickerField
-          value={companyDetails.cor_principal || "#000000"}
+          value={companyData.cor_principal || "#000000"}
           onChange={color => handleChange("cor_principal", color)}
         />
       </div>
@@ -124,8 +151,9 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
         <label htmlFor="missao" className="text-sm text-gray-500">Missão</label>
         <textarea
           id="missao"
-          value={companyDetails.missao}
-          onChange={e => handleChange('missao', e.target.value)}
+          ref={missaoRef}
+          defaultValue={companyData.missao}
+          onChange={() => missaoRef.current && handleChange('missao', missaoRef.current.value)}
           className="w-full border border-gray-300 rounded-md px-3 py-2 focus-visible:ring-merinno-dark min-h-[80px]"
           placeholder="Qual é a missão da sua empresa?"
         />
@@ -133,7 +161,7 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
 
       {/* 6. Valores (tópicos dinâmicos igual ao admin) */}
       <NewCompanyValuesField
-        values={Array.isArray(companyDetails.valores) ? companyDetails.valores : []}
+        values={Array.isArray(companyData.valores) ? companyData.valores : []}
         onChange={valores => handleChange("valores", valores)}
       />
 
@@ -142,8 +170,9 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
         <label htmlFor="videoInstitucional" className="text-sm text-gray-500">URL do vídeo institucional</label>
         <Input
           id="videoInstitucional"
-          value={companyDetails.video_institucional}
-          onChange={e => handleChange('video_institucional', e.target.value)}
+          ref={videoRef}
+          defaultValue={companyData.video_institucional}
+          onChange={() => videoRef.current && handleChange('video_institucional', videoRef.current.value)}
           className="border-b border-gray-300 rounded-md px-3 py-2 focus-visible:ring-merinno-dark"
           placeholder="https://youtube.com/..."
         />
@@ -154,8 +183,9 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
         <label htmlFor="historia" className="text-sm text-gray-500">História da empresa <span className="text-gray-400">(opcional)</span></label>
         <textarea
           id="historia"
-          value={companyDetails.historia}
-          onChange={e => handleChange('historia', e.target.value)}
+          ref={historiaRef}
+          defaultValue={companyData.historia}
+          onChange={() => historiaRef.current && handleChange('historia', historiaRef.current.value)}
           className="w-full border border-gray-300 rounded-md px-3 py-2 focus-visible:ring-merinno-dark min-h-[80px]"
           placeholder="Conte a história da sua empresa"
         />
@@ -166,7 +196,7 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
         <Button 
           type="button" 
           className="w-full mt-8"
-          onClick={onComplete}
+          onClick={handleComplete}
         >
           Concluir
         </Button>

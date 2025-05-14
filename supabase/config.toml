@@ -1,5 +1,3 @@
 
-
 [realtime]
-tables = ["lessons", "user_documents"]
-
+tables = ["lessons", "user_documents", "empresas", "user_empresa", "profiles"]
