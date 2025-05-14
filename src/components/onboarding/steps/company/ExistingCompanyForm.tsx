@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -8,7 +9,6 @@ import CompanyFoundMessage from "./CompanyFoundMessage";
 import CompanyNotFoundMessage from "./CompanyNotFoundMessage";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { CompanyLoadingAnimation } from "@/components/common/CompanyLoadingAnimation";
 
 interface CompanyInfo {
   id: string;
@@ -38,7 +38,6 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
   const [lookupDebounceTimer, setLookupDebounceTimer] = useState<NodeJS.Timeout | null>(null);
   const [idValidated, setIdValidated] = useState(false);
   const [isAssociating, setIsAssociating] = useState(false);
-  const [showLoading, setShowLoading] = useState(false);
   
   // Get current user
   const { user } = useAuth();
@@ -101,7 +100,6 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
     }
     
     setIsAssociating(true);
-    setShowLoading(true);
     
     try {
       // Verificar se já existe uma relação
@@ -141,11 +139,7 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
       toast.error(`Erro ao associar usuário à empresa: ${error.message}`);
       return false;
     } finally {
-      // Keep loading for a moment to ensure smooth transition
-      setTimeout(() => {
-        setIsAssociating(false);
-        setShowLoading(false);
-      }, 1500);
+      setIsAssociating(false);
     }
   };
 
@@ -157,17 +151,17 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
         const success = await associateUserToCompany(companyInfo.id);
         
         if (success) {
-          setTimeout(() => {
-            if (onComplete) {
-              onComplete();
-            }
-            toast.success(`Empresa ${companyInfo.nome} selecionada com sucesso!`);
-          }, 1800);
+          if (onComplete) {
+            onComplete();
+          }
+          toast.success(`Empresa ${companyInfo.nome} selecionada com sucesso!`);
+          
+          // Force reload to refresh company data
+          window.location.reload();
         }
       } catch (error: any) {
         console.error("Error during completion:", error);
         toast.error(`Erro ao concluir: ${error.message}`);
-        setShowLoading(false);
       }
     } else if (inputValue && inputValue.length >= 10 && !companyInfo) {
       toast.error("Empresa não encontrada. Verifique o ID informado.");
@@ -177,70 +171,63 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
   };
 
   return (
-    <>
-      <CompanyLoadingAnimation 
-        isOpen={showLoading} 
-        message="Vinculando à empresa..."
+    <div className="space-y-5">
+      {/* Botão Voltar */}
+      {onBack && (
+        <Button 
+          type="button" 
+          variant="ghost"
+          className="mb-4 flex items-center justify-center gap-2 text-gray-500"
+          onClick={onBack}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Voltar
+        </Button>
+      )}
+
+      {/* ID da Empresa Input Field */}
+      <ExistingCompanyIDField 
+        inputValue={inputValue}
+        onInputChange={handleInputChange}
+        isValidated={idValidated}
+        isCompanyFound={!!companyInfo}
       />
-      
-      <div className="space-y-5">
-        {/* Botão Voltar */}
-        {onBack && (
+
+      {/* Estado de carregamento */}
+      {loading && (
+        <div className="mt-4">
+          <div className="h-6 w-3/4 mb-2 bg-gray-200 animate-pulse rounded"></div>
+          <div className="h-4 w-1/2 bg-gray-200 animate-pulse rounded"></div>
+        </div>
+      )}
+
+      {/* Estado de empresa encontrada */}
+      {!loading && companyInfo && (
+        <CompanyFoundMessage 
+          companyName={companyInfo.nome}
+          logoUrl={companyInfo.logo}
+        />
+      )}
+
+      {/* Estado de empresa não encontrada - mostrar apenas após validação e quando o ID tiver comprimento válido */}
+      {!loading && idValidated && inputValue && inputValue.length >= 10 && !companyInfo && (
+        <CompanyNotFoundMessage />
+      )}
+
+      {/* Botão Concluir */}
+      {onComplete && (
+        <div className="flex justify-end pt-4">
           <Button 
             type="button" 
-            variant="ghost"
-            className="mb-4 flex items-center justify-center gap-2 text-gray-500"
-            onClick={onBack}
+            className="bg-black hover:bg-black/90 text-white"
+            onClick={handleComplete}
+            disabled={!companyInfo || isAssociating}
           >
-            <ArrowLeft className="h-4 w-4" />
-            Voltar
+            {isAssociating ? "Processando..." : "Concluir"}
           </Button>
-        )}
-
-        {/* ID da Empresa Input Field */}
-        <ExistingCompanyIDField 
-          inputValue={inputValue}
-          onInputChange={handleInputChange}
-          isValidated={idValidated}
-          isCompanyFound={!!companyInfo}
-        />
-
-        {/* Estado de carregamento */}
-        {loading && (
-          <div className="mt-4">
-            <div className="h-6 w-3/4 mb-2 bg-gray-200 animate-pulse rounded"></div>
-            <div className="h-4 w-1/2 bg-gray-200 animate-pulse rounded"></div>
-          </div>
-        )}
-
-        {/* Estado de empresa encontrada */}
-        {!loading && companyInfo && (
-          <CompanyFoundMessage 
-            companyName={companyInfo.nome}
-            logoUrl={companyInfo.logo}
-          />
-        )}
-
-        {/* Estado de empresa não encontrada - mostrar apenas após validação e quando o ID tiver comprimento válido */}
-        {!loading && idValidated && inputValue && inputValue.length >= 10 && !companyInfo && (
-          <CompanyNotFoundMessage />
-        )}
-
-        {/* Botão Concluir */}
-        {onComplete && (
-          <div className="flex justify-end pt-4">
-            <Button 
-              type="button" 
-              className="bg-black hover:bg-black/90 text-white"
-              onClick={handleComplete}
-              disabled={!companyInfo || isAssociating}
-            >
-              {isAssociating ? "Processando..." : "Concluir"}
-            </Button>
-          </div>
-        )}
-      </div>
-    </>
+        </div>
+      )}
+    </div>
   );
 };
 
