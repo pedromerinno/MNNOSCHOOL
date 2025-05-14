@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import ExistingCompanyIDField from "./ExistingCompanyIDField";
 import CompanyFoundMessage from "./CompanyFoundMessage";
 import CompanyNotFoundMessage from "./CompanyNotFoundMessage";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CompanyInfo {
   id: string;
@@ -35,6 +37,10 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
   const [inputValue, setInputValue] = useState(companyId);
   const [lookupDebounceTimer, setLookupDebounceTimer] = useState<NodeJS.Timeout | null>(null);
   const [idValidated, setIdValidated] = useState(false);
+  const [isAssociating, setIsAssociating] = useState(false);
+  
+  // Get current user
+  const { user } = useAuth();
   
   // Hook para buscar informações da empresa
   const { companyInfo, loading, error, fetchCompany } = useQuickCompanyLookup();
@@ -86,11 +92,77 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
     }
   }, [companyInfo, loading, onCompanyLookup]);
 
+  // Função para associar o usuário à empresa
+  const associateUserToCompany = async (companyId: string): Promise<boolean> => {
+    if (!user?.id) {
+      console.error("No user ID available");
+      return false;
+    }
+    
+    setIsAssociating(true);
+    
+    try {
+      // Verificar se já existe uma relação
+      const { data: existingRelation, error: checkError } = await supabase
+        .from('user_empresa')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('empresa_id', companyId)
+        .maybeSingle();
+        
+      if (checkError) throw checkError;
+      
+      if (existingRelation) {
+        console.log("User already associated with this company");
+        return true;
+      }
+      
+      // Criar nova relação
+      const { error } = await supabase
+        .from('user_empresa')
+        .insert({
+          user_id: user.id,
+          empresa_id: companyId,
+          is_admin: false
+        });
+        
+      if (error) throw error;
+      
+      console.log("User successfully associated with company");
+      
+      // Disparar evento para atualizar as relações de empresa
+      window.dispatchEvent(new CustomEvent('company-relation-changed'));
+      
+      return true;
+    } catch (error: any) {
+      console.error("Error associating user with company:", error);
+      toast.error(`Erro ao associar usuário à empresa: ${error.message}`);
+      return false;
+    } finally {
+      setIsAssociating(false);
+    }
+  };
+
   // Lidar com o envio do formulário
-  const handleComplete = () => {
-    if (onComplete && companyInfo) {
-      onComplete();
-      toast.success(`Empresa ${companyInfo.nome} selecionada com sucesso!`);
+  const handleComplete = async () => {
+    if (companyInfo && companyInfo.id) {
+      try {
+        // Tenta associar o usuário à empresa
+        const success = await associateUserToCompany(companyInfo.id);
+        
+        if (success) {
+          if (onComplete) {
+            onComplete();
+          }
+          toast.success(`Empresa ${companyInfo.nome} selecionada com sucesso!`);
+          
+          // Force reload to refresh company data
+          window.location.reload();
+        }
+      } catch (error: any) {
+        console.error("Error during completion:", error);
+        toast.error(`Erro ao concluir: ${error.message}`);
+      }
     } else if (inputValue && inputValue.length >= 10 && !companyInfo) {
       toast.error("Empresa não encontrada. Verifique o ID informado.");
     } else {
@@ -148,9 +220,9 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
           type="button" 
           className="mt-8 bg-black hover:bg-black/90 text-white"
           onClick={handleComplete}
-          disabled={!companyInfo}
+          disabled={!companyInfo || isAssociating}
         >
-          Concluir
+          {isAssociating ? "Processando..." : "Concluir"}
         </Button>
       )}
     </div>

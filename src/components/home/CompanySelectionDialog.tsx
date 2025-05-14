@@ -44,6 +44,11 @@ export const CompanySelectionDialog: React.FC<CompanySelectionDialogProps> = ({
                     forceGetUserCompanies(userId);
                   }
                   onCompanyCreated();
+                  
+                  // Force reload to refresh company data
+                  setTimeout(() => {
+                    window.location.reload();
+                  }, 500);
                 }} 
                 onBack={() => onOpenChange(false)} 
                 onCompanyTypeSelect={onCompanyTypeSelect} 
