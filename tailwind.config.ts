@@ -1,11 +1,14 @@
-import { Config } from 'tailwindcss';
-import { fontFamily } from "tailwindcss/defaultTheme";
-import plugin from 'tailwindcss/plugin';
-import animatePlugin from "tailwindcss-animate";
+import type { Config } from "tailwindcss";
 
-const config = {
+export default {
   darkMode: ["class"],
-  content: ["./index.html", "./src/**/*.{ts,tsx}"],
+  content: [
+    "./pages/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./app/**/*.{ts,tsx}",
+    "./src/**/*.{ts,tsx}",
+  ],
+  prefix: "",
   theme: {
     container: {
       center: true,
@@ -55,9 +58,6 @@ const config = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
-      fontFamily: {
-        sans: ["Inter", ...fontFamily.sans],
-      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
@@ -72,25 +72,7 @@ const config = {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
-      cursor: {
-        'upload': `url('/lovable-uploads/custom-cursor.png'), pointer`,
-      },
     },
   },
-  plugins: [
-    animatePlugin,
-    plugin(({ addUtilities }) => {
-      addUtilities({
-        '.drag-none': {
-          '-webkit-user-drag': 'none',
-          '-khtml-user-drag': 'none',
-          '-moz-user-drag': 'none',
-          '-o-user-drag': 'none',
-          'user-drag': 'none',
-        }
-      })
-    }),
-  ],
+  plugins: [require("tailwindcss-animate")],
 } satisfies Config;
-
-export default config;
