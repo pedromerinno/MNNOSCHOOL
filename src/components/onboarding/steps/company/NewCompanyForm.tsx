@@ -24,7 +24,6 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
 }) => {
   // Manage form value with refs instead of controlled inputs
   const companyNameRef = useRef<HTMLInputElement>(null);
-  const companyDescriptionRef = useRef<HTMLTextAreaElement>(null);
   const companyMissionRef = useRef<HTMLTextAreaElement>(null);
   const companyHistoryRef = useRef<HTMLTextAreaElement>(null);
   const companyMottoRef = useRef<HTMLInputElement>(null);
@@ -61,13 +60,11 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
       // Convert companyValues array to a JSON string for storage
       const valoresString = companyValues.length > 0 ? JSON.stringify(companyValues) : null;
       
-      // Create the company with all fields - make sure we use the correct column names
+      // Create the company with only fields that exist in the table schema
       const { data: companyData, error: companyError } = await supabase
         .from('empresas')
         .insert({
           nome: companyName,
-          // Use correct field name for description: 'descricao', not 'descricao'
-          descricao: companyDescriptionRef.current?.value || null,
           missao: companyMissionRef.current?.value || null,
           historia: companyHistoryRef.current?.value || null,
           frase_institucional: companyMottoRef.current?.value || null,
@@ -168,19 +165,6 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
               id="companyMotto"
               ref={companyMottoRef}
               placeholder="Digite a frase institucional da empresa"
-              className="border border-gray-200 rounded-lg px-4 py-2 w-full"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="companyDescription" className="text-sm text-gray-500 font-medium">
-              Descrição
-            </Label>
-            <Textarea
-              id="companyDescription"
-              ref={companyDescriptionRef}
-              placeholder="Descreva brevemente sua empresa"
-              rows={3}
               className="border border-gray-200 rounded-lg px-4 py-2 w-full"
             />
           </div>
