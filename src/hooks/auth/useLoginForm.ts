@@ -10,7 +10,7 @@ export const useLoginForm = () => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const { signInWithPassword } = useAuth();
   const navigate = useNavigate();
-  const { forceGetUserCompanies, selectCompany } = useCompanies();
+  const { forceGetUserCompanies, selectCompany } = useCompanies({ skipLoadingInOnboarding: true });
   const { clearCache } = useCache();
 
   const handleLogin = async (email: string, password: string) => {
@@ -37,36 +37,33 @@ export const useLoginForm = () => {
       if (data?.session?.user) {
         console.log("Login bem-sucedido, buscando empresas...");
         
-        // Forçar busca atualizada de empresas do usuário
-        const companies = await forceGetUserCompanies(data.session.user.id);
-        console.log("Empresas encontradas:", companies?.length || 0);
-        
-        // Verificar se o usuário tem empresas associadas
-        if (companies?.length > 0) {
-          console.log("Selecionando a primeira empresa disponível:", companies[0].nome);
+        try {
+          // Forçar busca atualizada de empresas do usuário
+          const companies = await forceGetUserCompanies(data.session.user.id);
+          console.log("Empresas encontradas:", companies?.length || 0);
           
-          try {
+          // Verificar se o usuário tem empresas associadas
+          if (companies?.length > 0) {
+            console.log("Selecionando a primeira empresa disponível:", companies[0].nome);
+            
             // Selecionar a primeira empresa disponível
             await selectCompany(data.session.user.id, companies[0]);
             console.log("Empresa selecionada com sucesso");
             toast.success("Login realizado com sucesso!");
             
-            // Usar setTimeout para evitar problemas de navegação durante transições de estado
-            setTimeout(() => {
-              navigate('/');
-            }, 100);
-          } catch (selectionError) {
-            console.error("Erro ao selecionar empresa:", selectionError);
-            toast.error("Erro ao selecionar empresa");
+            // Usar replace para evitar problemas com o histórico de navegação
+            navigate('/', { replace: true });
+          } else {
+            console.log("Nenhuma empresa disponível para este usuário, redirecionando para onboarding");
+            toast.success("Login realizado com sucesso!");
+            
+            // Redirecionar para onboarding caso não tenha empresas
+            navigate('/onboarding', { replace: true });
           }
-        } else {
-          console.log("Nenhuma empresa disponível para este usuário, redirecionando para onboarding");
+        } catch (fetchError) {
+          console.error("Erro ao buscar empresas:", fetchError);
           toast.success("Login realizado com sucesso!");
-          
-          // Redirecionar para onboarding caso não tenha empresas
-          setTimeout(() => {
-            navigate('/onboarding');
-          }, 100);
+          navigate('/', { replace: true });
         }
       }
     } catch (error: any) {
