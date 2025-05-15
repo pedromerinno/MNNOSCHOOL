@@ -51,17 +51,17 @@ export const AdminSidebar = ({
     }
   ];
 
-  // Handle menu click with explicit prevention of default behavior
+  // Nova implementação do manipulador de clique para evitar navegação padrão do navegador
   const handleMenuClick = (value: string) => (e: React.MouseEvent) => {
-    // Prevent default navigation behavior that causes page reload
+    // Evita o comportamento padrão do navegador que causaria um recarregamento
     e.preventDefault();
     
-    // Update the URL without causing a page refresh
+    // Atualiza a URL sem causar recarregamento da página
     const newUrl = new URL(window.location.href);
     newUrl.searchParams.set('tab', value);
     window.history.pushState({}, '', newUrl);
     
-    // Call the handler to update the state
+    // Chama o manipulador para atualizar o estado
     onTabChange(value);
   };
 

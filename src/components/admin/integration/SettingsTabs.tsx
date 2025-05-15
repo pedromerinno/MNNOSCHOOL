@@ -41,12 +41,12 @@ export const SettingsTabs: React.FC<SettingsTabsProps> = ({
     icon: Users
   }];
   
-  // Use preventive click handler to stop tab changes from reloading the page
+  // Nova implementação para evitar recarregamentos ao trocar de aba
   const handleTabChange = (value: string) => {
-    // Prevent default behavior that might cause page reload
+    // Define o estado ativo localmente
     setActiveTab(value);
     
-    // Update URL to reflect tab change without page reload
+    // Atualiza a URL sem recarregar a página
     const newUrl = new URL(window.location.href);
     newUrl.searchParams.set('subtab', value);
     window.history.pushState({}, '', newUrl);

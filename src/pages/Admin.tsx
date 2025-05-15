@@ -42,10 +42,27 @@ const AdminPage = () => {
     }
   }, [authLoading, location.search]);
 
-  // Memoized tab change handler to prevent unnecessary rerenders
+  // Manipulador de mudança de aba otimizado para evitar recarregamentos
   const handleTabChange = useCallback((tab: string) => {
-    console.log("Changing tab to:", tab);
+    // Atualiza o estado diretamente
     setActiveTab(tab);
+    
+    // Registra a operação no console
+    console.log("Mudando para a aba:", tab);
+  }, []);
+
+  // Adicionar um ouvinte para eventos popstate para lidar com navegação do histórico
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+      if (tabParam) {
+        setActiveTab(tabParam);
+      }
+    };
+    
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   if (!isReady) {

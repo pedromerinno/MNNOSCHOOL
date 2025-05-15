@@ -20,17 +20,19 @@ export const SettingsManagement: React.FC = () => {
     handleFormSubmit
   } = useSettingsManagement();
   
-  // Convert to async function that returns a Promise to match expected type
-  // and correctly handle the form submission
+  // Função de envio de formulário melhorada para garantir tratamento adequado de promises
   const onFormSubmit = async (data: any): Promise<void> => {
     try {
-      // Await the result to ensure Promise completion
+      // Aguarda a conclusão da promise para garantir que o processo seja finalizado
       await handleFormSubmit(data);
-      // Toast success message is handled in handleFormSubmit
+      // A mensagem de toast de sucesso é tratada em handleFormSubmit
     } catch (error) {
-      console.error("Error in form submission:", error);
+      console.error("Erro no envio do formulário:", error);
       toast.error("Ocorreu um erro ao salvar as configurações");
     }
+    
+    // Impede o recarregamento da página após o envio do formulário
+    return Promise.resolve();
   };
   
   return <div className="space-y-6">
