@@ -40,24 +40,6 @@ export const LinkCoursesDialog: React.FC<LinkCoursesDialogProps> = ({
   // Use company color with fallback to purple
   const primaryColor = companyColor || "#9b87f5";
   
-  // CSS style objects for elements using company color
-  const headerStyle = {
-    color: primaryColor
-  };
-  
-  const selectedItemStyle = {
-    borderColor: primaryColor,
-    backgroundColor: `${primaryColor}10` // 10% opacity
-  };
-  
-  const buttonStyle = {
-    backgroundColor: primaryColor,
-    ":hover": {
-      backgroundColor: primaryColor,
-      opacity: 0.9
-    }
-  };
-
   // Fetch all courses and existing company-course relationships when dialog opens
   useEffect(() => {
     if (open && companyId) {
@@ -68,14 +50,84 @@ export const LinkCoursesDialog: React.FC<LinkCoursesDialogProps> = ({
   const fetchAllCoursesAndLinks = async () => {
     setIsLoading(true);
     try {
-      // Get all courses
-      const { data: coursesData, error: coursesError } = await supabase
-        .from('courses')
-        .select('*')
-        .order('title');
-
-      if (coursesError) {
-        throw coursesError;
+      // Get user session to determine which courses they can access
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+      
+      if (!userId) {
+        throw new Error('User not authenticated');
+      }
+      
+      // Get user profile to check if they're a super_admin
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('super_admin, is_admin')
+        .eq('id', userId)
+        .single();
+        
+      if (profileError) throw profileError;
+      
+      let coursesData;
+      
+      // Super admins can see all courses
+      if (userProfile?.super_admin) {
+        const { data, error: coursesError } = await supabase
+          .from('courses')
+          .select('*')
+          .order('title');
+          
+        if (coursesError) throw coursesError;
+        coursesData = data;
+      } 
+      // Regular admins can only see courses from companies they're an admin for
+      else if (userProfile?.is_admin) {
+        // First get all companies the user has access to
+        const { data: userCompanies, error: companiesError } = await supabase
+          .from('user_empresa')
+          .select('empresa_id')
+          .eq('user_id', userId);
+          
+        if (companiesError) throw companiesError;
+        
+        if (!userCompanies || userCompanies.length === 0) {
+          setAllCourses([]);
+          setIsLoading(false);
+          return;
+        }
+        
+        const companyIds = userCompanies.map(uc => uc.empresa_id);
+        
+        // Then get all course IDs from those companies
+        const { data: companyCourses, error: coursesError } = await supabase
+          .from('company_courses')
+          .select('course_id')
+          .in('empresa_id', companyIds);
+          
+        if (coursesError) throw coursesError;
+        
+        if (!companyCourses || companyCourses.length === 0) {
+          setAllCourses([]);
+          setIsLoading(false);
+          return;
+        }
+        
+        // Get unique course IDs
+        const courseIds = [...new Set(companyCourses.map(cc => cc.course_id))];
+        
+        // Finally, get the actual course data
+        const { data: courses, error: fetchError } = await supabase
+          .from('courses')
+          .select('*')
+          .in('id', courseIds)
+          .order('title');
+          
+        if (fetchError) throw fetchError;
+        coursesData = courses;
+      } else {
+        // Regular users shouldn't see this dialog, but just in case
+        setAllCourses([]);
+        setIsLoading(false);
+        return;
       }
 
       // Get existing course links for this company
@@ -161,14 +213,14 @@ export const LinkCoursesDialog: React.FC<LinkCoursesDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold flex items-center gap-2" style={headerStyle}>
+          <DialogTitle className="text-xl font-semibold flex items-center gap-2" style={{ color: primaryColor }}>
             <BookPlus className="h-5 w-5" /> Vincular Cursos a {companyName}
           </DialogTitle>
         </DialogHeader>
 
         {isLoading ? (
           <div className="flex justify-center items-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin" style={headerStyle} />
+            <Loader2 className="h-8 w-8 animate-spin" style={{ color: primaryColor }} />
           </div>
         ) : allCourses.length === 0 ? (
           <div className="text-center py-8">
@@ -197,8 +249,23 @@ export const LinkCoursesDialog: React.FC<LinkCoursesDialogProps> = ({
                     } : {})
                   } as React.CSSProperties}
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
+                  <div className="flex items-start gap-3">
+                    {/* Course thumbnail */}
+                    <div className="flex-shrink-0 w-16 h-12 rounded overflow-hidden bg-gray-100 dark:bg-gray-800">
+                      {course.image_url ? (
+                        <img 
+                          src={course.image_url} 
+                          alt={course.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <BookPlus className="h-5 w-5 text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex-1">
                       <h3 className="font-medium truncate">{course.title}</h3>
                       {course.description && (
                         <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1">
@@ -206,8 +273,9 @@ export const LinkCoursesDialog: React.FC<LinkCoursesDialogProps> = ({
                         </p>
                       )}
                     </div>
+                    
                     {selectedCourses.includes(course.id) && (
-                      <Check className="h-5 w-5" style={{ color: primaryColor }} />
+                      <Check className="h-5 w-5 flex-shrink-0" style={{ color: primaryColor }} />
                     )}
                   </div>
                 </div>
