@@ -54,6 +54,7 @@ export const AdminSidebar = ({
   // Improved click handler to prevent default behavior
   const handleMenuClick = (value: string) => (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent default navigation
+    e.stopPropagation(); // Prevent event bubbling
     if (activeTab !== value) {
       onTabChange(value);
     }

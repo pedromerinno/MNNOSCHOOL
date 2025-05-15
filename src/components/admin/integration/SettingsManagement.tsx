@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { useSettingsManagement } from './useSettingsManagement';
@@ -6,6 +7,7 @@ import { SettingsTabs } from './SettingsTabs';
 import { NoCompanySelected } from './NoCompanySelected';
 import { LoadingState } from './LoadingState';
 import { toast } from 'sonner';
+
 export const SettingsManagement: React.FC = () => {
   const {
     companies,
@@ -17,6 +19,17 @@ export const SettingsManagement: React.FC = () => {
     handleCompanyChange,
     handleFormSubmit
   } = useSettingsManagement();
+  
+  // Prevent default navigation/reloads when handling form submission
+  const onFormSubmit = (data: any) => {
+    try {
+      handleFormSubmit(data);
+    } catch (error) {
+      console.error("Error in form submission:", error);
+      toast.error("Ocorreu um erro ao salvar as configurações");
+    }
+  };
+  
   return <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
@@ -33,7 +46,7 @@ export const SettingsManagement: React.FC = () => {
 
       {selectedCompany ? <Card>
           <CardContent className="p-4 py-[30px] px-[30px]">
-            <SettingsTabs company={selectedCompany} activeTab={activeTab} setActiveTab={setActiveTab} handleFormSubmit={handleFormSubmit} isSaving={isSaving} />
+            <SettingsTabs company={selectedCompany} activeTab={activeTab} setActiveTab={setActiveTab} handleFormSubmit={onFormSubmit} isSaving={isSaving} />
           </CardContent>
         </Card> : <NoCompanySelected />}
     </div>;

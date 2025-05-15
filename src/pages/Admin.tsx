@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
 import { UserManagement } from '@/components/admin/UserManagement';
 import { CompanyManagement } from '@/components/admin/CompanyManagement';
@@ -22,6 +22,8 @@ const AdminPage = () => {
     loading: authLoading
   } = useAuth();
   
+  const location = useLocation();
+  
   // Initialize with the appropriate default tab based on user role
   const [activeTab, setActiveTab] = useState(userProfile?.super_admin ? "platform" : "companies");
   const [isReady, setIsReady] = useState(false);
@@ -32,11 +34,30 @@ const AdminPage = () => {
     }
   }, [authLoading]);
 
-  // Handle tab change with a proper React state update
-  const handleTabChange = (tab: string) => {
+  // Handle tab change with a proper React state update - make it memoized to avoid rerenders
+  const handleTabChange = useCallback((tab: string) => {
     console.log("Changing tab to:", tab);
-    setActiveTab(tab);
-  };
+    // Prevent unnecessary re-renders if tab is the same
+    setActiveTab(prevTab => {
+      if (prevTab !== tab) {
+        // Using history.pushState to update URL without page reload
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.set('tab', tab);
+        window.history.pushState({}, '', newUrl);
+        return tab;
+      }
+      return prevTab;
+    });
+  }, []);
+
+  // Sync URL parameters with active tab on initial load
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get('tab');
+    if (tabParam && tabParam !== activeTab) {
+      setActiveTab(tabParam);
+    }
+  }, [location.search]);
 
   if (!isReady) {
     return <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919] flex items-center justify-center">
