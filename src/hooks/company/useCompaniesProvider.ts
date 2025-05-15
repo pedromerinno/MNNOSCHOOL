@@ -20,7 +20,7 @@ export const useCompaniesProvider = () => {
     fetchCount,
     isSuperAdmin,
     setIsSuperAdmin,
-    setSelectedCompany, // Make sure this is included from useCompanyState
+    setSelectedCompany,
     ...stateActions
   } = useCompanyState();
   
@@ -30,6 +30,7 @@ export const useCompaniesProvider = () => {
     getCompanyById
   } = useCompanyFetching({
     userCompanies,
+    setSelectedCompany, // Add missing setSelectedCompany prop
     ...stateActions
   });
   
@@ -42,6 +43,7 @@ export const useCompaniesProvider = () => {
     assignUserToCompany,
     removeUserFromCompany
   } = useCompanyModification({
+    setSelectedCompany, // Add missing setSelectedCompany prop
     ...stateActions
   });
 
@@ -53,7 +55,7 @@ export const useCompaniesProvider = () => {
     if (selectedCompanyFromEvent) {
       setSelectedCompany(selectedCompanyFromEvent);
     }
-  }, [selectedCompanyFromEvent]);
+  }, [selectedCompanyFromEvent, setSelectedCompany]);
 
   // Verificar se o usuário é super admin
   useEffect(() => {
