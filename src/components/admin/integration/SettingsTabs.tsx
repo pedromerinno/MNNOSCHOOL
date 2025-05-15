@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Tabs, TabsList } from "@/components/ui/tabs";
 import { Book, Briefcase, Key, Users, Video, Building } from "lucide-react";
@@ -5,6 +6,7 @@ import { SettingsTabTrigger } from './settings/SettingsTabTrigger';
 import { SettingsTabContent } from './settings/SettingsTabContent';
 import { SettingsTabsProps } from './settings/types';
 import { useAuth } from '@/contexts/AuthContext';
+
 export const SettingsTabs: React.FC<SettingsTabsProps> = ({
   company,
   activeTab,
@@ -38,7 +40,14 @@ export const SettingsTabs: React.FC<SettingsTabsProps> = ({
     label: "Colaboradores",
     icon: Users
   }];
-  return <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+  
+  // Use preventive click handler to stop tab changes from reloading the page
+  const handleTabChange = (value: string) => {
+    // Prevent any automatic form submissions
+    setActiveTab(value);
+  };
+  
+  return <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
       <div className="border-b border-gray-100 dark:border-gray-800 py-2 px-2 bg-transparent">
         <TabsList className="flex gap-2 rounded-2xl p-1.5 bg-transparent dark:bg-transparent w-full justify-start">
           {tabs.map(tab => <SettingsTabTrigger key={tab.value} value={tab.value} icon={tab.icon} label={tab.label} activeTab={activeTab} companyColor={company?.cor_principal} />)}
