@@ -44,41 +44,69 @@ export const useCourses = (companyId?: string) => {
         .single();
 
       if (currentUserProfile?.super_admin) {
-        const allCourses = await fetchCourses(companyId);
-        setCourses(allCourses);
+        // Super admins see either all courses or filtered by company ID if provided
+        const fetchedCourses = await fetchCourses(companyId);
+        setCourses(fetchedCourses);
       } else if (currentUserProfile?.is_admin) {
-        const { data: userCompanies } = await supabase
-          .from('user_empresa')
-          .select('empresa_id')
-          .eq('user_id', currentUserId);
+        if (companyId) {
+          // If company ID is provided, fetch only courses for that specific company
+          const { data: companyCourses } = await supabase
+            .from('company_courses')
+            .select('course_id')
+            .eq('empresa_id', companyId);
+            
+          if (!companyCourses?.length) {
+            setCourses([]);
+            setIsLoading(false);
+            return;
+          }
+          
+          const courseIds = companyCourses.map(cc => cc.course_id);
+          
+          const { data: courses } = await supabase
+            .from('courses')
+            .select('*')
+            .in('id', courseIds);
+            
+          setCourses(courses || []);
+        } else {
+          // If no company ID provided, fetch courses for all companies the admin has access to
+          const { data: userCompanies } = await supabase
+            .from('user_empresa')
+            .select('empresa_id')
+            .eq('user_id', currentUserId);
 
-        if (!userCompanies?.length) {
-          setCourses([]);
-          return;
+          if (!userCompanies?.length) {
+            setCourses([]);
+            setIsLoading(false);
+            return;
+          }
+
+          const companyIds = userCompanies.map(uc => uc.empresa_id);
+
+          const { data: companyCourses } = await supabase
+            .from('company_courses')
+            .select('course_id')
+            .in('empresa_id', companyIds);
+
+          if (!companyCourses?.length) {
+            setCourses([]);
+            setIsLoading(false);
+            return;
+          }
+
+          const courseIds = [...new Set(companyCourses.map(cc => cc.course_id))];
+
+          const { data: courses } = await supabase
+            .from('courses')
+            .select('*')
+            .in('id', courseIds);
+
+          setCourses(courses || []);
         }
-
-        const companyIds = userCompanies.map(uc => uc.empresa_id);
-
-        const { data: companyCourses } = await supabase
-          .from('company_courses')
-          .select('course_id')
-          .in('empresa_id', companyIds);
-
-        if (!companyCourses?.length) {
-          setCourses([]);
-          return;
-        }
-
-        const courseIds = [...new Set(companyCourses.map(cc => cc.course_id))];
-
-        const { data: courses } = await supabase
-          .from('courses')
-          .select('*')
-          .in('id', courseIds);
-
-        if (courses) {
-          setCourses(courses);
-        }
+      } else {
+        // Non-admin users see no courses
+        setCourses([]);
       }
     } catch (error) {
       console.error('Error loading courses:', error);
