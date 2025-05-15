@@ -32,6 +32,7 @@ export const useUserProfile = () => {
       fetchInProgress.current = true;
       setIsLoading(true);
       
+      // Otimizado para usar política RLS recém-adicionada
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -40,6 +41,9 @@ export const useUserProfile = () => {
 
       if (error) {
         console.error('Erro ao buscar perfil:', error);
+        if (error.code === 'PGRST116') {
+          console.log('Nenhum perfil encontrado para o usuário, pode ser primeiro login');
+        }
         return;
       }
 
@@ -60,6 +64,16 @@ export const useUserProfile = () => {
         console.log('Perfil de usuário carregado:', profile);
         setUserProfile(profile);
         lastFetchTimestamp.current = now;
+        
+        // Armazenar no localStorage para cache persistente
+        try {
+          localStorage.setItem('userProfile', JSON.stringify({
+            profile,
+            timestamp: now
+          }));
+        } catch (e) {
+          console.error('Erro ao salvar perfil no localStorage:', e);
+        }
       }
     } catch (error) {
       console.error('Erro ao buscar perfil:', error);
@@ -69,10 +83,28 @@ export const useUserProfile = () => {
     }
   }, [userProfile]);
 
+  // Tenta carregar perfil do cache no carregamento inicial
+  useEffect(() => {
+    try {
+      const cachedData = localStorage.getItem('userProfile');
+      if (cachedData) {
+        const { profile, timestamp } = JSON.parse(cachedData);
+        const now = Date.now();
+        if (now - timestamp < CACHE_DURATION) {
+          console.log('Carregando perfil de usuário do cache local');
+          setUserProfile(profile);
+        }
+      }
+    } catch (e) {
+      console.error('Erro ao carregar perfil do cache:', e);
+    }
+  }, []);
+
   // Limpa o perfil se o userId mudar
   const clearProfile = useCallback(() => {
     setUserProfile(null);
     lastFetchTimestamp.current = 0;
+    localStorage.removeItem('userProfile');
   }, []);
 
   // Modificada para retornar void de forma consistente
@@ -105,6 +137,23 @@ export const useUserProfile = () => {
         ...prevProfile,
         ...userData,
       }) : null);
+      
+      // Atualizar o cache no localStorage
+      try {
+        const cachedData = localStorage.getItem('userProfile');
+        if (cachedData) {
+          const parsed = JSON.parse(cachedData);
+          localStorage.setItem('userProfile', JSON.stringify({
+            profile: {
+              ...parsed.profile,
+              ...userData
+            },
+            timestamp: Date.now()
+          }));
+        }
+      } catch (e) {
+        console.error('Erro ao atualizar cache do perfil:', e);
+      }
       
       toast.success('Perfil atualizado com sucesso');
     } catch (error: any) {
