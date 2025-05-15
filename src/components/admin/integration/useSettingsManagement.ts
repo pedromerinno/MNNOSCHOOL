@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Company } from "@/types/company";
@@ -11,46 +11,33 @@ export const useSettingsManagement = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("info");
   const hasLoadedCompanies = useRef(false);
-  const lastEventTimeRef = useRef<number>(0);
-  const isProcessingEventRef = useRef<boolean>(false);
 
   // Use userCompanies instead of all companies for admins
   const companies = userCompanies;
 
-  // Improved loading logic with better memoization
   useEffect(() => {
-    if (!hasLoadedCompanies.current && !isLoadingCompanies) {
-      console.log("Loading companies in SettingsManagement - Initial Load");
-      hasLoadedCompanies.current = true;
-      fetchCompanies();
-    }
+    const loadCompanies = async () => {
+      if (!hasLoadedCompanies.current && !isLoadingCompanies) {
+        console.log("Loading companies in SettingsManagement - Initial Load");
+        hasLoadedCompanies.current = true;
+        await fetchCompanies();
+      }
+    };
+    loadCompanies();
   }, [fetchCompanies, isLoadingCompanies]);
 
-  // Throttled company selection
   useEffect(() => {
     if (companies.length > 0 && !selectedCompany) {
       console.log("Setting initial selected company:", companies[0].nome);
       setSelectedCompany(companies[0]);
       
-      // Throttle the event dispatch
-      const now = Date.now();
-      if (now - lastEventTimeRef.current > 1000 && !isProcessingEventRef.current) {
-        lastEventTimeRef.current = now;
-        isProcessingEventRef.current = true;
-        
-        // Use setTimeout to prevent excessive event dispatches
-        setTimeout(() => {
-          window.dispatchEvent(new CustomEvent('settings-company-changed', { 
-            detail: { company: companies[0] } 
-          }));
-          isProcessingEventRef.current = false;
-        }, 50);
-      }
+      window.dispatchEvent(new CustomEvent('settings-company-changed', { 
+        detail: { company: companies[0] } 
+      }));
     }
   }, [companies, selectedCompany]);
 
-  // Improved company change handler with debounce
-  const handleCompanyChange = useCallback((companyId: string) => {
+  const handleCompanyChange = (companyId: string) => {
     const company = companies.find(c => c.id === companyId);
     if (company) {
       console.log("Company changed to:", company.nome);
@@ -59,24 +46,14 @@ export const useSettingsManagement = () => {
       // Reset tab to info when changing company to ensure proper content loading
       setActiveTab("info");
       
-      // Throttle event dispatch
-      const now = Date.now();
-      if (now - lastEventTimeRef.current > 1000 && !isProcessingEventRef.current) {
-        lastEventTimeRef.current = now;
-        isProcessingEventRef.current = true;
-        
-        setTimeout(() => {
-          window.dispatchEvent(new CustomEvent('settings-company-changed', { 
-            detail: { company } 
-          }));
-          isProcessingEventRef.current = false;
-        }, 50);
-      }
+      // Broadcast company change for other components to react
+      window.dispatchEvent(new CustomEvent('settings-company-changed', { 
+        detail: { company } 
+      }));
     }
-  }, [companies]);
+  };
 
-  // Optimized form submission
-  const handleFormSubmit = useCallback(async (formData: any) => {
+  const handleFormSubmit = async (formData: any) => {
     if (!selectedCompany) {
       toast.error("Nenhuma empresa selecionada");
       return;
@@ -114,23 +91,13 @@ export const useSettingsManagement = () => {
       
       toast.success("Informações de integração atualizadas com sucesso");
       
-      // Dispatch single consolidated event with debounce
-      const now = Date.now();
-      if (now - lastEventTimeRef.current > 2000) {
-        lastEventTimeRef.current = now;
-        
-        // Use a single timeout for all events to prevent cascades
-        setTimeout(() => {
-          window.dispatchEvent(new CustomEvent('company-updated', { 
-            detail: { company: updatedCompany } 
-          }));
-          
-          // Delay the relation-changed event to prevent race conditions
-          setTimeout(() => {
-            window.dispatchEvent(new Event('company-relation-changed'));
-          }, 300);
-        }, 100);
-      }
+      // Dispatch event to update company data in other components
+      window.dispatchEvent(new CustomEvent('company-updated', { 
+        detail: { company: updatedCompany } 
+      }));
+      
+      // Trigger refresh event for other components
+      window.dispatchEvent(new Event('company-relation-changed'));
       
     } catch (error: any) {
       console.error("Erro ao salvar informações:", error);
@@ -138,7 +105,7 @@ export const useSettingsManagement = () => {
     } finally {
       setIsSaving(false);
     }
-  }, [selectedCompany]);
+  };
 
   return {
     companies,

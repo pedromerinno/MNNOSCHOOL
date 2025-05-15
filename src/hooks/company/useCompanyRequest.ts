@@ -6,36 +6,27 @@ export const useCompanyRequest = () => {
   const lastRequestTimeRef = useRef<number>(0);
   const debounceTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const throttleTimestampsRef = useRef<Record<string, number>>({});
-  const skipNextRequestRef = useRef<boolean>(false);
   
   const shouldMakeRequest = useCallback((forceRefresh: boolean, hasCachedData: boolean, requestingComponent?: string, cacheKey?: string): boolean => {
-    // Skip if explicitly marked for skipping (used for back-to-back events)
-    if (skipNextRequestRef.current && !forceRefresh) {
-      console.log(`[useCompanyRequest${requestingComponent ? '-' + requestingComponent : ''}] Request skipped by controller flag`);
-      skipNextRequestRef.current = false;
-      return false;
-    }
-    
     if (forceRefresh) return true;
     
-    // Skip if requests are already in progress
     if (pendingRequestsRef.current > 0) {
-      console.log(`[useCompanyRequest${requestingComponent ? '-' + requestingComponent : ''}] Request already in progress (${pendingRequestsRef.current}), skipping`);
+      console.log(`[useCompanyRequest${requestingComponent ? '-' + requestingComponent : ''}] Request already in progress, skipping`);
       return false;
     }
     
     const now = Date.now();
-    const THROTTLE_MS = 10000; // 10 seconds - more aggressive throttling
+    const THROTTLE_MS = 5000; // 5 seconds
     
     // If we have a cache key, use more specific throttling
     if (cacheKey && throttleTimestampsRef.current[cacheKey]) {
       const timeSinceLastRequest = now - throttleTimestampsRef.current[cacheKey];
       if (hasCachedData && timeSinceLastRequest < THROTTLE_MS) {
-        console.log(`[useCompanyRequest${requestingComponent ? '-' + requestingComponent : ''}] Request throttled for key ${cacheKey}, using cached data (${Math.round(timeSinceLastRequest/1000)}s ago)`);
+        console.log(`[useCompanyRequest${requestingComponent ? '-' + requestingComponent : ''}] Request throttled for key ${cacheKey}, using cached data`);
         return false;
       }
     } else if (hasCachedData && lastRequestTimeRef.current > 0 && now - lastRequestTimeRef.current < THROTTLE_MS) {
-      console.log(`[useCompanyRequest${requestingComponent ? '-' + requestingComponent : ''}] Request throttled, using cached data (${Math.round((now - lastRequestTimeRef.current)/1000)}s ago)`);
+      console.log(`[useCompanyRequest${requestingComponent ? '-' + requestingComponent : ''}] Request throttled, using cached data`);
       return false;
     }
     
@@ -59,7 +50,7 @@ export const useCompanyRequest = () => {
     pendingRequestsRef.current = 0;
   }, []);
   
-  // Enhanced debounce with better request handling
+  // Add a debounced request function that properly types the arguments
   const debouncedRequest = useCallback(<T extends any[]>(callback: (...args: T) => Promise<any> | void, delay: number = 300, key?: string) => {
     const timerKey = key || 'default';
     
@@ -69,17 +60,9 @@ export const useCompanyRequest = () => {
         clearTimeout(debounceTimersRef.current[timerKey]);
       }
       
-      // Set flag to skip next automated request as we're handling it here
-      skipNextRequestRef.current = true;
-      
       debounceTimersRef.current[timerKey] = setTimeout(() => {
         delete debounceTimersRef.current[timerKey];
         callback(...args);
-        
-        // Reset skip flag if it wasn't reset already
-        setTimeout(() => {
-          skipNextRequestRef.current = false;
-        }, 200);
       }, delay);
     };
   }, []);
@@ -101,7 +84,6 @@ export const useCompanyRequest = () => {
     completeRequest,
     resetRequestState,
     pendingRequestsRef,
-    debouncedRequest,
-    skipNextRequest: () => { skipNextRequestRef.current = true; }
+    debouncedRequest
   };
 };

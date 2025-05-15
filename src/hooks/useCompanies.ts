@@ -7,11 +7,10 @@ import { useCompanyCreate } from "./company/useCompanyCreateUpdates";
 import { useCompanyUpdate } from "./company/useCompanyUpdate";
 import { useCompanyDelete } from "./company/useCompanyDelete";
 import { useCompanyUserManagement } from "./company/useCompanyUserManagement";
-import { useCompanyEvents } from '@/hooks/company/useCompanyEvents';
+import { useCompanyEvents } from "./company/useCompanyEvents";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Company } from "@/types/company";
-import { toast } from "sonner";
 
 interface UseCompaniesOptions {
   skipLoadingInOnboarding?: boolean;
@@ -92,28 +91,8 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     removeUserFromCompany 
   } = useCompanyUserManagement();
   
-  // Fix: useCompanyEvents should not have an argument
-  const selectedCompanyFromEvent = useCompanyEvents();
-  
-  // Use o resultado do hook, se disponível
-  useEffect(() => {
-    if (selectedCompanyFromEvent) {
-      console.log(`[useCompanies] Company from event detected: ${selectedCompanyFromEvent.nome}`);
-      
-      // Check if this is a different company than currently selected
-      if (!selectedCompany || selectedCompany.id !== selectedCompanyFromEvent.id) {
-        setSelectedCompany(selectedCompanyFromEvent);
-        
-        // Dispatch event to notify components that need to update
-        const event = new CustomEvent('company-changed', {
-          detail: { company: selectedCompanyFromEvent }
-        });
-        window.dispatchEvent(event);
-        
-        toast.success(`Empresa ${selectedCompanyFromEvent.nome} selecionada!`);
-      }
-    }
-  }, [selectedCompanyFromEvent, selectedCompany, setSelectedCompany]);
+  // Listen for company selection events
+  useCompanyEvents(setSelectedCompany);
   
   // Clear cached company data on user change
   useEffect(() => {
@@ -277,12 +256,6 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
       if (hasAccess) {
         console.log('[useCompanies] Restored selected company from cache:', cachedCompany.nome);
         setSelectedCompany(cachedCompany);
-        
-        // Dispatch event so other components know company is selected
-        window.dispatchEvent(new CustomEvent('company-changed', {
-          detail: { company: cachedCompany }
-        }));
-        
         return;
       } else {
         console.log('[useCompanies] User does not have access to cached company, selecting another');
@@ -302,11 +275,6 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
         if (storedCompany) {
           setSelectedCompany(storedCompany);
           console.log('[useCompanies] Restored selected company from localStorage ID:', storedCompany.nome);
-          
-          // Dispatch event so other components know company is selected
-          window.dispatchEvent(new CustomEvent('company-changed', {
-            detail: { company: storedCompany }
-          }));
         } else {
           // If not found, try to fetch
           try {
@@ -318,32 +286,17 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
               if (hasAccess) {
                 setSelectedCompany(company);
                 console.log('[useCompanies] Restored selected company from database:', company.nome);
-                
-                // Dispatch event so other components know company is selected
-                window.dispatchEvent(new CustomEvent('company-changed', {
-                  detail: { company }
-                }));
               } else {
                 localStorage.removeItem('selectedCompanyId');
                 // Select first available company
                 setSelectedCompany(userCompanies[0]);
                 console.log('[useCompanies] Selected first available company after access check:', userCompanies[0].nome);
-                
-                // Dispatch event so other components know company is selected
-                window.dispatchEvent(new CustomEvent('company-changed', {
-                  detail: { company: userCompanies[0] }
-                }));
               }
             } else {
               // If not found, select first company
               localStorage.removeItem('selectedCompanyId');
               setSelectedCompany(userCompanies[0]);
               console.log('[useCompanies] Selected first available company after fetch:', userCompanies[0].nome);
-              
-              // Dispatch event so other components know company is selected
-              window.dispatchEvent(new CustomEvent('company-changed', {
-                detail: { company: userCompanies[0] }
-              }));
             }
           } catch (error) {
             console.error('[useCompanies] Failed to restore company from localStorage', error);
@@ -353,11 +306,6 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
             if (userCompanies.length > 0) {
               setSelectedCompany(userCompanies[0]);
               console.log('[useCompanies] Selected first available company after failure:', userCompanies[0].nome);
-              
-              // Dispatch event so other components know company is selected
-              window.dispatchEvent(new CustomEvent('company-changed', {
-                detail: { company: userCompanies[0] }
-              }));
             }
           }
         }
@@ -365,11 +313,6 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
         // Automatically select the only company
         setSelectedCompany(userCompanies[0]);
         console.log('[useCompanies] Auto-selected only available company:', userCompanies[0].nome);
-        
-        // Dispatch event so other components know company is selected
-        window.dispatchEvent(new CustomEvent('company-changed', {
-          detail: { company: userCompanies[0] }
-        }));
       }
     }
   }, [

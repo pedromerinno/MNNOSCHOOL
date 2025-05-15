@@ -1,33 +1,29 @@
 
-import { useEffect, useState } from 'react';
-import { Company } from '@/types/company';
+import { useEffect, useRef } from "react";
+import { Company } from "@/types/company";
 
-export const useCompanyEvents = () => {
-  const [selectedCompanyFromEvent, setSelectedCompanyFromEvent] = useState<Company | null>(null);
-  
+export const useCompanyEvents = (setSelectedCompany: (company: Company | null) => void) => {
+  const previousCompanyRef = useRef<string | null>(null);
+
   useEffect(() => {
-    const handleCompanySelected = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      console.log("Company selected event received:", customEvent.detail);
-      const selectedCompany = customEvent.detail?.company;
+    const handleCompanySelected = (event: CustomEvent) => {
+      const { company } = event.detail;
       
-      if (selectedCompany) {
-        console.log("Setting selected company from event:", selectedCompany.nome);
-        setSelectedCompanyFromEvent(selectedCompany);
-        
-        // Salvar em localStorage para persistência
-        localStorage.setItem('selectedCompany', JSON.stringify(selectedCompany));
-        localStorage.setItem('selectedCompanyId', selectedCompany.id);
-        localStorage.setItem('selectedCompanyName', selectedCompany.nome);
+      // Prevenir processamento duplicado do mesmo evento para a mesma empresa
+      if (previousCompanyRef.current === company?.id) {
+        console.log(`Ignorando evento duplicado para empresa: ${company?.id}`);
+        return;
       }
+      
+      console.log(`Processando evento de seleção para empresa: ${company?.id}`);
+      previousCompanyRef.current = company?.id || null;
+      setSelectedCompany(company);
     };
-    
-    window.addEventListener('company-selected', handleCompanySelected);
+
+    window.addEventListener('company-selected', handleCompanySelected as EventListener);
     
     return () => {
-      window.removeEventListener('company-selected', handleCompanySelected);
+      window.removeEventListener('company-selected', handleCompanySelected as EventListener);
     };
-  }, []);
-  
-  return selectedCompanyFromEvent;
+  }, [setSelectedCompany]);
 };

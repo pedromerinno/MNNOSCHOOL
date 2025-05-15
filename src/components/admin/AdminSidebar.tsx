@@ -1,95 +1,78 @@
 
-import React from "react";
-import {
-  Building,
-  Users,
-  Settings,
-  BookOpen,
-  Bell,
-  Layout,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Sidebar } from "@/components/ui/sidebar";
-import { useAuth } from "@/contexts/AuthContext";
+import React from 'react';
+import { Sidebar, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupContent, SidebarFooter } from "@/components/ui/sidebar";
+import { LayoutDashboard, Building, Users, Book, Settings, ArrowLeftRight, Bell } from "lucide-react";
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AdminSidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
 }
 
-export const AdminSidebar: React.FC<AdminSidebarProps> = ({
+export const AdminSidebar = ({
   activeTab,
-  onTabChange,
-}) => {
-  const { userProfile } = useAuth();
-  const isSuperAdmin = userProfile?.super_admin;
+  onTabChange
+}: AdminSidebarProps) => {
+  const {
+    userProfile
+  } = useAuth();
 
-  const handleTabClick = (tab: string, e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent default navigation
-    if (activeTab !== tab) {
-      onTabChange(tab);
+  // Define menu items based on user role
+  const menuItems = [
+    ...(userProfile?.super_admin ? [{
+      value: "platform",
+      label: "Plataforma",
+      icon: LayoutDashboard
+    }] : []),
+    {
+      value: "companies",
+      label: "Empresas",
+      icon: Building
+    },
+    {
+      value: "users",
+      label: "Usuários",
+      icon: Users
+    },
+    {
+      value: "allcourses",
+      label: "Cursos",
+      icon: Book
+    },
+    {
+      value: "notices",
+      label: "Avisos",
+      icon: Bell
+    },
+    {
+      value: "settings",
+      label: "Configurações",
+      icon: Settings
     }
-  };
+  ];
 
-  return (
-    <Sidebar className="border-r border-border dark:border-gray-800 bg-background">
-      <div className="px-3 py-2">
-        <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
-          Administração
-        </h2>
-        <div className="space-y-1">
-          {isSuperAdmin && (
-            <Button
-              variant={activeTab === "platform" ? "secondary" : "ghost"}
-              className="w-full justify-start"
-              onClick={(e) => handleTabClick("platform", e)}
-            >
-              <Layout className="mr-2 h-4 w-4" />
-              Plataforma
-            </Button>
-          )}
-          <Button
-            variant={activeTab === "companies" ? "secondary" : "ghost"}
-            className="w-full justify-start"
-            onClick={(e) => handleTabClick("companies", e)}
-          >
-            <Building className="mr-2 h-4 w-4" />
-            Empresas
-          </Button>
-          <Button
-            variant={activeTab === "users" ? "secondary" : "ghost"}
-            className="w-full justify-start"
-            onClick={(e) => handleTabClick("users", e)}
-          >
-            <Users className="mr-2 h-4 w-4" />
-            Usuários
-          </Button>
-          <Button
-            variant={activeTab === "allcourses" ? "secondary" : "ghost"}
-            className="w-full justify-start"
-            onClick={(e) => handleTabClick("allcourses", e)}
-          >
-            <BookOpen className="mr-2 h-4 w-4" />
-            Cursos
-          </Button>
-          <Button
-            variant={activeTab === "notices" ? "secondary" : "ghost"}
-            className="w-full justify-start"
-            onClick={(e) => handleTabClick("notices", e)}
-          >
-            <Bell className="mr-2 h-4 w-4" />
-            Avisos
-          </Button>
-          <Button
-            variant={activeTab === "settings" ? "secondary" : "ghost"}
-            className="w-full justify-start"
-            onClick={(e) => handleTabClick("settings", e)}
-          >
-            <Settings className="mr-2 h-4 w-4" />
-            Integrações
-          </Button>
+  return <Sidebar className="border-r border-gray-200 dark:border-gray-800">
+      <SidebarContent className="mx-0 py-[70px]">
+        <SidebarGroup>
+          <SidebarGroupContent className="pt-4">
+            <SidebarMenu>
+              {menuItems.map(item => <SidebarMenuItem key={item.value}>
+                  <SidebarMenuButton data-active={activeTab === item.value} onClick={() => onTabChange(item.value)} tooltip={item.label} className="py-[30px] px-[30px]">
+                    <item.icon className={`h-5 w-5 ${activeTab === item.value ? 'text-primary' : 'text-gray-500 dark:text-gray-400'}`} />
+                    <span>{item.label}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>)}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+      <SidebarFooter className="border-t border-gray-200 dark:border-gray-800 px-3 py-2">
+        <div className="flex justify-center">
+          <button className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" onClick={() => window.history.back()}>
+            <ArrowLeftRight className="h-4 w-4" />
+            <span>Voltar</span>
+          </button>
         </div>
-      </div>
-    </Sidebar>
-  );
+      </SidebarFooter>
+    </Sidebar>;
 };

@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCompanyState } from "./useCompanyState";
 import { useCompanyFetching } from "./useCompanyFetching";
 import { useCompanyModification } from "./useCompanyModification";
-import { useCompanyEvents } from './useCompanyEvents';
+import { useCompanyEvents } from "./useCompanyEvents";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -20,7 +20,6 @@ export const useCompaniesProvider = () => {
     fetchCount,
     isSuperAdmin,
     setIsSuperAdmin,
-    setSelectedCompany,
     ...stateActions
   } = useCompanyState();
   
@@ -30,7 +29,6 @@ export const useCompaniesProvider = () => {
     getCompanyById
   } = useCompanyFetching({
     userCompanies,
-    setSelectedCompany, // Add missing setSelectedCompany prop
     ...stateActions
   });
   
@@ -43,19 +41,11 @@ export const useCompaniesProvider = () => {
     assignUserToCompany,
     removeUserFromCompany
   } = useCompanyModification({
-    setSelectedCompany, // Add missing setSelectedCompany prop
     ...stateActions
   });
 
-  // Atualizando a chamada do hook para não passar argumentos
-  const selectedCompanyFromEvent = useCompanyEvents();
-  
-  // Use o resultado do hook, se disponível
-  useEffect(() => {
-    if (selectedCompanyFromEvent) {
-      setSelectedCompany(selectedCompanyFromEvent);
-    }
-  }, [selectedCompanyFromEvent, setSelectedCompany]);
+  // Listen for selected company events
+  useCompanyEvents(stateActions.setSelectedCompany);
 
   // Verificar se o usuário é super admin
   useEffect(() => {
