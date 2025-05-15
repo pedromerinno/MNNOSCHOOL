@@ -10,14 +10,15 @@ export const NoCompaniesAvailable = () => {
   const [showDialog, setShowDialog] = useState(false);
   const {
     forceGetUserCompanies,
+    selectCompany,
     user,
     userCompanies,
-    selectCompany
+    selectedCompany
   } = useCompanies();
 
   // Efeito para selecionar a primeira empresa quando disponível
   useEffect(() => {
-    if (user?.id && userCompanies.length > 0 && !showDialog) {
+    if (user?.id && userCompanies.length > 0 && !selectedCompany && !showDialog) {
       console.log("[NoCompaniesAvailable] Empresas disponíveis:", userCompanies.length);
       try {
         // Tentativa de selecionar a primeira empresa automaticamente
@@ -27,6 +28,7 @@ export const NoCompaniesAvailable = () => {
         // Disparar um evento para notificar outros componentes
         const event = new CustomEvent('company-selected', {
           detail: {
+            userId: user.id,
             company: userCompanies[0]
           }
         });
@@ -35,12 +37,23 @@ export const NoCompaniesAvailable = () => {
         // Forçar atualização na interface
         setTimeout(() => {
           window.dispatchEvent(new Event('force-reload-companies'));
+          
+          // Dispatch additional event for component-specific updates
+          window.dispatchEvent(new CustomEvent('company-changed', {
+            detail: { company: userCompanies[0] }
+          }));
+          
+          // Reload página para garantir atualização completa
+          if (!selectedCompany) {
+            window.location.reload();
+          }
         }, 500);
       } catch (error) {
         console.error("[NoCompaniesAvailable] Erro ao selecionar empresa:", error);
+        toast.error("Erro ao selecionar empresa. Tente novamente.");
       }
     }
-  }, [user, userCompanies, selectCompany, showDialog]);
+  }, [user, userCompanies, selectCompany, selectedCompany, showDialog]);
   
   const handleCompanyCreated = () => {
     setShowDialog(false);
@@ -48,6 +61,15 @@ export const NoCompaniesAvailable = () => {
       forceGetUserCompanies(user.id).then(companies => {
         if (companies.length > 0) {
           toast.success("Empresa criada e selecionada com sucesso!");
+          
+          // Após criar, selecionar automaticamente
+          selectCompany(user.id, companies[0]);
+          
+          // Forçar atualização na interface
+          setTimeout(() => {
+            window.dispatchEvent(new Event('force-reload-companies'));
+            window.location.reload();
+          }, 500);
         }
       });
     }

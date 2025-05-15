@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Navigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useSearchParams, useLocation } from 'react-router-dom';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { CompanyManagement } from '@/components/admin/CompanyManagement';
 import { SettingsManagement } from '@/components/admin/integration/SettingsManagement';
@@ -18,6 +18,7 @@ const AdminPage = () => {
     loading: authLoading
   } = useAuth();
   
+  const location = useLocation();
   // Utilize useSearchParams para ler o estado da URL
   const [searchParams, setSearchParams] = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
@@ -26,38 +27,75 @@ const AdminPage = () => {
     tabFromUrl || (userProfile?.super_admin ? "platform" : "companies")
   );
   const [isReady, setIsReady] = useState(false);
+  const [preventUrlChange, setPreventUrlChange] = useState(false);
+
+  // Use a ref to track initial render
+  const isInitialRender = React.useRef(true);
 
   // Memorizamos a função para atualizar a aba ativa
   const handleTabChange = useCallback((tab: string) => {
     console.log(`Admin tab changed to: ${tab}`);
     setActiveTab(tab);
     
-    // Atualizar URL sem recarregar a página
-    setSearchParams(prev => {
-      const newParams = new URLSearchParams(prev);
-      newParams.set('tab', tab);
-      return newParams;
-    }, { replace: true });
+    // Não atualize URL em montagem inicial
+    if (!isInitialRender.current) {
+      // Flag para prevenir o efeito de atualizar URL novamente
+      setPreventUrlChange(true);
+      
+      // Atualizar URL sem recarregar a página
+      setSearchParams(prev => {
+        const newParams = new URLSearchParams(prev);
+        newParams.set('tab', tab);
+        return newParams;
+      }, { replace: true });
+      
+      // Restaura flag depois de um curto delay
+      setTimeout(() => {
+        setPreventUrlChange(false);
+      }, 100);
+    }
   }, [setSearchParams]);
 
   // Wait for auth to be ready before rendering
   useEffect(() => {
     if (!authLoading) {
       setIsReady(true);
+      // Marca que não é mais a montagem inicial
+      isInitialRender.current = false;
     }
   }, [authLoading]);
 
+  // Efeito para atualizar o estado quando a URL mudar 
+  // (mas não quando nós mudamos a URL programaticamente)
+  useEffect(() => {
+    // Ignorar mudanças que vieram do nosso próprio código
+    if (preventUrlChange) return;
+    
+    const tab = searchParams.get('tab');
+    if (tab && tab !== activeTab) {
+      console.log(`Updating active tab from URL: ${tab}`);
+      setActiveTab(tab);
+    }
+  }, [searchParams, activeTab, preventUrlChange]);
+
   // Efeito para registrar eventos de histórico para a navegação
   useEffect(() => {
+    // Evita atualizar a URL se a mudança veio de uma navegação externa
+    if (preventUrlChange) return;
+    
     // Adicionamos ao histórico do navegador sem recarregar a página
     const updateUrlWithoutReload = () => {
+      if (isInitialRender.current) return;
+      
       const url = new URL(window.location.href);
-      url.searchParams.set('tab', activeTab);
-      window.history.replaceState({}, '', url.toString());
+      if (url.searchParams.get('tab') !== activeTab) {
+        url.searchParams.set('tab', activeTab);
+        window.history.replaceState({}, '', url.toString());
+      }
     };
     
     updateUrlWithoutReload();
-  }, [activeTab]);
+  }, [activeTab, preventUrlChange]);
 
   if (!isReady) {
     return <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919] flex items-center justify-center">
