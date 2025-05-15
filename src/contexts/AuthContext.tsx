@@ -110,6 +110,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await handleSignOut();
   };
 
+  // Wrapper promisificado para updateUserProfile
+  const handleUpdateUserProfile = async (userData: Partial<UserProfile>): Promise<void> => {
+    return Promise.resolve(updateUserProfile(userData));
+  };
+
   const handleUpdateUserData = async (userData: Partial<UserProfile>) => {
     if (!user) return;
     await updateUserData(user.id, userData);
@@ -125,7 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signInWithPassword,
     signOut,
     signUp,
-    updateUserProfile,
+    updateUserProfile: handleUpdateUserProfile,
     updateUserData: handleUpdateUserData,
     resendConfirmationEmail
   };

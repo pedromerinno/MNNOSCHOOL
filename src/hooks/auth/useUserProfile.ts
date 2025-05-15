@@ -75,6 +75,7 @@ export const useUserProfile = () => {
     lastFetchTimestamp.current = 0;
   }, []);
 
+  // Modificada para retornar void de forma consistente
   const updateUserProfile = useCallback((userData: Partial<UserProfile>) => {
     setUserProfile(prev => prev ? ({
       ...prev,
