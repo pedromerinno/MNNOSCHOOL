@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { UserHome } from './UserHome';
-import { LoadingState } from './LoadingState';
+import { IndexLoadingState } from './IndexLoadingState';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompanies } from '@/hooks/useCompanies';
 import { toast } from 'sonner';
@@ -37,7 +37,7 @@ export const IndexContent = () => {
   }, [selectedCompany, authLoading, companiesLoading]);
 
   if (authLoading || companiesLoading) {
-    return <LoadingState />;
+    return <IndexLoadingState />;
   }
 
   // Force re-render when key changes
