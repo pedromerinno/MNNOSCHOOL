@@ -28,6 +28,7 @@ const AdminPage = () => {
   const [activeTab, setActiveTab] = useState(userProfile?.super_admin ? "platform" : "companies");
   const [isReady, setIsReady] = useState(false);
 
+  // Handle URL params for tab selection on initial load and navigations
   useEffect(() => {
     if (!authLoading) {
       setIsReady(true);
@@ -41,7 +42,7 @@ const AdminPage = () => {
     }
   }, [authLoading, location.search]);
 
-  // Handle tab change with a proper React state update - make it memoized to avoid rerenders
+  // Memoized tab change handler to prevent unnecessary rerenders
   const handleTabChange = useCallback((tab: string) => {
     console.log("Changing tab to:", tab);
     setActiveTab(tab);
