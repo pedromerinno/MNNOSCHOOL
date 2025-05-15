@@ -1,16 +1,18 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Company } from '@/types/company';
 
-// Fix hook implementation to match expected signature with no arguments
-export const useCompanyEvents = (setSelectedCompany: (company: Company | null) => void) => {
+// Implementação correta do hook sem argumentos
+export const useCompanyEvents = () => {
+  const [selectedCompanyFromEvent, setSelectedCompanyFromEvent] = useState<Company | null>(null);
+  
   useEffect(() => {
     const handleCompanySelected = (event: Event) => {
       const customEvent = event as CustomEvent;
       const selectedCompany = customEvent.detail?.company;
       
       if (selectedCompany) {
-        setSelectedCompany(selectedCompany);
+        setSelectedCompanyFromEvent(selectedCompany);
       }
     };
     
@@ -19,5 +21,7 @@ export const useCompanyEvents = (setSelectedCompany: (company: Company | null) =
     return () => {
       window.removeEventListener('company-selected', handleCompanySelected);
     };
-  }, [setSelectedCompany]);
+  }, []);
+  
+  return selectedCompanyFromEvent;
 };

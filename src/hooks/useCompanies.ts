@@ -6,7 +6,7 @@ import { useCompanyCreate } from "./company/useCompanyCreateUpdates";
 import { useCompanyUpdate } from "./company/useCompanyUpdate";
 import { useCompanyDelete } from "./company/useCompanyDelete";
 import { useCompanyUserManagement } from "./company/useCompanyUserManagement";
-import { useCompanyEvents } from "./company/useCompanyEvents";
+import { useCompanyEvents } from '@/hooks/company/useCompanyEvents';
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Company } from "@/types/company";
@@ -91,7 +91,14 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
   } = useCompanyUserManagement();
   
   // Fix: useCompanyEvents should not have an argument
-  useCompanyEvents(setSelectedCompany);
+  const selectedCompanyFromEvent = useCompanyEvents();
+  
+  // Use o resultado do hook, se disponível
+  useEffect(() => {
+    if (selectedCompanyFromEvent) {
+      setSelectedCompany(selectedCompanyFromEvent);
+    }
+  }, [selectedCompanyFromEvent]);
   
   // Clear cached company data on user change
   useEffect(() => {

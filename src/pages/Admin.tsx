@@ -1,16 +1,13 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Card, CardContent } from "@/components/ui/card";
 import { UserManagement } from '@/components/admin/UserManagement';
 import { CompanyManagement } from '@/components/admin/CompanyManagement';
 import { SettingsManagement } from '@/components/admin/integration/SettingsManagement';
 import { BackgroundManager } from '@/components/admin/BackgroundManager';
 import { useAuth } from '@/contexts/AuthContext';
-import { ArrowLeft } from 'lucide-react';
 import { CourseManagement } from '@/components/admin/CourseManagement';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
-import { Button } from '@/components/ui/button';
 import { CompanyNoticesAdminList } from '@/components/admin/CompanyNoticesAdminList';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
@@ -23,6 +20,12 @@ const AdminPage = () => {
   const [activeTab, setActiveTab] = useState(userProfile?.super_admin ? "platform" : "companies");
   const [isReady, setIsReady] = useState(false);
 
+  // Memorizamos a função para atualizar a aba ativa
+  const handleTabChange = useCallback((tab: string) => {
+    console.log(`Admin tab changed to: ${tab}`);
+    setActiveTab(tab);
+  }, []);
+
   // Wait for auth to be ready before rendering
   useEffect(() => {
     if (!authLoading) {
@@ -30,11 +33,31 @@ const AdminPage = () => {
     }
   }, [authLoading]);
 
-  // Memoized tab change handler to prevent unnecessary re-renders
-  const handleTabChange = useCallback((tab: string) => {
-    console.log(`Admin tab changed to: ${tab}`);
-    setActiveTab(tab);
-  }, []);
+  // Efeito para registrar eventos de histórico para a navegação
+  useEffect(() => {
+    // Adicionamos ao histórico do navegador sem recarregar a página
+    const updateUrlWithoutReload = () => {
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', activeTab);
+      window.history.replaceState({}, '', url.toString());
+    };
+    
+    updateUrlWithoutReload();
+  }, [activeTab]);
+
+  // Efeito para carregar a aba correta quando a página é carregada
+  useEffect(() => {
+    if (isReady && !authLoading) {
+      // Verifica se há uma aba definida na URL
+      const url = new URL(window.location.href);
+      const tabFromUrl = url.searchParams.get('tab');
+      
+      if (tabFromUrl) {
+        console.log(`Loading tab from URL: ${tabFromUrl}`);
+        setActiveTab(tabFromUrl);
+      }
+    }
+  }, [isReady, authLoading]);
 
   if (!isReady) {
     return <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919] flex items-center justify-center">
@@ -83,4 +106,5 @@ const AdminPage = () => {
       </div>
     </div>;
 };
+
 export default AdminPage;

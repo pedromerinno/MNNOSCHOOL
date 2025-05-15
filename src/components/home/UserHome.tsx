@@ -1,51 +1,51 @@
 
-import { useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useCompanies } from "@/hooks/useCompanies";
-import { WelcomeSection } from "./WelcomeSection";
-import { QuickLinks } from "./QuickLinks";
-import { DashboardWidgets } from "./DashboardWidgets";
-import { Footer } from "./Footer";
-import { NoCompaniesAvailable } from "./NoCompaniesAvailable";
-import { AdminFloatingActionButton } from "../admin/AdminFloatingActionButton";
+import React, { useState, useEffect } from 'react';
+import { WelcomeSection } from './WelcomeSection';
+import { DashboardWidgets } from './DashboardWidgets';
+import { Footer } from './Footer';
+import { useCompanies } from '@/hooks/useCompanies';
+import { NoCompaniesAvailable } from './NoCompaniesAvailable';
+import { EmptyCompanyState } from './EmptyCompanyState';
 
-// Making UserHome a named export AND also a default export to fix the import issues
-export const UserHome = () => {
-  const { user } = useAuth();
-  const { getUserCompanies, selectedCompany, userCompanies } = useCompanies();
-  
+export const UserHome: React.FC = () => {
+  const { companies, isLoading, selectedCompany } = useCompanies();
+  const [showEmptyState, setShowEmptyState] = useState(false);
+
   useEffect(() => {
-    const fetchUserCompanies = async () => {
-      if (user?.id) {
-        try {
-          console.log("[UserHome] Buscando empresas do usuário sem forçar seleção");
-          await getUserCompanies(user.id, false);
-        } catch (error) {
-          console.error('Error fetching user companies on home page:', error);
-        }
-      }
-    };
+    // Show empty state if there are companies but none selected
+    if (!isLoading && companies.length > 0 && !selectedCompany) {
+      setShowEmptyState(true);
+    } else {
+      setShowEmptyState(false);
+    }
+  }, [isLoading, companies, selectedCompany]);
 
-    fetchUserCompanies();
-  }, [user, getUserCompanies]);
-  
-  if (user && userCompanies.length === 0) {
-    console.log("[UserHome] Nenhuma empresa disponível, mostrando NoCompaniesAvailable");
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (companies.length === 0) {
     return <NoCompaniesAvailable />;
   }
-  
+
+  if (showEmptyState) {
+    return <EmptyCompanyState />;
+  }
+
   return (
-    <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
-      <main className="container mx-auto px-4 py-8">
-        <WelcomeSection />
-        <QuickLinks />
-        <DashboardWidgets />
-      </main>
+    <div className="container mx-auto px-4 lg:px-8 py-4">
+      <WelcomeSection />
+      <DashboardWidgets />
       <Footer />
-      <AdminFloatingActionButton />
     </div>
   );
 };
 
-// Add default export to fix lazy loading
+// Adicionar exportação default para compatibilidade com lazy loading
 export default UserHome;

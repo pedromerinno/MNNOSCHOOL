@@ -2,7 +2,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCompanyState } from "./useCompanyState";
 import { useCompanyFetching } from "./useCompanyFetching";
 import { useCompanyModification } from "./useCompanyModification";
-import { useCompanyEvents } from "./useCompanyEvents";
+import { useCompanyEvents } from './useCompanyEvents';
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -43,8 +43,15 @@ export const useCompaniesProvider = () => {
     ...stateActions
   });
 
-  // Fix: useCompanyEvents should not have an argument
-  useCompanyEvents(stateActions.setSelectedCompany);
+  // Atualizando a chamada do hook para não passar argumentos
+  const selectedCompanyFromEvent = useCompanyEvents();
+  
+  // Use o resultado do hook, se disponível
+  useEffect(() => {
+    if (selectedCompanyFromEvent) {
+      setSelectedCompany(selectedCompanyFromEvent);
+    }
+  }, [selectedCompanyFromEvent]);
 
   // Verificar se o usuário é super admin
   useEffect(() => {

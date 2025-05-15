@@ -55,8 +55,11 @@ export const AdminSidebar = ({
     }
   ];
 
-  // Debounced navigation handler
-  const handleNavigation = useCallback((tabValue: string) => {
+  // Improved navigation handler with better debounce
+  const handleNavigation = useCallback((e: React.MouseEvent, tabValue: string) => {
+    // Prevent default to stop any potential navigation
+    e.preventDefault();
+    
     // Implement debounce to prevent double clicks
     const now = Date.now();
     if (now - clickTimeRef.current < 500 || isHandlingClickRef.current) {
@@ -69,8 +72,7 @@ export const AdminSidebar = ({
     
     console.log(`Tab navigation: ${tabValue}`);
     
-    // IMPORTANT: Update state directly without route change
-    // This is crucial to prevent page reload
+    // Update tab state without causing a reload
     onTabChange(tabValue);
     
     // Reset handling flag after a delay
@@ -93,7 +95,7 @@ export const AdminSidebar = ({
               {menuItems.map(item => <SidebarMenuItem key={item.value}>
                   <SidebarMenuButton 
                     data-active={activeTab === item.value} 
-                    onClick={() => handleNavigation(item.value)} 
+                    onClick={(e) => handleNavigation(e, item.value)} 
                     tooltip={item.label} 
                     className="py-[30px] px-[30px]"
                   >
