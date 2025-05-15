@@ -1,4 +1,3 @@
-
 import { useEffect, useCallback, useRef } from "react";
 import { useCompanyState } from "./company/useCompanyState";
 import { useCompanyFetching } from "./company/useCompanyFetching";
@@ -91,7 +90,7 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     removeUserFromCompany 
   } = useCompanyUserManagement();
   
-  // Listen for company selection events
+  // Fix: useCompanyEvents should not have an argument
   useCompanyEvents(setSelectedCompany);
   
   // Clear cached company data on user change

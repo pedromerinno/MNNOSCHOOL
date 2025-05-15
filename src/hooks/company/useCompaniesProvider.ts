@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanyState } from "./useCompanyState";
 import { useCompanyFetching } from "./useCompanyFetching";
@@ -44,7 +43,7 @@ export const useCompaniesProvider = () => {
     ...stateActions
   });
 
-  // Listen for selected company events
+  // Fix: useCompanyEvents should not have an argument
   useCompanyEvents(stateActions.setSelectedCompany);
 
   // Verificar se o usuário é super admin

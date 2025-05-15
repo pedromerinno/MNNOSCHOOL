@@ -9,6 +9,7 @@ import { Footer } from "./Footer";
 import { NoCompaniesAvailable } from "./NoCompaniesAvailable";
 import { AdminFloatingActionButton } from "../admin/AdminFloatingActionButton";
 
+// Making UserHome a named export AND also a default export to fix the import issues
 export const UserHome = () => {
   const { user } = useAuth();
   const { getUserCompanies, selectedCompany, userCompanies } = useCompanies();
@@ -45,3 +46,6 @@ export const UserHome = () => {
     </div>
   );
 };
+
+// Add default export to fix lazy loading
+export default UserHome;
