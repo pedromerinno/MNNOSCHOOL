@@ -1,7 +1,4 @@
 import { Toast, ToastActionElement, ToastProps } from "@/components/ui/toast"
-import {
-  useToast as useToastPrimitive,
-} from "@radix-ui/react-toast"
 import * as React from "react"
 
 const TOAST_LIMIT = 5
@@ -141,12 +138,12 @@ function dispatch(action: Action) {
   })
 }
 
-type Toast = Omit<ToasterToast, "id">
+type ToastProps = Omit<ToasterToast, "id">
 
-function toast({ ...props }: Toast) {
+function toast(props: ToastProps) {
   const id = genId()
 
-  const update = (props: ToasterToast) =>
+  const update = (props: ToastProps) =>
     dispatch({
       type: actionTypes.UPDATE_TOAST,
       toast: { ...props, id },
