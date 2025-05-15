@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -16,7 +16,7 @@ interface UserStatsType {
 }
 
 export const UserInfoHeader = () => {
-  const { userProfile, user } = useAuth();
+  const { userProfile, user, profileLoading } = useAuth();
   const { selectedCompany } = useCompanies();
   const [stats, setStats] = useState<UserStatsType>({
     completedCourses: 0,
@@ -25,60 +25,113 @@ export const UserInfoHeader = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchUserStats = async () => {
-      if (!user?.id || !selectedCompany?.id) return;
+  // Função memorizada de busca de estatísticas para evitar rerenders
+  const fetchUserStats = useCallback(async () => {
+    if (!user?.id || !selectedCompany?.id) return;
 
-      try {
-        setIsLoading(true);
+    try {
+      setIsLoading(true);
+      
+      // Usar chave de cache baseada no usuário e empresa
+      const cacheKey = `user_stats_${user.id}_${selectedCompany.id}`;
+      const cachedStats = localStorage.getItem(cacheKey);
+      
+      if (cachedStats) {
+        const { data, timestamp } = JSON.parse(cachedStats);
+        const now = Date.now();
         
-        // Get courses available to this company
-        const { data: companyCourses, error: courseError } = await supabase
-          .from('company_courses')
-          .select('course_id')
-          .eq('empresa_id', selectedCompany.id);
-        
-        if (courseError) throw courseError;
-        
-        const courseIds = companyCourses.map(cc => cc.course_id);
-        
-        if (courseIds.length === 0) {
-          setStats({
-            completedCourses: 0,
-            inProgressCourses: 0,
-            totalAvailableCourses: 0
-          });
+        // Cache de 5 minutos
+        if (now - timestamp < 300000) {
+          setStats(data);
           setIsLoading(false);
+          console.log('Usando estatísticas em cache');
+          
+          // Continuar carregando em segundo plano
+          setTimeout(() => fetchFreshStats(cacheKey), 100);
           return;
         }
-        
-        // Get user progress for these courses
-        const { data: progressData, error: progressError } = await supabase
-          .from('user_course_progress')
-          .select('course_id, progress, completed')
-          .eq('user_id', user.id)
-          .in('course_id', courseIds);
-        
-        if (progressError) throw progressError;
-        
-        // Calculate stats
-        const completed = progressData?.filter(p => p.completed).length || 0;
-        const inProgress = progressData?.filter(p => !p.completed && p.progress > 0).length || 0;
-        
-        setStats({
-          completedCourses: completed,
-          inProgressCourses: inProgress,
-          totalAvailableCourses: courseIds.length
-        });
-      } catch (error) {
-        console.error('Error fetching user stats:', error);
-      } finally {
-        setIsLoading(false);
       }
-    };
-    
-    fetchUserStats();
+      
+      // Se não tem cache ou expirou, buscar dados frescos
+      await fetchFreshStats(cacheKey);
+      
+    } catch (error) {
+      console.error('Error fetching user stats:', error);
+      setIsLoading(false);
+    }
   }, [user?.id, selectedCompany?.id]);
+
+  // Função para buscar dados atualizados
+  const fetchFreshStats = async (cacheKey: string) => {
+    try {
+      // Get courses available to this company
+      const { data: companyCourses, error: courseError } = await supabase
+        .from('company_courses')
+        .select('course_id')
+        .eq('empresa_id', selectedCompany?.id);
+      
+      if (courseError) throw courseError;
+      
+      const courseIds = companyCourses?.map(cc => cc.course_id) || [];
+      
+      if (courseIds.length === 0) {
+        const newStats = {
+          completedCourses: 0,
+          inProgressCourses: 0,
+          totalAvailableCourses: 0
+        };
+        
+        setStats(newStats);
+        localStorage.setItem(cacheKey, JSON.stringify({
+          data: newStats,
+          timestamp: Date.now()
+        }));
+        
+        setIsLoading(false);
+        return;
+      }
+      
+      // Get user progress for these courses
+      const { data: progressData, error: progressError } = await supabase
+        .from('user_course_progress')
+        .select('course_id, progress, completed')
+        .eq('user_id', user?.id)
+        .in('course_id', courseIds);
+      
+      if (progressError) throw progressError;
+      
+      // Calculate stats
+      const completed = progressData?.filter(p => p.completed).length || 0;
+      const inProgress = progressData?.filter(p => !p.completed && p.progress > 0).length || 0;
+      
+      const newStats = {
+        completedCourses: completed,
+        inProgressCourses: inProgress,
+        totalAvailableCourses: courseIds.length
+      };
+      
+      setStats(newStats);
+      
+      // Salvar no cache local
+      localStorage.setItem(cacheKey, JSON.stringify({
+        data: newStats,
+        timestamp: Date.now()
+      }));
+      
+    } catch (error) {
+      console.error('Error fetching fresh user stats:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.id && selectedCompany?.id) {
+      fetchUserStats();
+    } else {
+      setIsLoading(false);
+    }
+  }, [user?.id, selectedCompany?.id, fetchUserStats]);
 
   // Get user initials for avatar fallback
   const userInitials = userProfile?.display_name ? 
@@ -89,25 +142,39 @@ export const UserInfoHeader = () => {
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-8">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
         <div className="flex items-center mb-4 md:mb-0">
-          <Avatar className="h-16 w-16 mr-4">
-            <AvatarImage src={userProfile?.avatar || ""} alt={userProfile?.display_name || "User"} />
-            <AvatarFallback className="text-lg font-medium bg-primary/10 text-primary">
-              {userInitials}
-            </AvatarFallback>
-          </Avatar>
+          {profileLoading ? (
+            <Skeleton className="h-16 w-16 rounded-full" />
+          ) : (
+            <Avatar className="h-16 w-16 mr-4">
+              <AvatarImage src={userProfile?.avatar || ""} alt={userProfile?.display_name || "User"} />
+              <AvatarFallback className="text-lg font-medium bg-primary/10 text-primary">
+                {userInitials}
+              </AvatarFallback>
+            </Avatar>
+          )}
+          
           <div>
-            <h2 className="text-xl font-semibold">
-              {userProfile?.display_name || user?.email?.split('@')[0] || "Usuário"}
-            </h2>
-            <p className="text-gray-500 dark:text-gray-400">{user?.email}</p>
-            
-            {userProfile?.cargo_id && (
-              <div className="flex items-center mt-1">
-                <Badge variant="outline" className="flex items-center gap-1 text-xs font-normal">
-                  <Briefcase className="h-3 w-3" />
-                  {userProfile.cargo_id}
-                </Badge>
-              </div>
+            {profileLoading ? (
+              <>
+                <Skeleton className="h-6 w-40 mb-2" />
+                <Skeleton className="h-4 w-32" />
+              </>
+            ) : (
+              <>
+                <h2 className="text-xl font-semibold">
+                  {userProfile?.display_name || user?.email?.split('@')[0] || "Usuário"}
+                </h2>
+                <p className="text-gray-500 dark:text-gray-400">{user?.email}</p>
+                
+                {userProfile?.cargo_id && (
+                  <div className="flex items-center mt-1">
+                    <Badge variant="outline" className="flex items-center gap-1 text-xs font-normal">
+                      <Briefcase className="h-3 w-3" />
+                      {userProfile.cargo_id}
+                    </Badge>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

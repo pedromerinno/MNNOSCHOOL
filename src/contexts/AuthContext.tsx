@@ -1,5 +1,5 @@
 
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { UserProfile } from '@/types/user';
 import { useAuthSession } from '@/hooks/auth/useAuthSession';
@@ -11,6 +11,7 @@ interface AuthContextType {
   session: Session | null;
   userProfile: UserProfile | null;
   loading: boolean;
+  profileLoading: boolean;
   refreshError: Error | null;
   signInWithPassword: (email: string, password: string) => Promise<{ data: any, error: Error | null }>;
   signOut: () => Promise<void>;
@@ -21,6 +22,10 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Chave para o cache local
+const USER_PROFILE_CACHE_KEY = 'user_profile_cache';
+const PROFILE_CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutos
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [loading, setLoading] = useState(false);
@@ -35,14 +40,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   const { 
     userProfile, 
+    isLoading: profileLoading,
     fetchUserProfile,
     updateUserProfile,
-    updateUserData
+    updateUserData,
+    clearProfile
   } = useUserProfile();
 
   const { 
     signInWithPassword, 
-    signOut, 
+    signOut: handleSignOut, 
     signUp,
     resendConfirmationEmail 
   } = useAuthMethods({ 
@@ -50,13 +57,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading: (isLoading) => setLoading(isLoading)
   });
 
-  React.useEffect(() => {
+  // Carregar perfil de cache ao inicializar
+  useEffect(() => {
+    const loadCachedProfile = () => {
+      try {
+        const cachedData = localStorage.getItem(USER_PROFILE_CACHE_KEY);
+        if (cachedData) {
+          const { profile, timestamp, userId } = JSON.parse(cachedData);
+          const now = Date.now();
+          
+          if (now - timestamp < PROFILE_CACHE_EXPIRY && userId === user?.id) {
+            console.log('Usando perfil em cache enquanto carrega dados atualizados');
+            updateUserProfile(profile);
+          } else {
+            // Cache expirou ou mudou de usuário
+            localStorage.removeItem(USER_PROFILE_CACHE_KEY);
+          }
+        }
+      } catch (e) {
+        console.error('Erro ao carregar perfil do cache:', e);
+      }
+    };
+    
     if (user) {
-      setTimeout(async () => {
-        await fetchUserProfile(user.id);
-      }, 0);
+      loadCachedProfile();
+      fetchUserProfile(user.id);
+    } else {
+      clearProfile();
     }
-  }, [user, fetchUserProfile]);
+  }, [user, fetchUserProfile, updateUserProfile, clearProfile]);
+
+  // Salvar perfil em cache quando disponível
+  useEffect(() => {
+    if (userProfile && user) {
+      try {
+        const cacheData = {
+          profile: userProfile,
+          timestamp: Date.now(),
+          userId: user.id
+        };
+        localStorage.setItem(USER_PROFILE_CACHE_KEY, JSON.stringify(cacheData));
+      } catch (e) {
+        console.error('Erro ao salvar perfil em cache:', e);
+      }
+    }
+  }, [userProfile, user]);
+
+  // Função de signOut personalizada que limpa o cache
+  const signOut = async () => {
+    localStorage.removeItem(USER_PROFILE_CACHE_KEY);
+    clearProfile();
+    await handleSignOut();
+  };
 
   const handleUpdateUserData = async (userData: Partial<UserProfile>) => {
     if (!user) return;
@@ -68,6 +120,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     session,
     userProfile,
     loading: loading || sessionLoading,
+    profileLoading,
     refreshError,
     signInWithPassword,
     signOut,
