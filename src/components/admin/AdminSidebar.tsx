@@ -3,6 +3,7 @@ import React from 'react';
 import { Sidebar, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupContent, SidebarFooter } from "@/components/ui/sidebar";
 import { LayoutDashboard, Building, Users, Book, Settings, ArrowLeftRight, Bell } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 interface AdminSidebarProps {
   activeTab: string;
@@ -16,6 +17,7 @@ export const AdminSidebar = ({
   const {
     userProfile
   } = useAuth();
+  const navigate = useNavigate();
 
   // Define menu items based on user role
   const menuItems = [
@@ -51,13 +53,28 @@ export const AdminSidebar = ({
     }
   ];
 
+  const handleNavigation = (tabValue: string) => {
+    // Usar apenas onTabChange para atualizar a tab sem recarregar a página
+    onTabChange(tabValue);
+  };
+
+  const handleReturn = (e: React.MouseEvent) => {
+    e.preventDefault();
+    navigate(-1);
+  };
+
   return <Sidebar className="border-r border-gray-200 dark:border-gray-800">
       <SidebarContent className="mx-0 py-[70px]">
         <SidebarGroup>
           <SidebarGroupContent className="pt-4">
             <SidebarMenu>
               {menuItems.map(item => <SidebarMenuItem key={item.value}>
-                  <SidebarMenuButton data-active={activeTab === item.value} onClick={() => onTabChange(item.value)} tooltip={item.label} className="py-[30px] px-[30px]">
+                  <SidebarMenuButton 
+                    data-active={activeTab === item.value} 
+                    onClick={() => handleNavigation(item.value)} 
+                    tooltip={item.label} 
+                    className="py-[30px] px-[30px]"
+                  >
                     <item.icon className={`h-5 w-5 ${activeTab === item.value ? 'text-primary' : 'text-gray-500 dark:text-gray-400'}`} />
                     <span>{item.label}</span>
                   </SidebarMenuButton>
@@ -68,7 +85,10 @@ export const AdminSidebar = ({
       </SidebarContent>
       <SidebarFooter className="border-t border-gray-200 dark:border-gray-800 px-3 py-2">
         <div className="flex justify-center">
-          <button className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" onClick={() => window.history.back()}>
+          <button 
+            className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" 
+            onClick={handleReturn}
+          >
             <ArrowLeftRight className="h-4 w-4" />
             <span>Voltar</span>
           </button>
