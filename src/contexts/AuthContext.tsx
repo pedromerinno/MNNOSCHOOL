@@ -5,6 +5,7 @@ import { UserProfile } from '@/types/user';
 import { useAuthSession } from '@/hooks/auth/useAuthSession';
 import { useUserProfile } from '@/hooks/auth/useUserProfile';
 import { useAuthMethods } from '@/hooks/auth/useAuthMethods';
+import { useCache } from '@/hooks/useCache';
 
 interface AuthContextType {
   user: any;
@@ -22,10 +23,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Chave para o cache local
-const USER_PROFILE_CACHE_KEY = 'user_profile_cache';
-const PROFILE_CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutos
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [loading, setLoading] = useState(false);
@@ -57,60 +54,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading: (isLoading) => setLoading(isLoading)
   });
 
-  // Carregar perfil de cache ao inicializar
+  const { getCache, setCache, clearCache } = useCache();
+  const USER_PROFILE_CACHE_KEY = 'user_profile';
+
+  // Load user profile when user changes
   useEffect(() => {
-    const loadCachedProfile = () => {
-      try {
-        const cachedData = localStorage.getItem(USER_PROFILE_CACHE_KEY);
-        if (cachedData) {
-          const { profile, timestamp, userId } = JSON.parse(cachedData);
-          const now = Date.now();
-          
-          if (now - timestamp < PROFILE_CACHE_EXPIRY && userId === user?.id) {
-            console.log('Usando perfil em cache enquanto carrega dados atualizados');
-            updateUserProfile(profile);
-          } else {
-            // Cache expirou ou mudou de usuário
-            localStorage.removeItem(USER_PROFILE_CACHE_KEY);
-          }
-        }
-      } catch (e) {
-        console.error('Erro ao carregar perfil do cache:', e);
-      }
-    };
-    
     if (user) {
-      loadCachedProfile();
       fetchUserProfile(user.id);
     } else {
       clearProfile();
     }
-  }, [user, fetchUserProfile, updateUserProfile, clearProfile]);
+  }, [user, fetchUserProfile, clearProfile]);
 
-  // Salvar perfil em cache quando disponível
-  useEffect(() => {
-    if (userProfile && user) {
-      try {
-        const cacheData = {
-          profile: userProfile,
-          timestamp: Date.now(),
-          userId: user.id
-        };
-        localStorage.setItem(USER_PROFILE_CACHE_KEY, JSON.stringify(cacheData));
-      } catch (e) {
-        console.error('Erro ao salvar perfil em cache:', e);
-      }
-    }
-  }, [userProfile, user]);
-
-  // Função de signOut personalizada que limpa o cache
+  // Function to sign out and clear data
   const signOut = async () => {
-    localStorage.removeItem(USER_PROFILE_CACHE_KEY);
+    clearCache({ key: USER_PROFILE_CACHE_KEY });
     clearProfile();
     await handleSignOut();
   };
 
-  // Wrapper promisificado para updateUserProfile
+  // Wrapper promisified for updateUserProfile
   const handleUpdateUserProfile = async (userData: Partial<UserProfile>): Promise<void> => {
     return Promise.resolve(updateUserProfile(userData));
   };

@@ -3,36 +3,39 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfile } from '@/types/user';
 import { toast } from 'sonner';
+import { useCache } from '@/hooks/useCache';
 
 export const useUserProfile = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const fetchInProgress = useRef(false);
   const lastFetchTimestamp = useRef(0);
+  const { getCache, setCache, clearCache } = useCache();
   
-  // Cache de 2 minutos para reduzir chamadas ao servidor
+  // Reduced cache duration to 2 minutes to minimize stale data
   const CACHE_DURATION = 2 * 60 * 1000;
+  const CACHE_KEY = 'user_profile';
 
   const fetchUserProfile = useCallback(async (userId: string) => {
-    // Evita chamadas duplicadas simultâneas
+    // Avoid duplicate simultaneous calls
     if (fetchInProgress.current) {
-      console.log('Uma busca de perfil já está em andamento, evitando chamada duplicada');
+      console.log('A profile fetch is already in progress, avoiding duplicate call');
       return;
     }
 
-    // Evita chamadas frequentes demais
+    // Check cache timestamp to avoid frequent calls
     const now = Date.now();
     if (now - lastFetchTimestamp.current < CACHE_DURATION && userProfile) {
-      console.log('Usando cache de perfil de usuário, menos de 2 minutos desde a última busca');
+      console.log('Using cached user profile, less than 2 minutes since last fetch');
       return;
     }
 
     try {
-      console.log(`Buscando perfil do usuário: ${userId}`);
+      console.log(`Fetching user profile: ${userId}`);
       fetchInProgress.current = true;
       setIsLoading(true);
       
-      // Otimizado para usar política RLS recém-adicionada
+      // Optimized to use recently added RLS policy
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -40,9 +43,9 @@ export const useUserProfile = () => {
         .single();
 
       if (error) {
-        console.error('Erro ao buscar perfil:', error);
+        console.error('Error fetching profile:', error);
         if (error.code === 'PGRST116') {
-          console.log('Nenhum perfil encontrado para o usuário, pode ser primeiro login');
+          console.log('No profile found for user, might be first login');
         }
         return;
       }
@@ -61,53 +64,38 @@ export const useUserProfile = () => {
           created_at: data.created_at
         };
         
-        console.log('Perfil de usuário carregado:', profile);
+        console.log('User profile loaded:', profile);
         setUserProfile(profile);
         lastFetchTimestamp.current = now;
         
-        // Armazenar no localStorage para cache persistente
-        try {
-          localStorage.setItem('userProfile', JSON.stringify({
-            profile,
-            timestamp: now
-          }));
-        } catch (e) {
-          console.error('Erro ao salvar perfil no localStorage:', e);
-        }
+        // Using our optimized caching utility
+        setCache({ key: CACHE_KEY, expirationMinutes: 2 }, profile);
       }
     } catch (error) {
-      console.error('Erro ao buscar perfil:', error);
+      console.error('Error fetching profile:', error);
     } finally {
       fetchInProgress.current = false;
       setIsLoading(false);
     }
-  }, [userProfile]);
+  }, [userProfile, setCache]);
 
-  // Tenta carregar perfil do cache no carregamento inicial
+  // Try to load profile from cache on initial load
   useEffect(() => {
-    try {
-      const cachedData = localStorage.getItem('userProfile');
-      if (cachedData) {
-        const { profile, timestamp } = JSON.parse(cachedData);
-        const now = Date.now();
-        if (now - timestamp < CACHE_DURATION) {
-          console.log('Carregando perfil de usuário do cache local');
-          setUserProfile(profile);
-        }
-      }
-    } catch (e) {
-      console.error('Erro ao carregar perfil do cache:', e);
+    const cachedProfile = getCache<UserProfile>({ key: CACHE_KEY });
+    if (cachedProfile) {
+      console.log('Loading user profile from local cache');
+      setUserProfile(cachedProfile);
     }
-  }, []);
+  }, [getCache]);
 
-  // Limpa o perfil se o userId mudar
+  // Clear profile if userId changes
   const clearProfile = useCallback(() => {
     setUserProfile(null);
     lastFetchTimestamp.current = 0;
-    localStorage.removeItem('userProfile');
-  }, []);
+    clearCache({ key: CACHE_KEY });
+  }, [clearCache]);
 
-  // Modificada para retornar void de forma consistente
+  // Modified to return void consistently
   const updateUserProfile = useCallback((userData: Partial<UserProfile>) => {
     setUserProfile(prev => prev ? ({
       ...prev,
@@ -117,7 +105,7 @@ export const useUserProfile = () => {
 
   const updateUserData = async (userId: string, userData: Partial<UserProfile>) => {
     if (!userId) {
-      toast.error('Nenhum usuário logado');
+      toast.error('No logged in user');
       return;
     }
     
@@ -128,37 +116,30 @@ export const useUserProfile = () => {
         .eq('id', userId);
 
       if (error) {
-        console.error('Erro ao atualizar dados do usuário:', error);
-        toast.error('Erro ao atualizar dados: ' + error.message);
+        console.error('Error updating user data:', error);
+        toast.error('Error updating data: ' + error.message);
         return;
       }
 
+      // Update local state
       setUserProfile(prevProfile => prevProfile ? ({
         ...prevProfile,
         ...userData,
       }) : null);
       
-      // Atualizar o cache no localStorage
-      try {
-        const cachedData = localStorage.getItem('userProfile');
-        if (cachedData) {
-          const parsed = JSON.parse(cachedData);
-          localStorage.setItem('userProfile', JSON.stringify({
-            profile: {
-              ...parsed.profile,
-              ...userData
-            },
-            timestamp: Date.now()
-          }));
-        }
-      } catch (e) {
-        console.error('Erro ao atualizar cache do perfil:', e);
+      // Update cache using our optimized utility
+      const cachedProfile = getCache<UserProfile>({ key: CACHE_KEY });
+      if (cachedProfile) {
+        setCache({ key: CACHE_KEY, expirationMinutes: 2 }, {
+          ...cachedProfile,
+          ...userData
+        });
       }
       
-      toast.success('Perfil atualizado com sucesso');
+      toast.success('Profile updated successfully');
     } catch (error: any) {
-      console.error('Erro ao atualizar dados do usuário:', error);
-      toast.error('Erro ao atualizar dados: ' + error.message);
+      console.error('Error updating user data:', error);
+      toast.error('Error updating data: ' + error.message);
     }
   };
 
