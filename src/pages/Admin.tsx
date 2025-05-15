@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { CompanyManagement } from '@/components/admin/CompanyManagement';
 import { SettingsManagement } from '@/components/admin/integration/SettingsManagement';
@@ -17,7 +17,14 @@ const AdminPage = () => {
     userProfile,
     loading: authLoading
   } = useAuth();
-  const [activeTab, setActiveTab] = useState(userProfile?.super_admin ? "platform" : "companies");
+  
+  // Utilize useSearchParams para ler o estado da URL
+  const [searchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get('tab');
+  
+  const [activeTab, setActiveTab] = useState(
+    tabFromUrl || (userProfile?.super_admin ? "platform" : "companies")
+  );
   const [isReady, setIsReady] = useState(false);
 
   // Memorizamos a função para atualizar a aba ativa
@@ -44,20 +51,6 @@ const AdminPage = () => {
     
     updateUrlWithoutReload();
   }, [activeTab]);
-
-  // Efeito para carregar a aba correta quando a página é carregada
-  useEffect(() => {
-    if (isReady && !authLoading) {
-      // Verifica se há uma aba definida na URL
-      const url = new URL(window.location.href);
-      const tabFromUrl = url.searchParams.get('tab');
-      
-      if (tabFromUrl) {
-        console.log(`Loading tab from URL: ${tabFromUrl}`);
-        setActiveTab(tabFromUrl);
-      }
-    }
-  }, [isReady, authLoading]);
 
   if (!isReady) {
     return <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919] flex items-center justify-center">
@@ -89,7 +82,8 @@ const AdminPage = () => {
     }
   };
 
-  return <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
+  return (
+    <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
       <div className="container mx-auto px-0 lg:px-4 py-6 max-w-[1500px]">
         <SidebarProvider defaultOpen={true}>
           <div className="flex w-full min-h-[calc(100vh-120px)] rounded-lg overflow-hidden">
@@ -104,7 +98,8 @@ const AdminPage = () => {
           </div>
         </SidebarProvider>
       </div>
-    </div>;
+    </div>
+  );
 };
 
 export default AdminPage;
