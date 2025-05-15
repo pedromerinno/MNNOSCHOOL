@@ -1,6 +1,7 @@
 
 import { Suspense, lazy } from "react";
 import { IndexLoadingState } from "./IndexLoadingState";
+import { CompanySelectionDialog } from "./CompanySelectionDialog";
 
 const NoCompaniesAvailable = lazy(() => import("@/components/home/NoCompaniesAvailable").then(module => ({ default: module.NoCompaniesAvailable })));
 
@@ -23,6 +24,14 @@ export const EmptyCompanyState = ({
 }: EmptyCompanyStateProps) => {
   return (
     <div className="min-h-screen bg-background">
+      <CompanySelectionDialog 
+        open={showDialog}
+        onOpenChange={onOpenChange}
+        onCompanyTypeSelect={onCompanyTypeSelect}
+        onCompanyCreated={onCompanyCreated}
+        userId={userId}
+        forceGetUserCompanies={forceGetUserCompanies}
+      />
       <Suspense fallback={<IndexLoadingState />}>
         <NoCompaniesAvailable />
       </Suspense>

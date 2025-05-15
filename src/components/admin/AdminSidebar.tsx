@@ -59,6 +59,7 @@ export const AdminSidebar = ({
   const handleNavigation = useCallback((e: React.MouseEvent, tabValue: string) => {
     // Prevent default to stop any potential navigation
     e.preventDefault();
+    e.stopPropagation();
     
     // Implement debounce to prevent double clicks
     const now = Date.now();
@@ -75,6 +76,11 @@ export const AdminSidebar = ({
     // Update tab state without causing a reload
     onTabChange(tabValue);
     
+    // Update URL without reload
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', tabValue);
+    window.history.replaceState({}, '', url.toString());
+    
     // Reset handling flag after a delay
     setTimeout(() => {
       isHandlingClickRef.current = false;
@@ -84,15 +90,17 @@ export const AdminSidebar = ({
   // Prevent default and use React Router for back navigation
   const handleReturn = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    navigate(-1);
+    navigate('/');
   }, [navigate]);
 
-  return <Sidebar className="border-r border-gray-200 dark:border-gray-800">
+  return (
+    <Sidebar className="border-r border-gray-200 dark:border-gray-800">
       <SidebarContent className="mx-0 py-[70px]">
         <SidebarGroup>
           <SidebarGroupContent className="pt-4">
             <SidebarMenu>
-              {menuItems.map(item => <SidebarMenuItem key={item.value}>
+              {menuItems.map(item => (
+                <SidebarMenuItem key={item.value}>
                   <SidebarMenuButton 
                     data-active={activeTab === item.value} 
                     onClick={(e) => handleNavigation(e, item.value)} 
@@ -102,7 +110,8 @@ export const AdminSidebar = ({
                     <item.icon className={`h-5 w-5 ${activeTab === item.value ? 'text-primary' : 'text-gray-500 dark:text-gray-400'}`} />
                     <span>{item.label}</span>
                   </SidebarMenuButton>
-                </SidebarMenuItem>)}
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -118,5 +127,6 @@ export const AdminSidebar = ({
           </button>
         </div>
       </SidebarFooter>
-    </Sidebar>;
+    </Sidebar>
+  );
 };
