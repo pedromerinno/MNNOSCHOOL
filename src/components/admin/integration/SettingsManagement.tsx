@@ -21,9 +21,10 @@ export const SettingsManagement: React.FC = () => {
   } = useSettingsManagement();
   
   // Prevent default navigation/reloads when handling form submission
-  const onFormSubmit = (data: any) => {
+  // Return a Promise to match the expected type signature
+  const onFormSubmit = async (data: any): Promise<void> => {
     try {
-      handleFormSubmit(data);
+      await handleFormSubmit(data);
     } catch (error) {
       console.error("Error in form submission:", error);
       toast.error("Ocorreu um erro ao salvar as configurações");
