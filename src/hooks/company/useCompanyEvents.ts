@@ -1,50 +1,43 @@
 
-import { useEffect, useRef, useCallback } from "react";
-import { Company } from "@/types/company";
+import { useCallback, useRef } from 'react';
+import { debounce } from 'lodash';
 
-export const useCompanyEvents = (setSelectedCompany: (company: Company | null) => void) => {
-  const previousCompanyRef = useRef<string | null>(null);
-  const processingEventRef = useRef<boolean>(false);
-  const lastEventTimeRef = useRef<number>(0);
+// Esta função agora está dentro do hook personalizado
+export const useCompanyEvents = () => {
+  const eventTimeoutsRef = useRef<Record<string, NodeJS.Timeout>>({});
+  const lastTriggeredRef = useRef<Record<string, number>>({});
+  const MIN_EVENT_INTERVAL = 500; // Mínimo intervalo entre eventos em ms
 
-  useEffect(() => {
-    const handleCompanySelected = useCallback((event: CustomEvent) => {
-      const { company } = event.detail;
-      
-      // Prevent duplicate event processing for the same company
-      if (previousCompanyRef.current === company?.id) {
-        console.log(`Ignorando evento duplicado para empresa: ${company?.id}`);
-        return;
-      }
-      
-      // Throttle event handling to prevent cascading API calls
-      const now = Date.now();
-      if (now - lastEventTimeRef.current < 500 || processingEventRef.current) {
-        console.log(`Throttling company selection events, skipping: ${company?.id}`);
-        return;
-      }
-      
-      lastEventTimeRef.current = now;
-      processingEventRef.current = true;
-      
-      console.log(`Processando evento de seleção para empresa: ${company?.id}`);
-      previousCompanyRef.current = company?.id || null;
-      
-      // Use setTimeout to further debounce the state update
-      setTimeout(() => {
-        setSelectedCompany(company);
-        
-        // Reset processing flag after a small delay
-        setTimeout(() => {
-          processingEventRef.current = false;
-        }, 300);
-      }, 50);
-    }, [setSelectedCompany]);
-
-    window.addEventListener('company-selected', handleCompanySelected as EventListener);
+  // useCallback deve estar dentro de um hook ou componente funcional
+  const triggerCompanyEvent = useCallback((eventName: string, detail: any = {}) => {
+    const now = Date.now();
+    const lastTriggered = lastTriggeredRef.current[eventName] || 0;
     
-    return () => {
-      window.removeEventListener('company-selected', handleCompanySelected as EventListener);
-    };
-  }, [setSelectedCompany]);
+    // Evitar disparos múltiplos do mesmo evento em um curto período
+    if (now - lastTriggered < MIN_EVENT_INTERVAL) {
+      console.log(`[useCompanyEvents] Evento "${eventName}" ignorado (throttled)`);
+      return;
+    }
+    
+    // Limpar timeout anterior se existir
+    if (eventTimeoutsRef.current[eventName]) {
+      clearTimeout(eventTimeoutsRef.current[eventName]);
+    }
+    
+    // Registrar o último disparo
+    lastTriggeredRef.current[eventName] = now;
+    
+    // Usar debounce para eventos que podem ser disparados rapidamente
+    const debouncedDispatch = debounce(() => {
+      const event = new CustomEvent(eventName, { detail });
+      console.log(`[useCompanyEvents] Disparando evento: ${eventName}`, detail);
+      window.dispatchEvent(event);
+    }, 100);
+    
+    debouncedDispatch();
+  }, []);
+
+  return {
+    triggerCompanyEvent
+  };
 };

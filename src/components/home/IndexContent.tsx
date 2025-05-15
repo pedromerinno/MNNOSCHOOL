@@ -2,7 +2,10 @@
 import { Suspense, lazy } from "react";
 import { IndexLoadingState } from "./IndexLoadingState";
 
-const UserHome = lazy(() => import("@/components/home/UserHome").then(module => ({ default: module.UserHome })));
+// Corrigir a importação do UserHome
+const UserHome = lazy(() => import("@/components/home/UserHome").then(module => ({ 
+  default: module.UserHome || module.default 
+})));
 
 export const IndexContent = () => {
   return (
