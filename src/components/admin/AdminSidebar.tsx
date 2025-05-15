@@ -51,22 +51,18 @@ export const AdminSidebar = ({
     }
   ];
 
-  // Improved click handler with explicit handling for different types of events
+  // Handle menu click with explicit prevention of default behavior
   const handleMenuClick = (value: string) => (e: React.MouseEvent) => {
-    // Ensure we're preventing all default behaviors
+    // Prevent default navigation behavior that causes page reload
     e.preventDefault();
-    e.stopPropagation();
     
-    // Only trigger tab change if it's actually changing
-    if (activeTab !== value) {
-      // Update the URL without causing a page refresh
-      const newUrl = new URL(window.location.href);
-      newUrl.searchParams.set('tab', value);
-      window.history.pushState({}, '', newUrl);
-      
-      // Call the handler to update the state
-      onTabChange(value);
-    }
+    // Update the URL without causing a page refresh
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.set('tab', value);
+    window.history.pushState({}, '', newUrl);
+    
+    // Call the handler to update the state
+    onTabChange(value);
   };
 
   return <Sidebar className="border-r border-gray-200 dark:border-gray-800">

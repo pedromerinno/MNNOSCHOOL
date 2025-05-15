@@ -21,10 +21,12 @@ export const SettingsManagement: React.FC = () => {
   } = useSettingsManagement();
   
   // Convert to async function that returns a Promise to match expected type
+  // and correctly handle the form submission
   const onFormSubmit = async (data: any): Promise<void> => {
     try {
       // Await the result to ensure Promise completion
       await handleFormSubmit(data);
+      // Toast success message is handled in handleFormSubmit
     } catch (error) {
       console.error("Error in form submission:", error);
       toast.error("Ocorreu um erro ao salvar as configurações");

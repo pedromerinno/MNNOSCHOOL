@@ -43,8 +43,13 @@ export const SettingsTabs: React.FC<SettingsTabsProps> = ({
   
   // Use preventive click handler to stop tab changes from reloading the page
   const handleTabChange = (value: string) => {
-    // Prevent any automatic form submissions
+    // Prevent default behavior that might cause page reload
     setActiveTab(value);
+    
+    // Update URL to reflect tab change without page reload
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.set('subtab', value);
+    window.history.pushState({}, '', newUrl);
   };
   
   return <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
