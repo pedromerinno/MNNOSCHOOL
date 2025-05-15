@@ -6,6 +6,7 @@ import { fetchCourses, deleteCourse } from '@/services/course';
 import { useCourseForm } from '@/hooks/useCourseForm';
 import { useCompanyCoursesManager } from '@/hooks/useCompanyCoursesManager';
 import { supabase } from "@/integrations/supabase/client";
+import { useCache } from '@/hooks/useCache';
 
 export const useCourses = (companyId?: string) => {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -18,6 +19,9 @@ export const useCourses = (companyId?: string) => {
   
   // Tempo de expiração do cache: 5 minutos
   const CACHE_EXPIRATION = 5 * 60 * 1000;
+  
+  // Hook para gerenciamento de cache
+  const { setCache, getCache, clearCache } = useCache();
 
   const { 
     selectedCourse, 
@@ -105,22 +109,16 @@ export const useCourses = (companyId?: string) => {
         // Usar cache em LocalStorage para perfil de usuário
         let currentUserProfile;
         const cachedProfileKey = `user_profile_${currentUserId}`;
-        const cachedProfile = localStorage.getItem(cachedProfileKey);
+        const profileCache = getCache<{is_admin?: boolean, super_admin?: boolean}>({
+          key: cachedProfileKey,
+          expirationMinutes: 5
+        });
         
-        if (cachedProfile && !forceRefresh) {
-          try {
-            const { data, timestamp } = JSON.parse(cachedProfile);
-            if (Date.now() - timestamp < CACHE_EXPIRATION) {
-              currentUserProfile = data;
-              console.log('Usando perfil de usuário em cache');
-            }
-          } catch (e) {
-            console.error('Erro ao processar perfil em cache:', e);
-          }
-        }
-        
-        // Se não tiver cache válido, buscar do servidor
-        if (!currentUserProfile) {
+        if (profileCache && !forceRefresh) {
+          currentUserProfile = profileCache;
+          console.log('Usando perfil de usuário em cache');
+        } else {
+          // Se não tiver cache válido, buscar do servidor
           const { data: profile } = await supabase
             .from('profiles')
             .select('is_admin, super_admin')
@@ -130,14 +128,7 @@ export const useCourses = (companyId?: string) => {
           currentUserProfile = profile;
           
           // Salvar em cache
-          try {
-            localStorage.setItem(cachedProfileKey, JSON.stringify({
-              data: profile,
-              timestamp: Date.now()
-            }));
-          } catch (e) {
-            console.error('Erro ao cachear perfil:', e);
-          }
+          setCache({ key: cachedProfileKey }, profile);
         }
 
         if (currentUserProfile?.super_admin) {
@@ -150,22 +141,16 @@ export const useCourses = (companyId?: string) => {
           
           // Tentar usar cache para empresas do usuário
           const userCompaniesKey = `user_companies_${currentUserId}`;
+          const companiesCache = getCache<Array<{empresa_id: string}>>({
+            key: userCompaniesKey,
+            expirationMinutes: 5
+          });
+          
           let userCompanies;
-          const cachedUserCompanies = localStorage.getItem(userCompaniesKey);
-          
-          if (cachedUserCompanies && !forceRefresh) {
-            try {
-              const { data, timestamp } = JSON.parse(cachedUserCompanies);
-              if (Date.now() - timestamp < CACHE_EXPIRATION) {
-                userCompanies = data;
-                console.log('Usando empresas do usuário em cache');
-              }
-            } catch (e) {
-              console.error('Erro ao processar empresas em cache:', e);
-            }
-          }
-          
-          if (!userCompanies) {
+          if (companiesCache && !forceRefresh) {
+            userCompanies = companiesCache;
+            console.log('Usando empresas do usuário em cache');
+          } else {
             const { data } = await supabase
               .from('user_empresa')
               .select('empresa_id')
@@ -174,14 +159,7 @@ export const useCourses = (companyId?: string) => {
             userCompanies = data;
             
             // Salvar em cache
-            try {
-              localStorage.setItem(userCompaniesKey, JSON.stringify({
-                data,
-                timestamp: Date.now()
-              }));
-            } catch (e) {
-              console.error('Erro ao cachear empresas do usuário:', e);
-            }
+            setCache({ key: userCompaniesKey }, data);
           }
 
           if (!userCompanies?.length) {
@@ -190,26 +168,21 @@ export const useCourses = (companyId?: string) => {
             return;
           }
 
-          const companyIds = userCompanies.map(uc => uc.empresa_id);
+          // Corrigido o problema de tipo aqui - explicitamente convertendo para string[]
+          const companyIds = userCompanies.map(uc => uc.empresa_id) as string[];
           
           // Tentar usar cache para cursos das empresas
           const companyCourseKey = `company_courses_${companyIds.join('_')}`;
+          const coursesCache = getCache<Array<{course_id: string}>>({
+            key: companyCourseKey,
+            expirationMinutes: 5
+          });
+          
           let companyCourses;
-          const cachedCompanyCourses = localStorage.getItem(companyCourseKey);
-          
-          if (cachedCompanyCourses && !forceRefresh) {
-            try {
-              const { data, timestamp } = JSON.parse(cachedCompanyCourses);
-              if (Date.now() - timestamp < CACHE_EXPIRATION) {
-                companyCourses = data;
-                console.log('Usando cursos das empresas em cache');
-              }
-            } catch (e) {
-              console.error('Erro ao processar cursos das empresas em cache:', e);
-            }
-          }
-          
-          if (!companyCourses) {
+          if (coursesCache && !forceRefresh) {
+            companyCourses = coursesCache;
+            console.log('Usando cursos das empresas em cache');
+          } else {
             const { data } = await supabase
               .from('company_courses')
               .select('course_id')
@@ -218,14 +191,7 @@ export const useCourses = (companyId?: string) => {
             companyCourses = data;
             
             // Salvar em cache
-            try {
-              localStorage.setItem(companyCourseKey, JSON.stringify({
-                data,
-                timestamp: Date.now()
-              }));
-            } catch (e) {
-              console.error('Erro ao cachear cursos das empresas:', e);
-            }
+            setCache({ key: companyCourseKey }, data);
           }
 
           if (!companyCourses?.length) {
@@ -234,7 +200,8 @@ export const useCourses = (companyId?: string) => {
             return;
           }
 
-          const courseIds = [...new Set(companyCourses.map(cc => cc.course_id))];
+          // Corrigido o problema de tipo aqui também
+          const courseIds = [...new Set(companyCourses.map(cc => cc.course_id))] as string[];
           
           // Buscar cursos específicos
           const { data: courses } = await supabase
