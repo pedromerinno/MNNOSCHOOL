@@ -56,12 +56,12 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
       </div>;
   }
 
-  // Special case for a single course - centered layout
+  // Special case for a single course - centered layout with increased width
   if (hasSingleCourse) {
     const course = courses[0];
     return (
-      <div className="w-full relative overflow-hidden py-0 flex justify-center">
-        <div className="w-full max-w-4xl mx-auto">
+      <div className="w-full relative overflow-hidden py-0 flex justify-center mt-6">
+        <div className="w-full max-w-5xl mx-auto">
           <div className="relative h-[600px] rounded-2xl overflow-hidden cursor-pointer group">
             <img 
               src={course.image_url || "https://source.unsplash.com/random"} 
