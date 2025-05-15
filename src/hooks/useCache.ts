@@ -1,15 +1,28 @@
 
+/**
+ * Opções para operações de cache
+ */
 interface CacheOptions {
   key: string;
   expirationMinutes?: number;
 }
 
+/**
+ * Interface para dados armazenados em cache
+ */
 interface CacheData<T> {
   data: T;
   timestamp: number;
 }
 
+/**
+ * Hook para gerenciar operações de cache no localStorage com expiração
+ * e tratamento de erros
+ */
 export const useCache = () => {
+  /**
+   * Armazena dados no cache com expiração
+   */
   const setCache = <T>(options: CacheOptions, data: T): void => {
     try {
       const { key, expirationMinutes = 30 } = options;
@@ -26,6 +39,9 @@ export const useCache = () => {
     }
   };
   
+  /**
+   * Recupera dados do cache, verificando expiração
+   */
   const getCache = <T>(options: CacheOptions): T | null => {
     try {
       const { key, expirationMinutes = 30 } = options;
@@ -52,6 +68,9 @@ export const useCache = () => {
     }
   };
   
+  /**
+   * Remove dados do cache
+   */
   const clearCache = (options: CacheOptions): void => {
     try {
       const { key } = options;
