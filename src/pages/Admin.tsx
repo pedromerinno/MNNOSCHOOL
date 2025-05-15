@@ -31,33 +31,21 @@ const AdminPage = () => {
   useEffect(() => {
     if (!authLoading) {
       setIsReady(true);
+      
+      // Get initial tab from URL params if present
+      const params = new URLSearchParams(location.search);
+      const tabParam = params.get('tab');
+      if (tabParam) {
+        setActiveTab(tabParam);
+      }
     }
-  }, [authLoading]);
+  }, [authLoading, location.search]);
 
   // Handle tab change with a proper React state update - make it memoized to avoid rerenders
   const handleTabChange = useCallback((tab: string) => {
     console.log("Changing tab to:", tab);
-    // Prevent unnecessary re-renders if tab is the same
-    setActiveTab(prevTab => {
-      if (prevTab !== tab) {
-        // Using history.pushState to update URL without page reload
-        const newUrl = new URL(window.location.href);
-        newUrl.searchParams.set('tab', tab);
-        window.history.pushState({}, '', newUrl);
-        return tab;
-      }
-      return prevTab;
-    });
+    setActiveTab(tab);
   }, []);
-
-  // Sync URL parameters with active tab on initial load
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const tabParam = params.get('tab');
-    if (tabParam && tabParam !== activeTab) {
-      setActiveTab(tabParam);
-    }
-  }, [location.search]);
 
   if (!isReady) {
     return <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919] flex items-center justify-center">
