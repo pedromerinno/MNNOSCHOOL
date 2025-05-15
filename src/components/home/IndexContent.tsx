@@ -1,16 +1,45 @@
 
-import { Suspense, lazy } from "react";
-import { IndexLoadingState } from "./IndexLoadingState";
-
-// Corrigindo a importação lazy para usar o default export
-const UserHome = lazy(() => import("@/components/home/UserHome"));
+import React, { useEffect, useState } from 'react';
+import { UserHome } from './UserHome';
+import { LoadingState } from './LoadingState';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCompanies } from '@/hooks/useCompanies';
+import { toast } from 'sonner';
 
 export const IndexContent = () => {
-  return (
-    <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
-      <Suspense fallback={<IndexLoadingState />}>
-        <UserHome />
-      </Suspense>
-    </div>
-  );
+  const { loading: authLoading } = useAuth();
+  const { userCompanies, selectedCompany, isLoading: companiesLoading } = useCompanies();
+  const [contentKey, setContentKey] = useState(Date.now());
+  
+  // Listen for company selection events to force re-render
+  useEffect(() => {
+    const handleCompanyEvent = () => {
+      console.log("IndexContent: Company event detected, forcing re-render");
+      setContentKey(Date.now());
+    };
+    
+    window.addEventListener('company-selected', handleCompanyEvent);
+    window.addEventListener('company-changed', handleCompanyEvent);
+    window.addEventListener('force-reload-companies', handleCompanyEvent);
+    
+    return () => {
+      window.removeEventListener('company-selected', handleCompanyEvent);
+      window.removeEventListener('company-changed', handleCompanyEvent);
+      window.removeEventListener('force-reload-companies', handleCompanyEvent);
+    };
+  }, []);
+  
+  // Notify on company selection
+  useEffect(() => {
+    if (selectedCompany && !authLoading && !companiesLoading) {
+      console.log("IndexContent: Company selected:", selectedCompany.nome);
+    }
+  }, [selectedCompany, authLoading, companiesLoading]);
+
+  if (authLoading || companiesLoading) {
+    return <LoadingState />;
+  }
+
+  // Force re-render when key changes
+  return <div key={contentKey}><UserHome /></div>;
 };

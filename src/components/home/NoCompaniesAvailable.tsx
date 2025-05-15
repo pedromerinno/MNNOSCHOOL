@@ -1,10 +1,10 @@
-
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { CompanySelectionDialog } from "./CompanySelectionDialog";
 import { toast } from "sonner";
+import { UserHome } from "./UserHome";
 
 export const NoCompaniesAvailable = () => {
   const [showDialog, setShowDialog] = useState(false);
@@ -15,17 +15,22 @@ export const NoCompaniesAvailable = () => {
     userCompanies,
     selectedCompany
   } = useCompanies();
+  
+  const [attemptedSelection, setAttemptedSelection] = useState(false);
+  const [contentKey, setContentKey] = useState(Date.now());
 
-  // Efeito para selecionar a primeira empresa quando disponível
+  // Effect for selecting the first company when available
   useEffect(() => {
-    if (user?.id && userCompanies.length > 0 && !selectedCompany && !showDialog) {
+    if (user?.id && userCompanies.length > 0 && !selectedCompany && !attemptedSelection) {
       console.log("[NoCompaniesAvailable] Empresas disponíveis:", userCompanies.length);
+      setAttemptedSelection(true);
+      
       try {
-        // Tentativa de selecionar a primeira empresa automaticamente
+        // Attempt to select the first company automatically
         selectCompany(user.id, userCompanies[0]);
         toast.success(`Empresa ${userCompanies[0].nome} selecionada automaticamente`);
         
-        // Disparar um evento para notificar outros componentes
+        // Dispatch an event to notify other components
         const event = new CustomEvent('company-selected', {
           detail: {
             userId: user.id,
@@ -34,7 +39,7 @@ export const NoCompaniesAvailable = () => {
         });
         window.dispatchEvent(event);
         
-        // Forçar atualização na interface
+        // Force update interface with a delay
         setTimeout(() => {
           window.dispatchEvent(new Event('force-reload-companies'));
           
@@ -43,17 +48,14 @@ export const NoCompaniesAvailable = () => {
             detail: { company: userCompanies[0] }
           }));
           
-          // Reload página para garantir atualização completa
-          if (!selectedCompany) {
-            window.location.reload();
-          }
+          setContentKey(Date.now());
         }, 500);
       } catch (error) {
         console.error("[NoCompaniesAvailable] Erro ao selecionar empresa:", error);
         toast.error("Erro ao selecionar empresa. Tente novamente.");
       }
     }
-  }, [user, userCompanies, selectCompany, selectedCompany, showDialog]);
+  }, [user, userCompanies, selectCompany, selectedCompany, attemptedSelection]);
   
   const handleCompanyCreated = () => {
     setShowDialog(false);
@@ -62,13 +64,13 @@ export const NoCompaniesAvailable = () => {
         if (companies.length > 0) {
           toast.success("Empresa criada e selecionada com sucesso!");
           
-          // Após criar, selecionar automaticamente
+          // Auto-select after creation
           selectCompany(user.id, companies[0]);
           
-          // Forçar atualização na interface
+          // Force interface update
           setTimeout(() => {
             window.dispatchEvent(new Event('force-reload-companies'));
-            window.location.reload();
+            setContentKey(Date.now());
           }, 500);
         }
       });
@@ -79,6 +81,13 @@ export const NoCompaniesAvailable = () => {
     console.log("[NoCompaniesAvailable] Company type selected:", isExisting ? "existing" : "new");
   };
   
+  // If companies are available and one is selected, show the home content
+  if (userCompanies.length > 0 && selectedCompany) {
+    console.log("[NoCompaniesAvailable] Company is selected, rendering UserHome");
+    return <UserHome key={contentKey} />;
+  }
+
+  // Otherwise show the "no companies available" view
   return (
     <>
       <CompanySelectionDialog 
