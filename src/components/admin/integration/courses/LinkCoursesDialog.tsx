@@ -6,6 +6,7 @@ import { Loader2, BookPlus, Check } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Course {
   id: string;
@@ -36,6 +37,7 @@ export const LinkCoursesDialog: React.FC<LinkCoursesDialogProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [existingLinks, setExistingLinks] = useState<string[]>([]);
+  const { userProfile } = useAuth();
 
   // Use company color with fallback to purple
   const primaryColor = companyColor || "#9b87f5";
@@ -49,14 +51,6 @@ export const LinkCoursesDialog: React.FC<LinkCoursesDialogProps> = ({
     borderColor: primaryColor,
     backgroundColor: `${primaryColor}10` // 10% opacity
   };
-  
-  const buttonStyle = {
-    backgroundColor: primaryColor,
-    ":hover": {
-      backgroundColor: primaryColor,
-      opacity: 0.9
-    }
-  };
 
   // Fetch all courses and existing company-course relationships when dialog opens
   useEffect(() => {
@@ -68,14 +62,65 @@ export const LinkCoursesDialog: React.FC<LinkCoursesDialogProps> = ({
   const fetchAllCoursesAndLinks = async () => {
     setIsLoading(true);
     try {
-      // Get all courses
-      const { data: coursesData, error: coursesError } = await supabase
-        .from('courses')
-        .select('*')
-        .order('title');
-
-      if (coursesError) {
-        throw coursesError;
+      let coursesData;
+      
+      // Filter courses based on user role and permissions
+      if (userProfile?.super_admin) {
+        // Super admins can see all courses
+        const { data, error } = await supabase
+          .from('courses')
+          .select('*')
+          .order('title');
+          
+        if (error) throw error;
+        coursesData = data;
+      } else if (userProfile?.is_admin) {
+        // Regular admins can only see courses for companies they have access to
+        const { data: userCompanies, error: companiesError } = await supabase
+          .from('user_empresa')
+          .select('empresa_id')
+          .eq('user_id', userProfile.id);
+          
+        if (companiesError) throw companiesError;
+        
+        if (!userCompanies || userCompanies.length === 0) {
+          setAllCourses([]);
+          setIsLoading(false);
+          return;
+        }
+        
+        const companyIds = userCompanies.map(uc => uc.empresa_id);
+        
+        // Get course IDs from company_courses for these companies
+        const { data: companyCourses, error: coursesError } = await supabase
+          .from('company_courses')
+          .select('course_id')
+          .in('empresa_id', companyIds);
+          
+        if (coursesError) throw coursesError;
+        
+        if (!companyCourses || companyCourses.length === 0) {
+          setAllCourses([]);
+          setIsLoading(false);
+          return;
+        }
+        
+        const courseIds = [...new Set(companyCourses.map(cc => cc.course_id))];
+        
+        // Get the actual course data
+        const { data, error } = await supabase
+          .from('courses')
+          .select('*')
+          .in('id', courseIds)
+          .order('title');
+          
+        if (error) throw error;
+        coursesData = data;
+      } else {
+        // Non-admin users shouldn't see any courses
+        setAllCourses([]);
+        setIsLoading(false);
+        return;
       }
 
       // Get existing course links for this company
@@ -197,18 +242,39 @@ export const LinkCoursesDialog: React.FC<LinkCoursesDialogProps> = ({
                     } : {})
                   } as React.CSSProperties}
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium truncate">{course.title}</h3>
-                      {course.description && (
-                        <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1">
-                          {course.description}
-                        </p>
-                      )}
-                    </div>
-                    {selectedCourses.includes(course.id) && (
-                      <Check className="h-5 w-5" style={{ color: primaryColor }} />
+                  <div className="flex items-center gap-4">
+                    {/* Course thumbnail */}
+                    {course.image_url ? (
+                      <img 
+                        src={course.image_url} 
+                        alt={course.title}
+                        className="w-16 h-12 object-cover rounded-md flex-shrink-0"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "/placeholder.svg";
+                        }}
+                      />
+                    ) : (
+                      <div className="w-16 h-12 bg-gray-100 dark:bg-gray-700 rounded-md flex items-center justify-center flex-shrink-0">
+                        <BookPlus className="h-5 w-5 text-gray-400" />
+                      </div>
                     )}
+                    
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-medium truncate">{course.title}</h3>
+                          {course.description && (
+                            <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1">
+                              {course.description}
+                            </p>
+                          )}
+                        </div>
+                        {selectedCourses.includes(course.id) && (
+                          <Check className="h-5 w-5 flex-shrink-0" style={{ color: primaryColor }} />
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
