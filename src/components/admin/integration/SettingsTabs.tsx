@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Tabs, TabsList } from "@/components/ui/tabs";
 import { Book, Briefcase, Key, Users, Video, Building } from "lucide-react";
@@ -6,7 +5,6 @@ import { SettingsTabTrigger } from './settings/SettingsTabTrigger';
 import { SettingsTabContent } from './settings/SettingsTabContent';
 import { SettingsTabsProps } from './settings/types';
 import { useAuth } from '@/contexts/AuthContext';
-
 export const SettingsTabs: React.FC<SettingsTabsProps> = ({
   company,
   activeTab,
@@ -40,21 +38,7 @@ export const SettingsTabs: React.FC<SettingsTabsProps> = ({
     label: "Colaboradores",
     icon: Users
   }];
-  
-  // Implementação atualizada do manipulador de abas para evitar recarregamentos
-  const handleTabChange = (value: string) => {
-    // Evita o recarregamento da página definindo o estado localmente primeiro
-    setActiveTab(value);
-    
-    // Apenas atualiza o estado da URL sem causar navegação
-    if (typeof window !== 'undefined') {
-      const currentUrl = new URL(window.location.href);
-      currentUrl.searchParams.set('subtab', value);
-      window.history.replaceState({}, '', currentUrl.toString());
-    }
-  };
-  
-  return <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+  return <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <div className="border-b border-gray-100 dark:border-gray-800 py-2 px-2 bg-transparent">
         <TabsList className="flex gap-2 rounded-2xl p-1.5 bg-transparent dark:bg-transparent w-full justify-start">
           {tabs.map(tab => <SettingsTabTrigger key={tab.value} value={tab.value} icon={tab.icon} label={tab.label} activeTab={activeTab} companyColor={company?.cor_principal} />)}

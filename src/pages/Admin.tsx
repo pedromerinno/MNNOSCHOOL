@@ -1,6 +1,5 @@
-
-import React, { useState, useEffect, useCallback } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
 import { UserManagement } from '@/components/admin/UserManagement';
 import { CompanyManagement } from '@/components/admin/CompanyManagement';
@@ -14,66 +13,20 @@ import { Button } from '@/components/ui/button';
 import { CompanyNoticesAdminList } from '@/components/admin/CompanyNoticesAdminList';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
-import { toast } from 'sonner';
 
 const AdminPage = () => {
   const {
     userProfile,
     loading: authLoading
   } = useAuth();
-  
-  const location = useLocation();
-  
-  // Initialize with the appropriate default tab based on user role
   const [activeTab, setActiveTab] = useState(userProfile?.super_admin ? "platform" : "companies");
   const [isReady, setIsReady] = useState(false);
 
-  // Inicialização melhorada para evitar recarregamentos
   useEffect(() => {
     if (!authLoading) {
-      // Lógica para determinar a aba inicial
-      const params = new URLSearchParams(location.search);
-      const tabParam = params.get('tab');
-      
-      // Definir a aba ativa sem navegação
-      if (tabParam) {
-        setActiveTab(tabParam);
-      } else {
-        // Se não houver parâmetro, use o padrão
-        const defaultTab = userProfile?.super_admin ? "platform" : "companies";
-        
-        // Atualiza a URL sem causar navegação
-        if (defaultTab) {
-          const newUrl = new URL(window.location.href);
-          newUrl.searchParams.set('tab', defaultTab);
-          window.history.replaceState({}, '', newUrl.toString());
-        }
-      }
-      
       setIsReady(true);
     }
-  }, [authLoading, location.search, userProfile]);
-
-  // Manipulador de mudança de aba otimizado para evitar recarregamentos
-  const handleTabChange = useCallback((tab: string) => {
-    // Atualiza o estado diretamente
-    setActiveTab(tab);
-    console.log("Mudando para a aba:", tab);
-  }, []);
-
-  // Lidar com navegação do histórico
-  useEffect(() => {
-    const handlePopState = () => {
-      const params = new URLSearchParams(window.location.search);
-      const tabParam = params.get('tab');
-      if (tabParam) {
-        setActiveTab(tabParam);
-      }
-    };
-    
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
+  }, [authLoading]);
 
   if (!isReady) {
     return <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919] flex items-center justify-center">
@@ -108,7 +61,7 @@ const AdminPage = () => {
       <div className="container mx-auto px-0 lg:px-4 py-6 max-w-[1500px]">
         <SidebarProvider defaultOpen={true}>
           <div className="flex w-full min-h-[calc(100vh-120px)] rounded-lg overflow-hidden">
-            <AdminSidebar activeTab={activeTab} onTabChange={handleTabChange} />
+            <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />
             <div className="flex-1 overflow-auto">
               <div className="p-6">
                 <ErrorBoundary>
@@ -121,5 +74,4 @@ const AdminPage = () => {
       </div>
     </div>;
 };
-
 export default AdminPage;
