@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { useSettingsManagement } from './useSettingsManagement';
@@ -6,6 +7,7 @@ import { SettingsTabs } from './SettingsTabs';
 import { NoCompanySelected } from './NoCompanySelected';
 import { LoadingState } from './LoadingState';
 import { toast } from 'sonner';
+
 export const SettingsManagement: React.FC = () => {
   const {
     companies,
@@ -17,6 +19,28 @@ export const SettingsManagement: React.FC = () => {
     handleCompanyChange,
     handleFormSubmit
   } = useSettingsManagement();
+  
+  // Função de envio de formulário melhorada para garantir tratamento adequado de promises
+  const onFormSubmit = async (data: any): Promise<void> => {
+    try {
+      // Prevenção explícita de comportamento padrão caso seja chamado de um evento
+      if (data?.preventDefault) {
+        data.preventDefault();
+        data.stopPropagation();
+      }
+      
+      // Aguarda a conclusão da promise para garantir que o processo seja finalizado
+      await handleFormSubmit(data);
+      // A mensagem de toast de sucesso é tratada em handleFormSubmit
+    } catch (error) {
+      console.error("Erro no envio do formulário:", error);
+      toast.error("Ocorreu um erro ao salvar as configurações");
+    }
+    
+    // Impede o recarregamento da página após o envio do formulário
+    return Promise.resolve();
+  };
+  
   return <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
@@ -33,7 +57,7 @@ export const SettingsManagement: React.FC = () => {
 
       {selectedCompany ? <Card>
           <CardContent className="p-4 py-[30px] px-[30px]">
-            <SettingsTabs company={selectedCompany} activeTab={activeTab} setActiveTab={setActiveTab} handleFormSubmit={handleFormSubmit} isSaving={isSaving} />
+            <SettingsTabs company={selectedCompany} activeTab={activeTab} setActiveTab={setActiveTab} handleFormSubmit={onFormSubmit} isSaving={isSaving} />
           </CardContent>
         </Card> : <NoCompanySelected />}
     </div>;
