@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,12 +14,15 @@ import { Button } from '@/components/ui/button';
 import { CompanyNoticesAdminList } from '@/components/admin/CompanyNoticesAdminList';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
+import { toast } from 'sonner';
 
 const AdminPage = () => {
   const {
     userProfile,
     loading: authLoading
   } = useAuth();
+  
+  // Initialize with the appropriate default tab based on user role
   const [activeTab, setActiveTab] = useState(userProfile?.super_admin ? "platform" : "companies");
   const [isReady, setIsReady] = useState(false);
 
@@ -27,6 +31,12 @@ const AdminPage = () => {
       setIsReady(true);
     }
   }, [authLoading]);
+
+  // Handle tab change with a proper React state update
+  const handleTabChange = (tab: string) => {
+    console.log("Changing tab to:", tab);
+    setActiveTab(tab);
+  };
 
   if (!isReady) {
     return <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919] flex items-center justify-center">
@@ -61,7 +71,7 @@ const AdminPage = () => {
       <div className="container mx-auto px-0 lg:px-4 py-6 max-w-[1500px]">
         <SidebarProvider defaultOpen={true}>
           <div className="flex w-full min-h-[calc(100vh-120px)] rounded-lg overflow-hidden">
-            <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+            <AdminSidebar activeTab={activeTab} onTabChange={handleTabChange} />
             <div className="flex-1 overflow-auto">
               <div className="p-6">
                 <ErrorBoundary>
@@ -74,4 +84,5 @@ const AdminPage = () => {
       </div>
     </div>;
 };
+
 export default AdminPage;

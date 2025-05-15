@@ -51,13 +51,26 @@ export const AdminSidebar = ({
     }
   ];
 
+  // Improved click handler to prevent default behavior
+  const handleMenuClick = (value: string) => (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent default navigation
+    if (activeTab !== value) {
+      onTabChange(value);
+    }
+  };
+
   return <Sidebar className="border-r border-gray-200 dark:border-gray-800">
       <SidebarContent className="mx-0 py-[70px]">
         <SidebarGroup>
           <SidebarGroupContent className="pt-4">
             <SidebarMenu>
               {menuItems.map(item => <SidebarMenuItem key={item.value}>
-                  <SidebarMenuButton data-active={activeTab === item.value} onClick={() => onTabChange(item.value)} tooltip={item.label} className="py-[30px] px-[30px]">
+                  <SidebarMenuButton 
+                    data-active={activeTab === item.value} 
+                    onClick={handleMenuClick(item.value)}
+                    tooltip={item.label} 
+                    className="py-[30px] px-[30px]"
+                  >
                     <item.icon className={`h-5 w-5 ${activeTab === item.value ? 'text-primary' : 'text-gray-500 dark:text-gray-400'}`} />
                     <span>{item.label}</span>
                   </SidebarMenuButton>
