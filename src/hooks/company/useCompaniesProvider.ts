@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanyState } from "./useCompanyState";
 import { useCompanyFetching } from "./useCompanyFetching";
@@ -19,6 +20,7 @@ export const useCompaniesProvider = () => {
     fetchCount,
     isSuperAdmin,
     setIsSuperAdmin,
+    setSelectedCompany, // Make sure this is included from useCompanyState
     ...stateActions
   } = useCompanyState();
   
