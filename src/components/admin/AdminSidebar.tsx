@@ -51,18 +51,21 @@ export const AdminSidebar = ({
     }
   ];
 
-  // Nova implementação do manipulador de clique para evitar navegação padrão do navegador
+  // Manipulador de clique completamente atualizado para garantir que não haja recarregamento
   const handleMenuClick = (value: string) => (e: React.MouseEvent) => {
-    // Evita o comportamento padrão do navegador que causaria um recarregamento
+    // Prevenção explícita do comportamento padrão
     e.preventDefault();
+    e.stopPropagation();
     
-    // Atualiza a URL sem causar recarregamento da página
-    const newUrl = new URL(window.location.href);
-    newUrl.searchParams.set('tab', value);
-    window.history.pushState({}, '', newUrl);
-    
-    // Chama o manipulador para atualizar o estado
+    // Atualiza o estado local primeiro
     onTabChange(value);
+    
+    // Atualiza apenas o estado da URL sem navegação
+    if (typeof window !== 'undefined') {
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.set('tab', value);
+      window.history.replaceState({}, '', currentUrl.toString());
+    }
   };
 
   return <Sidebar className="border-r border-gray-200 dark:border-gray-800">

@@ -28,30 +28,40 @@ const AdminPage = () => {
   const [activeTab, setActiveTab] = useState(userProfile?.super_admin ? "platform" : "companies");
   const [isReady, setIsReady] = useState(false);
 
-  // Handle URL params for tab selection on initial load and navigations
+  // Inicialização melhorada para evitar recarregamentos
   useEffect(() => {
     if (!authLoading) {
-      setIsReady(true);
-      
-      // Get initial tab from URL params if present
+      // Lógica para determinar a aba inicial
       const params = new URLSearchParams(location.search);
       const tabParam = params.get('tab');
+      
+      // Definir a aba ativa sem navegação
       if (tabParam) {
         setActiveTab(tabParam);
+      } else {
+        // Se não houver parâmetro, use o padrão
+        const defaultTab = userProfile?.super_admin ? "platform" : "companies";
+        
+        // Atualiza a URL sem causar navegação
+        if (defaultTab) {
+          const newUrl = new URL(window.location.href);
+          newUrl.searchParams.set('tab', defaultTab);
+          window.history.replaceState({}, '', newUrl.toString());
+        }
       }
+      
+      setIsReady(true);
     }
-  }, [authLoading, location.search]);
+  }, [authLoading, location.search, userProfile]);
 
   // Manipulador de mudança de aba otimizado para evitar recarregamentos
   const handleTabChange = useCallback((tab: string) => {
     // Atualiza o estado diretamente
     setActiveTab(tab);
-    
-    // Registra a operação no console
     console.log("Mudando para a aba:", tab);
   }, []);
 
-  // Adicionar um ouvinte para eventos popstate para lidar com navegação do histórico
+  // Lidar com navegação do histórico
   useEffect(() => {
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search);

@@ -41,15 +41,17 @@ export const SettingsTabs: React.FC<SettingsTabsProps> = ({
     icon: Users
   }];
   
-  // Nova implementação para evitar recarregamentos ao trocar de aba
+  // Implementação atualizada do manipulador de abas para evitar recarregamentos
   const handleTabChange = (value: string) => {
-    // Define o estado ativo localmente
+    // Evita o recarregamento da página definindo o estado localmente primeiro
     setActiveTab(value);
     
-    // Atualiza a URL sem recarregar a página
-    const newUrl = new URL(window.location.href);
-    newUrl.searchParams.set('subtab', value);
-    window.history.pushState({}, '', newUrl);
+    // Apenas atualiza o estado da URL sem causar navegação
+    if (typeof window !== 'undefined') {
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.set('subtab', value);
+      window.history.replaceState({}, '', currentUrl.toString());
+    }
   };
   
   return <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">

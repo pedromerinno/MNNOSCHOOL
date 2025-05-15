@@ -23,6 +23,12 @@ export const SettingsManagement: React.FC = () => {
   // Função de envio de formulário melhorada para garantir tratamento adequado de promises
   const onFormSubmit = async (data: any): Promise<void> => {
     try {
+      // Prevenção explícita de comportamento padrão caso seja chamado de um evento
+      if (data?.preventDefault) {
+        data.preventDefault();
+        data.stopPropagation();
+      }
+      
       // Aguarda a conclusão da promise para garantir que o processo seja finalizado
       await handleFormSubmit(data);
       // A mensagem de toast de sucesso é tratada em handleFormSubmit
