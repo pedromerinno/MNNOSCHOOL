@@ -43,6 +43,8 @@ export const CompanyCourseManagement: React.FC<CompanyCourseManagementProps> = (
     fetchCourses
   } = useCourses(currentCompanyId);
 
+  console.log(`CompanyCourseManagement: Using company ID ${currentCompanyId}, found ${courses.length} courses`);
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-6">

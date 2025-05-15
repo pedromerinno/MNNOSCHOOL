@@ -28,49 +28,36 @@ export const useCourses = (companyId?: string) => {
   const loadCourses = async () => {
     setIsLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const currentUserId = session?.user?.id;
+      console.log('Loading courses with companyId:', companyId || 'none');
+      
+      if (companyId) {
+        // If companyId is provided, directly fetch courses for that company
+        const companySpecificCourses = await fetchCourses(companyId);
+        console.log(`Fetched ${companySpecificCourses.length} courses for company ${companyId}`);
+        setCourses(companySpecificCourses);
+      } else {
+        // If no companyId, follow the role-based logic
+        const { data: { session } } = await supabase.auth.getSession();
+        const currentUserId = session?.user?.id;
 
-      if (!currentUserId) {
-        setCourses([]);
-        setIsLoading(false);
-        return;
-      }
+        if (!currentUserId) {
+          setCourses([]);
+          setIsLoading(false);
+          return;
+        }
 
-      const { data: currentUserProfile } = await supabase
-        .from('profiles')
-        .select('is_admin, super_admin')
-        .eq('id', currentUserId)
-        .single();
+        const { data: currentUserProfile } = await supabase
+          .from('profiles')
+          .select('is_admin, super_admin')
+          .eq('id', currentUserId)
+          .single();
 
-      if (currentUserProfile?.super_admin) {
-        // Super admins see either all courses or filtered by company ID if provided
-        const fetchedCourses = await fetchCourses(companyId);
-        setCourses(fetchedCourses);
-      } else if (currentUserProfile?.is_admin) {
-        if (companyId) {
-          // If company ID is provided, fetch only courses for that specific company
-          const { data: companyCourses } = await supabase
-            .from('company_courses')
-            .select('course_id')
-            .eq('empresa_id', companyId);
-            
-          if (!companyCourses?.length) {
-            setCourses([]);
-            setIsLoading(false);
-            return;
-          }
-          
-          const courseIds = companyCourses.map(cc => cc.course_id);
-          
-          const { data: courses } = await supabase
-            .from('courses')
-            .select('*')
-            .in('id', courseIds);
-            
-          setCourses(courses || []);
-        } else {
-          // If no company ID provided, fetch courses for all companies the admin has access to
+        if (currentUserProfile?.super_admin) {
+          // Super admins see all courses if no companyId provided
+          const fetchedCourses = await fetchCourses();
+          setCourses(fetchedCourses);
+        } else if (currentUserProfile?.is_admin) {
+          // Regular admins see courses for their companies
           const { data: userCompanies } = await supabase
             .from('user_empresa')
             .select('empresa_id')
@@ -103,10 +90,10 @@ export const useCourses = (companyId?: string) => {
             .in('id', courseIds);
 
           setCourses(courses || []);
+        } else {
+          // Non-admin users see no courses
+          setCourses([]);
         }
-      } else {
-        // Non-admin users see no courses
-        setCourses([]);
       }
     } catch (error) {
       console.error('Error loading courses:', error);
