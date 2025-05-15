@@ -15,7 +15,7 @@ export const NoCompaniesAvailable = () => {
     selectCompany
   } = useCompanies();
 
-  // Effect para selecionar a primeira empresa quando disponível
+  // Efeito para selecionar a primeira empresa quando disponível
   useEffect(() => {
     if (user?.id && userCompanies.length > 0 && !showDialog) {
       console.log("[NoCompaniesAvailable] Empresas disponíveis:", userCompanies.length);
@@ -31,6 +31,11 @@ export const NoCompaniesAvailable = () => {
           }
         });
         window.dispatchEvent(event);
+        
+        // Forçar atualização na interface
+        setTimeout(() => {
+          window.dispatchEvent(new Event('force-reload-companies'));
+        }, 500);
       } catch (error) {
         console.error("[NoCompaniesAvailable] Erro ao selecionar empresa:", error);
       }

@@ -19,7 +19,7 @@ const AdminPage = () => {
   } = useAuth();
   
   // Utilize useSearchParams para ler o estado da URL
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
   
   const [activeTab, setActiveTab] = useState(
@@ -31,7 +31,14 @@ const AdminPage = () => {
   const handleTabChange = useCallback((tab: string) => {
     console.log(`Admin tab changed to: ${tab}`);
     setActiveTab(tab);
-  }, []);
+    
+    // Atualizar URL sem recarregar a página
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      newParams.set('tab', tab);
+      return newParams;
+    }, { replace: true });
+  }, [setSearchParams]);
 
   // Wait for auth to be ready before rendering
   useEffect(() => {

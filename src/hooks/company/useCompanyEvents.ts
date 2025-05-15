@@ -14,6 +14,11 @@ export const useCompanyEvents = () => {
       if (selectedCompany) {
         console.log("Setting selected company from event:", selectedCompany.nome);
         setSelectedCompanyFromEvent(selectedCompany);
+        
+        // Salvar em localStorage para persistência
+        localStorage.setItem('selectedCompany', JSON.stringify(selectedCompany));
+        localStorage.setItem('selectedCompanyId', selectedCompany.id);
+        localStorage.setItem('selectedCompanyName', selectedCompany.nome);
       }
     };
     
