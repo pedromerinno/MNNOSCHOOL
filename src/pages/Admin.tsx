@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useCallback } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
 import { UserManagement } from '@/components/admin/UserManagement';
@@ -22,11 +23,18 @@ const AdminPage = () => {
   const [activeTab, setActiveTab] = useState(userProfile?.super_admin ? "platform" : "companies");
   const [isReady, setIsReady] = useState(false);
 
+  // Wait for auth to be ready before rendering
   useEffect(() => {
     if (!authLoading) {
       setIsReady(true);
     }
   }, [authLoading]);
+
+  // Memoized tab change handler to prevent unnecessary re-renders
+  const handleTabChange = useCallback((tab: string) => {
+    console.log(`Admin tab changed to: ${tab}`);
+    setActiveTab(tab);
+  }, []);
 
   if (!isReady) {
     return <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919] flex items-center justify-center">
@@ -38,6 +46,7 @@ const AdminPage = () => {
     return <Navigate to="/" replace />;
   }
 
+  // Content selector based on active tab
   const getActiveContent = () => {
     switch (activeTab) {
       case "platform":
@@ -61,7 +70,7 @@ const AdminPage = () => {
       <div className="container mx-auto px-0 lg:px-4 py-6 max-w-[1500px]">
         <SidebarProvider defaultOpen={true}>
           <div className="flex w-full min-h-[calc(100vh-120px)] rounded-lg overflow-hidden">
-            <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+            <AdminSidebar activeTab={activeTab} onTabChange={handleTabChange} />
             <div className="flex-1 overflow-auto">
               <div className="p-6">
                 <ErrorBoundary>

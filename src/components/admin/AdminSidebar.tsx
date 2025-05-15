@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useCallback, useRef } from 'react';
 import { Sidebar, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupContent, SidebarFooter } from "@/components/ui/sidebar";
 import { LayoutDashboard, Building, Users, Book, Settings, ArrowLeftRight, Bell } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,6 +18,8 @@ export const AdminSidebar = ({
     userProfile
   } = useAuth();
   const navigate = useNavigate();
+  const clickTimeRef = useRef<number>(0);
+  const isHandlingClickRef = useRef<boolean>(false);
 
   // Define menu items based on user role
   const menuItems = [
@@ -53,15 +55,35 @@ export const AdminSidebar = ({
     }
   ];
 
-  const handleNavigation = (tabValue: string) => {
-    // Usar apenas onTabChange para atualizar a tab sem recarregar a página
+  // Debounced navigation handler
+  const handleNavigation = useCallback((tabValue: string) => {
+    // Implement debounce to prevent double clicks
+    const now = Date.now();
+    if (now - clickTimeRef.current < 500 || isHandlingClickRef.current) {
+      console.log("Debouncing click, ignoring duplicate");
+      return;
+    }
+    
+    clickTimeRef.current = now;
+    isHandlingClickRef.current = true;
+    
+    console.log(`Tab navigation: ${tabValue}`);
+    
+    // IMPORTANT: Update state directly without route change
+    // This is crucial to prevent page reload
     onTabChange(tabValue);
-  };
+    
+    // Reset handling flag after a delay
+    setTimeout(() => {
+      isHandlingClickRef.current = false;
+    }, 500);
+  }, [onTabChange]);
 
-  const handleReturn = (e: React.MouseEvent) => {
+  // Prevent default and use React Router for back navigation
+  const handleReturn = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     navigate(-1);
-  };
+  }, [navigate]);
 
   return <Sidebar className="border-r border-gray-200 dark:border-gray-800">
       <SidebarContent className="mx-0 py-[70px]">
