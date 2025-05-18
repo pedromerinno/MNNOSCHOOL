@@ -82,16 +82,41 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
       
       console.log("Empresa criada:", companyData);
       
-      // Associate user with company as admin
-      const { error: relationError } = await supabase
-        .from('user_empresa')
-        .insert({
-          user_id: user.id,
-          empresa_id: companyData.id,
-          is_admin: true // Garantindo que o usuário que criou a empresa seja admin
-        });
+      // Associate user with company as admin - com retry e logs adicionais
+      let relationCreated = false;
+      let retryCount = 0;
+      const maxRetries = 3;
       
-      if (relationError) throw relationError;
+      while (!relationCreated && retryCount < maxRetries) {
+        try {
+          console.log(`Tentativa ${retryCount + 1} de associar usuário ${user.id} à empresa ${companyData.id}`);
+          const { error: relationError } = await supabase
+            .from('user_empresa')
+            .insert({
+              user_id: user.id,
+              empresa_id: companyData.id,
+              is_admin: true // Garantindo que o usuário que criou a empresa seja admin
+            });
+          
+          if (relationError) {
+            console.error(`Erro na tentativa ${retryCount + 1}:`, relationError);
+            retryCount++;
+            if (retryCount < maxRetries) {
+              // Espera um tempo antes de tentar novamente
+              await new Promise(resolve => setTimeout(resolve, 500));
+            } else {
+              throw relationError;
+            }
+          } else {
+            relationCreated = true;
+            console.log("Usuário associado com sucesso como admin da empresa");
+          }
+        } catch (err) {
+          console.error("Erro ao associar usuário:", err);
+          retryCount++;
+          if (retryCount >= maxRetries) throw err;
+        }
+      }
       
       // Dispatch event to update company relationships
       window.dispatchEvent(new CustomEvent('company-relation-changed'));

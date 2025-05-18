@@ -23,17 +23,15 @@ const OnboardingLogoUploadField: React.FC<OnboardingLogoUploadFieldProps> = ({
       </Label>
       
       <DragDropImageUpload
-        value={value}
+        value={value || undefined}
         onChange={handleChange}
         objectPrefix="company"
         bucketName="company-assets"
         storagePath="logos"
         label="Arraste e solte o logo da empresa aqui ou clique para selecionar"
-        className="mt-1"
+        className="border-dashed border-2 border-gray-300 hover:border-primary"
+        previewClassName="mt-2 bg-gray-50"
       />
-      <p className="text-xs text-gray-500 mt-1">
-        PNG, JPG ou GIF (máx. 2MB)
-      </p>
     </div>
   );
 };

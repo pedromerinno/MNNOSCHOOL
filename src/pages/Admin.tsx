@@ -31,6 +31,14 @@ const AdminPage = () => {
   // Inicialização melhorada para evitar recarregamentos
   useEffect(() => {
     if (!authLoading) {
+      console.log("Admin page - Auth loading complete", { userProfile });
+      
+      // Verificar se o usuário tem permissões de admin
+      if (!userProfile?.is_admin && !userProfile?.super_admin) {
+        toast.error("Você não tem permissões de administrador");
+        return;
+      }
+      
       // Lógica para determinar a aba inicial
       const params = new URLSearchParams(location.search);
       const tabParam = params.get('tab');
@@ -75,13 +83,23 @@ const AdminPage = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  if (!isReady) {
-    return <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919] flex items-center justify-center">
+  if (authLoading || !isReady) {
+    return (
+      <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919] flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-      </div>;
+      </div>
+    );
   }
 
+  // Log detalhado para debugging
+  console.log("Admin page - Auth check", { 
+    is_admin: userProfile?.is_admin, 
+    super_admin: userProfile?.super_admin,
+    hasAccess: Boolean(userProfile?.is_admin || userProfile?.super_admin)
+  });
+
   if (!userProfile?.is_admin && !userProfile?.super_admin) {
+    console.log("Admin page - Access denied, redirecting to home");
     return <Navigate to="/" replace />;
   }
 

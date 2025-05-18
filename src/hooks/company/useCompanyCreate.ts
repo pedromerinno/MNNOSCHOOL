@@ -16,6 +16,14 @@ export const useCompanyCreate = ({
     setIsLoading(true);
     
     try {
+      // Ensure we have a creator ID
+      if (!companyData.created_by) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData?.session?.user?.id) {
+          companyData.created_by = sessionData.session.user.id;
+        }
+      }
+      
       const { data, error } = await supabase
         .from('empresas')
         .insert(companyData)
@@ -29,12 +37,14 @@ export const useCompanyCreate = ({
       // Update local state with the new company
       setCompanies(prev => [...prev, newCompany]);
       
-      // Associar o usuário criador como admin da empresa
-      if (companyData.created_by) {
+      // Associar o usuário criador como admin da empresa - com verificação extra de criador
+      const creatorId = companyData.created_by;
+      if (creatorId) {
+        console.log("Associando usuário como admin da empresa:", creatorId, newCompany.id);
         const { error: relationError } = await supabase
           .from('user_empresa')
           .insert({
-            user_id: companyData.created_by,
+            user_id: creatorId,
             empresa_id: newCompany.id,
             is_admin: true // Garantindo que o usuário que criou a empresa seja admin
           });
@@ -42,16 +52,20 @@ export const useCompanyCreate = ({
         if (relationError) {
           console.error("Erro ao associar usuário como admin:", relationError);
           // Não falha a operação principal, apenas loga o erro
+        } else {
+          console.log("Usuário associado com sucesso como admin da empresa");
         }
+      } else {
+        console.warn("Não foi possível associar usuário como admin: ID do criador não disponível");
       }
+      
+      // Trigger event so other components can update
+      window.dispatchEvent(new Event('company-relation-changed'));
       
       // Notify success
       toast.success("Empresa criada com sucesso", {
         description: `${newCompany.nome} foi adicionada ao sistema.`,
       });
-      
-      // Trigger event so other components can update
-      window.dispatchEvent(new Event('company-relation-changed'));
       
       return newCompany;
     } catch (error: any) {
