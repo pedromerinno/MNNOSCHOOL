@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export const MakeAdminButton = () => {
-  const { userProfile, refreshUserProfile } = useAuth();
+  const { userProfile } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
   
   // Skip rendering if already admin or super_admin
@@ -35,13 +35,8 @@ export const MakeAdminButton = () => {
       
       toast.success("Você agora é um administrador!");
       
-      // Refresh user profile
-      if (refreshUserProfile) {
-        await refreshUserProfile();
-      } else {
-        // Force refresh page as fallback
-        window.location.reload();
-      }
+      // Refresh the page to update the user's profile
+      window.location.reload();
     } catch (error: any) {
       console.error("Erro ao tornar usuário admin:", error);
       toast.error("Falha ao atualizar permissões", {
