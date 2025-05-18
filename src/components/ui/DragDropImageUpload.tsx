@@ -1,6 +1,6 @@
 
-import React, { useState, useCallback, useRef } from "react";
-import { Upload, Image } from "lucide-react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
+import { Upload, Loader } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -28,7 +28,50 @@ export const DragDropImageUpload: React.FC<DragDropImageUploadProps> = ({
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [bucketReady, setBucketReady] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Ensure bucket exists when component mounts
+  useEffect(() => {
+    const ensureBucketExists = async () => {
+      try {
+        // Check if bucket exists
+        const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+        
+        if (listError) {
+          console.error("Erro ao listar buckets:", listError);
+          return;
+        }
+        
+        const bucket = buckets?.find(b => b.name === bucketName);
+        
+        if (!bucket) {
+          console.log(`Bucket '${bucketName}' não encontrado. Tentando criar...`);
+          const { error: createError } = await supabase.storage.createBucket(bucketName, {
+            public: true,
+            fileSizeLimit: 2097152 // 2MB
+          });
+          
+          if (createError) {
+            console.error(`Erro ao criar bucket '${bucketName}':`, createError);
+            if (createError.message.includes("duplicate key value")) {
+              // Bucket was created by another process, consider it ready
+              setBucketReady(true);
+            }
+            return;
+          }
+          
+          console.log(`Bucket '${bucketName}' criado com sucesso!`);
+        }
+        
+        setBucketReady(true);
+      } catch (error) {
+        console.error("Erro ao verificar/criar bucket:", error);
+      }
+    };
+    
+    ensureBucketExists();
+  }, [bucketName]);
 
   // Handle drag events
   const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -58,6 +101,16 @@ export const DragDropImageUpload: React.FC<DragDropImageUploadProps> = ({
         return;
       }
 
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("A imagem deve ter no máximo 2MB");
+        return;
+      }
+
+      if (!bucketReady) {
+        toast.error("Sistema de armazenamento não está pronto. Tente novamente em instantes.");
+        return;
+      }
+
       setIsUploading(true);
 
       try {
@@ -73,7 +126,10 @@ export const DragDropImageUpload: React.FC<DragDropImageUploadProps> = ({
             upsert: true,
           });
 
-        if (error) throw error;
+        if (error) {
+          console.error("Erro ao fazer upload:", error);
+          throw error;
+        }
 
         const { data: { publicUrl } } = supabase.storage
           .from(bucketName)
@@ -89,7 +145,7 @@ export const DragDropImageUpload: React.FC<DragDropImageUploadProps> = ({
         setIsDragging(false);
       }
     },
-    [onChange, objectPrefix, bucketName, storagePath]
+    [onChange, objectPrefix, bucketName, storagePath, bucketReady]
   );
 
   const handleDrop = useCallback(
@@ -144,18 +200,25 @@ export const DragDropImageUpload: React.FC<DragDropImageUploadProps> = ({
           accept="image/*"
           className="hidden"
           onChange={handleFileInputChange}
-          disabled={isUploading}
+          disabled={isUploading || !bucketReady}
         />
         
         <div className="flex flex-col items-center justify-center text-center space-y-2">
           <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
-            <Upload className="w-6 h-6 text-gray-600" />
+            {isUploading ? (
+              <Loader className="w-6 h-6 text-gray-600 animate-spin" />
+            ) : (
+              <Upload className="w-6 h-6 text-gray-600" />
+            )}
           </div>
           <div className="text-sm text-gray-500">
             {isUploading ? (
               <span className="flex items-center justify-center">
-                <span className="loading mr-2"></span>
                 Enviando...
+              </span>
+            ) : !bucketReady ? (
+              <span className="flex items-center justify-center">
+                Preparando sistema de upload...
               </span>
             ) : (
               <>
