@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -62,7 +63,7 @@ export const useLoginForm = () => {
           console.log("Nenhuma empresa disponível para este usuário, redirecionando para home");
           toast.success("Login realizado com sucesso!");
           
-          // Redirecionar para home em vez de onboarding caso não tenha empresas
+          // Redirecionar para home
           setTimeout(() => {
             navigate('/');
           }, 100);

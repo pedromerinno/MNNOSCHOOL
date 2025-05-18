@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -15,7 +16,6 @@ import PasswordReset from "./pages/PasswordReset";
 import ResetPasswordConfirm from "./pages/ResetPasswordConfirm";
 import TermsOfUse from "./pages/TermsOfUse";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
-import Onboarding from "./pages/Onboarding";
 import Courses from "./pages/Courses";
 import MyCourses from "./pages/MyCourses";
 import CourseDetails from "./pages/CourseDetails";
@@ -59,8 +59,6 @@ const App = () => {
               <Route path="/privacidade" element={<PrivacyPolicy />} />
               
               <Route element={<ProtectedRoute />}>
-                {/* Redirect from onboarding to home */}
-                <Route path="/onboarding" element={<Onboarding />} />
                 <Route path="/" element={<>
                   <MainNavigationMenu />
                   <Index />
