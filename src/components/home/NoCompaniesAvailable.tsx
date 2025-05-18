@@ -1,27 +1,60 @@
 
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { CompanySelectionDialog } from "./CompanySelectionDialog";
 
-export const NoCompaniesAvailable = () => {
-  const [showDialog, setShowDialog] = useState(false);
+interface NoCompaniesAvailableProps {
+  initialDialogState?: boolean;
+  onDialogOpenChange?: (open: boolean) => void;
+  onCompanyTypeSelect?: (isExisting: boolean) => void;
+  onCompanyCreated?: () => void;
+  userId?: string;
+  forceGetUserCompanies?: (userId: string) => Promise<any>;
+}
+
+export const NoCompaniesAvailable = ({
+  initialDialogState,
+  onDialogOpenChange,
+  onCompanyTypeSelect,
+  onCompanyCreated,
+  userId,
+  forceGetUserCompanies
+}: NoCompaniesAvailableProps = {}) => {
+  // Local state for dialog control if not provided via props
+  const [internalShowDialog, setInternalShowDialog] = useState(false);
+  
+  // Use external state control if provided, otherwise use internal state
+  const showDialog = initialDialogState !== undefined ? initialDialogState : internalShowDialog;
+  const setShowDialog = onDialogOpenChange || setInternalShowDialog;
+  
   const {
-    forceGetUserCompanies,
+    forceGetUserCompanies: defaultForceGetUserCompanies,
     user
   } = useCompanies();
-
-  const handleCompanyCreated = () => {
+  
+  // Use props handlers if provided, otherwise use defaults
+  const handleCompanyCreated = onCompanyCreated || (() => {
     setShowDialog(false);
-    if (user?.id) {
-      forceGetUserCompanies(user.id);
+    if (userId || user?.id) {
+      const id = userId || user?.id;
+      if (id) {
+        (forceGetUserCompanies || defaultForceGetUserCompanies)(id);
+      }
     }
-  };
-
-  const handleCompanyTypeSelect = (isExisting: boolean) => {
+  });
+  
+  const handleCompanyTypeSelect = onCompanyTypeSelect || ((isExisting: boolean) => {
     console.log("[NoCompaniesAvailable] Company type selected:", isExisting ? "existing" : "new");
-  };
+  });
+
+  // Set initial dialog state based on props
+  useEffect(() => {
+    if (initialDialogState !== undefined) {
+      setInternalShowDialog(initialDialogState);
+    }
+  }, [initialDialogState]);
 
   return (
     <>
@@ -30,8 +63,8 @@ export const NoCompaniesAvailable = () => {
         onOpenChange={setShowDialog} 
         onCompanyTypeSelect={handleCompanyTypeSelect} 
         onCompanyCreated={handleCompanyCreated} 
-        userId={user?.id} 
-        forceGetUserCompanies={forceGetUserCompanies} 
+        userId={userId || user?.id} 
+        forceGetUserCompanies={forceGetUserCompanies || defaultForceGetUserCompanies} 
       />
 
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
@@ -55,8 +88,6 @@ export const NoCompaniesAvailable = () => {
               Configurar Acesso
             </Button>
           </div>
-          
-          
         </div>
       </div>
     </>

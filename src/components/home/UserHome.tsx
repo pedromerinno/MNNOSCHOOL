@@ -28,6 +28,8 @@ export const UserHome = () => {
     fetchUserCompanies();
   }, [user, getUserCompanies]);
   
+  // Se o usuário está logado mas não tem empresas, mostrar o componente NoCompaniesAvailable
+  // O componente NoCompaniesAvailable terá seu próprio diálogo para criação de empresas
   if (user && userCompanies.length === 0) {
     console.log("[UserHome] Nenhuma empresa disponível, mostrando NoCompaniesAvailable");
     return <NoCompaniesAvailable />;

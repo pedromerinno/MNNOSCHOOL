@@ -23,6 +23,9 @@ export const useCompanyInitialization = () => {
   // Get the cached company status
   const hasCachedCompany = getInitialSelectedCompany() !== null;
   
+  // Create a ref to prevent multiple company dialog openings
+  const hasShownCompanyDialogRef = useRef(false);
+  
   // Use the profile completion check first
   const {
     showProfileDialog,
@@ -39,8 +42,13 @@ export const useCompanyInitialization = () => {
   function setShowDialog(show: boolean) {
     profileSetShowCompanyDialog(show);
     setCompanyDialogState(show);
+    
+    // If we're showing the dialog, mark it as shown
+    if (show) {
+      hasShownCompanyDialogRef.current = true;
+    }
   }
-  
+
   // Now we can use onboarding check with the right dependencies
   const { hasAttemptedForceLoad, hasRedirectedToOnboarding } = useOnboardingCheck(
     user, 
@@ -101,6 +109,7 @@ export const useCompanyInitialization = () => {
     handleProfileComplete,
     handleCompanyComplete,
     forceGetUserCompanies,
-    hasCachedCompany
+    hasCachedCompany,
+    hasShownCompanyDialog: hasShownCompanyDialogRef
   };
 };

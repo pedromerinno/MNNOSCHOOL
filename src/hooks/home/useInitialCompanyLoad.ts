@@ -8,14 +8,20 @@ export const useInitialCompanyLoad = (
   hasAttemptedForceLoad: React.MutableRefObject<boolean>,
   getUserCompanies: (userId: string, forceRefresh?: boolean) => Promise<any[]>
 ) => {
-  // Force initial company load
+  // Force initial company load - only once
   useEffect(() => {
-    if (user?.id && userCompanies.length === 0 && !isLoading && !hasAttemptedForceLoad.current) {
-      console.log("[Index] Forçando carregamento inicial de empresas");
-      hasAttemptedForceLoad.current = true;
-      getUserCompanies(user.id, true).catch(err => {
-        console.error("[Index] Erro no carregamento inicial:", err);
-      });
-    }
+    const loadCompanies = async () => {
+      if (user?.id && userCompanies.length === 0 && !isLoading && !hasAttemptedForceLoad.current) {
+        console.log("[useInitialCompanyLoad] Forçando carregamento inicial de empresas");
+        hasAttemptedForceLoad.current = true;
+        try {
+          await getUserCompanies(user.id, true);
+        } catch (err) {
+          console.error("[useInitialCompanyLoad] Erro no carregamento inicial:", err);
+        }
+      }
+    };
+    
+    loadCompanies();
   }, [user?.id, getUserCompanies, userCompanies.length, isLoading, hasAttemptedForceLoad]);
 };
