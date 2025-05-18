@@ -104,13 +104,13 @@ export const ProtectedRoute = () => {
     interesses: userProfile?.interesses
   });
                          
-  // Redirecionar para onboarding se for a primeira vez
+  // Redirecionar para home se for a primeira vez (não mais para onboarding)
   if (needsOnboarding && !isOnboarding) {
     console.log("ProtectedRoute: Usuário precisa completar onboarding inicial", { 
       primeiro_login: userProfile?.primeiro_login,
       interesses: userProfile?.interesses
     });
-    return <Navigate to="/onboarding" replace />;
+    return <Navigate to="/" replace />;
   }
 
   // Se não precisa de onboarding mas não tem empresas, permitir acesso à home

@@ -60,12 +60,12 @@ export const useLoginForm = () => {
             toast.error("Erro ao selecionar empresa");
           }
         } else {
-          console.log("Nenhuma empresa disponível para este usuário, redirecionando para onboarding");
+          console.log("Nenhuma empresa disponível para este usuário, redirecionando para home");
           toast.success("Login realizado com sucesso!");
           
-          // Redirecionar para onboarding caso não tenha empresas
+          // Redirecionar para home em vez de onboarding caso não tenha empresas
           setTimeout(() => {
-            navigate('/onboarding');
+            navigate('/');
           }, 100);
         }
       }

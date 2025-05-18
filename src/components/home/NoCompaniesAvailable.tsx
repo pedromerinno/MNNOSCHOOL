@@ -1,25 +1,38 @@
+
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { CompanySelectionDialog } from "./CompanySelectionDialog";
+
 export const NoCompaniesAvailable = () => {
   const [showDialog, setShowDialog] = useState(false);
   const {
     forceGetUserCompanies,
     user
   } = useCompanies();
+
   const handleCompanyCreated = () => {
     setShowDialog(false);
     if (user?.id) {
       forceGetUserCompanies(user.id);
     }
   };
+
   const handleCompanyTypeSelect = (isExisting: boolean) => {
     console.log("[NoCompaniesAvailable] Company type selected:", isExisting ? "existing" : "new");
   };
-  return <>
-      <CompanySelectionDialog open={showDialog} onOpenChange={setShowDialog} onCompanyTypeSelect={handleCompanyTypeSelect} onCompanyCreated={handleCompanyCreated} userId={user?.id} forceGetUserCompanies={forceGetUserCompanies} />
+
+  return (
+    <>
+      <CompanySelectionDialog 
+        open={showDialog} 
+        onOpenChange={setShowDialog} 
+        onCompanyTypeSelect={handleCompanyTypeSelect} 
+        onCompanyCreated={handleCompanyCreated} 
+        userId={user?.id} 
+        forceGetUserCompanies={forceGetUserCompanies} 
+      />
 
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
         <div className="max-w-sm w-full mx-auto bg-card border border-border rounded-lg p-6 shadow-sm animate-fade-in">
@@ -46,5 +59,6 @@ export const NoCompaniesAvailable = () => {
           
         </div>
       </div>
-    </>;
+    </>
+  );
 };
