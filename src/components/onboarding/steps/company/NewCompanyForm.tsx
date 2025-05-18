@@ -88,7 +88,7 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
         .insert({
           user_id: user.id,
           empresa_id: companyData.id,
-          is_admin: true
+          is_admin: true // Garantindo que o usuário que criou a empresa seja admin
         });
       
       if (relationError) throw relationError;

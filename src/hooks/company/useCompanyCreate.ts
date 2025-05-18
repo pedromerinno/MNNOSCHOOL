@@ -29,6 +29,22 @@ export const useCompanyCreate = ({
       // Update local state with the new company
       setCompanies(prev => [...prev, newCompany]);
       
+      // Associar o usuário criador como admin da empresa
+      if (companyData.created_by) {
+        const { error: relationError } = await supabase
+          .from('user_empresa')
+          .insert({
+            user_id: companyData.created_by,
+            empresa_id: newCompany.id,
+            is_admin: true // Garantindo que o usuário que criou a empresa seja admin
+          });
+          
+        if (relationError) {
+          console.error("Erro ao associar usuário como admin:", relationError);
+          // Não falha a operação principal, apenas loga o erro
+        }
+      }
+      
       // Notify success
       toast.success("Empresa criada com sucesso", {
         description: `${newCompany.nome} foi adicionada ao sistema.`,
