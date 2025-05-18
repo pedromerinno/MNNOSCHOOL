@@ -14,6 +14,7 @@ export const useOnboardingCheck = (
 ) => {
   const hasAttemptedForceLoad = useRef(false);
   const hasOpenedDialogAfterForceLoad = useRef(false);
+  const hasRedirectedToOnboarding = useRef(false);
 
   // Check for user companies and open dialog if needed
   useEffect(() => {
@@ -52,6 +53,7 @@ export const useOnboardingCheck = (
   }, [user, isLoading, userCompanies, fetchCount, forceGetUserCompanies, setShowCompanyDialog, companyDialogTriggeredByProfile]);
 
   return {
-    hasAttemptedForceLoad
+    hasAttemptedForceLoad,
+    hasRedirectedToOnboarding
   };
 };
