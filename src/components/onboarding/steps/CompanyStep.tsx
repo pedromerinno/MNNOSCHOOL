@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ interface CompanyStepProps {
   onCompanyTypeSelect?: (isExisting: boolean) => void;
   onCompanyCreated?: () => void;
   showBackButton?: boolean;
+  hideHeader?: boolean;
 }
 
 const CompanyStep: React.FC<CompanyStepProps> = ({
@@ -18,7 +20,8 @@ const CompanyStep: React.FC<CompanyStepProps> = ({
   onBack,
   onCompanyTypeSelect,
   onCompanyCreated,
-  showBackButton = true
+  showBackButton = true,
+  hideHeader = false
 }) => {
   const { companyType, setCompanyType } = useOnboarding();
   const [companyId, setCompanyId] = useState("");
@@ -35,14 +38,16 @@ const CompanyStep: React.FC<CompanyStepProps> = ({
       {!companyType ? (
         // Select company type (new or existing)
         <div className="space-y-6">
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-semibold mb-2">
-              Configuração da Empresa
-            </h1>
-            <p className="text-gray-500 text-sm mb-4">
-              Escolha entre criar uma nova empresa ou vincular-se a uma existente
-            </p>
-          </div>
+          {!hideHeader && (
+            <div className="text-center mb-8">
+              <h1 className="text-2xl font-semibold mb-2">
+                Configuração da Empresa
+              </h1>
+              <p className="text-gray-500 text-sm mb-4">
+                Escolha entre criar uma nova empresa ou vincular-se a uma existente
+              </p>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Create new company option */}

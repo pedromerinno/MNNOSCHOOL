@@ -41,6 +41,7 @@ export const CompanyCreationDialog = ({
                 onBack={() => onOpenChange(false)}
                 onCompanyTypeSelect={onCompanyTypeSelect}
                 onCompanyCreated={onCompanyCreated}
+                hideHeader={false}
               />
             </OnboardingProvider>
           </div>

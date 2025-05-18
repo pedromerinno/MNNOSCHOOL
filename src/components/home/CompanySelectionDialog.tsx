@@ -49,6 +49,7 @@ export const CompanySelectionDialog: React.FC<CompanySelectionDialogProps> = ({
                 onCompanyTypeSelect={onCompanyTypeSelect} 
                 onCompanyCreated={onCompanyCreated} 
                 showBackButton={false} 
+                hideHeader={true}
               />
             </OnboardingProvider>
           </div>
