@@ -128,7 +128,6 @@ const App = () => {
                   <TeamMemberProfile />
                 </>} />
 
-                {/* Add Company Page route */}
                 <Route path="/company/:companyId" element={<>
                   <MainNavigationMenu />
                   <CompanyPage />
