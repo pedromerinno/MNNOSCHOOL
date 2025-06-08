@@ -1,4 +1,3 @@
-
 import { Link, useLocation } from "react-router-dom";
 import { 
   NavigationMenu, 
@@ -31,10 +30,6 @@ export const NavMenuLinks = ({ adminLabel = "Admin" }) => {
           <Link 
             to="/" 
             className={menuLinkClass('/')}
-            onClick={(e) => {
-              // Force navigation to home
-              window.location.href = '/';
-            }}
           >
             Início
           </Link>
