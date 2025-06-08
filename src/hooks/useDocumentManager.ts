@@ -70,11 +70,13 @@ export const useDocumentManager = () => {
            currentUserIsAdmin;
   }, [currentUserId, currentUserIsAdmin]);
 
-  // Função para lidar com o upload de documentos
+  // Função para lidar com o upload de documentos (arquivos e links)
   const handleDocumentUpload = useCallback(async (
-    file: File, 
+    attachmentType: 'file' | 'link',
+    fileOrUrl: File | string,
     documentType: DocumentType,
-    description: string
+    description: string,
+    name: string
   ): Promise<boolean> => {
     if (!currentUserId) {
       toast.error("Usuário não autenticado");
@@ -89,20 +91,29 @@ export const useDocumentManager = () => {
     setIsUploading(true);
     
     try {
-      // Upload file to storage
-      const userDir = `user-documents/${currentUserId}`;
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${userDir}/${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = fileName;
+      let filePath: string | null = null;
+      let fileType: string | null = null;
+      let linkUrl: string | null = null;
 
-      const { error: uploadError } = await supabase.storage
-        .from('documents')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true
-        });
+      if (attachmentType === 'file' && fileOrUrl instanceof File) {
+        // Upload file to storage
+        const userDir = `user-documents/${currentUserId}`;
+        const fileExt = fileOrUrl.name.split('.').pop();
+        const fileName = `${userDir}/${Math.random().toString(36).substring(2)}.${fileExt}`;
+        filePath = fileName;
 
-      if (uploadError) throw uploadError;
+        const { error: uploadError } = await supabase.storage
+          .from('documents')
+          .upload(filePath, fileOrUrl, {
+            cacheControl: '3600',
+            upsert: true
+          });
+
+        if (uploadError) throw uploadError;
+        fileType = fileOrUrl.type;
+      } else if (attachmentType === 'link' && typeof fileOrUrl === 'string') {
+        linkUrl = fileOrUrl;
+      }
 
       // Insert document record
       const { data, error } = await supabase
@@ -110,9 +121,11 @@ export const useDocumentManager = () => {
         .insert({
           user_id: currentUserId,
           company_id: selectedCompany.id,
-          name: file.name,
+          name: name,
           file_path: filePath,
-          file_type: file.type,
+          file_type: fileType,
+          link_url: linkUrl,
+          attachment_type: attachmentType,
           document_type: documentType,
           description: description || null,
           uploaded_by: currentUserId
@@ -124,16 +137,16 @@ export const useDocumentManager = () => {
 
       const newDoc = data as UserDocument;
       setDocuments(prev => [newDoc, ...prev]);
-      toast.success('Documento enviado com sucesso');
+      toast.success(attachmentType === 'file' ? 'Documento enviado com sucesso' : 'Link adicionado com sucesso');
       
       return true;
     } catch (error: any) {
-      console.error('Erro no upload do documento:', error);
+      console.error('Erro ao salvar documento:', error);
       
       if (error.message.includes("storage/bucket-not-found")) {
         toast.error("Sistema de armazenamento não está disponível. Contate o administrador.");
       } else {
-        toast.error(`Falha ao enviar documento: ${error.message}`);
+        toast.error(`Falha ao salvar: ${error.message}`);
       }
       
       return false;
@@ -167,14 +180,16 @@ export const useDocumentManager = () => {
 
       if (deleteError) throw deleteError;
 
-      // Try to delete the file from storage (but don't fail if it doesn't exist)
-      try {
-        await supabase.storage
-          .from('documents')
-          .remove([document.file_path]);
-      } catch (storageError) {
-        console.warn("Não foi possível excluir o arquivo do armazenamento:", storageError);
-        // Continue anyway, since the database record is already deleted
+      // Try to delete the file from storage (but don't fail if it doesn't exist or if it's a link)
+      if (document.file_path && document.attachment_type === 'file') {
+        try {
+          await supabase.storage
+            .from('documents')
+            .remove([document.file_path]);
+        } catch (storageError) {
+          console.warn("Não foi possível excluir o arquivo do armazenamento:", storageError);
+          // Continue anyway, since the database record is already deleted
+        }
       }
 
       setDocuments(prev => prev.filter(doc => doc.id !== documentId));

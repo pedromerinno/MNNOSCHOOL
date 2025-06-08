@@ -628,36 +628,42 @@ export type Database = {
       }
       user_documents: {
         Row: {
+          attachment_type: string
           company_id: string
           description: string | null
           document_type: string
-          file_path: string
-          file_type: string
+          file_path: string | null
+          file_type: string | null
           id: string
+          link_url: string | null
           name: string
           uploaded_at: string
           uploaded_by: string
           user_id: string
         }
         Insert: {
+          attachment_type?: string
           company_id: string
           description?: string | null
           document_type: string
-          file_path: string
-          file_type: string
+          file_path?: string | null
+          file_type?: string | null
           id?: string
+          link_url?: string | null
           name: string
           uploaded_at?: string
           uploaded_by: string
           user_id: string
         }
         Update: {
+          attachment_type?: string
           company_id?: string
           description?: string | null
           document_type?: string
-          file_path?: string
-          file_type?: string
+          file_path?: string | null
+          file_type?: string | null
           id?: string
+          link_url?: string | null
           name?: string
           uploaded_at?: string
           uploaded_by?: string

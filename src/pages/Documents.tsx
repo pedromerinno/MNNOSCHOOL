@@ -24,8 +24,14 @@ const Documents = () => {
     refreshDocuments
   } = useDocumentManager();
 
-  const handleUpload = async (file: File, documentType: DocumentType, description: string) => {
-    const success = await handleDocumentUpload(file, documentType, description);
+  const handleUpload = async (
+    attachmentType: 'file' | 'link',
+    fileOrUrl: File | string,
+    documentType: DocumentType,
+    description: string,
+    name: string
+  ) => {
+    const success = await handleDocumentUpload(attachmentType, fileOrUrl, documentType, description, name);
     if (success) {
       await refreshDocuments();
     }
