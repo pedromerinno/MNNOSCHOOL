@@ -28,7 +28,14 @@ export const NavMenuLinks = ({ adminLabel = "Admin" }) => {
     <NavigationMenu>
       <NavigationMenuList className="flex items-center space-x-8">
         <NavigationMenuItem>
-          <Link to="/" className={menuLinkClass('/')}>
+          <Link 
+            to="/" 
+            className={menuLinkClass('/')}
+            onClick={(e) => {
+              // Force navigation to home
+              window.location.href = '/';
+            }}
+          >
             Início
           </Link>
         </NavigationMenuItem>
