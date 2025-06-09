@@ -22,21 +22,11 @@ export const useCompanyNameSync = ({
       // Atualizar cache
       try {
         localStorage.setItem('selectedCompanyName', newName);
-        console.log('[CompanyNameSync] Cache atualizado com novo nome:', newName);
       } catch (error) {
         console.error('[CompanyNameSync] Erro ao salvar no cache:', error);
       }
     }
   }, [displayName]);
-
-  // Função para forçar atualização
-  const forceUpdate = useCallback(() => {
-    if (selectedCompany?.nome) {
-      console.log('[CompanyNameSync] Forçando atualização para:', selectedCompany.nome);
-      setDisplayName(selectedCompany.nome);
-      localStorage.setItem('selectedCompanyName', selectedCompany.nome);
-    }
-  }, [selectedCompany?.nome]);
 
   // Inicializar com dados disponíveis
   useEffect(() => {
@@ -59,7 +49,6 @@ export const useCompanyNameSync = ({
   useEffect(() => {
     const handleCompanyUpdate = (event: CustomEvent) => {
       const { company } = event.detail;
-      console.log('[CompanyNameSync] Evento company-updated recebido:', company?.nome);
       if (company?.nome) {
         updateDisplayName(company.nome, 'company-updated');
       }
@@ -67,7 +56,6 @@ export const useCompanyNameSync = ({
 
     const handleNameChange = (event: CustomEvent) => {
       const { newName, companyId } = event.detail;
-      console.log('[CompanyNameSync] Evento name-changed recebido:', newName);
       if (newName && (!selectedCompany || selectedCompany.id === companyId)) {
         updateDisplayName(newName, 'name-changed');
       }
@@ -75,18 +63,8 @@ export const useCompanyNameSync = ({
 
     const handleCompanySelected = (event: CustomEvent) => {
       const { company } = event.detail;
-      console.log('[CompanyNameSync] Evento company-selected recebido:', company?.nome);
       if (company?.nome) {
         updateDisplayName(company.nome, 'company-selected');
-      }
-    };
-
-    const handleForceRefresh = (event: CustomEvent) => {
-      const { company } = event.detail;
-      console.log('[CompanyNameSync] Evento force-company-refresh recebido:', company?.nome);
-      if (company?.nome) {
-        setDisplayName(company.nome);
-        localStorage.setItem('selectedCompanyName', company.nome);
       }
     };
 
@@ -94,19 +72,16 @@ export const useCompanyNameSync = ({
     window.addEventListener('company-updated', handleCompanyUpdate as EventListener);
     window.addEventListener('company-name-changed', handleNameChange as EventListener);
     window.addEventListener('company-selected', handleCompanySelected as EventListener);
-    window.addEventListener('force-company-refresh', handleForceRefresh as EventListener);
 
     return () => {
       window.removeEventListener('company-updated', handleCompanyUpdate as EventListener);
       window.removeEventListener('company-name-changed', handleNameChange as EventListener);
       window.removeEventListener('company-selected', handleCompanySelected as EventListener);
-      window.removeEventListener('force-company-refresh', handleForceRefresh as EventListener);
     };
   }, [selectedCompany?.id, updateDisplayName]);
 
   return {
     displayName,
-    updateDisplayName,
-    forceUpdate
+    updateDisplayName
   };
 };

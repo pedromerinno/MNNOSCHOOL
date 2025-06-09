@@ -22,7 +22,7 @@ export const CompanySelector = memo(() => {
     forceGetUserCompanies
   } = useCompanies();
   
-  const { displayName, forceUpdate } = useCompanyNameSync({ 
+  const { displayName } = useCompanyNameSync({ 
     selectedCompany,
     fallbackName: "merinno" 
   });
@@ -33,21 +33,14 @@ export const CompanySelector = memo(() => {
       await forceGetUserCompanies(user.id);
     }
   }, [user, forceGetUserCompanies]);
-
-  const handleForceRefresh = useCallback(() => {
-    console.log('CompanySelector: Force refresh solicitado');
-    forceUpdate();
-  }, [forceUpdate]);
   
   useEffect(() => {
     window.addEventListener('company-relation-changed', handleCompanyRelationChange);
-    window.addEventListener('force-company-refresh', handleForceRefresh);
     
     return () => {
       window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
-      window.removeEventListener('force-company-refresh', handleForceRefresh);
     };
-  }, [handleCompanyRelationChange, handleForceRefresh]);
+  }, [handleCompanyRelationChange]);
 
   const handleCompanyChange = useCallback((company) => {
     if (!company || !user?.id) return;
