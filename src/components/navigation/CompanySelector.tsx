@@ -39,20 +39,22 @@ export const CompanySelector = memo(() => {
     
     if (user?.id && company) {
       selectCompany(user.id, company);
+      
+      // Force immediate update of other components
+      const event = new CustomEvent('company-selector-changed', { 
+        detail: { company } 
+      });
+      window.dispatchEvent(event);
     } else {
       console.error('[CompanySelector] Missing user ID or company');
     }
   }, [user?.id, selectCompany, selectedCompany]);
 
-  // Verificar localStorage na montagem
+  // Show current selected company in logs when it changes
   useEffect(() => {
-    const storedId = localStorage.getItem('selectedCompanyId');
-    const storedCompany = localStorage.getItem('selectedCompany');
-    console.log('[CompanySelector] Mount - localStorage check:', {
-      storedId,
-      hasStoredCompany: !!storedCompany,
-      currentSelected: selectedCompany?.nome || 'none'
-    });
+    if (selectedCompany) {
+      console.log('[CompanySelector] ✅ Selected company updated to:', selectedCompany.nome);
+    }
   }, [selectedCompany]);
 
   const displayName = selectedCompany?.nome || "merinno";

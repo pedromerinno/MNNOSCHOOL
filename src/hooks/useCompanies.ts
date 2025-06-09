@@ -127,6 +127,25 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
   // Listen for company selection events
   useCompanyEvents(setSelectedCompany);
   
+  // IMMEDIATE company restoration on hook initialization
+  useEffect(() => {
+    if (!skipLoadingInOnboarding && !selectedCompany && !restorationAttempted.current) {
+      console.log(`[useCompanies-${hookId}] 🔄 Attempting immediate company restoration from localStorage...`);
+      restorationAttempted.current = true;
+      
+      const cachedCompany = getStoredCompany();
+      if (cachedCompany) {
+        console.log(`[useCompanies-${hookId}] ✅ Immediately restored company from localStorage:`, cachedCompany.nome);
+        setSelectedCompany(cachedCompany);
+      } else {
+        const storedId = getStoredCompanyId();
+        if (storedId) {
+          console.log(`[useCompanies-${hookId}] Found stored company ID, will restore after user companies load:`, storedId);
+        }
+      }
+    }
+  }, [skipLoadingInOnboarding, selectedCompany, getStoredCompany, getStoredCompanyId, setSelectedCompany, hookId]);
+  
   // Clear cached company data on user change
   useEffect(() => {
     if (user?.id) {
@@ -248,7 +267,7 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     }
   }, [loadInitialData, user?.id, skipLoadingInOnboarding, hookId, globalState]);
   
-  // CRITICAL: Restore previously selected company
+  // Restore company when user companies are loaded (if not already restored)
   const restoreSelectedCompany = useCallback(async () => {
     // Don't restore if we're in onboarding mode
     if (skipLoadingInOnboarding) {
@@ -273,34 +292,9 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
       return;
     }
     
-    // Skip if we already attempted restoration
-    if (restorationAttempted.current) {
-      console.log(`[useCompanies-${hookId}] Company restoration already attempted`);
-      return;
-    }
+    console.log(`[useCompanies-${hookId}] 🔄 Attempting company restoration with user companies...`);
     
-    restorationAttempted.current = true;
-    
-    console.log(`[useCompanies-${hookId}] 🔄 Attempting company restoration...`);
-    
-    // First try to get complete company object from localStorage
-    const cachedCompany = getStoredCompany();
-    if (cachedCompany) {
-      // Check if user has access to this company
-      const hasAccess = userCompanies.some(company => company.id === cachedCompany.id);
-      
-      if (hasAccess) {
-        console.log(`[useCompanies-${hookId}] ✅ Restored selected company from cache:`, cachedCompany.nome);
-        setSelectedCompany(cachedCompany);
-        return;
-      } else {
-        console.log(`[useCompanies-${hookId}] ⚠️ User does not have access to cached company, selecting another`);
-        localStorage.removeItem('selectedCompany');
-        localStorage.removeItem('selectedCompanyId');
-      }
-    }
-    
-    // If no cached company or no access, try stored ID
+    // Try stored ID from localStorage
     const storedCompanyId = getStoredCompanyId();
     if (storedCompanyId) {
       // Try to find in already loaded user companies
@@ -308,7 +302,7 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
       
       if (storedCompany) {
         setSelectedCompany(storedCompany);
-        console.log(`[useCompanies-${hookId}] ✅ Restored selected company from localStorage ID:`, storedCompany.nome);
+        console.log(`[useCompanies-${hookId}] ✅ Restored selected company from user companies:`, storedCompany.nome);
         return;
       } else {
         // If not found, try to fetch
@@ -324,15 +318,18 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
               return;
             } else {
               localStorage.removeItem('selectedCompanyId');
+              localStorage.removeItem('selectedCompany');
               console.log(`[useCompanies-${hookId}] ⚠️ No access to fetched company, will select first available`);
             }
           } else {
             localStorage.removeItem('selectedCompanyId');
+            localStorage.removeItem('selectedCompany');
             console.log(`[useCompanies-${hookId}] ⚠️ Company not found, will select first available`);
           }
         } catch (error) {
           console.error(`[useCompanies-${hookId}] ❌ Failed to restore company from localStorage`, error);
           localStorage.removeItem('selectedCompanyId');
+          localStorage.removeItem('selectedCompany');
         }
       }
     }
@@ -347,14 +344,13 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     selectedCompany, 
     getCompanyById, 
     getStoredCompanyId, 
-    getStoredCompany, 
     setSelectedCompany, 
     skipLoadingInOnboarding,
     hookId,
     globalState
   ]);
 
-  // Restore company when user companies are loaded
+  // Restore company when user companies are loaded (if not already restored)
   useEffect(() => {
     if (userCompanies.length > 0 && !selectedCompany && !skipLoadingInOnboarding && !globalState.isInitializing) {
       console.log(`[useCompanies-${hookId}] User companies loaded, attempting restoration...`);
