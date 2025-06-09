@@ -94,8 +94,17 @@ const Integration = () => {
     }
   }, [companyData?.id]);
   
-  // Efeito para ouvir eventos de atualização - simplificado
+  // Escutar mudanças de empresa do CompanySelector
   useEffect(() => {
+    const handleCompanyChange = (event: CustomEvent<{company: Company}>) => {
+      const newCompany = event.detail.company;
+      console.log("Company changed in Integration page:", newCompany.nome);
+      
+      if (newCompany.id !== companyData?.id) {
+        fetchJobRoles(newCompany.id);
+      }
+    };
+    
     const handleCompanyUpdated = (event: CustomEvent<{company: Company}>) => {
       const updatedCompany = event.detail.company;
       console.log("Company updated in Integration page:", updatedCompany.nome);
@@ -113,11 +122,15 @@ const Integration = () => {
     };
     
     // Adicionar listeners
+    window.addEventListener('company-changed', handleCompanyChange as EventListener);
+    window.addEventListener('company-navigation-change', handleCompanyChange as EventListener);
     window.addEventListener('company-updated', handleCompanyUpdated as EventListener);
     window.addEventListener('user-role-updated', handleRoleUpdated as EventListener);
     
     // Cleanup
     return () => {
+      window.removeEventListener('company-changed', handleCompanyChange as EventListener);
+      window.removeEventListener('company-navigation-change', handleCompanyChange as EventListener);
       window.removeEventListener('company-updated', handleCompanyUpdated as EventListener);
       window.removeEventListener('user-role-updated', handleRoleUpdated as EventListener);
     };

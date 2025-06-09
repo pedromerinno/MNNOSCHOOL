@@ -19,9 +19,16 @@ export const CompanySelector = memo(() => {
     isLoading 
   } = useCompanies();
 
+  // Função para lidar com mudança de empresa
   const handleCompanyChange = useCallback((company: any) => {
-    if (user?.id) {
+    if (user?.id && company) {
+      console.log('[CompanySelector] Selecting company:', company.nome);
       selectCompany(user.id, company);
+      
+      // Disparar evento global para notificar outros componentes
+      window.dispatchEvent(new CustomEvent('company-changed', { 
+        detail: { company } 
+      }));
     }
   }, [user?.id, selectCompany]);
 

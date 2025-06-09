@@ -31,19 +31,32 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
     }
   }, []);
   
-  // Selecionar empresa
+  // Selecionar empresa com persistência global
   const selectCompany = useCallback((userId: string, company: Company) => {
+    console.log('[useCompanySelection] Selecting company:', company.nome);
+    
+    // Atualizar estado local
     setSelectedCompany(company);
     
     try {
+      // Persistir no localStorage
       localStorage.setItem('selectedCompanyId', company.id);
       localStorage.setItem('selectedCompany', JSON.stringify(company));
+      
+      console.log('[useCompanySelection] Company persisted to localStorage');
       
       // Dispatch custom event for other components to listen
       const event = new CustomEvent('company-selected', { 
         detail: { userId, company } 
       });
       window.dispatchEvent(event);
+      
+      // Também disparar evento mais específico para navegação
+      const navEvent = new CustomEvent('company-navigation-change', { 
+        detail: { company } 
+      });
+      window.dispatchEvent(navEvent);
+      
     } catch (error) {
       console.error('Error saving selected company:', error);
     }

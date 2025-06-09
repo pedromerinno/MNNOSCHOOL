@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AllNoticesDialog } from "./AllNoticesDialog";
 import { useCompanies } from "@/hooks/useCompanies";
+import { Company } from "@/types/company";
 
 export const NotificationsWidget = () => {
   const [showAllNotices, setShowAllNotices] = useState(false);
@@ -30,20 +31,46 @@ export const NotificationsWidget = () => {
     console.log('Mark as read not implemented yet:', noticeId);
   };
 
-  // Only fetch when company changes and we're not already fetching
+  // Função para buscar avisos quando empresa muda
+  const fetchNoticesForCompany = async (companyId: string) => {
+    if (fetchInProgressRef.current || lastFetchedCompanyRef.current === companyId) {
+      return;
+    }
+    
+    fetchInProgressRef.current = true;
+    lastFetchedCompanyRef.current = companyId;
+    
+    try {
+      await fetchNotices(companyId);
+    } finally {
+      fetchInProgressRef.current = false;
+    }
+  };
+
+  // Buscar avisos quando empresa selecionada muda
   useEffect(() => {
-    if (selectedCompany?.id && 
-        selectedCompany.id !== lastFetchedCompanyRef.current && 
-        !fetchInProgressRef.current) {
-      
-      fetchInProgressRef.current = true;
-      lastFetchedCompanyRef.current = selectedCompany.id;
-      
-      fetchNotices(selectedCompany.id).finally(() => {
-        fetchInProgressRef.current = false;
-      });
+    if (selectedCompany?.id) {
+      fetchNoticesForCompany(selectedCompany.id);
     }
   }, [selectedCompany?.id, fetchNotices]);
+
+  // Escutar mudanças de empresa
+  useEffect(() => {
+    const handleCompanyChange = (event: CustomEvent<{company: Company}>) => {
+      const newCompany = event.detail.company;
+      if (newCompany?.id) {
+        fetchNoticesForCompany(newCompany.id);
+      }
+    };
+
+    window.addEventListener('company-changed', handleCompanyChange as EventListener);
+    window.addEventListener('company-navigation-change', handleCompanyChange as EventListener);
+    
+    return () => {
+      window.removeEventListener('company-changed', handleCompanyChange as EventListener);
+      window.removeEventListener('company-navigation-change', handleCompanyChange as EventListener);
+    };
+  }, []);
 
   return (
     <>
