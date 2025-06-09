@@ -34,6 +34,8 @@ export const useCompanyUpdate = ({
       if (error) throw error;
   
       if (updatedCompany) {
+        console.log('Company updated in database:', updatedCompany);
+        
         // Update companies list
         setCompanies(prevCompanies => prevCompanies.map(company => 
           company.id === companyId ? { ...company, ...updatedCompany } : company
@@ -44,8 +46,17 @@ export const useCompanyUpdate = ({
           const newSelectedCompany = { ...selectedCompany, ...updatedCompany };
           setSelectedCompany(newSelectedCompany);
           
-          // Usar o novo sistema de sincronização
+          console.log('Triggering sync for updated company:', newSelectedCompany.nome);
+          
+          // Forçar atualização imediata do cache e componentes
           syncCompanyData(newSelectedCompany);
+          
+          // Disparar evento adicional para garantir que todos os componentes sejam atualizados
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('force-company-refresh', {
+              detail: { company: newSelectedCompany }
+            }));
+          }, 100);
         }
         
         toast.success(`Empresa ${updatedCompany.nome} atualizada com sucesso!`);

@@ -58,8 +58,17 @@ function CompanyThemedBadge({
   useEffect(() => {
     const handleCompanyUpdate = (event: CustomEvent) => {
       const { company } = event.detail;
+      console.log('CompanyThemedBadge: Evento de atualização recebido:', company?.nome, company?.cor_principal);
       if (company?.cor_principal && selectedCompany?.id === company.id) {
         console.log('CompanyThemedBadge: Atualizando cor via evento:', company.cor_principal);
+        setCompanyColor(company.cor_principal);
+      }
+    };
+
+    const handleForceRefresh = (event: CustomEvent) => {
+      const { company } = event.detail;
+      console.log('CompanyThemedBadge: Force refresh recebido:', company?.cor_principal);
+      if (company?.cor_principal && selectedCompany?.id === company.id) {
         setCompanyColor(company.cor_principal);
       }
     };
@@ -67,11 +76,13 @@ function CompanyThemedBadge({
     window.addEventListener('company-updated', handleCompanyUpdate as EventListener);
     window.addEventListener('company-name-changed', handleCompanyUpdate as EventListener);
     window.addEventListener('company-selected', handleCompanyUpdate as EventListener);
+    window.addEventListener('force-company-refresh', handleForceRefresh as EventListener);
 
     return () => {
       window.removeEventListener('company-updated', handleCompanyUpdate as EventListener);
       window.removeEventListener('company-name-changed', handleCompanyUpdate as EventListener);
       window.removeEventListener('company-selected', handleCompanyUpdate as EventListener);
+      window.removeEventListener('force-company-refresh', handleForceRefresh as EventListener);
     };
   }, [selectedCompany?.id]);
   
