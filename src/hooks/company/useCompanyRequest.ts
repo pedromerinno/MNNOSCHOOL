@@ -16,7 +16,7 @@ export const useCompanyRequest = () => {
     }
     
     const now = Date.now();
-    const THROTTLE_MS = 5000; // 5 seconds
+    const THROTTLE_MS = 3000; // Aumentado para 3 segundos
     
     // If we have a cache key, use more specific throttling
     if (cacheKey && throttleTimestampsRef.current[cacheKey]) {
@@ -51,7 +51,7 @@ export const useCompanyRequest = () => {
   }, []);
   
   // Add a debounced request function that properly types the arguments
-  const debouncedRequest = useCallback(<T extends any[]>(callback: (...args: T) => Promise<any> | void, delay: number = 300, key?: string) => {
+  const debouncedRequest = useCallback(<T extends any[]>(callback: (...args: T) => Promise<any> | void, delay: number = 500, key?: string) => {
     const timerKey = key || 'default';
     
     return (...args: T) => {

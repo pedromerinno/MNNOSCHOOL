@@ -66,7 +66,7 @@ export const useUserCompaniesFetch = ({
 
     const now = Date.now();
     const timeSinceLastSuccess = now - lastSuccessfulFetchRef.current;
-    const COMPONENT_SPECIFIC_THROTTLE = 300000; // 5 minutes
+    const COMPONENT_SPECIFIC_THROTTLE = 180000; // Reduzido para 3 minutos
     
     if (!forceRefresh && lastSuccessfulFetchRef.current > 0 && 
         timeSinceLastSuccess < COMPONENT_SPECIFIC_THROTTLE && userCompanies.length > 0) {
@@ -172,9 +172,10 @@ export const useUserCompaniesFetch = ({
 
   const forceGetUserCompanies = useCallback(async (userId: string): Promise<Company[]> => {
     console.log(`[${hookInstanceIdRef.current}] Forcing user companies fetch and clearing cache first`);
-    // We need to implement this separately
+    // Clear memory cache before forcing refresh
+    memoryCache.current = { companies: null, timestamp: 0 };
     return getUserCompanies(userId, true);
-  }, [getUserCompanies, hookInstanceIdRef]);
+  }, [getUserCompanies, hookInstanceIdRef, memoryCache]);
 
   return {
     getUserCompanies,
