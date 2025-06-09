@@ -1,10 +1,9 @@
 
-import { useEffect, memo, useCallback } from "react";
+import { useEffect, memo, useCallback, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCompanies } from "@/hooks/useCompanies";
-import { useCompanyNameSync } from "@/hooks/company/useCompanyNameSync";
-import { toast } from "sonner";
+import { Company } from "@/types/company";
+import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,59 +13,52 @@ import {
 
 export const CompanySelector = memo(() => {
   const { user } = useAuth();
-  const { 
-    userCompanies, 
-    selectedCompany, 
-    selectCompany,
-    isLoading,
-    forceGetUserCompanies
-  } = useCompanies();
-  
-  const { displayName } = useCompanyNameSync({ 
-    selectedCompany,
-    fallbackName: "merinno" 
-  });
+  const [userCompanies, setUserCompanies] = useState<Company[]>([]);
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleCompanyRelationChange = useCallback(async () => {
-    if (user?.id) {
-      console.log('CompanySelector: Detectada mudança na relação de empresa, atualizando dados');
-      await forceGetUserCompanies(user.id);
+  // Simplified company fetching - only fetch once
+  const fetchUserCompanies = useCallback(async () => {
+    if (!user?.id || isLoading || userCompanies.length > 0) return;
+
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .rpc('get_user_companies', { user_id: user.id });
+
+      if (error) throw error;
+      
+      const companies = data as Company[];
+      setUserCompanies(companies);
+      
+      // Auto-select first company if none selected
+      if (companies.length > 0 && !selectedCompany) {
+        setSelectedCompany(companies[0]);
+      }
+    } catch (error) {
+      console.error('Error fetching companies:', error);
+    } finally {
+      setIsLoading(false);
     }
-  }, [user, forceGetUserCompanies]);
-  
+  }, [user?.id, isLoading, userCompanies.length, selectedCompany]);
+
   useEffect(() => {
-    window.addEventListener('company-relation-changed', handleCompanyRelationChange);
-    
-    return () => {
-      window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
-    };
-  }, [handleCompanyRelationChange]);
+    fetchUserCompanies();
+  }, [fetchUserCompanies]);
 
-  const handleCompanyChange = useCallback((company) => {
-    if (!company || !user?.id) return;
-    
-    if (selectedCompany?.id === company.id) {
-      console.log('CompanySelector: Empresa já selecionada, pulando mudança');
-      return;
-    }
-    
-    const hasAccess = userCompanies.some(c => c.id === company.id);
-    if (!hasAccess) {
-      console.error('CompanySelector: Usuário não tem acesso a esta empresa:', company.nome);
-      toast.error(`Você não tem acesso à empresa ${company.nome}`);
-      return;
-    }
-    
-    console.log('CompanySelector: Selecionando empresa:', company.nome);
-    selectCompany(user.id, company);
-    toast.success(`Empresa ${company.nome} selecionada com sucesso!`);
-  }, [user?.id, selectedCompany?.id, selectCompany, userCompanies]);
+  const handleCompanyChange = useCallback((company: Company) => {
+    setSelectedCompany(company);
+    localStorage.setItem('selectedCompanyId', company.id);
+    localStorage.setItem('selectedCompany', JSON.stringify(company));
+  }, []);
 
-  if (isLoading && !selectedCompany) {
+  const displayName = selectedCompany?.nome || "merinno";
+
+  if (isLoading) {
     return <span className="text-lg font-bold text-foreground">{displayName}</span>;
   }
 
-  if (!user || !userCompanies || userCompanies.length === 0) {
+  if (!user || userCompanies.length === 0) {
     return <span className="text-lg font-bold text-foreground">merinno</span>;
   }
 
@@ -83,7 +75,7 @@ export const CompanySelector = memo(() => {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="bg-white dark:bg-gray-800 z-50">
-        {Array.isArray(userCompanies) && userCompanies.map((company) => (
+        {userCompanies.map((company) => (
           <DropdownMenuItem 
             key={company.id} 
             onClick={() => handleCompanyChange(company)}

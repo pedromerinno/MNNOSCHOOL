@@ -9,33 +9,23 @@ export const useUserProfile = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const fetchInProgress = useRef(false);
-  const lastFetchTimestamp = useRef(0);
+  const hasFetchedOnce = useRef(false);
   const { getCache, setCache, clearCache } = useCache();
   
-  // Reduced cache duration to 2 minutes to minimize stale data
-  const CACHE_DURATION = 2 * 60 * 1000;
+  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
   const CACHE_KEY = 'user_profile';
 
   const fetchUserProfile = useCallback(async (userId: string) => {
-    // Avoid duplicate simultaneous calls
-    if (fetchInProgress.current) {
-      console.log('A profile fetch is already in progress, avoiding duplicate call');
-      return;
-    }
-
-    // Check cache timestamp to avoid frequent calls
-    const now = Date.now();
-    if (now - lastFetchTimestamp.current < CACHE_DURATION && userProfile) {
-      console.log('Using cached user profile, less than 2 minutes since last fetch');
+    // Prevent multiple fetches and excessive calls
+    if (fetchInProgress.current || hasFetchedOnce.current) {
       return;
     }
 
     try {
-      console.log(`Fetching user profile: ${userId}`);
       fetchInProgress.current = true;
+      hasFetchedOnce.current = true;
       setIsLoading(true);
       
-      // Optimized to use recently added RLS policy
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -43,9 +33,8 @@ export const useUserProfile = () => {
         .single();
 
       if (error) {
-        console.error('Error fetching profile:', error);
         if (error.code === 'PGRST116') {
-          console.log('No profile found for user, might be first login');
+          console.log('No profile found for user');
         }
         return;
       }
@@ -64,12 +53,8 @@ export const useUserProfile = () => {
           created_at: data.created_at
         };
         
-        console.log('User profile loaded:', profile);
         setUserProfile(profile);
-        lastFetchTimestamp.current = now;
-        
-        // Using our optimized caching utility
-        setCache({ key: CACHE_KEY, expirationMinutes: 2 }, profile);
+        setCache({ key: CACHE_KEY, expirationMinutes: 5 }, profile);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -77,25 +62,25 @@ export const useUserProfile = () => {
       fetchInProgress.current = false;
       setIsLoading(false);
     }
-  }, [userProfile, setCache]);
+  }, [setCache]);
 
-  // Try to load profile from cache on initial load
+  // Load profile from cache only once
   useEffect(() => {
-    const cachedProfile = getCache<UserProfile>({ key: CACHE_KEY });
-    if (cachedProfile) {
-      console.log('Loading user profile from local cache');
-      setUserProfile(cachedProfile);
+    if (!hasFetchedOnce.current) {
+      const cachedProfile = getCache<UserProfile>({ key: CACHE_KEY });
+      if (cachedProfile) {
+        setUserProfile(cachedProfile);
+        hasFetchedOnce.current = true;
+      }
     }
   }, [getCache]);
 
-  // Clear profile if userId changes
   const clearProfile = useCallback(() => {
     setUserProfile(null);
-    lastFetchTimestamp.current = 0;
+    hasFetchedOnce.current = false;
     clearCache({ key: CACHE_KEY });
   }, [clearCache]);
 
-  // Modified to return void consistently
   const updateUserProfile = useCallback((userData: Partial<UserProfile>) => {
     setUserProfile(prev => prev ? ({
       ...prev,
@@ -116,21 +101,18 @@ export const useUserProfile = () => {
         .eq('id', userId);
 
       if (error) {
-        console.error('Error updating user data:', error);
         toast.error('Error updating data: ' + error.message);
         return;
       }
 
-      // Update local state
       setUserProfile(prevProfile => prevProfile ? ({
         ...prevProfile,
         ...userData,
       }) : null);
       
-      // Update cache using our optimized utility
       const cachedProfile = getCache<UserProfile>({ key: CACHE_KEY });
       if (cachedProfile) {
-        setCache({ key: CACHE_KEY, expirationMinutes: 2 }, {
+        setCache({ key: CACHE_KEY, expirationMinutes: 5 }, {
           ...cachedProfile,
           ...userData
         });
@@ -138,7 +120,6 @@ export const useUserProfile = () => {
       
       toast.success('Profile updated successfully');
     } catch (error: any) {
-      console.error('Error updating user data:', error);
       toast.error('Error updating data: ' + error.message);
     }
   };
