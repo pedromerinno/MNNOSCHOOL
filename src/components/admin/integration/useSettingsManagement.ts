@@ -3,17 +3,23 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Company } from "@/types/company";
-import { useCompanies } from "@/hooks/company";
+import { useCompanies } from "@/hooks/useCompanies";
 
 export const useSettingsManagement = () => {
-  const { companies: allCompanies, isLoading: isLoadingCompanies, fetchCompanies, userCompanies } = useCompanies();
+  const { userCompanies, isLoading: isLoadingCompanies, fetchCompanies, selectedCompany: globalSelectedCompany } = useCompanies();
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("info");
   const hasLoadedCompanies = useRef(false);
 
-  // Use userCompanies instead of all companies for admins
-  const companies = userCompanies;
+  // Ordenar empresas para que a empresa selecionada globalmente apareça primeiro
+  const companies = userCompanies.slice().sort((a, b) => {
+    if (globalSelectedCompany) {
+      if (a.id === globalSelectedCompany.id) return -1;
+      if (b.id === globalSelectedCompany.id) return 1;
+    }
+    return a.nome.localeCompare(b.nome);
+  });
 
   useEffect(() => {
     const loadCompanies = async () => {
@@ -26,16 +32,31 @@ export const useSettingsManagement = () => {
     loadCompanies();
   }, [fetchCompanies, isLoadingCompanies]);
 
+  // Priorizar a empresa selecionada globalmente
   useEffect(() => {
-    if (companies.length > 0 && !selectedCompany) {
-      console.log("Setting initial selected company:", companies[0].nome);
-      setSelectedCompany(companies[0]);
-      
-      window.dispatchEvent(new CustomEvent('settings-company-changed', { 
-        detail: { company: companies[0] } 
-      }));
+    if (companies.length > 0) {
+      // Se há uma empresa selecionada globalmente e ela está nas empresas disponíveis, use ela
+      if (globalSelectedCompany && companies.some(c => c.id === globalSelectedCompany.id)) {
+        if (!selectedCompany || selectedCompany.id !== globalSelectedCompany.id) {
+          console.log("Setting selected company to global selected company:", globalSelectedCompany.nome);
+          setSelectedCompany(globalSelectedCompany);
+          
+          window.dispatchEvent(new CustomEvent('settings-company-changed', { 
+            detail: { company: globalSelectedCompany } 
+          }));
+        }
+      }
+      // Se não há empresa selecionada, use a primeira da lista
+      else if (!selectedCompany) {
+        console.log("Setting initial selected company:", companies[0].nome);
+        setSelectedCompany(companies[0]);
+        
+        window.dispatchEvent(new CustomEvent('settings-company-changed', { 
+          detail: { company: companies[0] } 
+        }));
+      }
     }
-  }, [companies, selectedCompany]);
+  }, [companies, selectedCompany, globalSelectedCompany]);
 
   const handleCompanyChange = (companyId: string) => {
     const company = companies.find(c => c.id === companyId);
