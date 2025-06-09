@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useCompanies } from "@/hooks/useCompanies";
 import { LoadingState } from '@/components/integration/video-playlist/LoadingState';
 import { IntegrationLayout } from '@/components/integration/layout/IntegrationLayout';
@@ -12,29 +12,33 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Integration = () => {
-  const { selectedCompany, isLoading, forceGetUserCompanies, getUserCompanies, user } = useCompanies();
+  const { selectedCompany, isLoading } = useCompanies();
   const { userProfile } = useAuth();
-  const [localCompany, setLocalCompany] = useState<Company | null>(selectedCompany);
   const [jobRoles, setJobRoles] = useState<JobRole[]>([]);
   const [userRole, setUserRole] = useState<JobRole | null>(null);
   const [isLoadingRoles, setIsLoadingRoles] = useState(false);
   const [activeTab, setActiveTab] = useState("culture");
   
-  useEffect(() => {
-    if (selectedCompany) {
-      setLocalCompany(selectedCompany);
-      fetchJobRoles(selectedCompany.id);
-      
-      // Store the company logo in localStorage for use in UserRoleProfile
-      if (selectedCompany.logo) {
-        localStorage.setItem('selectedCompanyLogo', selectedCompany.logo);
-      } else {
-        localStorage.setItem('selectedCompanyLogo', '/placeholder.svg');
-      }
-    }
+  // Memoizar dados da empresa para evitar re-renderizações desnecessárias
+  const companyData = useMemo(() => {
+    if (!selectedCompany) return null;
+    
+    return {
+      id: selectedCompany.id,
+      nome: selectedCompany.nome,
+      logo: selectedCompany.logo,
+      cor_principal: selectedCompany.cor_principal || "#1EAEDB",
+      valores: selectedCompany.valores,
+      missao: selectedCompany.missao,
+      historia: selectedCompany.historia,
+      video_institucional: selectedCompany.video_institucional,
+      descricao_video: selectedCompany.descricao_video
+    };
   }, [selectedCompany]);
   
   const fetchJobRoles = async (companyId: string) => {
+    if (!companyId || isLoadingRoles) return;
+    
     setIsLoadingRoles(true);
     try {
       const { data, error } = await supabase
@@ -64,69 +68,96 @@ const Integration = () => {
       } else {
         console.log(`No job roles found for company ${companyId}`);
         setJobRoles([]);
+        setUserRole(null);
       }
     } catch (error) {
       console.error("Error fetching job roles:", error);
       setJobRoles([]);
+      setUserRole(null);
     } finally {
       setIsLoadingRoles(false);
     }
   };
   
-  // Ouvir eventos para atualização de dados
+  // Efeito para carregar dados da empresa e cargos
+  useEffect(() => {
+    if (companyData?.id) {
+      // Armazenar logo da empresa no localStorage
+      if (companyData.logo) {
+        localStorage.setItem('selectedCompanyLogo', companyData.logo);
+      } else {
+        localStorage.setItem('selectedCompanyLogo', '/placeholder.svg');
+      }
+      
+      // Buscar cargos apenas se necessário
+      fetchJobRoles(companyData.id);
+    }
+  }, [companyData?.id]);
+  
+  // Efeito para ouvir eventos de atualização - simplificado
   useEffect(() => {
     const handleCompanyUpdated = (event: CustomEvent<{company: Company}>) => {
       const updatedCompany = event.detail.company;
       console.log("Company updated in Integration page:", updatedCompany.nome);
-      setLocalCompany(updatedCompany);
-      fetchJobRoles(updatedCompany.id);
+      
+      if (updatedCompany.id === companyData?.id) {
+        fetchJobRoles(updatedCompany.id);
+      }
     };
     
     const handleRoleUpdated = () => {
       console.log("User role updated event detected, refreshing data");
-      if (localCompany?.id) {
-        fetchJobRoles(localCompany.id);
+      if (companyData?.id) {
+        fetchJobRoles(companyData.id);
       }
     };
     
+    // Adicionar listeners
     window.addEventListener('company-updated', handleCompanyUpdated as EventListener);
-    window.addEventListener('company-relation-changed', () => {
-      if (user?.id) {
-        forceGetUserCompanies(user.id);
-      }
-    });
     window.addEventListener('user-role-updated', handleRoleUpdated as EventListener);
     
+    // Cleanup
     return () => {
       window.removeEventListener('company-updated', handleCompanyUpdated as EventListener);
-      window.removeEventListener('company-relation-changed', () => {});
       window.removeEventListener('user-role-updated', handleRoleUpdated as EventListener);
     };
-  }, [forceGetUserCompanies, user?.id, localCompany]);
-  
-  const companyColor = localCompany?.cor_principal || "#1EAEDB";
+  }, [companyData?.id]);
+
+  // Loading state
+  if (isLoading && !companyData) {
+    return (
+      <IntegrationLayout>
+        <LoadingState />
+      </IntegrationLayout>
+    );
+  }
+
+  // Sem empresa selecionada
+  if (!companyData) {
+    return (
+      <IntegrationLayout>
+        <div className="flex items-center justify-center h-64">
+          <p className="text-gray-500">Nenhuma empresa selecionada</p>
+        </div>
+      </IntegrationLayout>
+    );
+  }
 
   return (
     <IntegrationLayout>
-      {isLoading ? (
-        <LoadingState />
-      ) : (
-        <>
-          <CompanyHeader 
-            company={localCompany} 
-            companyColor={companyColor}
-          />
-          <IntegrationTabs
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            company={localCompany}
-            companyColor={companyColor}
-            jobRoles={jobRoles}
-            isLoadingRoles={isLoadingRoles}
-            userRole={userRole}
-          />
-        </>
-      )}
+      <CompanyHeader 
+        company={companyData} 
+        companyColor={companyData.cor_principal}
+      />
+      <IntegrationTabs
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        company={companyData}
+        companyColor={companyData.cor_principal}
+        jobRoles={jobRoles}
+        isLoadingRoles={isLoadingRoles}
+        userRole={userRole}
+      />
     </IntegrationLayout>
   );
 };
