@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,23 +13,21 @@ import { Company } from "@/types/company";
 export const NotificationsWidget = () => {
   const [showAllNotices, setShowAllNotices] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const lastFetchedCompanyRef = useRef<string | null>(null);
+  const fetchInProgressRef = useRef(false);
 
-  // Load selected company from localStorage
+  // Load selected company from localStorage only once
   useEffect(() => {
-    const loadSelectedCompany = () => {
-      try {
-        const storedCompany = localStorage.getItem('selectedCompany');
-        if (storedCompany) {
-          const company = JSON.parse(storedCompany);
-          console.log('[NotificationsWidget] Loading selected company:', company.nome);
-          setSelectedCompany(company);
-        }
-      } catch (error) {
-        console.error('[NotificationsWidget] Error loading selected company:', error);
+    try {
+      const storedCompany = localStorage.getItem('selectedCompany');
+      if (storedCompany) {
+        const company = JSON.parse(storedCompany);
+        console.log('[NotificationsWidget] Loading selected company:', company.nome);
+        setSelectedCompany(company);
       }
-    };
-
-    loadSelectedCompany();
+    } catch (error) {
+      console.error('[NotificationsWidget] Error loading selected company:', error);
+    }
   }, []);
 
   // Listen for company selection events
@@ -42,12 +40,10 @@ export const NotificationsWidget = () => {
 
     window.addEventListener('company-selected', handleCompanyEvents as EventListener);
     window.addEventListener('company-changed', handleCompanyEvents as EventListener);
-    window.addEventListener('company-content-reload', handleCompanyEvents as EventListener);
     
     return () => {
       window.removeEventListener('company-selected', handleCompanyEvents as EventListener);
       window.removeEventListener('company-changed', handleCompanyEvents as EventListener);
-      window.removeEventListener('company-content-reload', handleCompanyEvents as EventListener);
     };
   }, []);
 
@@ -61,21 +57,27 @@ export const NotificationsWidget = () => {
   console.log('[NotificationsWidget] Rendering with company:', selectedCompany?.nome, 'notices:', notices.length);
 
   const recentNotices = notices.slice(0, 3);
+  const unreadCount = notices.length;
 
-  // Calculate unread count from notices (assuming notices don't have is_read property)
-  const unreadCount = notices.length; // For now, consider all notices as unread
-
-  // Since markAsRead doesn't exist in the hook, we'll remove the functionality for now
   const handleMarkAsRead = async (noticeId: string) => {
     console.log('Mark as read not implemented yet:', noticeId);
   };
 
-  // Trigger fetch when company changes
+  // Only fetch when company changes and we're not already fetching
   useEffect(() => {
-    if (selectedCompany?.id) {
-      fetchNotices(selectedCompany.id);
+    if (selectedCompany?.id && 
+        selectedCompany.id !== lastFetchedCompanyRef.current && 
+        !fetchInProgressRef.current) {
+      
+      fetchInProgressRef.current = true;
+      lastFetchedCompanyRef.current = selectedCompany.id;
+      
+      console.log('[NotificationsWidget] Fetching notices for company:', selectedCompany.nome);
+      fetchNotices(selectedCompany.id).finally(() => {
+        fetchInProgressRef.current = false;
+      });
     }
-  }, [selectedCompany?.id, fetchNotices]);
+  }, [selectedCompany?.id]);
 
   return (
     <>
