@@ -29,6 +29,15 @@ const AdminPage = () => {
   const [isReady, setIsReady] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
 
+  console.log('[Admin] Current state:', {
+    activeTab,
+    userProfile: userProfile?.email || 'none',
+    isAdmin: userProfile?.is_admin,
+    isSuperAdmin: userProfile?.super_admin,
+    authLoading,
+    isReady
+  });
+
   // Inicialização melhorada para evitar recarregamentos
   useEffect(() => {
     // Prevent multiple initializations

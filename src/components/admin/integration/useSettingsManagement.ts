@@ -6,11 +6,20 @@ import { Company } from "@/types/company";
 import { useCompanies } from "@/hooks/useCompanies";
 
 export const useSettingsManagement = () => {
+  // Use useCompanies without skipLoadingInOnboarding to ensure companies are loaded
   const { userCompanies, isLoading: isLoadingCompanies, fetchCompanies, selectedCompany: globalSelectedCompany } = useCompanies();
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("info");
   const hasLoadedCompanies = useRef(false);
+  const hasInitialized = useRef(false);
+
+  console.log('[useSettingsManagement] Hook state:', {
+    userCompaniesCount: userCompanies.length,
+    selectedCompany: selectedCompany?.nome || 'none',
+    globalSelectedCompany: globalSelectedCompany?.nome || 'none',
+    isLoadingCompanies
+  });
 
   // Ordenar empresas para que a empresa selecionada globalmente apareça primeiro
   const companies = userCompanies.slice().sort((a, b) => {
@@ -21,34 +30,36 @@ export const useSettingsManagement = () => {
     return a.nome.localeCompare(b.nome);
   });
 
+  // Load companies if not loaded
   useEffect(() => {
     const loadCompanies = async () => {
-      if (!hasLoadedCompanies.current && !isLoadingCompanies) {
-        console.log("Loading companies in SettingsManagement - Initial Load");
+      if (!hasLoadedCompanies.current && !isLoadingCompanies && userCompanies.length === 0) {
+        console.log("[useSettingsManagement] Loading companies - Initial Load");
         hasLoadedCompanies.current = true;
         await fetchCompanies();
       }
     };
     loadCompanies();
-  }, [fetchCompanies, isLoadingCompanies]);
+  }, [fetchCompanies, isLoadingCompanies, userCompanies.length]);
 
-  // Priorizar a empresa selecionada globalmente
+  // Initialize selected company when companies are available
   useEffect(() => {
-    if (companies.length > 0) {
-      // Se há uma empresa selecionada globalmente e ela está nas empresas disponíveis, use ela
+    if (!hasInitialized.current && companies.length > 0) {
+      console.log('[useSettingsManagement] Initializing selected company');
+      hasInitialized.current = true;
+      
+      // First priority: global selected company if it exists in user companies
       if (globalSelectedCompany && companies.some(c => c.id === globalSelectedCompany.id)) {
-        if (!selectedCompany || selectedCompany.id !== globalSelectedCompany.id) {
-          console.log("Setting selected company to global selected company:", globalSelectedCompany.nome);
-          setSelectedCompany(globalSelectedCompany);
-          
-          window.dispatchEvent(new CustomEvent('settings-company-changed', { 
-            detail: { company: globalSelectedCompany } 
-          }));
-        }
+        console.log("[useSettingsManagement] Using global selected company:", globalSelectedCompany.nome);
+        setSelectedCompany(globalSelectedCompany);
+        
+        window.dispatchEvent(new CustomEvent('settings-company-changed', { 
+          detail: { company: globalSelectedCompany } 
+        }));
       }
-      // Se não há empresa selecionada, use a primeira da lista
-      else if (!selectedCompany) {
-        console.log("Setting initial selected company:", companies[0].nome);
+      // Second priority: first available company
+      else {
+        console.log("[useSettingsManagement] Using first available company:", companies[0].nome);
         setSelectedCompany(companies[0]);
         
         window.dispatchEvent(new CustomEvent('settings-company-changed', { 
@@ -56,7 +67,30 @@ export const useSettingsManagement = () => {
         }));
       }
     }
-  }, [companies, selectedCompany, globalSelectedCompany]);
+  }, [companies, globalSelectedCompany]);
+
+  // Listen for global company changes
+  useEffect(() => {
+    const handleGlobalCompanyChange = (event: CustomEvent<{company: Company}>) => {
+      const newCompany = event.detail.company;
+      
+      // Only update if the company is in our available companies and different from current
+      if (companies.some(c => c.id === newCompany.id) && (!selectedCompany || selectedCompany.id !== newCompany.id)) {
+        console.log("[useSettingsManagement] Global company changed, updating selected company:", newCompany.nome);
+        setSelectedCompany(newCompany);
+      }
+    };
+
+    window.addEventListener('company-changed', handleGlobalCompanyChange as EventListener);
+    window.addEventListener('company-navigation-change', handleGlobalCompanyChange as EventListener);
+    window.addEventListener('company-selected', handleGlobalCompanyChange as EventListener);
+    
+    return () => {
+      window.removeEventListener('company-changed', handleGlobalCompanyChange as EventListener);
+      window.removeEventListener('company-navigation-change', handleGlobalCompanyChange as EventListener);
+      window.removeEventListener('company-selected', handleGlobalCompanyChange as EventListener);
+    };
+  }, [companies, selectedCompany]);
 
   const handleCompanyChange = (companyId: string) => {
     const company = companies.find(c => c.id === companyId);
