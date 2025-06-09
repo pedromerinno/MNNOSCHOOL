@@ -3,7 +3,6 @@ import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 import { useCompanies } from "@/hooks/useCompanies"
-import { useCompanyCache } from "@/hooks/company/useCompanyCache" 
 import { useState, useEffect } from "react"
 
 const badgeVariants = cva(
@@ -44,45 +43,35 @@ function CompanyThemedBadge({
   ...props 
 }: BadgeProps) {
   const { selectedCompany } = useCompanies();
-  const { getInitialSelectedCompany } = useCompanyCache();
   
-  // Inicializar com cor do cache
-  const [companyColor, setCompanyColor] = useState<string>(() => {
-    const cachedCompany = getInitialSelectedCompany();
-    return cachedCompany?.cor_principal || "#1EAEDB";
-  });
+  const [companyColor, setCompanyColor] = useState<string>("#1EAEDB");
   
   // Atualizar quando a seleção mudar
   useEffect(() => {
     if (selectedCompany?.cor_principal) {
+      console.log('CompanyThemedBadge: Atualizando cor da empresa:', selectedCompany.cor_principal);
       setCompanyColor(selectedCompany.cor_principal);
     }
-  }, [selectedCompany]);
+  }, [selectedCompany?.cor_principal]);
 
-  // Adicionar listener para mudanças na empresa (incluindo atualizações do painel admin)
+  // Listener para eventos de atualização
   useEffect(() => {
     const handleCompanyUpdate = (event: CustomEvent) => {
-      const updatedCompany = event.detail.company;
-      if (updatedCompany?.cor_principal && selectedCompany?.id === updatedCompany.id) {
-        console.log('CompanyThemedBadge: Atualizando cor da empresa:', updatedCompany.cor_principal);
-        setCompanyColor(updatedCompany.cor_principal);
-      }
-    };
-
-    const handleCompanyNameChange = (event: CustomEvent) => {
       const { company } = event.detail;
       if (company?.cor_principal && selectedCompany?.id === company.id) {
-        console.log('CompanyThemedBadge: Atualizando cor via mudança de nome:', company.cor_principal);
+        console.log('CompanyThemedBadge: Atualizando cor via evento:', company.cor_principal);
         setCompanyColor(company.cor_principal);
       }
     };
 
     window.addEventListener('company-updated', handleCompanyUpdate as EventListener);
-    window.addEventListener('company-name-changed', handleCompanyNameChange as EventListener);
+    window.addEventListener('company-name-changed', handleCompanyUpdate as EventListener);
+    window.addEventListener('company-selected', handleCompanyUpdate as EventListener);
 
     return () => {
       window.removeEventListener('company-updated', handleCompanyUpdate as EventListener);
-      window.removeEventListener('company-name-changed', handleCompanyNameChange as EventListener);
+      window.removeEventListener('company-name-changed', handleCompanyUpdate as EventListener);
+      window.removeEventListener('company-selected', handleCompanyUpdate as EventListener);
     };
   }, [selectedCompany?.id]);
   
