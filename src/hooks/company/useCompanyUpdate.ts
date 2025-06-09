@@ -41,13 +41,26 @@ export const useCompanyUpdate = ({
           const newSelectedCompany = { ...selectedCompany, ...updatedCompany };
           setSelectedCompany(newSelectedCompany);
           localStorage.setItem('selectedCompany', JSON.stringify(newSelectedCompany));
+          
+          // Atualizar cache do nome da empresa para sincronizar com outros componentes
+          if (newSelectedCompany.nome) {
+            localStorage.setItem('selectedCompanyName', newSelectedCompany.nome);
+          }
         }
         
-        // Dispatch event so other components can update
+        // Dispatch event so other components can update - use custom event with company data
         const event = new CustomEvent('company-updated', { 
           detail: { company: updatedCompany } 
         });
         window.dispatchEvent(event);
+        
+        // Dispatch additional event specifically for company name changes to force cache refresh
+        if (data.nome) {
+          const nameChangeEvent = new CustomEvent('company-name-changed', {
+            detail: { companyId, newName: data.nome, company: updatedCompany }
+          });
+          window.dispatchEvent(nameChangeEvent);
+        }
         
         toast.success(`Empresa ${updatedCompany.nome} atualizada com sucesso!`);
       }

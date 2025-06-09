@@ -38,6 +38,16 @@ export const CompanySelector = memo(() => {
       await forceGetUserCompanies(user.id);
     }
   }, [user, forceGetUserCompanies]);
+
+  const handleCompanyNameChange = useCallback((event: CustomEvent) => {
+    const { companyId, newName, company } = event.detail;
+    console.log('CompanySelector: Detectada mudança no nome da empresa:', newName);
+    
+    if (selectedCompany?.id === companyId) {
+      setDisplayName(newName);
+      localStorage.setItem('selectedCompanyName', newName);
+    }
+  }, [selectedCompany?.id]);
   
   useEffect(() => {
     const cachedCompanyName = localStorage.getItem('selectedCompanyName');
@@ -51,17 +61,21 @@ export const CompanySelector = memo(() => {
     window.addEventListener('company-updated', (event: Event) => {
       const customEvent = event as CustomEvent;
       const updatedCompany = customEvent.detail.company;
-      if (updatedCompany) {
+      if (updatedCompany && selectedCompany?.id === updatedCompany.id) {
         setDisplayName(updatedCompany.nome);
         localStorage.setItem('selectedCompanyName', updatedCompany.nome);
       }
     });
     
+    // Adicionar listener específico para mudanças de nome da empresa
+    window.addEventListener('company-name-changed', handleCompanyNameChange as EventListener);
+    
     return () => {
       window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
       window.removeEventListener('company-updated', () => {});
+      window.removeEventListener('company-name-changed', handleCompanyNameChange as EventListener);
     };
-  }, [handleCompanyRelationChange]);
+  }, [handleCompanyRelationChange, handleCompanyNameChange, selectedCompany?.id]);
 
   const handleCompanyChange = useCallback((company) => {
     if (!company || !user?.id) return;

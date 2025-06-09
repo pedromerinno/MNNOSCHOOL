@@ -58,6 +58,33 @@ function CompanyThemedBadge({
       setCompanyColor(selectedCompany.cor_principal);
     }
   }, [selectedCompany]);
+
+  // Adicionar listener para mudanças na empresa (incluindo atualizações do painel admin)
+  useEffect(() => {
+    const handleCompanyUpdate = (event: CustomEvent) => {
+      const updatedCompany = event.detail.company;
+      if (updatedCompany?.cor_principal && selectedCompany?.id === updatedCompany.id) {
+        console.log('CompanyThemedBadge: Atualizando cor da empresa:', updatedCompany.cor_principal);
+        setCompanyColor(updatedCompany.cor_principal);
+      }
+    };
+
+    const handleCompanyNameChange = (event: CustomEvent) => {
+      const { company } = event.detail;
+      if (company?.cor_principal && selectedCompany?.id === company.id) {
+        console.log('CompanyThemedBadge: Atualizando cor via mudança de nome:', company.cor_principal);
+        setCompanyColor(company.cor_principal);
+      }
+    };
+
+    window.addEventListener('company-updated', handleCompanyUpdate as EventListener);
+    window.addEventListener('company-name-changed', handleCompanyNameChange as EventListener);
+
+    return () => {
+      window.removeEventListener('company-updated', handleCompanyUpdate as EventListener);
+      window.removeEventListener('company-name-changed', handleCompanyNameChange as EventListener);
+    };
+  }, [selectedCompany?.id]);
   
   // Set custom styles for company colors
   const style: React.CSSProperties = {
