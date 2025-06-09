@@ -23,20 +23,23 @@ export const CompanySelector = memo(() => {
 
     setIsLoading(true);
     try {
+      console.log('[CompanySelector] Fetching user companies for user:', user.id);
       const { data, error } = await supabase
         .rpc('get_user_companies', { user_id: user.id });
 
       if (error) throw error;
       
       const companies = data as Company[];
+      console.log('[CompanySelector] Fetched companies:', companies.length);
       setUserCompanies(companies);
       
       // Auto-select first company if none selected
       if (companies.length > 0 && !selectedCompany) {
-        setSelectedCompany(companies[0]);
+        console.log('[CompanySelector] Auto-selecting first company:', companies[0].nome);
+        handleCompanyChange(companies[0]);
       }
     } catch (error) {
-      console.error('Error fetching companies:', error);
+      console.error('[CompanySelector] Error fetching companies:', error);
     } finally {
       setIsLoading(false);
     }
@@ -46,11 +49,56 @@ export const CompanySelector = memo(() => {
     fetchUserCompanies();
   }, [fetchUserCompanies]);
 
+  // Load selected company from localStorage on mount
+  useEffect(() => {
+    const loadStoredCompany = () => {
+      try {
+        const storedCompany = localStorage.getItem('selectedCompany');
+        if (storedCompany) {
+          const company = JSON.parse(storedCompany);
+          console.log('[CompanySelector] Loading stored company:', company.nome);
+          setSelectedCompany(company);
+        }
+      } catch (error) {
+        console.error('[CompanySelector] Error loading stored company:', error);
+      }
+    };
+
+    loadStoredCompany();
+  }, []);
+
   const handleCompanyChange = useCallback((company: Company) => {
+    console.log('[CompanySelector] Company selection changed to:', company.nome);
+    
     setSelectedCompany(company);
+    
+    // Store in localStorage
     localStorage.setItem('selectedCompanyId', company.id);
     localStorage.setItem('selectedCompany', JSON.stringify(company));
-  }, []);
+    
+    // Dispatch multiple events to ensure all components are notified
+    console.log('[CompanySelector] Dispatching company selection events');
+    
+    // Event for company selection
+    const selectEvent = new CustomEvent('company-selected', { 
+      detail: { userId: user?.id, company } 
+    });
+    window.dispatchEvent(selectEvent);
+    
+    // Event for company change (broader notification)
+    const changeEvent = new CustomEvent('company-changed', { 
+      detail: { company, companyId: company.id } 
+    });
+    window.dispatchEvent(changeEvent);
+    
+    // Event for force reload of company-dependent content
+    const reloadEvent = new CustomEvent('company-content-reload', { 
+      detail: { company } 
+    });
+    window.dispatchEvent(reloadEvent);
+    
+    console.log('[CompanySelector] All events dispatched for company:', company.nome);
+  }, [user?.id]);
 
   const displayName = selectedCompany?.nome || "merinno";
 

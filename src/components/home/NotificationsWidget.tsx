@@ -1,177 +1,158 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, Plus, RefreshCw } from "lucide-react";
-import { useCompanyNotices } from "@/hooks/useCompanyNotices";
-import { useAuth } from "@/contexts/AuthContext";
-import { formatDistanceToNow } from "date-fns";
-import { pt } from "date-fns/locale";
-import { useState, useRef, memo, useCallback, useEffect } from "react";
-import NewNoticeDialog from "../admin/dialogs/NewNoticeDialog";
-import { AllNoticesDialog } from "./AllNoticesDialog";
-import { useCompanies } from "@/hooks/useCompanies";
-export const NotificationsWidget = memo(() => {
-  const {
-    userProfile
-  } = useAuth();
-  const {
-    selectedCompany
-  } = useCompanies();
-  const {
-    currentNotice,
-    isLoading,
-    error,
-    nextNotice,
-    prevNotice,
-    fetchNotices
-  } = useCompanyNotices();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [noticesDialogOpen, setNoticesDialogOpen] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  const initialFetchDoneRef = useRef(false);
-  const fetchTimeoutRef = useRef<number | null>(null);
-  const lastSelectedCompanyIdRef = useRef<string | null>(null);
-  const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
-  const formatRelativeTime = useCallback((dateString: string) => {
-    try {
-      return formatDistanceToNow(new Date(dateString), {
-        addSuffix: true,
-        locale: pt
-      });
-    } catch (error) {
-      console.error("Erro ao formatar data:", error);
-      return "data desconhecida";
-    }
-  }, []);
-  useEffect(() => {
-    // Initial fetch - only once when component mounts and company is selected
-    if (selectedCompany?.id && (!initialFetchDoneRef.current || selectedCompany.id !== lastSelectedCompanyIdRef.current)) {
-      initialFetchDoneRef.current = true;
-      lastSelectedCompanyIdRef.current = selectedCompany.id;
 
-      // Use setTimeout to avoid triggering fetch on every render
-      if (fetchTimeoutRef.current === null) {
-        fetchTimeoutRef.current = window.setTimeout(() => {
-          try {
-            console.log(`NotificationsWidget: Initial fetch for company ${selectedCompany.id}`);
-            fetchNotices(selectedCompany.id, false).catch(err => {
-              console.error("Error fetching notices:", err);
-            });
-          } catch (err) {
-            console.error("Exception in fetchNotices:", err);
-          }
-          fetchTimeoutRef.current = null;
-        }, 1000);
-      }
-    }
-    return () => {
-      if (fetchTimeoutRef.current !== null) {
-        clearTimeout(fetchTimeoutRef.current);
-        fetchTimeoutRef.current = null;
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Bell, Eye } from "lucide-react";
+import { useCompanyNotices } from "@/hooks/useCompanyNotices";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { AllNoticesDialog } from "./AllNoticesDialog";
+import { Company } from "@/types/company";
+
+export const NotificationsWidget = () => {
+  const [showAllNotices, setShowAllNotices] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+
+  // Load selected company from localStorage
+  useEffect(() => {
+    const loadSelectedCompany = () => {
+      try {
+        const storedCompany = localStorage.getItem('selectedCompany');
+        if (storedCompany) {
+          const company = JSON.parse(storedCompany);
+          console.log('[NotificationsWidget] Loading selected company:', company.nome);
+          setSelectedCompany(company);
+        }
+      } catch (error) {
+        console.error('[NotificationsWidget] Error loading selected company:', error);
       }
     };
-  }, [selectedCompany?.id, fetchNotices]);
-  const handleDialogOpenChange = (open: boolean) => {
-    setDialogOpen(open);
 
-    // Refresh notices when dialog closes
-    if (!open && initialFetchDoneRef.current && selectedCompany?.id) {
-      setTimeout(() => {
-        if (selectedCompany?.id) {
-          fetchNotices(selectedCompany.id, true).catch(err => {
-            console.error("Error refreshing notices after dialog close:", err);
-          });
-        }
-      }, 800);
-    }
+    loadSelectedCompany();
+  }, []);
+
+  // Listen for company selection events
+  useEffect(() => {
+    const handleCompanyEvents = (event: CustomEvent) => {
+      const { company } = event.detail;
+      console.log('[NotificationsWidget] Company event received, updating to:', company.nome);
+      setSelectedCompany(company);
+    };
+
+    window.addEventListener('company-selected', handleCompanyEvents as EventListener);
+    window.addEventListener('company-changed', handleCompanyEvents as EventListener);
+    window.addEventListener('company-content-reload', handleCompanyEvents as EventListener);
+    
+    return () => {
+      window.removeEventListener('company-selected', handleCompanyEvents as EventListener);
+      window.removeEventListener('company-changed', handleCompanyEvents as EventListener);
+      window.removeEventListener('company-content-reload', handleCompanyEvents as EventListener);
+    };
+  }, []);
+
+  const { 
+    notices, 
+    unreadCount, 
+    isLoading, 
+    markAsRead 
+  } = useCompanyNotices(selectedCompany?.id || null);
+
+  console.log('[NotificationsWidget] Rendering with company:', selectedCompany?.nome, 'notices:', notices.length);
+
+  const recentNotices = notices.slice(0, 3);
+
+  const handleMarkAsRead = async (noticeId: string) => {
+    await markAsRead(noticeId);
   };
-  const handleAllNoticesDialogChange = (open: boolean) => {
-    setNoticesDialogOpen(open);
-  };
-  const handleRefresh = async () => {
-    if (!selectedCompany?.id || refreshing) return;
-    setRefreshing(true);
-    try {
-      await fetchNotices(selectedCompany.id, true);
-    } catch (err) {
-      console.error("Error refreshing notices:", err);
-    } finally {
-      setTimeout(() => setRefreshing(false), 500);
-    }
-  };
-  return <Card className="border-0 shadow-none overflow-hidden bg-[#F1EDE4] dark:bg-[#222222] rounded-[30px]">
-      <CardContent className="p-0 flex flex-col h-full">
-        <div className="p-8 flex justify-between items-center py-[24px]">
-          <div className="flex items-center gap-3">
-            <h3 className="text-xl font-medium text-black dark:text-white">Avisos</h3>
-            {isAdmin && <Button variant="ghost" size="icon" className="rounded-full h-7 w-7" onClick={() => setDialogOpen(true)}>
-                <Plus className="h-4 w-4" />
-              </Button>}
-          </div>
-          <div className="flex space-x-2">
-            <Button size="icon" variant="ghost" onClick={handleRefresh} disabled={refreshing || isLoading} title="Atualizar avisos" className="h-7 w-7 rounded-full px-[25px] py-[25px] text-zinc-950 bg-[#ad7878]/0">
-              <RefreshCw className={`h-4 w-4 ${refreshing || isLoading ? 'animate-spin' : ''}`} />
-            </Button>
-            <Button size="icon" variant="ghost" className="h-12 w-12 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-amber-50 dark:hover:bg-amber-900/20" onClick={prevNotice} disabled={isLoading || !currentNotice}>
-              <ChevronLeft className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-            </Button>
-            <Button size="icon" variant="ghost" className="h-12 w-12 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-amber-50 dark:hover:bg-amber-900/20" onClick={nextNotice} disabled={isLoading || !currentNotice}>
-              <ChevronRight className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-            </Button>
-          </div>
-        </div>
-        
-        <div className="my-[35px]">
-          {refreshing || isLoading ? <div className="flex items-center justify-center h-40">
-              <div className="animate-pulse text-gray-400">Carregando avisos...</div>
-            </div> : error ? <div className="flex flex-col items-center justify-center h-40 gap-2">
-              <div className="text-red-500 text-center">{error}</div>
-              <Button variant="outline" size="sm" onClick={handleRefresh}>
-                Tentar novamente
-              </Button>
-            </div> : !currentNotice ? <div className="flex flex-col items-center justify-center h-40 gap-2">
-              <div className="text-gray-500 dark:text-gray-400">
-                Nenhum aviso disponível
-              </div>
-              {isAdmin && <Button variant="outline" size="sm" onClick={() => setDialogOpen(true)} className="px-[20px] py-[25px] bg-zinc-950 hover:bg-zinc-800 text-zinc-50 rounded-full my-[20px]">
-                  Criar aviso
-                </Button>}
-            </div> : <div className="px-[50px] py-0 flex flex-col items-center text-center">
-              <span className="inline-block px-6 py-1.5 rounded-full bg-amber-100 dark:bg-[#2C2C2C] text-yellow-700 dark:text-amber-100 text-xs font-semibold mb-4">
-                {currentNotice.type.charAt(0).toUpperCase() + currentNotice.type.slice(1)}
+
+  return (
+    <>
+      <Card className="h-full">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium flex items-center">
+            <Bell className="h-4 w-4 mr-2" />
+            Avisos da Empresa
+            {selectedCompany && (
+              <span className="ml-2 text-xs text-muted-foreground">
+                ({selectedCompany.nome})
               </span>
-              <h4 className="text-lg font-bold mb-2 dark:text-white">{currentNotice.title}</h4>
-              <p className="text-base text-gray-800 dark:text-gray-300 mb-5 line-clamp-2 max-w-xs mx-auto">
-                {currentNotice.content}
-              </p>
-              <div className="flex items-center justify-center p-3 rounded-lg space-y-1 bg-amber-100/0 py-[4px]">
-                <div className="flex items-center">
-                  {currentNotice.author?.avatar ? <img src={currentNotice.author.avatar} alt="Autor do aviso" className="h-6 w-6 rounded-full mr-3 object-cover" loading="lazy" onError={e => {
-                (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMiIgZmlsbD0iI2UyZThmMCIvPjxwYXRoIGQ9Ik04IDhoOHY4SDh6IiBmaWxsPSIjOTRhM2IzIi8+PC9zdmc+';
-              }} /> : <div className="h-6 w-6 rounded-full mr-3 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-300">
-                      {currentNotice.author?.display_name?.substring(0, 1).toUpperCase() || '?'}
-                    </div>}
-                  <span className="text-sm font-medium text-black dark:text-white mr-3">
-                    {currentNotice.author?.display_name || 'Usuário'}
-                  </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {formatRelativeTime(currentNotice.created_at)}
-                  </span>
+            )}
+          </CardTitle>
+          {unreadCount > 0 && (
+            <Badge variant="destructive" className="text-xs">
+              {unreadCount}
+            </Badge>
+          )}
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="space-y-2">
+              <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+              <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4"></div>
+            </div>
+          ) : !selectedCompany ? (
+            <p className="text-sm text-muted-foreground">
+              Selecione uma empresa para ver os avisos
+            </p>
+          ) : recentNotices.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhum aviso disponível</p>
+          ) : (
+            <div className="space-y-3">
+              {recentNotices.map((notice) => (
+                <div
+                  key={notice.id}
+                  className={`p-3 border rounded-lg ${
+                    notice.is_read ? "bg-gray-50" : "bg-blue-50 border-blue-200"
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-medium text-gray-900 truncate">
+                        {notice.title}
+                      </h4>
+                      <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                        {notice.content}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {format(new Date(notice.created_at), "dd MMM yyyy", {
+                          locale: ptBR,
+                        })}
+                      </p>
+                    </div>
+                    {!notice.is_read && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleMarkAsRead(notice.id)}
+                        className="ml-2"
+                      >
+                        <Eye className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </div>}
-        </div>
-        
-        <div className="border-t border-gray-100 dark:border-gray-800 py-6 text-center mb-6">
-          <button className="text-base text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300" onClick={() => setNoticesDialogOpen(true)}>
-            Ver mais
-          </button>
-        </div>
-      </CardContent>
-      
-      {/* Only render the dialog components when they need to be shown */}
-      {dialogOpen && <NewNoticeDialog open={dialogOpen} onOpenChange={handleDialogOpenChange} />}
-      
-      {noticesDialogOpen && <AllNoticesDialog open={noticesDialogOpen} onOpenChange={handleAllNoticesDialogChange} />}
-    </Card>;
-});
-NotificationsWidget.displayName = 'NotificationsWidget';
+              ))}
+              {notices.length > 3 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAllNotices(true)}
+                  className="w-full mt-2"
+                >
+                  Ver todos os avisos ({notices.length})
+                </Button>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <AllNoticesDialog
+        isOpen={showAllNotices}
+        onOpenChange={setShowAllNotices}
+        companyId={selectedCompany?.id || null}
+      />
+    </>
+  );
+};
