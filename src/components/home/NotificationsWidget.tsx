@@ -22,7 +22,6 @@ export const NotificationsWidget = () => {
       const storedCompany = localStorage.getItem('selectedCompany');
       if (storedCompany) {
         const company = JSON.parse(storedCompany);
-        console.log('[NotificationsWidget] Loading selected company:', company.nome);
         setSelectedCompany(company);
       }
     } catch (error) {
@@ -34,7 +33,6 @@ export const NotificationsWidget = () => {
   useEffect(() => {
     const handleCompanyEvents = (event: CustomEvent) => {
       const { company } = event.detail;
-      console.log('[NotificationsWidget] Company event received, updating to:', company.nome);
       setSelectedCompany(company);
     };
 
@@ -54,8 +52,6 @@ export const NotificationsWidget = () => {
     fetchNotices
   } = useCompanyNotices();
 
-  console.log('[NotificationsWidget] Rendering with company:', selectedCompany?.nome, 'notices:', notices.length);
-
   const recentNotices = notices.slice(0, 3);
   const unreadCount = notices.length;
 
@@ -72,12 +68,11 @@ export const NotificationsWidget = () => {
       fetchInProgressRef.current = true;
       lastFetchedCompanyRef.current = selectedCompany.id;
       
-      console.log('[NotificationsWidget] Fetching notices for company:', selectedCompany.nome);
       fetchNotices(selectedCompany.id).finally(() => {
         fetchInProgressRef.current = false;
       });
     }
-  }, [selectedCompany?.id]);
+  }, [selectedCompany?.id, fetchNotices]);
 
   return (
     <>

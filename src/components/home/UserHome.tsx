@@ -20,7 +20,6 @@ export const UserHome = () => {
         const storedCompany = localStorage.getItem('selectedCompany');
         if (storedCompany) {
           const company = JSON.parse(storedCompany);
-          console.log('[UserHome] Loading selected company:', company.nome);
           setSelectedCompany(company);
         }
       } catch (error) {
@@ -34,7 +33,6 @@ export const UserHome = () => {
   useEffect(() => {
     const handleCompanySelected = (event: CustomEvent) => {
       const { company } = event.detail;
-      console.log('[UserHome] Company selected event received:', company.nome);
       setSelectedCompany(company);
     };
 
@@ -44,12 +42,6 @@ export const UserHome = () => {
       window.removeEventListener('company-selected', handleCompanySelected as EventListener);
     };
   }, []);
-  
-  useEffect(() => {
-    if (user?.id) {
-      console.log("[UserHome] User authenticated, rendering home for company:", selectedCompany?.nome || 'none');
-    }
-  }, [user?.id, selectedCompany]);
   
   return (
     <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">

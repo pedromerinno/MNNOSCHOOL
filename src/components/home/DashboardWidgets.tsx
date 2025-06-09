@@ -16,7 +16,6 @@ export const DashboardWidgets = () => {
         const storedCompany = localStorage.getItem('selectedCompany');
         if (storedCompany) {
           const company = JSON.parse(storedCompany);
-          console.log('[DashboardWidgets] Loading selected company:', company.nome);
           setSelectedCompany(company);
         }
       } catch (error) {
@@ -30,7 +29,6 @@ export const DashboardWidgets = () => {
   useEffect(() => {
     const handleCompanyEvents = (event: CustomEvent) => {
       const { company } = event.detail;
-      console.log('[DashboardWidgets] Company event received:', company.nome);
       setSelectedCompany(company);
     };
 
