@@ -6,7 +6,6 @@ import { Company } from "@/types/company";
 import { useCompanies } from "@/hooks/useCompanies";
 
 export const useSettingsManagement = () => {
-  // Use useCompanies without skipLoadingInOnboarding to ensure companies are loaded
   const { userCompanies, isLoading: isLoadingCompanies, fetchCompanies, selectedCompany: globalSelectedCompany } = useCompanies();
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -52,24 +51,16 @@ export const useSettingsManagement = () => {
       if (globalSelectedCompany && companies.some(c => c.id === globalSelectedCompany.id)) {
         console.log("[useSettingsManagement] Using global selected company:", globalSelectedCompany.nome);
         setSelectedCompany(globalSelectedCompany);
-        
-        window.dispatchEvent(new CustomEvent('settings-company-changed', { 
-          detail: { company: globalSelectedCompany } 
-        }));
       }
       // Second priority: first available company
       else {
         console.log("[useSettingsManagement] Using first available company:", companies[0].nome);
         setSelectedCompany(companies[0]);
-        
-        window.dispatchEvent(new CustomEvent('settings-company-changed', { 
-          detail: { company: companies[0] } 
-        }));
       }
     }
   }, [companies, globalSelectedCompany]);
 
-  // Listen for global company changes
+  // Listen for global company changes and sync
   useEffect(() => {
     const handleGlobalCompanyChange = (event: CustomEvent<{company: Company}>) => {
       const newCompany = event.detail.company;
@@ -81,14 +72,17 @@ export const useSettingsManagement = () => {
       }
     };
 
+    // Listen to multiple company change events
     window.addEventListener('company-changed', handleGlobalCompanyChange as EventListener);
     window.addEventListener('company-navigation-change', handleGlobalCompanyChange as EventListener);
     window.addEventListener('company-selected', handleGlobalCompanyChange as EventListener);
+    window.addEventListener('settings-company-changed', handleGlobalCompanyChange as EventListener);
     
     return () => {
       window.removeEventListener('company-changed', handleGlobalCompanyChange as EventListener);
       window.removeEventListener('company-navigation-change', handleGlobalCompanyChange as EventListener);
       window.removeEventListener('company-selected', handleGlobalCompanyChange as EventListener);
+      window.removeEventListener('settings-company-changed', handleGlobalCompanyChange as EventListener);
     };
   }, [companies, selectedCompany]);
 
@@ -103,6 +97,11 @@ export const useSettingsManagement = () => {
       
       // Broadcast company change for other components to react
       window.dispatchEvent(new CustomEvent('settings-company-changed', { 
+        detail: { company } 
+      }));
+      
+      // Also dispatch global company change event
+      window.dispatchEvent(new CustomEvent('company-changed', { 
         detail: { company } 
       }));
     }
@@ -136,23 +135,35 @@ export const useSettingsManagement = () => {
         
       if (error) throw error;
       
-      // Update the selected company locally
+      // Update the selected company locally with new data
       const updatedCompany = {
         ...selectedCompany,
         ...processedData
       };
       
+      // CRITICAL: Update local state FIRST
       setSelectedCompany(updatedCompany);
       
       toast.success("Informações de integração atualizadas com sucesso");
       
-      // Dispatch event to update company data in other components
+      // Dispatch comprehensive events to update company data everywhere
       window.dispatchEvent(new CustomEvent('company-updated', { 
         detail: { company: updatedCompany } 
       }));
       
-      // Trigger refresh event for other components
+      window.dispatchEvent(new CustomEvent('settings-company-changed', { 
+        detail: { company: updatedCompany } 
+      }));
+      
+      window.dispatchEvent(new CustomEvent('company-changed', { 
+        detail: { company: updatedCompany } 
+      }));
+      
+      // Force refresh event for other components that need to reload data
       window.dispatchEvent(new Event('company-relation-changed'));
+      
+      // Force reload companies to ensure fresh data everywhere
+      window.dispatchEvent(new Event('force-reload-companies'));
       
     } catch (error: any) {
       console.error("Erro ao salvar informações:", error);
