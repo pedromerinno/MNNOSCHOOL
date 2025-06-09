@@ -1,3 +1,4 @@
+
 import { useEffect, useCallback, useRef } from "react";
 import { useCompanyState } from "./company/useCompanyState";
 import { useCompanyFetching } from "./company/useCompanyFetching";
@@ -368,22 +369,6 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     }
   }, [userCompanies.length, selectedCompany, restoreSelectedCompany, skipLoadingInOnboarding, globalState, hookId]);
   
-  // Set up listeners only once
-  useEffect(() => {
-    // IMPORTANT: Don't set up listeners if we're in onboarding mode
-    if (skipLoadingInOnboarding) {
-      return;
-    }
-    
-    window.addEventListener('company-relation-changed', handleCompanyRelationChange);
-    window.addEventListener('force-reload-companies', handleForceReload);
-    
-    return () => {
-      window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
-      window.removeEventListener('force-reload-companies', handleForceReload);
-    };
-  }, [handleCompanyRelationChange, handleForceReload, skipLoadingInOnboarding]);
-  
   // Update data when needed (with better memoization)
   const handleCompanyRelationChange = useCallback(async () => {
     if (user?.id && !globalState.isInitializing) {
@@ -418,6 +403,22 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
       }
     }
   }, [user?.id, forceGetUserCompanies, fetchCompanies, hookId, globalState]);
+  
+  // Set up listeners only once
+  useEffect(() => {
+    // IMPORTANT: Don't set up listeners if we're in onboarding mode
+    if (skipLoadingInOnboarding) {
+      return;
+    }
+    
+    window.addEventListener('company-relation-changed', handleCompanyRelationChange);
+    window.addEventListener('force-reload-companies', handleForceReload);
+    
+    return () => {
+      window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
+      window.removeEventListener('force-reload-companies', handleForceReload);
+    };
+  }, [handleCompanyRelationChange, handleForceReload, skipLoadingInOnboarding]);
   
   return {
     isLoading,
