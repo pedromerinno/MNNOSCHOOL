@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -80,7 +81,8 @@ export const useDocumentUploadOperations = (
           file_type: file.type,
           document_type: documentType,
           description: description || null,
-          uploaded_by: userId
+          uploaded_by: userId,
+          attachment_type: 'file'
         })
         .select('*')
         .single();
@@ -89,10 +91,11 @@ export const useDocumentUploadOperations = (
       
       // Atualizar o estado local com o novo documento
       if (newDocument) {
-        // Ensure newDocument has the correct type
+        // Ensure newDocument has the correct type with explicit casting
         const typedNewDocument: UserDocument = {
           ...newDocument,
-          document_type: newDocument.document_type as DocumentType
+          document_type: newDocument.document_type as DocumentType,
+          attachment_type: newDocument.attachment_type as 'file' | 'link'
         };
         
         setDocuments(current => [typedNewDocument, ...current]);
