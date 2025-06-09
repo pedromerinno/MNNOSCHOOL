@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export const CompanySelector = memo(() => {
+  console.log('[CompanySelector] Rendering...');
+  
   const { user } = useAuth();
   const { 
     userCompanies, 
@@ -19,32 +21,58 @@ export const CompanySelector = memo(() => {
     isLoading 
   } = useCompanies();
 
+  console.log('[CompanySelector] Current state:', {
+    userCompaniesCount: userCompanies.length,
+    selectedCompany: selectedCompany?.nome || 'none',
+    isLoading,
+    userId: user?.id || 'no user'
+  });
+
   // Função para lidar com mudança de empresa
   const handleCompanyChange = useCallback((company: any) => {
+    console.log('[CompanySelector] ================');
+    console.log('[CompanySelector] HANDLING COMPANY CHANGE');
+    console.log('[CompanySelector] From:', selectedCompany?.nome || 'none');
+    console.log('[CompanySelector] To:', company.nome);
+    console.log('[CompanySelector] User ID:', user?.id);
+    console.log('[CompanySelector] ================');
+    
     if (user?.id && company) {
-      console.log('[CompanySelector] Selecting company:', company.nome);
       selectCompany(user.id, company);
-      
-      // Disparar evento global para notificar outros componentes
-      window.dispatchEvent(new CustomEvent('company-changed', { 
-        detail: { company } 
-      }));
+    } else {
+      console.error('[CompanySelector] Missing user ID or company');
     }
-  }, [user?.id, selectCompany]);
+  }, [user?.id, selectCompany, selectedCompany]);
+
+  // Verificar localStorage na montagem
+  useEffect(() => {
+    const storedId = localStorage.getItem('selectedCompanyId');
+    const storedCompany = localStorage.getItem('selectedCompany');
+    console.log('[CompanySelector] Mount - localStorage check:', {
+      storedId,
+      hasStoredCompany: !!storedCompany,
+      currentSelected: selectedCompany?.nome || 'none'
+    });
+  }, [selectedCompany]);
 
   const displayName = selectedCompany?.nome || "merinno";
 
   if (isLoading) {
+    console.log('[CompanySelector] Showing loading state');
     return <span className="text-lg font-bold text-foreground">{displayName}</span>;
   }
 
   if (!user || userCompanies.length === 0) {
+    console.log('[CompanySelector] No user or companies, showing default');
     return <span className="text-lg font-bold text-foreground">merinno</span>;
   }
 
   if (userCompanies.length === 1) {
+    console.log('[CompanySelector] Only one company, showing without dropdown');
     return <span className="text-lg font-bold text-foreground">{displayName}</span>;
   }
+
+  console.log('[CompanySelector] Rendering dropdown with companies:', userCompanies.map(c => c.nome));
 
   return (
     <DropdownMenu>

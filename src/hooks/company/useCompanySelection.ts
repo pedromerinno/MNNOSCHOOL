@@ -10,7 +10,9 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
   // Buscar ID da empresa armazenado
   const getStoredCompanyId = useCallback((): string | null => {
     try {
-      return localStorage.getItem('selectedCompanyId');
+      const storedId = localStorage.getItem('selectedCompanyId');
+      console.log('[useCompanySelection] Getting stored company ID:', storedId);
+      return storedId;
     } catch (error) {
       console.error('Error getting stored company ID:', error);
       return null;
@@ -21,8 +23,11 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
   const getStoredCompany = useCallback((): Company | null => {
     try {
       const storedCompany = localStorage.getItem('selectedCompany');
+      console.log('[useCompanySelection] Getting stored company:', storedCompany ? 'found' : 'not found');
       if (storedCompany) {
-        return JSON.parse(storedCompany);
+        const company = JSON.parse(storedCompany);
+        console.log('[useCompanySelection] Parsed stored company:', company.nome);
+        return company;
       }
       return null;
     } catch (error) {
@@ -33,9 +38,12 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
   
   // Selecionar empresa com persistência global
   const selectCompany = useCallback((userId: string, company: Company) => {
-    console.log('[useCompanySelection] Selecting company:', company.nome);
+    console.log('[useCompanySelection] ================');
+    console.log('[useCompanySelection] SELECTING COMPANY:', company.nome);
+    console.log('[useCompanySelection] User ID:', userId);
+    console.log('[useCompanySelection] ================');
     
-    // Atualizar estado local
+    // Atualizar estado local PRIMEIRO
     setSelectedCompany(company);
     
     try {
@@ -43,22 +51,32 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
       localStorage.setItem('selectedCompanyId', company.id);
       localStorage.setItem('selectedCompany', JSON.stringify(company));
       
-      console.log('[useCompanySelection] Company persisted to localStorage');
+      console.log('[useCompanySelection] ✅ Company persisted to localStorage');
+      console.log('[useCompanySelection] Stored ID:', company.id);
+      console.log('[useCompanySelection] Stored Name:', company.nome);
       
-      // Dispatch custom event for other components to listen
-      const event = new CustomEvent('company-selected', { 
+      // Dispatch evento global para outros componentes
+      const globalEvent = new CustomEvent('company-selected', { 
         detail: { userId, company } 
       });
-      window.dispatchEvent(event);
+      window.dispatchEvent(globalEvent);
       
-      // Também disparar evento mais específico para navegação
+      // Evento específico para navegação
       const navEvent = new CustomEvent('company-navigation-change', { 
         detail: { company } 
       });
       window.dispatchEvent(navEvent);
       
+      // Evento genérico para mudança
+      const changeEvent = new CustomEvent('company-changed', { 
+        detail: { company } 
+      });
+      window.dispatchEvent(changeEvent);
+      
+      console.log('[useCompanySelection] ✅ Events dispatched');
+      
     } catch (error) {
-      console.error('Error saving selected company:', error);
+      console.error('[useCompanySelection] ❌ Error saving selected company:', error);
     }
   }, [setSelectedCompany]);
   
