@@ -13,7 +13,17 @@ import { toast } from "sonner";
 
 export const useCompanyInitialization = () => {
   const [isPageLoading, setIsPageLoading] = useState(true);
-  const { userCompanies, isLoading, fetchCount, selectedCompany, getUserCompanies, forceGetUserCompanies } = useCompanies();
+  
+  // Skip loading companies in onboarding mode to prevent conflicts
+  const { 
+    userCompanies, 
+    isLoading, 
+    fetchCount, 
+    selectedCompany, 
+    getUserCompanies, 
+    forceGetUserCompanies 
+  } = useCompanies({ skipLoadingInOnboarding: true });
+  
   const { user, userProfile } = useAuth();
   const { getInitialSelectedCompany } = useCompanyCache();
   

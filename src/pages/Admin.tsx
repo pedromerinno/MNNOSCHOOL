@@ -27,46 +27,57 @@ const AdminPage = () => {
   // Initialize with the appropriate default tab based on user role
   const [activeTab, setActiveTab] = useState(userProfile?.super_admin ? "platform" : "companies");
   const [isReady, setIsReady] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   // Inicialização melhorada para evitar recarregamentos
   useEffect(() => {
-    if (!authLoading) {
-      console.log("Admin page - Auth loading complete", { userProfile });
-      
-      // Verificar se o usuário tem permissões de admin
-      if (!userProfile?.is_admin && !userProfile?.super_admin) {
-        toast.error("Você não tem permissões de administrador");
-        return;
-      }
-      
-      // Lógica para determinar a aba inicial
-      const params = new URLSearchParams(location.search);
-      const tabParam = params.get('tab');
-      
-      // Definir a aba ativa sem navegação
-      if (tabParam) {
-        setActiveTab(tabParam);
-      } else {
-        // Se não houver parâmetro, use o padrão
-        const defaultTab = userProfile?.super_admin ? "platform" : "companies";
-        
-        // Atualiza a URL sem causar navegação
-        if (defaultTab) {
-          const newUrl = new URL(window.location.href);
-          newUrl.searchParams.set('tab', defaultTab);
-          window.history.replaceState({}, '', newUrl.toString());
-        }
-      }
-      
-      setIsReady(true);
+    // Prevent multiple initializations
+    if (hasInitialized || authLoading) {
+      return;
     }
-  }, [authLoading, location.search, userProfile]);
+    
+    console.log("Admin page - Auth loading complete", { userProfile });
+    
+    // Verificar se o usuário tem permissões de admin
+    if (!userProfile?.is_admin && !userProfile?.super_admin) {
+      toast.error("Você não tem permissões de administrador");
+      return;
+    }
+    
+    // Lógica para determinar a aba inicial
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get('tab');
+    
+    // Definir a aba ativa sem navegação
+    if (tabParam) {
+      setActiveTab(tabParam);
+    } else {
+      // Se não houver parâmetro, use o padrão
+      const defaultTab = userProfile?.super_admin ? "platform" : "companies";
+      
+      // Atualiza a URL sem causar navegação
+      if (defaultTab) {
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.set('tab', defaultTab);
+        window.history.replaceState({}, '', newUrl.toString());
+        setActiveTab(defaultTab);
+      }
+    }
+    
+    setHasInitialized(true);
+    setIsReady(true);
+  }, [authLoading, location.search, userProfile, hasInitialized]);
 
   // Manipulador de mudança de aba otimizado para evitar recarregamentos
   const handleTabChange = useCallback((tab: string) => {
     // Atualiza o estado diretamente
     setActiveTab(tab);
     console.log("Mudando para a aba:", tab);
+    
+    // Atualiza URL sem causar recarregamento
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.set('tab', tab);
+    window.history.replaceState({}, '', newUrl.toString());
   }, []);
 
   // Lidar com navegação do histórico
@@ -74,14 +85,14 @@ const AdminPage = () => {
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search);
       const tabParam = params.get('tab');
-      if (tabParam) {
+      if (tabParam && tabParam !== activeTab) {
         setActiveTab(tabParam);
       }
     };
     
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
+  }, [activeTab]);
 
   if (authLoading || !isReady) {
     return (
@@ -122,7 +133,8 @@ const AdminPage = () => {
     }
   };
 
-  return <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
+  return (
+    <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
       <div className="container mx-auto px-0 lg:px-4 py-6 max-w-[1500px]">
         <SidebarProvider defaultOpen={true}>
           <div className="flex w-full min-h-[calc(100vh-120px)] rounded-lg overflow-hidden">
@@ -137,7 +149,8 @@ const AdminPage = () => {
           </div>
         </SidebarProvider>
       </div>
-    </div>;
+    </div>
+  );
 };
 
 export default AdminPage;
