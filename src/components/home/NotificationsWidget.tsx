@@ -8,42 +8,13 @@ import { useCompanyNotices } from "@/hooks/useCompanyNotices";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AllNoticesDialog } from "./AllNoticesDialog";
-import { Company } from "@/types/company";
+import { useCompanies } from "@/hooks/useCompanies";
 
 export const NotificationsWidget = () => {
   const [showAllNotices, setShowAllNotices] = useState(false);
-  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const { selectedCompany } = useCompanies();
   const lastFetchedCompanyRef = useRef<string | null>(null);
   const fetchInProgressRef = useRef(false);
-
-  // Load selected company from localStorage only once
-  useEffect(() => {
-    try {
-      const storedCompany = localStorage.getItem('selectedCompany');
-      if (storedCompany) {
-        const company = JSON.parse(storedCompany);
-        setSelectedCompany(company);
-      }
-    } catch (error) {
-      console.error('[NotificationsWidget] Error loading selected company:', error);
-    }
-  }, []);
-
-  // Listen for company selection events
-  useEffect(() => {
-    const handleCompanyEvents = (event: CustomEvent) => {
-      const { company } = event.detail;
-      setSelectedCompany(company);
-    };
-
-    window.addEventListener('company-selected', handleCompanyEvents as EventListener);
-    window.addEventListener('company-changed', handleCompanyEvents as EventListener);
-    
-    return () => {
-      window.removeEventListener('company-selected', handleCompanyEvents as EventListener);
-      window.removeEventListener('company-changed', handleCompanyEvents as EventListener);
-    };
-  }, []);
 
   const { 
     notices, 
