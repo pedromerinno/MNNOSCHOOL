@@ -38,6 +38,9 @@ const AdminPage = () => {
     isReady
   });
 
+  // Verificação melhorada de permissões de admin
+  const hasAdminAccess = Boolean(userProfile?.is_admin || userProfile?.super_admin);
+
   // Inicialização melhorada para evitar recarregamentos
   useEffect(() => {
     // Prevent multiple initializations
@@ -47,9 +50,9 @@ const AdminPage = () => {
     
     console.log("Admin page - Auth loading complete", { userProfile });
     
-    // Verificar se o usuário tem permissões de admin
-    if (!userProfile?.is_admin && !userProfile?.super_admin) {
-      toast.error("Você não tem permissões de administrador");
+    // Verificar se o usuário tem permissões de admin - removida toast redundante
+    if (!hasAdminAccess) {
+      console.log("Admin page - No admin access detected");
       return;
     }
     
@@ -75,7 +78,7 @@ const AdminPage = () => {
     
     setHasInitialized(true);
     setIsReady(true);
-  }, [authLoading, location.search, userProfile, hasInitialized]);
+  }, [authLoading, location.search, userProfile, hasInitialized, hasAdminAccess]);
 
   // Manipulador de mudança de aba otimizado para evitar recarregamentos
   const handleTabChange = useCallback((tab: string) => {
@@ -115,10 +118,10 @@ const AdminPage = () => {
   console.log("Admin page - Auth check", { 
     is_admin: userProfile?.is_admin, 
     super_admin: userProfile?.super_admin,
-    hasAccess: Boolean(userProfile?.is_admin || userProfile?.super_admin)
+    hasAccess: hasAdminAccess
   });
 
-  if (!userProfile?.is_admin && !userProfile?.super_admin) {
+  if (!hasAdminAccess) {
     console.log("Admin page - Access denied, redirecting to home");
     return <Navigate to="/" replace />;
   }
