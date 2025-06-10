@@ -29,44 +29,53 @@ export const DragDropImageUpload: React.FC<DragDropImageUploadProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [bucketReady, setBucketReady] = useState(false);
+  const [bucketError, setBucketError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Ensure bucket exists when component mounts
   useEffect(() => {
     const ensureBucketExists = async () => {
       try {
-        // Check if bucket exists
-        const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+        setBucketError(null);
         
-        if (listError) {
-          console.error("Erro ao listar buckets:", listError);
+        // First, try to check if we can access the bucket by listing files
+        const { error: testError } = await supabase.storage
+          .from(bucketName)
+          .list('', { limit: 1 });
+        
+        if (!testError) {
+          // Bucket exists and is accessible
+          setBucketReady(true);
           return;
         }
         
-        const bucket = buckets?.find(b => b.name === bucketName);
+        console.log(`Testing bucket access failed: ${testError.message}`);
         
-        if (!bucket) {
-          console.log(`Bucket '${bucketName}' não encontrado. Tentando criar...`);
-          const { error: createError } = await supabase.storage.createBucket(bucketName, {
-            public: true,
-            fileSizeLimit: 2097152 // 2MB
-          });
-          
-          if (createError) {
-            console.error(`Erro ao criar bucket '${bucketName}':`, createError);
-            if (createError.message.includes("duplicate key value")) {
-              // Bucket was created by another process, consider it ready
-              setBucketReady(true);
-            }
-            return;
+        // If we can't access it, try to create it
+        const { error: createError } = await supabase.storage.createBucket(bucketName, {
+          public: true,
+          fileSizeLimit: 2097152 // 2MB
+        });
+        
+        if (createError) {
+          if (createError.message.includes("duplicate key value") || 
+              createError.message.includes("already exists")) {
+            // Bucket already exists, that's fine
+            console.log(`Bucket '${bucketName}' already exists`);
+            setBucketReady(true);
+          } else {
+            console.error(`Error creating bucket '${bucketName}':`, createError);
+            setBucketError(`Erro ao preparar sistema de upload: ${createError.message}`);
+            setBucketReady(false);
           }
-          
-          console.log(`Bucket '${bucketName}' criado com sucesso!`);
+        } else {
+          console.log(`Bucket '${bucketName}' created successfully!`);
+          setBucketReady(true);
         }
-        
-        setBucketReady(true);
-      } catch (error) {
-        console.error("Erro ao verificar/criar bucket:", error);
+      } catch (error: any) {
+        console.error("Error ensuring bucket exists:", error);
+        setBucketError(`Erro inesperado: ${error.message}`);
+        setBucketReady(false);
       }
     };
     
@@ -175,7 +184,35 @@ export const DragDropImageUpload: React.FC<DragDropImageUploadProps> = ({
   );
 
   const handleClick = () => {
+    if (!bucketReady && !bucketError) {
+      toast.error("Sistema de armazenamento ainda não está pronto. Aguarde um momento.");
+      return;
+    }
     fileInputRef.current?.click();
+  };
+
+  const getDisplayMessage = () => {
+    if (isUploading) {
+      return "Enviando...";
+    }
+    
+    if (bucketError) {
+      return bucketError;
+    }
+    
+    if (!bucketReady) {
+      return "Preparando sistema de upload...";
+    }
+    
+    return label;
+  };
+
+  const getSubMessage = () => {
+    if (isUploading || bucketError || !bucketReady) {
+      return null;
+    }
+    
+    return "SVG, PNG, JPG ou GIF (max. 2MB)";
   };
 
   return (
@@ -185,6 +222,8 @@ export const DragDropImageUpload: React.FC<DragDropImageUploadProps> = ({
           "border-2 border-dashed rounded-lg p-6 transition-colors cursor-pointer relative",
           isDragging
             ? "border-primary bg-primary/5"
+            : bucketError
+            ? "border-red-300 bg-red-50"
             : "border-gray-200 hover:border-gray-300 bg-gray-50/50 hover:bg-gray-50",
           className
         )}
@@ -200,33 +239,34 @@ export const DragDropImageUpload: React.FC<DragDropImageUploadProps> = ({
           accept="image/*"
           className="hidden"
           onChange={handleFileInputChange}
-          disabled={isUploading || !bucketReady}
+          disabled={isUploading || !bucketReady || !!bucketError}
         />
         
         <div className="flex flex-col items-center justify-center text-center space-y-2">
-          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
+          <div className={cn(
+            "w-12 h-12 rounded-full flex items-center justify-center",
+            bucketError ? "bg-red-100" : "bg-gray-100"
+          )}>
             {isUploading ? (
               <Loader className="w-6 h-6 text-gray-600 animate-spin" />
             ) : (
-              <Upload className="w-6 h-6 text-gray-600" />
+              <Upload className={cn(
+                "w-6 h-6",
+                bucketError ? "text-red-600" : "text-gray-600"
+              )} />
             )}
           </div>
           <div className="text-sm text-gray-500">
-            {isUploading ? (
-              <span className="flex items-center justify-center">
-                Enviando...
-              </span>
-            ) : !bucketReady ? (
-              <span className="flex items-center justify-center">
-                Preparando sistema de upload...
-              </span>
-            ) : (
-              <>
-                <span className="font-medium text-primary">{label}</span>
-                <p className="text-xs text-gray-400 mt-1">
-                  SVG, PNG, JPG ou GIF (max. 2MB)
-                </p>
-              </>
+            <span className={cn(
+              "font-medium",
+              bucketError ? "text-red-600" : "text-primary"
+            )}>
+              {getDisplayMessage()}
+            </span>
+            {getSubMessage() && (
+              <p className="text-xs text-gray-400 mt-1">
+                {getSubMessage()}
+              </p>
             )}
           </div>
         </div>
