@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { CompanyTable } from './CompanyTable';
 import { CompanyForm } from './CompanyForm';
-import { useCompanies } from '@/hooks/company';
+import { useCompanies } from '@/hooks/useCompanies';
 import { Company } from '@/types/company';
 import { UserCompanyManager } from './UserCompanyManager';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,35 +18,59 @@ export const CompanyManagement: React.FC = () => {
     userCompanies,
     isLoading,
     fetchCompanies,
+    getUserCompanies,
     createCompany,
     updateCompany,
     deleteCompany
   } = useCompanies();
   const {
+    user,
     userProfile
   } = useAuth();
   const isSuperAdmin = userProfile?.super_admin === true;
+  const isAdmin = userProfile?.is_admin === true;
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isUserManagerOpen, setIsUserManagerOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<Company | undefined>(undefined);
 
-  // Fetch companies on mount
+  console.log('[CompanyManagement] Current state:', {
+    isSuperAdmin,
+    isAdmin,
+    userCompaniesCount: userCompanies.length,
+    companiesCount: companies.length,
+    isLoading,
+    userId: user?.id
+  });
+
+  // Fetch companies on mount based on user role
   useEffect(() => {
     const loadCompanies = async () => {
-      // Se for super admin ou não tiver acesso a empresas específicas, buscar todas
-      if (isSuperAdmin) {
-        try {
-          console.log('CompanyManagement: Loading all companies for super admin');
+      if (!user?.id) {
+        console.log('[CompanyManagement] No user ID, skipping load');
+        return;
+      }
+
+      try {
+        if (isSuperAdmin) {
+          console.log('[CompanyManagement] Loading all companies for super admin');
           await fetchCompanies();
-        } catch (error) {
-          console.error('Error fetching companies:', error);
-          toast.error("Erro ao carregar empresas");
+        } else if (isAdmin) {
+          console.log('[CompanyManagement] Loading user companies for admin');
+          await getUserCompanies(user.id);
         }
+      } catch (error) {
+        console.error('[CompanyManagement] Error fetching companies:', error);
+        toast.error("Erro ao carregar empresas");
       }
     };
-    loadCompanies();
-  }, [fetchCompanies, isSuperAdmin]);
+
+    // Only load if we have user profile information
+    if (userProfile && (isSuperAdmin || isAdmin)) {
+      loadCompanies();
+    }
+  }, [fetchCompanies, getUserCompanies, isSuperAdmin, isAdmin, user?.id, userProfile]);
+
   const handleCreateCompany = () => {
     if (!userProfile?.is_admin && !userProfile?.super_admin) {
       toast.error("Você não tem permissão para criar empresas");
@@ -55,6 +79,7 @@ export const CompanyManagement: React.FC = () => {
     setSelectedCompany(undefined);
     setIsFormOpen(true);
   };
+
   const handleEditCompany = (company: Company) => {
     if (!userProfile?.is_admin && !userProfile?.super_admin) {
       toast.error("Você não tem permissão para editar empresas");
@@ -63,6 +88,7 @@ export const CompanyManagement: React.FC = () => {
     setSelectedCompany(company);
     setIsFormOpen(true);
   };
+
   const handleDeleteCompany = async (companyId: string) => {
     if (!userProfile?.is_admin && !userProfile?.super_admin) {
       toast.error("Você não tem permissão para excluir empresas");
@@ -93,6 +119,7 @@ export const CompanyManagement: React.FC = () => {
       toast.error("Erro ao verificar permissões");
     }
   };
+
   const handleManageUsers = (company: Company) => {
     if (!userProfile?.is_admin && !userProfile?.super_admin) {
       toast.error("Você não tem permissão para gerenciar usuários da empresa");
@@ -101,6 +128,7 @@ export const CompanyManagement: React.FC = () => {
     setSelectedCompany(company);
     setIsUserManagerOpen(true);
   };
+
   const handleFormSubmit = async (data: Omit<Company, 'id' | 'created_at' | 'updated_at'>) => {
     if (!userProfile?.is_admin && !userProfile?.super_admin) {
       toast.error("Você não tem permissão para realizar esta ação");
@@ -127,8 +155,19 @@ export const CompanyManagement: React.FC = () => {
   };
 
   // Determinar quais empresas mostrar baseado no perfil do usuário
-  const displayCompanies = isSuperAdmin ? Array.isArray(companies) ? companies : [] : Array.isArray(userCompanies) ? userCompanies : [];
-  return <div className="space-y-4">
+  const displayCompanies = isSuperAdmin 
+    ? (Array.isArray(companies) ? companies : []) 
+    : (Array.isArray(userCompanies) ? userCompanies : []);
+
+  console.log('[CompanyManagement] Display companies:', {
+    displayCompaniesCount: displayCompanies.length,
+    isSuperAdmin,
+    companiesArray: Array.isArray(companies),
+    userCompaniesArray: Array.isArray(userCompanies)
+  });
+
+  return (
+    <div className="space-y-4">
       <div className="flex justify-between items-center py-[5px]">
         <h2 className="text-xl font-semibold py-0">Gerenciamento de Empresas</h2>
         <Button onClick={handleCreateCompany} className="rounded-2xl">
@@ -137,7 +176,13 @@ export const CompanyManagement: React.FC = () => {
         </Button>
       </div>
       
-      <CompanyTable companies={displayCompanies} loading={isLoading} onEdit={handleEditCompany} onDelete={handleDeleteCompany} onManageUsers={handleManageUsers} />
+      <CompanyTable 
+        companies={displayCompanies} 
+        loading={isLoading} 
+        onEdit={handleEditCompany} 
+        onDelete={handleDeleteCompany} 
+        onManageUsers={handleManageUsers} 
+      />
 
       {/* Company Form Dialog */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
@@ -150,7 +195,12 @@ export const CompanyManagement: React.FC = () => {
               {selectedCompany ? 'Atualize os detalhes da empresa abaixo.' : 'Preencha o formulário para criar uma nova empresa.'}
             </DialogDescription>
           </DialogHeader>
-          <CompanyForm initialData={selectedCompany} onSubmit={handleFormSubmit} onCancel={() => setIsFormOpen(false)} isSubmitting={isSubmitting} />
+          <CompanyForm 
+            initialData={selectedCompany} 
+            onSubmit={handleFormSubmit} 
+            onCancel={() => setIsFormOpen(false)} 
+            isSubmitting={isSubmitting} 
+          />
         </DialogContent>
       </Dialog>
 
@@ -165,8 +215,14 @@ export const CompanyManagement: React.FC = () => {
               Adicione ou remova usuários desta empresa.
             </DialogDescription>
           </DialogHeader>
-          {selectedCompany && <UserCompanyManager company={selectedCompany} onClose={() => setIsUserManagerOpen(false)} />}
+          {selectedCompany && (
+            <UserCompanyManager 
+              company={selectedCompany} 
+              onClose={() => setIsUserManagerOpen(false)} 
+            />
+          )}
         </DialogContent>
       </Dialog>
-    </div>;
+    </div>
+  );
 };
