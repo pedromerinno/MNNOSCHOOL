@@ -11,7 +11,7 @@ interface CacheData {
 }
 
 const CACHE_KEY = 'discussions_cache';
-const CACHE_EXPIRATION = 3 * 60 * 1000; // Reduzido para 3 minutos para dados mais frescos
+const CACHE_EXPIRATION = 5 * 60 * 1000; // 5 minutos
 
 export const useDiscussionsCache = () => {
   const getCachedData = useCallback((companyId: string): CacheData | null => {
@@ -37,11 +37,8 @@ export const useDiscussionsCache = () => {
 
   const setCachedData = useCallback((companyId: string, discussions: Discussion[], totalCount: number, hasMore: boolean) => {
     try {
-      // Cache apenas as primeiras discussões para não sobrecarregar o localStorage
-      const discussionsToCache = discussions.length > 20 ? discussions.slice(0, 20) : discussions;
-      
       const data: CacheData = {
-        discussions: discussionsToCache,
+        discussions,
         timestamp: Date.now(),
         companyId,
         totalCount,
@@ -51,8 +48,6 @@ export const useDiscussionsCache = () => {
       localStorage.setItem(CACHE_KEY, JSON.stringify(data));
     } catch (error) {
       console.error('Error caching discussions:', error);
-      // Se o localStorage estiver cheio, limpe o cache antigo
-      localStorage.removeItem(CACHE_KEY);
     }
   }, []);
 
