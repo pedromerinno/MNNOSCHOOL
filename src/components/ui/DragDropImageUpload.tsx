@@ -32,54 +32,33 @@ export const DragDropImageUpload: React.FC<DragDropImageUploadProps> = ({
   const [bucketError, setBucketError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Ensure bucket exists when component mounts
+  // Check if bucket exists and is accessible
   useEffect(() => {
-    const ensureBucketExists = async () => {
+    const checkBucketAccess = async () => {
       try {
         setBucketError(null);
         
-        // First, try to check if we can access the bucket by listing files
-        const { error: testError } = await supabase.storage
+        // Try to list files in the bucket to verify access
+        const { data, error } = await supabase.storage
           .from(bucketName)
           .list('', { limit: 1 });
         
-        if (!testError) {
-          // Bucket exists and is accessible
-          setBucketReady(true);
-          return;
-        }
-        
-        console.log(`Testing bucket access failed: ${testError.message}`);
-        
-        // If we can't access it, try to create it
-        const { error: createError } = await supabase.storage.createBucket(bucketName, {
-          public: true,
-          fileSizeLimit: 2097152 // 2MB
-        });
-        
-        if (createError) {
-          if (createError.message.includes("duplicate key value") || 
-              createError.message.includes("already exists")) {
-            // Bucket already exists, that's fine
-            console.log(`Bucket '${bucketName}' already exists`);
-            setBucketReady(true);
-          } else {
-            console.error(`Error creating bucket '${bucketName}':`, createError);
-            setBucketError(`Erro ao preparar sistema de upload: ${createError.message}`);
-            setBucketReady(false);
-          }
+        if (error) {
+          console.warn(`Bucket access error for '${bucketName}':`, error);
+          setBucketError(`Erro ao acessar sistema de upload: ${error.message}`);
+          setBucketReady(false);
         } else {
-          console.log(`Bucket '${bucketName}' created successfully!`);
+          console.log(`Bucket '${bucketName}' is accessible`);
           setBucketReady(true);
         }
       } catch (error: any) {
-        console.error("Error ensuring bucket exists:", error);
+        console.error("Error checking bucket access:", error);
         setBucketError(`Erro inesperado: ${error.message}`);
         setBucketReady(false);
       }
     };
     
-    ensureBucketExists();
+    checkBucketAccess();
   }, [bucketName]);
 
   // Handle drag events
@@ -136,7 +115,7 @@ export const DragDropImageUpload: React.FC<DragDropImageUploadProps> = ({
           });
 
         if (error) {
-          console.error("Erro ao fazer upload:", error);
+          console.error("Upload error:", error);
           throw error;
         }
 
@@ -147,7 +126,7 @@ export const DragDropImageUpload: React.FC<DragDropImageUploadProps> = ({
         onChange(publicUrl);
         toast.success("Imagem enviada com sucesso!");
       } catch (error: any) {
-        console.error("Erro ao enviar imagem:", error);
+        console.error("Error uploading image:", error);
         toast.error(`Erro ao enviar imagem: ${error.message}`);
       } finally {
         setIsUploading(false);
@@ -188,6 +167,12 @@ export const DragDropImageUpload: React.FC<DragDropImageUploadProps> = ({
       toast.error("Sistema de armazenamento ainda não está pronto. Aguarde um momento.");
       return;
     }
+    
+    if (bucketError) {
+      toast.error("Sistema de armazenamento não está disponível. Tente recarregar a página.");
+      return;
+    }
+    
     fileInputRef.current?.click();
   };
 
@@ -197,7 +182,7 @@ export const DragDropImageUpload: React.FC<DragDropImageUploadProps> = ({
     }
     
     if (bucketError) {
-      return bucketError;
+      return "Sistema de upload indisponível";
     }
     
     if (!bucketReady) {
@@ -224,7 +209,9 @@ export const DragDropImageUpload: React.FC<DragDropImageUploadProps> = ({
             ? "border-primary bg-primary/5"
             : bucketError
             ? "border-red-300 bg-red-50"
-            : "border-gray-200 hover:border-gray-300 bg-gray-50/50 hover:bg-gray-50",
+            : bucketReady
+            ? "border-gray-200 hover:border-gray-300 bg-gray-50/50 hover:bg-gray-50"
+            : "border-gray-200 bg-gray-100",
           className
         )}
         onDragEnter={handleDragEnter}
