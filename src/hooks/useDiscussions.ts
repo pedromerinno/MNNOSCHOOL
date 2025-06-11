@@ -1,26 +1,17 @@
-
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useCompanies } from '@/hooks/useCompanies';
 import { toast } from "sonner";
 import { Discussion, DiscussionReply } from '@/types/discussions';
 import { useAuth } from '@/contexts/AuthContext';
-import { useDiscussionsCache } from './useDiscussionsCache';
-import { useDiscussionsPaginated } from './useDiscussionsPaginated';
 
 export const useDiscussions = () => {
   const { selectedCompany } = useCompanies();
   const { user, userProfile } = useAuth();
-  const { getCachedData, setCachedData, clearCache } = useDiscussionsCache();
-  const { fetchDiscussionsPage, isLoading: isPaginationLoading } = useDiscussionsPaginated();
-  
   const [discussions, setDiscussions] = useState<Discussion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [totalCount, setTotalCount] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
-  const [currentPage, setCurrentPage] = useState(0);
 
-  const fetchDiscussions = useCallback(async (useCache = true) => {
+  const fetchDiscussions = useCallback(async () => {
     if (!selectedCompany?.id) {
       setDiscussions([]);
       setIsLoading(false);
@@ -30,65 +21,92 @@ export const useDiscussions = () => {
     try {
       setIsLoading(true);
       
-      // Tentar usar cache primeiro
-      if (useCache) {
-        const cachedData = getCachedData(selectedCompany.id);
-        if (cachedData) {
-          setDiscussions(cachedData.discussions);
-          setTotalCount(cachedData.totalCount);
-          setHasMore(cachedData.hasMore);
-          setIsLoading(false);
-          return;
-        }
+      // Fetch discussions first
+      const { data: discussionsData, error: discussionsError } = await supabase
+        .from('discussions')
+        .select('*')
+        .eq('company_id', selectedCompany.id)
+        .order('created_at', { ascending: false });
+
+      if (discussionsError) throw discussionsError;
+      
+      if (!discussionsData || discussionsData.length === 0) {
+        setDiscussions([]);
+        return;
       }
 
-      // Buscar primeira página
-      const result = await fetchDiscussionsPage({
-        companyId: selectedCompany.id,
-        offset: 0,
-        limit: 10
+      // Get author profiles
+      const authorIds = discussionsData.map(d => d.author_id);
+      const { data: authorsData } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar')
+        .in('id', authorIds);
+
+      // Get discussion replies
+      const discussionIds = discussionsData.map(d => d.id);
+      const { data: repliesData } = await supabase
+        .from('discussion_replies')
+        .select('*')
+        .in('discussion_id', discussionIds)
+        .order('created_at', { ascending: true });
+
+      // Get reply author profiles
+      const replyAuthorIds = repliesData?.map(r => r.author_id) || [];
+      const uniqueReplyAuthorIds = [...new Set(replyAuthorIds)];
+      const { data: replyAuthorsData } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar')
+        .in('id', uniqueReplyAuthorIds);
+
+      // Map discussions with their data
+      const formattedData = discussionsData.map(discussion => {
+        const author = authorsData?.find(a => a.id === discussion.author_id);
+        const discussionReplies = repliesData?.filter(r => r.discussion_id === discussion.id) || [];
+        
+        const formattedReplies = discussionReplies.map(reply => {
+          const replyAuthor = replyAuthorsData?.find(a => a.id === reply.author_id);
+          return {
+            ...reply,
+            profiles: replyAuthor ? {
+              display_name: replyAuthor.display_name,
+              avatar: replyAuthor.avatar
+            } : {
+              display_name: 'Usuário',
+              avatar: null
+            }
+          } as DiscussionReply;
+        });
+
+        return {
+          id: discussion.id,
+          title: discussion.title,
+          content: discussion.content,
+          author_id: discussion.author_id,
+          company_id: discussion.company_id,
+          created_at: discussion.created_at,
+          updated_at: discussion.updated_at,
+          image_url: discussion.image_url || null,
+          video_url: discussion.video_url || null,
+          status: (discussion.status || 'open') as 'open' | 'closed',
+          profiles: author ? {
+            display_name: author.display_name,
+            avatar: author.avatar
+          } : {
+            display_name: 'Usuário',
+            avatar: null
+          },
+          discussion_replies: formattedReplies
+        } as Discussion;
       });
       
-      setDiscussions(result.discussions);
-      setTotalCount(result.totalCount);
-      setHasMore(result.hasMore);
-      setCurrentPage(0);
-      
-      // Cache os resultados
-      setCachedData(selectedCompany.id, result.discussions, result.totalCount, result.hasMore);
-      
+      setDiscussions(formattedData);
     } catch (error: any) {
       console.error('Error fetching discussions:', error);
       toast.error('Erro ao carregar discussões');
     } finally {
       setIsLoading(false);
     }
-  }, [selectedCompany?.id, getCachedData, setCachedData, fetchDiscussionsPage]);
-
-  const loadMoreDiscussions = useCallback(async () => {
-    if (!selectedCompany?.id || !hasMore || isPaginationLoading) return;
-
-    try {
-      const nextOffset = (currentPage + 1) * 10;
-      const result = await fetchDiscussionsPage({
-        companyId: selectedCompany.id,
-        offset: nextOffset,
-        limit: 10
-      });
-      
-      setDiscussions(prev => [...prev, ...result.discussions]);
-      setHasMore(result.hasMore);
-      setCurrentPage(prev => prev + 1);
-      
-      // Atualizar cache com todos os dados
-      const allDiscussions = [...discussions, ...result.discussions];
-      setCachedData(selectedCompany.id, allDiscussions, result.totalCount, result.hasMore);
-      
-    } catch (error: any) {
-      console.error('Error loading more discussions:', error);
-      toast.error('Erro ao carregar mais discussões');
-    }
-  }, [selectedCompany?.id, hasMore, currentPage, discussions, fetchDiscussionsPage, setCachedData, isPaginationLoading]);
+  }, [selectedCompany?.id]);
 
   const createDiscussion = useCallback(async (title: string, content: string, imageUrl?: string, videoUrl?: string) => {
     if (!selectedCompany?.id || !user?.id) {
@@ -117,16 +135,26 @@ export const useDiscussions = () => {
       
       toast.success('Discussão criada com sucesso!');
       
-      // Limpar cache e recarregar
-      clearCache();
-      await fetchDiscussions(false);
+      // Add new discussion to state immediately
+      if (data) {
+        const newDiscussion: Discussion = {
+          ...data,
+          status: (data.status || 'open') as 'open' | 'closed',
+          profiles: {
+            display_name: userProfile?.display_name || 'Usuário',
+            avatar: userProfile?.avatar || null
+          },
+          discussion_replies: []
+        };
+        setDiscussions(prev => [newDiscussion, ...prev]);
+      }
       
       return data;
     } catch (error: any) {
       console.error('Error creating discussion:', error);
       toast.error('Erro ao criar discussão');
     }
-  }, [selectedCompany?.id, user?.id, userProfile, clearCache, fetchDiscussions]);
+  }, [selectedCompany?.id, user?.id, userProfile]);
 
   const toggleDiscussionStatus = useCallback(async (discussionId: string, newStatus: 'open' | 'closed') => {
     try {
@@ -137,20 +165,19 @@ export const useDiscussions = () => {
         
       if (error) throw error;
       
+      // Update local state immediately
       setDiscussions(prev => prev.map(discussion => 
         discussion.id === discussionId 
           ? {...discussion, status: newStatus} 
           : discussion
       ));
       
-      clearCache();
-      
       toast.success(`Discussão ${newStatus === 'closed' ? 'concluída' : 'reaberta'} com sucesso!`);
     } catch (error: any) {
       console.error('Error updating discussion status:', error);
       toast.error('Erro ao atualizar status da discussão');
     }
-  }, [clearCache]);
+  }, []);
 
   const deleteDiscussion = useCallback(async (discussionId: string) => {
     try {
@@ -161,14 +188,14 @@ export const useDiscussions = () => {
 
       if (error) throw error;
       
+      // Remove from local state immediately
       setDiscussions(prev => prev.filter(d => d.id !== discussionId));
-      clearCache();
       toast.success('Discussão excluída com sucesso!');
     } catch (error) {
       console.error('Error deleting discussion:', error);
       toast.error('Erro ao excluir discussão');
     }
-  }, [clearCache]);
+  }, []);
 
   const addReply = useCallback(async (discussionId: string, content: string, imageUrl?: string, videoUrl?: string) => {
     if (!user?.id) {
@@ -193,6 +220,7 @@ export const useDiscussions = () => {
 
       if (error) throw error;
       
+      // Add reply to local state immediately
       if (data) {
         const newReply: DiscussionReply = {
           ...data,
@@ -211,8 +239,6 @@ export const useDiscussions = () => {
           }
           return discussion;
         }));
-        
-        clearCache();
       }
       
       toast.success('Resposta enviada com sucesso!');
@@ -220,7 +246,7 @@ export const useDiscussions = () => {
       console.error('Error adding reply:', error);
       toast.error('Erro ao enviar resposta');
     }
-  }, [user?.id, userProfile, clearCache]);
+  }, [user?.id, userProfile]);
 
   const deleteReply = useCallback(async (replyId: string) => {
     try {
@@ -231,18 +257,18 @@ export const useDiscussions = () => {
 
       if (error) throw error;
       
+      // Remove reply from local state immediately
       setDiscussions(prev => prev.map(discussion => ({
         ...discussion,
         discussion_replies: discussion.discussion_replies.filter(reply => reply.id !== replyId)
       })));
       
-      clearCache();
       toast.success('Resposta excluída com sucesso!');
     } catch (error) {
       console.error('Error deleting reply:', error);
       toast.error('Erro ao excluir resposta');
     }
-  }, [clearCache]);
+  }, []);
 
   useEffect(() => {
     fetchDiscussions();
@@ -250,15 +276,11 @@ export const useDiscussions = () => {
 
   return {
     discussions,
-    isLoading: isLoading || isPaginationLoading,
-    totalCount,
-    hasMore,
+    isLoading,
     createDiscussion,
     deleteDiscussion,
     addReply,
     deleteReply,
-    toggleDiscussionStatus,
-    loadMoreDiscussions,
-    refreshDiscussions: () => fetchDiscussions(false)
+    toggleDiscussionStatus
   };
 };
