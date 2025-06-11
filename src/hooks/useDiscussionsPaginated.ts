@@ -37,18 +37,19 @@ export const useDiscussionsPaginated = () => {
           image_url,
           video_url,
           status,
-          author_profile:profiles!author_id(
+          author_profile:profiles!discussions_author_id_fkey(
             display_name,
             avatar
           ),
           discussion_replies(
             id,
+            discussion_id,
             content,
             author_id,
             created_at,
             image_url,
             video_url,
-            reply_profile:profiles!author_id(
+            reply_profile:profiles!discussion_replies_author_id_fkey(
               display_name,
               avatar
             )
@@ -71,7 +72,13 @@ export const useDiscussionsPaginated = () => {
       // Format the data with proper typing
       const formattedDiscussions = discussionsData.map(discussion => {
         const formattedReplies = discussion.discussion_replies?.map(reply => ({
-          ...reply,
+          id: reply.id,
+          discussion_id: reply.discussion_id,
+          content: reply.content,
+          author_id: reply.author_id,
+          created_at: reply.created_at,
+          image_url: reply.image_url,
+          video_url: reply.video_url,
           profiles: reply.reply_profile ? {
             display_name: reply.reply_profile.display_name,
             avatar: reply.reply_profile.avatar
