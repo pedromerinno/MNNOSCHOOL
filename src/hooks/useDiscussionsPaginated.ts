@@ -37,7 +37,7 @@ export const useDiscussionsPaginated = () => {
           image_url,
           video_url,
           status,
-          profiles!discussions_author_id_fkey(
+          author_profile:profiles!author_id(
             display_name,
             avatar
           ),
@@ -48,7 +48,7 @@ export const useDiscussionsPaginated = () => {
             created_at,
             image_url,
             video_url,
-            profiles!discussion_replies_author_id_fkey(
+            reply_profile:profiles!author_id(
               display_name,
               avatar
             )
@@ -72,9 +72,9 @@ export const useDiscussionsPaginated = () => {
       const formattedDiscussions = discussionsData.map(discussion => {
         const formattedReplies = discussion.discussion_replies?.map(reply => ({
           ...reply,
-          profiles: reply.profiles ? {
-            display_name: reply.profiles.display_name,
-            avatar: reply.profiles.avatar
+          profiles: reply.reply_profile ? {
+            display_name: reply.reply_profile.display_name,
+            avatar: reply.reply_profile.avatar
           } : {
             display_name: 'Usuário',
             avatar: null
@@ -92,9 +92,9 @@ export const useDiscussionsPaginated = () => {
           image_url: discussion.image_url,
           video_url: discussion.video_url,
           status: (discussion.status || 'open') as 'open' | 'closed',
-          profiles: discussion.profiles ? {
-            display_name: discussion.profiles.display_name,
-            avatar: discussion.profiles.avatar
+          profiles: discussion.author_profile ? {
+            display_name: discussion.author_profile.display_name,
+            avatar: discussion.author_profile.avatar
           } : {
             display_name: 'Usuário',
             avatar: null
