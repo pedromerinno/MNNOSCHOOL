@@ -42,7 +42,7 @@ export const useDiscussions = () => {
         }
       }
 
-      // Buscar primeira página
+      // Buscar primeira página com consulta otimizada
       const result = await fetchDiscussionsPage({
         companyId: selectedCompany.id,
         offset: 0,

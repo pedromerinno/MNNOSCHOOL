@@ -23,10 +23,37 @@ export const useDiscussionsPaginated = () => {
     try {
       setIsLoading(true);
       
-      // Buscar discussões com paginação
+      // Single optimized query with joins to reduce round trips
       const { data: discussionsData, error: discussionsError, count } = await supabase
         .from('discussions')
-        .select('*', { count: 'exact' })
+        .select(`
+          id,
+          title,
+          content,
+          author_id,
+          company_id,
+          created_at,
+          updated_at,
+          image_url,
+          video_url,
+          status,
+          profiles!discussions_author_id_fkey(
+            display_name,
+            avatar
+          ),
+          discussion_replies(
+            id,
+            content,
+            author_id,
+            created_at,
+            image_url,
+            video_url,
+            profiles!discussion_replies_author_id_fkey(
+              display_name,
+              avatar
+            )
+          )
+        `, { count: 'exact' })
         .eq('company_id', companyId)
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
@@ -41,52 +68,18 @@ export const useDiscussionsPaginated = () => {
         };
       }
 
-      // Buscar perfis dos autores das discussões
-      const authorIds = discussionsData.map(d => d.author_id);
-      const { data: authorsData } = await supabase
-        .from('profiles')
-        .select('id, display_name, avatar')
-        .in('id', authorIds);
-
-      // Buscar respostas das discussões
-      const discussionIds = discussionsData.map(d => d.id);
-      const { data: repliesData } = await supabase
-        .from('discussion_replies')
-        .select('*')
-        .in('discussion_id', discussionIds)
-        .order('created_at', { ascending: true });
-
-      // Buscar perfis dos autores das respostas
-      const replyAuthorIds = repliesData?.map(r => r.author_id) || [];
-      const uniqueReplyAuthorIds = [...new Set(replyAuthorIds)];
-      let replyAuthorsData = [];
-      
-      if (uniqueReplyAuthorIds.length > 0) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('id, display_name, avatar')
-          .in('id', uniqueReplyAuthorIds);
-        replyAuthorsData = data || [];
-      }
-
-      // Formatar dados
+      // Format the data with proper typing
       const formattedDiscussions = discussionsData.map(discussion => {
-        const author = authorsData?.find(a => a.id === discussion.author_id);
-        const discussionReplies = repliesData?.filter(r => r.discussion_id === discussion.id) || [];
-        
-        const formattedReplies = discussionReplies.map(reply => {
-          const replyAuthor = replyAuthorsData?.find(a => a.id === reply.author_id);
-          return {
-            ...reply,
-            profiles: replyAuthor ? {
-              display_name: replyAuthor.display_name,
-              avatar: replyAuthor.avatar
-            } : {
-              display_name: 'Usuário',
-              avatar: null
-            }
-          } as DiscussionReply;
-        });
+        const formattedReplies = discussion.discussion_replies?.map(reply => ({
+          ...reply,
+          profiles: reply.profiles ? {
+            display_name: reply.profiles.display_name,
+            avatar: reply.profiles.avatar
+          } : {
+            display_name: 'Usuário',
+            avatar: null
+          }
+        } as DiscussionReply)) || [];
 
         return {
           id: discussion.id,
@@ -96,12 +89,12 @@ export const useDiscussionsPaginated = () => {
           company_id: discussion.company_id,
           created_at: discussion.created_at,
           updated_at: discussion.updated_at,
-          image_url: discussion.image_url || null,
-          video_url: discussion.video_url || null,
+          image_url: discussion.image_url,
+          video_url: discussion.video_url,
           status: (discussion.status || 'open') as 'open' | 'closed',
-          profiles: author ? {
-            display_name: author.display_name,
-            avatar: author.avatar
+          profiles: discussion.profiles ? {
+            display_name: discussion.profiles.display_name,
+            avatar: discussion.profiles.avatar
           } : {
             display_name: 'Usuário',
             avatar: null
