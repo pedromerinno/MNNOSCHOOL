@@ -25,7 +25,7 @@ export function useUsers() {
   const { selectedCompany } = useCompanies();
   
   const USERS_CACHE_KEY = 'cachedUsers';
-  const USERS_CACHE_EXPIRATION = 15;
+  const USERS_CACHE_EXPIRATION = 10; // Reduzido para 10 minutos
   
   const getCachedUsers = useCallback((): UserProfile[] | null => {
     return getCache<UserProfile[]>({
@@ -36,7 +36,7 @@ export function useUsers() {
   
   const setCachedUsers = useCallback((data: UserProfile[]) => {
     try {
-      const usersToCache = data.slice(0, 20); // Aumentei o limite de cache
+      const usersToCache = data.slice(0, 50); // Limitar cache a 50 usuários
       setCache({
         key: USERS_CACHE_KEY,
         expirationMinutes: USERS_CACHE_EXPIRATION
@@ -46,16 +46,28 @@ export function useUsers() {
     }
   }, [setCache]);
 
+  // Helper function otimizada para buscar IDs das empresas do usuário
+  const getUserCompanyIds = useCallback(async (userId: string): Promise<string[]> => {
+    const { data: userCompanies } = await supabase
+      .from('user_empresa')
+      .select('empresa_id')
+      .eq('user_id', userId);
+      
+    return userCompanies?.map(uc => uc.empresa_id) || [];
+  }, []);
+
   const fetchUsers = useCallback(async () => {
     try {
-      // Use cached data immediately if available
+      // Usar dados do cache imediatamente se disponível
       const cachedData = getCachedUsers();
       if (cachedData) {
         console.log('Using cached users data');
         setUsers(cachedData);
         setLoading(false);
-        // Still fetch fresh data in background
+        return; // Não buscar dados frescos se temos cache válido
       }
+      
+      setLoading(true);
       
       const { data: { session } } = await supabase.auth.getSession();
       const currentUserId = session?.user?.id;
@@ -64,7 +76,7 @@ export function useUsers() {
         throw new Error('No user is currently logged in');
       }
       
-      // Get current user profile first
+      // Buscar perfil do usuário atual primeiro - otimizado
       const { data: currentUserProfile } = await supabase
         .from('profiles')
         .select('is_admin, super_admin')
@@ -72,12 +84,12 @@ export function useUsers() {
         .single();
         
       if (currentUserProfile?.super_admin) {
-        // Super admin sees all users - optimized query
+        // Super admin vê todos os usuários - query otimizada
         const { data: allUsers, error } = await supabase
           .from('profiles')
           .select('id, display_name, is_admin, super_admin, email, created_at, avatar, cargo_id')
           .order('display_name', { ascending: true })
-          .limit(100); // Limit results for performance
+          .limit(100); // Limitar resultados para performance
           
         if (error) throw error;
         
@@ -86,7 +98,14 @@ export function useUsers() {
           setCachedUsers(allUsers);
         }
       } else if (currentUserProfile?.is_admin) {
-        // Admin sees only users from their companies - single optimized query
+        // Admin vê apenas usuários das suas empresas - query única otimizada
+        const companyIds = await getUserCompanyIds(currentUserId);
+        
+        if (companyIds.length === 0) {
+          setUsers([]);
+          return;
+        }
+        
         const { data: companyUsers, error } = await supabase
           .from('user_empresa')
           .select(`
@@ -102,11 +121,11 @@ export function useUsers() {
               cargo_id
             )
           `)
-          .in('empresa_id', await getUserCompanyIds(currentUserId));
+          .in('empresa_id', companyIds);
           
         if (error) throw error;
         
-        // Extract unique users from the join result
+        // Extrair usuários únicos do resultado do join
         const uniqueUsers = companyUsers?.reduce((acc: UserProfile[], item: any) => {
           const user = item.profiles;
           if (user && !acc.find(u => u.id === user.id)) {
@@ -117,12 +136,15 @@ export function useUsers() {
         
         setUsers(uniqueUsers);
         setCachedUsers(uniqueUsers);
+      } else {
+        // Usuários comuns não podem ver outros usuários
+        setUsers([]);
       }
       
     } catch (error: any) {
       console.error('Error fetching users:', error);
       
-      // Use cached data on error if available
+      // Usar dados do cache em caso de erro se disponível
       const cachedData = getCachedUsers();
       if (cachedData) {
         console.log('Using cached users data due to error');
@@ -138,17 +160,7 @@ export function useUsers() {
     } finally {
       setLoading(false);
     }
-  }, [toast, getCachedUsers, setCachedUsers]);
-
-  // Helper function to get user company IDs efficiently
-  const getUserCompanyIds = useCallback(async (userId: string): Promise<string[]> => {
-    const { data: userCompanies } = await supabase
-      .from('user_empresa')
-      .select('empresa_id')
-      .eq('user_id', userId);
-      
-    return userCompanies?.map(uc => uc.empresa_id) || [];
-  }, []);
+  }, [toast, getCachedUsers, setCachedUsers, getUserCompanyIds]);
 
   const toggleAdminStatus = useCallback(async (
     userId: string, 
@@ -167,7 +179,7 @@ export function useUsers() {
           : user
       ));
       
-      // Update cache
+      // Atualizar cache
       const updatedUsers = users.map(user => 
         user.id === userId 
           ? { 

@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { UserTable } from './UserTable';
+import { UserTableOptimized } from './UserTableOptimized';
 import { useUsers } from '@/hooks/useUsers';
 import { AdminSetup } from './user/AdminSetup';
 import { PermissionError } from './user/PermissionError';
@@ -72,7 +73,7 @@ export const UserManagement = () => {
       {loading && users.length === 0 ? (
         <UserManagementSkeleton />
       ) : (
-        <UserTable 
+        <UserTableOptimized 
           users={users} 
           loading={loading} 
           onToggle={toggleAdminStatus} 
