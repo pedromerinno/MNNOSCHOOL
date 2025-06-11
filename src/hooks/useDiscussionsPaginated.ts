@@ -37,7 +37,7 @@ export const useDiscussionsPaginated = () => {
           image_url,
           video_url,
           status,
-          author_profile:profiles!discussions_author_id_fkey(
+          author_profile:profiles!author_id(
             display_name,
             avatar
           ),
@@ -49,7 +49,7 @@ export const useDiscussionsPaginated = () => {
             created_at,
             image_url,
             video_url,
-            reply_profile:profiles!discussion_replies_author_id_fkey(
+            reply_profile:profiles!author_id(
               display_name,
               avatar
             )
@@ -79,9 +79,9 @@ export const useDiscussionsPaginated = () => {
           created_at: reply.created_at,
           image_url: reply.image_url,
           video_url: reply.video_url,
-          profiles: reply.reply_profile ? {
-            display_name: reply.reply_profile.display_name,
-            avatar: reply.reply_profile.avatar
+          profiles: reply.reply_profile && typeof reply.reply_profile === 'object' ? {
+            display_name: (reply.reply_profile as any).display_name,
+            avatar: (reply.reply_profile as any).avatar
           } : {
             display_name: 'Usuário',
             avatar: null
@@ -99,9 +99,9 @@ export const useDiscussionsPaginated = () => {
           image_url: discussion.image_url,
           video_url: discussion.video_url,
           status: (discussion.status || 'open') as 'open' | 'closed',
-          profiles: discussion.author_profile ? {
-            display_name: discussion.author_profile.display_name,
-            avatar: discussion.author_profile.avatar
+          profiles: discussion.author_profile && typeof discussion.author_profile === 'object' ? {
+            display_name: (discussion.author_profile as any).display_name,
+            avatar: (discussion.author_profile as any).avatar
           } : {
             display_name: 'Usuário',
             avatar: null
