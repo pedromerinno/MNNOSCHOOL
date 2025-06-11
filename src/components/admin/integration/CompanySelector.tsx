@@ -22,39 +22,39 @@ export const CompanySelector: React.FC<CompanySelectorProps> = memo(({
   disabled = false
 }) => {
   const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   // Verificar se companies é um array e não está vazio
   const hasCompanies = Array.isArray(companies) && companies.length > 0;
 
-  // Manipular exibição de erro
+  // Melhor manipulação de erro
   useEffect(() => {
-    if (!hasCompanies && !disabled) {
-      setError("Não foi possível carregar a lista de empresas");
-    } else {
+    if (!hasCompanies && !disabled && !isRetrying) {
+      setError("Lista de empresas indisponível");
+    } else if (hasCompanies) {
       setError(null);
     }
-  }, [companies, disabled, hasCompanies]);
+  }, [companies, disabled, hasCompanies, isRetrying]);
 
   const handleRetry = () => {
-    setRetryCount(prev => prev + 1);
+    setIsRetrying(true);
+    setError("Recarregando...");
+    
     // Despachar evento que será capturado pelos componentes que precisam recarregar
     window.dispatchEvent(new CustomEvent('force-reload-companies'));
-    setError("Tentando novamente...");
     
-    // Resetar erro após 3 segundos
+    // Reset após 2 segundos
     setTimeout(() => {
+      setIsRetrying(false);
       if (!hasCompanies) {
-        setError("Não foi possível carregar a lista de empresas");
-      } else {
-        setError(null);
+        setError("Lista de empresas indisponível");
       }
-    }, 3000);
+    }, 2000);
   };
 
   return (
     <div className="w-full md:w-72">
-      {error ? (
+      {error && !hasCompanies ? (
         <div className="mb-4">
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -66,8 +66,9 @@ export const CompanySelector: React.FC<CompanySelectorProps> = memo(({
                 size="sm" 
                 onClick={handleRetry} 
                 className="mt-2 w-full"
+                disabled={isRetrying}
               >
-                Tentar novamente
+                {isRetrying ? "Tentando..." : "Tentar novamente"}
               </Button>
             </AlertDescription>
           </Alert>
@@ -75,9 +76,9 @@ export const CompanySelector: React.FC<CompanySelectorProps> = memo(({
       ) : null}
       
       <Select 
-        value={selectedCompany?.id} 
+        value={selectedCompany?.id || ''} 
         onValueChange={onCompanyChange}
-        disabled={disabled || !hasCompanies}
+        disabled={disabled || !hasCompanies || isRetrying}
       >
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Selecione uma empresa">
@@ -90,8 +91,7 @@ export const CompanySelector: React.FC<CompanySelectorProps> = memo(({
                       alt={selectedCompany.nome}
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = "/placeholder.svg";
-                        target.onerror = null;
+                        target.style.display = 'none';
                       }}
                     />
                   ) : null}
@@ -115,8 +115,7 @@ export const CompanySelector: React.FC<CompanySelectorProps> = memo(({
                       alt={company.nome}
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = "/placeholder.svg";
-                        target.onerror = null;
+                        target.style.display = 'none';
                       }}
                     />
                   ) : null}

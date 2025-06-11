@@ -21,14 +21,21 @@ export const UserManagement = () => {
   const [permissionError, setPermissionError] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [showInviteInfo, setShowInviteInfo] = useState(false);
-  const { companies, userCompanies } = useCompanies();
+  
+  // Use companies with skipLoadingInOnboarding to prevent conflicts
+  const { userCompanies, isLoading: companiesLoading } = useCompanies({ 
+    skipLoadingInOnboarding: false 
+  });
+  
   const [selectedInviteCompany, setSelectedInviteCompany] = useState(null);
   const { toast } = useToast();
 
   console.log('[UserManagement] Current state:', {
     usersCount: users.length,
     loading,
-    isRefreshing
+    isRefreshing,
+    companiesCount: userCompanies?.length || 0,
+    companiesLoading
   });
 
   const handleRefresh = async () => {
@@ -62,8 +69,8 @@ export const UserManagement = () => {
   };
 
   const handleCompanyChange = (companyId) => {
-    const company = (userCompanies || companies).find(c => c.id === companyId);
-    setSelectedInviteCompany(company);
+    const company = userCompanies?.find(c => c.id === companyId);
+    setSelectedInviteCompany(company || null);
   };
 
   // Se não há usuários e não está carregando, mostrar estado vazio específico
@@ -135,10 +142,10 @@ export const UserManagement = () => {
           
           <div className="space-y-4 py-4">
             <CompanySelector 
-              companies={userCompanies || companies} 
+              companies={userCompanies || []} 
               selectedCompany={selectedInviteCompany}
               onCompanyChange={handleCompanyChange}
-              disabled={loading}
+              disabled={companiesLoading}
             />
             
             {selectedInviteCompany ? (
@@ -169,7 +176,7 @@ export const UserManagement = () => {
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Selecione uma empresa para ver o ID
+                {companiesLoading ? "Carregando empresas..." : "Selecione uma empresa para ver o ID"}
               </p>
             )}
           </div>

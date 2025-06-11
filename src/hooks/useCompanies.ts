@@ -1,4 +1,3 @@
-
 import { useEffect, useCallback, useRef } from "react";
 import { useCompanyState } from "./company/useCompanyState";
 import { useCompanyFetching } from "./company/useCompanyFetching";
@@ -249,11 +248,18 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
         .single();
       
       if (profileData?.super_admin) {
-        const { data: allCompanies } = await supabase
+        // For super admin, get all companies directly without rate limiting issues
+        const { data: allCompanies, error: companiesError } = await supabase
           .from('empresas')
-          .select('*');
+          .select('*')
+          .order('nome')
+          .limit(20); // Limit to prevent excessive data transfer
         
-        setUserCompanies(allCompanies as Company[] || []);
+        if (companiesError) {
+          throw companiesError;
+        }
+        
+        setUserCompanies(allCompanies || []);
         console.log(`[useCompanies-${hookId}] ✅ Loaded all companies for super admin`);
       } else {
         await getUserCompanies(user.id);
@@ -288,7 +294,7 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
           user?.id) {
         loadInitialData();
       }
-    }, 100);
+    }, 150); // Slightly increased delay
     
     return () => clearTimeout(timer);
   }, [loadInitialData, user?.id, skipLoadingInOnboarding, hookId, globalState]);
@@ -389,7 +395,7 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
         if (!selectedCompany && !globalState.isInitializing && !initializationInProgress.current) {
           restoreSelectedCompany();
         }
-      }, 200);
+      }, 250); // Increased delay
       
       return () => clearTimeout(timer);
     }
