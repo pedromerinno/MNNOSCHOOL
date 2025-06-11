@@ -21,17 +21,10 @@ export const useDiscussions = () => {
     try {
       setIsLoading(true);
       
-      // Single optimized query with joins to get all data at once
+      // Fetch discussions first
       const { data: discussionsData, error: discussionsError } = await supabase
         .from('discussions')
-        .select(`
-          *,
-          profiles:author_id(id, display_name, avatar),
-          discussion_replies(
-            *,
-            profiles:author_id(id, display_name, avatar)
-          )
-        `)
+        .select('*')
         .eq('company_id', selectedCompany.id)
         .order('created_at', { ascending: false });
 
@@ -41,29 +34,70 @@ export const useDiscussions = () => {
         setDiscussions([]);
         return;
       }
-      
-      // Transform data to match expected structure
-      const formattedData = discussionsData.map(discussion => ({
-        id: discussion.id,
-        title: discussion.title,
-        content: discussion.content,
-        author_id: discussion.author_id,
-        company_id: discussion.company_id,
-        created_at: discussion.created_at,
-        updated_at: discussion.updated_at,
-        image_url: discussion.image_url || null,
-        video_url: discussion.video_url || null,
-        status: (discussion.status || 'open') as 'open' | 'closed',
-        profiles: Array.isArray(discussion.profiles) && discussion.profiles.length > 0 
-          ? discussion.profiles[0] 
-          : { display_name: 'Usuário', avatar: null },
-        discussion_replies: (discussion.discussion_replies || []).map((reply: any) => ({
-          ...reply,
-          profiles: Array.isArray(reply.profiles) && reply.profiles.length > 0
-            ? reply.profiles[0]
-            : { display_name: 'Usuário', avatar: null }
-        })) as DiscussionReply[]
-      })) as Discussion[];
+
+      // Get author profiles
+      const authorIds = discussionsData.map(d => d.author_id);
+      const { data: authorsData } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar')
+        .in('id', authorIds);
+
+      // Get discussion replies
+      const discussionIds = discussionsData.map(d => d.id);
+      const { data: repliesData } = await supabase
+        .from('discussion_replies')
+        .select('*')
+        .in('discussion_id', discussionIds)
+        .order('created_at', { ascending: true });
+
+      // Get reply author profiles
+      const replyAuthorIds = repliesData?.map(r => r.author_id) || [];
+      const uniqueReplyAuthorIds = [...new Set(replyAuthorIds)];
+      const { data: replyAuthorsData } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar')
+        .in('id', uniqueReplyAuthorIds);
+
+      // Map discussions with their data
+      const formattedData = discussionsData.map(discussion => {
+        const author = authorsData?.find(a => a.id === discussion.author_id);
+        const discussionReplies = repliesData?.filter(r => r.discussion_id === discussion.id) || [];
+        
+        const formattedReplies = discussionReplies.map(reply => {
+          const replyAuthor = replyAuthorsData?.find(a => a.id === reply.author_id);
+          return {
+            ...reply,
+            profiles: replyAuthor ? {
+              display_name: replyAuthor.display_name,
+              avatar: replyAuthor.avatar
+            } : {
+              display_name: 'Usuário',
+              avatar: null
+            }
+          } as DiscussionReply;
+        });
+
+        return {
+          id: discussion.id,
+          title: discussion.title,
+          content: discussion.content,
+          author_id: discussion.author_id,
+          company_id: discussion.company_id,
+          created_at: discussion.created_at,
+          updated_at: discussion.updated_at,
+          image_url: discussion.image_url || null,
+          video_url: discussion.video_url || null,
+          status: (discussion.status || 'open') as 'open' | 'closed',
+          profiles: author ? {
+            display_name: author.display_name,
+            avatar: author.avatar
+          } : {
+            display_name: 'Usuário',
+            avatar: null
+          },
+          discussion_replies: formattedReplies
+        } as Discussion;
+      });
       
       setDiscussions(formattedData);
     } catch (error: any) {
@@ -94,10 +128,7 @@ export const useDiscussions = () => {
       const { data, error } = await supabase
         .from('discussions')
         .insert([discussionData])
-        .select(`
-          *,
-          profiles:author_id(id, display_name, avatar)
-        `)
+        .select()
         .single();
 
       if (error) throw error;
@@ -109,9 +140,10 @@ export const useDiscussions = () => {
         const newDiscussion: Discussion = {
           ...data,
           status: (data.status || 'open') as 'open' | 'closed',
-          profiles: Array.isArray(data.profiles) && data.profiles.length > 0
-            ? data.profiles[0]
-            : { display_name: 'Usuário', avatar: null },
+          profiles: {
+            display_name: userProfile?.display_name || 'Usuário',
+            avatar: userProfile?.avatar || null
+          },
           discussion_replies: []
         };
         setDiscussions(prev => [newDiscussion, ...prev]);
@@ -122,7 +154,7 @@ export const useDiscussions = () => {
       console.error('Error creating discussion:', error);
       toast.error('Erro ao criar discussão');
     }
-  }, [selectedCompany?.id, user?.id]);
+  }, [selectedCompany?.id, user?.id, userProfile]);
 
   const toggleDiscussionStatus = useCallback(async (discussionId: string, newStatus: 'open' | 'closed') => {
     try {
@@ -183,10 +215,7 @@ export const useDiscussions = () => {
       const { data, error } = await supabase
         .from('discussion_replies')
         .insert([replyData])
-        .select(`
-          *,
-          profiles:author_id(id, display_name, avatar)
-        `)
+        .select()
         .single();
 
       if (error) throw error;
@@ -195,9 +224,10 @@ export const useDiscussions = () => {
       if (data) {
         const newReply: DiscussionReply = {
           ...data,
-          profiles: Array.isArray(data.profiles) && data.profiles.length > 0
-            ? data.profiles[0]
-            : { display_name: 'Usuário', avatar: null }
+          profiles: {
+            display_name: userProfile?.display_name || 'Usuário',
+            avatar: userProfile?.avatar || null
+          }
         };
         
         setDiscussions(prev => prev.map(discussion => {
@@ -216,7 +246,7 @@ export const useDiscussions = () => {
       console.error('Error adding reply:', error);
       toast.error('Erro ao enviar resposta');
     }
-  }, [user?.id]);
+  }, [user?.id, userProfile]);
 
   const deleteReply = useCallback(async (replyId: string) => {
     try {
