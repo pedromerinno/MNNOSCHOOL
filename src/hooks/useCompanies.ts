@@ -28,10 +28,14 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
   const initialDataLoaded = useRef(false);
   const hasRegistered = useRef(false);
   const restorationAttempted = useRef(false);
+  const initializationInProgress = useRef(false);
+  const lastUserId = useRef<string | null>(null);
   
   console.log(`[useCompanies-${hookId}] Hook called`, {
     userId: user?.id || 'no user',
-    skipLoadingInOnboarding
+    skipLoadingInOnboarding,
+    initialDataLoaded: initialDataLoaded.current,
+    initializationInProgress: initializationInProgress.current
   });
   
   // Register hook with global state
@@ -70,7 +74,8 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
   console.log(`[useCompanies-${hookId}] Current state:`, {
     userCompaniesCount: userCompanies.length,
     selectedCompany: selectedCompany?.nome || 'none',
-    isLoading
+    isLoading,
+    initializationInProgress: initializationInProgress.current
   });
   
   // Hook for company fetching operations
@@ -127,9 +132,33 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
   // Listen for company selection events
   useCompanyEvents(setSelectedCompany);
   
+  // Detect user changes and reset state
+  useEffect(() => {
+    if (user?.id && lastUserId.current !== user.id) {
+      console.log(`[useCompanies-${hookId}] User changed from ${lastUserId.current} to ${user.id}`);
+      
+      // Reset all state for new user
+      initialDataLoaded.current = false;
+      restorationAttempted.current = false;
+      initializationInProgress.current = false;
+      
+      // Clear cache if this is actually a user change (not initial load)
+      if (lastUserId.current) {
+        localStorage.removeItem('userCompanies');
+        localStorage.removeItem('selectedCompany');
+        localStorage.removeItem('selectedCompanyId');
+        setUserCompanies([]);
+        setSelectedCompany(null);
+        console.log(`[useCompanies-${hookId}] User changed - cleared cache`);
+      }
+      
+      lastUserId.current = user.id;
+    }
+  }, [user?.id, setUserCompanies, setSelectedCompany, hookId]);
+  
   // IMMEDIATE company restoration on hook initialization
   useEffect(() => {
-    if (!skipLoadingInOnboarding && !selectedCompany && !restorationAttempted.current) {
+    if (!skipLoadingInOnboarding && !selectedCompany && !restorationAttempted.current && !initializationInProgress.current) {
       console.log(`[useCompanies-${hookId}] 🔄 Attempting immediate company restoration from localStorage...`);
       restorationAttempted.current = true;
       
@@ -146,32 +175,14 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     }
   }, [skipLoadingInOnboarding, selectedCompany, getStoredCompany, getStoredCompanyId, setSelectedCompany, hookId]);
   
-  // Clear cached company data on user change
-  useEffect(() => {
-    if (user?.id) {
-      // This is a user change or initial login
-      const checkUserChange = async () => {
-        // Reset data for new user
-        initialDataLoaded.current = false;
-        restorationAttempted.current = false;
-        
-        // Clear cache if we already have data loaded (which means this is a user change)
-        if (userCompanies.length > 0) {
-          localStorage.removeItem('userCompanies');
-          localStorage.removeItem('selectedCompany');
-          localStorage.removeItem('selectedCompanyId');
-          setUserCompanies([]);
-          setSelectedCompany(null);
-          console.log(`[useCompanies-${hookId}] User changed - cleared cache`);
-        }
-      };
-      
-      checkUserChange();
-    }
-  }, [user?.id, setUserCompanies, setSelectedCompany, hookId]);
-  
-  // Global data loading with improved throttling
+  // Global data loading with improved throttling and loop prevention
   const loadInitialData = useCallback(async () => {
+    // Prevent multiple concurrent initializations
+    if (initializationInProgress.current) {
+      console.log(`[useCompanies-${hookId}] Initialization already in progress, skipping`);
+      return;
+    }
+    
     // If we've already loaded initial data, don't load again
     if (initialDataLoaded.current) {
       console.log(`[useCompanies-${hookId}] Initial data already loaded, skipping`);
@@ -202,8 +213,8 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     }
     
     try {
+      initializationInProgress.current = true;
       globalState.startInitialization(hookId);
-      initialDataLoaded.current = true;
       
       console.log(`[useCompanies-${hookId}] 🚀 Starting company data initialization`);
       
@@ -215,6 +226,9 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
           if (Array.isArray(companies) && companies.length > 0) {
             setUserCompanies(companies);
             console.log(`[useCompanies-${hookId}] ✅ Using cached data during initial load`);
+            
+            // Mark as loaded to prevent further requests
+            initialDataLoaded.current = true;
             
             // Start a background fetch without showing loading
             getUserCompanies(user.id, false).catch(err => 
@@ -245,26 +259,38 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
         await getUserCompanies(user.id);
         console.log(`[useCompanies-${hookId}] ✅ Loaded user companies`);
       }
+      
+      // Mark as loaded to prevent further requests
+      initialDataLoaded.current = true;
+      
     } catch (error) {
       console.error(`[useCompanies-${hookId}] ❌ Error loading initial company data:`, error);
+      setError(error instanceof Error ? error : new Error('Failed to load companies'));
     } finally {
+      initializationInProgress.current = false;
       globalState.endInitialization(hookId);
     }
-  }, [user?.id, isLoading, getUserCompanies, skipLoadingInOnboarding, setUserCompanies, hookId, globalState]);
+  }, [user?.id, isLoading, getUserCompanies, skipLoadingInOnboarding, setUserCompanies, hookId, globalState, setError]);
   
-  // Load initial data only when needed
+  // Load initial data only when needed with additional safeguards
   useEffect(() => {
-    // IMPORTANT: Check skipLoadingInOnboarding option before loading data
-    if (user?.id && !initialDataLoaded.current && !skipLoadingInOnboarding) {
-      // Add a small delay to prevent immediate execution
-      const timer = setTimeout(() => {
-        if (!initialDataLoaded.current && globalState.canInitialize(hookId)) {
-          loadInitialData();
-        }
-      }, 100);
-      
-      return () => clearTimeout(timer);
+    // Prevent loading if conditions aren't met
+    if (!user?.id || initialDataLoaded.current || skipLoadingInOnboarding || initializationInProgress.current) {
+      return;
     }
+    
+    // Add a small delay to prevent immediate execution and allow other effects to settle
+    const timer = setTimeout(() => {
+      // Double-check conditions after timeout
+      if (!initialDataLoaded.current && 
+          !initializationInProgress.current && 
+          globalState.canInitialize(hookId) && 
+          user?.id) {
+        loadInitialData();
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, [loadInitialData, user?.id, skipLoadingInOnboarding, hookId, globalState]);
   
   // Restore company when user companies are loaded (if not already restored)
@@ -281,8 +307,8 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     }
     
     // Don't restore during global initialization
-    if (globalState.isInitializing) {
-      console.log(`[useCompanies-${hookId}] Skipping company restoration - global init in progress`);
+    if (globalState.isInitializing || initializationInProgress.current) {
+      console.log(`[useCompanies-${hookId}] Skipping company restoration - initialization in progress`);
       return;
     }
     
@@ -352,11 +378,15 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
 
   // Restore company when user companies are loaded (if not already restored)
   useEffect(() => {
-    if (userCompanies.length > 0 && !selectedCompany && !skipLoadingInOnboarding && !globalState.isInitializing) {
+    if (userCompanies.length > 0 && 
+        !selectedCompany && 
+        !skipLoadingInOnboarding && 
+        !globalState.isInitializing && 
+        !initializationInProgress.current) {
       console.log(`[useCompanies-${hookId}] User companies loaded, attempting restoration...`);
       // Add delay to prevent immediate execution
       const timer = setTimeout(() => {
-        if (!selectedCompany && !globalState.isInitializing) {
+        if (!selectedCompany && !globalState.isInitializing && !initializationInProgress.current) {
           restoreSelectedCompany();
         }
       }, 200);
@@ -367,7 +397,7 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
   
   // Update data when needed (with better memoization)
   const handleCompanyRelationChange = useCallback(async () => {
-    if (user?.id && !globalState.isInitializing) {
+    if (user?.id && !globalState.isInitializing && !initializationInProgress.current) {
       try {
         console.log(`[useCompanies-${hookId}] Forcing update after company relation change`);
         await forceGetUserCompanies(user.id);
@@ -378,7 +408,7 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
   }, [user?.id, forceGetUserCompanies, hookId, globalState]);
 
   const handleForceReload = useCallback(async () => {
-    if (globalState.isInitializing) {
+    if (globalState.isInitializing || initializationInProgress.current) {
       console.log(`[useCompanies-${hookId}] Skipping force reload - initialization in progress`);
       return;
     }

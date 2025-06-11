@@ -33,6 +33,7 @@ export const CompanyManagement: React.FC = () => {
   const [isUserManagerOpen, setIsUserManagerOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<Company | undefined>(undefined);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   console.log('[CompanyManagement] Current state:', {
     isSuperAdmin,
@@ -43,15 +44,21 @@ export const CompanyManagement: React.FC = () => {
     userId: user?.id
   });
 
-  // Fetch companies on mount based on user role
+  // Fetch companies on mount based on user role with improved logic
   useEffect(() => {
     const loadCompanies = async () => {
-      if (!user?.id) {
-        console.log('[CompanyManagement] No user ID, skipping load');
+      if (!user?.id || !userProfile || hasInitialized) {
+        console.log('[CompanyManagement] Not ready to load companies:', {
+          hasUser: !!user?.id,
+          hasProfile: !!userProfile,
+          hasInitialized
+        });
         return;
       }
 
       try {
+        setHasInitialized(true);
+        
         if (isSuperAdmin) {
           console.log('[CompanyManagement] Loading all companies for super admin');
           await fetchCompanies();
@@ -65,11 +72,11 @@ export const CompanyManagement: React.FC = () => {
       }
     };
 
-    // Only load if we have user profile information
-    if (userProfile && (isSuperAdmin || isAdmin)) {
+    // Only load if we have user profile information and haven't initialized yet
+    if (userProfile && (isSuperAdmin || isAdmin) && !hasInitialized) {
       loadCompanies();
     }
-  }, [fetchCompanies, getUserCompanies, isSuperAdmin, isAdmin, user?.id, userProfile]);
+  }, [fetchCompanies, getUserCompanies, isSuperAdmin, isAdmin, user?.id, userProfile, hasInitialized]);
 
   const handleCreateCompany = () => {
     if (!userProfile?.is_admin && !userProfile?.super_admin) {
