@@ -16,20 +16,55 @@ export const useOptimizedCache = () => {
         expirationMinutes
       };
       
-      // Limitar tamanho do item no cache
       const serialized = JSON.stringify(item);
-      if (serialized.length > 1024 * 1024) { // 1MB limit
-        console.warn(`Cache item ${key} is too large, skipping`);
+      
+      // Verificar tamanho antes de armazenar (limite de 256KB por item)
+      if (serialized.length > 256 * 1024) {
+        console.warn(`[Cache] Item ${key} é muito grande (${serialized.length} bytes), reduzindo dados...`);
+        
+        // Se for um array, reduzir o número de itens
+        if (Array.isArray(data)) {
+          const reducedData = data.slice(0, Math.min(10, data.length));
+          const reducedItem: CacheItem<T> = {
+            data: reducedData as T,
+            timestamp: Date.now(),
+            expirationMinutes
+          };
+          localStorage.setItem(`cache_${key}`, JSON.stringify(reducedItem));
+          console.log(`[Cache] Armazenou versão reduzida de ${key} com ${reducedData.length} itens`);
+        }
         return;
       }
       
       localStorage.setItem(`cache_${key}`, serialized);
-    } catch (error) {
-      console.warn(`Failed to cache ${key}:`, error);
-      // Tentar limpar cache antigo se falhar
-      try {
-        localStorage.removeItem(`cache_${key}`);
-      } catch {}
+      console.log(`[Cache] Armazenou ${key} com sucesso (${serialized.length} bytes)`);
+    } catch (error: any) {
+      console.warn(`[Cache] Falha ao armazenar ${key}:`, error.message);
+      
+      // Se falhar por quota, tentar limpar cache antigo
+      if (error.name === 'QuotaExceededError') {
+        console.log('[Cache] Quota excedida, limpando cache antigo...');
+        try {
+          // Limpar itens expirados
+          clearExpiredCache();
+          
+          // Tentar novamente com dados reduzidos
+          if (Array.isArray(data) && data.length > 5) {
+            const reducedData = data.slice(0, 5);
+            const reducedItem: CacheItem<T> = {
+              data: reducedData as T,
+              timestamp: Date.now(),
+              expirationMinutes
+            };
+            localStorage.setItem(`cache_${key}`, JSON.stringify(reducedItem));
+            console.log(`[Cache] Armazenou versão muito reduzida de ${key}`);
+          }
+        } catch (retryError) {
+          console.warn(`[Cache] Falha na segunda tentativa:`, retryError);
+          // Como último recurso, limpar este item específico
+          localStorage.removeItem(`cache_${key}`);
+        }
+      }
     }
   }, []);
 
@@ -43,13 +78,15 @@ export const useOptimizedCache = () => {
       const expirationTime = item.timestamp + (item.expirationMinutes * 60 * 1000);
 
       if (now > expirationTime) {
+        console.log(`[Cache] Item ${key} expirado, removendo...`);
         localStorage.removeItem(`cache_${key}`);
         return null;
       }
 
+      console.log(`[Cache] Recuperou ${key} do cache`);
       return item.data;
     } catch (error) {
-      console.warn(`Failed to get cache ${key}:`, error);
+      console.warn(`[Cache] Falha ao recuperar ${key}:`, error);
       // Limpar cache corrompido
       try {
         localStorage.removeItem(`cache_${key}`);
@@ -61,8 +98,44 @@ export const useOptimizedCache = () => {
   const clearCache = useCallback((key: string) => {
     try {
       localStorage.removeItem(`cache_${key}`);
+      console.log(`[Cache] Limpou ${key}`);
     } catch (error) {
-      console.warn(`Failed to clear cache ${key}:`, error);
+      console.warn(`[Cache] Falha ao limpar ${key}:`, error);
+    }
+  }, []);
+
+  const clearExpiredCache = useCallback(() => {
+    try {
+      const now = Date.now();
+      const keys = Object.keys(localStorage);
+      let cleared = 0;
+      
+      keys.forEach(key => {
+        if (key.startsWith('cache_')) {
+          try {
+            const cached = localStorage.getItem(key);
+            if (cached) {
+              const item = JSON.parse(cached);
+              const expirationTime = item.timestamp + (item.expirationMinutes * 60 * 1000);
+              
+              if (now > expirationTime) {
+                localStorage.removeItem(key);
+                cleared++;
+              }
+            }
+          } catch {
+            // Se não conseguir fazer parse, remover o item
+            localStorage.removeItem(key);
+            cleared++;
+          }
+        }
+      });
+      
+      if (cleared > 0) {
+        console.log(`[Cache] Limpou ${cleared} itens expirados`);
+      }
+    } catch (error) {
+      console.warn('[Cache] Erro ao limpar cache expirado:', error);
     }
   }, []);
 
@@ -74,10 +147,11 @@ export const useOptimizedCache = () => {
           localStorage.removeItem(key);
         }
       });
+      console.log('[Cache] Limpou todo o cache');
     } catch (error) {
-      console.warn('Failed to clear all cache:', error);
+      console.warn('[Cache] Falha ao limpar todo o cache:', error);
     }
   }, []);
 
-  return { setCache, getCache, clearCache, clearAllCache };
+  return { setCache, getCache, clearCache, clearExpiredCache, clearAllCache };
 };

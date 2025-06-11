@@ -25,16 +25,32 @@ export const UserManagement = () => {
   const [selectedInviteCompany, setSelectedInviteCompany] = useState(null);
   const { toast } = useToast();
 
+  console.log('[UserManagement] Current state:', {
+    usersCount: users.length,
+    loading,
+    isRefreshing
+  });
+
   const handleRefresh = async () => {
+    console.log('[UserManagement] Manual refresh requested');
     setIsRefreshing(true);
     try {
       await fetchUsers();
       setPermissionError(false);
+      toast({
+        title: "Sucesso",
+        description: "Lista de usuários atualizada com sucesso.",
+      });
     } catch (error: any) {
-      console.error('Error refreshing users:', error);
+      console.error('[UserManagement] Error refreshing users:', error);
       if (error?.message?.includes('permission') || error?.status === 403) {
         setPermissionError(true);
       }
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar lista de usuários.",
+        variant: "destructive",
+      });
     } finally {
       setIsRefreshing(false);
     }
@@ -49,6 +65,34 @@ export const UserManagement = () => {
     const company = (userCompanies || companies).find(c => c.id === companyId);
     setSelectedInviteCompany(company);
   };
+
+  // Se não há usuários e não está carregando, mostrar estado vazio específico
+  if (!loading && users.length === 0 && !permissionError) {
+    return (
+      <div className="space-y-4">
+        <UserManagementHeader 
+          onAddAdminClick={() => setIsDialogOpen(true)}
+          onRefreshClick={handleRefresh}
+          loading={loading}
+          isRefreshing={isRefreshing}
+          onInviteUser={handleInviteUser}
+        />
+        
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">
+            Nenhum usuário encontrado. Clique em "Atualizar" para tentar novamente.
+          </p>
+          <Button 
+            onClick={handleRefresh} 
+            className="mt-4"
+            disabled={isRefreshing}
+          >
+            {isRefreshing ? "Atualizando..." : "Atualizar"}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -75,7 +119,7 @@ export const UserManagement = () => {
       ) : (
         <UserTableOptimized 
           users={users} 
-          loading={loading} 
+          loading={isRefreshing} 
           onToggle={toggleAdminStatus} 
         />
       )}
