@@ -55,10 +55,14 @@ export const useDiscussions = () => {
         image_url: discussion.image_url || null,
         video_url: discussion.video_url || null,
         status: discussion.status || 'open' as const,
-        profiles: discussion.profiles || { display_name: 'Usuário', avatar: null },
+        profiles: Array.isArray(discussion.profiles) && discussion.profiles.length > 0 
+          ? discussion.profiles[0] 
+          : { display_name: 'Usuário', avatar: null },
         discussion_replies: (discussion.discussion_replies || []).map((reply: any) => ({
           ...reply,
-          profiles: reply.profiles || { display_name: 'Usuário', avatar: null }
+          profiles: Array.isArray(reply.profiles) && reply.profiles.length > 0
+            ? reply.profiles[0]
+            : { display_name: 'Usuário', avatar: null }
         })) as DiscussionReply[]
       })) as Discussion[];
       
@@ -105,7 +109,9 @@ export const useDiscussions = () => {
       if (data) {
         const newDiscussion: Discussion = {
           ...data,
-          profiles: data.profiles || { display_name: 'Usuário', avatar: null },
+          profiles: Array.isArray(data.profiles) && data.profiles.length > 0
+            ? data.profiles[0]
+            : { display_name: 'Usuário', avatar: null },
           discussion_replies: []
         };
         setDiscussions(prev => [newDiscussion, ...prev]);
@@ -189,7 +195,9 @@ export const useDiscussions = () => {
       if (data) {
         const newReply: DiscussionReply = {
           ...data,
-          profiles: data.profiles || { display_name: 'Usuário', avatar: null }
+          profiles: Array.isArray(data.profiles) && data.profiles.length > 0
+            ? data.profiles[0]
+            : { display_name: 'Usuário', avatar: null }
         };
         
         setDiscussions(prev => prev.map(discussion => {
