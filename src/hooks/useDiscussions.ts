@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useCompanies } from '@/hooks/useCompanies';
 import { toast } from "sonner";
@@ -11,16 +12,27 @@ export const useDiscussions = () => {
   const [discussions, setDiscussions] = useState<Discussion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchDiscussions = async () => {
-    if (!selectedCompany?.id) return;
+  const fetchDiscussions = useCallback(async () => {
+    if (!selectedCompany?.id) {
+      setDiscussions([]);
+      setIsLoading(false);
+      return;
+    }
 
     try {
       setIsLoading(true);
       
-      // Fetch discussions first
+      // Single optimized query with joins to get all data at once
       const { data: discussionsData, error: discussionsError } = await supabase
         .from('discussions')
-        .select('*')
+        .select(`
+          *,
+          profiles:author_id(id, display_name, avatar),
+          discussion_replies(
+            *,
+            profiles:author_id(id, display_name, avatar)
+          )
+        `)
         .eq('company_id', selectedCompany.id)
         .order('created_at', { ascending: false });
 
@@ -31,84 +43,24 @@ export const useDiscussions = () => {
         return;
       }
       
-      // Fetch profiles for authors
-      const authorIds = [...new Set(discussionsData.map(d => d.author_id))];
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, display_name, avatar')
-        .in('id', authorIds);
-        
-      if (profilesError) {
-        console.warn('Error fetching profiles:', profilesError);
-      }
-      
-      // Create a map of profiles by id for quick lookup
-      const profilesMap = (profilesData || []).reduce((map, profile) => {
-        map[profile.id] = profile;
-        return map;
-      }, {} as Record<string, any>);
-      
-      // Fetch all replies for these discussions
-      const discussionIds = discussionsData.map(d => d.id);
-      const { data: repliesData, error: repliesError } = await supabase
-        .from('discussion_replies')
-        .select('*')
-        .in('discussion_id', discussionIds)
-        .order('created_at', { ascending: true });
-        
-      if (repliesError) {
-        console.warn('Error fetching replies:', repliesError);
-      }
-      
-      // Fetch profiles for reply authors
-      const replyAuthorIds = [...new Set((repliesData || []).map(r => r.author_id))];
-      const { data: replyProfilesData, error: replyProfilesError } = await supabase
-        .from('profiles')
-        .select('id, display_name, avatar')
-        .in('id', replyAuthorIds);
-        
-      if (replyProfilesError) {
-        console.warn('Error fetching reply author profiles:', replyProfilesError);
-      }
-      
-      // Create a map of reply author profiles
-      const replyProfilesMap = (replyProfilesData || []).reduce((map, profile) => {
-        map[profile.id] = profile;
-        return map;
-      }, {} as Record<string, any>);
-      
-      // Group replies by discussion_id
-      const repliesByDiscussionId = (repliesData || []).reduce((map, reply) => {
-        if (!map[reply.discussion_id]) {
-          map[reply.discussion_id] = [];
-        }
-        // Fix TypeScript error: item.profiles is possibly 'null'
-        const replyWithProfiles = {
+      // Transform data to match expected structure
+      const formattedData = discussionsData.map(discussion => ({
+        id: discussion.id,
+        title: discussion.title,
+        content: discussion.content,
+        author_id: discussion.author_id,
+        company_id: discussion.company_id,
+        created_at: discussion.created_at,
+        updated_at: discussion.updated_at,
+        image_url: discussion.image_url || null,
+        video_url: discussion.video_url || null,
+        status: discussion.status || 'open' as const,
+        profiles: discussion.profiles || { display_name: 'Usuário', avatar: null },
+        discussion_replies: (discussion.discussion_replies || []).map((reply: any) => ({
           ...reply,
-          profiles: replyProfilesMap[reply.author_id] || { display_name: 'Usuário', avatar: null }
-        };
-        map[reply.discussion_id].push(replyWithProfiles);
-        return map;
-      }, {} as Record<string, any[]>);
-      
-      // Transform the data to match the Discussion type
-      const formattedData = discussionsData.map(discussion => {
-        return {
-          id: discussion.id,
-          title: discussion.title,
-          content: discussion.content,
-          author_id: discussion.author_id,
-          company_id: discussion.company_id,
-          created_at: discussion.created_at,
-          updated_at: discussion.updated_at,
-          image_url: discussion.image_url || null,
-          video_url: discussion.video_url || null,
-          status: discussion.status || 'open' as const,
-          // Fix TypeScript error by providing default value for profiles
-          profiles: profilesMap[discussion.author_id] || { display_name: 'Usuário', avatar: null },
-          discussion_replies: (repliesByDiscussionId[discussion.id] || []) as DiscussionReply[]
-        } as Discussion;
-      });
+          profiles: reply.profiles || { display_name: 'Usuário', avatar: null }
+        })) as DiscussionReply[]
+      })) as Discussion[];
       
       setDiscussions(formattedData);
     } catch (error: any) {
@@ -117,9 +69,9 @@ export const useDiscussions = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedCompany?.id]);
 
-  const createDiscussion = async (title: string, content: string, imageUrl?: string, videoUrl?: string) => {
+  const createDiscussion = useCallback(async (title: string, content: string, imageUrl?: string, videoUrl?: string) => {
     if (!selectedCompany?.id || !user?.id) {
       toast.error('Nenhuma empresa selecionada');
       return;
@@ -139,24 +91,35 @@ export const useDiscussions = () => {
       const { data, error } = await supabase
         .from('discussions')
         .insert([discussionData])
-        .select()
+        .select(`
+          *,
+          profiles:author_id(id, display_name, avatar)
+        `)
         .single();
 
       if (error) throw error;
       
       toast.success('Discussão criada com sucesso!');
-      await fetchDiscussions();
-      // Fix TypeScript error by checking if data exists
+      
+      // Add new discussion to state immediately
+      if (data) {
+        const newDiscussion: Discussion = {
+          ...data,
+          profiles: data.profiles || { display_name: 'Usuário', avatar: null },
+          discussion_replies: []
+        };
+        setDiscussions(prev => [newDiscussion, ...prev]);
+      }
+      
       return data;
     } catch (error: any) {
       console.error('Error creating discussion:', error);
       toast.error('Erro ao criar discussão');
     }
-  };
+  }, [selectedCompany?.id, user?.id]);
 
-  const toggleDiscussionStatus = async (discussionId: string, newStatus: 'open' | 'closed') => {
+  const toggleDiscussionStatus = useCallback(async (discussionId: string, newStatus: 'open' | 'closed') => {
     try {
-      // Update the status in the database
       const { error } = await supabase
         .from('discussions')
         .update({ status: newStatus })
@@ -164,8 +127,8 @@ export const useDiscussions = () => {
         
       if (error) throw error;
       
-      // Update local state
-      setDiscussions(discussions.map(discussion => 
+      // Update local state immediately
+      setDiscussions(prev => prev.map(discussion => 
         discussion.id === discussionId 
           ? {...discussion, status: newStatus} 
           : discussion
@@ -176,9 +139,9 @@ export const useDiscussions = () => {
       console.error('Error updating discussion status:', error);
       toast.error('Erro ao atualizar status da discussão');
     }
-  };
+  }, []);
 
-  const deleteDiscussion = async (discussionId: string) => {
+  const deleteDiscussion = useCallback(async (discussionId: string) => {
     try {
       const { error } = await supabase
         .from('discussions')
@@ -187,15 +150,16 @@ export const useDiscussions = () => {
 
       if (error) throw error;
       
+      // Remove from local state immediately
+      setDiscussions(prev => prev.filter(d => d.id !== discussionId));
       toast.success('Discussão excluída com sucesso!');
-      await fetchDiscussions();
     } catch (error) {
       console.error('Error deleting discussion:', error);
       toast.error('Erro ao excluir discussão');
     }
-  };
+  }, []);
 
-  const addReply = async (discussionId: string, content: string, imageUrl?: string, videoUrl?: string) => {
+  const addReply = useCallback(async (discussionId: string, content: string, imageUrl?: string, videoUrl?: string) => {
     if (!user?.id) {
       toast.error('Você precisa estar logado para responder');
       return;
@@ -213,36 +177,23 @@ export const useDiscussions = () => {
       const { data, error } = await supabase
         .from('discussion_replies')
         .insert([replyData])
-        .select()
+        .select(`
+          *,
+          profiles:author_id(id, display_name, avatar)
+        `)
         .single();
 
       if (error) throw error;
       
-      // Fix: Get the profile data separately to avoid type issues
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('id, display_name, avatar')
-        .eq('id', user.id)
-        .single();
-
-      // If the insertion was successful and we received data back
+      // Add reply to local state immediately
       if (data) {
-        // Find the discussion to update
+        const newReply: DiscussionReply = {
+          ...data,
+          profiles: data.profiles || { display_name: 'Usuário', avatar: null }
+        };
+        
         setDiscussions(prev => prev.map(discussion => {
           if (discussion.id === discussionId) {
-            // Format the new reply to match the expected structure with proper profile data
-            const newReply: DiscussionReply = {
-              id: data.id,
-              discussion_id: data.discussion_id,
-              author_id: data.author_id,
-              content: data.content,
-              created_at: data.created_at,
-              image_url: data.image_url,
-              video_url: data.video_url,
-              profiles: profileData || { display_name: 'Usuário', avatar: null }
-            };
-            
-            // Add the new reply to the discussion
             return {
               ...discussion,
               discussion_replies: [...discussion.discussion_replies, newReply]
@@ -256,12 +207,10 @@ export const useDiscussions = () => {
     } catch (error) {
       console.error('Error adding reply:', error);
       toast.error('Erro ao enviar resposta');
-      // In case of error, refresh all discussions to ensure consistent state
-      await fetchDiscussions();
     }
-  };
+  }, [user?.id]);
 
-  const deleteReply = async (replyId: string) => {
+  const deleteReply = useCallback(async (replyId: string) => {
     try {
       const { error } = await supabase
         .from('discussion_replies')
@@ -270,7 +219,7 @@ export const useDiscussions = () => {
 
       if (error) throw error;
       
-      // Update local state to remove the deleted reply
+      // Remove reply from local state immediately
       setDiscussions(prev => prev.map(discussion => ({
         ...discussion,
         discussion_replies: discussion.discussion_replies.filter(reply => reply.id !== replyId)
@@ -280,14 +229,12 @@ export const useDiscussions = () => {
     } catch (error) {
       console.error('Error deleting reply:', error);
       toast.error('Erro ao excluir resposta');
-      // In case of error, refresh all discussions to ensure consistent state
-      await fetchDiscussions();
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchDiscussions();
-  }, [selectedCompany?.id]);
+  }, [fetchDiscussions]);
 
   return {
     discussions,

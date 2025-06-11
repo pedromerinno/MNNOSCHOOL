@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -26,16 +27,16 @@ export function useUsers() {
   const USERS_CACHE_KEY = 'cachedUsers';
   const USERS_CACHE_EXPIRATION = 15;
   
-  const getCachedUsers = (): UserProfile[] | null => {
+  const getCachedUsers = useCallback((): UserProfile[] | null => {
     return getCache<UserProfile[]>({
       key: USERS_CACHE_KEY,
       expirationMinutes: USERS_CACHE_EXPIRATION
     });
-  };
+  }, [getCache]);
   
-  const setCachedUsers = (data: UserProfile[]) => {
+  const setCachedUsers = useCallback((data: UserProfile[]) => {
     try {
-      const usersToCache = data.slice(0, 5);
+      const usersToCache = data.slice(0, 20); // Aumentei o limite de cache
       setCache({
         key: USERS_CACHE_KEY,
         expirationMinutes: USERS_CACHE_EXPIRATION
@@ -43,17 +44,17 @@ export function useUsers() {
     } catch (e) {
       console.error('Error caching users', e);
     }
-  };
+  }, [setCache]);
 
   const fetchUsers = useCallback(async () => {
     try {
+      // Use cached data immediately if available
       const cachedData = getCachedUsers();
       if (cachedData) {
-        console.log('Using cached users data while fetching updates');
+        console.log('Using cached users data');
         setUsers(cachedData);
         setLoading(false);
-      } else {
-        setLoading(true);
+        // Still fetch fresh data in background
       }
       
       const { data: { session } } = await supabase.auth.getSession();
@@ -63,6 +64,7 @@ export function useUsers() {
         throw new Error('No user is currently logged in');
       }
       
+      // Get current user profile first
       const { data: currentUserProfile } = await supabase
         .from('profiles')
         .select('is_admin, super_admin')
@@ -70,53 +72,62 @@ export function useUsers() {
         .single();
         
       if (currentUserProfile?.super_admin) {
-        const result = await supabase
-          .from('profiles')
-          .select('id, display_name, is_admin, super_admin, email, created_at, avatar, cargo_id');
-          
-        if (result.error) throw result.error;
-        setUsers(result.data);
-      } else if (currentUserProfile?.is_admin) {
-        const { data: userCompanies } = await supabase
-          .from('user_empresa')
-          .select('empresa_id')
-          .eq('user_id', currentUserId);
-          
-        if (!userCompanies?.length) {
-          setUsers([]);
-          return;
-        }
-        
-        const companyIds = userCompanies.map(uc => uc.empresa_id);
-        
-        const { data: companyUsers } = await supabase
-          .from('user_empresa')
-          .select('user_id')
-          .in('empresa_id', companyIds);
-          
-        if (!companyUsers?.length) {
-          setUsers([]);
-          return;
-        }
-        
-        const userIds = [...new Set(companyUsers.map(cu => cu.user_id))];
-        
-        const { data: profiles } = await supabase
+        // Super admin sees all users - optimized query
+        const { data: allUsers, error } = await supabase
           .from('profiles')
           .select('id, display_name, is_admin, super_admin, email, created_at, avatar, cargo_id')
-          .in('id', userIds);
+          .order('display_name', { ascending: true })
+          .limit(100); // Limit results for performance
           
-        if (profiles) {
-          setUsers(profiles);
+        if (error) throw error;
+        
+        if (allUsers) {
+          setUsers(allUsers);
+          setCachedUsers(allUsers);
         }
+      } else if (currentUserProfile?.is_admin) {
+        // Admin sees only users from their companies - single optimized query
+        const { data: companyUsers, error } = await supabase
+          .from('user_empresa')
+          .select(`
+            user_id,
+            profiles!inner(
+              id, 
+              display_name, 
+              is_admin, 
+              super_admin, 
+              email, 
+              created_at, 
+              avatar, 
+              cargo_id
+            )
+          `)
+          .in('empresa_id', await getUserCompanyIds(currentUserId));
+          
+        if (error) throw error;
+        
+        // Extract unique users from the join result
+        const uniqueUsers = companyUsers?.reduce((acc: UserProfile[], item: any) => {
+          const user = item.profiles;
+          if (user && !acc.find(u => u.id === user.id)) {
+            acc.push(user);
+          }
+          return acc;
+        }, []) || [];
+        
+        setUsers(uniqueUsers);
+        setCachedUsers(uniqueUsers);
       }
-      
-      setLoading(false);
       
     } catch (error: any) {
       console.error('Error fetching users:', error);
       
-      if (!error.message?.includes('política de segurança') && 
+      // Use cached data on error if available
+      const cachedData = getCachedUsers();
+      if (cachedData) {
+        console.log('Using cached users data due to error');
+        setUsers(cachedData);
+      } else if (!error.message?.includes('política de segurança') && 
           !error.message?.includes('Erro de permissão')) {
         toast({
           title: 'Erro ao buscar usuários',
@@ -124,15 +135,20 @@ export function useUsers() {
           variant: 'destructive',
         });
       }
-      
-      const cachedData = getCachedUsers();
-      if (cachedData) {
-        console.log('Using cached users data due to error');
-        setUsers(cachedData);
-      }
+    } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, getCachedUsers, setCachedUsers]);
+
+  // Helper function to get user company IDs efficiently
+  const getUserCompanyIds = useCallback(async (userId: string): Promise<string[]> => {
+    const { data: userCompanies } = await supabase
+      .from('user_empresa')
+      .select('empresa_id')
+      .eq('user_id', userId);
+      
+    return userCompanies?.map(uc => uc.empresa_id) || [];
+  }, []);
 
   const toggleAdminStatus = useCallback(async (
     userId: string, 
@@ -151,18 +167,16 @@ export function useUsers() {
           : user
       ));
       
-      const cachedData = getCachedUsers();
-      if (cachedData) {
-        const updatedCache = cachedData.map(user => 
-          user.id === userId 
-            ? { 
-                ...user, 
-                [isSuperAdmin ? 'super_admin' : 'is_admin']: !(currentStatus || false)
-              } 
-            : user
-        );
-        setCachedUsers(updatedCache);
-      }
+      // Update cache
+      const updatedUsers = users.map(user => 
+        user.id === userId 
+          ? { 
+              ...user, 
+              [isSuperAdmin ? 'super_admin' : 'is_admin']: !(currentStatus || false)
+            } 
+          : user
+      );
+      setCachedUsers(updatedUsers);
       
       toast({
         title: 'Sucesso',
@@ -176,7 +190,7 @@ export function useUsers() {
         variant: 'destructive',
       });
     }
-  }, [users, toast]);
+  }, [users, toast, setCachedUsers]);
 
   useEffect(() => {
     fetchUsers();

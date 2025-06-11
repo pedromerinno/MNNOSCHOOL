@@ -7,7 +7,6 @@ import { toast } from "sonner";
 
 const CACHE_KEY = 'team_members_cache';
 const CACHE_EXPIRATION = 10 * 60 * 1000; // 10 minutos
-const BATCH_SIZE = 15; // Tamanho do lote para carregar membros
 
 export const useTeamMembers = () => {
   const [members, setMembers] = useState<UserProfile[]>([]);
@@ -25,7 +24,7 @@ export const useTeamMembers = () => {
       const now = Date.now();
       
       if (now - timestamp < CACHE_EXPIRATION && companyId === selectedCompany?.id) {
-        console.log('Usando dados em cache para membros da equipe');
+        console.log('Using cached team members data');
         return data;
       }
       
@@ -39,7 +38,7 @@ export const useTeamMembers = () => {
 
   const cacheMembers = useCallback((data: UserProfile[]) => {
     try {
-      // Only cache essential data, limiting the size
+      // Cache only essential data
       const minimalData = data.map(member => ({
         id: member.id,
         display_name: member.display_name,
@@ -50,7 +49,7 @@ export const useTeamMembers = () => {
         created_at: member.created_at
       }));
 
-      // Limit the number of entries to cache if there are too many
+      // Limit cache size
       const dataToCache = minimalData.length > 50 ? minimalData.slice(0, 50) : minimalData;
       
       localStorage.setItem(CACHE_KEY, JSON.stringify({
@@ -59,48 +58,9 @@ export const useTeamMembers = () => {
         companyId: selectedCompany?.id
       }));
     } catch (error) {
-      console.error('Erro ao cachear membros:', error);
-      // Don't throw, just log - we can still function without caching
+      console.error('Error caching team members:', error);
     }
   }, [selectedCompany]);
-
-  // Função para carregar membros em lotes
-  const fetchMembersInBatches = useCallback(async (userIds: string[]): Promise<UserProfile[]> => {
-    const allProfiles: UserProfile[] = [];
-    const totalBatches = Math.ceil(userIds.length / BATCH_SIZE);
-    
-    for (let i = 0; i < userIds.length; i += BATCH_SIZE) {
-      const batchIds = userIds.slice(i, i + BATCH_SIZE);
-      const currentBatch = Math.floor(i / BATCH_SIZE) + 1;
-      
-      try {
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, display_name, email, cargo_id, avatar, is_admin, created_at')
-          .in('id', batchIds);
-
-        if (profilesError) throw profilesError;
-        
-        if (profilesData && profilesData.length > 0) {
-          allProfiles.push(...profilesData);
-        }
-        
-        // Atualiza o progresso
-        setLoadProgress(Math.round((currentBatch / totalBatches) * 100));
-        
-      } catch (error) {
-        console.error(`Erro ao carregar lote ${currentBatch}/${totalBatches}:`, error);
-        // Continue para tentar carregar os outros lotes
-      }
-      
-      // Pequena pausa para evitar sobrecarregar a API
-      if (totalBatches > 3 && i + BATCH_SIZE < userIds.length) {
-        await new Promise(resolve => setTimeout(resolve, 300));
-      }
-    }
-    
-    return allProfiles;
-  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -116,59 +76,53 @@ export const useTeamMembers = () => {
         setError(null);
         setLoadProgress(0);
 
+        // Use cached data immediately if available
         const cachedData = getCachedMembers();
         if (cachedData) {
           setMembers(cachedData);
           setIsLoading(false);
-          // Ainda carrega dados atualizados em segundo plano
+          setLoadProgress(100);
+          return; // Don't fetch fresh data if we have cache
         } else {
           setIsLoading(true);
         }
 
-        // Buscar relacionamentos usuário-empresa
-        const { data: userCompanyRelations, error: relationsError } = await supabase
+        // Single optimized query with join
+        const { data: teamData, error: teamError } = await supabase
           .from('user_empresa')
-          .select('user_id')
+          .select(`
+            user_id,
+            profiles!inner(
+              id, 
+              display_name, 
+              email, 
+              cargo_id, 
+              avatar, 
+              is_admin, 
+              created_at
+            )
+          `)
           .eq('empresa_id', selectedCompany.id);
 
-        if (relationsError) throw relationsError;
-
-        if (!userCompanyRelations || userCompanyRelations.length === 0) {
-          if (isMounted) {
-            setMembers([]);
-            setIsLoading(false);
-            setLoadProgress(100);
-          }
-          return;
-        }
-
-        const userIds = userCompanyRelations.map(relation => relation.user_id);
-        
-        // Fetcha perfis em lotes para evitar problemas de performance
-        const allProfiles = await fetchMembersInBatches(userIds);
+        if (teamError) throw teamError;
 
         if (!isMounted) return;
 
-        const teamMembers: UserProfile[] = allProfiles.map(profile => ({
-          id: profile.id,
-          display_name: profile.display_name,
-          email: profile.email,
-          cargo_id: profile.cargo_id,
-          avatar: profile.avatar,
-          is_admin: profile.is_admin,
-          created_at: profile.created_at
-        }));
+        // Extract team members from join result
+        const teamMembers: UserProfile[] = teamData?.map((item: any) => ({
+          id: item.profiles.id,
+          display_name: item.profiles.display_name,
+          email: item.profiles.email,
+          cargo_id: item.profiles.cargo_id,
+          avatar: item.profiles.avatar,
+          is_admin: item.profiles.is_admin,
+          created_at: item.profiles.created_at
+        })) || [];
 
         if (isMounted) {
           setMembers(teamMembers);
           setLoadProgress(100);
-          
-          // Try to cache, but don't fail if it doesn't work
-          try {
-            cacheMembers(teamMembers);
-          } catch (cacheError) {
-            console.warn('Could not cache team members:', cacheError);
-          }
+          cacheMembers(teamMembers);
         }
       } catch (err) {
         console.error('Error fetching team members:', err);
@@ -188,7 +142,7 @@ export const useTeamMembers = () => {
     return () => {
       isMounted = false;
     };
-  }, [selectedCompany, getCachedMembers, cacheMembers, fetchMembersInBatches]);
+  }, [selectedCompany, getCachedMembers, cacheMembers]);
 
   return { members, isLoading, error, loadProgress };
 };
