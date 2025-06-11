@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useCompanies } from '@/hooks/useCompanies';
@@ -54,7 +53,7 @@ export const useDiscussions = () => {
         updated_at: discussion.updated_at,
         image_url: discussion.image_url || null,
         video_url: discussion.video_url || null,
-        status: discussion.status || 'open' as const,
+        status: (discussion.status || 'open') as 'open' | 'closed',
         profiles: Array.isArray(discussion.profiles) && discussion.profiles.length > 0 
           ? discussion.profiles[0] 
           : { display_name: 'Usuário', avatar: null },
@@ -109,6 +108,7 @@ export const useDiscussions = () => {
       if (data) {
         const newDiscussion: Discussion = {
           ...data,
+          status: (data.status || 'open') as 'open' | 'closed',
           profiles: Array.isArray(data.profiles) && data.profiles.length > 0
             ? data.profiles[0]
             : { display_name: 'Usuário', avatar: null },
