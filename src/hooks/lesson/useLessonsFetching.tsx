@@ -14,7 +14,8 @@ export const useLessonsFetching = (courseId: string) => {
     if (!courseId) return;
     
     const now = Date.now();
-    if (!force && now - lastRefreshTime < 1000) {
+    // Increase debounce time to 2 seconds to prevent multiple rapid refreshes
+    if (!force && now - lastRefreshTime < 2000) {
       console.log(`Skipping lessons refresh for ${courseId} - too soon since last refresh`);
       return;
     }

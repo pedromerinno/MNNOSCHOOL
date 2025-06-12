@@ -96,22 +96,23 @@ export const useLessonMutations = (courseId: string, onSuccess: () => Promise<vo
     try {
       console.log("Reordering lessons:", lessons.map(l => ({ id: l.id, order_index: l.order_index })));
 
-      // Update each lesson's order_index
-      const updatePromises = lessons.map(lesson => 
-        supabase
-          .from('lessons')
-          .update({ order_index: lesson.order_index })
-          .eq('id', lesson.id)
-      );
+      // Batch update all lessons in a single transaction-like operation
+      const updates = lessons.map(lesson => ({
+        id: lesson.id,
+        order_index: lesson.order_index
+      }));
 
-      const results = await Promise.all(updatePromises);
-      
-      // Check for errors
-      const errors = results.filter(result => result.error);
-      if (errors.length > 0) {
-        throw new Error('Erro ao reordenar algumas aulas');
-      }
+      // Use upsert to update all lessons at once
+      const { error } = await supabase
+        .from('lessons')
+        .upsert(updates, { 
+          onConflict: 'id',
+          ignoreDuplicates: false 
+        });
 
+      if (error) throw error;
+
+      // Only refresh once after all updates are complete
       await onSuccess();
 
       toast({

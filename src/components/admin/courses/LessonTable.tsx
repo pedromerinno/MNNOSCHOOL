@@ -38,12 +38,13 @@ export const LessonTable: React.FC<LessonTableProps> = ({
     const [reorderedItem] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reorderedItem);
 
-    // Update order_index for each lesson
+    // Update order_index for each lesson - ensure it's sequential starting from 1
     const reorderedLessons = items.map((lesson, index) => ({
       ...lesson,
       order_index: index + 1
     }));
 
+    // Optimistically update the UI first
     onReorderLessons(reorderedLessons);
   };
 
@@ -96,12 +97,12 @@ export const LessonTable: React.FC<LessonTableProps> = ({
                         <TableRow 
                           ref={provided.innerRef}
                           {...provided.draggableProps}
-                          className={`h-16 ${snapshot.isDragging ? 'bg-accent/50 shadow-lg' : ''}`}
+                          className={`h-16 ${snapshot.isDragging ? 'bg-accent/50 shadow-lg border-primary' : ''} transition-all duration-200`}
                         >
                           <TableCell>
                             <div 
                               {...provided.dragHandleProps}
-                              className="cursor-grab active:cursor-grabbing p-1 hover:bg-accent rounded"
+                              className="cursor-grab active:cursor-grabbing p-1 hover:bg-accent rounded transition-colors"
                             >
                               <GripVertical className="h-4 w-4 text-muted-foreground" />
                             </div>

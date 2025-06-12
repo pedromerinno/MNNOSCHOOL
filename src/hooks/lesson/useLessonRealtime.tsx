@@ -10,6 +10,16 @@ export const useLessonRealtime = (courseId: string, onUpdate: () => void) => {
     const channelId = `lessons-hook-${courseId}-${hookInstanceId}`;
     console.log(`Creating channel: ${channelId}`);
     
+    // Debounce the onUpdate function to prevent rapid fire updates
+    let timeoutId: NodeJS.Timeout;
+    const debouncedUpdate = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        console.log(`Debounced real-time update triggered for ${channelId}`);
+        onUpdate();
+      }, 1000); // 1 second debounce
+    };
+    
     const channel = supabase
       .channel(channelId)
       .on(
@@ -22,7 +32,10 @@ export const useLessonRealtime = (courseId: string, onUpdate: () => void) => {
         },
         (payload) => {
           console.log(`Received real-time update in lessons hook (${channelId}):`, payload);
-          onUpdate();
+          // Only trigger update for INSERT and DELETE, not UPDATE during reordering
+          if (payload.eventType === 'INSERT' || payload.eventType === 'DELETE') {
+            debouncedUpdate();
+          }
         }
       )
       .subscribe((status) => {
@@ -31,6 +44,7 @@ export const useLessonRealtime = (courseId: string, onUpdate: () => void) => {
 
     return () => {
       console.log(`Cleaning up real-time subscription for lessons hook: ${channelId}`);
+      clearTimeout(timeoutId);
       supabase.removeChannel(channel);
     };
   }, [courseId, onUpdate]);
