@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLessonDataOptimized } from '@/hooks/lesson/useLessonDataOptimized';
@@ -217,6 +216,7 @@ const LessonPage = () => {
                   onLessonSelect={handleLessonSelect}
                   loading={loading && !isFromCache && !lesson}
                   companyColor={companyColor}
+                  courseId={courseId}
                 />
               </div>
             </div>

@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Play, CheckCircle, Clock, PlayCircle, BookOpen, Video, FileText, HelpCircle } from "lucide-react";
@@ -18,6 +17,7 @@ interface LessonPlaylistProps {
   onLessonSelect: (lessonId: string) => void;
   loading?: boolean;
   companyColor?: string;
+  courseId?: string;
 }
 
 export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
@@ -25,7 +25,8 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
   currentLessonId,
   onLessonSelect,
   loading = false,
-  companyColor = "#1EAEDB"
+  companyColor = "#1EAEDB",
+  courseId
 }) => {
   const currentIndex = lessons.findIndex(lesson => lesson.id === currentLessonId);
   const totalDuration = calculateTotalDuration(lessons);
@@ -40,7 +41,7 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
         console.log('Lesson field updated in playlist, dispatching course update event');
         // Dispatch a course update event to refresh the course data
         window.dispatchEvent(new CustomEvent('course-updated', {
-          detail: { courseId: lessons[0]?.course_id }
+          detail: { courseId }
         }));
       }
     };
@@ -50,7 +51,7 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
     return () => {
       window.removeEventListener('lesson-field-updated', handleLessonFieldUpdated as EventListener);
     };
-  }, [lessons]);
+  }, [lessons, courseId]);
 
   // Prevent default click behavior and handle lesson selection
   const handleLessonClick = (lessonId: string, e: React.MouseEvent) => {
