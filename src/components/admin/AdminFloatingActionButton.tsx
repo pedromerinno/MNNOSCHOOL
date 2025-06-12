@@ -19,7 +19,7 @@ const FAB_OPTIONS = [{
   icon: <MessageSquarePlus className="h-5 w-5 mr-2" />,
   action: "openDiscussion" as const
 }, {
-  label: "Novo Acesso",
+  label: "Nova Senha de Acesso",
   icon: <Link className="h-5 w-5 mr-2" />,
   action: "openAccess" as const
 }, {
