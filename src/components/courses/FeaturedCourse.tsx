@@ -14,7 +14,9 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
   
   if (!course) return null;
 
-  const handleImageClick = () => {
+  const handleImageClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     console.log('FeaturedCourse: Image clicked!', { courseId: course.id, courseTitle: course.title });
     navigate(`/courses/${course.id}`);
   };
@@ -28,10 +30,11 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
   
   return (
     <div className="rounded-2xl overflow-hidden mb-8 bg-[#1A1F2C] h-[350px] relative">
-      {/* Clickable image area */}
+      {/* Clickable image area - covers the entire background */}
       <div 
-        className="absolute inset-0 w-full h-full cursor-pointer z-0"
+        className="absolute inset-0 w-full h-full cursor-pointer"
         onClick={handleImageClick}
+        style={{ zIndex: 1 }}
       >
         <img 
           src={course.image_url || "https://images.unsplash.com/photo-1617096199719-18e5acee65f8?auto=format&fit=crop&w=1200&q=80"} 
@@ -42,9 +45,9 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
         <div className="absolute inset-0 bg-gradient-to-tr from-black/70 to-transparent"></div>
       </div>
       
-      {/* Content positioned over the image */}
-      <div className="relative h-full z-10 pointer-events-none">
-        <div className="flex flex-col h-full p-8 md:p-12">
+      {/* Content positioned over the image - higher z-index */}
+      <div className="relative h-full" style={{ zIndex: 2 }}>
+        <div className="flex flex-col h-full p-8 md:p-12 pointer-events-none">
           <div className="flex-1">
             <h1 className="text-3xl md:text-4xl font-bold text-white mb-6">
               {course.title}
@@ -96,6 +99,7 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
             <Button 
               className="bg-white text-black hover:bg-gray-100 rounded-full gap-2 px-6 pointer-events-auto"
               onClick={handleButtonClick}
+              style={{ zIndex: 3 }}
             >
               Assistir agora
               <Play className="h-4 w-4" />
