@@ -14,13 +14,8 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
   
   if (!course) return null;
 
-  const handleCardClick = (e: React.MouseEvent) => {
-    // Evitar que o clique no botão propague para o card
-    if ((e.target as HTMLElement).closest('button')) {
-      return;
-    }
-    
-    console.log('🎯 FeaturedCourse: Card clicked - navigating to course', { 
+  const handleCourseClick = () => {
+    console.log('🎯 FeaturedCourse: Navigating to course', { 
       courseId: course.id, 
       courseTitle: course.title 
     });
@@ -30,17 +25,13 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
   const handleButtonClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('🎯 FeaturedCourse: Button clicked - navigating to course', { 
-      courseId: course.id, 
-      courseTitle: course.title 
-    });
-    navigate(`/courses/${course.id}`);
+    handleCourseClick();
   };
   
   return (
     <div 
       className="rounded-2xl overflow-hidden mb-8 bg-[#1A1F2C] h-[350px] relative cursor-pointer"
-      onClick={handleCardClick}
+      onClick={handleCourseClick}
       style={{ zIndex: 1 }}
     >
       {/* Background image */}
