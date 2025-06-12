@@ -95,6 +95,7 @@ export const WelcomeSection = () => {
             className="text-foreground text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-5"
             placeholder="Digite a frase institucional..."
             canEdit={true}
+            layout="centered"
           />
         ) : (
           <p 

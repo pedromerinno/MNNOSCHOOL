@@ -12,6 +12,7 @@ interface EditableTextProps {
   className?: string;
   placeholder?: string;
   canEdit?: boolean;
+  layout?: 'inline' | 'centered'; // Nova prop para controlar o layout
 }
 
 export const EditableText: React.FC<EditableTextProps> = ({
@@ -20,7 +21,8 @@ export const EditableText: React.FC<EditableTextProps> = ({
   multiline = false,
   className = '',
   placeholder,
-  canEdit = true
+  canEdit = true,
+  layout = 'inline' // Default para inline (página de aula)
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value);
@@ -100,9 +102,50 @@ export const EditableText: React.FC<EditableTextProps> = ({
 
   const InputComponent = multiline ? Textarea : Input;
 
+  // Layout inline (página de aula)
+  if (layout === 'inline') {
+    return (
+      <div className="w-full flex items-start gap-3">
+        <div className="flex-1">
+          <InputComponent
+            ref={inputRef as any}
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={handleBlur}
+            className={`${multiline ? 'min-h-[60px] text-center text-[40px] font-normal leading-[1.1] resize-none border-none bg-transparent focus:border-none focus:ring-0 focus:outline-none shadow-none p-0' : ''} w-full ${className}`}
+            disabled={isSaving}
+            placeholder={placeholder}
+          />
+        </div>
+        
+        <div className="flex items-center gap-2 flex-shrink-0 mt-1">
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={isSaving}
+            className="h-10 w-10 p-0 bg-black hover:bg-black/90 text-white rounded-lg"
+          >
+            <Check className="h-5 w-5" />
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleCancel}
+            disabled={isSaving}
+            className="h-10 w-10 p-0 border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Layout centralizado (home page)
   return (
-    <div className="w-full flex items-start gap-3">
-      <div className="flex-1">
+    <div className="w-full flex flex-col items-center">
+      <div className="w-full mb-4">
         <InputComponent
           ref={inputRef as any}
           value={editValue}
@@ -115,23 +158,25 @@ export const EditableText: React.FC<EditableTextProps> = ({
         />
       </div>
       
-      <div className="flex items-center gap-2 flex-shrink-0 mt-1">
+      <div className="flex items-center gap-3">
         <Button
           size="sm"
           onClick={handleSave}
           disabled={isSaving}
-          className="h-10 w-10 p-0 bg-black hover:bg-black/90 text-white rounded-lg"
+          className="px-6 py-2 bg-black hover:bg-black/90 text-white rounded-lg flex items-center gap-2"
         >
-          <Check className="h-5 w-5" />
+          <Check className="h-4 w-4" />
+          Salvar
         </Button>
         <Button
           size="sm"
           variant="outline"
           onClick={handleCancel}
           disabled={isSaving}
-          className="h-10 w-10 p-0 border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg"
+          className="px-6 py-2 border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg flex items-center gap-2"
         >
-          <X className="h-5 w-5" />
+          <X className="h-4 w-4" />
+          Cancelar
         </Button>
       </div>
     </div>

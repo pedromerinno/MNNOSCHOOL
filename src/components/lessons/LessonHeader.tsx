@@ -66,6 +66,7 @@ export const LessonHeader: React.FC<LessonHeaderProps> = ({
         onSave={handleTitleUpdate}
         className="text-3xl font-bold mb-4"
         canEdit={isAdmin}
+        layout="inline"
       />
     </>
   );
