@@ -102,7 +102,7 @@ export const EditableText: React.FC<EditableTextProps> = ({
 
   return (
     <div className="w-full flex flex-col items-center">
-      <div className="w-full max-w-5xl">
+      <div className="w-full max-w-5xl flex flex-col items-center">
         <InputComponent
           ref={inputRef as any}
           value={editValue}
@@ -113,27 +113,27 @@ export const EditableText: React.FC<EditableTextProps> = ({
           disabled={isSaving}
           placeholder={placeholder}
         />
-      </div>
-      <div className="flex justify-center gap-3 mt-4">
-        <Button
-          size="sm"
-          onClick={handleSave}
-          disabled={isSaving}
-          className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 font-medium"
-        >
-          <Check className="h-4 w-4" />
-          {isSaving ? 'Salvando...' : 'Salvar'}
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={handleCancel}
-          disabled={isSaving}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
-        >
-          <X className="h-4 w-4" />
-          Cancelar
-        </Button>
+        <div className="flex justify-end gap-3 mt-4 w-full">
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={isSaving}
+            className="flex items-center gap-2 bg-black hover:bg-black/90 text-white px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 font-medium"
+          >
+            <Check className="h-4 w-4" />
+            {isSaving ? 'Salvando...' : 'Salvar'}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleCancel}
+            disabled={isSaving}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
+          >
+            <X className="h-4 w-4" />
+            Cancelar
+          </Button>
+        </div>
       </div>
     </div>
   );
