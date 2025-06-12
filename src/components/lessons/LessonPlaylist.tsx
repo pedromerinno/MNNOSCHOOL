@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { Play, CheckCircle } from "lucide-react";
+import { Play, CheckCircle, Clock, PlayCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { calculateTotalDuration, formatDuration } from "@/utils/durationUtils";
@@ -40,70 +40,93 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
 
   return (
     <div className="bg-background rounded-lg">
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold mb-2 text-foreground">Aulas do Curso</h3>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">{lessons.length} aulas</span>
-          <span className="text-sm text-muted-foreground">•</span>
-          <span className="text-sm text-muted-foreground px-2 py-1 bg-muted/50 rounded-md">{totalDuration}</span>
+      <div className="mb-8">
+        <h3 className="text-2xl font-bold mb-3 text-foreground">Aulas do Curso</h3>
+        <div className="flex items-center gap-3 text-muted-foreground">
+          <span className="text-sm font-medium">{lessons.length} aulas</span>
+          <span className="w-1 h-1 bg-muted-foreground rounded-full"></span>
+          <div className="flex items-center gap-1">
+            <Clock className="w-4 h-4" />
+            <span className="text-sm font-medium">{totalDuration}</span>
+          </div>
         </div>
       </div>
       
-      <div className="max-h-[calc(100vh-180px)] overflow-y-auto pr-2">
+      <div className="max-h-[calc(100vh-200px)] overflow-y-auto pr-2">
         {loading ? (
-          <div className="space-y-3">
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-16 w-full" />
+          <div className="space-y-4">
+            <Skeleton className="h-20 w-full rounded-xl" />
+            <Skeleton className="h-20 w-full rounded-xl" />
+            <Skeleton className="h-20 w-full rounded-xl" />
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {lessons.map((lesson, index) => (
-              <div
+              <Card
                 key={lesson.id}
                 className={cn(
-                  "flex items-center gap-3 p-3 cursor-pointer hover:bg-accent/60 transition-all duration-200 rounded-lg border-l-3 shadow-sm",
+                  "transition-all duration-300 cursor-pointer hover:shadow-md group border-0 shadow-sm",
                   lesson.id === currentLessonId
-                    ? "border-l-primary bg-accent/80 shadow-md"
-                    : "border-l-transparent hover:border-l-primary/30"
+                    ? "bg-primary/5 border-l-4 border-l-primary shadow-md"
+                    : "hover:bg-accent/50 border-l-4 border-l-transparent hover:border-l-primary/30"
                 )}
                 onClick={(e) => handleLessonClick(lesson.id, e)}
               >
-                <div className="flex-shrink-0 w-7 h-7">
-                  {lesson.completed ? (
-                    <div className="w-7 h-7 text-green-500 flex items-center justify-center">
-                      <CheckCircle className="h-6 w-6" />
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-4">
+                    <div className="flex-shrink-0">
+                      {lesson.completed ? (
+                        <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center">
+                          <CheckCircle className="h-6 w-6 text-green-500" />
+                        </div>
+                      ) : lesson.id === currentLessonId ? (
+                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                          <PlayCircle className="h-6 w-6 text-primary" />
+                        </div>
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-muted/80 border-2 border-muted-foreground/20 flex items-center justify-center text-sm font-bold text-muted-foreground group-hover:border-primary/40 group-hover:text-primary transition-colors">
+                          {index + 1}
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <div className={cn(
-                      "w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold border-2",
-                      lesson.id === currentLessonId 
-                        ? "bg-primary text-primary-foreground border-primary" 
-                        : "bg-muted/80 text-muted-foreground border-muted-foreground/20 hover:border-primary/40"
-                    )}>
-                      {index + 1}
+                    
+                    <div className="flex-1 min-w-0">
+                      <h4 className={cn(
+                        "font-semibold text-base leading-tight mb-2",
+                        lesson.id === currentLessonId 
+                          ? "text-primary" 
+                          : "text-foreground group-hover:text-primary transition-colors"
+                      )}>
+                        {lesson.title}
+                      </h4>
+                      
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide px-2 py-1 bg-muted/50 rounded-md">
+                          {lesson.type === 'video' ? 'Vídeo' : lesson.type === 'text' ? 'Texto' : 'Quiz'}
+                        </span>
+                        {lesson.duration && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Clock className="w-3 h-3" />
+                            <span>{formatDuration(lesson.duration)}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <h4 className={cn(
-                    "font-medium text-sm truncate leading-tight",
-                    lesson.id === currentLessonId && "text-primary font-semibold"
-                  )}>
-                    {lesson.title}
-                  </h4>
-                  {lesson.duration && (
-                    <div className="text-xs text-muted-foreground mt-1 px-2 py-0.5 bg-muted/40 rounded-md inline-block">
-                      {formatDuration(lesson.duration)}
-                    </div>
-                  )}
-                </div>
 
-                {lesson.id === currentLessonId && (
-                  <Play className="w-4 h-4 text-primary shrink-0" />
-                )}
-              </div>
+                    <div className="flex-shrink-0">
+                      {lesson.id === currentLessonId ? (
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Play className="w-4 h-4 text-primary fill-primary" />
+                        </div>
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-transparent group-hover:bg-primary/10 flex items-center justify-center transition-colors">
+                          <Play className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}
