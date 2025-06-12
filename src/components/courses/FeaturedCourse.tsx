@@ -13,11 +13,18 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
   const navigate = useNavigate();
   
   if (!course) return null;
+
+  const handleCourseClick = () => {
+    navigate(`/courses/${course.id}`);
+  };
   
   return (
     <div className="rounded-2xl overflow-hidden mb-8 bg-[#1A1F2C] h-[350px] relative">
-      {/* Full-width background image */}
-      <div className="absolute inset-0 w-full h-full">
+      {/* Full-width background image with click handler */}
+      <div 
+        className="absolute inset-0 w-full h-full cursor-pointer" 
+        onClick={handleCourseClick}
+      >
         <img 
           src={course.image_url || "https://images.unsplash.com/photo-1617096199719-18e5acee65f8?auto=format&fit=crop&w=1200&q=80"} 
           alt={course.title} 
@@ -80,7 +87,7 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
             
             <Button 
               className="bg-white text-black hover:bg-gray-100 rounded-full gap-2 px-6"
-              onClick={() => navigate(`/courses/${course.id}`)}
+              onClick={handleCourseClick}
             >
               Assistir agora
               <Play className="h-4 w-4" />
