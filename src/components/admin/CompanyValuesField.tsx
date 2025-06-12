@@ -28,8 +28,8 @@ export const CompanyValuesField: React.FC<CompanyValuesFieldProps> = ({
   };
 
   const updateValue = (index: number, field: keyof CompanyValue, value: string) => {
-    const newValues = [...values];
-    newValues[index] = { ...newValues[index], [field]: value };
+    const newValues: CompanyValue[] = [...values];
+    newValues[index] = { ...newValues[index], [field]: value } as CompanyValue;
     onChange(newValues);
   };
 
@@ -72,7 +72,7 @@ export const CompanyValuesField: React.FC<CompanyValuesFieldProps> = ({
                 </Label>
                 <Input
                   id={`value-title-${index}`}
-                  value={value.title}
+                  value={value.title || ''}
                   onChange={(e) => updateValue(index, 'title', e.target.value)}
                   placeholder="Ex: Inovação"
                   className="mt-1"
@@ -85,7 +85,7 @@ export const CompanyValuesField: React.FC<CompanyValuesFieldProps> = ({
                 </Label>
                 <Textarea
                   id={`value-description-${index}`}
-                  value={value.description}
+                  value={value.description || ''}
                   onChange={(e) => updateValue(index, 'description', e.target.value)}
                   placeholder="Descrição deste valor para a empresa"
                   className="mt-1"

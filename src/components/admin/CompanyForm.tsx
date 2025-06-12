@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -206,7 +205,7 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
 
         <CompanyValuesField
           values={form.watch('valores') || []}
-          onChange={(values: CompanyValue[]) => form.setValue('valores', values)}
+          onChange={(values) => form.setValue('valores', values)}
         />
 
         <FormField
