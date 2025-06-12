@@ -45,7 +45,7 @@ interface ProfileDialogProps {
 
 export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialogProps) => {
   const { userProfile, updateUserProfile, user } = useAuth();
-  const { userCompanies, isLoading: companiesLoading, forceGetUserCompanies } = useCompanies();
+  const { userCompanies, isLoading: companiesLoading } = useCompanies();
   const [avatarPreview, setAvatarPreview] = useState<string>("https://i.pravatar.cc/150?img=68");
   const { toast } = useToast();
 
@@ -56,14 +56,6 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
       avatar: "https://i.pravatar.cc/150?img=68",
     },
   });
-
-  // Força o carregamento das empresas quando o dialog abre
-  useEffect(() => {
-    if (isOpen && user?.id) {
-      console.log('ProfileDialog: Dialog opened, force loading user companies');
-      forceGetUserCompanies(user.id);
-    }
-  }, [isOpen, user?.id, forceGetUserCompanies]);
 
   useEffect(() => {
     if (userProfile) {
@@ -87,22 +79,6 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
     
     return () => subscription.unsubscribe();
   }, [form]);
-
-  // Listener para mudanças nas relações de empresa
-  useEffect(() => {
-    const handleCompanyRelationChange = () => {
-      if (user?.id) {
-        console.log('ProfileDialog: Company relation changed, reloading companies');
-        forceGetUserCompanies(user.id);
-      }
-    };
-
-    window.addEventListener('company-relation-changed', handleCompanyRelationChange);
-    
-    return () => {
-      window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
-    };
-  }, [user?.id, forceGetUserCompanies]);
 
   const handleProfileUpdate = async (values: UserProfileFormValues) => {
     try {
