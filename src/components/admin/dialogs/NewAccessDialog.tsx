@@ -22,8 +22,8 @@ export const NewAccessDialog: React.FC<NewAccessDialogProps> = ({ open, onOpenCh
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Companies logic - using userCompanies instead of companies
-  const { selectedCompany, userCompanies, selectCompany, user, isLoading } = useCompanies();
+  // Use hook with forced refresh to ensure companies are loaded
+  const { selectedCompany, userCompanies, selectCompany, user, isLoading, forceGetUserCompanies } = useCompanies();
 
   console.log('[NewAccessDialog] Companies data:', {
     userCompaniesCount: userCompanies.length,
@@ -31,6 +31,14 @@ export const NewAccessDialog: React.FC<NewAccessDialogProps> = ({ open, onOpenCh
     isLoading,
     userId: user?.id || 'no user'
   });
+
+  // Force reload companies when dialog opens
+  React.useEffect(() => {
+    if (open && user?.id && userCompanies.length === 0 && !isLoading) {
+      console.log('[NewAccessDialog] Dialog opened, forcing companies refresh');
+      forceGetUserCompanies(user.id);
+    }
+  }, [open, user?.id, userCompanies.length, isLoading, forceGetUserCompanies]);
 
   const handleCompanyChange = (companyId: string) => {
     const company = userCompanies.find(c => c.id === companyId);
@@ -68,12 +76,12 @@ export const NewAccessDialog: React.FC<NewAccessDialogProps> = ({ open, onOpenCh
           <Select 
             value={selectedCompany?.id || ""} 
             onValueChange={handleCompanyChange}
-            disabled={isLoading || userCompanies.length === 0}
+            disabled={isLoading}
           >
             <SelectTrigger>
               <SelectValue placeholder={
                 isLoading ? "Carregando empresas..." : 
-                userCompanies.length === 0 ? "Nenhuma empresa disponível" :
+                userCompanies.length === 0 ? "Clique para carregar empresas" :
                 "Selecione uma empresa"
               } />
             </SelectTrigger>
@@ -95,9 +103,19 @@ export const NewAccessDialog: React.FC<NewAccessDialogProps> = ({ open, onOpenCh
             </SelectContent>
           </Select>
           {userCompanies.length === 0 && !isLoading && (
-            <p className="text-sm text-muted-foreground mt-1">
-              Nenhuma empresa encontrada. Verifique suas permissões.
-            </p>
+            <div className="mt-2">
+              <p className="text-sm text-muted-foreground">
+                Nenhuma empresa encontrada. Verifique suas permissões.
+              </p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => user?.id && forceGetUserCompanies(user.id)}
+                className="mt-1"
+              >
+                Tentar carregar novamente
+              </Button>
+            </div>
           )}
         </div>
         <div className="space-y-3 py-2">
