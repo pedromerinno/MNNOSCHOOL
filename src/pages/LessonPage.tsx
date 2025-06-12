@@ -121,13 +121,17 @@ const LessonPage = () => {
     };
   }, [lessonId, refreshLessonData]);
 
-  // Scroll to top when changing lessons
+  // Scroll to top when changing lessons and reset navigation state
   useEffect(() => {
     window.scrollTo(0, 0);
     setShowAutoplayPrompt(false);
     setLocalUpdates({}); // Limpar updates locais
-    setIsNavigating(false); // Reset navigation state
-  }, [lessonId, setShowAutoplayPrompt]);
+    
+    // Reset navigation state when lesson data is loaded
+    if (lesson && isNavigating) {
+      setIsNavigating(false);
+    }
+  }, [lessonId, lesson, isNavigating, setShowAutoplayPrompt]);
 
   // Clean up autoplay
   useEffect(() => {
