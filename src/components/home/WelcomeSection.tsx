@@ -47,7 +47,7 @@ export const WelcomeSection = () => {
 
     try {
       const { error } = await supabase
-        .from('companies')
+        .from('empresas')
         .update({ frase_institucional: newPhrase })
         .eq('id', displayCompany.id);
 
@@ -59,7 +59,7 @@ export const WelcomeSection = () => {
       
       // Atualizar no contexto de empresas
       if (updateCompany) {
-        updateCompany(updatedCompany);
+        updateCompany(displayCompany.id, updatedCompany);
       }
 
       toast({
