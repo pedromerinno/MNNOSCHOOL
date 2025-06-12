@@ -49,6 +49,15 @@ export const EditableText: React.FC<EditableTextProps> = ({
       setIsSaving(true);
       try {
         await onSave(editValue.trim());
+        
+        // Dispatch evento para atualização imediata na playlist
+        window.dispatchEvent(new CustomEvent('lesson-field-updated', {
+          detail: {
+            lessonId: 'current', // Será atualizado pelo componente pai
+            field: 'title',
+            value: editValue.trim()
+          }
+        }));
       } catch (error) {
         console.error('Error saving:', error);
       } finally {

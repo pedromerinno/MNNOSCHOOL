@@ -4,9 +4,53 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from '@/hooks/use-toast';
 import { Lesson } from '@/components/courses/CourseLessonList';
 
-// Cache global otimizado
+// Cache global otimizado com localStorage
 const courseLessonsCache = new Map<string, {data: Lesson[], timestamp: number}>();
-const CACHE_DURATION = 10 * 60 * 1000; // 10 minutos para lista de aulas
+const CACHE_DURATION = 15 * 60 * 1000; // 15 minutos para lista de aulas
+const STORAGE_KEY = 'course-lessons-cache';
+
+// Funções de cache com localStorage
+const getCachedLessons = (courseId: string) => {
+  // Verificar cache em memória primeiro
+  const memoryCache = courseLessonsCache.get(courseId);
+  if (memoryCache && Date.now() - memoryCache.timestamp < CACHE_DURATION) {
+    return memoryCache.data;
+  }
+
+  // Verificar localStorage
+  try {
+    const stored = localStorage.getItem(`${STORAGE_KEY}-${courseId}`);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Date.now() - parsed.timestamp < CACHE_DURATION) {
+        // Repovoar cache em memória
+        courseLessonsCache.set(courseId, parsed);
+        return parsed.data;
+      }
+    }
+  } catch (error) {
+    console.warn('Error reading lessons from localStorage:', error);
+  }
+  
+  return null;
+};
+
+const setCachedLessons = (courseId: string, lessons: Lesson[]) => {
+  const cacheEntry = {
+    data: lessons,
+    timestamp: Date.now()
+  };
+  
+  // Salvar em memória
+  courseLessonsCache.set(courseId, cacheEntry);
+  
+  // Salvar em localStorage
+  try {
+    localStorage.setItem(`${STORAGE_KEY}-${courseId}`, JSON.stringify(cacheEntry));
+  } catch (error) {
+    console.warn('Error writing lessons to localStorage:', error);
+  }
+};
 
 export const useLessonsFetchingOptimized = (courseId: string) => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
@@ -20,10 +64,10 @@ export const useLessonsFetchingOptimized = (courseId: string) => {
   useEffect(() => {
     if (!courseId) return;
     
-    const cached = courseLessonsCache.get(courseId);
-    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    const cached = getCachedLessons(courseId);
+    if (cached) {
       console.log(`Loading lessons from cache for course: ${courseId}`);
-      setLessons(cached.data);
+      setLessons(cached);
       setIsLoading(false);
       return;
     }
@@ -41,17 +85,19 @@ export const useLessonsFetchingOptimized = (courseId: string) => {
       return fetchPromiseRef.current;
     }
     
-    // Verificar cache novamente
-    const cached = courseLessonsCache.get(courseId);
-    if (!force && cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-      console.log(`Using cached lessons for course: ${courseId}`);
-      setLessons(cached.data);
-      setIsLoading(false);
-      return;
+    // Verificar cache novamente se não for forçado
+    if (!force) {
+      const cached = getCachedLessons(courseId);
+      if (cached) {
+        console.log(`Using cached lessons for course: ${courseId}`);
+        setLessons(cached);
+        setIsLoading(false);
+        return;
+      }
     }
     
     const now = Date.now();
-    if (!force && now - lastRefreshTime < 3000) {
+    if (!force && now - lastRefreshTime < 2000) {
       console.log(`Skipping lessons refresh for ${courseId} - too recent`);
       return;
     }
@@ -80,12 +126,8 @@ export const useLessonsFetchingOptimized = (courseId: string) => {
 
         console.log("Lessons loaded successfully:", data?.length || 0);
         
-        // Atualizar cache
-        courseLessonsCache.set(courseId, {
-          data: data || [],
-          timestamp: Date.now()
-        });
-        
+        // Atualizar cache com localStorage
+        setCachedLessons(courseId, data || []);
         setLessons(data || []);
       } catch (error: any) {
         if (error.name === 'AbortError') {
@@ -117,10 +159,21 @@ export const useLessonsFetchingOptimized = (courseId: string) => {
     fetchPromiseRef.current = null;
   }, []);
 
+  // Função para limpar cache
+  const clearCache = useCallback(() => {
+    courseLessonsCache.delete(courseId);
+    try {
+      localStorage.removeItem(`${STORAGE_KEY}-${courseId}`);
+    } catch (error) {
+      console.warn('Error clearing lessons cache:', error);
+    }
+  }, [courseId]);
+
   return {
     lessons,
     isLoading,
     fetchLessons,
-    cleanup
+    cleanup,
+    clearCache
   };
 };
