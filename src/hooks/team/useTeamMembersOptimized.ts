@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfile } from "@/hooks/useUsers";
-import { toast } from "sonner";
 
 interface UseTeamMembersOptimizedProps {
   selectedCompanyId?: string;
@@ -42,6 +41,7 @@ export const useTeamMembersOptimized = ({
 
       console.log('[useTeamMembersOptimized] Buscando membros para empresa:', companyId);
 
+      // Query otimizada sem timeout para evitar delays
       const { data: teamData, error: teamError } = await supabase
         .from('user_empresa')
         .select(`
@@ -60,7 +60,7 @@ export const useTeamMembersOptimized = ({
 
       if (teamError) throw teamError;
 
-      console.log('[useTeamMembersOptimized] Dados brutos recebidos:', teamData);
+      console.log('[useTeamMembersOptimized] Dados recebidos:', teamData?.length || 0, 'membros');
 
       const teamMembers: UserProfile[] = teamData?.map((item: any) => ({
         id: item.profiles.id,
@@ -72,7 +72,7 @@ export const useTeamMembersOptimized = ({
       })) || [];
 
       setMembers(teamMembers);
-      console.log('[useTeamMembersOptimized] Membros carregados:', teamMembers.length);
+      console.log('[useTeamMembersOptimized] Membros carregados com sucesso:', teamMembers.length);
     } catch (err: any) {
       if (err.name === 'AbortError') {
         console.log('[useTeamMembersOptimized] Fetch cancelado');
@@ -81,7 +81,6 @@ export const useTeamMembersOptimized = ({
       
       console.error('[useTeamMembersOptimized] Erro ao carregar membros:', err);
       setError(err as Error);
-      toast.error("Erro ao carregar membros da equipe");
     } finally {
       setIsLoading(false);
     }

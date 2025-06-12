@@ -5,8 +5,6 @@ import { useCompanies } from "@/hooks/useCompanies";
 import { TeamMembersList } from "@/components/team/TeamMembersList";
 import { EmptyState } from "@/components/team/EmptyState";
 import { useTeamMembersOptimized } from "@/hooks/team/useTeamMembersOptimized";
-import { useTeamMembers } from "@/hooks/team/useTeamMembers";
-import { toast } from "sonner";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { TeamMetricsDashboardOptimized } from "@/components/team/TeamMetricsDashboardOptimized";
@@ -15,58 +13,29 @@ import { TeamMembersSkeletonList } from "@/components/team/TeamMembersSkeletonLi
 const Team = () => {
   const { selectedCompany, isLoading: companiesLoading } = useCompanies();
   const { userProfile } = useAuth();
-  const [showSlowLoadingMessage, setShowSlowLoadingMessage] = useState(false);
-  const [useOptimized, setUseOptimized] = useState(true);
 
-  // Try optimized hook first
-  const optimizedResult = useTeamMembersOptimized({
+  // Use only the optimized hook
+  const { 
+    members, 
+    isLoading: membersLoading, 
+    error: membersError 
+  } = useTeamMembersOptimized({
     selectedCompanyId: selectedCompany?.id,
-    skipLoading: companiesLoading || !selectedCompany?.id || !useOptimized
+    skipLoading: companiesLoading || !selectedCompany?.id
   });
 
-  // Fallback to original hook if optimized fails
-  const fallbackResult = useTeamMembers();
-
-  // Choose which result to use
-  const { members, isLoading: membersLoading, error: membersError } = useOptimized ? optimizedResult : fallbackResult;
-
-  console.log('[Team] Current state:', {
+  console.log('[Team] Estado atual:', {
     companiesLoading,
     membersLoading,
     selectedCompanyId: selectedCompany?.id,
     membersCount: members.length,
-    hasError: !!membersError,
-    useOptimized
+    hasError: !!membersError
   });
-
-  // If optimized hook has error, switch to fallback
-  useEffect(() => {
-    if (useOptimized && optimizedResult.error && !optimizedResult.isLoading) {
-      console.log('[Team] Optimized hook failed, switching to fallback');
-      setUseOptimized(false);
-    }
-  }, [useOptimized, optimizedResult.error, optimizedResult.isLoading]);
 
   // Redirect if user is not an admin
   if (!userProfile?.is_admin && !userProfile?.super_admin) {
     return <Navigate to="/" replace />;
   }
-
-  // Show slow loading message after 3 seconds
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (membersLoading && !companiesLoading && selectedCompany?.id) {
-      timer = setTimeout(() => {
-        setShowSlowLoadingMessage(true);
-        toast.info("Carregamento está demorando mais que o esperado");
-      }, 3000);
-    } else {
-      setShowSlowLoadingMessage(false);
-    }
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  }, [membersLoading, companiesLoading, selectedCompany?.id]);
 
   // Loading companies
   if (companiesLoading) {
@@ -93,24 +62,7 @@ const Team = () => {
   if (membersLoading) {
     return (
       <PageLayout title="Equipe">
-        <div className="space-y-6">
-          <TeamMembersSkeletonList />
-          
-          {showSlowLoadingMessage && (
-            <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg z-50 w-64">
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    Carregando membros...
-                  </span>
-                </div>
-                <p className="text-xs text-amber-600 dark:text-amber-400">
-                  Isso pode demorar um pouco mais...
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
+        <TeamMembersSkeletonList />
       </PageLayout>
     );
   }
