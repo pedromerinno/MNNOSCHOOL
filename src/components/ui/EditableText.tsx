@@ -72,6 +72,11 @@ export const EditableText: React.FC<EditableTextProps> = ({
     }
   };
 
+  const handleBlur = () => {
+    // Save automatically when clicking outside the field
+    handleSave();
+  };
+
   if (!isEditing) {
     return (
       <div
@@ -93,6 +98,7 @@ export const EditableText: React.FC<EditableTextProps> = ({
         value={editValue}
         onChange={(e) => setEditValue(e.target.value)}
         onKeyDown={handleKeyDown}
+        onBlur={handleBlur}
         className={`${className} flex-1`}
         disabled={isSaving}
       />
