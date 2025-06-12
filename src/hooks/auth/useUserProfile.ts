@@ -15,6 +15,33 @@ export const useUserProfile = () => {
   const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
   const CACHE_KEY = 'user_profile';
 
+  // Função para sincronizar email do perfil com email de autenticação
+  const syncEmailWithAuth = useCallback(async (userId: string, authEmail: string) => {
+    try {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', userId)
+        .single();
+
+      // Se o email do perfil não existe ou é diferente do email de auth, atualiza
+      if (!profileData?.email || profileData.email !== authEmail) {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ email: authEmail })
+          .eq('id', userId);
+
+        if (error) {
+          console.error('Erro ao sincronizar email:', error);
+        } else {
+          console.log('Email sincronizado com sucesso');
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao verificar sincronização de email:', error);
+    }
+  }, []);
+
   const fetchUserProfile = useCallback(async (userId: string) => {
     // Prevent multiple fetches and excessive calls
     if (fetchInProgress.current || hasFetchedOnce.current) {
@@ -25,6 +52,14 @@ export const useUserProfile = () => {
       fetchInProgress.current = true;
       hasFetchedOnce.current = true;
       setIsLoading(true);
+      
+      // Buscar dados do usuário autenticado para obter email atual
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Sincronizar email antes de buscar o perfil
+      if (user?.email) {
+        await syncEmailWithAuth(userId, user.email);
+      }
       
       const { data, error } = await supabase
         .from('profiles')
@@ -42,7 +77,7 @@ export const useUserProfile = () => {
       if (data) {
         const profile: UserProfile = {
           id: data.id,
-          email: data.email,
+          email: data.email || user?.email || null, // Usar email do auth como fallback
           display_name: data.display_name,
           is_admin: data.is_admin,
           super_admin: data.super_admin,
@@ -61,7 +96,7 @@ export const useUserProfile = () => {
       fetchInProgress.current = false;
       setIsLoading(false);
     }
-  }, [setCache]);
+  }, [setCache, syncEmailWithAuth]);
 
   // Load profile from cache only once
   useEffect(() => {
@@ -130,6 +165,7 @@ export const useUserProfile = () => {
     clearProfile,
     updateUserProfile,
     updateUserData,
-    setUserProfile
+    setUserProfile,
+    syncEmailWithAuth
   };
 };

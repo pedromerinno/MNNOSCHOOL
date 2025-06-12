@@ -5,6 +5,7 @@ import { UserProfile } from '@/types/user';
 import { useAuthSession } from '@/hooks/auth/useAuthSession';
 import { useUserProfile } from '@/hooks/auth/useUserProfile';
 import { useAuthMethods } from '@/hooks/auth/useAuthMethods';
+import { useEmailSync } from '@/hooks/auth/useEmailSync';
 import { useCache } from '@/hooks/useCache';
 
 interface AuthContextType {
@@ -20,6 +21,8 @@ interface AuthContextType {
   updateUserProfile: (userData: Partial<UserProfile>) => Promise<void>;
   updateUserData: (userData: Partial<UserProfile>) => Promise<void>;
   resendConfirmationEmail: (email: string) => Promise<{ success: boolean, error: any }>;
+  syncProfileEmailWithAuth: () => Promise<{ success: boolean, updated?: boolean, error?: any }>;
+  validateEmailSync: () => Promise<{ synced: boolean, authEmail: string | null, profileEmail: string | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -54,17 +57,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading: (isLoading) => setLoading(isLoading)
   });
 
+  const { syncProfileEmailWithAuth, validateEmailSync } = useEmailSync();
   const { getCache, setCache, clearCache } = useCache();
   const USER_PROFILE_CACHE_KEY = 'user_profile';
 
-  // Load user profile when user changes
+  // Load user profile when user changes and sync email
   useEffect(() => {
     if (user) {
-      fetchUserProfile(user.id);
+      // Primeiro sincronizar email, depois buscar perfil
+      syncProfileEmailWithAuth().then(() => {
+        fetchUserProfile(user.id);
+      });
     } else {
       clearProfile();
     }
-  }, [user, fetchUserProfile, clearProfile]);
+  }, [user, fetchUserProfile, clearProfile, syncProfileEmailWithAuth]);
 
   // Function to sign out and clear data
   const signOut = async () => {
@@ -95,7 +102,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signUp,
     updateUserProfile: handleUpdateUserProfile,
     updateUserData: handleUpdateUserData,
-    resendConfirmationEmail
+    resendConfirmationEmail,
+    syncProfileEmailWithAuth,
+    validateEmailSync
   };
 
   return (

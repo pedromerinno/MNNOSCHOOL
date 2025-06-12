@@ -94,6 +94,7 @@ export const useSignUp = ({
           .from('profiles')
           .update({ 
             display_name: displayName,
+            email: email, // Garantir que o email seja sincronizado
             primeiro_login: true
           })
           .eq('id', data.user.id);
