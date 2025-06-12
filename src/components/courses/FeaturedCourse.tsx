@@ -14,7 +14,10 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
   
   if (!course) return null;
 
-  const handleCourseClick = () => {
+  const handleCourseClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('FeaturedCourse: handleCourseClick called', { courseId: course.id, courseTitle: course.title });
     navigate(`/courses/${course.id}`);
   };
   
