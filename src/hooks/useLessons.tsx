@@ -10,7 +10,7 @@ export type { ExtendedLesson };
 export const useLessons = (courseId: string) => {
   const [selectedLesson, setSelectedLesson] = useState<ExtendedLesson | undefined>(undefined);
   const { lessons, isLoading, fetchLessons } = useLessonsFetching(courseId);
-  const { isSubmitting, handleCreateLesson, handleUpdateLesson, handleDeleteLesson } = 
+  const { isSubmitting, handleCreateLesson, handleUpdateLesson, handleReorderLessons, handleDeleteLesson } = 
     useLessonMutations(courseId, fetchLessons);
   
   // Set up real-time subscription
@@ -25,6 +25,7 @@ export const useLessons = (courseId: string) => {
     fetchLessons,
     handleCreateLesson,
     handleUpdateLesson,
+    handleReorderLessons,
     handleDeleteLesson,
   };
 };

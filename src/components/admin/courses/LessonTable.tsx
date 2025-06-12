@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, FileText } from "lucide-react";
+import { Pencil, Trash2, FileText, GripVertical } from "lucide-react";
 import { 
   Table,
   TableBody,
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Lesson } from '@/components/courses/CourseLessonList';
+import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 
 interface LessonTableProps {
   lessons: Lesson[];
@@ -19,6 +20,7 @@ interface LessonTableProps {
   onEditLesson: (lesson: Lesson) => void;
   onDeleteLesson: (lesson: Lesson) => void;
   onAddLesson: () => void;
+  onReorderLessons: (lessons: Lesson[]) => void;
 }
 
 export const LessonTable: React.FC<LessonTableProps> = ({
@@ -26,8 +28,25 @@ export const LessonTable: React.FC<LessonTableProps> = ({
   isLoading,
   onEditLesson,
   onDeleteLesson,
-  onAddLesson
+  onAddLesson,
+  onReorderLessons
 }) => {
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+
+    const items = Array.from(lessons);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    // Update order_index for each lesson
+    const reorderedLessons = items.map((lesson, index) => ({
+      ...lesson,
+      order_index: index + 1
+    }));
+
+    onReorderLessons(reorderedLessons);
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-2">
@@ -56,63 +75,87 @@ export const LessonTable: React.FC<LessonTableProps> = ({
   return (
     <div className="border rounded-md overflow-hidden">
       <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[60px]">Ordem</TableHead>
-              <TableHead>Título</TableHead>
-              <TableHead className="hidden md:table-cell">Tipo</TableHead>
-              <TableHead className="hidden md:table-cell">Duração</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {lessons.map((lesson) => (
-              <TableRow key={lesson.id} className="h-16">
-                <TableCell className="font-medium">{lesson.order_index}</TableCell>
-                <TableCell>
-                  <div>
-                    <div className="font-medium">{lesson.title}</div>
-                    <div className="text-xs text-muted-foreground hidden md:block">
-                      {lesson.description 
-                        ? lesson.description.length > 50 
-                          ? `${lesson.description.substring(0, 50)}...` 
-                          : lesson.description 
-                        : '-'
-                      }
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell className="hidden md:table-cell">
-                  {lesson.type === 'video' && 'Vídeo'}
-                  {lesson.type === 'text' && 'Texto'}
-                  {lesson.type === 'quiz' && 'Quiz'}
-                </TableCell>
-                <TableCell className="hidden md:table-cell">{lesson.duration || '-'}</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => onEditLesson(lesson)}
-                    >
-                      <Pencil className="h-4 w-4 mr-1" />
-                      <span className="hidden sm:inline">Editar</span>
-                    </Button>
-                    <Button 
-                      variant="destructive" 
-                      size="sm"
-                      onClick={() => onDeleteLesson(lesson)}
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      <span className="hidden sm:inline">Excluir</span>
-                    </Button>
-                  </div>
-                </TableCell>
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[40px]"></TableHead>
+                <TableHead className="w-[60px]">Ordem</TableHead>
+                <TableHead>Título</TableHead>
+                <TableHead className="hidden md:table-cell">Tipo</TableHead>
+                <TableHead className="hidden md:table-cell">Duração</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <Droppable droppableId="lessons">
+              {(provided) => (
+                <TableBody {...provided.droppableProps} ref={provided.innerRef}>
+                  {lessons.map((lesson, index) => (
+                    <Draggable key={lesson.id} draggableId={lesson.id} index={index}>
+                      {(provided, snapshot) => (
+                        <TableRow 
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          className={`h-16 ${snapshot.isDragging ? 'bg-accent/50 shadow-lg' : ''}`}
+                        >
+                          <TableCell>
+                            <div 
+                              {...provided.dragHandleProps}
+                              className="cursor-grab active:cursor-grabbing p-1 hover:bg-accent rounded"
+                            >
+                              <GripVertical className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-medium">{lesson.order_index || index + 1}</TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{lesson.title}</div>
+                              <div className="text-xs text-muted-foreground hidden md:block">
+                                {lesson.description 
+                                  ? lesson.description.length > 50 
+                                    ? `${lesson.description.substring(0, 50)}...` 
+                                    : lesson.description 
+                                  : '-'
+                                }
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            {lesson.type === 'video' && 'Vídeo'}
+                            {lesson.type === 'text' && 'Texto'}
+                            {lesson.type === 'quiz' && 'Quiz'}
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">{lesson.duration || '-'}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end space-x-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => onEditLesson(lesson)}
+                              >
+                                <Pencil className="h-4 w-4 mr-1" />
+                                <span className="hidden sm:inline">Editar</span>
+                              </Button>
+                              <Button 
+                                variant="destructive" 
+                                size="sm"
+                                onClick={() => onDeleteLesson(lesson)}
+                              >
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                <span className="hidden sm:inline">Excluir</span>
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </TableBody>
+              )}
+            </Droppable>
+          </Table>
+        </DragDropContext>
       </div>
     </div>
   );

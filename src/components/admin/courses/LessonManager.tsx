@@ -33,6 +33,7 @@ export const LessonManager: React.FC<LessonManagerProps> = ({
     fetchLessons,
     handleCreateLesson,
     handleUpdateLesson, 
+    handleReorderLessons,
     handleDeleteLesson
   } = useLessons(courseId);
 
@@ -140,14 +141,14 @@ export const LessonManager: React.FC<LessonManagerProps> = ({
   return (
     <>
       <Sheet open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
-        <SheetContent side="right" className="w-full sm:max-w-3xl p-0 overflow-y-auto">
+        <SheetContent side="right" className="w-full sm:max-w-4xl p-0 overflow-y-auto">
           <div className="flex flex-col h-full">
             <SheetHeader className="px-6 py-4 border-b">
               <SheetTitle className="text-lg font-semibold">
                 Aulas do curso: {courseTitle}
               </SheetTitle>
               <SheetDescription>
-                Adicione, edite ou remova aulas para este curso.
+                Adicione, edite, reordene ou remova aulas para este curso. Arraste e solte para reordenar.
               </SheetDescription>
             </SheetHeader>
             
@@ -166,6 +167,7 @@ export const LessonManager: React.FC<LessonManagerProps> = ({
                 onEditLesson={handleEditLesson}
                 onDeleteLesson={confirmDeleteLesson}
                 onAddLesson={handleAddLesson}
+                onReorderLessons={handleReorderLessons}
               />
             </div>
             

@@ -91,6 +91,46 @@ export const useLessonMutations = (courseId: string, onSuccess: () => Promise<vo
     }
   };
 
+  const handleReorderLessons = async (lessons: ExtendedLesson[]) => {
+    setIsSubmitting(true);
+    try {
+      console.log("Reordering lessons:", lessons.map(l => ({ id: l.id, order_index: l.order_index })));
+
+      // Update each lesson's order_index
+      const updatePromises = lessons.map(lesson => 
+        supabase
+          .from('lessons')
+          .update({ order_index: lesson.order_index })
+          .eq('id', lesson.id)
+      );
+
+      const results = await Promise.all(updatePromises);
+      
+      // Check for errors
+      const errors = results.filter(result => result.error);
+      if (errors.length > 0) {
+        throw new Error('Erro ao reordenar algumas aulas');
+      }
+
+      await onSuccess();
+
+      toast({
+        title: 'Aulas reordenadas',
+        description: 'A ordem das aulas foi atualizada com sucesso',
+      });
+
+    } catch (error: any) {
+      console.error("Erro ao reordenar aulas:", error);
+      toast({
+        title: 'Erro ao reordenar aulas',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleDeleteLesson = async (lessonId: string) => {
     try {
       console.log(`Deleting lesson ${lessonId}`);
@@ -124,6 +164,7 @@ export const useLessonMutations = (courseId: string, onSuccess: () => Promise<vo
     isSubmitting,
     handleCreateLesson,
     handleUpdateLesson,
+    handleReorderLessons,
     handleDeleteLesson,
   };
 };
