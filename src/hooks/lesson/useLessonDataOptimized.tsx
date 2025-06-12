@@ -60,6 +60,7 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
   const [prefetchedData, setPrefetchedData] = useState<Map<string, any>>(new Map());
   const location = useLocation();
   const abortControllerRef = useRef<AbortController | null>(null);
+  const navigationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Verificar cache primeiro - otimizado com localStorage
   const getCachedLesson = useCallback((id: string) => {
@@ -89,13 +90,14 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
     if (lessonId) {
       const cached = getCachedLesson(lessonId);
       if (cached) {
-        console.log('Loading lesson from cache:', lessonId);
+        console.log('Loading lesson from cache (instant):', lessonId);
         setCachedLesson(cached);
         setIsFromCache(true);
         
         // Prefetch dados relacionados em background
         prefetchRelatedData(cached);
       } else {
+        console.log('No cache found, will fetch:', lessonId);
         setIsFromCache(false);
         setCachedLesson(null);
       }
@@ -136,26 +138,40 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
         abortControllerRef.current.abort();
       }
       
+      // Clear navigation timeout
+      if (navigationTimeoutRef.current) {
+        clearTimeout(navigationTimeoutRef.current);
+      }
+      
       setCurrentLessonId(lessonId);
     }
   }, [lessonId, currentLessonId]);
   
-  // Navegação otimizada com preload
+  // Navegação otimizada e mais rápida
   const handleNavigateToLesson = useCallback((newLessonId: string) => {
     if (newLessonId === currentLessonId) return;
     
-    console.log('Navigating to lesson:', newLessonId);
+    console.log('Fast navigation to lesson:', newLessonId);
     
-    // Verificar se dados já estão prefetched
+    // Verificar se dados já estão prefetched ou em cache
+    const cached = getCachedData(newLessonId);
     const prefetched = prefetchedData.get(newLessonId);
-    if (prefetched) {
-      console.log('Using prefetched data for lesson:', newLessonId);
+    
+    if (cached) {
+      console.log('Using cached data for instant navigation:', newLessonId);
+    } else if (prefetched) {
+      console.log('Using prefetched data for navigation:', newLessonId);
     }
     
     if ((cachedLesson || lesson)?.course_id) {
+      // Navegação imediata sem delay
       navigate(`/courses/${(cachedLesson || lesson).course_id}/lessons/${newLessonId}`, { 
         replace: true,
-        state: { preventRefresh: true, prefetched } 
+        state: { 
+          preventRefresh: true, 
+          prefetched: !!prefetched,
+          cached: !!cached
+        } 
       });
     }
   }, [navigate, cachedLesson, lesson, currentLessonId, prefetchedData]);
@@ -165,6 +181,9 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
+      }
+      if (navigationTimeoutRef.current) {
+        clearTimeout(navigationTimeoutRef.current);
       }
     };
   }, []);
