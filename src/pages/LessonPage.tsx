@@ -179,30 +179,30 @@ const LessonPage = () => {
     <>
       <DashboardLayout fullWidth>
         <div className="flex flex-col lg:flex-row w-full min-h-[calc(100vh-80px)]">
-          {/* Sidebar fixed on left side */}
-          <div className="lg:w-1/4 lg:min-h-full border-r border-border">
-            <div className="fixed lg:w-[calc(25%-1px)] top-[80px] h-[calc(100vh-80px)] overflow-y-auto pb-6">
-              {/* Improved back to course button */}
-              <div className="px-4 pt-6 mb-6">
+          {/* Improved Sidebar with better padding and styling */}
+          <div className="lg:w-1/4 lg:min-h-full border-r border-border/60 bg-muted/20">
+            <div className="fixed lg:w-[calc(25%-1px)] top-[80px] h-[calc(100vh-80px)] overflow-y-auto">
+              {/* Back to course button with better spacing */}
+              <div className="p-6 pb-4 border-b border-border/40">
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-accent transition-colors gap-2" 
+                  className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-accent/70 transition-all duration-200 gap-2 h-10" 
                   onClick={() => window.location.href = `/courses/${courseId}`}
                 >
                   <ChevronLeft className="h-4 w-4" />
                   <BookOpen className="h-4 w-4" />
-                  <span className="font-medium">Voltar para o Curso</span>
+                  <span className="font-medium">Voltar ao Curso</span>
                 </Button>
               </div>
 
-              {/* Improved Manage Lessons button for admins and super admins */}
+              {/* Manage Lessons button for admins with improved styling */}
               {isAdmin && (
-                <div className="px-4 mb-6">
+                <div className="px-6 py-4 border-b border-border/40">
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="w-full justify-start gap-2 border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 transition-all duration-200 shadow-sm" 
+                    className="w-full justify-start gap-2 border-primary/20 text-primary hover:bg-primary/10 hover:border-primary/40 transition-all duration-200 shadow-sm h-10" 
                     onClick={() => setShowLessonManager(true)}
                   >
                     <Settings className="h-4 w-4" />
@@ -211,7 +211,8 @@ const LessonPage = () => {
                 </div>
               )}
               
-              <div className="px-4">
+              {/* Lesson playlist with proper spacing */}
+              <div className="px-3 py-2">
                 <LessonPlaylist
                   lessons={displayLesson?.course_lessons || []}
                   currentLessonId={displayLesson?.id}
@@ -222,8 +223,8 @@ const LessonPage = () => {
             </div>
           </div>
           
-          {/* Content area */}
-          <div className="flex-1 p-6 lg:px-8">
+          {/* Content area with better spacing */}
+          <div className="flex-1 p-6 lg:px-10 lg:py-8">
             <div className={isTransitioning ? "opacity-70 pointer-events-none transition-opacity" : ""}>
               <LessonHeader lesson={displayLesson} courseId={courseId} hideBackButton={true} />
 
@@ -238,9 +239,9 @@ const LessonPage = () => {
                 lessonDuration={displayLesson?.duration}
               />
               
-              <div className="mt-6 space-y-8">
+              <div className="mt-8 space-y-10">
                 {/* Video container */}
-                <div className="rounded-lg overflow-hidden">
+                <div className="rounded-xl overflow-hidden shadow-sm">
                   <LessonContent 
                     lesson={displayLesson}
                     onVideoEnd={handleVideoEnd}
@@ -253,7 +254,7 @@ const LessonPage = () => {
                   lessonId={displayLesson?.id}
                 />
                 
-                <div className="mt-8">
+                <div className="mt-10">
                   <LessonComments lessonId={displayLesson?.id} />
                 </div>
               </div>
