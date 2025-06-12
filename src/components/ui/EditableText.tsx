@@ -109,7 +109,7 @@ export const EditableText: React.FC<EditableTextProps> = ({
           onChange={(e) => setEditValue(e.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
-          className={`${multiline ? 'min-h-[80px] text-center text-lg resize-none border-2 border-primary/20 focus:border-primary shadow-lg' : ''} w-full`}
+          className={`${multiline ? 'min-h-[60px] text-center text-[40px] font-normal leading-[1.1] resize-none border-none bg-transparent focus:border-none focus:ring-0 focus:outline-none shadow-none p-0' : ''} w-full ${className}`}
           disabled={isSaving}
           placeholder={placeholder}
         />
