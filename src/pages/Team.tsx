@@ -4,42 +4,58 @@ import { Navigate } from "react-router-dom";
 import { useCompanies } from "@/hooks/useCompanies";
 import { TeamMembersList } from "@/components/team/TeamMembersList";
 import { EmptyState } from "@/components/team/EmptyState";
-import { useTeamMembers } from "@/hooks/team/useTeamMembers";
+import { useTeamMembersOptimized } from "@/hooks/team/useTeamMembersOptimized";
 import { toast } from "sonner";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { useAuth } from "@/contexts/AuthContext";
-import { TeamMetricsDashboard } from "@/components/team/TeamMetricsDashboard";
-import { Progress } from "@/components/ui/progress";
+import { TeamMetricsDashboardOptimized } from "@/components/team/TeamMetricsDashboardOptimized";
 import { TeamMembersSkeletonList } from "@/components/team/TeamMembersSkeletonList";
 
 const Team = () => {
   const { selectedCompany, isLoading: companiesLoading } = useCompanies();
-  const { members, isLoading, error, loadProgress } = useTeamMembers();
-  const [showSlowLoadingMessage, setShowSlowLoadingMessage] = useState(false);
   const { userProfile } = useAuth();
+  const [showSlowLoadingMessage, setShowSlowLoadingMessage] = useState(false);
+
+  // Use the optimized hook
+  const { 
+    members, 
+    isLoading: membersLoading, 
+    error: membersError 
+  } = useTeamMembersOptimized({
+    selectedCompanyId: selectedCompany?.id,
+    skipLoading: companiesLoading || !selectedCompany?.id
+  });
+
+  console.log('[Team] Current state:', {
+    companiesLoading,
+    membersLoading,
+    selectedCompanyId: selectedCompany?.id,
+    membersCount: members.length,
+    hasError: !!membersError
+  });
 
   // Redirect if user is not an admin
   if (!userProfile?.is_admin && !userProfile?.super_admin) {
     return <Navigate to="/" replace />;
   }
 
-  // Show a message if loading takes too long
+  // Show slow loading message after 3 seconds
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    if (isLoading && !companiesLoading) {
+    if (membersLoading && !companiesLoading && selectedCompany?.id) {
       timer = setTimeout(() => {
         setShowSlowLoadingMessage(true);
         toast.info("Carregamento está demorando mais que o esperado");
-      }, 3000); // Reduzido para 3 segundos
+      }, 3000);
     } else {
       setShowSlowLoadingMessage(false);
     }
     return () => {
       if (timer) clearTimeout(timer);
     };
-  }, [isLoading, companiesLoading]);
+  }, [membersLoading, companiesLoading, selectedCompany?.id]);
 
-  // Aguardar empresas carregarem primeiro
+  // Loading companies
   if (companiesLoading) {
     return (
       <PageLayout title="Equipe">
@@ -48,6 +64,7 @@ const Team = () => {
     );
   }
 
+  // No company selected
   if (!selectedCompany) {
     return (
       <PageLayout title="Equipe">
@@ -59,41 +76,39 @@ const Team = () => {
     );
   }
 
-  if (isLoading) {
+  // Loading members
+  if (membersLoading) {
     return (
       <PageLayout title="Equipe">
         <div className="space-y-6">
           <TeamMembersSkeletonList />
           
-          {(loadProgress > 0 && loadProgress < 100) || showSlowLoadingMessage ? (
+          {showSlowLoadingMessage && (
             <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg z-50 w-64">
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {showSlowLoadingMessage ? "Carregamento lento..." : "Carregando membros..."}
+                    Carregando membros...
                   </span>
-                  <span className="text-xs font-medium">{loadProgress}%</span>
                 </div>
-                <Progress value={loadProgress} className="h-2" />
-                {showSlowLoadingMessage && (
-                  <p className="text-xs text-amber-600 dark:text-amber-400">
-                    Isso pode demorar um pouco mais...
-                  </p>
-                )}
+                <p className="text-xs text-amber-600 dark:text-amber-400">
+                  Isso pode demorar um pouco mais...
+                </p>
               </div>
             </div>
-          ) : null}
+          )}
         </div>
       </PageLayout>
     );
   }
 
-  if (error) {
+  // Error state
+  if (membersError) {
     return (
       <PageLayout title="Equipe">
         <EmptyState 
           title="Erro ao carregar equipe" 
-          description={error.message || "Ocorreu um erro ao carregar os membros da equipe. Tente novamente mais tarde."} 
+          description={membersError.message || "Ocorreu um erro ao carregar os membros da equipe. Tente novamente mais tarde."} 
         />
       </PageLayout>
     );
@@ -102,7 +117,11 @@ const Team = () => {
   return (
     <PageLayout title="Equipe">
       <div className="space-y-6">
-        <TeamMetricsDashboard members={members} />
+        <TeamMetricsDashboardOptimized 
+          members={members} 
+          companyId={selectedCompany?.id}
+          companyColor={selectedCompany?.cor_principal}
+        />
         <TeamMembersList members={members} />
       </div>
     </PageLayout>
