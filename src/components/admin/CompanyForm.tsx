@@ -55,7 +55,7 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
       // Ensure each parsed value has the required properties
       parsedValores = Array.isArray(parsed) ? parsed.filter((item: any) => 
         item && typeof item.title === 'string' && typeof item.description === 'string'
-      ).map((item: any) => ({
+      ).map((item: any): CompanyValue => ({
         title: item.title || '',
         description: item.description || ''
       })) : [];
@@ -63,7 +63,7 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
       // Ensure the array items conform to CompanyValue interface
       parsedValores = initialData.valores.filter((item: any) => 
         item && typeof item.title === 'string' && typeof item.description === 'string'
-      ).map((item: any) => ({
+      ).map((item: any): CompanyValue => ({
         title: item.title || '',
         description: item.description || ''
       }));
