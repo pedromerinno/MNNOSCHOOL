@@ -77,18 +77,14 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
     }
   }, [currentLessonId, navigatingToLesson]);
 
-  // Simplified lesson click handler - allows navigation to any lesson
+  // Fixed lesson click handler - allow navigation to any lesson including previously viewed ones
   const handleLessonClick = (lessonId: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    // Don't navigate if it's the same lesson
-    if (lessonId === currentLessonId) {
-      console.log('Same lesson clicked, ignoring:', lessonId);
-      return;
-    }
+    console.log('Lesson clicked:', lessonId, 'Current:', currentLessonId);
     
-    console.log('Navigating to lesson:', lessonId);
+    // Always allow navigation - remove the restriction that was preventing re-visiting lessons
     setNavigatingToLesson(lessonId);
     
     // Call the navigation function immediately

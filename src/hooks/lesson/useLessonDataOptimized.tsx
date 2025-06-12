@@ -153,21 +153,17 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
     }
   }, [lessonId, currentLessonId]);
   
-  // Navegação otimizada e mais rápida
+  // Fixed navigation - allow returning to any lesson including previously visited ones
   const handleNavigateToLesson = useCallback((newLessonId: string) => {
-    if (newLessonId === currentLessonId) {
-      console.log('Same lesson, ignoring navigation');
-      return;
-    }
+    console.log('Navigation requested to lesson:', newLessonId, 'from current:', currentLessonId);
     
-    console.log('Fast navigation to lesson:', newLessonId);
-    
+    // Remove the restriction - allow navigation to any lesson
     // Verificar se dados já estão prefetched ou em cache
     const cached = getCachedData(newLessonId);
     const prefetched = prefetchedData.get(newLessonId);
     
     if (cached) {
-      console.log('Using cached data for instant navigation:', newLessonId);
+      console.log('Using cached data for navigation:', newLessonId);
     } else if (prefetched) {
       console.log('Using prefetched data for navigation:', newLessonId);
     }
