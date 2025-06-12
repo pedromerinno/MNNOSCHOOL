@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLessonDataOptimized } from '@/hooks/lesson/useLessonDataOptimized';
@@ -22,6 +23,7 @@ const LessonPage = () => {
   const { courseId, lessonId } = useParams<{ courseId: string, lessonId: string }>();
   const [showLessonManager, setShowLessonManager] = useState(false);
   const [localUpdates, setLocalUpdates] = useState<Record<string, any>>({});
+  const [isNavigating, setIsNavigating] = useState(false);
   const { userProfile } = useAuth();
   const { selectedCompany } = useCompanies();
   const navigate = useNavigate();
@@ -124,6 +126,7 @@ const LessonPage = () => {
     window.scrollTo(0, 0);
     setShowAutoplayPrompt(false);
     setLocalUpdates({}); // Limpar updates locais
+    setIsNavigating(false); // Reset navigation state
   }, [lessonId, setShowAutoplayPrompt]);
 
   // Clean up autoplay
@@ -133,11 +136,12 @@ const LessonPage = () => {
     };
   }, [cancelAutoplay]);
 
-  // Navegação otimizada
+  // Navegação otimizada com skeleton
   const handleLessonSelect = (selectedLessonId: string) => {
     if (selectedLessonId === lessonId) return;
     
     console.log('Selecting lesson:', selectedLessonId);
+    setIsNavigating(true);
     setLocalUpdates({});
     navigateToLesson(selectedLessonId);
   };
@@ -154,8 +158,8 @@ const LessonPage = () => {
     }
   };
 
-  // Loading otimizado - mostrar conteúdo se disponível
-  if (loading && !lesson && !isFromCache) {
+  // Loading otimizado - mostrar skeleton se navegando ou carregando
+  if ((loading && !lesson && !isFromCache) || isNavigating) {
     return <LessonSkeleton />;
   }
 
