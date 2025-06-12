@@ -1,13 +1,13 @@
 
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useCompanies } from "@/hooks/useCompanies";
+import { DocumentAttachmentForm } from "@/components/documents/DocumentAttachmentForm";
+import { DocumentType } from "@/types/document";
 
 interface AddDocumentDialogProps {
   open: boolean;
@@ -15,9 +15,8 @@ interface AddDocumentDialogProps {
 }
 
 export const AddDocumentDialog: React.FC<AddDocumentDialogProps> = ({ open, onOpenChange }) => {
-  const [file, setFile] = useState<File | null>(null);
-  const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
 
   // Companies logic - using userCompanies instead of companies
   const { selectedCompany, userCompanies, selectCompany, user, isLoading } = useCompanies();
@@ -29,10 +28,6 @@ export const AddDocumentDialog: React.FC<AddDocumentDialogProps> = ({ open, onOp
     userId: user?.id || 'no user'
   });
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) setFile(e.target.files[0]);
-  };
-
   const handleCompanyChange = (companyId: string) => {
     const company = userCompanies.find(c => c.id === companyId);
     if (company && user?.id) {
@@ -40,27 +35,52 @@ export const AddDocumentDialog: React.FC<AddDocumentDialogProps> = ({ open, onOp
     }
   };
 
-  const handleUpload = async () => {
+  const handleSubmit = async (
+    attachmentType: 'file' | 'link',
+    fileOrUrl: File | string,
+    documentType: DocumentType,
+    description: string,
+    name: string
+  ) => {
+    if (!selectedCompany?.id) {
+      toast.error("Por favor, selecione uma empresa primeiro");
+      return;
+    }
+
     try {
       setLoading(true);
+      // Simulate upload/save process
       await new Promise(res => setTimeout(res, 1200));
-      toast.success("Documento enviado com sucesso!");
-      setFile(null);
-      setDescription("");
+      
+      const successMessage = attachmentType === 'file' ? 
+        "Documento enviado com sucesso!" : 
+        "Link adicionado com sucesso!";
+      
+      toast.success(successMessage);
       onOpenChange(false);
     } catch (e) {
-      toast.error("Falha no envio.");
+      const errorMessage = attachmentType === 'file' ? 
+        "Falha no envio do documento." : 
+        "Falha ao adicionar o link.";
+      
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleCancel = () => {
+    onOpenChange(false);
+    setFileError(null);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Adicionar Documento</DialogTitle>
         </DialogHeader>
+        
         <div className="mb-4">
           <Label>Empresa</Label>
           <Select 
@@ -98,21 +118,13 @@ export const AddDocumentDialog: React.FC<AddDocumentDialogProps> = ({ open, onOp
             </p>
           )}
         </div>
-        <div className="space-y-3">
-          <div>
-            <Input type="file" onChange={handleFile} />
-          </div>
-          <div>
-            <Label>Descrição</Label>
-            <Textarea value={description} onChange={e => setDescription(e.target.value)} />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleUpload} disabled={loading || !file}>
-            {loading ? "Enviando..." : "Adicionar"}
-          </Button>
-        </DialogFooter>
+
+        <DocumentAttachmentForm
+          onSubmit={handleSubmit}
+          isUploading={loading}
+          fileError={fileError}
+          onCancel={handleCancel}
+        />
       </DialogContent>
     </Dialog>
   );
