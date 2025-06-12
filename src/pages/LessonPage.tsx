@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useLessonData } from '@/hooks/useLessonData';
@@ -38,7 +39,8 @@ const LessonPage = () => {
     likes,
     userLiked,
     toggleLikeLesson,
-    completed
+    completed,
+    refreshLessonData
   } = useLessonData(lessonId);
 
   // Use lessons hook for admin functionality
@@ -88,6 +90,25 @@ const LessonPage = () => {
       window.removeEventListener('lesson-updated', handleLessonUpdated as EventListener);
     };
   }, [lessonId]);
+
+  // Listen for course update events to refresh lesson data and playlist
+  useEffect(() => {
+    const handleCourseUpdated = (event: CustomEvent) => {
+      if (event.detail?.courseId === courseId) {
+        console.log('Course updated event received, refreshing lesson data and playlist');
+        // Refresh the lesson data to update the playlist
+        if (refreshLessonData) {
+          refreshLessonData();
+        }
+      }
+    };
+
+    window.addEventListener('course-updated', handleCourseUpdated as EventListener);
+    
+    return () => {
+      window.removeEventListener('course-updated', handleCourseUpdated as EventListener);
+    };
+  }, [courseId, refreshLessonData]);
 
   // Handle scroll to top when changing lessons
   useEffect(() => {
