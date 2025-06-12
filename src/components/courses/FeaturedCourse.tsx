@@ -14,24 +14,25 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
   
   if (!course) return null;
 
-  const handleCourseClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('FeaturedCourse: handleCourseClick called', { courseId: course.id, courseTitle: course.title });
+  const handleImageClick = () => {
+    console.log('FeaturedCourse: Image clicked!', { courseId: course.id, courseTitle: course.title });
     navigate(`/courses/${course.id}`);
   };
 
   const handleButtonClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('FeaturedCourse: handleButtonClick called', { courseId: course.id, courseTitle: course.title });
+    console.log('FeaturedCourse: Button clicked!', { courseId: course.id, courseTitle: course.title });
     navigate(`/courses/${course.id}`);
   };
   
   return (
-    <div className="rounded-2xl overflow-hidden mb-8 bg-[#1A1F2C] h-[350px] relative cursor-pointer" onClick={handleCourseClick}>
-      {/* Full-width background image */}
-      <div className="absolute inset-0 w-full h-full">
+    <div className="rounded-2xl overflow-hidden mb-8 bg-[#1A1F2C] h-[350px] relative">
+      {/* Clickable image area */}
+      <div 
+        className="absolute inset-0 w-full h-full cursor-pointer z-0"
+        onClick={handleImageClick}
+      >
         <img 
           src={course.image_url || "https://images.unsplash.com/photo-1617096199719-18e5acee65f8?auto=format&fit=crop&w=1200&q=80"} 
           alt={course.title} 
