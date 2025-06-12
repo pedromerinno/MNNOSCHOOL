@@ -61,6 +61,7 @@ export const useLessonData = (lessonId: string | undefined) => {
     likes,
     userLiked,
     toggleLikeLesson,
-    completed
+    completed,
+    refreshLessonData: refetch
   };
 };
