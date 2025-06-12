@@ -17,13 +17,15 @@ interface LessonPlaylistProps {
   currentLessonId: string;
   onLessonSelect: (lessonId: string) => void;
   loading?: boolean;
+  companyColor?: string;
 }
 
 export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
   lessons,
   currentLessonId,
   onLessonSelect,
-  loading = false
+  loading = false,
+  companyColor = "#1EAEDB"
 }) => {
   const currentIndex = lessons.findIndex(lesson => lesson.id === currentLessonId);
   const totalDuration = calculateTotalDuration(lessons);
@@ -66,16 +68,22 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
 
   return (
     <div className="bg-background rounded-lg p-6">
-      {/* Header with improved styling */}
+      {/* Header with company color accent */}
       <div className="mb-6 pb-4 border-b border-border/40">
         <div className="flex items-center gap-2 mb-3">
-          <BookOpen className="w-5 h-5 text-primary" />
+          <BookOpen 
+            className="w-5 h-5" 
+            style={{ color: companyColor }}
+          />
           <h3 className="text-xl font-bold text-foreground">Aulas do Curso</h3>
         </div>
         
         <div className="flex items-center gap-4 text-sm">
           <div className="flex items-center gap-1.5 text-muted-foreground">
-            <div className="w-2 h-2 bg-primary rounded-full"></div>
+            <div 
+              className="w-2 h-2 rounded-full"
+              style={{ backgroundColor: companyColor }}
+            ></div>
             <span className="font-medium">{lessons.length} aulas</span>
           </div>
           <div className="w-1 h-1 bg-muted-foreground/40 rounded-full"></div>
@@ -101,25 +109,43 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
                 className={cn(
                   "transition-all duration-200 cursor-pointer group border hover:shadow-sm",
                   lesson.id === currentLessonId
-                    ? "bg-primary/8 border-primary/30 shadow-sm ring-1 ring-primary/20"
-                    : "hover:bg-accent/50 border-border/60 hover:border-primary/40"
+                    ? "border-border/60 shadow-sm ring-1"
+                    : "hover:bg-accent/50 border-border/60"
                 )}
+                style={{
+                  backgroundColor: lesson.id === currentLessonId ? `${companyColor}08` : undefined,
+                  borderColor: lesson.id === currentLessonId ? `${companyColor}30` : undefined,
+                  '--tw-ring-color': lesson.id === currentLessonId ? `${companyColor}20` : undefined,
+                } as React.CSSProperties}
                 onClick={(e) => handleLessonClick(lesson.id, e)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    {/* Lesson indicator */}
+                    {/* Lesson indicator with company color */}
                     <div className="flex-shrink-0">
                       {lesson.completed ? (
                         <div className="w-10 h-10 rounded-full bg-green-500/15 border-2 border-green-500/30 flex items-center justify-center">
                           <CheckCircle className="h-5 w-5 text-green-600" />
                         </div>
                       ) : lesson.id === currentLessonId ? (
-                        <div className="w-10 h-10 rounded-full bg-primary/15 border-2 border-primary/40 flex items-center justify-center">
-                          <PlayCircle className="h-5 w-5 text-primary" />
+                        <div 
+                          className="w-10 h-10 rounded-full flex items-center justify-center border-2"
+                          style={{
+                            backgroundColor: `${companyColor}15`,
+                            borderColor: `${companyColor}40`
+                          }}
+                        >
+                          <PlayCircle 
+                            className="h-5 w-5" 
+                            style={{ color: companyColor }}
+                          />
                         </div>
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-muted/60 border-2 border-muted-foreground/20 flex items-center justify-center text-sm font-semibold text-muted-foreground group-hover:border-primary/40 group-hover:text-primary transition-colors">
+                        <div className="w-10 h-10 rounded-full bg-muted/60 border-2 border-muted-foreground/20 flex items-center justify-center text-sm font-semibold text-muted-foreground group-hover:text-primary transition-colors"
+                             style={{
+                               '--tw-text-opacity': lesson.id === currentLessonId ? '1' : undefined,
+                               color: lesson.id === currentLessonId ? companyColor : undefined
+                             } as React.CSSProperties}>
                           {index + 1}
                         </div>
                       )}
@@ -128,21 +154,29 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       <h4 className={cn(
-                        "font-semibold text-sm leading-snug mb-2 line-clamp-2",
+                        "font-semibold text-sm leading-snug mb-2 line-clamp-2 transition-colors",
                         lesson.id === currentLessonId 
-                          ? "text-primary" 
-                          : "text-foreground group-hover:text-primary transition-colors"
-                      )}>
+                          ? "" 
+                          : "text-foreground group-hover:text-primary"
+                      )}
+                      style={{
+                        color: lesson.id === currentLessonId ? companyColor : undefined
+                      }}>
                         {lesson.title}
                       </h4>
                       
                       <div className="flex items-center gap-3">
                         <div className={cn(
-                          "flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full",
+                          "flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border",
                           lesson.id === currentLessonId
-                            ? "bg-primary/15 text-primary border border-primary/20"
-                            : "bg-muted/70 text-muted-foreground border border-muted-foreground/20"
-                        )}>
+                            ? ""
+                            : "bg-muted/70 text-muted-foreground border-muted-foreground/20"
+                        )}
+                        style={{
+                          backgroundColor: lesson.id === currentLessonId ? `${companyColor}15` : undefined,
+                          color: lesson.id === currentLessonId ? companyColor : undefined,
+                          borderColor: lesson.id === currentLessonId ? `${companyColor}20` : undefined
+                        }}>
                           {getTypeIcon(lesson.type)}
                           <span>{getTypeLabel(lesson.type)}</span>
                         </div>
@@ -156,11 +190,20 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
                       </div>
                     </div>
 
-                    {/* Play button */}
+                    {/* Play button with company color */}
                     <div className="flex-shrink-0">
                       {lesson.id === currentLessonId ? (
-                        <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center">
-                          <Play className="w-4 h-4 text-primary fill-primary" />
+                        <div 
+                          className="w-8 h-8 rounded-full flex items-center justify-center border"
+                          style={{
+                            backgroundColor: `${companyColor}15`,
+                            borderColor: `${companyColor}30`
+                          }}
+                        >
+                          <Play 
+                            className="w-4 h-4 fill-current" 
+                            style={{ color: companyColor }}
+                          />
                         </div>
                       ) : (
                         <div className="w-8 h-8 rounded-full bg-transparent group-hover:bg-primary/10 border border-transparent group-hover:border-primary/20 flex items-center justify-center transition-all">

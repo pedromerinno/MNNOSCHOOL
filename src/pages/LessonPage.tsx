@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useLessonData } from '@/hooks/useLessonData';
@@ -18,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, Settings, BookOpen } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
 import { useLessons } from '@/hooks/useLessons';
+import { useCompanies } from '@/hooks/useCompanies';
 
 const LessonPage = () => {
   const { courseId, lessonId } = useParams<{ courseId: string, lessonId: string }>();
@@ -27,7 +27,9 @@ const LessonPage = () => {
   const [localUpdates, setLocalUpdates] = useState<Record<string, any>>({});
   const [showLessonManager, setShowLessonManager] = useState(false);
   const { userProfile } = useAuth();
+  const { selectedCompany } = useCompanies();
   const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
+  const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
   
   // Use useLessonData with URL parameter
   const { 
@@ -179,15 +181,18 @@ const LessonPage = () => {
     <>
       <DashboardLayout fullWidth>
         <div className="flex flex-col lg:flex-row w-full min-h-[calc(100vh-80px)]">
-          {/* Improved Sidebar with better padding and styling */}
+          {/* Improved Sidebar with company color styling */}
           <div className="lg:w-1/4 lg:min-h-full border-r border-border/60 bg-muted/20">
             <div className="fixed lg:w-[calc(25%-1px)] top-[80px] h-[calc(100vh-80px)] overflow-y-auto">
-              {/* Back to course button with better spacing */}
+              {/* Back to course button with company color accent */}
               <div className="p-6 pb-4 border-b border-border/40">
                 <Button 
                   variant="ghost" 
                   size="sm" 
                   className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-accent/70 transition-all duration-200 gap-2 h-10" 
+                  style={{
+                    '--hover-color': companyColor
+                  } as React.CSSProperties}
                   onClick={() => window.location.href = `/courses/${courseId}`}
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -196,13 +201,19 @@ const LessonPage = () => {
                 </Button>
               </div>
 
-              {/* Manage Lessons button for admins with improved styling */}
+              {/* Manage Lessons button for admins with company color styling */}
               {isAdmin && (
                 <div className="px-6 py-4 border-b border-border/40">
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="w-full justify-start gap-2 border-primary/20 text-primary hover:bg-primary/10 hover:border-primary/40 transition-all duration-200 shadow-sm h-10" 
+                    className="w-full justify-start gap-2 transition-all duration-200 shadow-sm h-10" 
+                    style={{
+                      borderColor: `${companyColor}20`,
+                      color: companyColor,
+                      '--hover-bg': `${companyColor}10`,
+                      '--hover-border': `${companyColor}40`
+                    } as React.CSSProperties}
                     onClick={() => setShowLessonManager(true)}
                   >
                     <Settings className="h-4 w-4" />
@@ -211,13 +222,14 @@ const LessonPage = () => {
                 </div>
               )}
               
-              {/* Lesson playlist with proper spacing */}
+              {/* Lesson playlist with company color */}
               <div className="px-3 py-2">
                 <LessonPlaylist
                   lessons={displayLesson?.course_lessons || []}
                   currentLessonId={displayLesson?.id}
                   onLessonSelect={handleLessonSelect}
                   loading={loading}
+                  companyColor={companyColor}
                 />
               </div>
             </div>
