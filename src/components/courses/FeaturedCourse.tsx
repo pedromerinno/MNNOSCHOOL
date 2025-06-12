@@ -14,7 +14,12 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
   
   if (!course) return null;
 
-  const handleCardClick = () => {
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Evitar que o clique no botão propague para o card
+    if ((e.target as HTMLElement).closest('button')) {
+      return;
+    }
+    
     console.log('🎯 FeaturedCourse: Card clicked - navigating to course', { 
       courseId: course.id, 
       courseTitle: course.title 
@@ -34,19 +39,13 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
   
   return (
     <div 
-      className="rounded-2xl overflow-hidden mb-8 bg-[#1A1F2C] h-[350px] relative cursor-pointer select-none"
+      className="rounded-2xl overflow-hidden mb-8 bg-[#1A1F2C] h-[350px] relative cursor-pointer"
       onClick={handleCardClick}
-      onMouseDown={(e) => console.log('🎯 Mouse down on card')}
-      onMouseUp={(e) => console.log('🎯 Mouse up on card')}
-      style={{ 
-        zIndex: 1,
-        userSelect: 'none',
-        WebkitUserSelect: 'none'
-      }}
+      style={{ zIndex: 1 }}
     >
       {/* Background image */}
       <div 
-        className="absolute inset-0 w-full h-full pointer-events-none"
+        className="absolute inset-0 w-full h-full"
         style={{
           backgroundImage: `url(${course.image_url || "https://images.unsplash.com/photo-1617096199719-18e5acee65f8?auto=format&fit=crop&w=1200&q=80"})`,
           backgroundSize: 'cover',
@@ -56,10 +55,10 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
       />
       
       {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-black/70 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-tr from-black/70 to-transparent" />
       
       {/* Content */}
-      <div className="relative z-10 h-full p-8 md:p-12 flex flex-col pointer-events-none">
+      <div className="relative z-10 h-full p-8 md:p-12 flex flex-col">
         <div className="flex-1">
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-6">
             {course.title}
@@ -109,9 +108,8 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
           </div>
           
           <Button 
-            className="bg-white text-black hover:bg-gray-100 rounded-full gap-2 px-6 pointer-events-auto"
+            className="bg-white text-black hover:bg-gray-100 rounded-full gap-2 px-6"
             onClick={handleButtonClick}
-            onMouseDown={(e) => console.log('🎯 Mouse down on button')}
           >
             Assistir agora
             <Play className="h-4 w-4" />
