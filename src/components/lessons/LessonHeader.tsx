@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -19,14 +19,35 @@ export const LessonHeader: React.FC<LessonHeaderProps> = ({
   courseId,
   hideBackButton = false 
 }) => {
+  const [currentTitle, setCurrentTitle] = useState(lesson?.title || '');
   const { updateLessonField } = useLessonEdit(lesson?.id);
   const { userProfile } = useAuth();
   const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
 
+  // Update local title when lesson changes
+  useEffect(() => {
+    if (lesson?.title) {
+      setCurrentTitle(lesson.title);
+    }
+  }, [lesson?.title]);
+
   if (!lesson) return null;
 
   const handleTitleUpdate = async (newTitle: string) => {
+    // Update local state immediately
+    setCurrentTitle(newTitle);
+    
+    // Update in database
     await updateLessonField('title', newTitle);
+    
+    // Dispatch event for other components to update
+    window.dispatchEvent(new CustomEvent('lesson-field-updated', {
+      detail: {
+        lessonId: lesson.id,
+        field: 'title',
+        value: newTitle
+      }
+    }));
   };
 
   return (
@@ -41,7 +62,7 @@ export const LessonHeader: React.FC<LessonHeaderProps> = ({
       )}
       
       <EditableText
-        value={lesson.title}
+        value={currentTitle}
         onSave={handleTitleUpdate}
         className="text-3xl font-bold mb-4"
         canEdit={isAdmin}

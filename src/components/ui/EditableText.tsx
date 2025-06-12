@@ -101,7 +101,7 @@ export const EditableText: React.FC<EditableTextProps> = ({
   const InputComponent = multiline ? Textarea : Input;
 
   return (
-    <div className="w-full flex items-center gap-2">
+    <div className="w-full flex items-start gap-3">
       <div className="flex-1">
         <InputComponent
           ref={inputRef as any}
@@ -115,23 +115,23 @@ export const EditableText: React.FC<EditableTextProps> = ({
         />
       </div>
       
-      <div className="flex items-center gap-1 flex-shrink-0">
+      <div className="flex items-center gap-2 flex-shrink-0 mt-1">
         <Button
           size="sm"
           onClick={handleSave}
           disabled={isSaving}
-          className="h-8 w-8 p-0 bg-black hover:bg-black/90 text-white rounded-md"
+          className="h-10 w-10 p-0 bg-black hover:bg-black/90 text-white rounded-lg"
         >
-          <Check className="h-4 w-4" />
+          <Check className="h-5 w-5" />
         </Button>
         <Button
           size="sm"
           variant="outline"
           onClick={handleCancel}
           disabled={isSaving}
-          className="h-8 w-8 p-0 border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-md"
+          className="h-10 w-10 p-0 border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg"
         >
-          <X className="h-4 w-4" />
+          <X className="h-5 w-5" />
         </Button>
       </div>
     </div>
