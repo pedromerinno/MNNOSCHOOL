@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Play, CheckCircle, Clock, PlayCircle, BookOpen, Video, FileText, HelpCircle } from "lucide-react";
@@ -70,14 +69,14 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
     };
   }, [localLessons, courseId]);
 
-  // Simplified lesson click handler
+  // Prevent default click behavior and handle lesson selection
   const handleLessonClick = (lessonId: string, e: React.MouseEvent) => {
-    console.log('Lesson clicked:', lessonId, 'Current:', currentLessonId);
-    
-    // Always call onLessonSelect regardless of current lesson
-    e.preventDefault();
-    e.stopPropagation();
-    onLessonSelect(lessonId);
+    // Only proceed if this isn't already the active lesson
+    if (lessonId !== currentLessonId) {
+      e.preventDefault();
+      e.stopPropagation();
+      onLessonSelect(lessonId);
+    }
   };
 
   const getTypeIcon = (type: string) => {

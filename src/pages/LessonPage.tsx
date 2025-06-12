@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLessonDataOptimized } from '@/hooks/lesson/useLessonDataOptimized';
@@ -120,7 +119,7 @@ const LessonPage = () => {
     };
   }, [lessonId, refreshLessonData]);
 
-  // Scroll to top when changing lessons and reset states
+  // Scroll to top when changing lessons
   useEffect(() => {
     window.scrollTo(0, 0);
     setShowAutoplayPrompt(false);
@@ -134,14 +133,13 @@ const LessonPage = () => {
     };
   }, [cancelAutoplay]);
 
-  // Navegação simplificada - usando navigate diretamente
+  // Navegação otimizada
   const handleLessonSelect = (selectedLessonId: string) => {
     if (selectedLessonId === lessonId) return;
     
-    console.log('Navigating to lesson:', selectedLessonId);
-    
-    // Navegar diretamente usando o navigate do React Router
-    navigate(`/courses/${courseId}/lessons/${selectedLessonId}`);
+    console.log('Selecting lesson:', selectedLessonId);
+    setLocalUpdates({});
+    navigateToLesson(selectedLessonId);
   };
 
   const handleAddLesson = async (data: any) => {
@@ -156,7 +154,7 @@ const LessonPage = () => {
     }
   };
 
-  // Loading - mostrar skeleton se carregando e não há dados em cache
+  // Loading otimizado - mostrar conteúdo se disponível
   if (loading && !lesson && !isFromCache) {
     return <LessonSkeleton />;
   }
@@ -169,7 +167,7 @@ const LessonPage = () => {
     <>
       <DashboardLayout fullWidth>
         <div className="flex flex-col lg:flex-row w-full min-h-[calc(100vh-80px)]">
-          {/* Sidebar */}
+          {/* Sidebar com loading otimizado */}
           <div className="lg:w-1/4 lg:min-h-full border-r border-border/60 bg-muted/20">
             <div className="lg:w-[calc(25%-1px)] lg:fixed top-[80px] h-[calc(100vh-80px)] overflow-y-auto">
               {/* Back to course button */}
@@ -210,7 +208,7 @@ const LessonPage = () => {
                 </div>
               )}
               
-              {/* Playlist */}
+              {/* Playlist com altura flexível */}
               <div className="p-4">
                 <LessonPlaylist
                   lessons={displayLesson?.course_lessons || []}
