@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useLessonData } from '@/hooks/useLessonData';
@@ -14,8 +12,9 @@ import { LessonNotFound } from '@/components/lessons/LessonNotFound';
 import { CourseDescription } from '@/components/courses/CourseDescription';
 import { LessonPlaylist } from '@/components/lessons/LessonPlaylist';
 import { LessonFormSheet } from '@/components/admin/courses/LessonFormSheet';
+import { LessonManager } from '@/components/admin/courses/LessonManager';
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Plus } from "lucide-react";
+import { ChevronLeft, Settings, BookOpen } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
 import { useLessons } from '@/hooks/useLessons';
 
@@ -25,7 +24,7 @@ const LessonPage = () => {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [currentLesson, setCurrentLesson] = useState<any>(null);
   const [localUpdates, setLocalUpdates] = useState<Record<string, any>>({});
-  const [showAddLessonDialog, setShowAddLessonDialog] = useState(false);
+  const [showLessonManager, setShowLessonManager] = useState(false);
   const { userProfile } = useAuth();
   const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
   
@@ -126,7 +125,7 @@ const LessonPage = () => {
   const handleAddLesson = async (data: any) => {
     try {
       await handleCreateLesson(data);
-      setShowAddLessonDialog(false);
+      setShowLessonManager(false);
       // Refresh the lesson list by dispatching a course update event
       window.dispatchEvent(new CustomEvent('course-updated', {
         detail: { courseId }
@@ -162,30 +161,31 @@ const LessonPage = () => {
           {/* Sidebar fixed on left side */}
           <div className="lg:w-1/4 lg:min-h-full border-r border-border">
             <div className="fixed lg:w-[calc(25%-1px)] top-[80px] h-[calc(100vh-80px)] overflow-y-auto pb-6">
-              {/* Back to course button moved to top of sidebar */}
-              <div className="px-4 pt-6 mb-4">
+              {/* Improved back to course button */}
+              <div className="px-4 pt-6 mb-6">
                 <Button 
-                  variant="outline" 
+                  variant="ghost" 
                   size="sm" 
-                  className="w-full justify-start" 
+                  className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-accent transition-colors gap-2" 
                   onClick={() => window.location.href = `/courses/${courseId}`}
                 >
-                  <ChevronLeft className="mr-1 h-4 w-4" />
-                  Voltar para o Curso
+                  <ChevronLeft className="h-4 w-4" />
+                  <BookOpen className="h-4 w-4" />
+                  <span className="font-medium">Voltar para o Curso</span>
                 </Button>
               </div>
 
-              {/* Add Lesson button for admins */}
+              {/* Improved Manage Lessons button for admins */}
               {isAdmin && (
-                <div className="px-4 mb-4">
+                <div className="px-4 mb-6">
                   <Button 
-                    variant="default" 
+                    variant="outline" 
                     size="sm" 
-                    className="w-full justify-start" 
-                    onClick={() => setShowAddLessonDialog(true)}
+                    className="w-full justify-start gap-2 border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 transition-all duration-200" 
+                    onClick={() => setShowLessonManager(true)}
                   >
-                    <Plus className="mr-1 h-4 w-4" />
-                    Adicionar Aula
+                    <Settings className="h-4 w-4" />
+                    <span className="font-medium">Gerenciar Aulas</span>
                   </Button>
                 </div>
               )}
@@ -241,15 +241,13 @@ const LessonPage = () => {
         </div>
       </DashboardLayout>
 
-      {/* Add Lesson Dialog */}
+      {/* Lesson Manager Dialog */}
       {isAdmin && (
-        <LessonFormSheet
-          isOpen={showAddLessonDialog}
-          onClose={() => setShowAddLessonDialog(false)}
-          selectedLesson={undefined}
-          onSubmit={handleAddLesson}
-          isSubmitting={isSubmitting}
+        <LessonManager
           courseId={courseId || ''}
+          courseTitle={displayLesson?.course_title || 'Curso'}
+          open={showLessonManager}
+          onClose={() => setShowLessonManager(false)}
         />
       )}
     </>
@@ -257,4 +255,3 @@ const LessonPage = () => {
 };
 
 export default LessonPage;
-
