@@ -14,99 +14,100 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
   
   if (!course) return null;
 
-  const handleCourseClick = (e: React.MouseEvent) => {
-    console.log('FeaturedCourse: Card clicked!', { 
+  const handleCardClick = () => {
+    console.log('FeaturedCourse: Card clicked - navigating to course', { 
       courseId: course.id, 
-      courseTitle: course.title,
-      target: e.target,
-      currentTarget: e.currentTarget
+      courseTitle: course.title 
     });
     navigate(`/courses/${course.id}`);
   };
 
   const handleButtonClick = (e: React.MouseEvent) => {
-    e.preventDefault();
     e.stopPropagation();
-    console.log('FeaturedCourse: Button clicked!', { courseId: course.id, courseTitle: course.title });
+    console.log('FeaturedCourse: Button clicked - navigating to course', { 
+      courseId: course.id, 
+      courseTitle: course.title 
+    });
     navigate(`/courses/${course.id}`);
   };
   
   return (
     <div 
       className="rounded-2xl overflow-hidden mb-8 bg-[#1A1F2C] h-[350px] relative cursor-pointer"
-      onClick={handleCourseClick}
-      onMouseEnter={() => console.log('Mouse entered featured course card')}
-      onMouseLeave={() => console.log('Mouse left featured course card')}
+      onClick={handleCardClick}
+      style={{ zIndex: 1 }}
     >
       {/* Background image */}
-      <img 
-        src={course.image_url || "https://images.unsplash.com/photo-1617096199719-18e5acee65f8?auto=format&fit=crop&w=1200&q=80"} 
-        alt={course.title} 
-        className="w-full h-full object-cover absolute inset-0 pointer-events-none"
+      <div 
+        className="absolute inset-0 w-full h-full"
+        style={{
+          backgroundImage: `url(${course.image_url || "https://images.unsplash.com/photo-1617096199719-18e5acee65f8?auto=format&fit=crop&w=1200&q=80"})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
       />
       
-      {/* Diagonal black shadow gradient for readability */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-black/70 to-transparent pointer-events-none"></div>
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-black/70 to-transparent" />
       
-      {/* Content positioned over the image */}
-      <div className="relative h-full z-10 pointer-events-none">
-        <div className="flex flex-col h-full p-8 md:p-12">
-          <div className="flex-1">
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-6">
-              {course.title}
-            </h1>
-            
-            {course.description && (
-              <p className="text-white/80 mb-6 line-clamp-3">
-                {course.description}
-              </p>
+      {/* Content */}
+      <div className="relative z-10 h-full p-8 md:p-12 flex flex-col">
+        <div className="flex-1">
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-6">
+            {course.title}
+          </h1>
+          
+          {course.description && (
+            <p className="text-white/80 mb-6 line-clamp-3">
+              {course.description}
+            </p>
+          )}
+          
+          <div className="flex flex-wrap gap-2 mb-8">
+            {course.tags?.slice(0, 3).map((tag: string, index: number) => (
+              <Badge 
+                key={index}
+                variant="outline" 
+                className="bg-transparent text-white border-white/40"
+              >
+                {tag}
+              </Badge>
+            ))}
+            {course.tags && course.tags.length > 3 && (
+              <Badge 
+                variant="outline" 
+                className="bg-transparent text-white border-white/40"
+              >
+                +{course.tags.length - 3}
+              </Badge>
             )}
-            
-            <div className="flex flex-wrap gap-2 mb-8">
-              {course.tags?.slice(0, 3).map((tag: string, index: number) => (
-                <Badge 
-                  key={index}
-                  variant="outline" 
-                  className="bg-transparent text-white border-white/40"
-                >
-                  {tag}
-                </Badge>
-              ))}
-              {course.tags && course.tags.length > 3 && (
-                <Badge 
-                  variant="outline" 
-                  className="bg-transparent text-white border-white/40"
-                >
-                  +{course.tags.length - 3}
-                </Badge>
+          </div>
+        </div>
+        
+        <div className="flex flex-wrap justify-between items-center">
+          <div className="flex items-center space-x-3 mb-4 md:mb-0">
+            <div className="h-10 w-10 rounded-full bg-gray-500 flex items-center justify-center text-white text-lg font-medium overflow-hidden">
+              {course.instructor ? (
+                <img 
+                  src={`https://i.pravatar.cc/100?u=${course.instructor}`} 
+                  alt={course.instructor}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span>P</span>
               )}
             </div>
+            <span className="text-white">{course.instructor || "Pedro"}</span>
           </div>
           
-          <div className="flex flex-wrap justify-between items-center">
-            <div className="flex items-center space-x-3 mb-4 md:mb-0">
-              <div className="h-10 w-10 rounded-full bg-gray-500 flex items-center justify-center text-white text-lg font-medium overflow-hidden">
-                {course.instructor ? (
-                  <img 
-                    src={`https://i.pravatar.cc/100?u=${course.instructor}`} 
-                    alt={course.instructor}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <span>P</span>
-                )}
-              </div>
-              <span className="text-white">{course.instructor || "Pedro"}</span>
-            </div>
-            
-            <Button 
-              className="bg-white text-black hover:bg-gray-100 rounded-full gap-2 px-6 pointer-events-auto"
-              onClick={handleButtonClick}
-            >
-              Assistir agora
-              <Play className="h-4 w-4" />
-            </Button>
-          </div>
+          <Button 
+            className="bg-white text-black hover:bg-gray-100 rounded-full gap-2 px-6 relative z-20"
+            onClick={handleButtonClick}
+          >
+            Assistir agora
+            <Play className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </div>
