@@ -175,13 +175,13 @@ const LessonPage = () => {
                 </Button>
               </div>
 
-              {/* Improved Manage Lessons button for admins */}
+              {/* Improved Manage Lessons button for admins and super admins */}
               {isAdmin && (
                 <div className="px-4 mb-6">
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="w-full justify-start gap-2 border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 transition-all duration-200" 
+                    className="w-full justify-start gap-2 border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 transition-all duration-200 shadow-sm" 
                     onClick={() => setShowLessonManager(true)}
                   >
                     <Settings className="h-4 w-4" />
