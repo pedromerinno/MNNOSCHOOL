@@ -47,13 +47,26 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
   onCancel,
   isSubmitting,
 }) => {
-  // Parse valores if it's a string
+  // Parse valores if it's a string and ensure it conforms to CompanyValue interface
   let parsedValores: CompanyValue[] = [];
   try {
     if (initialData?.valores && typeof initialData.valores === 'string') {
-      parsedValores = JSON.parse(initialData.valores);
+      const parsed = JSON.parse(initialData.valores);
+      // Ensure each parsed value has the required properties
+      parsedValores = Array.isArray(parsed) ? parsed.filter((item: any) => 
+        item && typeof item.title === 'string' && typeof item.description === 'string'
+      ).map((item: any) => ({
+        title: item.title || '',
+        description: item.description || ''
+      })) : [];
     } else if (Array.isArray(initialData?.valores)) {
-      parsedValores = initialData.valores;
+      // Ensure the array items conform to CompanyValue interface
+      parsedValores = initialData.valores.filter((item: any) => 
+        item && typeof item.title === 'string' && typeof item.description === 'string'
+      ).map((item: any) => ({
+        title: item.title || '',
+        description: item.description || ''
+      }));
     }
   } catch (e) {
     console.error("Error parsing valores:", e);
