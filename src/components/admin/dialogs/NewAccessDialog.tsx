@@ -22,8 +22,15 @@ export const NewAccessDialog: React.FC<NewAccessDialogProps> = ({ open, onOpenCh
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Companies logic
-  const { selectedCompany, userCompanies, selectCompany, user } = useCompanies();
+  // Companies logic - using userCompanies instead of companies
+  const { selectedCompany, userCompanies, selectCompany, user, isLoading } = useCompanies();
+
+  console.log('[NewAccessDialog] Companies data:', {
+    userCompaniesCount: userCompanies.length,
+    selectedCompany: selectedCompany?.nome || 'none',
+    isLoading,
+    userId: user?.id || 'no user'
+  });
 
   const handleCompanyChange = (companyId: string) => {
     const company = userCompanies.find(c => c.id === companyId);
@@ -54,16 +61,21 @@ export const NewAccessDialog: React.FC<NewAccessDialogProps> = ({ open, onOpenCh
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Novo Acesso</DialogTitle>
+          <DialogTitle>Nova Senha de Acesso</DialogTitle>
         </DialogHeader>
         <div className="mb-4">
           <Label>Empresa</Label>
           <Select 
             value={selectedCompany?.id || ""} 
             onValueChange={handleCompanyChange}
+            disabled={isLoading || userCompanies.length === 0}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Selecione uma empresa" />
+              <SelectValue placeholder={
+                isLoading ? "Carregando empresas..." : 
+                userCompanies.length === 0 ? "Nenhuma empresa disponível" :
+                "Selecione uma empresa"
+              } />
             </SelectTrigger>
             <SelectContent>
               {userCompanies.map((company) => (
@@ -82,6 +94,11 @@ export const NewAccessDialog: React.FC<NewAccessDialogProps> = ({ open, onOpenCh
               ))}
             </SelectContent>
           </Select>
+          {userCompanies.length === 0 && !isLoading && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Nenhuma empresa encontrada. Verifique suas permissões.
+            </p>
+          )}
         </div>
         <div className="space-y-3 py-2">
           <div>
