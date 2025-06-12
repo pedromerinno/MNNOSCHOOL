@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useLessonData } from '@/hooks/useLessonData';
@@ -40,6 +39,23 @@ const LessonPage = () => {
     setShowAutoplayPrompt,
     cancelAutoplay
   } = useAutoplayNavigation(null, courseId);
+
+  // Listen for lesson update events to refresh data
+  useEffect(() => {
+    const handleLessonUpdated = (event: CustomEvent) => {
+      if (event.detail?.lessonId === lessonId) {
+        console.log('Lesson updated event received, refreshing lesson data');
+        // Force a refresh of the lesson data
+        window.location.reload();
+      }
+    };
+
+    window.addEventListener('lesson-updated', handleLessonUpdated as EventListener);
+    
+    return () => {
+      window.removeEventListener('lesson-updated', handleLessonUpdated as EventListener);
+    };
+  }, [lessonId]);
 
   // Handle scroll to top when changing lessons
   useEffect(() => {
@@ -141,7 +157,10 @@ const LessonPage = () => {
                 />
               </div>
               
-              <CourseDescription description={displayLesson?.description || null} />
+              <CourseDescription 
+                description={displayLesson?.description || null} 
+                lessonId={displayLesson?.id}
+              />
               
               <div className="mt-8">
                 <LessonComments lessonId={displayLesson?.id} />

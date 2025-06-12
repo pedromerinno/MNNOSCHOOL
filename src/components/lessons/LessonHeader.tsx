@@ -3,7 +3,10 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { EditableText } from "@/components/ui/EditableText";
 import { Lesson } from '@/components/courses/CourseLessonList';
+import { useLessonEdit } from '@/hooks/lesson/useLessonEdit';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface LessonHeaderProps {
   lesson: Lesson;
@@ -16,7 +19,15 @@ export const LessonHeader: React.FC<LessonHeaderProps> = ({
   courseId,
   hideBackButton = false 
 }) => {
+  const { updateLessonField } = useLessonEdit(lesson?.id);
+  const { userProfile } = useAuth();
+  const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
+
   if (!lesson) return null;
+
+  const handleTitleUpdate = async (newTitle: string) => {
+    await updateLessonField('title', newTitle);
+  };
 
   return (
     <>
@@ -29,7 +40,12 @@ export const LessonHeader: React.FC<LessonHeaderProps> = ({
         </Button>
       )}
       
-      <h1 className="text-3xl font-bold mb-4">{lesson.title}</h1>
+      <EditableText
+        value={lesson.title}
+        onSave={handleTitleUpdate}
+        className="text-3xl font-bold mb-4"
+        canEdit={isAdmin}
+      />
     </>
   );
 };
