@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useLessonData } from '@/hooks/useLessonData';
+import { useLessonDataOptimized } from '@/hooks/lesson/useLessonDataOptimized';
 import { useAutoplayNavigation } from '@/hooks/lesson/useAutoplayNavigation';
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { LessonHeader } from '@/components/lessons/LessonHeader';
@@ -11,7 +11,6 @@ import { LessonSkeleton } from '@/components/lessons/LessonSkeleton';
 import { LessonNotFound } from '@/components/lessons/LessonNotFound';
 import { CourseDescription } from '@/components/courses/CourseDescription';
 import { LessonPlaylist } from '@/components/lessons/LessonPlaylist';
-import { LessonFormSheet } from '@/components/admin/courses/LessonFormSheet';
 import { LessonManager } from '@/components/admin/courses/LessonManager';
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Settings, BookOpen } from "lucide-react";
@@ -31,7 +30,7 @@ const LessonPage = () => {
   const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
   
-  // Use useLessonData with URL parameter
+  // Use o hook otimizado
   const { 
     lesson, 
     loading, 
@@ -42,8 +41,9 @@ const LessonPage = () => {
     userLiked,
     toggleLikeLesson,
     completed,
-    refreshLessonData
-  } = useLessonData(lessonId);
+    refreshLessonData,
+    isFromCache
+  } = useLessonDataOptimized(lessonId);
 
   // Use lessons hook for admin functionality
   const { handleCreateLesson, isSubmitting } = useLessons(courseId || '');
@@ -81,7 +81,6 @@ const LessonPage = () => {
     const handleLessonUpdated = (event: CustomEvent) => {
       if (event.detail?.lessonId === lessonId) {
         console.log('Lesson updated event received, refreshing lesson data');
-        // Force a refresh of the lesson data
         window.location.reload();
       }
     };
@@ -98,7 +97,6 @@ const LessonPage = () => {
     const handleCourseUpdated = (event: CustomEvent) => {
       if (event.detail?.courseId === courseId) {
         console.log('Course updated event received, refreshing lesson data and playlist');
-        // Refresh the lesson data to update the playlist
         if (refreshLessonData) {
           refreshLessonData();
         }
@@ -124,7 +122,6 @@ const LessonPage = () => {
       setCurrentLesson(lesson);
       setIsTransitioning(false);
       setLocalLoading(false);
-      // Clear local updates when new lesson data arrives
       setLocalUpdates({});
     }
   }, [lesson, loading]);
@@ -136,12 +133,12 @@ const LessonPage = () => {
     };
   }, [cancelAutoplay]);
 
-  // Improved lesson selection handling with smoother transitions
+  // Navegação otimizada
   const handleLessonSelect = (selectedLessonId: string) => {
     if (selectedLessonId === lessonId) return;
     
     setIsTransitioning(true);
-    setLocalUpdates({}); // Clear local updates when changing lessons
+    setLocalUpdates({});
     navigateToLesson(selectedLessonId);
   };
 
@@ -149,7 +146,6 @@ const LessonPage = () => {
     try {
       await handleCreateLesson(data);
       setShowLessonManager(false);
-      // Refresh the lesson list by dispatching a course update event
       window.dispatchEvent(new CustomEvent('course-updated', {
         detail: { courseId }
       }));
@@ -158,10 +154,10 @@ const LessonPage = () => {
     }
   };
 
-  // If we have a current lesson and are transitioning, show that instead of skeleton
-  const shouldShowContent = currentLesson && (!loading || isTransitioning);
+  // Loading otimizado - mostrar skeleton apenas se não for do cache
+  const shouldShowContent = currentLesson && (!loading || isTransitioning || isFromCache);
   
-  if (loading && !shouldShowContent) {
+  if (loading && !shouldShowContent && !isFromCache) {
     return <LessonSkeleton />;
   }
 
@@ -170,7 +166,6 @@ const LessonPage = () => {
   }
 
   // Use either the current loaded lesson or the previous lesson during transition
-  // Apply local updates on top of the base lesson data
   const baseLesson = isTransitioning ? currentLesson : lesson || currentLesson;
   const displayLesson = baseLesson ? {
     ...baseLesson,
@@ -181,10 +176,10 @@ const LessonPage = () => {
     <>
       <DashboardLayout fullWidth>
         <div className="flex flex-col lg:flex-row w-full min-h-[calc(100vh-80px)]">
-          {/* Improved Sidebar with company color styling */}
+          {/* Sidebar otimizado com padding adequado */}
           <div className="lg:w-1/4 lg:min-h-full border-r border-border/60 bg-muted/20">
             <div className="fixed lg:w-[calc(25%-1px)] top-[80px] h-[calc(100vh-80px)] overflow-y-auto">
-              {/* Back to course button with company color accent */}
+              {/* Back to course button */}
               <div className="p-6 pb-4 border-b border-border/40">
                 <Button 
                   variant="ghost" 
@@ -201,7 +196,7 @@ const LessonPage = () => {
                 </Button>
               </div>
 
-              {/* Manage Lessons button for admins with company color styling */}
+              {/* Admin button */}
               {isAdmin && (
                 <div className="px-6 py-4 border-b border-border/40">
                   <Button 
@@ -222,25 +217,24 @@ const LessonPage = () => {
                 </div>
               )}
               
-              {/* Lesson playlist with company color */}
-              <div className="px-3 py-2">
+              {/* Lesson playlist */}
+              <div className="p-4">
                 <LessonPlaylist
                   lessons={displayLesson?.course_lessons || []}
                   currentLessonId={displayLesson?.id}
                   onLessonSelect={handleLessonSelect}
-                  loading={loading}
+                  loading={loading && !isFromCache}
                   companyColor={companyColor}
                 />
               </div>
             </div>
           </div>
           
-          {/* Content area with better spacing */}
+          {/* Content area */}
           <div className="flex-1 p-6 lg:px-10 lg:py-8">
-            <div className={isTransitioning ? "opacity-70 pointer-events-none transition-opacity" : ""}>
+            <div className={isTransitioning && !isFromCache ? "opacity-70 pointer-events-none transition-opacity" : ""}>
               <LessonHeader lesson={displayLesson} courseId={courseId} hideBackButton={true} />
 
-              {/* Actions in a single row above the video */}
               <LessonActions
                 completed={completed}
                 onMarkCompleted={markLessonCompleted}
@@ -252,7 +246,6 @@ const LessonPage = () => {
               />
               
               <div className="mt-8 space-y-10">
-                {/* Video container */}
                 <div className="rounded-xl overflow-hidden shadow-sm">
                   <LessonContent 
                     lesson={displayLesson}
