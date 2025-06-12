@@ -6,18 +6,25 @@ import { Company } from "@/types/company";
 import { useCompanies } from "@/hooks/useCompanies";
 
 export const useSettingsManagement = () => {
-  const { userCompanies, isLoading: isLoadingCompanies, fetchCompanies, selectedCompany: globalSelectedCompany } = useCompanies();
+  const { 
+    userCompanies, 
+    isLoading: isLoadingCompanies, 
+    selectedCompany: globalSelectedCompany,
+    forceGetUserCompanies,
+    user
+  } = useCompanies();
+  
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("info");
-  const hasLoadedCompanies = useRef(false);
   const hasInitialized = useRef(false);
 
   console.log('[useSettingsManagement] Hook state:', {
     userCompaniesCount: userCompanies.length,
     selectedCompany: selectedCompany?.nome || 'none',
     globalSelectedCompany: globalSelectedCompany?.nome || 'none',
-    isLoadingCompanies
+    isLoadingCompanies,
+    userId: user?.id || 'no user'
   });
 
   // Ordenar empresas para que a empresa selecionada globalmente apareça primeiro
@@ -29,17 +36,15 @@ export const useSettingsManagement = () => {
     return a.nome.localeCompare(b.nome);
   });
 
-  // Load companies if not loaded
+  // Force load companies if we have a user but no companies
   useEffect(() => {
-    const loadCompanies = async () => {
-      if (!hasLoadedCompanies.current && !isLoadingCompanies && userCompanies.length === 0) {
-        console.log("[useSettingsManagement] Loading companies - Initial Load");
-        hasLoadedCompanies.current = true;
-        await fetchCompanies();
-      }
-    };
-    loadCompanies();
-  }, [fetchCompanies, isLoadingCompanies, userCompanies.length]);
+    if (user?.id && !isLoadingCompanies && userCompanies.length === 0) {
+      console.log('[useSettingsManagement] No companies loaded, forcing fetch...');
+      forceGetUserCompanies(user.id).catch(error => {
+        console.error('[useSettingsManagement] Error forcing companies fetch:', error);
+      });
+    }
+  }, [user?.id, isLoadingCompanies, userCompanies.length, forceGetUserCompanies]);
 
   // Initialize selected company when companies are available
   useEffect(() => {
@@ -53,7 +58,7 @@ export const useSettingsManagement = () => {
         setSelectedCompany(globalSelectedCompany);
       }
       // Second priority: first available company
-      else {
+      else if (companies.length > 0) {
         console.log("[useSettingsManagement] Using first available company:", companies[0].nome);
         setSelectedCompany(companies[0]);
       }
