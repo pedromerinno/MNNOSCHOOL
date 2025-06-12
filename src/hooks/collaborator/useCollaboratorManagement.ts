@@ -8,8 +8,12 @@ import { useCompanyUserRelationship } from './useCompanyUserRelationship';
 import { useFilterUsers } from './useFilterUsers';
 import { CollaboratorData } from './types';
 
+const MAX_RETRY_ATTEMPTS = 3;
+const RETRY_DELAY = 2000;
+
 export const useCollaboratorManagement = (company: Company | null): CollaboratorData => {
   const { users: allUsers, loading: loadingUsers, fetchUsers } = useUsers();
+  const [retryAttempt, setRetryAttempt] = useState(0);
   
   // Get state management and actions
   const {
@@ -45,6 +49,26 @@ export const useCollaboratorManagement = (company: Company | null): Collaborator
   const { availableUsers, filteredCompanyUsers } = 
     useFilterUsers(allUsers, companyUsers, searchTerm);
 
+  // Function to retry fetch with backoff
+  const retryFetchWithBackoff = useCallback(async (fn: () => Promise<any>) => {
+    try {
+      return await fn();
+    } catch (error) {
+      if (retryAttempt < MAX_RETRY_ATTEMPTS) {
+        console.log(`Retry attempt ${retryAttempt + 1} of ${MAX_RETRY_ATTEMPTS}`);
+        setRetryAttempt(prev => prev + 1);
+        
+        // Implement exponential backoff
+        const delay = RETRY_DELAY * Math.pow(2, retryAttempt);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        
+        // Try again
+        return fn();
+      }
+      throw error;
+    }
+  }, [retryAttempt]);
+
   // Wrapper functions to include company
   const addUserToCompany = useCallback(async (userId: string): Promise<boolean | void> => {
     if (!company) {
@@ -62,7 +86,12 @@ export const useCollaboratorManagement = (company: Company | null): Collaborator
     return removeUser(userId, company);
   }, [removeUser, company]);
 
-  // Single effect to load company users - simplified logic
+  // Reset retry counter when company changes
+  useEffect(() => {
+    setRetryAttempt(0);
+  }, [company?.id]);
+
+  // Load data when component mounts and when company or reload trigger changes
   useEffect(() => {
     const loadCompanyUsers = async () => {
       if (!company || !company.id) {
@@ -74,18 +103,13 @@ export const useCollaboratorManagement = (company: Company | null): Collaborator
         return;
       }
       
-      // Prevent double loading by checking if we're already loading
-      if (isLoading && initialFetchDone.current) {
-        console.log("Already loading, skipping duplicate request");
-        return;
-      }
-      
-      console.log(`Loading company users for ${company.nome} (trigger: ${reloadTrigger})`);
+      console.log(`Loading company users for ${company.nome} (${reloadTrigger})`);
       try {
         setIsLoading(true);
         setError(null);
         
-        await fetchCompanyUsers(company);
+        // Use retry mechanism
+        await retryFetchWithBackoff(() => fetchCompanyUsers(company));
         
         setIsLoading(false);
       } catch (error: any) {
@@ -96,7 +120,7 @@ export const useCollaboratorManagement = (company: Company | null): Collaborator
     };
     
     loadCompanyUsers();
-  }, [company?.id, reloadTrigger, fetchCompanyUsers, setIsLoading, setCompanyUsers, setError, initialFetchDone, isLoading]);
+  }, [company, reloadTrigger, fetchCompanyUsers, setIsLoading, setCompanyUsers, setError, initialFetchDone, retryFetchWithBackoff]);
   
   // Ensure all users are loaded
   useEffect(() => {
@@ -105,6 +129,21 @@ export const useCollaboratorManagement = (company: Company | null): Collaborator
       fetchUsers();
     }
   }, [allUsers.length, loadingUsers, fetchUsers]);
+  
+  // Listen for company selection events and reload data
+  useEffect(() => {
+    const handleCompanyChange = () => {
+      console.log("CollaboratorsManagement: Company change event detected");
+      setRetryAttempt(0); // Reset retry counter on company change events
+      setReloadTrigger(prev => prev + 1);
+    };
+    
+    window.addEventListener('company-relation-changed', handleCompanyChange);
+    
+    return () => {
+      window.removeEventListener('company-relation-changed', handleCompanyChange);
+    };
+  }, [setReloadTrigger]);
 
   return {
     isLoading,
