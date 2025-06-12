@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { CourseHeader } from './CourseHeader';
 import { CourseHero } from './CourseHero';
 import { CourseNotFound } from './CourseNotFound';
@@ -14,7 +14,8 @@ import { calculateTotalDuration } from '@/utils/durationUtils';
 
 export const CourseView: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
-  const { userCompanies } = useCompanies();
+  const { userCompanies, selectedCompany } = useCompanies();
+  const navigate = useNavigate();
   
   const {
     course,
@@ -35,6 +36,24 @@ export const CourseView: React.FC = () => {
     handleCourseUpdate,
     refreshCourseData
   } = useCourseView(courseId);
+
+  // Listen for company changes and redirect to courses page
+  useEffect(() => {
+    const handleCompanyChange = () => {
+      console.log('Company changed in CourseView, redirecting to courses page');
+      navigate('/courses');
+    };
+
+    window.addEventListener('company-selected', handleCompanyChange);
+    window.addEventListener('company-selector-changed', handleCompanyChange);
+    window.addEventListener('company-changed', handleCompanyChange);
+    
+    return () => {
+      window.removeEventListener('company-selected', handleCompanyChange);
+      window.removeEventListener('company-selector-changed', handleCompanyChange);
+      window.removeEventListener('company-changed', handleCompanyChange);
+    };
+  }, [navigate]);
 
   // Listen for course update events to refresh data
   useEffect(() => {

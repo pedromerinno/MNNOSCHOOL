@@ -1,5 +1,6 @@
+
 import React, { useEffect, useState, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useLessonDataOptimized } from '@/hooks/lesson/useLessonDataOptimized';
 import { useAutoplayNavigation } from '@/hooks/lesson/useAutoplayNavigation';
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
@@ -24,8 +25,27 @@ const LessonPage = () => {
   const [localUpdates, setLocalUpdates] = useState<Record<string, any>>({});
   const { userProfile } = useAuth();
   const { selectedCompany } = useCompanies();
+  const navigate = useNavigate();
   const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
+  
+  // Listen for company changes and redirect to courses page
+  useEffect(() => {
+    const handleCompanyChange = () => {
+      console.log('Company changed in LessonPage, redirecting to courses page');
+      navigate('/courses');
+    };
+
+    window.addEventListener('company-selected', handleCompanyChange);
+    window.addEventListener('company-selector-changed', handleCompanyChange);
+    window.addEventListener('company-changed', handleCompanyChange);
+    
+    return () => {
+      window.removeEventListener('company-selected', handleCompanyChange);
+      window.removeEventListener('company-selector-changed', handleCompanyChange);
+      window.removeEventListener('company-changed', handleCompanyChange);
+    };
+  }, [navigate]);
   
   // Use o hook otimizado
   const { 
