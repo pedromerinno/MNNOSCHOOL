@@ -97,7 +97,7 @@ export const InviteCompanySelector: React.FC<InviteCompanySelectorProps> = ({
     >
       <SelectTrigger className="w-full">
         <SelectValue placeholder={loading ? "Carregando empresas..." : "Selecione uma empresa"}>
-          {selectedCompany && (
+          {selectedCompany && selectedCompany.nome && (
             <div className="flex items-center">
               <Avatar className="h-5 w-5 mr-2">
                 {selectedCompany.logo ? (
@@ -111,7 +111,7 @@ export const InviteCompanySelector: React.FC<InviteCompanySelectorProps> = ({
                   />
                 ) : null}
                 <AvatarFallback className="text-xs">
-                  {selectedCompany.nome.charAt(0).toUpperCase()}
+                  {selectedCompany.nome ? selectedCompany.nome.charAt(0).toUpperCase() : 'E'}
                 </AvatarFallback>
               </Avatar>
               {selectedCompany.nome}
@@ -127,7 +127,7 @@ export const InviteCompanySelector: React.FC<InviteCompanySelectorProps> = ({
                 {company.logo ? (
                   <AvatarImage 
                     src={company.logo} 
-                    alt={company.nome}
+                    alt={company.nome || 'Empresa'}
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';
@@ -135,10 +135,10 @@ export const InviteCompanySelector: React.FC<InviteCompanySelectorProps> = ({
                   />
                 ) : null}
                 <AvatarFallback className="text-xs">
-                  {company.nome.charAt(0).toUpperCase()}
+                  {company.nome ? company.nome.charAt(0).toUpperCase() : 'E'}
                 </AvatarFallback>
               </Avatar>
-              {company.nome}
+              {company.nome || 'Empresa sem nome'}
             </div>
           </SelectItem>
         ))}

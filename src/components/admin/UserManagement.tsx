@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { InviteCompanySelector } from './user/InviteCompanySelector';
 import { useCompanies } from '@/hooks/useCompanies';
+import { Company } from '@/types/company';
 
 export const UserManagement = () => {
   const { users, loading, fetchUsers, toggleAdminStatus } = useUsers();
@@ -20,7 +21,7 @@ export const UserManagement = () => {
   const [permissionError, setPermissionError] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [showInviteInfo, setShowInviteInfo] = useState(false);
-  const [selectedInviteCompany, setSelectedInviteCompany] = useState(null);
+  const [selectedInviteCompany, setSelectedInviteCompany] = useState<Company | null>(null);
   const { toast } = useToast();
 
   // Use companies with skipLoadingInOnboarding to prevent conflicts
@@ -66,9 +67,9 @@ export const UserManagement = () => {
     setShowInviteInfo(true);
   };
 
-  const handleCompanyChange = (companyId) => {
-    const company = { id: companyId }; // Temporary company object for ID display
-    setSelectedInviteCompany(company);
+  const handleCompanyChange = (companyId: string) => {
+    const company = userCompanies.find(c => c.id === companyId);
+    setSelectedInviteCompany(company || null);
   };
 
   // Se não há usuários e não está carregando, mostrar estado vazio específico
