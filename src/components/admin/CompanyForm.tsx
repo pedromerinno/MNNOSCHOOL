@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -94,6 +95,13 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
     };
     await onSubmit(processedData);
   };
+
+  // Ensure watched valores conform to CompanyValue interface
+  const watchedValores = form.watch('valores') || [];
+  const conformedValores: CompanyValue[] = watchedValores.map(value => ({
+    title: value?.title || '',
+    description: value?.description || ''
+  }));
 
   return (
     <Form {...form}>
@@ -204,7 +212,7 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
         />
 
         <CompanyValuesField
-          values={form.watch('valores') || []}
+          values={conformedValores}
           onChange={(values) => form.setValue('valores', values)}
         />
 
