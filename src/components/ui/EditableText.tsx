@@ -89,7 +89,7 @@ export const EditableText: React.FC<EditableTextProps> = ({
   if (!isEditing) {
     return (
       <div
-        className={`${className} ${canEdit ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded p-1 transition-colors' : ''}`}
+        className={`${className} ${canEdit ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg p-2 transition-colors' : ''}`}
         onDoubleClick={handleDoubleClick}
         title={canEdit ? 'Clique duas vezes para editar' : ''}
       >
@@ -101,34 +101,36 @@ export const EditableText: React.FC<EditableTextProps> = ({
   const InputComponent = multiline ? Textarea : Input;
 
   return (
-    <div className="flex items-start gap-2">
+    <div className="flex flex-col gap-4 w-full max-w-4xl mx-auto">
       <InputComponent
         ref={inputRef as any}
         value={editValue}
         onChange={(e) => setEditValue(e.target.value)}
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
-        className={`${className} flex-1`}
+        className={`${className} ${multiline ? 'min-h-[120px] text-center text-lg resize-none border-2 border-primary/20 focus:border-primary shadow-lg' : ''} w-full`}
         disabled={isSaving}
+        placeholder={placeholder}
       />
-      <div className="flex gap-1">
+      <div className="flex justify-center gap-3">
         <Button
           size="sm"
-          variant="ghost"
           onClick={handleSave}
           disabled={isSaving}
-          className="h-8 w-8 p-0"
+          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2"
         >
           <Check className="h-4 w-4" />
+          Salvar
         </Button>
         <Button
           size="sm"
-          variant="ghost"
+          variant="outline"
           onClick={handleCancel}
           disabled={isSaving}
-          className="h-8 w-8 p-0"
+          className="flex items-center gap-2 px-6 py-2"
         >
           <X className="h-4 w-4" />
+          Cancelar
         </Button>
       </div>
     </div>
