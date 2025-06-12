@@ -101,8 +101,8 @@ export const EditableText: React.FC<EditableTextProps> = ({
   const InputComponent = multiline ? Textarea : Input;
 
   return (
-    <div className="w-full flex flex-col items-center">
-      <div className="w-full max-w-7xl flex flex-col items-center">
+    <div className="w-full flex items-center gap-2">
+      <div className="flex-1">
         <InputComponent
           ref={inputRef as any}
           value={editValue}
@@ -113,27 +113,26 @@ export const EditableText: React.FC<EditableTextProps> = ({
           disabled={isSaving}
           placeholder={placeholder}
         />
-        <div className="flex justify-center gap-3 mt-4 mb-8 w-full">
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={isSaving}
-            className="flex items-center gap-2 bg-black hover:bg-black/90 text-white px-4 py-2 rounded-lg transition-all duration-200 font-medium"
-          >
-            <Check className="h-4 w-4" />
-            {isSaving ? 'Salvando...' : 'Salvar'}
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleCancel}
-            disabled={isSaving}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 transition-all duration-200 font-medium"
-          >
-            <X className="h-4 w-4" />
-            Cancelar
-          </Button>
-        </div>
+      </div>
+      
+      <div className="flex items-center gap-1 flex-shrink-0">
+        <Button
+          size="sm"
+          onClick={handleSave}
+          disabled={isSaving}
+          className="h-8 w-8 p-0 bg-black hover:bg-black/90 text-white rounded-md"
+        >
+          <Check className="h-4 w-4" />
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleCancel}
+          disabled={isSaving}
+          className="h-8 w-8 p-0 border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-md"
+        >
+          <X className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );
