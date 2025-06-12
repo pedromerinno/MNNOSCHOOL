@@ -29,9 +29,9 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
   onSuccess 
 }) => {
   const [roles, setRoles] = useState<JobRole[]>([]);
-  const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
-  const [currentRoleId, setCurrentRoleId] = useState<string | null>(null);
-  const [currentRoleTitle, setCurrentRoleTitle] = useState<string | null>(null);
+  const [selectedRoleId, setSelectedRoleId] = useState<string>("");
+  const [currentRoleId, setCurrentRoleId] = useState<string>("");
+  const [currentRoleTitle, setCurrentRoleTitle] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +40,10 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
     const fetchData = async () => {
       setIsLoading(true);
       setError(null);
+      
       try {
+        console.log('[UserRoleAssignment] Fetching data for user:', user.id, 'company:', companyId);
+        
         // Buscar cargos da empresa
         const { data: roleData, error: roleError } = await supabase
           .from('job_roles')
@@ -48,47 +51,60 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
           .eq('company_id', companyId)
           .order('title');
           
-        if (roleError) throw roleError;
-        
-        if (roleData) {
-          setRoles(roleData as JobRole[]);
+        if (roleError) {
+          console.error('[UserRoleAssignment] Error fetching roles:', roleError);
+          throw roleError;
         }
         
-        // Buscar cargo atual do usuário
-        if (user.cargo_id) {
-          setCurrentRoleId(user.cargo_id);
-          setSelectedRoleId(user.cargo_id);
+        console.log('[UserRoleAssignment] Roles fetched:', roleData?.length || 0);
+        setRoles(roleData as JobRole[] || []);
+        
+        // Buscar perfil atualizado do usuário para pegar o cargo atual
+        const { data: userProfile, error: profileError } = await supabase
+          .from('profiles')
+          .select('cargo_id')
+          .eq('id', user.id)
+          .single();
           
-          const { data: currentRoleData, error: currentRoleError } = await supabase
-            .from('job_roles')
-            .select('title')
-            .eq('id', user.cargo_id)
-            .single();
-            
-          if (!currentRoleError && currentRoleData) {
-            setCurrentRoleTitle(currentRoleData.title);
+        if (profileError && profileError.code !== 'PGRST116') {
+          console.error('[UserRoleAssignment] Error fetching user profile:', profileError);
+          throw profileError;
+        }
+        
+        const userCargoId = userProfile?.cargo_id || user.cargo_id;
+        console.log('[UserRoleAssignment] User cargo_id:', userCargoId);
+        
+        if (userCargoId) {
+          setCurrentRoleId(userCargoId);
+          setSelectedRoleId(userCargoId);
+          
+          // Buscar título do cargo atual
+          const currentRole = roleData?.find(role => role.id === userCargoId);
+          if (currentRole) {
+            setCurrentRoleTitle(currentRole.title);
+            console.log('[UserRoleAssignment] Current role found:', currentRole.title);
+          } else {
+            console.warn('[UserRoleAssignment] Current role not found in company roles');
+            setCurrentRoleTitle('Cargo não encontrado');
           }
+        } else {
+          console.log('[UserRoleAssignment] No cargo assigned to user');
+          setCurrentRoleId("");
+          setSelectedRoleId("");
+          setCurrentRoleTitle("");
         }
       } catch (error: any) {
-        console.error("Error fetching role data:", error);
+        console.error("[UserRoleAssignment] Error fetching role data:", error);
         setError(`Erro ao carregar dados: ${error.message}`);
       } finally {
         setIsLoading(false);
       }
     };
     
-    if (user && companyId) {
+    if (user?.id && companyId) {
       fetchData();
     }
-  }, [user, companyId]);
-  
-  // Atualizamos para manter o cargo atual como opção padrão na lista
-  useEffect(() => {
-    if (user?.cargo_id) {
-      setSelectedRoleId(user.cargo_id);
-      setCurrentRoleId(user.cargo_id);
-    }
-  }, [user]);
+  }, [user?.id, companyId]);
   
   const handleSaveRole = async () => {
     if (!selectedRoleId) {
@@ -96,6 +112,7 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
       return;
     }
     
+    console.log('[UserRoleAssignment] Saving role:', selectedRoleId, 'for user:', user.id);
     setIsSaving(true);
     setError(null);
     
@@ -110,20 +127,21 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
         .update(updates)
         .eq('id', user.id);
         
-      if (error) throw error;
+      if (error) {
+        console.error('[UserRoleAssignment] Error updating profile:', error);
+        throw error;
+      }
+      
+      console.log('[UserRoleAssignment] Profile updated successfully');
       
       // Atualizar estado local
       setCurrentRoleId(selectedRoleId);
       
       // Buscar título do cargo atualizado
-      const { data: updatedRoleData, error: updatedRoleError } = await supabase
-        .from('job_roles')
-        .select('title')
-        .eq('id', selectedRoleId)
-        .single();
-        
-      if (!updatedRoleError && updatedRoleData) {
-        setCurrentRoleTitle(updatedRoleData.title);
+      const updatedRole = roles.find(role => role.id === selectedRoleId);
+      if (updatedRole) {
+        setCurrentRoleTitle(updatedRole.title);
+        console.log('[UserRoleAssignment] Role title updated:', updatedRole.title);
       }
       
       // Disparar evento personalizado para notificar outros componentes
@@ -142,7 +160,7 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
       }
       
     } catch (error: any) {
-      console.error("Error updating role:", error);
+      console.error("[UserRoleAssignment] Error updating role:", error);
       setError(`Erro ao atualizar cargo: ${error.message}`);
       toast.error(`Erro ao atualizar cargo: ${error.message}`);
     } finally {
@@ -153,6 +171,7 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
   const handleRemoveRole = async () => {
     if (!confirm("Tem certeza que deseja remover o cargo deste usuário?")) return;
     
+    console.log('[UserRoleAssignment] Removing role for user:', user.id);
     setIsSaving(true);
     setError(null);
     
@@ -165,11 +184,16 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
         })
         .eq('id', user.id);
         
-      if (error) throw error;
+      if (error) {
+        console.error('[UserRoleAssignment] Error removing role:', error);
+        throw error;
+      }
       
-      setCurrentRoleId(null);
-      setCurrentRoleTitle(null);
-      setSelectedRoleId(null);
+      console.log('[UserRoleAssignment] Role removed successfully');
+      
+      setCurrentRoleId("");
+      setCurrentRoleTitle("");
+      setSelectedRoleId("");
       
       // Disparar evento personalizado para notificar outros componentes
       window.dispatchEvent(new CustomEvent('user-role-updated', {
@@ -187,7 +211,7 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
       }
       
     } catch (error: any) {
-      console.error("Error removing role:", error);
+      console.error("[UserRoleAssignment] Error removing role:", error);
       setError(`Erro ao remover cargo: ${error.message}`);
       toast.error(`Erro ao remover cargo: ${error.message}`);
     } finally {
@@ -235,8 +259,11 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
               <div>
                 <Label htmlFor="role-select">Selecionar Cargo</Label>
                 <Select
-                  value={selectedRoleId || ""}
-                  onValueChange={setSelectedRoleId}
+                  value={selectedRoleId}
+                  onValueChange={(value) => {
+                    console.log('[UserRoleAssignment] Role selected:', value);
+                    setSelectedRoleId(value);
+                  }}
                 >
                   <SelectTrigger id="role-select">
                     <SelectValue placeholder="Selecione um cargo..." />
@@ -263,7 +290,7 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
                 )}
                 <Button 
                   onClick={handleSaveRole} 
-                  disabled={isSaving || selectedRoleId === currentRoleId}
+                  disabled={isSaving || !selectedRoleId || selectedRoleId === currentRoleId}
                 >
                   {isSaving ? "Salvando..." : "Salvar Cargo"}
                 </Button>
