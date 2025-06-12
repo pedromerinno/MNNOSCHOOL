@@ -14,8 +14,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Company } from "@/types/company";
+import { Company, CompanyValue } from "@/types/company";
 import DragDropImageUpload from '@/components/ui/DragDropImageUpload';
+import { CompanyValuesField } from './CompanyValuesField';
 
 const companySchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
@@ -23,7 +24,10 @@ const companySchema = z.object({
   frase_institucional: z.string().optional().nullable(),
   missao: z.string().optional().nullable(),
   historia: z.string().optional().nullable(),
-  valores: z.string().optional().nullable(),
+  valores: z.array(z.object({
+    title: z.string(),
+    description: z.string()
+  })).optional(),
   video_institucional: z.string().optional().nullable(),
   descricao_video: z.string().optional().nullable(),
 });
@@ -32,7 +36,7 @@ type CompanyFormValues = z.infer<typeof companySchema>;
 
 interface CompanyFormProps {
   initialData?: Company;
-  onSubmit: (data: CompanyFormValues) => Promise<void>;
+  onSubmit: (data: any) => Promise<void>;
   onCancel: () => void;
   isSubmitting: boolean;
 }
@@ -43,6 +47,19 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
   onCancel,
   isSubmitting,
 }) => {
+  // Parse valores if it's a string
+  let parsedValores: CompanyValue[] = [];
+  try {
+    if (initialData?.valores && typeof initialData.valores === 'string') {
+      parsedValores = JSON.parse(initialData.valores);
+    } else if (Array.isArray(initialData?.valores)) {
+      parsedValores = initialData.valores;
+    }
+  } catch (e) {
+    console.error("Error parsing valores:", e);
+    parsedValores = [];
+  }
+
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companySchema),
     defaultValues: {
@@ -51,15 +68,24 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
       frase_institucional: initialData?.frase_institucional || "",
       missao: initialData?.missao || "",
       historia: initialData?.historia || "",
-      valores: initialData?.valores || "",
+      valores: parsedValores,
       video_institucional: initialData?.video_institucional || "",
       descricao_video: initialData?.descricao_video || "",
     },
   });
 
+  const handleFormSubmit = async (data: CompanyFormValues) => {
+    // Convert valores array to JSON string for storage
+    const processedData = {
+      ...data,
+      valores: data.valores && data.valores.length > 0 ? JSON.stringify(data.valores) : null
+    };
+    await onSubmit(processedData);
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="nome"
@@ -165,6 +191,11 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
           )}
         />
 
+        <CompanyValuesField
+          values={form.watch('valores') || []}
+          onChange={(values) => form.setValue('valores', values)}
+        />
+
         <FormField
           control={form.control}
           name="historia"
@@ -177,25 +208,6 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
                   {...field} 
                   value={field.value || ""}
                   rows={4}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="valores"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Valores</FormLabel>
-              <FormControl>
-                <Textarea 
-                  placeholder="Descreva os valores da empresa" 
-                  {...field} 
-                  value={field.value || ""}
-                  rows={3}
                 />
               </FormControl>
               <FormMessage />
