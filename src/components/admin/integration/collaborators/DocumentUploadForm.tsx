@@ -5,12 +5,18 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DocumentType, DOCUMENT_TYPE_LABELS } from "@/types/document";
-import { AlertCircle, Loader2, Upload } from "lucide-react";
-import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from '@/hooks/documents/constants';
+import { AlertCircle, Loader2, Upload, Link as LinkIcon } from "lucide-react";
 
 interface DocumentUploadFormProps {
-  onSubmit: (file: File, documentType: DocumentType, description: string) => Promise<void>;
+  onSubmit: (
+    attachmentType: 'file' | 'link',
+    fileOrUrl: File | string,
+    documentType: DocumentType,
+    description: string,
+    name: string
+  ) => Promise<void>;
   isUploading: boolean;
   fileError: string | null;
   onCancel: () => void;
@@ -22,14 +28,28 @@ export const DocumentUploadForm: React.FC<DocumentUploadFormProps> = ({
   fileError,
   onCancel
 }) => {
+  const [attachmentType, setAttachmentType] = useState<'file' | 'link'>('file');
   const [file, setFile] = useState<File | null>(null);
+  const [linkUrl, setLinkUrl] = useState("");
+  const [linkName, setLinkName] = useState("");
   const [documentType, setDocumentType] = useState<DocumentType>("confidentiality_agreement");
   const [description, setDescription] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (file) {
-      await onSubmit(file, documentType, description);
+    
+    if (attachmentType === 'file' && file) {
+      await onSubmit(attachmentType, file, documentType, description, file.name);
+    } else if (attachmentType === 'link' && linkUrl && linkName) {
+      await onSubmit(attachmentType, linkUrl, documentType, description, linkName);
+    }
+  };
+
+  const isValid = () => {
+    if (attachmentType === 'file') {
+      return file !== null;
+    } else {
+      return linkUrl.trim() !== '' && linkName.trim() !== '';
     }
   };
 
@@ -58,20 +78,58 @@ export const DocumentUploadForm: React.FC<DocumentUploadFormProps> = ({
           </SelectContent>
         </Select>
       </div>
-      
+
       <div className="space-y-2">
-        <Label htmlFor="document-file">Arquivo</Label>
-        <Input 
-          id="document-file" 
-          type="file" 
-          onChange={(e) => setFile(e.target.files?.[0] || null)}
-          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-        />
-        {file && (
-          <p className="text-sm text-gray-500">
-            Arquivo selecionado: {file.name} ({Math.round(file.size / 1024)} KB)
-          </p>
-        )}
+        <Label>Tipo de Anexo</Label>
+        <Tabs value={attachmentType} onValueChange={(value) => setAttachmentType(value as 'file' | 'link')}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="file" className="flex items-center gap-2">
+              <Upload className="h-4 w-4" />
+              Arquivo
+            </TabsTrigger>
+            <TabsTrigger value="link" className="flex items-center gap-2">
+              <LinkIcon className="h-4 w-4" />
+              Link
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="file" className="space-y-2">
+            <Label htmlFor="document-file">Arquivo</Label>
+            <Input 
+              id="document-file" 
+              type="file" 
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+            />
+            {file && (
+              <p className="text-sm text-gray-500">
+                Arquivo selecionado: {file.name} ({Math.round(file.size / 1024)} KB)
+              </p>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="link" className="space-y-2">
+            <div className="space-y-2">
+              <Label htmlFor="document-name">Nome do Documento</Label>
+              <Input 
+                id="document-name"
+                value={linkName}
+                onChange={(e) => setLinkName(e.target.value)}
+                placeholder="Digite o nome do documento"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="document-url">URL do Link</Label>
+              <Input 
+                id="document-url"
+                type="url"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                placeholder="https://exemplo.com/documento"
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
       
       <div className="space-y-2">
@@ -95,7 +153,7 @@ export const DocumentUploadForm: React.FC<DocumentUploadFormProps> = ({
         </Button>
         <Button 
           type="submit" 
-          disabled={isUploading || !file}
+          disabled={isUploading || !isValid()}
         >
           {isUploading ? (
             <>
@@ -104,8 +162,12 @@ export const DocumentUploadForm: React.FC<DocumentUploadFormProps> = ({
             </>
           ) : (
             <>
-              <Upload className="mr-2 h-4 w-4" />
-              Enviar Documento
+              {attachmentType === 'file' ? (
+                <Upload className="mr-2 h-4 w-4" />
+              ) : (
+                <LinkIcon className="mr-2 h-4 w-4" />
+              )}
+              {attachmentType === 'file' ? 'Enviar Documento' : 'Adicionar Link'}
             </>
           )}
         </Button>
