@@ -19,8 +19,15 @@ export const AddDocumentDialog: React.FC<AddDocumentDialogProps> = ({ open, onOp
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Companies logic
-  const { selectedCompany, userCompanies, selectCompany, user } = useCompanies();
+  // Companies logic - using userCompanies instead of companies
+  const { selectedCompany, userCompanies, selectCompany, user, isLoading } = useCompanies();
+
+  console.log('[AddDocumentDialog] Companies data:', {
+    userCompaniesCount: userCompanies.length,
+    selectedCompany: selectedCompany?.nome || 'none',
+    isLoading,
+    userId: user?.id || 'no user'
+  });
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) setFile(e.target.files[0]);
@@ -59,9 +66,14 @@ export const AddDocumentDialog: React.FC<AddDocumentDialogProps> = ({ open, onOp
           <Select 
             value={selectedCompany?.id || ""} 
             onValueChange={handleCompanyChange}
+            disabled={isLoading || userCompanies.length === 0}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Selecione uma empresa" />
+              <SelectValue placeholder={
+                isLoading ? "Carregando empresas..." : 
+                userCompanies.length === 0 ? "Nenhuma empresa disponível" :
+                "Selecione uma empresa"
+              } />
             </SelectTrigger>
             <SelectContent>
               {userCompanies.map((company) => (
@@ -80,6 +92,11 @@ export const AddDocumentDialog: React.FC<AddDocumentDialogProps> = ({ open, onOp
               ))}
             </SelectContent>
           </Select>
+          {userCompanies.length === 0 && !isLoading && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Nenhuma empresa encontrada. Verifique suas permissões.
+            </p>
+          )}
         </div>
         <div className="space-y-3">
           <div>
