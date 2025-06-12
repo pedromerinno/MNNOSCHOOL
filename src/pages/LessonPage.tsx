@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useLessonData } from '@/hooks/useLessonData';
@@ -19,6 +20,7 @@ const LessonPage = () => {
   const [localLoading, setLocalLoading] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [currentLesson, setCurrentLesson] = useState<any>(null);
+  const [localUpdates, setLocalUpdates] = useState<Record<string, any>>({});
   
   // Use useLessonData with URL parameter
   const { 
@@ -45,10 +47,10 @@ const LessonPage = () => {
     const handleLessonFieldUpdated = (event: CustomEvent) => {
       const { lessonId: updatedLessonId, field, value } = event.detail;
       
-      if (updatedLessonId === lessonId && currentLesson) {
+      if (updatedLessonId === lessonId) {
         console.log('Updating lesson field locally:', field, value);
-        setCurrentLesson((prevLesson: any) => ({
-          ...prevLesson,
+        setLocalUpdates(prev => ({
+          ...prev,
           [field]: value
         }));
       }
@@ -59,7 +61,7 @@ const LessonPage = () => {
     return () => {
       window.removeEventListener('lesson-field-updated', handleLessonFieldUpdated as EventListener);
     };
-  }, [lessonId, currentLesson]);
+  }, [lessonId]);
 
   // Listen for lesson update events to refresh data
   useEffect(() => {
@@ -90,6 +92,8 @@ const LessonPage = () => {
       setCurrentLesson(lesson);
       setIsTransitioning(false);
       setLocalLoading(false);
+      // Clear local updates when new lesson data arrives
+      setLocalUpdates({});
     }
   }, [lesson, loading]);
 
@@ -105,6 +109,7 @@ const LessonPage = () => {
     if (selectedLessonId === lessonId) return;
     
     setIsTransitioning(true);
+    setLocalUpdates({}); // Clear local updates when changing lessons
     navigateToLesson(selectedLessonId);
   };
 
@@ -120,7 +125,12 @@ const LessonPage = () => {
   }
 
   // Use either the current loaded lesson or the previous lesson during transition
-  const displayLesson = isTransitioning ? currentLesson : lesson || currentLesson;
+  // Apply local updates on top of the base lesson data
+  const baseLesson = isTransitioning ? currentLesson : lesson || currentLesson;
+  const displayLesson = baseLesson ? {
+    ...baseLesson,
+    ...localUpdates
+  } : null;
 
   return (
     <DashboardLayout fullWidth>
