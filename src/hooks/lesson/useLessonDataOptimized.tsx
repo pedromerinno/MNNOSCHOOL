@@ -7,10 +7,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 // Cache em memória melhorado com localStorage backup
 const lessonCache = new Map<string, any>();
-const CACHE_DURATION = 10 * 60 * 1000; // 10 minutos
+const CACHE_DURATION = 15 * 60 * 1000; // Aumentado para 15 minutos
 const STORAGE_KEY = 'lesson-cache';
 
-// Funções de cache com localStorage
+// Funções de cache com localStorage otimizadas
 const getCachedData = (key: string) => {
   // Primeiro verifica o cache em memória
   const memoryCache = lessonCache.get(key);
@@ -45,12 +45,14 @@ const setCachedData = (key: string, data: any) => {
   // Salvar em memória
   lessonCache.set(key, cacheEntry);
   
-  // Salvar em localStorage
-  try {
-    localStorage.setItem(`${STORAGE_KEY}-${key}`, JSON.stringify(cacheEntry));
-  } catch (error) {
-    console.warn('Error writing to localStorage:', error);
-  }
+  // Salvar em localStorage de forma assíncrona
+  setTimeout(() => {
+    try {
+      localStorage.setItem(`${STORAGE_KEY}-${key}`, JSON.stringify(cacheEntry));
+    } catch (error) {
+      console.warn('Error writing to localStorage:', error);
+    }
+  }, 0);
 };
 
 export const useLessonDataOptimized = (lessonId: string | undefined) => {
@@ -67,20 +69,23 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
     return getCachedData(id);
   }, []);
 
-  // Prefetch de dados relacionados
+  // Prefetch de dados relacionados - otimizado
   const prefetchRelatedData = useCallback(async (lesson: any) => {
     if (!lesson?.course_lessons) return;
     
-    // Prefetch próximas 2 aulas
+    // Prefetch próximas 3 aulas (aumentado de 2 para 3)
     const currentIndex = lesson.course_lessons.findIndex((l: any) => l.id === lesson.id);
-    const nextLessons = lesson.course_lessons.slice(currentIndex + 1, currentIndex + 3);
+    const nextLessons = lesson.course_lessons.slice(currentIndex + 1, currentIndex + 4);
     
-    nextLessons.forEach((nextLesson: any) => {
+    nextLessons.forEach((nextLesson: any, index: number) => {
       if (!getCachedData(nextLesson.id)) {
-        // Simular prefetch (pode ser implementado com fetch real se necessário)
+        // Prefetch com delay menor para as próximas aulas
         setTimeout(() => {
-          setPrefetchedData(prev => new Map(prev.set(nextLesson.id, { prefetched: true })));
-        }, 100);
+          setPrefetchedData(prev => new Map(prev.set(nextLesson.id, { 
+            prefetched: true, 
+            priority: index + 1 
+          })));
+        }, index * 50); // Delay menor e escalonado
       }
     });
   }, []);
@@ -130,7 +135,7 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
     }
   }, [lesson, currentLessonId, loading, prefetchRelatedData]);
 
-  // Update current lesson ID quando o prop muda
+  // Update current lesson ID quando o prop muda - otimizado
   useEffect(() => {
     if (lessonId && lessonId !== currentLessonId) {
       // Cancelar requisições anteriores

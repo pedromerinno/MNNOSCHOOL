@@ -78,13 +78,13 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
     }
   }, [currentLessonId, navigatingToLesson]);
 
-  // Improved lesson click handler with immediate feedback
+  // Fixed lesson click handler - removed restriction that was blocking navigation
   const handleLessonClick = (lessonId: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    // Don't navigate if already current lesson or already navigating
-    if (lessonId === currentLessonId || navigatingToLesson) {
+    // Only prevent navigation if it's the same lesson
+    if (lessonId === currentLessonId) {
       return;
     }
     
@@ -94,10 +94,10 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
     // Call the navigation function immediately
     onLessonSelect(lessonId);
     
-    // Set timeout to clear navigation state if something goes wrong
+    // Clear navigation state after a reasonable timeout
     setTimeout(() => {
       setNavigatingToLesson(null);
-    }, 3000);
+    }, 2000); // Reduced from 3000ms to 2000ms
   };
 
   const getTypeIcon = (type: string) => {
@@ -194,7 +194,7 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
                     isCurrentLesson
                       ? "border-border/60 shadow-sm ring-1"
                       : "hover:bg-accent/50 border-border/60",
-                    isNavigating && "opacity-50"
+                    isNavigating && "opacity-70"
                   )}
                   style={{
                     backgroundColor: isCurrentLesson ? `${companyColor}08` : undefined,
@@ -203,10 +203,13 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
                   } as React.CSSProperties}
                   onClick={(e) => handleLessonClick(lesson.id, e)}
                 >
-                  {/* Loading overlay for navigating lesson */}
+                  {/* Loading overlay for navigating lesson - improved */}
                   {isNavigating && (
-                    <div className="absolute inset-0 bg-background/50 flex items-center justify-center rounded-lg z-10">
-                      <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    <div className="absolute inset-0 bg-background/70 backdrop-blur-[1px] flex items-center justify-center rounded-lg z-10">
+                      <div 
+                        className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin"
+                        style={{ borderColor: `${companyColor}40`, borderTopColor: 'transparent' }}
+                      ></div>
                     </div>
                   )}
                   
