@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Play, CheckCircle, Clock, PlayCircle, BookOpen, Video, FileText, HelpCircle } from "lucide-react";
@@ -78,13 +77,14 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
     }
   }, [currentLessonId, navigatingToLesson]);
 
-  // Fixed lesson click handler - removed restriction that was blocking navigation
+  // Simplified lesson click handler - allows navigation to any lesson
   const handleLessonClick = (lessonId: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    // Only prevent navigation if it's the same lesson
+    // Don't navigate if it's the same lesson
     if (lessonId === currentLessonId) {
+      console.log('Same lesson clicked, ignoring:', lessonId);
       return;
     }
     
@@ -94,10 +94,10 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
     // Call the navigation function immediately
     onLessonSelect(lessonId);
     
-    // Clear navigation state after a reasonable timeout
+    // Clear navigation state after timeout
     setTimeout(() => {
       setNavigatingToLesson(null);
-    }, 2000); // Reduced from 3000ms to 2000ms
+    }, 1500);
   };
 
   const getTypeIcon = (type: string) => {
@@ -203,7 +203,7 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
                   } as React.CSSProperties}
                   onClick={(e) => handleLessonClick(lesson.id, e)}
                 >
-                  {/* Loading overlay for navigating lesson - improved */}
+                  {/* Loading overlay for navigating lesson */}
                   {isNavigating && (
                     <div className="absolute inset-0 bg-background/70 backdrop-blur-[1px] flex items-center justify-center rounded-lg z-10">
                       <div 

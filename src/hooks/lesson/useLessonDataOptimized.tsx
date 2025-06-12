@@ -7,7 +7,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 // Cache em memória melhorado com localStorage backup
 const lessonCache = new Map<string, any>();
-const CACHE_DURATION = 15 * 60 * 1000; // Aumentado para 15 minutos
+const CACHE_DURATION = 10 * 60 * 1000; // Reduzido para 10 minutos
 const STORAGE_KEY = 'lesson-cache';
 
 // Funções de cache com localStorage otimizadas
@@ -73,19 +73,20 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
   const prefetchRelatedData = useCallback(async (lesson: any) => {
     if (!lesson?.course_lessons) return;
     
-    // Prefetch próximas 3 aulas (aumentado de 2 para 3)
+    // Prefetch próximas 2 aulas e anteriores 1 aula
     const currentIndex = lesson.course_lessons.findIndex((l: any) => l.id === lesson.id);
-    const nextLessons = lesson.course_lessons.slice(currentIndex + 1, currentIndex + 4);
+    const nextLessons = lesson.course_lessons.slice(currentIndex + 1, currentIndex + 3);
+    const prevLessons = lesson.course_lessons.slice(Math.max(0, currentIndex - 1), currentIndex);
     
-    nextLessons.forEach((nextLesson: any, index: number) => {
-      if (!getCachedData(nextLesson.id)) {
-        // Prefetch com delay menor para as próximas aulas
+    [...prevLessons, ...nextLessons].forEach((relatedLesson: any, index: number) => {
+      if (!getCachedData(relatedLesson.id)) {
+        // Prefetch com delay menor
         setTimeout(() => {
-          setPrefetchedData(prev => new Map(prev.set(nextLesson.id, { 
+          setPrefetchedData(prev => new Map(prev.set(relatedLesson.id, { 
             prefetched: true, 
             priority: index + 1 
           })));
-        }, index * 50); // Delay menor e escalonado
+        }, index * 30);
       }
     });
   }, []);
@@ -154,7 +155,10 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
   
   // Navegação otimizada e mais rápida
   const handleNavigateToLesson = useCallback((newLessonId: string) => {
-    if (newLessonId === currentLessonId) return;
+    if (newLessonId === currentLessonId) {
+      console.log('Same lesson, ignoring navigation');
+      return;
+    }
     
     console.log('Fast navigation to lesson:', newLessonId);
     
@@ -169,7 +173,7 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
     }
     
     if ((cachedLesson || lesson)?.course_id) {
-      // Navegação imediata sem delay
+      // Navegação imediata
       navigate(`/courses/${(cachedLesson || lesson).course_id}/lessons/${newLessonId}`, { 
         replace: true,
         state: { 
