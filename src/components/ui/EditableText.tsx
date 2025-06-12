@@ -102,7 +102,7 @@ export const EditableText: React.FC<EditableTextProps> = ({
 
   return (
     <div className="w-full flex flex-col items-center">
-      <div className="w-full max-w-5xl flex flex-col items-center">
+      <div className="w-full max-w-6xl flex flex-col items-center">
         <InputComponent
           ref={inputRef as any}
           value={editValue}
