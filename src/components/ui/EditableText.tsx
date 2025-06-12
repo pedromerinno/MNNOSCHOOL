@@ -101,18 +101,20 @@ export const EditableText: React.FC<EditableTextProps> = ({
   const InputComponent = multiline ? Textarea : Input;
 
   return (
-    <div className="flex flex-col gap-4 w-full max-w-4xl mx-auto">
-      <InputComponent
-        ref={inputRef as any}
-        value={editValue}
-        onChange={(e) => setEditValue(e.target.value)}
-        onKeyDown={handleKeyDown}
-        onBlur={handleBlur}
-        className={`${className} ${multiline ? 'min-h-[120px] text-center text-lg resize-none border-2 border-primary/20 focus:border-primary shadow-lg' : ''} w-full`}
-        disabled={isSaving}
-        placeholder={placeholder}
-      />
-      <div className="flex justify-center gap-3">
+    <div className="w-full flex flex-col items-center">
+      <div className="w-full max-w-5xl">
+        <InputComponent
+          ref={inputRef as any}
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={handleBlur}
+          className={`${multiline ? 'min-h-[120px] text-center text-lg resize-none border-2 border-primary/20 focus:border-primary shadow-lg' : ''} w-full`}
+          disabled={isSaving}
+          placeholder={placeholder}
+        />
+      </div>
+      <div className="flex justify-center gap-3 mt-4">
         <Button
           size="sm"
           onClick={handleSave}
