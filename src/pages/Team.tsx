@@ -5,6 +5,7 @@ import { useCompanies } from "@/hooks/useCompanies";
 import { TeamMembersList } from "@/components/team/TeamMembersList";
 import { EmptyState } from "@/components/team/EmptyState";
 import { useTeamMembersOptimized } from "@/hooks/team/useTeamMembersOptimized";
+import { useTeamMembers } from "@/hooks/team/useTeamMembers";
 import { toast } from "sonner";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,24 +16,36 @@ const Team = () => {
   const { selectedCompany, isLoading: companiesLoading } = useCompanies();
   const { userProfile } = useAuth();
   const [showSlowLoadingMessage, setShowSlowLoadingMessage] = useState(false);
+  const [useOptimized, setUseOptimized] = useState(true);
 
-  // Use the optimized hook
-  const { 
-    members, 
-    isLoading: membersLoading, 
-    error: membersError 
-  } = useTeamMembersOptimized({
+  // Try optimized hook first
+  const optimizedResult = useTeamMembersOptimized({
     selectedCompanyId: selectedCompany?.id,
-    skipLoading: companiesLoading || !selectedCompany?.id
+    skipLoading: companiesLoading || !selectedCompany?.id || !useOptimized
   });
+
+  // Fallback to original hook if optimized fails
+  const fallbackResult = useTeamMembers();
+
+  // Choose which result to use
+  const { members, isLoading: membersLoading, error: membersError } = useOptimized ? optimizedResult : fallbackResult;
 
   console.log('[Team] Current state:', {
     companiesLoading,
     membersLoading,
     selectedCompanyId: selectedCompany?.id,
     membersCount: members.length,
-    hasError: !!membersError
+    hasError: !!membersError,
+    useOptimized
   });
+
+  // If optimized hook has error, switch to fallback
+  useEffect(() => {
+    if (useOptimized && optimizedResult.error && !optimizedResult.isLoading) {
+      console.log('[Team] Optimized hook failed, switching to fallback');
+      setUseOptimized(false);
+    }
+  }, [useOptimized, optimizedResult.error, optimizedResult.isLoading]);
 
   // Redirect if user is not an admin
   if (!userProfile?.is_admin && !userProfile?.super_admin) {

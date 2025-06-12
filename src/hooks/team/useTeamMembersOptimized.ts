@@ -60,6 +60,8 @@ export const useTeamMembersOptimized = ({
 
       if (teamError) throw teamError;
 
+      console.log('[useTeamMembersOptimized] Dados brutos recebidos:', teamData);
+
       const teamMembers: UserProfile[] = teamData?.map((item: any) => ({
         id: item.profiles.id,
         display_name: item.profiles.display_name,
