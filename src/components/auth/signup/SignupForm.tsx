@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,14 +54,10 @@ export const SignupForm = () => {
     setIsSuccess(false);
     
     try {
-      const metadataWithCompany = { 
-        interests: ["onboarding_incomplete"] 
-      };
-      
       const displayName = email.split('@')[0];
       
-      console.log("Iniciando cadastro com metadata:", metadataWithCompany);
-      const result = await signUp(email, password, displayName, metadataWithCompany);
+      console.log("Iniciando cadastro");
+      const result = await signUp(email, password, displayName);
       
       console.log("Resultado do cadastro:", result);
       

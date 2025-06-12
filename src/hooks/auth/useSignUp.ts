@@ -20,8 +20,7 @@ export const useSignUp = ({
   const signUp = useCallback(async (
     email: string, 
     password: string, 
-    displayName: string, 
-    metadata?: { interests?: string[] }
+    displayName: string
   ) => {
     try {
       setLoading(true);
@@ -56,7 +55,6 @@ export const useSignUp = ({
         options: {
           data: {
             display_name: displayName,
-            interests: metadata?.interests || [],
           },
         },
       });
@@ -96,7 +94,6 @@ export const useSignUp = ({
           .from('profiles')
           .update({ 
             display_name: displayName,
-            interesses: metadata?.interests || [],
             primeiro_login: true
           })
           .eq('id', data.user.id);

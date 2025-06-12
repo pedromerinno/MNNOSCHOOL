@@ -48,7 +48,6 @@ export const useUserProfile = () => {
           super_admin: data.super_admin,
           avatar: data.avatar,
           cargo_id: data.cargo_id,
-          interesses: data.interesses,
           primeiro_login: data.primeiro_login,
           created_at: data.created_at
         };
