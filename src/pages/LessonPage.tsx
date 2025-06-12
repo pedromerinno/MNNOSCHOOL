@@ -40,6 +40,27 @@ const LessonPage = () => {
     cancelAutoplay
   } = useAutoplayNavigation(null, courseId);
 
+  // Listen for lesson field update events to update data locally
+  useEffect(() => {
+    const handleLessonFieldUpdated = (event: CustomEvent) => {
+      const { lessonId: updatedLessonId, field, value } = event.detail;
+      
+      if (updatedLessonId === lessonId && currentLesson) {
+        console.log('Updating lesson field locally:', field, value);
+        setCurrentLesson((prevLesson: any) => ({
+          ...prevLesson,
+          [field]: value
+        }));
+      }
+    };
+
+    window.addEventListener('lesson-field-updated', handleLessonFieldUpdated as EventListener);
+    
+    return () => {
+      window.removeEventListener('lesson-field-updated', handleLessonFieldUpdated as EventListener);
+    };
+  }, [lessonId, currentLesson]);
+
   // Listen for lesson update events to refresh data
   useEffect(() => {
     const handleLessonUpdated = (event: CustomEvent) => {
@@ -99,7 +120,7 @@ const LessonPage = () => {
   }
 
   // Use either the current loaded lesson or the previous lesson during transition
-  const displayLesson = isTransitioning ? currentLesson : lesson;
+  const displayLesson = isTransitioning ? currentLesson : lesson || currentLesson;
 
   return (
     <DashboardLayout fullWidth>

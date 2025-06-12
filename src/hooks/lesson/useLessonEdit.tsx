@@ -20,9 +20,13 @@ export const useLessonEdit = (lessonId: string | undefined) => {
 
       toast.success('Aula atualizada com sucesso');
       
-      // Trigger a refresh of lesson data
-      window.dispatchEvent(new CustomEvent('lesson-updated', {
-        detail: { lessonId }
+      // Trigger a local update event instead of page reload
+      window.dispatchEvent(new CustomEvent('lesson-field-updated', {
+        detail: { 
+          lessonId,
+          field,
+          value
+        }
       }));
 
     } catch (error: any) {
