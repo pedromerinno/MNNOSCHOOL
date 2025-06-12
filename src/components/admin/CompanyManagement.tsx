@@ -193,8 +193,8 @@ export const CompanyManagement: React.FC = () => {
 
       {/* Company Form Dialog */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>
               {selectedCompany ? 'Editar Empresa' : 'Criar Nova Empresa'}
             </DialogTitle>
@@ -202,12 +202,14 @@ export const CompanyManagement: React.FC = () => {
               {selectedCompany ? 'Atualize os detalhes da empresa abaixo.' : 'Preencha o formulário para criar uma nova empresa.'}
             </DialogDescription>
           </DialogHeader>
-          <CompanyForm 
-            initialData={selectedCompany} 
-            onSubmit={handleFormSubmit} 
-            onCancel={() => setIsFormOpen(false)} 
-            isSubmitting={isSubmitting} 
-          />
+          <div className="flex-1 overflow-y-auto pr-2">
+            <CompanyForm 
+              initialData={selectedCompany} 
+              onSubmit={handleFormSubmit} 
+              onCancel={() => setIsFormOpen(false)} 
+              isSubmitting={isSubmitting} 
+            />
+          </div>
         </DialogContent>
       </Dialog>
 
