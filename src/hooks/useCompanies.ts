@@ -27,18 +27,11 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
   const initialDataLoaded = useRef(false);
   const hasRegistered = useRef(false);
   
-  console.log(`[useCompanies-${hookId}] Hook called`, {
-    userId: user?.id || 'no user',
-    skipLoadingInOnboarding,
-    initialDataLoaded: initialDataLoaded.current
-  });
-  
   // Register hook with global state
   useEffect(() => {
     if (!hasRegistered.current) {
       globalState.registerHook(hookId);
       hasRegistered.current = true;
-      console.log(`[useCompanies-${hookId}] Hook registered`);
     }
     
     return () => {
@@ -65,12 +58,6 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     incrementFetchCount,
     resetError
   } = useCompanyState();
-  
-  console.log(`[useCompanies-${hookId}] Current state:`, {
-    userCompaniesCount: userCompanies.length,
-    selectedCompany: selectedCompany?.nome || 'none',
-    isLoading
-  });
   
   // Hook for company fetching operations
   const {
@@ -126,15 +113,20 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
   // Listen for company selection events
   useCompanyEvents(setSelectedCompany);
   
-  // Load initial data only when needed - simplified version
+  // Simplified and faster initial data loading
   const loadInitialData = useCallback(async () => {
-    if (skipLoadingInOnboarding || !user?.id || initialDataLoaded.current || isLoading) {
+    if (skipLoadingInOnboarding || !user?.id || initialDataLoaded.current) {
       return;
     }
     
     try {
       initialDataLoaded.current = true;
-      console.log(`[useCompanies-${hookId}] Loading initial company data`);
+      
+      // Try to get stored company first for immediate UI update
+      const storedCompany = getStoredCompany();
+      if (storedCompany) {
+        setSelectedCompany(storedCompany);
+      }
       
       // Check if user is super admin
       const { data: profileData } = await supabase
@@ -156,38 +148,31 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
         }
         
         setUserCompanies(allCompanies || []);
-        console.log(`[useCompanies-${hookId}] Loaded all companies for super admin`);
       } else {
         await getUserCompanies(user.id);
-        console.log(`[useCompanies-${hookId}] Loaded user companies`);
       }
       
     } catch (error) {
       console.error(`[useCompanies-${hookId}] Error loading initial company data:`, error);
       setError(error instanceof Error ? error : new Error('Failed to load companies'));
     }
-  }, [user?.id, isLoading, getUserCompanies, skipLoadingInOnboarding, setUserCompanies, hookId, setError]);
+  }, [user?.id, getUserCompanies, skipLoadingInOnboarding, setUserCompanies, hookId, setError, getStoredCompany, setSelectedCompany]);
   
   // Load initial data when user is available
   useEffect(() => {
     if (user?.id && !skipLoadingInOnboarding && !initialDataLoaded.current) {
-      const timer = setTimeout(() => {
-        loadInitialData();
-      }, 100);
-      
-      return () => clearTimeout(timer);
+      loadInitialData();
     }
   }, [user?.id, skipLoadingInOnboarding, loadInitialData]);
   
   // Auto-select company when user companies are loaded
   useEffect(() => {
     if (userCompanies.length > 0 && !selectedCompany && !skipLoadingInOnboarding) {
-      console.log(`[useCompanies-${hookId}] Auto-selecting first company:`, userCompanies[0].nome);
       setSelectedCompany(userCompanies[0]);
     }
-  }, [userCompanies.length, selectedCompany, skipLoadingInOnboarding, setSelectedCompany, hookId]);
+  }, [userCompanies.length, selectedCompany, skipLoadingInOnboarding, setSelectedCompany]);
   
-  // Simple event listeners
+  // Simplified event listeners
   useEffect(() => {
     if (skipLoadingInOnboarding) {
       return;
@@ -195,14 +180,12 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     
     const handleCompanyRelationChange = () => {
       if (user?.id) {
-        console.log(`[useCompanies-${hookId}] Company relation changed, reloading companies`);
         forceGetUserCompanies(user.id);
       }
     };
 
     const handleForceReload = () => {
       if (user?.id) {
-        console.log(`[useCompanies-${hookId}] Forcing company reload`);
         forceGetUserCompanies(user.id);
       } else {
         fetchCompanies();
@@ -216,7 +199,7 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
       window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
       window.removeEventListener('force-reload-companies', handleForceReload);
     };
-  }, [user?.id, forceGetUserCompanies, fetchCompanies, skipLoadingInOnboarding, hookId]);
+  }, [user?.id, forceGetUserCompanies, fetchCompanies, skipLoadingInOnboarding]);
   
   return {
     isLoading,

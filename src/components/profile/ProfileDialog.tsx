@@ -45,7 +45,7 @@ interface ProfileDialogProps {
 
 export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialogProps) => {
   const { userProfile, updateUserProfile, user } = useAuth();
-  const { userCompanies, isLoading: companiesLoading } = useCompanies();
+  const { userCompanies, isLoading: companiesLoading, forceGetUserCompanies } = useCompanies();
   const [avatarPreview, setAvatarPreview] = useState<string>("https://i.pravatar.cc/150?img=68");
   const { toast } = useToast();
 
@@ -69,6 +69,13 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
       }
     }
   }, [userProfile, email, form]);
+
+  // Force reload companies when dialog opens
+  useEffect(() => {
+    if (isOpen && user?.id) {
+      forceGetUserCompanies(user.id);
+    }
+  }, [isOpen, user?.id, forceGetUserCompanies]);
 
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
