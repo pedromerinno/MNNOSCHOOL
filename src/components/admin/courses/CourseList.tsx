@@ -12,7 +12,6 @@ import { toast } from "sonner";
 import { deleteCourse } from '@/services/course';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-
 interface CourseListProps {
   courses: Course[];
   isLoading: boolean;
@@ -27,7 +26,6 @@ interface CourseListProps {
   companyId?: string;
   handleFormSubmit: (data: any) => Promise<void>;
 }
-
 export const CourseList: React.FC<CourseListProps> = ({
   courses,
   isLoading,
@@ -45,35 +43,28 @@ export const CourseList: React.FC<CourseListProps> = ({
   const [isLessonManagerOpen, setIsLessonManagerOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
-
   const handleNewCourse = () => {
     setSelectedCourse(null);
     setIsFormOpen(true);
   };
-
   const handleEditCourse = (course: Course) => {
     setSelectedCourse(course);
     setIsFormOpen(true);
   };
-
   const handleManageCompanies = (course: Course) => {
     setSelectedCourse(course);
     setIsCompanyManagerOpen(true);
   };
-
   const handleManageLessons = (course: Course) => {
     setSelectedCourse(course);
     setIsLessonManagerOpen(true);
   };
-
   const confirmDeleteCourse = (course: Course) => {
     setCourseToDelete(course);
     setIsDeleteDialogOpen(true);
   };
-
   const handleDeleteCourse = async () => {
     if (!courseToDelete) return;
-
     try {
       const success = await deleteCourse(courseToDelete.id);
       if (success) {
@@ -93,26 +84,21 @@ export const CourseList: React.FC<CourseListProps> = ({
       setCourseToDelete(null);
     }
   };
-
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center py-12">
+    return <div className="flex justify-center items-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
         <span className="ml-2">Carregando cursos...</span>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       <div className="flex justify-between items-center mb-4 px-[20px] py-[10px]">
         <h3 className="text-lg font-medium">
           {showAllCourses ? "Todos os Cursos" : "Cursos Disponíveis"}
         </h3>
+        
       </div>
 
-      {courses.length === 0 ? (
-        <div className="text-center p-8 border border-dashed rounded-lg">
+      {courses.length === 0 ? <div className="text-center p-8 border border-dashed rounded-lg">
           <Users className="h-12 w-12 mx-auto text-gray-400 mb-3" />
           <h3 className="text-lg font-medium mb-1">Nenhum curso encontrado</h3>
           <p className="text-gray-500 mb-4">Adicione seu primeiro curso para começar</p>
@@ -120,9 +106,7 @@ export const CourseList: React.FC<CourseListProps> = ({
             <PlusCircle className="h-4 w-4 mr-2" />
             Adicionar Curso
           </Button>
-        </div>
-      ) : (
-        <Table>
+        </div> : <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="w-16">Capa</TableHead>
@@ -133,25 +117,15 @@ export const CourseList: React.FC<CourseListProps> = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {courses.map(course => (
-              <TableRow key={course.id}>
+            {courses.map(course => <TableRow key={course.id}>
                 <TableCell>
-                  {course.image_url ? (
-                    <img 
-                      src={course.image_url} 
-                      alt={course.title} 
-                      className="h-12 w-16 object-cover rounded" 
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = "/placeholder.svg";
-                        target.onerror = null;
-                      }} 
-                    />
-                  ) : (
-                    <div className="h-12 w-16 bg-gray-200 rounded flex items-center justify-center text-gray-500">
+                  {course.image_url ? <img src={course.image_url} alt={course.title} className="h-12 w-16 object-cover rounded" onError={e => {
+              const target = e.target as HTMLImageElement;
+              target.src = "/placeholder.svg";
+              target.onerror = null;
+            }} /> : <div className="h-12 w-16 bg-gray-200 rounded flex items-center justify-center text-gray-500">
                       No image
-                    </div>
-                  )}
+                    </div>}
                 </TableCell>
                 <TableCell className="font-medium">{course.title}</TableCell>
                 <TableCell>{course.instructor || "Não especificado"}</TableCell>
@@ -185,11 +159,9 @@ export const CourseList: React.FC<CourseListProps> = ({
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
-              </TableRow>
-            ))}
+              </TableRow>)}
           </TableBody>
-        </Table>
-      )}
+        </Table>}
 
       {/* Formulário de curso */}
       <Sheet open={isFormOpen} onOpenChange={setIsFormOpen}>
@@ -197,13 +169,7 @@ export const CourseList: React.FC<CourseListProps> = ({
           <SheetHeader>
             <SheetTitle>{selectedCourse ? "Editar Curso" : "Novo Curso"}</SheetTitle>
           </SheetHeader>
-          <CourseForm 
-            initialData={selectedCourse} 
-            onSubmit={handleFormSubmit} 
-            onCancel={() => setIsFormOpen(false)} 
-            isSubmitting={isSubmitting} 
-            preselectedCompanyId={companyId} 
-          />
+          <CourseForm initialData={selectedCourse} onSubmit={handleFormSubmit} onCancel={() => setIsFormOpen(false)} isSubmitting={isSubmitting} onClose={() => setIsFormOpen(false)} preselectedCompanyId={companyId} />
         </SheetContent>
       </Sheet>
 
@@ -214,24 +180,12 @@ export const CourseList: React.FC<CourseListProps> = ({
             <DialogTitle>Gerenciar Empresas</DialogTitle>
           </DialogHeader>
           
-          {selectedCourse && (
-            <CompanyCoursesManager 
-              course={selectedCourse} 
-              onClose={() => setIsCompanyManagerOpen(false)} 
-            />
-          )}
+          {selectedCourse && <CompanyCoursesManager course={selectedCourse} onClose={() => setIsCompanyManagerOpen(false)} />}
         </DialogContent>
       </Dialog>
       
       {/* Gerenciador de aulas */}
-      {selectedCourse && (
-        <LessonManager 
-          courseId={selectedCourse.id} 
-          courseTitle={selectedCourse.title} 
-          onClose={() => setIsLessonManagerOpen(false)} 
-          open={isLessonManagerOpen} 
-        />
-      )}
+      {selectedCourse && <LessonManager courseId={selectedCourse.id} courseTitle={selectedCourse.title} onClose={() => setIsLessonManagerOpen(false)} open={isLessonManagerOpen} />}
 
       {/* Diálogo de confirmação para excluir curso */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
@@ -240,24 +194,18 @@ export const CourseList: React.FC<CourseListProps> = ({
             <AlertDialogTitle>Excluir curso</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja excluir este curso? Esta ação não pode ser desfeita.
-              {courseToDelete && (
-                <div className="mt-2 font-semibold text-foreground">
+              {courseToDelete && <div className="mt-2 font-semibold text-foreground">
                   "{courseToDelete.title}"
-                </div>
-              )}
+                </div>}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteCourse} 
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogAction onClick={handleDeleteCourse} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
-  );
+    </div>;
 };

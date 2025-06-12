@@ -6,18 +6,12 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Company } from "@/types/company";
-import { EditableText } from "@/components/ui/EditableText";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 
 export const WelcomeSection = () => {
   const { user, userProfile } = useAuth();
-  const { selectedCompany, updateCompany } = useCompanies();
+  const { selectedCompany } = useCompanies();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [displayCompany, setDisplayCompany] = useState<Company | null>(selectedCompany);
-
-  const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
 
   // Simplificar atualização da empresa
   useEffect(() => {
@@ -32,51 +26,8 @@ export const WelcomeSection = () => {
     navigate('/integration');
   };
 
-  const defaultPhrase = "Existimos para criar coisas impossíveis";
+  const defaultPhrase = "Juntos, estamos desenhando o futuro de grandes empresas";
   const companyPhrase = displayCompany?.frase_institucional || defaultPhrase;
-
-  const handleSavePhrase = async (newPhrase: string) => {
-    if (!displayCompany || !isAdmin) {
-      toast({
-        title: "Erro",
-        description: "Você não tem permissão para editar esta frase",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('empresas')
-        .update({ frase_institucional: newPhrase })
-        .eq('id', displayCompany.id);
-
-      if (error) throw error;
-
-      // Atualizar estado local
-      const updatedCompany = { ...displayCompany, frase_institucional: newPhrase };
-      setDisplayCompany(updatedCompany);
-      
-      // Atualizar no contexto de empresas
-      if (updateCompany) {
-        updateCompany(displayCompany.id, updatedCompany);
-      }
-
-      toast({
-        title: "Sucesso",
-        description: "Frase institucional atualizada com sucesso",
-      });
-
-    } catch (error: any) {
-      console.error('Error updating company phrase:', error);
-      toast({
-        title: "Erro",
-        description: error.message || "Erro ao atualizar a frase",
-        variant: "destructive"
-      });
-      throw error;
-    }
-  };
 
   return (
     <div className="mb-16 mt-10">
@@ -87,23 +38,11 @@ export const WelcomeSection = () => {
           Olá, {userName}
         </p>
         
-        {isAdmin && displayCompany ? (
-          <EditableText
-            value={companyPhrase}
-            onSave={handleSavePhrase}
-            multiline={true}
-            className="text-foreground text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-5"
-            placeholder="Digite a frase institucional..."
-            canEdit={true}
-            layout="centered"
-          />
-        ) : (
-          <p 
-            className="text-foreground text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-5"
-          >
-            {companyPhrase}
-          </p>
-        )}
+        <p 
+          className="text-foreground text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-5"
+        >
+          {companyPhrase}
+        </p>
         
         <Button 
           onClick={handleLearnMore} 
