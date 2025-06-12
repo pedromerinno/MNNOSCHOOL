@@ -99,8 +99,8 @@ export const EditableText: React.FC<EditableTextProps> = ({
   const InputComponent = multiline ? Textarea : Input;
 
   return (
-    <div className="w-full flex flex-col items-center">
-      <div className="w-full max-w-7xl">
+    <div className="w-full flex justify-center">
+      <div className="w-full max-w-4xl">
         <InputComponent
           ref={inputRef as any}
           value={editValue}
