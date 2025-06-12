@@ -61,7 +61,7 @@ export const CourseLessonsSection: React.FC<CourseLessonsSectionProps> = ({
   }, [courseId, refreshCourseData]);
 
   return (
-    <Card className="h-full">
+    <Card className="h-fit">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
@@ -91,7 +91,7 @@ export const CourseLessonsSection: React.FC<CourseLessonsSectionProps> = ({
           onClose={() => setShowLessonManager(false)}
         />
         
-        <ScrollArea className="h-auto max-h-[calc(100vh-280px)]">
+        <ScrollArea className="h-auto max-h-[60vh]">
           <CourseLessonList 
             lessons={lessons} 
             courseId={courseId}
