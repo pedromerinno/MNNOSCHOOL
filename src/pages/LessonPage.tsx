@@ -23,7 +23,6 @@ const LessonPage = () => {
   const { courseId, lessonId } = useParams<{ courseId: string, lessonId: string }>();
   const [showLessonManager, setShowLessonManager] = useState(false);
   const [localUpdates, setLocalUpdates] = useState<Record<string, any>>({});
-  const [isNavigating, setIsNavigating] = useState(false);
   const { userProfile } = useAuth();
   const { selectedCompany } = useCompanies();
   const navigate = useNavigate();
@@ -121,17 +120,12 @@ const LessonPage = () => {
     };
   }, [lessonId, refreshLessonData]);
 
-  // Scroll to top when changing lessons and reset navigation state
+  // Scroll to top when changing lessons and reset states
   useEffect(() => {
     window.scrollTo(0, 0);
     setShowAutoplayPrompt(false);
     setLocalUpdates({}); // Limpar updates locais
-    
-    // Reset navigation state when lesson data is loaded
-    if (lesson && isNavigating) {
-      setIsNavigating(false);
-    }
-  }, [lessonId, lesson, isNavigating, setShowAutoplayPrompt]);
+  }, [lessonId, setShowAutoplayPrompt]);
 
   // Clean up autoplay
   useEffect(() => {
@@ -140,13 +134,11 @@ const LessonPage = () => {
     };
   }, [cancelAutoplay]);
 
-  // Navegação otimizada com skeleton
+  // Navegação simples - deixar o hook otimizado fazer o trabalho
   const handleLessonSelect = (selectedLessonId: string) => {
     if (selectedLessonId === lessonId) return;
     
     console.log('Selecting lesson:', selectedLessonId);
-    setIsNavigating(true);
-    setLocalUpdates({});
     navigateToLesson(selectedLessonId);
   };
 
@@ -162,8 +154,8 @@ const LessonPage = () => {
     }
   };
 
-  // Loading otimizado - mostrar skeleton se navegando ou carregando
-  if ((loading && !lesson && !isFromCache) || isNavigating) {
+  // Loading - mostrar skeleton se carregando e não há dados em cache
+  if (loading && !lesson && !isFromCache) {
     return <LessonSkeleton />;
   }
 
@@ -175,7 +167,7 @@ const LessonPage = () => {
     <>
       <DashboardLayout fullWidth>
         <div className="flex flex-col lg:flex-row w-full min-h-[calc(100vh-80px)]">
-          {/* Sidebar com loading otimizado */}
+          {/* Sidebar */}
           <div className="lg:w-1/4 lg:min-h-full border-r border-border/60 bg-muted/20">
             <div className="lg:w-[calc(25%-1px)] lg:fixed top-[80px] h-[calc(100vh-80px)] overflow-y-auto">
               {/* Back to course button */}
@@ -216,7 +208,7 @@ const LessonPage = () => {
                 </div>
               )}
               
-              {/* Playlist com altura flexível */}
+              {/* Playlist */}
               <div className="p-4">
                 <LessonPlaylist
                   lessons={displayLesson?.course_lessons || []}
