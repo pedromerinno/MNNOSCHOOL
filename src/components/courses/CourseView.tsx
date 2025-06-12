@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { CourseHeader } from './CourseHeader';
 import { CourseHero } from './CourseHero';
@@ -35,6 +35,22 @@ export const CourseView: React.FC = () => {
     handleCourseUpdate,
     refreshCourseData
   } = useCourseView(courseId);
+
+  // Listen for course update events to refresh data
+  useEffect(() => {
+    const handleCourseUpdated = (event: CustomEvent) => {
+      if (event.detail?.courseId === courseId) {
+        console.log('Course updated event received, refreshing course data');
+        refreshCourseData();
+      }
+    };
+
+    window.addEventListener('course-updated', handleCourseUpdated as EventListener);
+    
+    return () => {
+      window.removeEventListener('course-updated', handleCourseUpdated as EventListener);
+    };
+  }, [courseId, refreshCourseData]);
 
   if (loading) {
     return <CourseViewSkeleton />;

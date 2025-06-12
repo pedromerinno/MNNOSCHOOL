@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -79,6 +80,17 @@ export const LessonManager: React.FC<LessonManagerProps> = ({
     };
   }, [courseId, open, fetchLessons]);
 
+  const handleClose = () => {
+    onClose();
+    
+    // Trigger course refresh when lesson manager closes
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('course-updated', {
+        detail: { courseId }
+      }));
+    }, 100);
+  };
+
   const handleAddLesson = () => {
     setSelectedLesson(undefined);
     setIsFormOpen(true);
@@ -127,7 +139,7 @@ export const LessonManager: React.FC<LessonManagerProps> = ({
 
   return (
     <>
-      <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+      <Sheet open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
         <SheetContent side="right" className="w-full sm:max-w-3xl p-0 overflow-y-auto">
           <div className="flex flex-col h-full">
             <SheetHeader className="px-6 py-4 border-b">
@@ -158,7 +170,7 @@ export const LessonManager: React.FC<LessonManagerProps> = ({
             </div>
             
             <div className="border-t p-4 flex justify-end">
-              <Button onClick={onClose}>
+              <Button onClick={handleClose}>
                 Fechar
               </Button>
             </div>

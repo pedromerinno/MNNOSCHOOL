@@ -52,6 +52,19 @@ export const EditCourseDialog: React.FC<EditCourseDialogProps> = ({
     };
   }, [open]);
 
+  const handleOpenChange = (newOpen: boolean) => {
+    onOpenChange(newOpen);
+    
+    // When dialog closes, trigger refresh event
+    if (!newOpen) {
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('course-updated', {
+          detail: { courseId: initialData.id }
+        }));
+      }, 100);
+    }
+  };
+
   const handleDeleteCourse = async () => {
     // Make sure we have a valid ID before trying to delete
     if (!initialData.id) {
@@ -74,7 +87,7 @@ export const EditCourseDialog: React.FC<EditCourseDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar Curso</DialogTitle>
@@ -82,9 +95,9 @@ export const EditCourseDialog: React.FC<EditCourseDialogProps> = ({
         <CourseForm
           initialData={initialData}
           onSubmit={onSubmit}
-          onCancel={() => onOpenChange(false)}
+          onCancel={() => handleOpenChange(false)}
           isSubmitting={isSubmitting}
-          onClose={() => onOpenChange(false)}
+          onClose={() => handleOpenChange(false)}
           availableCompanies={userCompanies}
           showCompanySelector={true}
         />
