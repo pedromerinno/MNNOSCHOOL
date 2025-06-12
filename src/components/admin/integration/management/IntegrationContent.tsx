@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Company } from "@/types/company";
@@ -8,7 +7,7 @@ import { CompanyIntegrationForm } from '../CompanyIntegrationForm';
 import { IntegrationVideosManager } from '../IntegrationVideosManager';
 import { JobRolesManager } from '../JobRolesManager';
 import { AccessManagement } from '../AccessManagement';
-import { CollaboratorsManagement } from '../CollaboratorsManagement';
+import { CollaboratorsManagement } from '../collaborators/CollaboratorsManagement';
 
 interface IntegrationContentProps {
   company: Company;
