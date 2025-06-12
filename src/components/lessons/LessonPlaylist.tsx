@@ -77,21 +77,34 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
     }
   }, [currentLessonId, navigatingToLesson]);
 
-  // Fixed lesson click handler - allow navigation to any lesson including previously viewed ones
+  // Completely unrestricted lesson click handler
   const handleLessonClick = (lessonId: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    console.log('Lesson clicked:', lessonId, 'Current:', currentLessonId);
+    console.log('=== LESSON CLICK DEBUG ===');
+    console.log('Clicked lesson ID:', lessonId);
+    console.log('Current lesson ID:', currentLessonId);
+    console.log('Are they the same?', lessonId === currentLessonId);
+    console.log('Navigation state:', navigatingToLesson);
+    console.log('========================');
     
-    // Always allow navigation - remove the restriction that was preventing re-visiting lessons
+    // Set navigation state immediately - no restrictions
     setNavigatingToLesson(lessonId);
     
-    // Call the navigation function immediately
-    onLessonSelect(lessonId);
+    console.log('Calling onLessonSelect with:', lessonId);
+    
+    // Call the navigation function - always execute
+    try {
+      onLessonSelect(lessonId);
+      console.log('onLessonSelect called successfully');
+    } catch (error) {
+      console.error('Error in onLessonSelect:', error);
+    }
     
     // Clear navigation state after timeout
     setTimeout(() => {
+      console.log('Clearing navigation state for:', lessonId);
       setNavigatingToLesson(null);
     }, 1500);
   };
