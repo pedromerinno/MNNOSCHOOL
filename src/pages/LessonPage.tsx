@@ -134,12 +134,14 @@ const LessonPage = () => {
     };
   }, [cancelAutoplay]);
 
-  // Navegação simples - deixar o hook otimizado fazer o trabalho
+  // Navegação simplificada - usando navigate diretamente
   const handleLessonSelect = (selectedLessonId: string) => {
     if (selectedLessonId === lessonId) return;
     
-    console.log('Selecting lesson:', selectedLessonId);
-    navigateToLesson(selectedLessonId);
+    console.log('Navigating to lesson:', selectedLessonId);
+    
+    // Navegar diretamente usando o navigate do React Router
+    navigate(`/courses/${courseId}/lessons/${selectedLessonId}`);
   };
 
   const handleAddLesson = async (data: any) => {
