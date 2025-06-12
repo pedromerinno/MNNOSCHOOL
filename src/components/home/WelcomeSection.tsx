@@ -11,16 +11,14 @@ export const WelcomeSection = () => {
   const { user, userProfile } = useAuth();
   const { selectedCompany } = useCompanies();
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
-  const [displayCompany, setDisplayCompany] = useState<Company | null>(null);
+  const [displayCompany, setDisplayCompany] = useState<Company | null>(selectedCompany);
 
-  // Atualizar empresa exibida quando a seleção mudar
+  // Simplificar atualização da empresa
   useEffect(() => {
-    if (selectedCompany) {
-      console.log('[WelcomeSection] Empresa selecionada atualizada:', selectedCompany.nome);
+    if (selectedCompany && selectedCompany.id !== displayCompany?.id) {
       setDisplayCompany(selectedCompany);
     }
-  }, [selectedCompany]);
+  }, [selectedCompany?.id]);
 
   const userName = userProfile?.display_name || user?.email?.split('@')[0] || 'Usuário';
 
