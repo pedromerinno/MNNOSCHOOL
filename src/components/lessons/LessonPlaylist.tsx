@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Play, CheckCircle, Clock, PlayCircle, BookOpen, Video, FileText, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -28,18 +28,34 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
   companyColor = "#1EAEDB",
   courseId
 }) => {
-  const currentIndex = lessons.findIndex(lesson => lesson.id === currentLessonId);
-  const totalDuration = calculateTotalDuration(lessons);
+  const [localLessons, setLocalLessons] = useState(lessons);
+  const currentIndex = localLessons.findIndex(lesson => lesson.id === currentLessonId);
+  const totalDuration = calculateTotalDuration(localLessons);
 
-  // Listen for lesson field updates to refresh the playlist
+  // Sync local lessons with props
+  useEffect(() => {
+    setLocalLessons(lessons);
+  }, [lessons]);
+
+  // Listen for lesson field updates to update local state immediately
   useEffect(() => {
     const handleLessonFieldUpdated = (event: CustomEvent) => {
-      const { lessonId: updatedLessonId } = event.detail;
+      const { lessonId: updatedLessonId, field, value } = event.detail;
       
       // Check if the updated lesson is in our current playlist
-      if (lessons.some(lesson => lesson.id === updatedLessonId)) {
-        console.log('Lesson field updated in playlist, dispatching course update event');
-        // Dispatch a course update event to refresh the course data
+      if (localLessons.some(lesson => lesson.id === updatedLessonId)) {
+        console.log('Updating lesson field in playlist locally:', field, value);
+        
+        // Update local state immediately
+        setLocalLessons(prevLessons => 
+          prevLessons.map(lesson => 
+            lesson.id === updatedLessonId 
+              ? { ...lesson, [field]: value }
+              : lesson
+          )
+        );
+        
+        // Also dispatch course update event to refresh the course data
         window.dispatchEvent(new CustomEvent('course-updated', {
           detail: { courseId }
         }));
@@ -51,7 +67,7 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
     return () => {
       window.removeEventListener('lesson-field-updated', handleLessonFieldUpdated as EventListener);
     };
-  }, [lessons, courseId]);
+  }, [localLessons, courseId]);
 
   // Prevent default click behavior and handle lesson selection
   const handleLessonClick = (lessonId: string, e: React.MouseEvent) => {
@@ -107,7 +123,7 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
               className="w-2 h-2 rounded-full"
               style={{ backgroundColor: companyColor }}
             ></div>
-            <span className="font-medium">{lessons.length} aulas</span>
+            <span className="font-medium">{localLessons.length} aulas</span>
           </div>
           <div className="w-1 h-1 bg-muted-foreground/40 rounded-full"></div>
           <div className="flex items-center gap-1.5 text-muted-foreground">
@@ -126,7 +142,7 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
           </div>
         ) : (
           <>
-            {lessons.map((lesson, index) => (
+            {localLessons.map((lesson, index) => (
               <Card
                 key={lesson.id}
                 className={cn(
