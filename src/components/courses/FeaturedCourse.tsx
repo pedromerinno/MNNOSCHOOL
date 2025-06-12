@@ -14,8 +14,13 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
   
   if (!course) return null;
 
-  const handleCourseClick = () => {
-    console.log('FeaturedCourse: Course clicked!', { courseId: course.id, courseTitle: course.title });
+  const handleCourseClick = (e: React.MouseEvent) => {
+    console.log('FeaturedCourse: Card clicked!', { 
+      courseId: course.id, 
+      courseTitle: course.title,
+      target: e.target,
+      currentTarget: e.currentTarget
+    });
     navigate(`/courses/${course.id}`);
   };
 
@@ -30,19 +35,21 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
     <div 
       className="rounded-2xl overflow-hidden mb-8 bg-[#1A1F2C] h-[350px] relative cursor-pointer"
       onClick={handleCourseClick}
+      onMouseEnter={() => console.log('Mouse entered featured course card')}
+      onMouseLeave={() => console.log('Mouse left featured course card')}
     >
       {/* Background image */}
       <img 
         src={course.image_url || "https://images.unsplash.com/photo-1617096199719-18e5acee65f8?auto=format&fit=crop&w=1200&q=80"} 
         alt={course.title} 
-        className="w-full h-full object-cover absolute inset-0"
+        className="w-full h-full object-cover absolute inset-0 pointer-events-none"
       />
       
       {/* Diagonal black shadow gradient for readability */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-black/70 to-transparent"></div>
+      <div className="absolute inset-0 bg-gradient-to-tr from-black/70 to-transparent pointer-events-none"></div>
       
       {/* Content positioned over the image */}
-      <div className="relative h-full z-10">
+      <div className="relative h-full z-10 pointer-events-none">
         <div className="flex flex-col h-full p-8 md:p-12">
           <div className="flex-1">
             <h1 className="text-3xl md:text-4xl font-bold text-white mb-6">
@@ -93,7 +100,7 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
             </div>
             
             <Button 
-              className="bg-white text-black hover:bg-gray-100 rounded-full gap-2 px-6"
+              className="bg-white text-black hover:bg-gray-100 rounded-full gap-2 px-6 pointer-events-auto"
               onClick={handleButtonClick}
             >
               Assistir agora
