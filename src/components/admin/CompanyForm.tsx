@@ -25,8 +25,8 @@ const companySchema = z.object({
   missao: z.string().optional().nullable(),
   historia: z.string().optional().nullable(),
   valores: z.array(z.object({
-    title: z.string(),
-    description: z.string()
+    title: z.string().min(1, "Título é obrigatório"),
+    description: z.string().min(1, "Descrição é obrigatória")
   })).optional(),
   video_institucional: z.string().optional().nullable(),
   descricao_video: z.string().optional().nullable(),
