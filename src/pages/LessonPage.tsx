@@ -150,7 +150,7 @@ const LessonPage = () => {
         <div className="flex flex-col lg:flex-row w-full min-h-[calc(100vh-80px)]">
           {/* Sidebar com loading otimizado */}
           <div className="lg:w-1/4 lg:min-h-full border-r border-border/60 bg-muted/20">
-            <div className="fixed lg:w-[calc(25%-1px)] top-[80px] h-[calc(100vh-80px)] overflow-y-auto">
+            <div className="lg:w-[calc(25%-1px)] lg:fixed top-[80px] h-[calc(100vh-80px)] overflow-y-auto">
               {/* Back to course button */}
               <div className="p-6 pb-4 border-b border-border/40">
                 <Button 
@@ -189,7 +189,7 @@ const LessonPage = () => {
                 </div>
               )}
               
-              {/* Playlist com loading otimizado */}
+              {/* Playlist com altura flexível */}
               <div className="p-4">
                 <LessonPlaylist
                   lessons={displayLesson?.course_lessons || []}

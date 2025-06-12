@@ -67,7 +67,7 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
   };
 
   return (
-    <div className="bg-background rounded-lg p-6">
+    <div className="bg-background rounded-lg p-6 h-fit">
       {/* Header with company color accent */}
       <div className="mb-6 pb-4 border-b border-border/40">
         <div className="flex items-center gap-2 mb-3">
@@ -94,7 +94,7 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
         </div>
       </div>
       
-      <div className="max-h-[calc(100vh-240px)] overflow-y-auto pr-2 space-y-3">
+      <div className="max-h-[60vh] overflow-y-auto pr-2 space-y-3">
         {loading ? (
           <div className="space-y-3">
             <Skeleton className="h-16 w-full rounded-lg" />
