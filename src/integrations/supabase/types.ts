@@ -974,6 +974,10 @@ export type Database = {
         Args: { user_id: string }
         Returns: boolean
       }
+      sync_all_profile_emails: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       user_belongs_to_company: {
         Args: { company_id: string } | { user_id: string; company_id: string }
         Returns: boolean
