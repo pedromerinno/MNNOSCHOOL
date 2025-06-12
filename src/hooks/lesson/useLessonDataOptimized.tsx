@@ -5,17 +5,18 @@ import { useLessonProgress } from './useLessonProgress';
 import { useLessonLikes } from './useLessonLikes';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-// Cache em memória para otimizar carregamento
+// Cache em memória melhorado com TTL mais longo
 const lessonCache = new Map<string, any>();
-const CACHE_DURATION = 2 * 60 * 1000; // 2 minutos
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
 
 export const useLessonDataOptimized = (lessonId: string | undefined) => {
   const [currentLessonId, setCurrentLessonId] = useState<string | undefined>(lessonId);
   const [isFromCache, setIsFromCache] = useState(false);
+  const [cachedLesson, setCachedLesson] = useState<any>(null);
   const location = useLocation();
   const abortControllerRef = useRef<AbortController | null>(null);
   
-  // Verificar cache primeiro
+  // Verificar cache primeiro - otimizado
   const getCachedLesson = useCallback((id: string) => {
     const cached = lessonCache.get(id);
     if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
@@ -24,23 +25,48 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
     return null;
   }, []);
 
-  // Use os hooks existentes mas com otimizações
-  const { lesson, loading, error, refetch } = useLessonFetch(currentLessonId);
-  const { completed, markLessonCompleted } = useLessonProgress(currentLessonId, lesson?.course_id, lesson?.completed);
-  const { likes, userLiked, toggleLikeLesson } = useLessonLikes(lesson?.likes || 0, lesson?.user_liked || false);
+  // Usar cache imediatamente se disponível
+  useEffect(() => {
+    if (lessonId) {
+      const cached = getCachedLesson(lessonId);
+      if (cached) {
+        console.log('Loading lesson from cache:', lessonId);
+        setCachedLesson(cached);
+        setIsFromCache(true);
+      } else {
+        setIsFromCache(false);
+        setCachedLesson(null);
+      }
+    }
+  }, [lessonId, getCachedLesson]);
+
+  // Use os hooks apenas quando necessário
+  const shouldFetch = currentLessonId && !isFromCache;
+  const { lesson, loading, error, refetch } = useLessonFetch(shouldFetch ? currentLessonId : undefined);
+  const { completed, markLessonCompleted } = useLessonProgress(
+    currentLessonId, 
+    (cachedLesson || lesson)?.course_id, 
+    (cachedLesson || lesson)?.completed
+  );
+  const { likes, userLiked, toggleLikeLesson } = useLessonLikes(
+    (cachedLesson || lesson)?.likes || 0, 
+    (cachedLesson || lesson)?.user_liked || false
+  );
   const navigate = useNavigate();
 
   // Cache da aula quando carregada
   useEffect(() => {
     if (lesson && currentLessonId && !loading) {
+      console.log('Caching lesson:', currentLessonId);
       lessonCache.set(currentLessonId, {
         data: lesson,
         timestamp: Date.now()
       });
+      setCachedLesson(lesson);
     }
   }, [lesson, currentLessonId, loading]);
 
-  // Update current lesson ID when the prop changes
+  // Update current lesson ID quando o prop muda
   useEffect(() => {
     if (lessonId && lessonId !== currentLessonId) {
       // Cancelar requisições anteriores
@@ -48,46 +74,23 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
         abortControllerRef.current.abort();
       }
       
-      // Verificar cache primeiro
-      const cached = getCachedLesson(lessonId);
-      if (cached) {
-        setIsFromCache(true);
-        setCurrentLessonId(lessonId);
-        return;
-      }
-      
-      setIsFromCache(false);
       setCurrentLessonId(lessonId);
     }
-  }, [lessonId, currentLessonId, getCachedLesson]);
+  }, [lessonId, currentLessonId]);
   
-  // Navegação otimizada
+  // Navegação otimizada com preload
   const handleNavigateToLesson = useCallback((newLessonId: string) => {
     if (newLessonId === currentLessonId) return;
     
-    if (lesson?.course_id) {
-      // Pré-carregar a próxima aula se estiver em cache
-      const nextLesson = getCachedLesson(newLessonId);
-      
-      navigate(`/courses/${lesson.course_id}/lessons/${newLessonId}`, { 
-        replace: true,
-        state: { preventRefresh: true, fromCache: !!nextLesson } 
-      });
-      
-      setCurrentLessonId(newLessonId);
-    }
-  }, [navigate, lesson?.course_id, currentLessonId, getCachedLesson]);
-
-  // Evitar refetches desnecessários
-  useEffect(() => {
-    const preventRefresh = location.state && (location.state as any).preventRefresh;
-    const fromCache = location.state && (location.state as any).fromCache;
+    console.log('Navigating to lesson:', newLessonId);
     
-    if (!preventRefresh && !fromCache && currentLessonId && !isFromCache) {
-      console.log("Regular navigation detected, fetching lesson data");
-      refetch();
+    if ((cachedLesson || lesson)?.course_id) {
+      navigate(`/courses/${(cachedLesson || lesson).course_id}/lessons/${newLessonId}`, { 
+        replace: true,
+        state: { preventRefresh: true } 
+      });
     }
-  }, [location.pathname, refetch, currentLessonId, isFromCache]);
+  }, [navigate, cachedLesson, lesson, currentLessonId]);
 
   // Cleanup ao desmontar
   useEffect(() => {
@@ -98,8 +101,11 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
     };
   }, []);
 
+  // Usar lesson do cache ou fetched
+  const currentLesson = cachedLesson || lesson;
+
   return { 
-    lesson, 
+    lesson: currentLesson, 
     loading: loading && !isFromCache, 
     error, 
     markLessonCompleted,

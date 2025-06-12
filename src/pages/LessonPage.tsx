@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useLessonDataOptimized } from '@/hooks/lesson/useLessonDataOptimized';
 import { useAutoplayNavigation } from '@/hooks/lesson/useAutoplayNavigation';
@@ -20,11 +20,8 @@ import { useCompanies } from '@/hooks/useCompanies';
 
 const LessonPage = () => {
   const { courseId, lessonId } = useParams<{ courseId: string, lessonId: string }>();
-  const [localLoading, setLocalLoading] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [currentLesson, setCurrentLesson] = useState<any>(null);
-  const [localUpdates, setLocalUpdates] = useState<Record<string, any>>({});
   const [showLessonManager, setShowLessonManager] = useState(false);
+  const [localUpdates, setLocalUpdates] = useState<Record<string, any>>({});
   const { userProfile } = useAuth();
   const { selectedCompany } = useCompanies();
   const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
@@ -45,8 +42,8 @@ const LessonPage = () => {
     isFromCache
   } = useLessonDataOptimized(lessonId);
 
-  // Use lessons hook for admin functionality
-  const { handleCreateLesson, isSubmitting } = useLessons(courseId || '');
+  // Use lessons hook apenas para admin
+  const { handleCreateLesson } = useLessons(isAdmin ? (courseId || '') : '');
 
   const {
     showAutoplayPrompt,
@@ -55,7 +52,16 @@ const LessonPage = () => {
     cancelAutoplay
   } = useAutoplayNavigation(null, courseId);
 
-  // Listen for lesson field update events to update data locally
+  // Memoizar displayLesson para evitar re-renders
+  const displayLesson = useMemo(() => {
+    if (!lesson) return null;
+    return {
+      ...lesson,
+      ...localUpdates
+    };
+  }, [lesson, localUpdates]);
+
+  // Listen for lesson field updates
   useEffect(() => {
     const handleLessonFieldUpdated = (event: CustomEvent) => {
       const { lessonId: updatedLessonId, field, value } = event.detail;
@@ -76,12 +82,14 @@ const LessonPage = () => {
     };
   }, [lessonId]);
 
-  // Listen for lesson update events to refresh data
+  // Listen for lesson updates
   useEffect(() => {
     const handleLessonUpdated = (event: CustomEvent) => {
       if (event.detail?.lessonId === lessonId) {
-        console.log('Lesson updated event received, refreshing lesson data');
-        window.location.reload();
+        console.log('Lesson updated, refreshing data');
+        if (refreshLessonData) {
+          refreshLessonData();
+        }
       }
     };
 
@@ -90,43 +98,16 @@ const LessonPage = () => {
     return () => {
       window.removeEventListener('lesson-updated', handleLessonUpdated as EventListener);
     };
-  }, [lessonId]);
+  }, [lessonId, refreshLessonData]);
 
-  // Listen for course update events to refresh lesson data and playlist
-  useEffect(() => {
-    const handleCourseUpdated = (event: CustomEvent) => {
-      if (event.detail?.courseId === courseId) {
-        console.log('Course updated event received, refreshing lesson data and playlist');
-        if (refreshLessonData) {
-          refreshLessonData();
-        }
-      }
-    };
-
-    window.addEventListener('course-updated', handleCourseUpdated as EventListener);
-    
-    return () => {
-      window.removeEventListener('course-updated', handleCourseUpdated as EventListener);
-    };
-  }, [courseId, refreshLessonData]);
-
-  // Handle scroll to top when changing lessons
+  // Scroll to top when changing lessons
   useEffect(() => {
     window.scrollTo(0, 0);
     setShowAutoplayPrompt(false);
+    setLocalUpdates({}); // Limpar updates locais
   }, [lessonId, setShowAutoplayPrompt]);
 
-  // Update current lesson when the lesson data changes
-  useEffect(() => {
-    if (lesson && !loading) {
-      setCurrentLesson(lesson);
-      setIsTransitioning(false);
-      setLocalLoading(false);
-      setLocalUpdates({});
-    }
-  }, [lesson, loading]);
-
-  // Clean up autoplay on unmount
+  // Clean up autoplay
   useEffect(() => {
     return () => {
       cancelAutoplay();
@@ -137,7 +118,7 @@ const LessonPage = () => {
   const handleLessonSelect = (selectedLessonId: string) => {
     if (selectedLessonId === lessonId) return;
     
-    setIsTransitioning(true);
+    console.log('Selecting lesson:', selectedLessonId);
     setLocalUpdates({});
     navigateToLesson(selectedLessonId);
   };
@@ -154,29 +135,20 @@ const LessonPage = () => {
     }
   };
 
-  // Loading otimizado - mostrar skeleton apenas se não for do cache
-  const shouldShowContent = currentLesson && (!loading || isTransitioning || isFromCache);
-  
-  if (loading && !shouldShowContent && !isFromCache) {
+  // Loading otimizado - mostrar conteúdo se disponível
+  if (loading && !lesson && !isFromCache) {
     return <LessonSkeleton />;
   }
 
-  if (!lesson && !currentLesson && !isTransitioning) {
+  if (!lesson && !loading) {
     return <LessonNotFound courseId={courseId} />;
   }
-
-  // Use either the current loaded lesson or the previous lesson during transition
-  const baseLesson = isTransitioning ? currentLesson : lesson || currentLesson;
-  const displayLesson = baseLesson ? {
-    ...baseLesson,
-    ...localUpdates
-  } : null;
 
   return (
     <>
       <DashboardLayout fullWidth>
         <div className="flex flex-col lg:flex-row w-full min-h-[calc(100vh-80px)]">
-          {/* Sidebar otimizado com padding adequado */}
+          {/* Sidebar com loading otimizado */}
           <div className="lg:w-1/4 lg:min-h-full border-r border-border/60 bg-muted/20">
             <div className="fixed lg:w-[calc(25%-1px)] top-[80px] h-[calc(100vh-80px)] overflow-y-auto">
               {/* Back to course button */}
@@ -217,13 +189,13 @@ const LessonPage = () => {
                 </div>
               )}
               
-              {/* Lesson playlist */}
+              {/* Playlist com loading otimizado */}
               <div className="p-4">
                 <LessonPlaylist
                   lessons={displayLesson?.course_lessons || []}
                   currentLessonId={displayLesson?.id}
                   onLessonSelect={handleLessonSelect}
-                  loading={loading && !isFromCache}
+                  loading={loading && !isFromCache && !lesson}
                   companyColor={companyColor}
                 />
               </div>
@@ -232,38 +204,40 @@ const LessonPage = () => {
           
           {/* Content area */}
           <div className="flex-1 p-6 lg:px-10 lg:py-8">
-            <div className={isTransitioning && !isFromCache ? "opacity-70 pointer-events-none transition-opacity" : ""}>
-              <LessonHeader lesson={displayLesson} courseId={courseId} hideBackButton={true} />
+            {displayLesson && (
+              <>
+                <LessonHeader lesson={displayLesson} courseId={courseId} hideBackButton={true} />
 
-              <LessonActions
-                completed={completed}
-                onMarkCompleted={markLessonCompleted}
-                likes={likes}
-                userLiked={userLiked}
-                onToggleLike={toggleLikeLesson}
-                lessonType={displayLesson?.type}
-                lessonDuration={displayLesson?.duration}
-              />
-              
-              <div className="mt-8 space-y-10">
-                <div className="rounded-xl overflow-hidden shadow-sm">
-                  <LessonContent 
-                    lesson={displayLesson}
-                    onVideoEnd={handleVideoEnd}
-                    showAutoplayPrompt={false}
-                  />
-                </div>
-                
-                <CourseDescription 
-                  description={displayLesson?.description || null} 
-                  lessonId={displayLesson?.id}
+                <LessonActions
+                  completed={completed}
+                  onMarkCompleted={markLessonCompleted}
+                  likes={likes}
+                  userLiked={userLiked}
+                  onToggleLike={toggleLikeLesson}
+                  lessonType={displayLesson?.type}
+                  lessonDuration={displayLesson?.duration}
                 />
                 
-                <div className="mt-10">
-                  <LessonComments lessonId={displayLesson?.id} />
+                <div className="mt-8 space-y-10">
+                  <div className="rounded-xl overflow-hidden shadow-sm">
+                    <LessonContent 
+                      lesson={displayLesson}
+                      onVideoEnd={handleVideoEnd}
+                      showAutoplayPrompt={false}
+                    />
+                  </div>
+                  
+                  <CourseDescription 
+                    description={displayLesson?.description || null} 
+                    lessonId={displayLesson?.id}
+                  />
+                  
+                  <div className="mt-10">
+                    <LessonComments lessonId={displayLesson?.id} />
+                  </div>
                 </div>
-              </div>
-            </div>
+              </>
+            )}
           </div>
         </div>
       </DashboardLayout>

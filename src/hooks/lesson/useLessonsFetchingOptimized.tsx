@@ -1,24 +1,47 @@
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from '@/hooks/use-toast';
 import { Lesson } from '@/components/courses/CourseLessonList';
 
-// Cache global para aulas por curso
+// Cache global otimizado
 const courseLessonsCache = new Map<string, {data: Lesson[], timestamp: number}>();
-const CACHE_DURATION = 3 * 60 * 1000; // 3 minutos
+const CACHE_DURATION = 10 * 60 * 1000; // 10 minutos para lista de aulas
 
 export const useLessonsFetchingOptimized = (courseId: string) => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [lastRefreshTime, setLastRefreshTime] = useState<number>(0);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const fetchPromiseRef = useRef<Promise<void> | null>(null);
   const { toast } = useToast();
+
+  // Carregar do cache imediatamente
+  useEffect(() => {
+    if (!courseId) return;
+    
+    const cached = courseLessonsCache.get(courseId);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      console.log(`Loading lessons from cache for course: ${courseId}`);
+      setLessons(cached.data);
+      setIsLoading(false);
+      return;
+    }
+    
+    // Se não tem cache, buscar
+    fetchLessons();
+  }, [courseId]);
 
   const fetchLessons = useCallback(async (force = false) => {
     if (!courseId) return;
     
-    // Verificar cache primeiro
+    // Evitar múltiplas requisições simultâneas
+    if (fetchPromiseRef.current && !force) {
+      console.log('Fetch already in progress, waiting...');
+      return fetchPromiseRef.current;
+    }
+    
+    // Verificar cache novamente
     const cached = courseLessonsCache.get(courseId);
     if (!force && cached && Date.now() - cached.timestamp < CACHE_DURATION) {
       console.log(`Using cached lessons for course: ${courseId}`);
@@ -28,60 +51,62 @@ export const useLessonsFetchingOptimized = (courseId: string) => {
     }
     
     const now = Date.now();
-    if (!force && now - lastRefreshTime < 1000) {
-      console.log(`Skipping lessons refresh for ${courseId} - too soon since last refresh`);
+    if (!force && now - lastRefreshTime < 3000) {
+      console.log(`Skipping lessons refresh for ${courseId} - too recent`);
       return;
     }
     
-    // Cancelar requisição anterior se existir
+    // Cancelar requisição anterior
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
     
-    // Criar novo AbortController
     abortControllerRef.current = new AbortController();
-    
     setIsLoading(true);
     setLastRefreshTime(now);
     
-    try {
-      console.log(`Fetching lessons for course: ${courseId}`);
-      
-      const { data, error } = await supabase
-        .from('lessons')
-        .select('*')
-        .eq('course_id', courseId)
-        .order('order_index', { ascending: true })
-        .abortSignal(abortControllerRef.current.signal);
+    const fetchPromise = async () => {
+      try {
+        console.log(`Fetching lessons for course: ${courseId}`);
+        
+        const { data, error } = await supabase
+          .from('lessons')
+          .select('*')
+          .eq('course_id', courseId)
+          .order('order_index', { ascending: true })
+          .abortSignal(abortControllerRef.current!.signal);
 
-      if (error) {
-        throw error;
-      }
+        if (error) throw error;
 
-      console.log("Aulas carregadas com sucesso:", data?.length || 0);
-      
-      // Atualizar cache
-      courseLessonsCache.set(courseId, {
-        data: data || [],
-        timestamp: Date.now()
-      });
-      
-      setLessons(data || []);
-    } catch (error: any) {
-      if (error.name === 'AbortError') {
-        console.log('Fetch lessons request was aborted');
-        return;
+        console.log("Lessons loaded successfully:", data?.length || 0);
+        
+        // Atualizar cache
+        courseLessonsCache.set(courseId, {
+          data: data || [],
+          timestamp: Date.now()
+        });
+        
+        setLessons(data || []);
+      } catch (error: any) {
+        if (error.name === 'AbortError') {
+          console.log('Fetch lessons request was aborted');
+          return;
+        }
+        
+        console.error("Error loading lessons:", error);
+        toast({
+          title: 'Erro ao carregar aulas',
+          description: error.message,
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
+        fetchPromiseRef.current = null;
       }
-      
-      console.error("Erro ao carregar aulas:", error);
-      toast({
-        title: 'Erro ao carregar aulas',
-        description: error.message,
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    };
+    
+    fetchPromiseRef.current = fetchPromise();
+    return fetchPromiseRef.current;
   }, [courseId, toast, lastRefreshTime]);
 
   // Cleanup
@@ -89,6 +114,7 @@ export const useLessonsFetchingOptimized = (courseId: string) => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
+    fetchPromiseRef.current = null;
   }, []);
 
   return {
