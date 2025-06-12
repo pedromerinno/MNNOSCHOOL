@@ -153,12 +153,15 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
     }
   }, [lessonId, currentLessonId]);
   
-  // Completely unrestricted navigation function
+  // Navegação com logs super detalhados
   const handleNavigateToLesson = useCallback((newLessonId: string) => {
-    console.log('=== NAVIGATION DEBUG ===');
-    console.log('Navigation requested to lesson:', newLessonId);
-    console.log('Current lesson:', currentLessonId);
-    console.log('Course ID from lesson:', (cachedLesson || lesson)?.course_id);
+    console.log('=== NAVIGATION DEBUG START ===');
+    console.log('Navigation function called with lesson ID:', newLessonId);
+    console.log('Current lesson ID in hook:', currentLessonId);
+    console.log('Course ID from cached lesson:', (cachedLesson || lesson)?.course_id);
+    console.log('Cached lesson available:', !!cachedLesson);
+    console.log('Fetched lesson available:', !!lesson);
+    console.log('Navigate function available:', !!navigate);
     
     // Verificar se dados já estão prefetched ou em cache
     const cached = getCachedData(newLessonId);
@@ -172,28 +175,50 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
       console.log('No cached or prefetched data, will fetch fresh');
     }
     
-    if ((cachedLesson || lesson)?.course_id) {
-      console.log('Executing navigation...');
+    const courseId = (cachedLesson || lesson)?.course_id;
+    console.log('Extracted course ID:', courseId);
+    
+    if (courseId) {
+      console.log('Course ID found, proceeding with navigation...');
       
-      // Navegação imediata - sem verificações de restrições
+      const navigationPath = `/courses/${courseId}/lessons/${newLessonId}`;
+      console.log('Navigation path:', navigationPath);
+      
       try {
-        navigate(`/courses/${(cachedLesson || lesson).course_id}/lessons/${newLessonId}`, { 
+        console.log('Calling navigate function...');
+        navigate(navigationPath, { 
           replace: true,
           state: { 
             preventRefresh: true, 
             prefetched: !!prefetched,
-            cached: !!cached
+            cached: !!cached,
+            timestamp: Date.now()
           } 
         });
-        console.log('Navigation executed successfully');
+        console.log('Navigate function called successfully');
+        
+        // Aguardar um pouco e verificar se a navegação funcionou
+        setTimeout(() => {
+          console.log('Current URL after navigation attempt:', window.location.pathname);
+          console.log('Expected URL:', navigationPath);
+          console.log('Navigation successful?', window.location.pathname === navigationPath);
+        }, 100);
+        
       } catch (error) {
-        console.error('Navigation error:', error);
+        console.error('Error during navigation:', error);
+        console.error('Error stack:', error instanceof Error ? error.stack : 'No stack available');
       }
     } else {
       console.error('No course_id available for navigation');
+      console.error('Available lesson data:', {
+        cachedLesson: !!cachedLesson,
+        lesson: !!lesson,
+        cachedLessonCourseId: cachedLesson?.course_id,
+        lessonCourseId: lesson?.course_id
+      });
     }
     
-    console.log('======================');
+    console.log('=== NAVIGATION DEBUG END ===');
   }, [navigate, cachedLesson, lesson, currentLessonId, prefetchedData]);
 
   // Cleanup ao desmontar

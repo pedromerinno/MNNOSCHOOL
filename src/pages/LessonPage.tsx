@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLessonDataOptimized } from '@/hooks/lesson/useLessonDataOptimized';
@@ -133,13 +134,34 @@ const LessonPage = () => {
     };
   }, [cancelAutoplay]);
 
-  // Navegação otimizada
+  // Navegação com logs detalhados
   const handleLessonSelect = (selectedLessonId: string) => {
-    if (selectedLessonId === lessonId) return;
+    console.log('=== LESSON SELECT DEBUG ===');
+    console.log('Selected lesson ID:', selectedLessonId);
+    console.log('Current lesson ID:', lessonId);
+    console.log('Are they equal?', selectedLessonId === lessonId);
+    console.log('Course ID:', courseId);
+    console.log('Display lesson available:', !!displayLesson);
+    console.log('NavigateToLesson function available:', !!navigateToLesson);
     
-    console.log('Selecting lesson:', selectedLessonId);
+    if (selectedLessonId === lessonId) {
+      console.log('Same lesson selected, ignoring navigation');
+      return;
+    }
+    
+    console.log('Clearing local updates');
     setLocalUpdates({});
-    navigateToLesson(selectedLessonId);
+    
+    console.log('Calling navigateToLesson with:', selectedLessonId);
+    
+    try {
+      navigateToLesson(selectedLessonId);
+      console.log('NavigateToLesson called successfully');
+    } catch (error) {
+      console.error('Error calling navigateToLesson:', error);
+    }
+    
+    console.log('=========================');
   };
 
   const handleAddLesson = async (data: any) => {
