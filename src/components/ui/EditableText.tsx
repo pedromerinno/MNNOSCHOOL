@@ -113,7 +113,7 @@ export const EditableText: React.FC<EditableTextProps> = ({
           disabled={isSaving}
           placeholder={placeholder}
         />
-        <div className="flex justify-end gap-3 mt-4 w-full">
+        <div className="flex justify-center gap-3 mt-4 mb-8 w-full">
           <Button
             size="sm"
             onClick={handleSave}
