@@ -9,7 +9,6 @@ import { LessonContent } from '@/components/lessons/LessonContent';
 import { LessonActions } from '@/components/courses/LessonActions';
 import { LessonComments } from '@/components/courses/LessonComments';
 import { LessonSkeleton } from '@/components/lessons/LessonSkeleton';
-import { LessonContentSkeleton } from '@/components/lessons/LessonContentSkeleton';
 import { LessonNotFound } from '@/components/lessons/LessonNotFound';
 import { CourseDescription } from '@/components/courses/CourseDescription';
 import { LessonPlaylist } from '@/components/lessons/LessonPlaylist';
@@ -23,8 +22,6 @@ import { useCompanies } from '@/hooks/useCompanies';
 const LessonPage = () => {
   const { courseId, lessonId } = useParams<{ courseId: string, lessonId: string }>();
   const [showLessonManager, setShowLessonManager] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [previousLessonId, setPreviousLessonId] = useState<string | undefined>();
   const { userProfile } = useAuth();
   const { selectedCompany } = useCompanies();
   const navigate = useNavigate();
@@ -33,21 +30,6 @@ const LessonPage = () => {
   
   console.log('📍 LessonPage: Renderizando com lessonId:', lessonId, ', courseId:', courseId);
   
-  // Track lesson changes for transition state
-  useEffect(() => {
-    if (lessonId && lessonId !== previousLessonId) {
-      setIsTransitioning(true);
-      setPreviousLessonId(lessonId);
-      
-      // Clear transition state after a short delay
-      const timer = setTimeout(() => {
-        setIsTransitioning(false);
-      }, 300);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [lessonId, previousLessonId]);
-
   // Listen for company changes and redirect to courses page
   useEffect(() => {
     const handleCompanyChange = () => {
@@ -199,29 +181,22 @@ const LessonPage = () => {
                 />
                 
                 <div className="mt-8 space-y-10">
-                  {/* Show skeleton during transitions or loading */}
-                  {(isTransitioning || loading) ? (
-                    <LessonContentSkeleton />
-                  ) : (
-                    <>
-                      <div className="rounded-xl overflow-hidden shadow-sm">
-                        <LessonContent 
-                          lesson={lesson}
-                          onVideoEnd={handleVideoEnd}
-                          showAutoplayPrompt={false}
-                        />
-                      </div>
-                      
-                      <CourseDescription 
-                        description={lesson?.description || null} 
-                        lessonId={lesson?.id}
-                      />
-                      
-                      <div className="mt-10">
-                        <LessonComments lessonId={lesson?.id} />
-                      </div>
-                    </>
-                  )}
+                  <div className="rounded-xl overflow-hidden shadow-sm">
+                    <LessonContent 
+                      lesson={lesson}
+                      onVideoEnd={handleVideoEnd}
+                      showAutoplayPrompt={false}
+                    />
+                  </div>
+                  
+                  <CourseDescription 
+                    description={lesson?.description || null} 
+                    lessonId={lesson?.id}
+                  />
+                  
+                  <div className="mt-10">
+                    <LessonComments lessonId={lesson?.id} />
+                  </div>
                 </div>
               </>
             )}
