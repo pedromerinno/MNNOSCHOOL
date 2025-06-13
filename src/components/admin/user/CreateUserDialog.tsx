@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Copy } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CreateUserDialogProps {
   isOpen: boolean;
@@ -33,10 +34,14 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
   onSuccess
 }) => {
   const { toast } = useToast();
+  const { userProfile } = useAuth();
   const [isCreating, setIsCreating] = useState(false);
   const [inviteLink, setInviteLink] = useState('');
   const [showInviteLink, setShowInviteLink] = useState(false);
   const [formData, setFormData] = useState(initialFormData);
+
+  // Verificar se o usuário tem permissão para criar usuários
+  const canCreateUsers = userProfile?.super_admin || userProfile?.is_admin;
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -68,6 +73,16 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
   };
 
   const handleSubmit = async () => {
+    // Verificar permissões
+    if (!canCreateUsers) {
+      toast({
+        title: "Erro de Permissão",
+        description: "Você não possui permissões suficientes para criar usuários. Entre em contato com um super administrador.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!formData.email || !formData.display_name) {
       toast({
         title: "Erro",
@@ -82,119 +97,48 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
       // Gerar senha se não foi fornecida
       const password = formData.password || generateRandomPassword();
 
-      // Primeiro, vamos tentar criar um convite por email
-      // Isso é uma abordagem mais segura que não requer permissões de admin
-      const { data: inviteData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
-        formData.email,
-        {
-          data: {
-            display_name: formData.display_name,
-          },
-          redirectTo: `${window.location.origin}/signup`
-        }
-      );
-
-      if (inviteError) {
-        // Se o convite falhar, vamos tentar a abordagem de criação direta
-        console.log('Convite falhou, tentando criação direta:', inviteError);
-        
-        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-          email: formData.email,
-          password: password,
-          email_confirm: true,
-          user_metadata: {
-            display_name: formData.display_name,
-          }
-        });
-
-        if (authError) {
-          console.error('Erro ao criar usuário:', authError);
-          
-          // Verificar se é um erro de permissões
-          if (authError.message.includes('User not allowed') || authError.message.includes('not authorized')) {
-            toast({
-              title: "Erro de Permissão",
-              description: "Você não possui permissões suficientes para criar usuários. Entre em contato com um super administrador.",
-              variant: "destructive",
-            });
-          } else {
-            toast({
-              title: "Erro",
-              description: authError.message || "Erro ao criar usuário",
-              variant: "destructive",
-            });
-          }
-          return;
-        }
-
-        if (authData?.user) {
-          // Atualizar perfil com informações adicionais
-          const updateData: any = {
-            display_name: formData.display_name,
-            cidade: formData.cidade || null,
-            tipo_contrato: formData.tipo_contrato === 'not_specified' ? null : formData.tipo_contrato,
-            nivel_colaborador: formData.nivel_colaborador === 'not_specified' ? null : formData.nivel_colaborador,
-            primeiro_login: true,
-          };
-
-          if (formData.aniversario) {
-            updateData.aniversario = formData.aniversario;
-          }
-          if (formData.data_inicio) {
-            updateData.data_inicio = formData.data_inicio;
-          }
-
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .update(updateData)
-            .eq('id', authData.user.id);
-
-          if (profileError) {
-            console.error('Erro ao atualizar perfil:', profileError);
-          }
-        }
-      } else {
-        console.log('Convite enviado com sucesso:', inviteData);
-        
-        toast({
-          title: "Convite Enviado",
-          description: `Um convite foi enviado para ${formData.email}. O usuário receberá um email para completar o cadastro.`,
-        });
-
-        onSuccess();
-        handleClose();
-        return;
-      }
-
-      // Criar link de informações para o novo usuário
+      // Para administradores regulares, criar um convite por email usando a abordagem de signup
+      // Isso é mais seguro e não requer permissões de super admin
       const baseUrl = window.location.origin;
+      const signupUrl = `${baseUrl}/signup`;
+      
+      // Criar um convite personalizado com as informações do usuário
       const inviteText = `
 Olá ${formData.display_name}!
 
 Você foi convidado(a) para acessar nossa plataforma.
 
 Email: ${formData.email}
-Senha temporária: ${password}
+Senha sugerida: ${password}
 
-Acesse: ${baseUrl}/login
+Para completar seu cadastro, acesse: ${signupUrl}
 
-Por favor, altere sua senha no primeiro acesso.
+Use o email acima e crie sua senha no primeiro acesso.
+
+Informações adicionais que serão configuradas no seu perfil:
+${formData.cidade ? `- Cidade: ${formData.cidade}` : ''}
+${formData.aniversario ? `- Aniversário: ${new Date(formData.aniversario).toLocaleDateString('pt-BR')}` : ''}
+${formData.data_inicio ? `- Data de início: ${new Date(formData.data_inicio).toLocaleDateString('pt-BR')}` : ''}
+${formData.tipo_contrato !== 'not_specified' ? `- Tipo de contrato: ${formData.tipo_contrato}` : ''}
+${formData.nivel_colaborador !== 'not_specified' ? `- Nível: ${formData.nivel_colaborador}` : ''}
+
+Por favor, complete seu cadastro e configure essas informações em seu perfil.
       `.trim();
 
       setInviteLink(inviteText);
       setShowInviteLink(true);
 
       toast({
-        title: "Sucesso",
-        description: "Usuário criado com sucesso!",
+        title: "Convite Criado",
+        description: "Convite criado com sucesso! Compartilhe as informações com o novo usuário.",
       });
 
       onSuccess();
     } catch (error: any) {
-      console.error('Erro ao criar usuário:', error);
+      console.error('Erro ao criar convite:', error);
       toast({
         title: "Erro",
-        description: "Erro ao criar usuário. Verifique suas permissões.",
+        description: "Erro ao criar convite para usuário.",
         variant: "destructive",
       });
     } finally {
@@ -209,12 +153,38 @@ Por favor, altere sua senha no primeiro acesso.
     onOpenChange(false);
   };
 
+  // Se o usuário não tem permissão, mostrar mensagem
+  if (!canCreateUsers) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Acesso Negado</DialogTitle>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <p className="text-muted-foreground">
+              Você não possui permissões suficientes para criar usuários. 
+              Entre em contato com um super administrador.
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button onClick={() => onOpenChange(false)}>
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   if (showInviteLink) {
     return (
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Usuário Criado com Sucesso!</DialogTitle>
+            <DialogTitle>Convite Criado com Sucesso!</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
@@ -279,7 +249,7 @@ Por favor, altere sua senha no primeiro acesso.
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Senha Temporária</Label>
+            <Label htmlFor="password">Senha Sugerida</Label>
             <div className="flex gap-2">
               <Input
                 id="password"
@@ -370,7 +340,7 @@ Por favor, altere sua senha no primeiro acesso.
             Cancelar
           </Button>
           <Button onClick={handleSubmit} disabled={isCreating}>
-            {isCreating ? "Criando..." : "Criar Usuário"}
+            {isCreating ? "Criando..." : "Criar Convite"}
           </Button>
         </DialogFooter>
       </DialogContent>
