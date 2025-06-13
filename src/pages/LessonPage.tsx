@@ -22,7 +22,6 @@ import { useCompanies } from '@/hooks/useCompanies';
 const LessonPage = () => {
   const { courseId, lessonId } = useParams<{ courseId: string, lessonId: string }>();
   const [showLessonManager, setShowLessonManager] = useState(false);
-  const [localUpdates, setLocalUpdates] = useState<Record<string, any>>({});
   const { userProfile } = useAuth();
   const { selectedCompany } = useCompanies();
   const navigate = useNavigate();
@@ -72,70 +71,10 @@ const LessonPage = () => {
     cancelAutoplay
   } = useAutoplayNavigation(null, courseId);
 
-  // Memoizar displayLesson para evitar re-renders
-  const displayLesson = useMemo(() => {
-    if (!lesson) return null;
-    return {
-      ...lesson,
-      ...localUpdates
-    };
-  }, [lesson, localUpdates]);
-
-  // Listen for lesson field updates - otimizado
-  useEffect(() => {
-    const handleLessonFieldUpdated = (event: CustomEvent) => {
-      const { lessonId: updatedLessonId, field, value } = event.detail;
-      
-      if (updatedLessonId === lessonId) {
-        console.log('📝 LessonPage: Campo atualizado:', field, '=', value);
-        setLocalUpdates(prev => ({
-          ...prev,
-          [field]: value
-        }));
-        
-        // Atualizar cache também
-        if (lesson) {
-          const updatedLesson = { ...lesson, [field]: value };
-          window.dispatchEvent(new CustomEvent('lesson-updated', {
-            detail: { 
-              lessonId: updatedLessonId,
-              data: updatedLesson
-            }
-          }));
-        }
-      }
-    };
-
-    window.addEventListener('lesson-field-updated', handleLessonFieldUpdated as EventListener);
-    
-    return () => {
-      window.removeEventListener('lesson-field-updated', handleLessonFieldUpdated as EventListener);
-    };
-  }, [lessonId, lesson]);
-
-  // Listen for lesson updates
-  useEffect(() => {
-    const handleLessonUpdated = (event: CustomEvent) => {
-      if (event.detail?.lessonId === lessonId) {
-        console.log('🔄 LessonPage: Recebido evento de atualização para:', lessonId);
-        if (refreshLessonData) {
-          refreshLessonData();
-        }
-      }
-    };
-
-    window.addEventListener('lesson-updated', handleLessonUpdated as EventListener);
-    
-    return () => {
-      window.removeEventListener('lesson-updated', handleLessonUpdated as EventListener);
-    };
-  }, [lessonId, refreshLessonData]);
-
   // Scroll to top when changing lessons - otimizado
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setShowAutoplayPrompt(false);
-    setLocalUpdates({}); // Limpar updates locais
   }, [lessonId, setShowAutoplayPrompt]);
 
   // Clean up autoplay
@@ -157,8 +96,8 @@ const LessonPage = () => {
     }
   };
   
-  // Loading otimizado - mostrar conteúdo se disponível
-  if (loading && !lesson && !isFromCache) {
+  // Loading otimizado - mostrar skeleton apenas se realmente necessário
+  if (loading && !lesson) {
     return <LessonSkeleton />;
   }
 
@@ -214,10 +153,10 @@ const LessonPage = () => {
               {/* Playlist */}
               <div className="p-4">
                 <LessonPlaylist
-                  lessons={displayLesson?.course_lessons || []}
-                  currentLessonId={displayLesson?.id || ''}
+                  lessons={lesson?.course_lessons || []}
+                  currentLessonId={lesson?.id || ''}
                   onLessonSelect={() => {}} // Not used anymore
-                  loading={loading && !isFromCache && !lesson}
+                  loading={loading && !lesson}
                   companyColor={companyColor}
                   courseId={courseId}
                 />
@@ -227,9 +166,9 @@ const LessonPage = () => {
           
           {/* Content area */}
           <div className="flex-1 p-6 lg:px-10 lg:py-8">
-            {displayLesson && (
+            {lesson && (
               <>
-                <LessonHeader lesson={displayLesson} courseId={courseId} hideBackButton={true} />
+                <LessonHeader lesson={lesson} courseId={courseId} hideBackButton={true} />
 
                 <LessonActions
                   completed={completed}
@@ -237,26 +176,26 @@ const LessonPage = () => {
                   likes={likes}
                   userLiked={userLiked}
                   onToggleLike={toggleLikeLesson}
-                  lessonType={displayLesson?.type}
-                  lessonDuration={displayLesson?.duration}
+                  lessonType={lesson?.type}
+                  lessonDuration={lesson?.duration}
                 />
                 
                 <div className="mt-8 space-y-10">
                   <div className="rounded-xl overflow-hidden shadow-sm">
                     <LessonContent 
-                      lesson={displayLesson}
+                      lesson={lesson}
                       onVideoEnd={handleVideoEnd}
                       showAutoplayPrompt={false}
                     />
                   </div>
                   
                   <CourseDescription 
-                    description={displayLesson?.description || null} 
-                    lessonId={displayLesson?.id}
+                    description={lesson?.description || null} 
+                    lessonId={lesson?.id}
                   />
                   
                   <div className="mt-10">
-                    <LessonComments lessonId={displayLesson?.id} />
+                    <LessonComments lessonId={lesson?.id} />
                   </div>
                 </div>
               </>
@@ -269,7 +208,7 @@ const LessonPage = () => {
       {isAdmin && (
         <LessonManager
           courseId={courseId || ''}
-          courseTitle={displayLesson?.course_title || 'Curso'}
+          courseTitle={lesson?.course_title || 'Curso'}
           open={showLessonManager}
           onClose={() => setShowLessonManager(false)}
         />

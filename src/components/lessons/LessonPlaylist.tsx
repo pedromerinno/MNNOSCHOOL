@@ -30,19 +30,13 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
   companyColor = "#1EAEDB",
   courseId
 }) => {
-  const [localLessons, setLocalLessons] = useState(lessons);
   const [navigatingToLesson, setNavigatingToLesson] = useState<string | null>(null);
   const navigate = useNavigate();
   const { courseId: paramCourseId } = useParams();
   const effectiveCourseId = courseId || paramCourseId;
-  const totalDuration = calculateTotalDuration(localLessons);
+  const totalDuration = calculateTotalDuration(lessons);
 
   console.log('🎯 LessonPlaylist: courseId atual:', effectiveCourseId, 'currentLessonId:', currentLessonId);
-
-  // Sync local lessons with props
-  useEffect(() => {
-    setLocalLessons(lessons);
-  }, [lessons]);
 
   // Clear navigating state when current lesson changes
   useEffect(() => {
@@ -53,12 +47,12 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
   }, [currentLessonId, navigatingToLesson]);
 
   const handleLessonClick = (lessonId: string) => {
-    if (lessonId === currentLessonId || navigatingToLesson) {
-      console.log('🚫 LessonPlaylist: Clique ignorado - mesma aula ou já navegando');
+    if (lessonId === currentLessonId) {
+      console.log('🚫 LessonPlaylist: Clique ignorado - mesma aula');
       return;
     }
     
-    console.log('🔗 LessonPlaylist: Iniciando navegação para aula:', lessonId, 'do curso:', effectiveCourseId);
+    console.log('🔗 LessonPlaylist: Navegação imediata para:', lessonId);
     
     if (!effectiveCourseId) {
       console.error('❌ LessonPlaylist: courseId não encontrado');
@@ -67,10 +61,12 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
     
     setNavigatingToLesson(lessonId);
     
-    // Use React Router navigate instead of window.location for SPA navigation
+    // Navegação imediata sem delays
     const newPath = `/courses/${effectiveCourseId}/lessons/${lessonId}`;
-    console.log('🌐 LessonPlaylist: Navegando para path:', newPath);
-    navigate(newPath);
+    navigate(newPath, { replace: false });
+    
+    // Clear navigating state after a short delay
+    setTimeout(() => setNavigatingToLesson(null), 500);
   };
 
   const getTypeIcon = (type: string) => {
@@ -102,7 +98,7 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
   // Loading skeleton component
   const PlaylistSkeleton = () => (
     <div className="space-y-3">
-      {[1, 2, 3, 4, 5].map((i) => (
+      {[1, 2, 3].map((i) => (
         <Card key={i} className="border-border/60">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -140,7 +136,7 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
               className="w-2 h-2 rounded-full"
               style={{ backgroundColor: companyColor }}
             ></div>
-            <span className="font-medium">{localLessons.length} aulas</span>
+            <span className="font-medium">{lessons.length} aulas</span>
           </div>
           <div className="w-1 h-1 bg-muted-foreground/40 rounded-full"></div>
           <div className="flex items-center gap-1.5 text-muted-foreground">
@@ -155,7 +151,7 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
           <PlaylistSkeleton />
         ) : (
           <>
-            {localLessons.map((lesson, index) => {
+            {lessons.map((lesson, index) => {
               const isCurrentLesson = lesson.id === currentLessonId;
               const isNavigating = navigatingToLesson === lesson.id;
               
@@ -163,11 +159,11 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
                 <Card
                   key={lesson.id}
                   className={cn(
-                    "transition-all duration-200 cursor-pointer group border hover:shadow-sm",
+                    "transition-all duration-150 cursor-pointer group border hover:shadow-sm",
                     isCurrentLesson
                       ? "border-border/60 shadow-sm ring-1"
                       : "hover:bg-accent/50 border-border/60",
-                    isNavigating && "opacity-50 pointer-events-none"
+                    isNavigating && "opacity-70"
                   )}
                   style={{
                     backgroundColor: isCurrentLesson ? `${companyColor}08` : undefined,
@@ -178,13 +174,9 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
-                      {/* Lesson indicator with loading state */}
+                      {/* Lesson indicator */}
                       <div className="flex-shrink-0">
-                        {isNavigating ? (
-                          <div className="w-10 h-10 rounded-full bg-muted/60 border-2 border-muted-foreground/20 flex items-center justify-center">
-                            <div className="animate-spin h-4 w-4 border-t-2 border-primary border-r-2 rounded-full"></div>
-                          </div>
-                        ) : lesson.completed ? (
+                        {lesson.completed ? (
                           <div className="w-10 h-10 rounded-full bg-green-500/15 border-2 border-green-500/30 flex items-center justify-center">
                             <CheckCircle className="h-5 w-5 text-green-600" />
                           </div>
@@ -247,13 +239,9 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
                         </div>
                       </div>
 
-                      {/* Play button with loading state */}
+                      {/* Play button */}
                       <div className="flex-shrink-0">
-                        {isNavigating ? (
-                          <div className="w-8 h-8 rounded-full bg-muted/60 flex items-center justify-center">
-                            <div className="animate-spin h-3 w-3 border-t-2 border-primary border-r-2 rounded-full"></div>
-                          </div>
-                        ) : isCurrentLesson ? (
+                        {isCurrentLesson ? (
                           <div 
                             className="w-8 h-8 rounded-full flex items-center justify-center border"
                             style={{

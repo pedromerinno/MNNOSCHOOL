@@ -4,36 +4,19 @@ import { useLessonFetch } from './useLessonFetch';
 import { useLessonProgress } from './useLessonProgress';
 import { useLessonLikes } from './useLessonLikes';
 
-// Cache em memória simples e rápido
-const lessonCache = new Map<string, any>();
+// Cache simples sem Map complexo
+const lessonCache: Record<string, any> = {};
 
 export const useLessonDataOptimized = (lessonId: string | undefined) => {
   const [cachedLesson, setCachedLesson] = useState<any>(null);
-  const [isFromCache, setIsFromCache] = useState(false);
   
   console.log('🔧 useLessonDataOptimized: Hook chamado com lessonId:', lessonId);
   
-  // Verificar cache primeiro
-  useEffect(() => {
-    if (lessonId) {
-      const cached = lessonCache.get(lessonId);
-      if (cached) {
-        console.log('📦 useLessonDataOptimized: Cache hit para:', lessonId);
-        setCachedLesson(cached);
-        setIsFromCache(true);
-      } else {
-        console.log('❌ useLessonDataOptimized: Cache miss para:', lessonId);
-        setIsFromCache(false);
-        setCachedLesson(null);
-      }
-    }
-  }, [lessonId]);
-
-  // Fetch apenas se não tiver cache
-  const shouldFetch = lessonId && !isFromCache;
-  const { lesson, loading, error, refetch } = useLessonFetch(shouldFetch ? lessonId : undefined);
+  // Sempre fazer fetch - sem cache complexo
+  const { lesson, loading, error, refetch } = useLessonFetch(lessonId);
   
-  const currentLesson = cachedLesson || lesson;
+  // Use lesson diretamente ou cache se disponível
+  const currentLesson = lesson || cachedLesson || lessonCache[lessonId || ''];
   
   const { completed, markLessonCompleted } = useLessonProgress(
     lessonId, 
@@ -46,24 +29,27 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
     currentLesson?.user_liked || false
   );
 
-  // Cache quando carregar nova aula
+  // Cache simples quando lesson carrega
   useEffect(() => {
-    if (lesson && lessonId && !loading) {
-      console.log('💾 useLessonDataOptimized: Salvando cache para:', lessonId);
-      lessonCache.set(lessonId, lesson);
+    if (lesson && lessonId) {
+      console.log('💾 Cache simples para:', lessonId);
+      lessonCache[lessonId] = lesson;
       setCachedLesson(lesson);
-      setIsFromCache(true);
     }
-  }, [lesson, lessonId, loading]);
+  }, [lesson, lessonId]);
 
-  // Refresh que limpa cache
+  // Limpar cache antigo quando muda lessonId
+  useEffect(() => {
+    if (lessonId && cachedLesson && cachedLesson.id !== lessonId) {
+      setCachedLesson(null);
+    }
+  }, [lessonId, cachedLesson]);
+
   const refreshLessonData = useCallback(() => {
     if (lessonId) {
-      console.log('🔄 useLessonDataOptimized: Limpando cache para:', lessonId);
-      lessonCache.delete(lessonId);
-      setIsFromCache(false);
+      console.log('🔄 Refresh data para:', lessonId);
+      delete lessonCache[lessonId];
       setCachedLesson(null);
-      
       if (refetch) {
         refetch();
       }
@@ -72,7 +58,7 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
 
   return { 
     lesson: currentLesson, 
-    loading: loading && !cachedLesson, 
+    loading: loading && !currentLesson, 
     error, 
     markLessonCompleted,
     likes,
@@ -80,6 +66,6 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
     toggleLikeLesson,
     completed,
     refreshLessonData,
-    isFromCache: !!cachedLesson
+    isFromCache: !!cachedLesson && !lesson
   };
 };
