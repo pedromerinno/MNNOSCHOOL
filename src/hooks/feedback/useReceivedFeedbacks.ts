@@ -51,14 +51,14 @@ export const useReceivedFeedbacks = () => {
           throw new Error('User not authenticated');
         }
 
-        // Buscar feedbacks com limite menor para home
+        // Buscar feedbacks com limite ainda menor para home
         const { data: feedbackData, error } = await supabase
           .from('user_feedbacks')
           .select('id, content, created_at, from_user_id')
           .eq('to_user_id', user.id)
           .eq('company_id', selectedCompany.id)
           .order('created_at', { ascending: false })
-          .limit(3); // Reduzir limite para home
+          .limit(2); // Reduzir ainda mais para home
 
         if (error) {
           throw error;
@@ -66,8 +66,7 @@ export const useReceivedFeedbacks = () => {
 
         if (!feedbackData || feedbackData.length === 0) {
           setFeedbacks([]);
-          // Cache vazio também
-          setCache(cacheKey, [], 1);
+          setCache(cacheKey, [], 2); // Cache mais longo para dados vazios
           setLoading(false);
           return;
         }
@@ -99,8 +98,8 @@ export const useReceivedFeedbacks = () => {
           from_profile: feedback.from_user_id ? profilesMap.get(feedback.from_user_id) || null : null
         }));
         
-        // Cache com TTL menor
-        setCache(cacheKey, enrichedFeedbacks, 1);
+        // Cache com TTL de 2 minutos
+        setCache(cacheKey, enrichedFeedbacks, 2);
         setFeedbacks(enrichedFeedbacks);
       } catch (err) {
         console.error('Error fetching feedbacks:', err);
@@ -110,12 +109,8 @@ export const useReceivedFeedbacks = () => {
       }
     };
 
-    // Debounce para evitar múltiplas chamadas
-    const timeoutId = setTimeout(() => {
-      fetchFeedbacks();
-    }, 100);
-
-    return () => clearTimeout(timeoutId);
+    // Remover debounce para carregamento imediato
+    fetchFeedbacks();
   }, [selectedCompany, getCache, setCache]);
 
   return { feedbacks, loading };

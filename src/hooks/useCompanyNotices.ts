@@ -71,13 +71,13 @@ export function useCompanyNotices() {
       
       console.log(`Fetching notices for company: ${targetCompanyId}`);
       
-      // Buscar avisos primeiro
+      // Buscar avisos com limite menor para home
       const { data: noticesData, error: noticesError } = await supabase
         .from('company_notices')
         .select('*')
         .eq('company_id', targetCompanyId)
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(10); // Reduzir limite para home
       
       if (noticesError) {
         console.error('Error fetching notices:', noticesError);
@@ -96,6 +96,7 @@ export function useCompanyNotices() {
         console.log('No notices found, setting empty array');
         setNotices([]);
         setCurrentNotice(null);
+        setCache(cacheKey, [], 3); // Cache dados vazios por 3 minutos
         setIsLoading(false);
         return;
       }
@@ -148,9 +149,9 @@ export function useCompanyNotices() {
       
       console.log('Final notices with authors:', noticesWithAuthors);
       
-      // Tentar armazenar no cache (sem falhar se der erro)
+      // Cache por 3 minutos
       try {
-        setCache(cacheKey, noticesWithAuthors, 2); // Cache menor
+        setCache(cacheKey, noticesWithAuthors, 3);
       } catch (cacheError) {
         console.warn('Failed to cache notices:', cacheError);
       }
@@ -468,12 +469,8 @@ export function useCompanyNotices() {
   useEffect(() => {
     if (selectedCompany?.id) {
       console.log(`Selected company changed to: ${selectedCompany.id}, fetching notices`);
-      // Debounce para evitar múltiplas chamadas
-      const timeoutId = setTimeout(() => {
-        fetchNotices(selectedCompany.id);
-      }, 100);
-      
-      return () => clearTimeout(timeoutId);
+      // Carregamento imediato sem debounce
+      fetchNotices(selectedCompany.id);
     } else {
       console.log('No selected company, clearing notices');
       setNotices([]);

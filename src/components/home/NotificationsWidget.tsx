@@ -10,7 +10,6 @@ import { ptBR } from "date-fns/locale";
 import { AllNoticesDialog } from "./AllNoticesDialog";
 import { NoticeDetailDialog } from "./NoticeDetailDialog";
 import { useCompanies } from "@/hooks/useCompanies";
-import { Company } from "@/types/company";
 
 export const NotificationsWidget = () => {
   const [showAllNotices, setShowAllNotices] = useState(false);
@@ -30,7 +29,7 @@ export const NotificationsWidget = () => {
 
   // Filtrar apenas avisos visíveis para o widget da home
   const visibleNotices = notices.filter(notice => (notice as any).visibilidade !== false);
-  const recentNotices = visibleNotices.slice(0, 3);
+  const recentNotices = visibleNotices.slice(0, 2); // Reduzir para 2 avisos
   const unreadCount = visibleNotices.length;
 
   const handleNoticeClick = (notice: any) => {
@@ -40,7 +39,7 @@ export const NotificationsWidget = () => {
 
   // Função otimizada para buscar avisos
   const fetchNoticesForCompany = async (companyId: string) => {
-    // Evitar requisições duplicadas ou desnecessárias
+    // Evitar requisições duplicadas
     if (
       fetchInProgressRef.current || 
       lastFetchedCompanyRef.current === companyId ||
@@ -64,12 +63,8 @@ export const NotificationsWidget = () => {
   // Effect otimizado para buscar avisos quando empresa muda
   useEffect(() => {
     if (selectedCompany?.id && mountedRef.current) {
-      // Usar debounce menor para home
-      const timeoutId = setTimeout(() => {
-        fetchNoticesForCompany(selectedCompany.id);
-      }, 50);
-
-      return () => clearTimeout(timeoutId);
+      // Carregamento imediato sem debounce
+      fetchNoticesForCompany(selectedCompany.id);
     } else {
       // Resetar estado quando não há empresa selecionada
       lastFetchedCompanyRef.current = null;
@@ -83,27 +78,6 @@ export const NotificationsWidget = () => {
     return () => {
       mountedRef.current = false;
       fetchInProgressRef.current = false;
-    };
-  }, []);
-
-  // Remover listeners de eventos desnecessários para melhorar performance
-  useEffect(() => {
-    const handleCompanyChange = (event: CustomEvent<{company: Company}>) => {
-      const newCompany = event.detail.company;
-      if (newCompany?.id && mountedRef.current) {
-        // Resetar refs para permitir nova busca
-        if (lastFetchedCompanyRef.current !== newCompany.id) {
-          fetchInProgressRef.current = false;
-          lastFetchedCompanyRef.current = null;
-        }
-      }
-    };
-
-    // Reduzir número de listeners
-    window.addEventListener('company-changed', handleCompanyChange as EventListener);
-    
-    return () => {
-      window.removeEventListener('company-changed', handleCompanyChange as EventListener);
     };
   }, []);
 
@@ -134,7 +108,6 @@ export const NotificationsWidget = () => {
               <div className="space-y-4">
                 <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
                 <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-3/4"></div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-1/2"></div>
               </div>
             ) : !selectedCompany ? (
               <div className="text-center py-8">
@@ -184,7 +157,7 @@ export const NotificationsWidget = () => {
             )}
           </div>
           
-          {visibleNotices.length > 3 && (
+          {visibleNotices.length > 2 && (
             <div className="border-t border-gray-100 dark:border-gray-800 py-6 text-center">
               <button 
                 onClick={() => setShowAllNotices(true)}
