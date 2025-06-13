@@ -29,6 +29,8 @@ const LessonPage = () => {
   const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
   
+  console.log('📍 LessonPage: Renderizando com lessonId:', lessonId, ', courseId:', courseId);
+  
   // Listen for company changes and redirect to courses page
   useEffect(() => {
     const handleCompanyChange = () => {
@@ -131,13 +133,17 @@ const LessonPage = () => {
     };
   }, [cancelAutoplay]);
 
-  // Navegação DIRETA - sem verificações
+  // NAVEGAÇÃO DIRETA - sem função intermediária
   const handleLessonSelect = (selectedLessonId: string) => {
-    // Limpar updates locais
+    console.log('🎯 LessonPage: handleLessonSelect chamado com:', selectedLessonId);
     setLocalUpdates({});
     
-    // Chamar função de navegação diretamente - SEM VERIFICAÇÕES
-    navigateToLesson(selectedLessonId);
+    // Navegação direta sem verificações
+    if (courseId) {
+      const path = `/courses/${courseId}/lessons/${selectedLessonId}`;
+      console.log('🎯 LessonPage: Navegando diretamente para:', path);
+      navigate(path);
+    }
   };
 
   const handleAddLesson = async (data: any) => {

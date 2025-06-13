@@ -61,6 +61,8 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
   const [cachedLesson, setCachedLesson] = useState<any>(null);
   const navigate = useNavigate();
   
+  console.log('🔧 useLessonDataOptimized: Hook chamado com lessonId:', lessonId);
+  
   // Verificar cache primeiro
   const getCachedLesson = useCallback((id: string) => {
     return getCachedData(id);
@@ -71,9 +73,11 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
     if (lessonId) {
       const cached = getCachedLesson(lessonId);
       if (cached) {
+        console.log('📦 useLessonDataOptimized: Encontrou cache para:', lessonId);
         setCachedLesson(cached);
         setIsFromCache(true);
       } else {
+        console.log('❌ useLessonDataOptimized: Sem cache para:', lessonId);
         setIsFromCache(false);
         setCachedLesson(null);
       }
@@ -96,6 +100,7 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
   // Cache da aula quando carregada
   useEffect(() => {
     if (lesson && currentLessonId && !loading) {
+      console.log('💾 useLessonDataOptimized: Salvando cache para:', currentLessonId);
       setCachedData(currentLessonId, lesson);
       setCachedLesson(lesson);
     }
@@ -104,27 +109,32 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
   // Update current lesson ID quando o prop muda
   useEffect(() => {
     if (lessonId && lessonId !== currentLessonId) {
+      console.log('🔄 useLessonDataOptimized: Mudando lessonId de', currentLessonId, 'para', lessonId);
       setCurrentLessonId(lessonId);
     }
   }, [lessonId, currentLessonId]);
   
-  // Navegação SUPER SIMPLES - apenas navega diretamente
+  // NAVEGAÇÃO SUPER SIMPLES - remove TODA lógica desnecessária
   const handleNavigateToLesson = useCallback((newLessonId: string) => {
+    console.log('🎯 useLessonDataOptimized: handleNavigateToLesson chamado com:', newLessonId);
+    
     const courseId = (cachedLesson || lesson)?.course_id;
     
     if (!courseId) {
-      console.error('No course ID available for navigation');
+      console.error('❌ useLessonDataOptimized: No course ID available for navigation');
       return;
     }
     
-    // Navegação direta - sem verificações, sem delays, sem complexidade
+    // Navegação direta - ZERO complexidade
     const navigationPath = `/courses/${courseId}/lessons/${newLessonId}`;
+    console.log('🎯 useLessonDataOptimized: Navegando para:', navigationPath);
     navigate(navigationPath);
   }, [navigate, cachedLesson, lesson]);
 
   // Refresh que limpa cache
   const refreshLessonData = useCallback(() => {
     if (currentLessonId) {
+      console.log('🔄 useLessonDataOptimized: Limpando cache para:', currentLessonId);
       // Limpar cache
       lessonCache.delete(currentLessonId);
       try {

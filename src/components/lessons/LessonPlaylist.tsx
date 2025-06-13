@@ -5,6 +5,7 @@ import { Play, CheckCircle, Clock, PlayCircle, BookOpen, Video, FileText, HelpCi
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { calculateTotalDuration, formatDuration } from "@/utils/durationUtils";
+import { useNavigate } from 'react-router-dom';
 
 interface LessonPlaylistProps {
   lessons: Array<{
@@ -30,6 +31,7 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
   courseId
 }) => {
   const [localLessons, setLocalLessons] = useState(lessons);
+  const navigate = useNavigate();
   const totalDuration = calculateTotalDuration(localLessons);
 
   // Sync local lessons with props
@@ -37,43 +39,22 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
     setLocalLessons(lessons);
   }, [lessons]);
 
-  // Listen for lesson field updates to update local state immediately
-  useEffect(() => {
-    const handleLessonFieldUpdated = (event: CustomEvent) => {
-      const { lessonId: updatedLessonId, field, value } = event.detail;
-      
-      // Check if the updated lesson is in our current playlist
-      if (localLessons.some(lesson => lesson.id === updatedLessonId)) {
-        // Update local state immediately
-        setLocalLessons(prevLessons => 
-          prevLessons.map(lesson => 
-            lesson.id === updatedLessonId 
-              ? { ...lesson, [field]: value }
-              : lesson
-          )
-        );
-        
-        // Also dispatch course update event to refresh the course data
-        window.dispatchEvent(new CustomEvent('course-updated', {
-          detail: { courseId }
-        }));
-      }
-    };
-
-    window.addEventListener('lesson-field-updated', handleLessonFieldUpdated as EventListener);
-    
-    return () => {
-      window.removeEventListener('lesson-field-updated', handleLessonFieldUpdated as EventListener);
-    };
-  }, [localLessons, courseId]);
-
-  // Navegação super simples - só chama o callback
+  // NAVEGAÇÃO SUPER SIMPLES - apenas navega diretamente
   const handleLessonClick = (lessonId: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    // Simplesmente chama a função de navegação - sem verificações
-    onLessonSelect(lessonId);
+    console.log('🚀 LessonPlaylist: Clicou na aula:', lessonId);
+    
+    if (!courseId) {
+      console.error('❌ LessonPlaylist: Sem courseId');
+      return;
+    }
+    
+    // Navegação direta usando navigate
+    const path = `/courses/${courseId}/lessons/${lessonId}`;
+    console.log('🚀 LessonPlaylist: Navegando para:', path);
+    navigate(path);
   };
 
   const getTypeIcon = (type: string) => {
