@@ -8,7 +8,7 @@ import { useCompanyNotices } from "@/hooks/useCompanyNotices";
 import NewNoticeDialog from "./dialogs/NewNoticeDialog";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Eye, EyeOff, Plus, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { Calendar, User, Plus, MoreHorizontal, Pencil, Trash2, Eye, EyeOff } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -40,7 +40,8 @@ export const CompanyNoticesAdminList: React.FC = () => {
       if (error) throw error;
 
       toast.success(`Aviso ${!currentVisibility ? 'publicado' : 'ocultado'} com sucesso`);
-      fetchNotices();
+      // Instant refresh after update
+      await fetchNotices();
     } catch (error) {
       console.error('Error toggling notice visibility:', error);
       toast.error('Erro ao alterar visibilidade do aviso');
@@ -52,6 +53,8 @@ export const CompanyNoticesAdminList: React.FC = () => {
       const success = await deleteNotice(noticeId);
       if (success) {
         toast.success('Aviso excluído com sucesso');
+        // Instant refresh after delete
+        await fetchNotices();
       }
     }
   };
@@ -115,22 +118,29 @@ export const CompanyNoticesAdminList: React.FC = () => {
       ) : (
         <div className="grid gap-4">
           {notices.map((notice) => (
-            <Card key={notice.id} className="relative">
-              <CardHeader>
+            <Card key={notice.id} className="relative border border-gray-200 dark:border-gray-700">
+              <CardHeader className="pb-4">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <Badge 
-                        variant="secondary" 
-                        className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+                        variant="outline" 
+                        className="text-xs capitalize bg-gray-50 dark:bg-gray-800"
                       >
-                        {selectedCompany.nome}
+                        {notice.type}
                       </Badge>
                     </div>
-                    <CardTitle className="text-lg mb-1">{notice.title}</CardTitle>
-                    <p className="text-sm text-gray-500">
-                      📅 {format(new Date(notice.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })} 👤 {notice.author?.display_name || 'Usuário'}
-                    </p>
+                    <CardTitle className="text-lg mb-3 font-semibold">{notice.title}</CardTitle>
+                    <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4" />
+                        <span>{format(new Date(notice.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <User className="h-4 w-4" />
+                        <span>{notice.author?.display_name || 'Usuário'}</span>
+                      </div>
+                    </div>
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -168,17 +178,35 @@ export const CompanyNoticesAdminList: React.FC = () => {
                   </DropdownMenu>
                 </div>
               </CardHeader>
-              <CardContent>
-                <p className="text-gray-700 dark:text-gray-300">{notice.content}</p>
-                <div className="mt-4 flex items-center justify-between">
+              <CardContent className="pt-0">
+                <p className="text-gray-700 dark:text-gray-300 mb-4">{notice.content}</p>
+                
+                {/* Company badge at the bottom with logo */}
+                <div className="flex items-center justify-between mt-4">
+                  <div className="flex items-center gap-2">
+                    {selectedCompany.logo && (
+                      <img 
+                        src={selectedCompany.logo} 
+                        alt={selectedCompany.nome}
+                        className="w-6 h-6 rounded object-cover"
+                      />
+                    )}
+                    <Badge 
+                      className="text-xs font-medium px-3 py-1"
+                      style={{
+                        backgroundColor: `${selectedCompany.cor_principal}20`,
+                        color: selectedCompany.cor_principal,
+                        borderColor: `${selectedCompany.cor_principal}30`
+                      }}
+                    >
+                      {selectedCompany.nome}
+                    </Badge>
+                  </div>
                   <Badge 
                     variant={(notice as any).visibilidade ? "default" : "secondary"}
                     className="text-xs"
                   >
                     {(notice as any).visibilidade ? "Visível" : "Oculto"}
-                  </Badge>
-                  <Badge variant="outline" className="text-xs capitalize">
-                    {notice.type}
                   </Badge>
                 </div>
               </CardContent>
