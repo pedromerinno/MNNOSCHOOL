@@ -1,9 +1,11 @@
+
 import React, { useState } from 'react';
 import { UserTableOptimized } from './UserTableOptimized';
 import { useUsers } from '@/hooks/useUsers';
 import { AdminSetup } from './user/AdminSetup';
 import { PermissionError } from './user/PermissionError';
 import { AddAdminDialog } from './user/AddAdminDialog';
+import { CreateUserDialog } from './user/CreateUserDialog';
 import { UserManagementHeader } from './user/UserManagementHeader';
 import { UserManagementSkeleton } from './user/UserManagementSkeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -21,6 +23,7 @@ export const UserManagement = () => {
   const [permissionError, setPermissionError] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [showInviteInfo, setShowInviteInfo] = useState(false);
+  const [showCreateUser, setShowCreateUser] = useState(false);
   const [selectedInviteCompany, setSelectedInviteCompany] = useState<Company | null>(null);
   const { toast } = useToast();
 
@@ -67,6 +70,14 @@ export const UserManagement = () => {
     setShowInviteInfo(true);
   };
 
+  const handleCreateUser = () => {
+    setShowCreateUser(true);
+  };
+
+  const handleCreateUserSuccess = () => {
+    fetchUsers();
+  };
+
   const handleCompanyChange = (companyId: string) => {
     const company = userCompanies.find(c => c.id === companyId);
     setSelectedInviteCompany(company || null);
@@ -82,6 +93,7 @@ export const UserManagement = () => {
           loading={loading}
           isRefreshing={isRefreshing}
           onInviteUser={handleInviteUser}
+          onCreateUser={handleCreateUser}
         />
         
         <div className="text-center py-8">
@@ -108,6 +120,7 @@ export const UserManagement = () => {
         loading={loading}
         isRefreshing={isRefreshing}
         onInviteUser={handleInviteUser}
+        onCreateUser={handleCreateUser}
       />
       
       <AdminSetup
@@ -190,6 +203,12 @@ export const UserManagement = () => {
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         fetchUsers={fetchUsers}
+      />
+
+      <CreateUserDialog
+        isOpen={showCreateUser}
+        onOpenChange={setShowCreateUser}
+        onSuccess={handleCreateUserSuccess}
       />
     </div>
   );

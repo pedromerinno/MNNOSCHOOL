@@ -1,172 +1,181 @@
 
-import React, { memo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle, Image } from "lucide-react";
-import { UserAdminToggle } from "./UserAdminToggle";
+import { Card, CardContent } from "@/components/ui/card";
 import { UserProfile } from "@/hooks/useUsers";
-import { Skeleton } from "@/components/ui/skeleton";
+import { UserActionsDropdown } from './user/UserActionsDropdown';
+import { EditUserProfileDialog } from './user/EditUserProfileDialog';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
-type ExtendedUserProfile = UserProfile & {
-  companies?: {
-    logo: string | null;
-    nome: string;
-  }[];
-};
-
-interface UserTableProps {
-  users: ExtendedUserProfile[];
+interface UserTableOptimizedProps {
+  users: UserProfile[];
   loading: boolean;
-  onToggle: (userId: string, currentStatus: boolean | null, isSuperAdmin: boolean) => Promise<void>;
+  onToggle: (userId: string, currentStatus: boolean | null, isSuperAdmin?: boolean) => void;
 }
 
-const CompanyLogosCell = memo<{
-  companies?: {
-    logo: string | null;
-    nome: string;
-  }[];
-}>(({ companies }) => {
-  if (!companies || companies.length === 0) {
-    return <span className="text-xs text-gray-400">Nenhuma</span>;
-  }
-
-  const maxToShow = 3;
-  const showCompanies = companies.slice(0, maxToShow);
-  const extra = companies.length - maxToShow;
-
-  return (
-    <div className="flex items-center gap-1.5">
-      {showCompanies.map((company, idx) => (
-        company.logo ? (
-          <img
-            key={`${company.nome}-${idx}`}
-            src={company.logo}
-            alt={company.nome}
-            className="w-8 h-8 rounded-md object-contain border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-0.5"
-            loading="lazy"
-          />
-        ) : (
-          <span
-            key={`${company.nome}-${idx}`}
-            className="rounded-md bg-gray-100 dark:bg-gray-800 text-gray-400 flex items-center justify-center w-8 h-8 border border-gray-200 dark:border-gray-700"
-          >
-            <Image className="w-4 h-4" />
-          </span>
-        )
-      ))}
-      {extra > 0 && (
-        <span className="ml-1.5 text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
-          +{extra}
-        </span>
-      )}
-    </div>
-  );
-});
-
-CompanyLogosCell.displayName = 'CompanyLogosCell';
-
-const UserRow = memo<{
-  user: ExtendedUserProfile;
-  loading: boolean;
-  onToggle: (userId: string, currentStatus: boolean | null, isSuperAdmin: boolean) => Promise<void>;
-}>(({ user, loading, onToggle }) => {
-  const getBadgeContent = () => {
-    if (user.super_admin) {
-      return (
-        <Badge variant="default" className="text-white py-[7px] bg-sky-500">
-          <CheckCircle className="h-3.5 w-3.5 mr-1" />
-          Super Admin
-        </Badge>
-      );
-    }
-    if (user.is_admin) {
-      return (
-        <Badge variant="default" className="text-white bg-[#e0a93c] py-[7px]">
-          <CheckCircle className="h-3.5 w-3.5 mr-1" />
-          Admin
-        </Badge>
-      );
-    }
-    return (
-      <Badge variant="outline" className="text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700">
-        <XCircle className="h-3.5 w-3.5 mr-1" />
-        Usuário
-      </Badge>
-    );
-  };
-
-  return (
-    <TableRow
-      className={`${loading ? "opacity-60" : ""} hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors`}
-    >
-      <TableCell className="px-[30px] py-[20px]">
-        {loading ? <Skeleton className="h-5 w-24" /> : user.display_name}
-      </TableCell>
-      <TableCell className="text-gray-600 dark:text-gray-300">
-        {loading ? <Skeleton className="h-5 w-36" /> : user.email}
-      </TableCell>
-      <TableCell>
-        {loading ? <Skeleton className="h-8 w-28" /> : <CompanyLogosCell companies={user.companies} />}
-      </TableCell>
-      <TableCell>
-        {loading ? <Skeleton className="h-6 w-16" /> : getBadgeContent()}
-      </TableCell>
-      <TableCell className="text-right">
-        {loading ? (
-          <Skeleton className="h-8 w-20 ml-auto" />
-        ) : (
-          <UserAdminToggle
-            userId={user.id}
-            isAdmin={user.is_admin}
-            isSuperAdmin={user.super_admin}
-            onToggle={onToggle}
-          />
-        )}
-      </TableCell>
-    </TableRow>
-  );
-});
-
-UserRow.displayName = 'UserRow';
-
-export const UserTableOptimized: React.FC<UserTableProps> = memo(({
+export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
   users,
   loading,
   onToggle
 }) => {
-  return (
-    <div className="rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-gray-800 shadow-sm">
-      <Table>
-        <TableHeader className="bg-gray-50 dark:bg-gray-900">
-          <TableRow>
-            <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Nome</TableHead>
-            <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Email</TableHead>
-            <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Empresas</TableHead>
-            <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Status</TableHead>
-            <TableHead className="text-right font-semibold px-[30px]">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {users.length === 0 && !loading ? (
-            <TableRow>
-              <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                Nenhum usuário encontrado
-              </TableCell>
-            </TableRow>
-          ) : (
-            users.map(user => (
-              <UserRow
-                key={user.id}
-                user={user}
-                loading={loading}
-                onToggle={onToggle}
-              />
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </div>
-  );
-});
+  const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
-UserTableOptimized.displayName = 'UserTableOptimized';
+  const formatDate = (dateString?: string | null): string => {
+    if (!dateString) return "-";
+    try {
+      return format(new Date(dateString), 'dd/MM/yyyy', { locale: ptBR });
+    } catch (error) {
+      return "-";
+    }
+  };
+
+  const formatBirthday = (dateString?: string | null): string => {
+    if (!dateString) return "-";
+    try {
+      return format(new Date(dateString), 'dd/MM', { locale: ptBR });
+    } catch (error) {
+      return "-";
+    }
+  };
+
+  const sortedUsers = useMemo(() => {
+    return [...users].sort((a, b) => {
+      if (a.super_admin && !b.super_admin) return -1;
+      if (!a.super_admin && b.super_admin) return 1;
+      if (a.is_admin && !b.is_admin) return -1;
+      if (!a.is_admin && b.is_admin) return 1;
+      return (a.display_name || a.email || '').localeCompare(b.display_name || b.email || '');
+    });
+  }, [users]);
+
+  const handleEditProfile = (user: UserProfile) => {
+    setEditingUser(user);
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSuccess = () => {
+    // Trigger refresh of users list
+    window.location.reload();
+  };
+
+  if (loading && users.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+            <span className="ml-2">Carregando usuários...</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (users.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center">
+          <p className="text-muted-foreground">Nenhum usuário encontrado.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <>
+      <Card>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Cidade</TableHead>
+                  <TableHead>Aniversário</TableHead>
+                  <TableHead>Nível</TableHead>
+                  <TableHead>Contrato</TableHead>
+                  <TableHead>Data Início</TableHead>
+                  <TableHead>Manual</TableHead>
+                  <TableHead>Permissões</TableHead>
+                  <TableHead className="w-[50px]">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedUsers.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell className="font-medium">
+                      {user.display_name || 'Sem nome'}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {user.email || 'Sem email'}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {user.cidade || '-'}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {formatBirthday(user.aniversario)}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {user.nivel_colaborador || '-'}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {user.tipo_contrato || '-'}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {formatDate(user.data_inicio)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={user.manual_cultura_aceito ? "default" : "secondary"}
+                        className="text-xs"
+                      >
+                        {user.manual_cultura_aceito ? "Aceito" : "Pendente"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        {user.super_admin && (
+                          <Badge variant="destructive" className="text-xs">
+                            Super Admin
+                          </Badge>
+                        )}
+                        {user.is_admin && !user.super_admin && (
+                          <Badge variant="default" className="text-xs">
+                            Admin
+                          </Badge>
+                        )}
+                        {!user.is_admin && !user.super_admin && (
+                          <Badge variant="outline" className="text-xs">
+                            Usuário
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <UserActionsDropdown
+                        user={user}
+                        onEditProfile={handleEditProfile}
+                        onToggleAdmin={onToggle}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <EditUserProfileDialog
+        isOpen={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        user={editingUser}
+        onSuccess={handleEditSuccess}
+      />
+    </>
+  );
+};
