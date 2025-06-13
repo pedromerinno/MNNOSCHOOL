@@ -96,15 +96,15 @@ export const CompanyNoticesAdminList: React.FC = () => {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant={notice.visibilidade ? "default" : "secondary"}>
-                      {notice.visibilidade ? "Visível" : "Oculto"}
+                    <Badge variant={(notice as any).visibilidade ? "default" : "secondary"}>
+                      {(notice as any).visibilidade ? "Visível" : "Oculto"}
                     </Badge>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleToggleVisibility(notice.id, notice.visibilidade)}
+                      onClick={() => handleToggleVisibility(notice.id, (notice as any).visibilidade)}
                     >
-                      {notice.visibilidade ? (
+                      {(notice as any).visibilidade ? (
                         <>
                           <EyeOff className="h-4 w-4 mr-2" />
                           Ocultar
@@ -130,7 +130,6 @@ export const CompanyNoticesAdminList: React.FC = () => {
       <NewNoticeDialog
         open={isNewNoticeDialogOpen}
         onOpenChange={setIsNewNoticeDialogOpen}
-        companyId={selectedCompany.id}
         onSuccess={() => {
           fetchNotices();
           setIsNewNoticeDialogOpen(false);

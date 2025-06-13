@@ -96,6 +96,7 @@ export type Database = {
           title: string
           type: string
           updated_at: string
+          visibilidade: boolean
         }
         Insert: {
           company_id: string
@@ -106,6 +107,7 @@ export type Database = {
           title: string
           type?: string
           updated_at?: string
+          visibilidade?: boolean
         }
         Update: {
           company_id?: string
@@ -116,6 +118,7 @@ export type Database = {
           title?: string
           type?: string
           updated_at?: string
+          visibilidade?: boolean
         }
         Relationships: [
           {
