@@ -26,7 +26,6 @@ export function useCompanyNotices() {
   const fetchingRef = useRef(false);
   const lastFetchedCompanyIdRef = useRef<string | null>(null);
   const mountedRef = useRef(true);
-  const abortControllerRef = useRef<AbortController | null>(null);
 
   const fetchNotices = useCallback(async (companyId?: string, forceRefresh = false) => {
     const targetCompanyId = companyId || selectedCompany?.id;
@@ -37,11 +36,6 @@ export function useCompanyNotices() {
       setCurrentNotice(null);
       setIsLoading(false);
       return;
-    }
-    
-    // Cancelar requisição anterior se ainda estiver em andamento
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
     }
     
     // Evitar requisições duplicadas
@@ -75,30 +69,15 @@ export function useCompanyNotices() {
       fetchingRef.current = true;
       lastFetchedCompanyIdRef.current = targetCompanyId;
       
-      // Criar novo AbortController para esta requisição
-      abortControllerRef.current = new AbortController();
-      const signal = abortControllerRef.current.signal;
-      
       console.log(`Fetching notices for company: ${targetCompanyId}`);
       
       // Buscar avisos primeiro
       const { data: noticesData, error: noticesError } = await supabase
         .from('company_notices')
-        .select(`
-          id,
-          title,
-          content,
-          type,
-          created_at,
-          updated_at,
-          company_id,
-          created_by,
-          visibilidade
-        `)
+        .select('*')
         .eq('company_id', targetCompanyId)
         .order('created_at', { ascending: false })
-        .limit(50)
-        .abortSignal(signal);
+        .limit(20);
       
       if (noticesError) {
         console.error('Error fetching notices:', noticesError);
@@ -106,8 +85,8 @@ export function useCompanyNotices() {
       }
       
       // Verificar se componente ainda está montado
-      if (!mountedRef.current || signal.aborted) {
-        console.log('Component unmounted or request aborted during notices fetch');
+      if (!mountedRef.current) {
+        console.log('Component unmounted during notices fetch');
         return;
       }
       
@@ -132,10 +111,11 @@ export function useCompanyNotices() {
       
       if (authorsError) {
         console.error('Error fetching authors:', authorsError);
+        // Continuar mesmo com erro de autores
       }
       
-      if (!mountedRef.current || signal.aborted) {
-        console.log('Component unmounted or request aborted during authors fetch');
+      if (!mountedRef.current) {
+        console.log('Component unmounted during authors fetch');
         return;
       }
       
@@ -168,11 +148,15 @@ export function useCompanyNotices() {
       
       console.log('Final notices with authors:', noticesWithAuthors);
       
-      // Armazenar no cache
-      setCache(cacheKey, noticesWithAuthors, 3);
+      // Tentar armazenar no cache (sem falhar se der erro)
+      try {
+        setCache(cacheKey, noticesWithAuthors, 2); // Cache menor
+      } catch (cacheError) {
+        console.warn('Failed to cache notices:', cacheError);
+      }
       
-      if (!mountedRef.current || signal.aborted) {
-        console.log('Component unmounted or request aborted before setting state');
+      if (!mountedRef.current) {
+        console.log('Component unmounted before setting state');
         return;
       }
       
@@ -186,12 +170,6 @@ export function useCompanyNotices() {
       }
       
     } catch (err: any) {
-      // Não mostrar erro se foi cancelado
-      if (err.name === 'AbortError') {
-        console.log('Request was aborted');
-        return;
-      }
-      
       console.error('Error fetching notices:', err);
       if (mountedRef.current) {
         setError(err.message || 'Erro ao buscar avisos');
@@ -202,7 +180,6 @@ export function useCompanyNotices() {
         setIsLoading(false);
       }
       fetchingRef.current = false;
-      abortControllerRef.current = null;
     }
   }, [selectedCompany?.id, getCache, setCache]);
 
@@ -494,7 +471,7 @@ export function useCompanyNotices() {
       // Debounce para evitar múltiplas chamadas
       const timeoutId = setTimeout(() => {
         fetchNotices(selectedCompany.id);
-      }, 50);
+      }, 100);
       
       return () => clearTimeout(timeoutId);
     } else {
@@ -509,9 +486,6 @@ export function useCompanyNotices() {
   useEffect(() => {
     return () => {
       mountedRef.current = false;
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
     };
   }, []);
 
