@@ -67,10 +67,10 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
     
     setNavigatingToLesson(lessonId);
     
-    // Navegação direta usando window.location para garantir que funcione
-    const newUrl = `/courses/${effectiveCourseId}/lessons/${lessonId}`;
-    console.log('🌐 LessonPlaylist: Navegando para URL:', newUrl);
-    window.location.href = newUrl;
+    // Use React Router navigate instead of window.location for SPA navigation
+    const newPath = `/courses/${effectiveCourseId}/lessons/${lessonId}`;
+    console.log('🌐 LessonPlaylist: Navegando para path:', newPath);
+    navigate(newPath);
   };
 
   const getTypeIcon = (type: string) => {
