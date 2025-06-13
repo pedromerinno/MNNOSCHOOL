@@ -54,7 +54,6 @@ const LessonPage = () => {
     loading, 
     error,
     markLessonCompleted, 
-    navigateToLesson,
     likes,
     userLiked,
     toggleLikeLesson,
