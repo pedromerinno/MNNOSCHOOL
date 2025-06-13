@@ -19,6 +19,7 @@ export const NotificationsWidget = () => {
   const { selectedCompany } = useCompanies();
   const lastFetchedCompanyRef = useRef<string | null>(null);
   const fetchInProgressRef = useRef(false);
+  const mountedRef = useRef(true);
 
   const { 
     notices, 
@@ -37,9 +38,14 @@ export const NotificationsWidget = () => {
     setShowNoticeDetail(true);
   };
 
-  // Função para buscar avisos quando empresa muda
+  // Função otimizada para buscar avisos
   const fetchNoticesForCompany = async (companyId: string) => {
-    if (fetchInProgressRef.current || lastFetchedCompanyRef.current === companyId) {
+    // Evitar requisições duplicadas ou desnecessárias
+    if (
+      fetchInProgressRef.current || 
+      lastFetchedCompanyRef.current === companyId ||
+      !mountedRef.current
+    ) {
       return;
     }
     
@@ -47,34 +53,57 @@ export const NotificationsWidget = () => {
     lastFetchedCompanyRef.current = companyId;
     
     try {
-      await fetchNotices(companyId);
+      await fetchNotices(companyId, false); // usar cache quando possível
     } finally {
-      fetchInProgressRef.current = false;
+      if (mountedRef.current) {
+        fetchInProgressRef.current = false;
+      }
     }
   };
 
-  // Buscar avisos quando empresa selecionada muda
+  // Effect otimizado para buscar avisos quando empresa muda
   useEffect(() => {
-    if (selectedCompany?.id) {
-      fetchNoticesForCompany(selectedCompany.id);
-    }
-  }, [selectedCompany?.id, fetchNotices]);
+    if (selectedCompany?.id && mountedRef.current) {
+      // Usar debounce para evitar múltiplas chamadas
+      const timeoutId = setTimeout(() => {
+        fetchNoticesForCompany(selectedCompany.id);
+      }, 100);
 
-  // Escutar mudanças de empresa
+      return () => clearTimeout(timeoutId);
+    } else {
+      // Resetar estado quando não há empresa selecionada
+      lastFetchedCompanyRef.current = null;
+      fetchInProgressRef.current = false;
+    }
+  }, [selectedCompany?.id]);
+
+  // Cleanup otimizado
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      fetchInProgressRef.current = false;
+    };
+  }, []);
+
+  // Remover listeners de eventos desnecessários para melhorar performance
   useEffect(() => {
     const handleCompanyChange = (event: CustomEvent<{company: Company}>) => {
       const newCompany = event.detail.company;
-      if (newCompany?.id) {
-        fetchNoticesForCompany(newCompany.id);
+      if (newCompany?.id && mountedRef.current) {
+        // Resetar refs para permitir nova busca
+        if (lastFetchedCompanyRef.current !== newCompany.id) {
+          fetchInProgressRef.current = false;
+          lastFetchedCompanyRef.current = null;
+        }
       }
     };
 
+    // Reduzir número de listeners
     window.addEventListener('company-changed', handleCompanyChange as EventListener);
-    window.addEventListener('company-navigation-change', handleCompanyChange as EventListener);
     
     return () => {
       window.removeEventListener('company-changed', handleCompanyChange as EventListener);
-      window.removeEventListener('company-navigation-change', handleCompanyChange as EventListener);
     };
   }, []);
 

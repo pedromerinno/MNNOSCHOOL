@@ -26,6 +26,7 @@ export function useCompanyNotices() {
   const fetchingRef = useRef(false);
   const lastFetchedCompanyIdRef = useRef<string | null>(null);
   const mountedRef = useRef(true);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const fetchNotices = useCallback(async (companyId?: string, forceRefresh = false) => {
     const targetCompanyId = companyId || selectedCompany?.id;
@@ -37,8 +38,13 @@ export function useCompanyNotices() {
       return;
     }
     
+    // Cancelar requisição anterior se ainda estiver em andamento
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
     // Evitar requisições duplicadas
-    if (fetchingRef.current || (!forceRefresh && lastFetchedCompanyIdRef.current === targetCompanyId)) {
+    if (fetchingRef.current && !forceRefresh) {
       return;
     }
 
@@ -47,7 +53,7 @@ export function useCompanyNotices() {
     // Tentar usar cache primeiro se não for refresh forçado
     if (!forceRefresh) {
       const cachedData = getCache<Notice[]>(cacheKey);
-      if (cachedData && Array.isArray(cachedData) && cachedData.length >= 0) {
+      if (cachedData && Array.isArray(cachedData)) {
         console.log(`Using cached notices for company ${targetCompanyId}`);
         setNotices(cachedData);
         if (cachedData.length > 0) {
@@ -67,33 +73,46 @@ export function useCompanyNotices() {
       fetchingRef.current = true;
       lastFetchedCompanyIdRef.current = targetCompanyId;
       
+      // Criar novo AbortController para esta requisição
+      abortControllerRef.current = new AbortController();
+      const signal = abortControllerRef.current.signal;
+      
       console.log(`Fetching notices for company: ${targetCompanyId}`);
       
-      // Buscar avisos e autores em paralelo para melhor performance
-      const [noticesResponse, authorsResponse] = await Promise.all([
-        supabase
-          .from('company_notices')
-          .select('*')
-          .eq('company_id', targetCompanyId)
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('profiles')
-          .select('id, display_name, avatar')
-      ]);
+      // Buscar apenas os avisos necessários com limit para melhor performance
+      const { data: noticesData, error: noticesError } = await supabase
+        .from('company_notices')
+        .select(`
+          id,
+          title,
+          content,
+          type,
+          created_at,
+          updated_at,
+          company_id,
+          created_by,
+          visibilidade,
+          profiles:created_by (
+            id,
+            display_name,
+            avatar
+          )
+        `)
+        .eq('company_id', targetCompanyId)
+        .order('created_at', { ascending: false })
+        .limit(50) // Limitar para melhor performance
+        .abortSignal(signal);
       
-      if (noticesResponse.error) throw noticesResponse.error;
-      if (authorsResponse.error) throw authorsResponse.error;
+      if (noticesError) throw noticesError;
       
-      const noticesData = noticesResponse.data || [];
-      const authors = authorsResponse.data || [];
+      // Verificar se componente ainda está montado
+      if (!mountedRef.current || signal.aborted) return;
       
-      console.log(`Retrieved ${noticesData.length} notices`);
+      console.log(`Retrieved ${noticesData?.length || 0} notices`);
       
       // Mapear avisos com autores de forma otimizada
-      const authorsMap = new Map(authors.map(author => [author.id, author]));
-      
-      const noticesWithAuthors = noticesData.map((notice) => {
-        const author = authorsMap.get(notice.created_by) as NoticeAuthor;
+      const noticesWithAuthors = (noticesData || []).map((notice) => {
+        const author = notice.profiles as NoticeAuthor;
         return { 
           ...notice, 
           author,
@@ -101,10 +120,10 @@ export function useCompanyNotices() {
         };
       });
       
-      // Armazenar no cache com expiração de 5 minutos
-      setCache(cacheKey, noticesWithAuthors, 5);
+      // Armazenar no cache com expiração de 3 minutos para melhor performance
+      setCache(cacheKey, noticesWithAuthors, 3);
       
-      if (!mountedRef.current) return;
+      if (!mountedRef.current || signal.aborted) return;
       
       setNotices(noticesWithAuthors);
       
@@ -116,6 +135,9 @@ export function useCompanyNotices() {
       }
       
     } catch (err: any) {
+      // Não mostrar erro se foi cancelado
+      if (err.name === 'AbortError') return;
+      
       console.error('Erro ao buscar avisos:', err);
       if (mountedRef.current) {
         setError(err.message || 'Erro ao buscar avisos');
@@ -125,6 +147,7 @@ export function useCompanyNotices() {
         setIsLoading(false);
       }
       fetchingRef.current = false;
+      abortControllerRef.current = null;
     }
   }, [selectedCompany?.id, getCache, setCache]);
 
@@ -409,11 +432,16 @@ export function useCompanyNotices() {
     setCurrentNotice(notices[prevIndex]);
   };
 
-  // Effect para buscar avisos quando empresa muda
+  // Effect otimizado para buscar avisos quando empresa muda
   useEffect(() => {
     if (selectedCompany?.id) {
       console.log(`Selected company changed to: ${selectedCompany.id}, fetching notices`);
-      fetchNotices(selectedCompany.id);
+      // Debounce para evitar múltiplas chamadas
+      const timeoutId = setTimeout(() => {
+        fetchNotices(selectedCompany.id);
+      }, 50);
+      
+      return () => clearTimeout(timeoutId);
     } else {
       setNotices([]);
       setCurrentNotice(null);
@@ -425,6 +453,9 @@ export function useCompanyNotices() {
   useEffect(() => {
     return () => {
       mountedRef.current = false;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
     };
   }, []);
 
