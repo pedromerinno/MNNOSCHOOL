@@ -1,9 +1,9 @@
-
 import React, { useMemo, useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserProfile } from "@/hooks/useUsers";
 import { UserActionsDropdown } from './user/UserActionsDropdown';
 import { EditUserProfileDialog } from './user/EditUserProfileDialog';
@@ -63,6 +63,20 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
       return (a.display_name || a.email || '').localeCompare(b.display_name || b.email || '');
     });
   }, [users]);
+
+  const getInitials = (name: string | null, email: string | null): string => {
+    if (name) {
+      const nameParts = name.split(' ');
+      if (nameParts.length >= 2) {
+        return `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
+      }
+      return name.charAt(0).toUpperCase();
+    }
+    if (email) {
+      return email.charAt(0).toUpperCase();
+    }
+    return 'U';
+  };
 
   const handleEditProfile = (user: UserProfile) => {
     setEditingUser(user);
@@ -201,6 +215,7 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Foto</TableHead>
                   <TableHead>Nome</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Cidade</TableHead>
@@ -216,6 +231,17 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
               <TableBody>
                 {sortedUsers.map((user) => (
                   <TableRow key={user.id}>
+                    <TableCell>
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage 
+                          src={user.avatar || undefined} 
+                          alt={user.display_name || user.email || 'Usuário'} 
+                        />
+                        <AvatarFallback className="bg-slate-100 text-slate-600 font-medium">
+                          {getInitials(user.display_name, user.email)}
+                        </AvatarFallback>
+                      </Avatar>
+                    </TableCell>
                     <TableCell className="font-medium">
                       {user.display_name || 'Sem nome'}
                     </TableCell>
