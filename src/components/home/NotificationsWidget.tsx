@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Eye } from "lucide-react";
+import { Bell, Eye, ChevronRight } from "lucide-react";
 import { useCompanyNotices } from "@/hooks/useCompanyNotices";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -74,75 +74,86 @@ export const NotificationsWidget = () => {
 
   return (
     <>
-      <Card className="h-full">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium flex items-center">
-            <Bell className="h-4 w-4 mr-2" />
-            Avisos da Empresa
-            {selectedCompany && (
-              <span className="ml-2 text-xs text-muted-foreground">
-                ({selectedCompany.nome})
-              </span>
+      <Card className="h-full bg-white dark:bg-card border border-gray-200 dark:border-gray-800 shadow-sm">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg font-semibold flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Bell className="h-5 w-5 text-blue-600" />
+              <span>Avisos da Empresa</span>
+            </div>
+            {unreadCount > 0 && (
+              <Badge variant="destructive" className="text-xs px-2 py-1">
+                {unreadCount}
+              </Badge>
             )}
           </CardTitle>
-          {unreadCount > 0 && (
-            <Badge variant="destructive" className="text-xs">
-              {unreadCount}
-            </Badge>
+          {selectedCompany && (
+            <p className="text-sm text-muted-foreground">
+              {selectedCompany.nome}
+            </p>
           )}
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           {isLoading ? (
-            <div className="space-y-2">
-              <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-              <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4"></div>
+            <div className="space-y-3">
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-3/4"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-1/2"></div>
             </div>
           ) : !selectedCompany ? (
-            <p className="text-sm text-muted-foreground">
-              Selecione uma empresa para ver os avisos
-            </p>
+            <div className="text-center py-8">
+              <Bell className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground">
+                Selecione uma empresa para ver os avisos
+              </p>
+            </div>
           ) : recentNotices.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhum aviso disponível</p>
+            <div className="text-center py-8">
+              <Bell className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground mb-2">Nenhum aviso disponível</p>
+              <p className="text-xs text-gray-400">Os avisos aparecerão aqui quando publicados</p>
+            </div>
           ) : (
             <div className="space-y-3">
               {recentNotices.map((notice) => (
                 <div
                   key={notice.id}
-                  className="p-3 border rounded-lg bg-blue-50 border-blue-200"
+                  className="group p-3 rounded-lg border border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-600 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-all duration-200 cursor-pointer"
+                  onClick={() => handleMarkAsRead(notice.id)}
                 >
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-medium text-gray-900 truncate">
+                      <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-blue-700 dark:group-hover:text-blue-300">
                         {notice.title}
                       </h4>
-                      <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
                         {notice.content}
                       </p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        {format(new Date(notice.created_at), "dd MMM yyyy", {
-                          locale: ptBR,
-                        })}
-                      </p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Badge variant="outline" className="text-xs px-2 py-0.5 capitalize">
+                          {notice.type}
+                        </Badge>
+                        <span className="text-xs text-gray-400">
+                          {format(new Date(notice.created_at), "dd MMM", {
+                            locale: ptBR,
+                          })}
+                        </span>
+                      </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleMarkAsRead(notice.id)}
-                      className="ml-2"
-                    >
-                      <Eye className="h-3 w-3" />
-                    </Button>
+                    <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
                   </div>
                 </div>
               ))}
+              
               {notices.length > 3 && (
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   onClick={() => setShowAllNotices(true)}
-                  className="w-full mt-2"
+                  className="w-full mt-4 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950/20"
                 >
                   Ver todos os avisos ({notices.length})
+                  <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               )}
             </div>
