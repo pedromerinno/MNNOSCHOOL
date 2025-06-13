@@ -4,8 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "./useCompanies";
 import { toast } from "sonner";
 import { Notice, NoticeAuthor } from "./useNotifications";
-import { useCache } from "@/hooks/useCache";
-import { useCompanyRequest } from "@/hooks/company/useCompanyRequest";
+import { useOptimizedCache } from "@/hooks/useOptimizedCache";
 
 export interface NoticeFormData {
   title: string;
@@ -22,112 +21,90 @@ export function useCompanyNotices() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { getCache, setCache, clearCache } = useCache();
-  const {
-    shouldMakeRequest,
-    startRequest,
-    completeRequest,
-    resetRequestState,
-    debouncedRequest
-  } = useCompanyRequest();
+  const { getCache, setCache, clearCache } = useOptimizedCache();
   
   const fetchingRef = useRef(false);
-  const cleanupInProgressRef = useRef(false);
-  const lastCleanupTimeRef = useRef(0);
-  const noticesInstanceIdRef = useRef<string>(`notices-${Math.random().toString(36).substring(2, 9)}`);
   const lastFetchedCompanyIdRef = useRef<string | null>(null);
-  const pendingFetchTimeoutRef = useRef<number | null>(null);
+  const mountedRef = useRef(true);
 
   const fetchNotices = useCallback(async (companyId?: string, forceRefresh = false) => {
     const targetCompanyId = companyId || selectedCompany?.id;
     
-    if (!targetCompanyId) {
+    if (!targetCompanyId || !mountedRef.current) {
       setNotices([]);
       setCurrentNotice(null);
       setIsLoading(false);
       return;
     }
     
-    // Evitar requisições duplicadas para a mesma empresa em um curto período de tempo
-    if (lastFetchedCompanyIdRef.current === targetCompanyId && !forceRefresh) {
-      console.log(`Ignorando fetch duplicado para empresa: ${targetCompanyId}`);
+    // Evitar requisições duplicadas
+    if (fetchingRef.current || (!forceRefresh && lastFetchedCompanyIdRef.current === targetCompanyId)) {
       return;
-    }
-    
-    // Limpar qualquer timeout pendente
-    if (pendingFetchTimeoutRef.current !== null) {
-      clearTimeout(pendingFetchTimeoutRef.current);
-      pendingFetchTimeoutRef.current = null;
     }
 
     const cacheKey = `notices_${targetCompanyId}`;
     
-    const cachedData = getCache({ key: cacheKey });
-    const hasLocalData = !!cachedData && Array.isArray(cachedData) && cachedData.length > 0;
-    
-    if (!shouldMakeRequest(forceRefresh, hasLocalData, noticesInstanceIdRef.current, cacheKey) || fetchingRef.current) {
-      if (hasLocalData) {
-        console.log(`[${noticesInstanceIdRef.current}] Using cached data for notices of company ${targetCompanyId}`);
+    // Tentar usar cache primeiro se não for refresh forçado
+    if (!forceRefresh) {
+      const cachedData = getCache<Notice[]>(cacheKey);
+      if (cachedData && Array.isArray(cachedData) && cachedData.length >= 0) {
+        console.log(`Using cached notices for company ${targetCompanyId}`);
         setNotices(cachedData);
         if (cachedData.length > 0) {
           setCurrentNotice(cachedData[0]);
           setCurrentIndex(0);
+        } else {
+          setCurrentNotice(null);
         }
         setIsLoading(false);
+        return;
       }
-      return;
     }
 
     try {
       setIsLoading(true);
       setError(null);
       fetchingRef.current = true;
-      startRequest(cacheKey);
       lastFetchedCompanyIdRef.current = targetCompanyId;
       
       console.log(`Fetching notices for company: ${targetCompanyId}`);
       
-      // Buscar diretamente todos os avisos da empresa na tabela company_notices
-      const { data: noticesData, error: noticesError } = await supabase
-        .from('company_notices')
-        .select('*')
-        .eq('company_id', targetCompanyId)
-        .order('created_at', { ascending: false }); // Order by newest first
+      // Buscar avisos e autores em paralelo para melhor performance
+      const [noticesResponse, authorsResponse] = await Promise.all([
+        supabase
+          .from('company_notices')
+          .select('*')
+          .eq('company_id', targetCompanyId)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('profiles')
+          .select('id, display_name, avatar')
+      ]);
       
-      if (noticesError) throw noticesError;
+      if (noticesResponse.error) throw noticesResponse.error;
+      if (authorsResponse.error) throw authorsResponse.error;
       
-      if (!noticesData || noticesData.length === 0) {
-        console.log(`No notices found for company: ${targetCompanyId}`);
-        setNotices([]);
-        setCurrentNotice(null);
-        setIsLoading(false);
-        completeRequest();
-        fetchingRef.current = false;
-        setCache({ key: cacheKey }, []);
-        return;
-      }
+      const noticesData = noticesResponse.data || [];
+      const authors = authorsResponse.data || [];
       
       console.log(`Retrieved ${noticesData.length} notices`);
       
-      const authorIds = [...new Set(noticesData.map(n => n.created_by))];
-      
-      const { data: authors, error: authorsError } = await supabase
-        .from('profiles')
-        .select('id, display_name, avatar')
-        .in('id', authorIds);
-        
-      if (authorsError) throw authorsError;
+      // Mapear avisos com autores de forma otimizada
+      const authorsMap = new Map(authors.map(author => [author.id, author]));
       
       const noticesWithAuthors = noticesData.map((notice) => {
-        const author = authors?.find(a => a.id === notice.created_by) as NoticeAuthor;
+        const author = authorsMap.get(notice.created_by) as NoticeAuthor;
         return { 
           ...notice, 
           author,
-          companies: [targetCompanyId] // Assumir que o aviso pertence à empresa atual
+          companies: [targetCompanyId]
         };
       });
       
-      setCache({ key: cacheKey }, noticesWithAuthors);
+      // Armazenar no cache com expiração de 5 minutos
+      setCache(cacheKey, noticesWithAuthors, 5);
+      
+      if (!mountedRef.current) return;
       
       setNotices(noticesWithAuthors);
       
@@ -138,25 +115,18 @@ export function useCompanyNotices() {
         setCurrentNotice(null);
       }
       
-      completeRequest();
     } catch (err: any) {
       console.error('Erro ao buscar avisos:', err);
-      setError(err.message || 'Erro ao buscar avisos');
-      resetRequestState();
+      if (mountedRef.current) {
+        setError(err.message || 'Erro ao buscar avisos');
+      }
     } finally {
-      setIsLoading(false);
+      if (mountedRef.current) {
+        setIsLoading(false);
+      }
       fetchingRef.current = false;
     }
-  }, [
-    selectedCompany?.id, 
-    getCache, 
-    setCache, 
-    clearCache, 
-    shouldMakeRequest, 
-    startRequest, 
-    completeRequest, 
-    resetRequestState
-  ]);
+  }, [selectedCompany?.id, getCache, setCache]);
 
   const createNotice = async (data: NoticeFormData) => {
     if (!user || !data.companies || data.companies.length === 0) {
@@ -186,17 +156,21 @@ export function useCompanyNotices() {
         throw new Error("Erro ao criar aviso: ID do aviso não retornado");
       }
 
-      const noticeRelations = data.companies.map(companyId => ({
-        notice_id: newNotice.id,
-        company_id: companyId
-      }));
+      // Criar relações com empresas se necessário
+      if (data.companies.length > 1) {
+        const noticeRelations = data.companies.slice(1).map(companyId => ({
+          notice_id: newNotice.id,
+          company_id: companyId
+        }));
 
-      const { error: relationsError } = await supabase
-        .from('notice_companies')
-        .insert(noticeRelations);
+        const { error: relationsError } = await supabase
+          .from('notice_companies')
+          .insert(noticeRelations);
 
-      if (relationsError) throw relationsError;
+        if (relationsError) throw relationsError;
+      }
 
+      // Criar notificações para usuários
       for (const companyId of data.companies) {
         const { data: usersToNotify, error: errorUsers } = await supabase
           .from('user_empresa')
@@ -230,8 +204,9 @@ export function useCompanyNotices() {
         }
       }
 
+      // Limpar cache das empresas afetadas
       for (const companyId of data.companies) {
-        clearCache({ key: `notices_${companyId}` });
+        clearCache(`notices_${companyId}`);
       }
 
       await fetchNotices(undefined, true);
@@ -361,7 +336,7 @@ export function useCompanyNotices() {
 
       const allAffectedCompanies = [...companiesToAdd, ...companiesToRemove, ...currentCompanyIds];
       for (const companyId of allAffectedCompanies) {
-        clearCache({ key: `notices_${companyId}` });
+        clearCache(`notices_${companyId}`);
       }
 
       await fetchNotices(undefined, true);
@@ -399,9 +374,11 @@ export function useCompanyNotices() {
       
       if (relatedCompanies && relatedCompanies.length > 0) {
         for (const item of relatedCompanies) {
-          clearCache({ key: `notices_${item.company_id}` });
+          clearCache(`notices_${item.company_id}`);
         }
       }
+      
+      clearCache(`notices_${selectedCompany.id}`);
       
       await fetchNotices(undefined, true);
       
@@ -432,32 +409,24 @@ export function useCompanyNotices() {
     setCurrentNotice(notices[prevIndex]);
   };
 
+  // Effect para buscar avisos quando empresa muda
   useEffect(() => {
     if (selectedCompany?.id) {
-      console.log(`Selected company changed to: ${selectedCompany.id}, will fetch notices`);
-      
-      // Usar um timeout para debounce
-      if (pendingFetchTimeoutRef.current !== null) {
-        clearTimeout(pendingFetchTimeoutRef.current);
-      }
-      
-      pendingFetchTimeoutRef.current = window.setTimeout(() => {
-        fetchNotices(selectedCompany.id);
-        pendingFetchTimeoutRef.current = null;
-      }, 800);
+      console.log(`Selected company changed to: ${selectedCompany.id}, fetching notices`);
+      fetchNotices(selectedCompany.id);
     } else {
       setNotices([]);
       setCurrentNotice(null);
       setIsLoading(false);
     }
-    
-    return () => {
-      if (pendingFetchTimeoutRef.current !== null) {
-        clearTimeout(pendingFetchTimeoutRef.current);
-        pendingFetchTimeoutRef.current = null;
-      }
-    };
   }, [selectedCompany?.id, fetchNotices]);
+
+  // Cleanup ao desmontar
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   return {
     notices,
