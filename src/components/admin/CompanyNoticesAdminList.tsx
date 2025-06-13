@@ -22,8 +22,7 @@ import { Notice } from "@/hooks/useNotifications";
 
 export const CompanyNoticesAdminList: React.FC = () => {
   const { selectedCompany } = useCompanies();
-  // Show all notices in admin (including hidden ones)
-  const { notices, isLoading, fetchNotices, deleteNotice } = useCompanyNotices(false);
+  const { notices, isLoading, fetchNotices, deleteNotice } = useCompanyNotices();
   const [isNewNoticeDialogOpen, setIsNewNoticeDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
@@ -34,11 +33,10 @@ export const CompanyNoticesAdminList: React.FC = () => {
     setLocalNotices(notices);
   }, [notices]);
 
-  // Auto-refresh when component mounts and when company changes
+  // Auto-refresh when component mounts
   useEffect(() => {
     if (selectedCompany) {
-      console.log('CompanyNoticesAdminList: forcing refresh for company', selectedCompany.id);
-      fetchNotices(selectedCompany.id, true); // Force refresh sempre
+      fetchNotices();
     }
   }, [selectedCompany, fetchNotices]);
 
@@ -66,8 +64,8 @@ export const CompanyNoticesAdminList: React.FC = () => {
 
       toast.success(`Aviso ${!currentVisibility ? 'publicado' : 'ocultado'} com sucesso`);
       
-      // Refresh to ensure consistency - force refresh
-      await fetchNotices(selectedCompany?.id, true);
+      // Refresh to ensure consistency
+      await fetchNotices();
     } catch (error) {
       console.error('Error toggling notice visibility:', error);
       toast.error('Erro ao alterar visibilidade do aviso');
@@ -82,7 +80,7 @@ export const CompanyNoticesAdminList: React.FC = () => {
       const success = await deleteNotice(noticeId);
       if (success) {
         toast.success('Aviso excluído com sucesso');
-        await fetchNotices(selectedCompany?.id, true); // Force refresh
+        await fetchNotices();
       }
     }
   };
@@ -100,7 +98,7 @@ export const CompanyNoticesAdminList: React.FC = () => {
   const handleDialogOpenChange = (open: boolean) => {
     setIsNewNoticeDialogOpen(open);
     if (!open && selectedCompany) {
-      fetchNotices(selectedCompany.id, true); // Force refresh
+      fetchNotices();
     }
   };
 
@@ -109,7 +107,7 @@ export const CompanyNoticesAdminList: React.FC = () => {
     if (!open) {
       setSelectedNotice(null);
       if (selectedCompany) {
-        fetchNotices(selectedCompany.id, true); // Force refresh
+        fetchNotices();
       }
     }
   };
@@ -129,7 +127,7 @@ export const CompanyNoticesAdminList: React.FC = () => {
         <div>
           <h2 className="text-2xl font-bold">Avisos da Empresa</h2>
           <p className="text-gray-500 dark:text-gray-400">
-            Gerencie os avisos para {selectedCompany.nome} (incluindo avisos ocultos)
+            Gerencie os avisos para {selectedCompany.nome}
           </p>
         </div>
         <Button 

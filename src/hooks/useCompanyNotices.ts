@@ -14,7 +14,7 @@ export interface NoticeFormData {
   companies?: string[];
 }
 
-export function useCompanyNotices(showOnlyVisible: boolean = true) {
+export function useCompanyNotices() {
   const { user } = useAuth();
   const { selectedCompany } = useCompanies();
   const [notices, setNotices] = useState<Notice[]>([]);
@@ -77,19 +77,10 @@ export function useCompanyNotices(showOnlyVisible: boolean = true) {
       return;
     }
     
-    // Para admin (showOnlyVisible=false), sempre buscar dados frescos
-    if (!showOnlyVisible) {
-      // Evitar requisições duplicadas para admin
-      if (fetchingRef.current) {
-        console.log('Admin fetch already in progress, skipping');
-        return;
-      }
-    } else {
-      // Para home widget, usar lógica de cache
-      if (lastFetchedCompanyIdRef.current === targetCompanyId && !forceRefresh) {
-        console.log(`Ignorando fetch duplicado para empresa: ${targetCompanyId}`);
-        return;
-      }
+    // Evitar requisições duplicadas para a mesma empresa em um curto período de tempo
+    if (lastFetchedCompanyIdRef.current === targetCompanyId && !forceRefresh) {
+      console.log(`Ignorando fetch duplicado para empresa: ${targetCompanyId}`);
+      return;
     }
     
     // Limpar qualquer timeout pendente
@@ -98,37 +89,32 @@ export function useCompanyNotices(showOnlyVisible: boolean = true) {
       pendingFetchTimeoutRef.current = null;
     }
 
-    const cacheKey = `notices_${targetCompanyId}_${showOnlyVisible ? 'visible' : 'all'}`;
+    const cacheKey = `notices_${targetCompanyId}`;
     
-    // Só usar cache para home widget (showOnlyVisible=true)
-    if (showOnlyVisible) {
-      const cachedData = getCache({ key: cacheKey });
-      const hasLocalData = !!cachedData && Array.isArray(cachedData) && cachedData.length > 0;
-      
-      if (!shouldMakeRequest(forceRefresh, hasLocalData, noticesInstanceIdRef.current, cacheKey) && !fetchingRef.current) {
-        if (hasLocalData) {
-          console.log(`[${noticesInstanceIdRef.current}] Using cached data for notices of company ${targetCompanyId}`);
-          setNotices(cachedData);
-          if (cachedData.length > 0) {
-            setCurrentNotice(cachedData[0]);
-            setCurrentIndex(0);
-          }
-          setIsLoading(false);
+    const cachedData = getCache({ key: cacheKey });
+    const hasLocalData = !!cachedData && Array.isArray(cachedData) && cachedData.length > 0;
+    
+    if (!shouldMakeRequest(forceRefresh, hasLocalData, noticesInstanceIdRef.current, cacheKey) || fetchingRef.current) {
+      if (hasLocalData) {
+        console.log(`[${noticesInstanceIdRef.current}] Using cached data for notices of company ${targetCompanyId}`);
+        setNotices(cachedData);
+        if (cachedData.length > 0) {
+          setCurrentNotice(cachedData[0]);
+          setCurrentIndex(0);
         }
-        return;
+        setIsLoading(false);
       }
+      return;
     }
 
     try {
       setIsLoading(true);
       setError(null);
       fetchingRef.current = true;
-      if (showOnlyVisible) {
-        startRequest(cacheKey);
-      }
+      startRequest(cacheKey);
       lastFetchedCompanyIdRef.current = targetCompanyId;
       
-      console.log(`Fetching notices for company: ${targetCompanyId}, showOnlyVisible: ${showOnlyVisible}`);
+      console.log(`Fetching notices for company: ${targetCompanyId}`);
       
       const { data: noticeRelations, error: relationsError } = await supabase
         .from('notice_companies')
@@ -144,41 +130,27 @@ export function useCompanyNotices(showOnlyVisible: boolean = true) {
         setNotices([]);
         setCurrentNotice(null);
         setIsLoading(false);
-        if (showOnlyVisible) {
-          completeRequest();
-          setCache({ key: cacheKey }, []);
-        }
+        completeRequest();
         fetchingRef.current = false;
+        setCache({ key: cacheKey }, []);
         return;
       }
       
       const noticeIds = noticeRelations.map(item => item.notice_id);
       console.log(`Found ${noticeIds.length} notice IDs for company: ${targetCompanyId}`);
       
-      // Build query - para admin não aplicar filtro de visibilidade
-      let query = supabase
+      // Fetch notices and filter by visibility (only visible notices for end users)
+      const { data: noticesData, error: noticesError } = await supabase
         .from('company_notices')
         .select('*')
-        .in('id', noticeIds);
-      
-      // Aplicar filtro de visibilidade apenas para home widget
-      if (showOnlyVisible) {
-        console.log('Applying visibility filter - showing only visible notices');
-        query = query.eq('visibilidade', true);
-      } else {
-        console.log('Admin mode - showing all notices including hidden ones');
-      }
-      
-      const { data: noticesData, error: noticesError } = await query
+        .in('id', noticeIds)
+        .eq('visibilidade', true) // Only fetch visible notices
         .order('created_at', { ascending: false });
       
       if (noticesError) throw noticesError;
       
       if (!noticesData || noticesData.length === 0) {
-        const logMessage = showOnlyVisible 
-          ? `No visible notice data found for IDs: ${noticeIds.join(', ')}`
-          : `No notice data found for IDs: ${noticeIds.join(', ')}`;
-        console.log(logMessage);
+        console.log(`No visible notice data found for IDs: ${noticeIds.join(', ')}`);
         
         setTimeout(() => {
           cleanupInvalidRelations(targetCompanyId, noticeIds).catch(err => {
@@ -186,15 +158,11 @@ export function useCompanyNotices(showOnlyVisible: boolean = true) {
           });
         }, 100);
         
-        if (showOnlyVisible) {
-          clearCache({ key: cacheKey });
-        }
+        clearCache({ key: cacheKey });
         setNotices([]);
         setCurrentNotice(null);
         setIsLoading(false);
-        if (showOnlyVisible) {
-          resetRequestState();
-        }
+        resetRequestState();
         fetchingRef.current = false;
         return;
       }
@@ -210,7 +178,7 @@ export function useCompanyNotices(showOnlyVisible: boolean = true) {
         }, 100);
       }
       
-      console.log(`Retrieved ${noticesData.length} notices (showOnlyVisible: ${showOnlyVisible})`);
+      console.log(`Retrieved ${noticesData.length} notices`);
       
       const authorIds = [...new Set(noticesData.map(n => n.created_by))];
       
@@ -239,10 +207,7 @@ export function useCompanyNotices(showOnlyVisible: boolean = true) {
       
       const noticesWithCompanies = await Promise.all(noticesWithCompaniesPromises);
       
-      // Só fazer cache para dados de home widget (showOnlyVisible=true)
-      if (showOnlyVisible) {
-        setCache({ key: cacheKey }, noticesWithCompanies);
-      }
+      setCache({ key: cacheKey }, noticesWithCompanies);
       
       setNotices(noticesWithCompanies);
       
@@ -253,15 +218,11 @@ export function useCompanyNotices(showOnlyVisible: boolean = true) {
         setCurrentNotice(null);
       }
       
-      if (showOnlyVisible) {
-        completeRequest();
-      }
+      completeRequest();
     } catch (err: any) {
       console.error('Erro ao buscar avisos:', err);
       setError(err.message || 'Erro ao buscar avisos');
-      if (showOnlyVisible) {
-        resetRequestState();
-      }
+      resetRequestState();
     } finally {
       setIsLoading(false);
       fetchingRef.current = false;
@@ -275,8 +236,7 @@ export function useCompanyNotices(showOnlyVisible: boolean = true) {
     startRequest, 
     completeRequest, 
     resetRequestState,
-    cleanupInvalidRelations,
-    showOnlyVisible
+    cleanupInvalidRelations
   ]);
 
   const createNotice = async (data: NoticeFormData) => {
@@ -352,8 +312,7 @@ export function useCompanyNotices(showOnlyVisible: boolean = true) {
       }
 
       for (const companyId of data.companies) {
-        clearCache({ key: `notices_${companyId}_visible` });
-        clearCache({ key: `notices_${companyId}_all` });
+        clearCache({ key: `notices_${companyId}` });
       }
 
       await fetchNotices(undefined, true);
@@ -483,8 +442,7 @@ export function useCompanyNotices(showOnlyVisible: boolean = true) {
 
       const allAffectedCompanies = [...companiesToAdd, ...companiesToRemove, ...currentCompanyIds];
       for (const companyId of allAffectedCompanies) {
-        clearCache({ key: `notices_${companyId}_visible` });
-        clearCache({ key: `notices_${companyId}_all` });
+        clearCache({ key: `notices_${companyId}` });
       }
 
       await fetchNotices(undefined, true);
@@ -522,8 +480,7 @@ export function useCompanyNotices(showOnlyVisible: boolean = true) {
       
       if (relatedCompanies && relatedCompanies.length > 0) {
         for (const item of relatedCompanies) {
-          clearCache({ key: `notices_${item.company_id}_visible` });
-          clearCache({ key: `notices_${item.company_id}_all` });
+          clearCache({ key: `notices_${item.company_id}` });
         }
       }
       
@@ -560,20 +517,15 @@ export function useCompanyNotices(showOnlyVisible: boolean = true) {
     if (selectedCompany?.id) {
       console.log(`Selected company changed to: ${selectedCompany.id}, will fetch notices`);
       
-      // Para admin (showOnlyVisible=false), fazer fetch imediato
-      if (!showOnlyVisible) {
-        fetchNotices(selectedCompany.id, true);
-      } else {
-        // Para home widget, usar debounce
-        if (pendingFetchTimeoutRef.current !== null) {
-          clearTimeout(pendingFetchTimeoutRef.current);
-        }
-        
-        pendingFetchTimeoutRef.current = window.setTimeout(() => {
-          fetchNotices(selectedCompany.id);
-          pendingFetchTimeoutRef.current = null;
-        }, 800);
+      // Usar um timeout para debounce
+      if (pendingFetchTimeoutRef.current !== null) {
+        clearTimeout(pendingFetchTimeoutRef.current);
       }
+      
+      pendingFetchTimeoutRef.current = window.setTimeout(() => {
+        fetchNotices(selectedCompany.id);
+        pendingFetchTimeoutRef.current = null;
+      }, 800);
     } else {
       setNotices([]);
       setCurrentNotice(null);
@@ -586,7 +538,7 @@ export function useCompanyNotices(showOnlyVisible: boolean = true) {
         pendingFetchTimeoutRef.current = null;
       }
     };
-  }, [selectedCompany?.id, fetchNotices, showOnlyVisible]);
+  }, [selectedCompany?.id, fetchNotices]);
 
   return {
     notices,
