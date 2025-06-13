@@ -48,7 +48,7 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
       <div className="absolute inset-0 bg-gradient-to-tr from-black/70 to-transparent" />
       
       {/* Content */}
-      <div className="relative z-10 h-full p-8 md:p-12 flex flex-col pointer-events-none">
+      <div className="relative z-10 h-full p-8 md:p-12 flex flex-col">
         <div className="flex-1">
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-6">
             {course.title}
@@ -98,7 +98,7 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
           </div>
           
           <Button 
-            className="bg-white text-black hover:bg-gray-100 rounded-full gap-2 px-6 pointer-events-auto"
+            className="bg-white text-black hover:bg-gray-100 rounded-full gap-2 px-6 relative z-20"
             onClick={handleButtonClick}
           >
             Assistir agora
