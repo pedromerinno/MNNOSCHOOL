@@ -153,73 +153,33 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
     }
   }, [lessonId, currentLessonId]);
   
-  // Navegação com logs super detalhados
+  // Navegação simplificada e corrigida
   const handleNavigateToLesson = useCallback((newLessonId: string) => {
-    console.log('=== NAVIGATION DEBUG START ===');
-    console.log('Navigation function called with lesson ID:', newLessonId);
-    console.log('Current lesson ID in hook:', currentLessonId);
-    console.log('Course ID from cached lesson:', (cachedLesson || lesson)?.course_id);
-    console.log('Cached lesson available:', !!cachedLesson);
-    console.log('Fetched lesson available:', !!lesson);
-    console.log('Navigate function available:', !!navigate);
-    
-    // Verificar se dados já estão prefetched ou em cache
-    const cached = getCachedData(newLessonId);
-    const prefetched = prefetchedData.get(newLessonId);
-    
-    if (cached) {
-      console.log('Using cached data for navigation:', newLessonId);
-    } else if (prefetched) {
-      console.log('Using prefetched data for navigation:', newLessonId);
-    } else {
-      console.log('No cached or prefetched data, will fetch fresh');
-    }
+    console.log('=== NAVIGATION ATTEMPT ===');
+    console.log('Target lesson ID:', newLessonId);
+    console.log('Current lesson ID:', currentLessonId);
     
     const courseId = (cachedLesson || lesson)?.course_id;
-    console.log('Extracted course ID:', courseId);
+    console.log('Course ID:', courseId);
     
-    if (courseId) {
-      console.log('Course ID found, proceeding with navigation...');
-      
-      const navigationPath = `/courses/${courseId}/lessons/${newLessonId}`;
-      console.log('Navigation path:', navigationPath);
-      
-      try {
-        console.log('Calling navigate function...');
-        navigate(navigationPath, { 
-          replace: true,
-          state: { 
-            preventRefresh: true, 
-            prefetched: !!prefetched,
-            cached: !!cached,
-            timestamp: Date.now()
-          } 
-        });
-        console.log('Navigate function called successfully');
-        
-        // Aguardar um pouco e verificar se a navegação funcionou
-        setTimeout(() => {
-          console.log('Current URL after navigation attempt:', window.location.pathname);
-          console.log('Expected URL:', navigationPath);
-          console.log('Navigation successful?', window.location.pathname === navigationPath);
-        }, 100);
-        
-      } catch (error) {
-        console.error('Error during navigation:', error);
-        console.error('Error stack:', error instanceof Error ? error.stack : 'No stack available');
-      }
-    } else {
-      console.error('No course_id available for navigation');
-      console.error('Available lesson data:', {
-        cachedLesson: !!cachedLesson,
-        lesson: !!lesson,
-        cachedLessonCourseId: cachedLesson?.course_id,
-        lessonCourseId: lesson?.course_id
-      });
+    if (!courseId) {
+      console.error('No course ID available for navigation');
+      return;
     }
     
-    console.log('=== NAVIGATION DEBUG END ===');
-  }, [navigate, cachedLesson, lesson, currentLessonId, prefetchedData]);
+    // Navegação direta e simples
+    const navigationPath = `/courses/${courseId}/lessons/${newLessonId}`;
+    console.log('Navigating to:', navigationPath);
+    
+    try {
+      navigate(navigationPath, { replace: false });
+      console.log('Navigation called successfully');
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
+    
+    console.log('=========================');
+  }, [navigate, cachedLesson, lesson, currentLessonId]);
 
   // Cleanup ao desmontar
   useEffect(() => {

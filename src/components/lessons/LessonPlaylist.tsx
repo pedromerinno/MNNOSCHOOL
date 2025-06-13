@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Play, CheckCircle, Clock, PlayCircle, BookOpen, Video, FileText, HelpCircle } from "lucide-react";
@@ -77,36 +78,28 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
     }
   }, [currentLessonId, navigatingToLesson]);
 
-  // Completely unrestricted lesson click handler
+  // Função de navegação simplificada
   const handleLessonClick = (lessonId: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    console.log('=== LESSON CLICK DEBUG ===');
+    console.log('=== LESSON CLICK ===');
     console.log('Clicked lesson ID:', lessonId);
     console.log('Current lesson ID:', currentLessonId);
-    console.log('Are they the same?', lessonId === currentLessonId);
     console.log('Navigation state:', navigatingToLesson);
-    console.log('========================');
     
-    // Set navigation state immediately - no restrictions
+    // Permitir navegação sempre
     setNavigatingToLesson(lessonId);
     
-    console.log('Calling onLessonSelect with:', lessonId);
-    
-    // Call the navigation function - always execute
-    try {
-      onLessonSelect(lessonId);
-      console.log('onLessonSelect called successfully');
-    } catch (error) {
-      console.error('Error in onLessonSelect:', error);
-    }
+    console.log('Calling onLessonSelect...');
+    onLessonSelect(lessonId);
     
     // Clear navigation state after timeout
     setTimeout(() => {
-      console.log('Clearing navigation state for:', lessonId);
       setNavigatingToLesson(null);
-    }, 1500);
+    }, 1000);
+    
+    console.log('===================');
   };
 
   const getTypeIcon = (type: string) => {

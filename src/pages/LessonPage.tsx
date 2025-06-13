@@ -134,34 +134,19 @@ const LessonPage = () => {
     };
   }, [cancelAutoplay]);
 
-  // Navegação com logs detalhados
+  // Navegação simplificada
   const handleLessonSelect = (selectedLessonId: string) => {
-    console.log('=== LESSON SELECT DEBUG ===');
+    console.log('=== LESSON PAGE SELECT ===');
     console.log('Selected lesson ID:', selectedLessonId);
     console.log('Current lesson ID:', lessonId);
-    console.log('Are they equal?', selectedLessonId === lessonId);
-    console.log('Course ID:', courseId);
-    console.log('Display lesson available:', !!displayLesson);
-    console.log('NavigateToLesson function available:', !!navigateToLesson);
     
-    if (selectedLessonId === lessonId) {
-      console.log('Same lesson selected, ignoring navigation');
-      return;
-    }
-    
-    console.log('Clearing local updates');
+    // Limpar updates locais
     setLocalUpdates({});
     
-    console.log('Calling navigateToLesson with:', selectedLessonId);
+    // Chamar função de navegação diretamente
+    navigateToLesson(selectedLessonId);
     
-    try {
-      navigateToLesson(selectedLessonId);
-      console.log('NavigateToLesson called successfully');
-    } catch (error) {
-      console.error('Error calling navigateToLesson:', error);
-    }
-    
-    console.log('=========================');
+    console.log('==========================');
   };
 
   const handleAddLesson = async (data: any) => {
