@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { UserTableOptimized } from './UserTableOptimized';
 import { useUsers } from '@/hooks/useUsers';
@@ -139,7 +138,8 @@ export const UserManagement = () => {
         <UserTableOptimized 
           users={users} 
           loading={isRefreshing} 
-          onToggle={toggleAdminStatus} 
+          onToggle={toggleAdminStatus}
+          onRefresh={handleRefresh}
         />
       )}
 

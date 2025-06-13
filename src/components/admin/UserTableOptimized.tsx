@@ -3,6 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserProfile } from "@/hooks/useUsers";
 import { UserActionsDropdown } from './user/UserActionsDropdown';
 import { EditUserProfileDialog } from './user/EditUserProfileDialog';
@@ -13,12 +14,14 @@ interface UserTableOptimizedProps {
   users: UserProfile[];
   loading: boolean;
   onToggle: (userId: string, currentStatus: boolean | null, isSuperAdmin?: boolean) => void;
+  onRefresh?: () => void;
 }
 
 export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
   users,
   loading,
-  onToggle
+  onToggle,
+  onRefresh
 }) => {
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -57,8 +60,47 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
   };
 
   const handleEditSuccess = () => {
-    // Trigger refresh of users list
-    window.location.reload();
+    if (onRefresh) {
+      onRefresh();
+    }
+  };
+
+  const handlePermissionChange = (userId: string, permission: string) => {
+    const currentUser = users.find(u => u.id === userId);
+    if (!currentUser) return;
+
+    switch (permission) {
+      case 'user':
+        // Remove both admin and super admin
+        if (currentUser.super_admin) {
+          onToggle(userId, true, true); // Remove super admin
+        }
+        if (currentUser.is_admin) {
+          onToggle(userId, true, false); // Remove admin
+        }
+        break;
+      case 'admin':
+        // Set as admin, remove super admin if needed
+        if (currentUser.super_admin) {
+          onToggle(userId, true, true); // Remove super admin first
+        }
+        if (!currentUser.is_admin) {
+          onToggle(userId, false, false); // Add admin
+        }
+        break;
+      case 'super_admin':
+        // Set as super admin
+        if (!currentUser.super_admin) {
+          onToggle(userId, false, true); // Add super admin
+        }
+        break;
+    }
+  };
+
+  const getUserPermissionValue = (user: UserProfile): string => {
+    if (user.super_admin) return 'super_admin';
+    if (user.is_admin) return 'admin';
+    return 'user';
   };
 
   if (loading && users.length === 0) {
@@ -137,23 +179,19 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-1">
-                        {user.super_admin && (
-                          <Badge variant="destructive" className="text-xs">
-                            Super Admin
-                          </Badge>
-                        )}
-                        {user.is_admin && !user.super_admin && (
-                          <Badge variant="default" className="text-xs">
-                            Admin
-                          </Badge>
-                        )}
-                        {!user.is_admin && !user.super_admin && (
-                          <Badge variant="outline" className="text-xs">
-                            Usuário
-                          </Badge>
-                        )}
-                      </div>
+                      <Select
+                        value={getUserPermissionValue(user)}
+                        onValueChange={(value) => handlePermissionChange(user.id, value)}
+                      >
+                        <SelectTrigger className="w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="user">Usuário</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="super_admin">Super Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </TableCell>
                     <TableCell>
                       <UserActionsDropdown
