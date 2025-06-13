@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,11 +7,14 @@ import { useCompanyNotices } from "@/hooks/useCompanyNotices";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AllNoticesDialog } from "./AllNoticesDialog";
+import { NoticeDetailDialog } from "./NoticeDetailDialog";
 import { useCompanies } from "@/hooks/useCompanies";
 import { Company } from "@/types/company";
 
 export const NotificationsWidget = () => {
   const [showAllNotices, setShowAllNotices] = useState(false);
+  const [selectedNotice, setSelectedNotice] = useState<any>(null);
+  const [showNoticeDetail, setShowNoticeDetail] = useState(false);
   const { selectedCompany } = useCompanies();
   const lastFetchedCompanyRef = useRef<string | null>(null);
   const fetchInProgressRef = useRef(false);
@@ -27,8 +29,9 @@ export const NotificationsWidget = () => {
   const recentNotices = notices.slice(0, 3);
   const unreadCount = notices.length;
 
-  const handleMarkAsRead = async (noticeId: string) => {
-    console.log('Mark as read not implemented yet:', noticeId);
+  const handleNoticeClick = (notice: any) => {
+    setSelectedNotice(notice);
+    setShowNoticeDetail(true);
   };
 
   // Função para buscar avisos quando empresa muda
@@ -121,7 +124,7 @@ export const NotificationsWidget = () => {
                   <div
                     key={notice.id}
                     className="group p-3 rounded-lg border border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-600 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-all duration-200 cursor-pointer"
-                    onClick={() => handleMarkAsRead(notice.id)}
+                    onClick={() => handleNoticeClick(notice)}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
@@ -166,6 +169,12 @@ export const NotificationsWidget = () => {
       <AllNoticesDialog
         open={showAllNotices}
         onOpenChange={setShowAllNotices}
+      />
+
+      <NoticeDetailDialog
+        open={showNoticeDetail}
+        onOpenChange={setShowNoticeDetail}
+        notice={selectedNotice}
       />
     </>
   );
