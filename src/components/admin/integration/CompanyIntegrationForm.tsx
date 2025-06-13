@@ -88,8 +88,8 @@ export const CompanyIntegrationForm: React.FC<CompanyIntegrationFormProps> = ({
             <TextareaField 
               control={form.control} 
               name="historia" 
-              label="História" 
-              placeholder="Conte a história da empresa" 
+              label="Declaração de Cultura" 
+              placeholder="Conte a declaração de cultura da empresa" 
             />
             
             <ValuesField form={form} />
