@@ -133,19 +133,6 @@ const LessonPage = () => {
     };
   }, [cancelAutoplay]);
 
-  // NAVEGAÇÃO DIRETA - sem função intermediária
-  const handleLessonSelect = (selectedLessonId: string) => {
-    console.log('🎯 LessonPage: handleLessonSelect chamado com:', selectedLessonId);
-    setLocalUpdates({});
-    
-    // Navegação direta sem verificações
-    if (courseId) {
-      const path = `/courses/${courseId}/lessons/${selectedLessonId}`;
-      console.log('🎯 LessonPage: Navegando diretamente para:', path);
-      navigate(path);
-    }
-  };
-
   const handleAddLesson = async (data: any) => {
     try {
       await handleCreateLesson(data);
@@ -217,7 +204,7 @@ const LessonPage = () => {
                 <LessonPlaylist
                   lessons={displayLesson?.course_lessons || []}
                   currentLessonId={displayLesson?.id}
-                  onLessonSelect={handleLessonSelect}
+                  onLessonSelect={() => {}} // Not used anymore
                   loading={loading && !isFromCache && !lesson}
                   companyColor={companyColor}
                   courseId={courseId}

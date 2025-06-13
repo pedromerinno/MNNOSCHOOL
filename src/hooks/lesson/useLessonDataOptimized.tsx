@@ -3,7 +3,6 @@ import { useCallback, useEffect, useState, useRef } from 'react';
 import { useLessonFetch } from './useLessonFetch';
 import { useLessonProgress } from './useLessonProgress';
 import { useLessonLikes } from './useLessonLikes';
-import { useNavigate } from 'react-router-dom';
 
 // Cache em memória melhorado com localStorage backup
 const lessonCache = new Map<string, any>();
@@ -59,7 +58,6 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
   const [currentLessonId, setCurrentLessonId] = useState<string | undefined>(lessonId);
   const [isFromCache, setIsFromCache] = useState(false);
   const [cachedLesson, setCachedLesson] = useState<any>(null);
-  const navigate = useNavigate();
   
   console.log('🔧 useLessonDataOptimized: Hook chamado com lessonId:', lessonId);
   
@@ -113,23 +111,6 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
       setCurrentLessonId(lessonId);
     }
   }, [lessonId, currentLessonId]);
-  
-  // NAVEGAÇÃO SUPER SIMPLES - remove TODA lógica desnecessária
-  const handleNavigateToLesson = useCallback((newLessonId: string) => {
-    console.log('🎯 useLessonDataOptimized: handleNavigateToLesson chamado com:', newLessonId);
-    
-    const courseId = (cachedLesson || lesson)?.course_id;
-    
-    if (!courseId) {
-      console.error('❌ useLessonDataOptimized: No course ID available for navigation');
-      return;
-    }
-    
-    // Navegação direta - ZERO complexidade
-    const navigationPath = `/courses/${courseId}/lessons/${newLessonId}`;
-    console.log('🎯 useLessonDataOptimized: Navegando para:', navigationPath);
-    navigate(navigationPath);
-  }, [navigate, cachedLesson, lesson]);
 
   // Refresh que limpa cache
   const refreshLessonData = useCallback(() => {
@@ -161,7 +142,7 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
     loading: loading && !isFromCache, 
     error, 
     markLessonCompleted,
-    navigateToLesson: handleNavigateToLesson,
+    navigateToLesson: () => {}, // Não usado mais
     likes,
     userLiked,
     toggleLikeLesson,
