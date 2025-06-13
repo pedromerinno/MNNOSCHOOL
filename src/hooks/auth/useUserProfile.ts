@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfile } from '@/types/user';
@@ -93,13 +92,13 @@ export const useUserProfile = () => {
           cargo_id: data.cargo_id,
           primeiro_login: data.primeiro_login,
           created_at: data.created_at,
-          // Novas colunas
+          // Novas colunas com type casting seguro
           aniversario: data.aniversario,
-          tipo_contrato: data.tipo_contrato,
+          tipo_contrato: data.tipo_contrato as 'CLT' | 'PJ' | 'Fornecedor' | null,
           cidade: data.cidade,
           data_inicio: data.data_inicio,
           manual_cultura_aceito: data.manual_cultura_aceito,
-          nivel_colaborador: data.nivel_colaborador
+          nivel_colaborador: data.nivel_colaborador as 'Junior' | 'Pleno' | 'Senior' | null
         };
         
         setUserProfile(profile);

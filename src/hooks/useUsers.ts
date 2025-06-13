@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -160,8 +159,16 @@ export function useUsers() {
         
         if (allUsers) {
           console.log('[useUsers] Fetched', allUsers.length, 'users for super admin');
-          setUsers(allUsers);
-          setCachedUsers(allUsers);
+          
+          // Converter dados do banco para tipos corretos
+          const typedUsers: UserProfile[] = allUsers.map(user => ({
+            ...user,
+            tipo_contrato: user.tipo_contrato as 'CLT' | 'PJ' | 'Fornecedor' | null,
+            nivel_colaborador: user.nivel_colaborador as 'Junior' | 'Pleno' | 'Senior' | null
+          }));
+          
+          setUsers(typedUsers);
+          setCachedUsers(typedUsers);
         }
       } else if (currentUserProfile?.is_admin) {
         console.log('[useUsers] Fetching company users for admin');
@@ -201,11 +208,15 @@ export function useUsers() {
           throw error;
         }
         
-        // Extrair usuários únicos do resultado
+        // Extrair usuários únicos do resultado com tipos corretos
         const uniqueUsers = companyUsers?.reduce((acc: UserProfile[], item: any) => {
           const user = item.profiles;
           if (user && !acc.find(u => u.id === user.id)) {
-            acc.push(user);
+            acc.push({
+              ...user,
+              tipo_contrato: user.tipo_contrato as 'CLT' | 'PJ' | 'Fornecedor' | null,
+              nivel_colaborador: user.nivel_colaborador as 'Junior' | 'Pleno' | 'Senior' | null
+            });
           }
           return acc;
         }, []) || [];
