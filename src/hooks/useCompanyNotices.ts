@@ -32,6 +32,7 @@ export function useCompanyNotices() {
     const targetCompanyId = companyId || selectedCompany?.id;
     
     if (!targetCompanyId || !mountedRef.current) {
+      console.log('No company ID or component unmounted, clearing notices');
       setNotices([]);
       setCurrentNotice(null);
       setIsLoading(false);
@@ -45,6 +46,7 @@ export function useCompanyNotices() {
     
     // Evitar requisições duplicadas
     if (fetchingRef.current && !forceRefresh) {
+      console.log('Fetch already in progress, skipping');
       return;
     }
 
@@ -54,7 +56,7 @@ export function useCompanyNotices() {
     if (!forceRefresh) {
       const cachedData = getCache<Notice[]>(cacheKey);
       if (cachedData && Array.isArray(cachedData)) {
-        console.log(`Using cached notices for company ${targetCompanyId}`);
+        console.log(`Using cached notices for company ${targetCompanyId}:`, cachedData.length);
         setNotices(cachedData);
         if (cachedData.length > 0) {
           setCurrentNotice(cachedData[0]);
@@ -79,7 +81,7 @@ export function useCompanyNotices() {
       
       console.log(`Fetching notices for company: ${targetCompanyId}`);
       
-      // Buscar avisos com dados do autor em uma query separada para evitar erros de join
+      // Buscar avisos primeiro
       const { data: noticesData, error: noticesError } = await supabase
         .from('company_notices')
         .select(`
@@ -98,21 +100,46 @@ export function useCompanyNotices() {
         .limit(50)
         .abortSignal(signal);
       
-      if (noticesError) throw noticesError;
+      if (noticesError) {
+        console.error('Error fetching notices:', noticesError);
+        throw noticesError;
+      }
       
       // Verificar se componente ainda está montado
-      if (!mountedRef.current || signal.aborted) return;
+      if (!mountedRef.current || signal.aborted) {
+        console.log('Component unmounted or request aborted during notices fetch');
+        return;
+      }
       
-      console.log(`Retrieved ${noticesData?.length || 0} notices`);
+      console.log(`Retrieved ${noticesData?.length || 0} notices:`, noticesData);
+      
+      if (!noticesData || noticesData.length === 0) {
+        console.log('No notices found, setting empty array');
+        setNotices([]);
+        setCurrentNotice(null);
+        setIsLoading(false);
+        return;
+      }
       
       // Buscar perfis dos autores em uma query separada
-      const authorIds = [...new Set(noticesData?.map(notice => notice.created_by) || [])];
-      const { data: authorsData } = await supabase
+      const authorIds = [...new Set(noticesData.map(notice => notice.created_by))];
+      console.log('Fetching authors for IDs:', authorIds);
+      
+      const { data: authorsData, error: authorsError } = await supabase
         .from('profiles')
         .select('id, display_name, avatar')
         .in('id', authorIds);
       
-      if (!mountedRef.current || signal.aborted) return;
+      if (authorsError) {
+        console.error('Error fetching authors:', authorsError);
+      }
+      
+      if (!mountedRef.current || signal.aborted) {
+        console.log('Component unmounted or request aborted during authors fetch');
+        return;
+      }
+      
+      console.log('Retrieved authors:', authorsData);
       
       // Criar mapa de autores para facilitar o lookup
       const authorsMap = new Map<string, NoticeAuthor>();
@@ -125,7 +152,7 @@ export function useCompanyNotices() {
       });
       
       // Mapear avisos com autores
-      const noticesWithAuthors = (noticesData || []).map((notice) => {
+      const noticesWithAuthors = noticesData.map((notice) => {
         const author = authorsMap.get(notice.created_by) || {
           id: notice.created_by,
           display_name: 'Usuário',
@@ -139,10 +166,15 @@ export function useCompanyNotices() {
         };
       });
       
-      // Armazenar no cache com expiração de 3 minutos para melhor performance
+      console.log('Final notices with authors:', noticesWithAuthors);
+      
+      // Armazenar no cache
       setCache(cacheKey, noticesWithAuthors, 3);
       
-      if (!mountedRef.current || signal.aborted) return;
+      if (!mountedRef.current || signal.aborted) {
+        console.log('Component unmounted or request aborted before setting state');
+        return;
+      }
       
       setNotices(noticesWithAuthors);
       
@@ -155,11 +187,15 @@ export function useCompanyNotices() {
       
     } catch (err: any) {
       // Não mostrar erro se foi cancelado
-      if (err.name === 'AbortError') return;
+      if (err.name === 'AbortError') {
+        console.log('Request was aborted');
+        return;
+      }
       
-      console.error('Erro ao buscar avisos:', err);
+      console.error('Error fetching notices:', err);
       if (mountedRef.current) {
         setError(err.message || 'Erro ao buscar avisos');
+        toast.error('Erro ao carregar avisos');
       }
     } finally {
       if (mountedRef.current) {
@@ -462,6 +498,7 @@ export function useCompanyNotices() {
       
       return () => clearTimeout(timeoutId);
     } else {
+      console.log('No selected company, clearing notices');
       setNotices([]);
       setCurrentNotice(null);
       setIsLoading(false);
