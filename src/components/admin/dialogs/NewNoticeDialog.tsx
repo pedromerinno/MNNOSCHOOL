@@ -9,6 +9,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -40,7 +41,7 @@ const NewNoticeDialog = ({
   editingNoticeId 
 }: NewNoticeDialogProps) => {
   const { toast } = useToast();
-  const { createNotice, updateNotice } = useCompanyNotices();
+  const { createNotice, updateNotice, fetchNotices } = useCompanyNotices();
   const { userCompanies, selectedCompany } = useCompanies();
   const [submitting, setSubmitting] = useState(false);
 
@@ -145,8 +146,23 @@ const NewNoticeDialog = ({
     }
   };
 
+  // Handle dialog close to refresh notices instantly
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      // Trigger instant refresh when dialog closes
+      setTimeout(() => {
+        if (selectedCompany?.id) {
+          fetchNotices(selectedCompany.id, true);
+        }
+        // Dispatch custom event for other components to listen
+        window.dispatchEvent(new CustomEvent('notices-updated'));
+      }, 100);
+    }
+    onOpenChange(open);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
           <DialogTitle>{editingNoticeId ? "Editar Aviso" : "Novo Aviso"}</DialogTitle>
@@ -181,7 +197,12 @@ const NewNoticeDialog = ({
                   <FormItem>
                     <FormLabel>Conteúdo</FormLabel>
                     <FormControl>
-                      <Input placeholder="Conteúdo do aviso" {...field} />
+                      <Textarea 
+                        placeholder="Conteúdo do aviso" 
+                        {...field} 
+                        rows={6}
+                        className="resize-none"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
