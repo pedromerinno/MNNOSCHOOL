@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -139,18 +140,16 @@ export function useCompanyNotices() {
       const noticeIds = noticeRelations.map(item => item.notice_id);
       console.log(`Found ${noticeIds.length} notice IDs for company: ${targetCompanyId}`);
       
-      // Fetch notices and filter by visibility (only visible notices for end users)
       const { data: noticesData, error: noticesError } = await supabase
         .from('company_notices')
         .select('*')
         .in('id', noticeIds)
-        .eq('visibilidade', true) // Only fetch visible notices
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }); // Order by newest first
       
       if (noticesError) throw noticesError;
       
       if (!noticesData || noticesData.length === 0) {
-        console.log(`No visible notice data found for IDs: ${noticeIds.join(', ')}`);
+        console.log(`No notice data found for IDs: ${noticeIds.join(', ')}`);
         
         setTimeout(() => {
           cleanupInvalidRelations(targetCompanyId, noticeIds).catch(err => {

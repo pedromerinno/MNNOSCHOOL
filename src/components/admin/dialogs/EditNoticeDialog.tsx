@@ -26,15 +26,13 @@ interface EditNoticeDialogProps {
   onOpenChange: (open: boolean) => void;
   notice: Notice | null;
   companyId: string;
-  onNoticeUpdated?: (updatedNotice: Notice) => void;
 }
 
 export const EditNoticeDialog: React.FC<EditNoticeDialogProps> = ({
   open,
   onOpenChange,
   notice,
-  companyId,
-  onNoticeUpdated
+  companyId
 }) => {
   const { updateNotice, isLoading } = useCompanyNotices();
   const [formData, setFormData] = useState({
@@ -62,16 +60,6 @@ export const EditNoticeDialog: React.FC<EditNoticeDialogProps> = ({
       ...formData,
       companies: [companyId]
     });
-    
-    if (success && onNoticeUpdated) {
-      // Notify parent component about the update
-      const updatedNotice = {
-        ...notice,
-        ...formData,
-        updated_at: new Date().toISOString()
-      };
-      onNoticeUpdated(updatedNotice);
-    }
     
     if (success) {
       onOpenChange(false);
