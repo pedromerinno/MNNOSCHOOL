@@ -84,28 +84,6 @@ export const NoticeDetailDialog = ({ open, onOpenChange, notice }: NoticeDetailD
                   locale: ptBR,
                 })}
               </span>
-              {canManage && (
-                <div className="ml-auto flex gap-2">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={handleEdit}
-                    title="Editar aviso"
-                    className="h-8 w-8"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={handleDelete}
-                    title="Apagar aviso"
-                    className="h-8 w-8"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              )}
             </div>
             <DialogTitle className="text-xl font-semibold text-left">
               {notice.title}
@@ -118,33 +96,58 @@ export const NoticeDetailDialog = ({ open, onOpenChange, notice }: NoticeDetailD
             </div>
             
             {notice.author && (
-              <div className="flex items-center gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
-                {notice.author.avatar ? (
-                  <Avatar className="h-8 w-8">
-                    <img
-                      className="rounded-full object-cover h-8 w-8"
-                      src={notice.author.avatar}
-                      alt="Autor do aviso"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                  </Avatar>
-                ) : (
-                  <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 text-sm font-semibold">
-                    {getInitial(notice.author.display_name)}
+              <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-800">
+                <div className="flex items-center gap-3">
+                  {notice.author.avatar ? (
+                    <Avatar className="h-8 w-8">
+                      <img
+                        className="rounded-full object-cover h-8 w-8"
+                        src={notice.author.avatar}
+                        alt="Autor do aviso"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    </Avatar>
+                  ) : (
+                    <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 text-sm font-semibold">
+                      {getInitial(notice.author.display_name)}
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      {notice.author.display_name || "Usuário"}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Publicado em {format(new Date(notice.created_at), "dd/MM/yyyy 'às' HH:mm", {
+                        locale: ptBR,
+                      })}
+                    </p>
+                  </div>
+                </div>
+                
+                {canManage && (
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleEdit}
+                      className="flex items-center gap-2"
+                    >
+                      <Pencil className="w-4 h-4" />
+                      Editar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleDelete}
+                      className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Excluir
+                    </Button>
                   </div>
                 )}
-                <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {notice.author.display_name || "Usuário"}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Publicado em {format(new Date(notice.created_at), "dd/MM/yyyy 'às' HH:mm", {
-                      locale: ptBR,
-                    })}
-                  </p>
-                </div>
               </div>
             )}
           </div>
