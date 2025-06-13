@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -38,35 +37,6 @@ export function useCompanyNotices() {
   const noticesInstanceIdRef = useRef<string>(`notices-${Math.random().toString(36).substring(2, 9)}`);
   const lastFetchedCompanyIdRef = useRef<string | null>(null);
   const pendingFetchTimeoutRef = useRef<number | null>(null);
-
-  const cleanupInvalidRelations = useCallback(async (companyId: string, noticeIds: string[]) => {
-    if (cleanupInProgressRef.current) return;
-    
-    const now = Date.now();
-    if (now - lastCleanupTimeRef.current < 60000) return;
-    
-    try {
-      cleanupInProgressRef.current = true;
-      lastCleanupTimeRef.current = now;
-      
-      console.log(`Attempting to clean up invalid notice relations for company: ${companyId}`);
-      const { error: cleanupError } = await supabase
-        .from('notice_companies')
-        .delete()
-        .eq('company_id', companyId)
-        .in('notice_id', noticeIds);
-        
-      if (cleanupError) {
-        console.error("Error cleaning up invalid notice relations:", cleanupError);
-      } else {
-        console.log("Successfully cleaned up invalid notice relations");
-      }
-    } catch (cleanupErr) {
-      console.error("Failed to clean up invalid notice relations:", cleanupErr);
-    } finally {
-      cleanupInProgressRef.current = false;
-    }
-  }, []);
 
   const fetchNotices = useCallback(async (companyId?: string, forceRefresh = false) => {
     const targetCompanyId = companyId || selectedCompany?.id;
@@ -117,16 +87,16 @@ export function useCompanyNotices() {
       
       console.log(`Fetching notices for company: ${targetCompanyId}`);
       
-      const { data: noticeRelations, error: relationsError } = await supabase
-        .from('notice_companies')
-        .select('notice_id')
-        .eq('company_id', targetCompanyId);
+      // Buscar diretamente todos os avisos da empresa na tabela company_notices
+      const { data: noticesData, error: noticesError } = await supabase
+        .from('company_notices')
+        .select('*')
+        .eq('company_id', targetCompanyId)
+        .order('created_at', { ascending: false }); // Order by newest first
       
-      if (relationsError) throw relationsError;
+      if (noticesError) throw noticesError;
       
-      console.log("Found", noticeRelations?.length || 0, "company relations");
-      
-      if (!noticeRelations || noticeRelations.length === 0) {
+      if (!noticesData || noticesData.length === 0) {
         console.log(`No notices found for company: ${targetCompanyId}`);
         setNotices([]);
         setCurrentNotice(null);
@@ -135,46 +105,6 @@ export function useCompanyNotices() {
         fetchingRef.current = false;
         setCache({ key: cacheKey }, []);
         return;
-      }
-      
-      const noticeIds = noticeRelations.map(item => item.notice_id);
-      console.log(`Found ${noticeIds.length} notice IDs for company: ${targetCompanyId}`);
-      
-      const { data: noticesData, error: noticesError } = await supabase
-        .from('company_notices')
-        .select('*')
-        .in('id', noticeIds)
-        .order('created_at', { ascending: false }); // Order by newest first
-      
-      if (noticesError) throw noticesError;
-      
-      if (!noticesData || noticesData.length === 0) {
-        console.log(`No notice data found for IDs: ${noticeIds.join(', ')}`);
-        
-        setTimeout(() => {
-          cleanupInvalidRelations(targetCompanyId, noticeIds).catch(err => {
-            console.error("Background cleanup error:", err);
-          });
-        }, 100);
-        
-        clearCache({ key: cacheKey });
-        setNotices([]);
-        setCurrentNotice(null);
-        setIsLoading(false);
-        resetRequestState();
-        fetchingRef.current = false;
-        return;
-      }
-      
-      const foundNoticeIds = new Set(noticesData.map(n => n.id));
-      const missingNoticeIds = noticeIds.filter(id => !foundNoticeIds.has(id));
-      
-      if (missingNoticeIds.length > 0) {
-        setTimeout(() => {
-          cleanupInvalidRelations(targetCompanyId, missingNoticeIds).catch(err => {
-            console.error("Background cleanup error:", err);
-          });
-        }, 100);
       }
       
       console.log(`Retrieved ${noticesData.length} notices`);
@@ -188,30 +118,21 @@ export function useCompanyNotices() {
         
       if (authorsError) throw authorsError;
       
-      const noticesWithCompaniesPromises = noticesData.map(async (notice) => {
-        const { data: companies } = await supabase
-          .from('notice_companies')
-          .select('company_id')
-          .eq('notice_id', notice.id);
-        
-        const companyIds = companies ? companies.map(c => c.company_id) : [];
-        
+      const noticesWithAuthors = noticesData.map((notice) => {
         const author = authors?.find(a => a.id === notice.created_by) as NoticeAuthor;
         return { 
           ...notice, 
           author,
-          companies: companyIds
+          companies: [targetCompanyId] // Assumir que o aviso pertence à empresa atual
         };
       });
       
-      const noticesWithCompanies = await Promise.all(noticesWithCompaniesPromises);
+      setCache({ key: cacheKey }, noticesWithAuthors);
       
-      setCache({ key: cacheKey }, noticesWithCompanies);
+      setNotices(noticesWithAuthors);
       
-      setNotices(noticesWithCompanies);
-      
-      if (noticesWithCompanies.length > 0) {
-        setCurrentNotice(noticesWithCompanies[0]);
+      if (noticesWithAuthors.length > 0) {
+        setCurrentNotice(noticesWithAuthors[0]);
         setCurrentIndex(0);
       } else {
         setCurrentNotice(null);
@@ -234,8 +155,7 @@ export function useCompanyNotices() {
     shouldMakeRequest, 
     startRequest, 
     completeRequest, 
-    resetRequestState,
-    cleanupInvalidRelations
+    resetRequestState
   ]);
 
   const createNotice = async (data: NoticeFormData) => {
