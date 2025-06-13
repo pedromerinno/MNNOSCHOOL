@@ -34,15 +34,16 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
       onClick={handleCourseClick}
       style={{ zIndex: 1 }}
     >
-      {/* Background image */}
+      {/* Background image - now clickable */}
       <div 
-        className="absolute inset-0 w-full h-full"
+        className="absolute inset-0 w-full h-full cursor-pointer"
         style={{
           backgroundImage: `url(${course.image_url || "https://images.unsplash.com/photo-1617096199719-18e5acee65f8?auto=format&fit=crop&w=1200&q=80"})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat'
         }}
+        onClick={handleCourseClick}
       />
       
       {/* Gradient overlay */}
