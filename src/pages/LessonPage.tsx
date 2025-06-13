@@ -32,7 +32,6 @@ const LessonPage = () => {
   // Listen for company changes and redirect to courses page
   useEffect(() => {
     const handleCompanyChange = () => {
-      console.log('Company changed in LessonPage, redirecting to courses page');
       navigate('/courses');
     };
 
@@ -87,7 +86,6 @@ const LessonPage = () => {
       const { lessonId: updatedLessonId, field, value } = event.detail;
       
       if (updatedLessonId === lessonId) {
-        console.log('Updating lesson field locally:', field, value);
         setLocalUpdates(prev => ({
           ...prev,
           [field]: value
@@ -106,7 +104,6 @@ const LessonPage = () => {
   useEffect(() => {
     const handleLessonUpdated = (event: CustomEvent) => {
       if (event.detail?.lessonId === lessonId) {
-        console.log('Lesson updated, refreshing data');
         if (refreshLessonData) {
           refreshLessonData();
         }
@@ -134,19 +131,13 @@ const LessonPage = () => {
     };
   }, [cancelAutoplay]);
 
-  // Navegação simplificada
+  // Navegação DIRETA - sem verificações
   const handleLessonSelect = (selectedLessonId: string) => {
-    console.log('=== LESSON PAGE SELECT ===');
-    console.log('Selected lesson ID:', selectedLessonId);
-    console.log('Current lesson ID:', lessonId);
-    
     // Limpar updates locais
     setLocalUpdates({});
     
-    // Chamar função de navegação diretamente
+    // Chamar função de navegação diretamente - SEM VERIFICAÇÕES
     navigateToLesson(selectedLessonId);
-    
-    console.log('==========================');
   };
 
   const handleAddLesson = async (data: any) => {
@@ -174,7 +165,7 @@ const LessonPage = () => {
     <>
       <DashboardLayout fullWidth>
         <div className="flex flex-col lg:flex-row w-full min-h-[calc(100vh-80px)]">
-          {/* Sidebar com loading otimizado */}
+          {/* Sidebar */}
           <div className="lg:w-1/4 lg:min-h-full border-r border-border/60 bg-muted/20">
             <div className="lg:w-[calc(25%-1px)] lg:fixed top-[80px] h-[calc(100vh-80px)] overflow-y-auto">
               {/* Back to course button */}
@@ -215,7 +206,7 @@ const LessonPage = () => {
                 </div>
               )}
               
-              {/* Playlist com altura flexível */}
+              {/* Playlist */}
               <div className="p-4">
                 <LessonPlaylist
                   lessons={displayLesson?.course_lessons || []}

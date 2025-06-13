@@ -3,11 +3,11 @@ import { useCallback, useEffect, useState, useRef } from 'react';
 import { useLessonFetch } from './useLessonFetch';
 import { useLessonProgress } from './useLessonProgress';
 import { useLessonLikes } from './useLessonLikes';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 // Cache em memória melhorado com localStorage backup
 const lessonCache = new Map<string, any>();
-const CACHE_DURATION = 10 * 60 * 1000; // Reduzido para 10 minutos
+const CACHE_DURATION = 10 * 60 * 1000; // 10 minutos
 const STORAGE_KEY = 'lesson-cache';
 
 // Funções de cache com localStorage otimizadas
@@ -59,36 +59,11 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
   const [currentLessonId, setCurrentLessonId] = useState<string | undefined>(lessonId);
   const [isFromCache, setIsFromCache] = useState(false);
   const [cachedLesson, setCachedLesson] = useState<any>(null);
-  const [prefetchedData, setPrefetchedData] = useState<Map<string, any>>(new Map());
-  const location = useLocation();
-  const abortControllerRef = useRef<AbortController | null>(null);
-  const navigationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const navigate = useNavigate();
   
-  // Verificar cache primeiro - otimizado com localStorage
+  // Verificar cache primeiro
   const getCachedLesson = useCallback((id: string) => {
     return getCachedData(id);
-  }, []);
-
-  // Prefetch de dados relacionados - otimizado
-  const prefetchRelatedData = useCallback(async (lesson: any) => {
-    if (!lesson?.course_lessons) return;
-    
-    // Prefetch próximas 2 aulas e anteriores 1 aula
-    const currentIndex = lesson.course_lessons.findIndex((l: any) => l.id === lesson.id);
-    const nextLessons = lesson.course_lessons.slice(currentIndex + 1, currentIndex + 3);
-    const prevLessons = lesson.course_lessons.slice(Math.max(0, currentIndex - 1), currentIndex);
-    
-    [...prevLessons, ...nextLessons].forEach((relatedLesson: any, index: number) => {
-      if (!getCachedData(relatedLesson.id)) {
-        // Prefetch com delay menor
-        setTimeout(() => {
-          setPrefetchedData(prev => new Map(prev.set(relatedLesson.id, { 
-            prefetched: true, 
-            priority: index + 1 
-          })));
-        }, index * 30);
-      }
-    });
   }, []);
 
   // Usar cache imediatamente se disponível
@@ -96,19 +71,14 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
     if (lessonId) {
       const cached = getCachedLesson(lessonId);
       if (cached) {
-        console.log('Loading lesson from cache (instant):', lessonId);
         setCachedLesson(cached);
         setIsFromCache(true);
-        
-        // Prefetch dados relacionados em background
-        prefetchRelatedData(cached);
       } else {
-        console.log('No cache found, will fetch:', lessonId);
         setIsFromCache(false);
         setCachedLesson(null);
       }
     }
-  }, [lessonId, getCachedLesson, prefetchRelatedData]);
+  }, [lessonId, getCachedLesson]);
 
   // Use os hooks apenas quando necessário
   const shouldFetch = currentLessonId && !isFromCache;
@@ -122,78 +92,37 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
     (cachedLesson || lesson)?.likes || 0, 
     (cachedLesson || lesson)?.user_liked || false
   );
-  const navigate = useNavigate();
 
-  // Cache da aula quando carregada com localStorage
+  // Cache da aula quando carregada
   useEffect(() => {
     if (lesson && currentLessonId && !loading) {
-      console.log('Caching lesson with localStorage:', currentLessonId);
       setCachedData(currentLessonId, lesson);
       setCachedLesson(lesson);
-      
-      // Prefetch dados relacionados
-      prefetchRelatedData(lesson);
     }
-  }, [lesson, currentLessonId, loading, prefetchRelatedData]);
+  }, [lesson, currentLessonId, loading]);
 
-  // Update current lesson ID quando o prop muda - otimizado
+  // Update current lesson ID quando o prop muda
   useEffect(() => {
     if (lessonId && lessonId !== currentLessonId) {
-      // Cancelar requisições anteriores
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      
-      // Clear navigation timeout
-      if (navigationTimeoutRef.current) {
-        clearTimeout(navigationTimeoutRef.current);
-      }
-      
       setCurrentLessonId(lessonId);
     }
   }, [lessonId, currentLessonId]);
   
-  // Navegação simplificada e corrigida
+  // Navegação SUPER SIMPLES - apenas navega diretamente
   const handleNavigateToLesson = useCallback((newLessonId: string) => {
-    console.log('=== NAVIGATION ATTEMPT ===');
-    console.log('Target lesson ID:', newLessonId);
-    console.log('Current lesson ID:', currentLessonId);
-    
     const courseId = (cachedLesson || lesson)?.course_id;
-    console.log('Course ID:', courseId);
     
     if (!courseId) {
       console.error('No course ID available for navigation');
       return;
     }
     
-    // Navegação direta e simples
+    // Navegação direta - sem verificações, sem delays, sem complexidade
     const navigationPath = `/courses/${courseId}/lessons/${newLessonId}`;
-    console.log('Navigating to:', navigationPath);
-    
-    try {
-      navigate(navigationPath, { replace: false });
-      console.log('Navigation called successfully');
-    } catch (error) {
-      console.error('Navigation error:', error);
-    }
-    
-    console.log('=========================');
-  }, [navigate, cachedLesson, lesson, currentLessonId]);
+    navigate(navigationPath);
+  }, [navigate, cachedLesson, lesson]);
 
-  // Cleanup ao desmontar
-  useEffect(() => {
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      if (navigationTimeoutRef.current) {
-        clearTimeout(navigationTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  // Refresh otimizado que limpa cache
+  // Refresh que limpa cache
   const refreshLessonData = useCallback(() => {
     if (currentLessonId) {
       // Limpar cache

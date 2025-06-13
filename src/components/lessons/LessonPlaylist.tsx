@@ -30,8 +30,6 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
   courseId
 }) => {
   const [localLessons, setLocalLessons] = useState(lessons);
-  const [navigatingToLesson, setNavigatingToLesson] = useState<string | null>(null);
-  const currentIndex = localLessons.findIndex(lesson => lesson.id === currentLessonId);
   const totalDuration = calculateTotalDuration(localLessons);
 
   // Sync local lessons with props
@@ -46,8 +44,6 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
       
       // Check if the updated lesson is in our current playlist
       if (localLessons.some(lesson => lesson.id === updatedLessonId)) {
-        console.log('Updating lesson field in playlist locally:', field, value);
-        
         // Update local state immediately
         setLocalLessons(prevLessons => 
           prevLessons.map(lesson => 
@@ -71,35 +67,13 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
     };
   }, [localLessons, courseId]);
 
-  // Clear navigation state when lesson changes
-  useEffect(() => {
-    if (navigatingToLesson && navigatingToLesson === currentLessonId) {
-      setNavigatingToLesson(null);
-    }
-  }, [currentLessonId, navigatingToLesson]);
-
-  // Função de navegação simplificada
+  // Navegação super simples - só chama o callback
   const handleLessonClick = (lessonId: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    console.log('=== LESSON CLICK ===');
-    console.log('Clicked lesson ID:', lessonId);
-    console.log('Current lesson ID:', currentLessonId);
-    console.log('Navigation state:', navigatingToLesson);
-    
-    // Permitir navegação sempre
-    setNavigatingToLesson(lessonId);
-    
-    console.log('Calling onLessonSelect...');
+    // Simplesmente chama a função de navegação - sem verificações
     onLessonSelect(lessonId);
-    
-    // Clear navigation state after timeout
-    setTimeout(() => {
-      setNavigatingToLesson(null);
-    }, 1000);
-    
-    console.log('===================');
   };
 
   const getTypeIcon = (type: string) => {
@@ -186,17 +160,15 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
           <>
             {localLessons.map((lesson, index) => {
               const isCurrentLesson = lesson.id === currentLessonId;
-              const isNavigating = navigatingToLesson === lesson.id;
               
               return (
                 <Card
                   key={lesson.id}
                   className={cn(
-                    "transition-all duration-200 cursor-pointer group border hover:shadow-sm relative",
+                    "transition-all duration-200 cursor-pointer group border hover:shadow-sm",
                     isCurrentLesson
                       ? "border-border/60 shadow-sm ring-1"
-                      : "hover:bg-accent/50 border-border/60",
-                    isNavigating && "opacity-70"
+                      : "hover:bg-accent/50 border-border/60"
                   )}
                   style={{
                     backgroundColor: isCurrentLesson ? `${companyColor}08` : undefined,
@@ -205,16 +177,6 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
                   } as React.CSSProperties}
                   onClick={(e) => handleLessonClick(lesson.id, e)}
                 >
-                  {/* Loading overlay for navigating lesson */}
-                  {isNavigating && (
-                    <div className="absolute inset-0 bg-background/70 backdrop-blur-[1px] flex items-center justify-center rounded-lg z-10">
-                      <div 
-                        className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin"
-                        style={{ borderColor: `${companyColor}40`, borderTopColor: 'transparent' }}
-                      ></div>
-                    </div>
-                  )}
-                  
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
                       {/* Lesson indicator with company color */}
