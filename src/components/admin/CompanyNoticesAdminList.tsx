@@ -1,235 +1,141 @@
 
-import React, { useState, useEffect } from "react";
-import { useCompanyNotices } from "@/hooks/useCompanyNotices";
-import { Badge } from "@/components/ui/badge";
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, MoreHorizontal, Calendar, User } from "lucide-react";
-import NewNoticeDialog from "./dialogs/NewNoticeDialog";
-import { Notice } from "@/hooks/useNotifications";
-import { Card, CardContent } from "@/components/ui/card";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import { useCompanies } from "@/hooks/useCompanies";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useCompanyNotices } from "@/hooks/useCompanyNotices";
+import { NewNoticeDialog } from "./dialogs/NewNoticeDialog";
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { Eye, EyeOff, Plus } from 'lucide-react';
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const CompanyNoticesAdminList: React.FC = () => {
-  const {
-    notices,
-    deleteNotice,
-    isLoading,
-    fetchNotices
-  } = useCompanyNotices();
-  const {
-    userCompanies,
-    selectedCompany,
-    selectCompany
-  } = useCompanies();
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editingNotice, setEditingNotice] = useState<any | null>(null);
-  const [filterCompanyId, setFilterCompanyId] = useState<string | null>(null);
+  const { selectedCompany } = useCompanies();
+  const { notices, loading, refreshNotices } = useCompanyNotices();
+  const [isNewNoticeDialogOpen, setIsNewNoticeDialogOpen] = useState(false);
 
-  // Re-fetch notices when component mounts or when filter changes
+  // Auto-refresh when component mounts
   useEffect(() => {
-    const companyId = filterCompanyId || selectedCompany?.id;
-    if (companyId) {
-      fetchNotices(companyId);
-    } else {
-      fetchNotices();
+    if (selectedCompany) {
+      refreshNotices();
     }
-  }, [filterCompanyId, selectedCompany?.id]);
+  }, [selectedCompany, refreshNotices]);
 
-  const handleEdit = (notice: any) => {
-    setEditingNotice({
-      ...notice,
-      companies: notice.companies || [notice.company_id] // Usar companies se disponível, senão usar company_id
-    });
-    setEditDialogOpen(true);
-  };
-  
-  const handleDelete = async (noticeId: string) => {
-    if (window.confirm("Deseja realmente apagar este aviso?")) {
-      await deleteNotice(noticeId);
-    }
-  };
-
-  // Handler para quando o diálogo é fechado
-  const handleDialogClose = (open: boolean) => {
-    setEditDialogOpen(open);
-    if (!open) {
-      // Re-fetch notices when dialog closes
-      const companyId = filterCompanyId || selectedCompany?.id;
-      if (companyId) {
-        fetchNotices(companyId);
-      } else {
-        fetchNotices();
-      }
-    }
-  };
-
-  // Company filter change handler
-  const handleCompanyChange = (companyId: string) => {
-    setFilterCompanyId(companyId);
-  };
-
-  // Helper function to get company name from company id
-  const getCompanyName = (companyId: string) => {
-    const company = userCompanies.find(c => c.id === companyId);
-    return company?.nome || companyId;
-  };
-
-  // Helper function to get company logo from company id
-  const getCompanyLogo = (companyId: string) => {
-    const company = userCompanies.find(c => c.id === companyId);
-    return company?.logo || null;
-  };
-
-  // Helper function to get company color from company id
-  const getCompanyColor = (companyId: string) => {
-    const company = userCompanies.find(c => c.id === companyId);
-    return company?.cor_principal || "#1EAEDB";
-  };
-
-  // Format date to display in PT-BR format
-  const formatDate = (dateString: string) => {
+  const handleToggleVisibility = async (noticeId: string, currentVisibilidade: boolean) => {
     try {
-      return format(new Date(dateString), "dd 'de' MMMM 'de' yyyy", {
-        locale: ptBR
-      });
-    } catch (e) {
-      return dateString;
+      const { error } = await supabase
+        .from('avisos_empresa')
+        .update({ visibilidade: !currentVisibilidade })
+        .eq('id', noticeId);
+
+      if (error) throw error;
+
+      toast.success(`Aviso ${!currentVisibilidade ? 'publicado' : 'ocultado'} com sucesso`);
+      refreshNotices();
+    } catch (error) {
+      console.error('Error toggling notice visibility:', error);
+      toast.error('Erro ao alterar visibilidade do aviso');
     }
   };
-  
-  return <div>
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
-          <h2 className="text-2xl font-bold">Avisos</h2>
-          
-          {/* Company Dropdown Filter */}
-          {userCompanies.length > 0 && (
-            <Select 
-              value={filterCompanyId || (selectedCompany?.id || '')} 
-              onValueChange={handleCompanyChange}
-            >
-              <SelectTrigger className="w-full md:w-[250px]">
-                <SelectValue placeholder="Filtrar por empresa" />
-              </SelectTrigger>
-              <SelectContent>
-                {userCompanies.map((company) => (
-                  <SelectItem key={company.id} value={company.id}>
-                    <div className="flex items-center gap-2">
-                      {company.logo ? (
-                        <div className="h-5 w-5 rounded-full overflow-hidden flex-shrink-0">
-                          <img 
-                            src={company.logo} 
-                            alt={company.nome} 
-                            className="h-full w-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                            }}
-                          />
-                        </div>
-                      ) : (
-                        <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary flex-shrink-0">
-                          {company.nome.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                      {company.nome}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+
+  if (!selectedCompany) {
+    return (
+      <div className="text-center p-8">
+        <h3 className="text-lg font-medium mb-2">Nenhuma empresa selecionada</h3>
+        <p className="text-gray-500">Selecione uma empresa para visualizar os avisos.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold">Avisos da Empresa</h2>
+          <p className="text-gray-500 dark:text-gray-400">
+            Gerencie os avisos para {selectedCompany.nome}
+          </p>
         </div>
-        
-        <Button onClick={() => setEditDialogOpen(true)} className="bg-primary hover:bg-primary/90">
+        <Button onClick={() => setIsNewNoticeDialogOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
           Novo Aviso
         </Button>
       </div>
-      
-      {isLoading ? <div className="flex items-center justify-center h-40">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-        </div> : notices.length === 0 ? <Card>
-          <CardContent className="flex flex-col items-center justify-center py-8">
-            <p className="text-muted-foreground mb-4">Nenhum aviso encontrado.</p>
-            <Button onClick={() => setEditDialogOpen(true)}>Criar Primeiro Aviso</Button>
-          </CardContent>
-        </Card> : <div className="grid gap-4">
-          {notices.map(notice => <Card key={notice.id} className="overflow-hidden border border-gray-200 dark:border-gray-800">
-              <CardContent className="p-4 py-[32px] px-[32px]">
-                <div className="flex items-center justify-between mb-3">
-                  <Badge variant="outline" className="px-2 py-1 capitalize text-xs">
-                    {notice.type.charAt(0).toUpperCase() + notice.type.slice(1)}
-                  </Badge>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Ações</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEdit(notice)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        <span>Editar</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleDelete(notice.id)} className="text-destructive focus:text-destructive">
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        <span>Apagar</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-                
-                <h3 className="text-lg font-semibold mb-1">{notice.title}</h3>
-                <p className="text-muted-foreground mb-3 line-clamp-2">{notice.content}</p>
-                
-                <div className="flex flex-col gap-3 mt-3 text-sm text-muted-foreground my-0">
-                  {/* Date and author info */}
-                  <div className="flex items-center gap-3 flex-wrap py-[5px]">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5" />
-                      <span className="text-sm">{formatDate(notice.created_at)}</span>
-                    </div>
-                    {notice.author && <div className="flex items-center gap-1">
-                        <User className="h-3.5 w-3.5" />
-                        <span className="text-sm">{notice.author.display_name || "Usuário"}</span>
-                      </div>}
-                  </div>
-                  
-                  {/* Companies list */}
-                  {notice.companies && notice.companies.length > 0 && <div className="mt-2">
-                      
-                      <div className="flex flex-wrap gap-1.5 py-0">
-                        {notice.companies.map((companyId: string) => {
-                  const companyColor = getCompanyColor(companyId);
-                  const companyLogo = getCompanyLogo(companyId);
-                  return <Badge key={companyId} variant="secondary" className="text-xs flex items-center px-2 py-1" style={{
-                    backgroundColor: `${companyColor}15`,
-                    // Light background (10% opacity)
-                    color: companyColor,
-                    borderColor: `${companyColor}30` // Slightly darker border (30% opacity)
-                  }}>
-                              {companyLogo ? <img src={companyLogo} alt={getCompanyName(companyId)} className="w-3.5 h-3.5 rounded-full mr-1.5 object-cover" onError={e => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                    }} /> : <span className="w-3.5 h-3.5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] mr-1.5">
-                                  {getCompanyName(companyId).charAt(0).toUpperCase()}
-                                </span>}
-                              {getCompanyName(companyId)}
-                            </Badge>;
-                })}
-                      </div>
-                    </div>}
-                </div>
-              </CardContent>
-            </Card>)}
-        </div>}
 
-      {/* Dialog de edição */}
-      <NewNoticeDialog open={editDialogOpen} onOpenChange={handleDialogClose} initialData={editingNotice} editingNoticeId={editingNotice?.id || null} />
-    </div>;
+      {loading ? (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+          <span className="ml-2">Carregando avisos...</span>
+        </div>
+      ) : notices.length === 0 ? (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <h3 className="text-lg font-medium mb-2">Nenhum aviso encontrado</h3>
+            <p className="text-gray-500 mb-4">
+              Crie o primeiro aviso para {selectedCompany.nome}
+            </p>
+            <Button onClick={() => setIsNewNoticeDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Criar Primeiro Aviso
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4">
+          {notices.map((notice) => (
+            <Card key={notice.id}>
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <CardTitle className="text-lg">{notice.titulo}</CardTitle>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {format(new Date(notice.created_at), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={notice.visibilidade ? "default" : "secondary"}>
+                      {notice.visibilidade ? "Visível" : "Oculto"}
+                    </Badge>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleToggleVisibility(notice.id, notice.visibilidade)}
+                    >
+                      {notice.visibilidade ? (
+                        <>
+                          <EyeOff className="h-4 w-4 mr-2" />
+                          Ocultar
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="h-4 w-4 mr-2" />
+                          Mostrar
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-700 dark:text-gray-300">{notice.conteudo}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <NewNoticeDialog
+        open={isNewNoticeDialogOpen}
+        onOpenChange={setIsNewNoticeDialogOpen}
+        companyId={selectedCompany.id}
+        onSuccess={() => {
+          refreshNotices();
+          setIsNewNoticeDialogOpen(false);
+        }}
+      />
+    </div>
+  );
 };
