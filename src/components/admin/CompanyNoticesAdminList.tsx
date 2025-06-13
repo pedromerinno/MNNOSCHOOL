@@ -8,13 +8,19 @@ import { useCompanyNotices } from "@/hooks/useCompanyNotices";
 import NewNoticeDialog from "./dialogs/NewNoticeDialog";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Eye, EyeOff, Plus } from 'lucide-react';
+import { Eye, EyeOff, Plus, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const CompanyNoticesAdminList: React.FC = () => {
   const { selectedCompany } = useCompanies();
-  const { notices, isLoading, fetchNotices } = useCompanyNotices();
+  const { notices, isLoading, fetchNotices, deleteNotice } = useCompanyNotices();
   const [isNewNoticeDialogOpen, setIsNewNoticeDialogOpen] = useState(false);
 
   // Auto-refresh when component mounts
@@ -38,6 +44,15 @@ export const CompanyNoticesAdminList: React.FC = () => {
     } catch (error) {
       console.error('Error toggling notice visibility:', error);
       toast.error('Erro ao alterar visibilidade do aviso');
+    }
+  };
+
+  const handleDeleteNotice = async (noticeId: string) => {
+    if (window.confirm('Tem certeza que deseja excluir este aviso?')) {
+      const success = await deleteNotice(noticeId);
+      if (success) {
+        toast.success('Aviso excluído com sucesso');
+      }
     }
   };
 
@@ -100,41 +115,72 @@ export const CompanyNoticesAdminList: React.FC = () => {
       ) : (
         <div className="grid gap-4">
           {notices.map((notice) => (
-            <Card key={notice.id}>
+            <Card key={notice.id} className="relative">
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <CardTitle className="text-lg">{notice.title}</CardTitle>
-                    <p className="text-sm text-gray-500 mt-1">
-                      {format(new Date(notice.created_at), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge 
+                        variant="secondary" 
+                        className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+                      >
+                        {selectedCompany.nome}
+                      </Badge>
+                    </div>
+                    <CardTitle className="text-lg mb-1">{notice.title}</CardTitle>
+                    <p className="text-sm text-gray-500">
+                      📅 {format(new Date(notice.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })} 👤 {notice.author?.display_name || 'Usuário'}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={(notice as any).visibilidade ? "default" : "secondary"}>
-                      {(notice as any).visibilidade ? "Visível" : "Oculto"}
-                    </Badge>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleToggleVisibility(notice.id, (notice as any).visibilidade)}
-                    >
-                      {(notice as any).visibilidade ? (
-                        <>
-                          <EyeOff className="h-4 w-4 mr-2" />
-                          Ocultar
-                        </>
-                      ) : (
-                        <>
-                          <Eye className="h-4 w-4 mr-2" />
-                          Mostrar
-                        </>
-                      )}
-                    </Button>
-                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="sr-only">Abrir menu</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleToggleVisibility(notice.id, (notice as any).visibilidade)}>
+                        {(notice as any).visibilidade ? (
+                          <>
+                            <EyeOff className="mr-2 h-4 w-4" />
+                            Ocultar
+                          </>
+                        ) : (
+                          <>
+                            <Eye className="mr-2 h-4 w-4" />
+                            Mostrar
+                          </>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Editar Aviso
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => handleDeleteNotice(notice.id)}
+                        className="text-red-600 dark:text-red-400 focus:text-red-700 dark:focus:text-red-300"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Excluir Aviso
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-700 dark:text-gray-300">{notice.content}</p>
+                <div className="mt-4 flex items-center justify-between">
+                  <Badge 
+                    variant={(notice as any).visibilidade ? "default" : "secondary"}
+                    className="text-xs"
+                  >
+                    {(notice as any).visibilidade ? "Visível" : "Oculto"}
+                  </Badge>
+                  <Badge variant="outline" className="text-xs capitalize">
+                    {notice.type}
+                  </Badge>
+                </div>
               </CardContent>
             </Card>
           ))}
