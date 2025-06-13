@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,8 +26,10 @@ export const NotificationsWidget = () => {
     fetchNotices
   } = useCompanyNotices();
 
-  const recentNotices = notices.slice(0, 3);
-  const unreadCount = notices.length;
+  // Filtrar apenas avisos visíveis
+  const visibleNotices = notices.filter(notice => (notice as any).visibilidade !== false);
+  const recentNotices = visibleNotices.slice(0, 3);
+  const unreadCount = visibleNotices.length;
 
   const handleNoticeClick = (notice: any) => {
     setSelectedNotice(notice);
@@ -153,13 +154,13 @@ export const NotificationsWidget = () => {
             )}
           </div>
           
-          {notices.length > 3 && (
+          {visibleNotices.length > 3 && (
             <div className="border-t border-gray-100 dark:border-gray-800 py-6 text-center">
               <button 
                 onClick={() => setShowAllNotices(true)}
                 className="text-base text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
               >
-                ver todos ({notices.length})
+                ver todos ({visibleNotices.length})
               </button>
             </div>
           )}

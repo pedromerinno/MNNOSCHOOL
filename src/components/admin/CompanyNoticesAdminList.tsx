@@ -8,7 +8,7 @@ import { useCompanyNotices } from "@/hooks/useCompanyNotices";
 import NewNoticeDialog from "./dialogs/NewNoticeDialog";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Eye, EyeOff, Plus } from 'lucide-react';
+import { Eye, EyeOff, Plus, Building } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -61,11 +61,26 @@ export const CompanyNoticesAdminList: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">Avisos da Empresa</h2>
-          <p className="text-gray-500 dark:text-gray-400">
-            Gerencie os avisos para {selectedCompany.nome}
-          </p>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            {selectedCompany.logo ? (
+              <img 
+                src={selectedCompany.logo} 
+                alt={`Logo ${selectedCompany.nome}`}
+                className="w-12 h-12 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+              />
+            ) : (
+              <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center border border-gray-200 dark:border-gray-700">
+                <Building className="w-6 h-6 text-gray-400" />
+              </div>
+            )}
+            <div>
+              <h2 className="text-2xl font-bold">Avisos da Empresa</h2>
+              <p className="text-gray-500 dark:text-gray-400">
+                Gerencie os avisos para {selectedCompany.nome}
+              </p>
+            </div>
+          </div>
         </div>
         <Button 
           onClick={() => setIsNewNoticeDialogOpen(true)}
