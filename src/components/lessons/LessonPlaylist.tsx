@@ -1,6 +1,7 @@
+
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { Play, CheckCircle, Clock, PlayCircle, BookOpen, Video, FileText, HelpCircle } from "lucide-react";
+import { Play, CheckCircle, Clock, PlayCircle, BookOpen, Video, FileText, HelpCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { calculateTotalDuration, formatDuration } from "@/utils/durationUtils";
@@ -94,8 +95,8 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
     const newPath = `/courses/${effectiveCourseId}/lessons/${lessonId}`;
     navigate(newPath, { replace: false });
     
-    // Clear navigating state after a short delay
-    setTimeout(() => setNavigatingToLesson(null), 500);
+    // Clear navigating state after a longer delay to show loading
+    setTimeout(() => setNavigatingToLesson(null), 1500);
   };
 
   const getTypeIcon = (type: string) => {
@@ -268,9 +269,13 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
                         </div>
                       </div>
 
-                      {/* Play button */}
+                      {/* Play button or loading */}
                       <div className="flex-shrink-0">
-                        {isCurrentLesson ? (
+                        {isNavigating ? (
+                          <div className="w-8 h-8 rounded-full bg-muted/40 flex items-center justify-center">
+                            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                          </div>
+                        ) : isCurrentLesson ? (
                           <div 
                             className="w-8 h-8 rounded-full flex items-center justify-center border"
                             style={{
