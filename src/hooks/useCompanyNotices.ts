@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -142,7 +143,8 @@ export function useCompanyNotices() {
       const { data: noticesData, error: noticesError } = await supabase
         .from('company_notices')
         .select('*')
-        .in('id', noticeIds);
+        .in('id', noticeIds)
+        .order('created_at', { ascending: false }); // Order by newest first
       
       if (noticesError) throw noticesError;
       
