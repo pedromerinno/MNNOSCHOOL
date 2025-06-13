@@ -126,14 +126,6 @@ Para completar seu cadastro, acesse: ${signupUrl}
 
 Use o email acima e crie sua senha no primeiro acesso.
 
-Informações adicionais que serão configuradas no seu perfil:
-- Empresa: ${companyName}
-${formData.cidade ? `- Cidade: ${formData.cidade}` : ''}
-${formData.aniversario ? `- Aniversário: ${new Date(formData.aniversario).toLocaleDateString('pt-BR')}` : ''}
-${formData.data_inicio ? `- Data de início: ${new Date(formData.data_inicio).toLocaleDateString('pt-BR')}` : ''}
-${formData.tipo_contrato !== 'not_specified' ? `- Tipo de contrato: ${formData.tipo_contrato}` : ''}
-${formData.nivel_colaborador !== 'not_specified' ? `- Nível: ${formData.nivel_colaborador}` : ''}
-
 Por favor, complete seu cadastro e entre em contato com um administrador para que sua conta seja vinculada à empresa ${companyName}.
       `.trim();
 
