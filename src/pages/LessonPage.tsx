@@ -7,7 +7,6 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { LessonHeader } from '@/components/lessons/LessonHeader';
 import { LessonContent } from '@/components/lessons/LessonContent';
 import { LessonActions } from '@/components/courses/LessonActions';
-import { LessonComments } from '@/components/courses/LessonComments';
 import { LessonSkeleton } from '@/components/lessons/LessonSkeleton';
 import { LessonNotFound } from '@/components/lessons/LessonNotFound';
 import { CourseDescription } from '@/components/courses/CourseDescription';
@@ -193,10 +192,6 @@ const LessonPage = () => {
                     description={lesson?.description || null} 
                     lessonId={lesson?.id}
                   />
-                  
-                  <div className="mt-10">
-                    <LessonComments lessonId={lesson?.id} />
-                  </div>
                 </div>
               </>
             )}
