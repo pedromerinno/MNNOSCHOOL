@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Copy } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCompanies } from "@/hooks/useCompanies";
 
 interface CreateUserDialogProps {
   isOpen: boolean;
@@ -26,6 +26,7 @@ const initialFormData = {
   tipo_contrato: 'not_specified' as const,
   nivel_colaborador: 'not_specified' as const,
   password: '',
+  company_id: '',
 };
 
 export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
@@ -35,6 +36,7 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
 }) => {
   const { toast } = useToast();
   const { userProfile } = useAuth();
+  const { userCompanies, forceGetUserCompanies, user } = useCompanies();
   const [isCreating, setIsCreating] = useState(false);
   const [inviteLink, setInviteLink] = useState('');
   const [showInviteLink, setShowInviteLink] = useState(false);
@@ -42,6 +44,13 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
 
   // Verificar se o usuário tem permissão para criar usuários
   const canCreateUsers = userProfile?.super_admin || userProfile?.is_admin;
+
+  // Carregar empresas quando o diálogo abrir
+  useEffect(() => {
+    if (isOpen && user?.id && userCompanies.length === 0) {
+      forceGetUserCompanies(user.id);
+    }
+  }, [isOpen, user?.id, userCompanies.length, forceGetUserCompanies]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -83,10 +92,10 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
       return;
     }
 
-    if (!formData.email || !formData.display_name) {
+    if (!formData.email || !formData.display_name || !formData.company_id) {
       toast({
         title: "Erro",
-        description: "Email e nome são obrigatórios",
+        description: "Email, nome e empresa são obrigatórios",
         variant: "destructive",
       });
       return;
@@ -97,16 +106,18 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
       // Gerar senha se não foi fornecida
       const password = formData.password || generateRandomPassword();
 
-      // Para administradores regulares, criar um convite por email usando a abordagem de signup
-      // Isso é mais seguro e não requer permissões de super admin
+      // Encontrar a empresa selecionada
+      const selectedCompany = userCompanies.find(company => company.id === formData.company_id);
+      const companyName = selectedCompany?.nome || 'Empresa não encontrada';
+
+      // Criar um convite personalizado com as informações do usuário
       const baseUrl = window.location.origin;
       const signupUrl = `${baseUrl}/signup`;
       
-      // Criar um convite personalizado com as informações do usuário
       const inviteText = `
 Olá ${formData.display_name}!
 
-Você foi convidado(a) para acessar nossa plataforma.
+Você foi convidado(a) para acessar nossa plataforma da empresa ${companyName}.
 
 Email: ${formData.email}
 Senha sugerida: ${password}
@@ -116,13 +127,14 @@ Para completar seu cadastro, acesse: ${signupUrl}
 Use o email acima e crie sua senha no primeiro acesso.
 
 Informações adicionais que serão configuradas no seu perfil:
+- Empresa: ${companyName}
 ${formData.cidade ? `- Cidade: ${formData.cidade}` : ''}
 ${formData.aniversario ? `- Aniversário: ${new Date(formData.aniversario).toLocaleDateString('pt-BR')}` : ''}
 ${formData.data_inicio ? `- Data de início: ${new Date(formData.data_inicio).toLocaleDateString('pt-BR')}` : ''}
 ${formData.tipo_contrato !== 'not_specified' ? `- Tipo de contrato: ${formData.tipo_contrato}` : ''}
 ${formData.nivel_colaborador !== 'not_specified' ? `- Nível: ${formData.nivel_colaborador}` : ''}
 
-Por favor, complete seu cadastro e configure essas informações em seu perfil.
+Por favor, complete seu cadastro e entre em contato com um administrador para que sua conta seja vinculada à empresa ${companyName}.
       `.trim();
 
       setInviteLink(inviteText);
@@ -227,6 +239,39 @@ Por favor, complete seu cadastro e configure essas informações em seu perfil.
         </DialogHeader>
         
         <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="company_id">Empresa *</Label>
+            <Select
+              value={formData.company_id}
+              onValueChange={(value) => handleInputChange('company_id', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione uma empresa" />
+              </SelectTrigger>
+              <SelectContent>
+                {userCompanies.map((company) => (
+                  <SelectItem key={company.id} value={company.id}>
+                    <div className="flex items-center">
+                      {company.logo && (
+                        <img
+                          src={company.logo}
+                          alt={company.nome}
+                          className="h-5 w-5 object-contain rounded mr-2"
+                        />
+                      )}
+                      {company.nome}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {userCompanies.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                Carregando empresas disponíveis...
+              </p>
+            )}
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="email">Email *</Label>
             <Input
@@ -339,7 +384,7 @@ Por favor, complete seu cadastro e configure essas informações em seu perfil.
           <Button variant="outline" onClick={handleClose}>
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} disabled={isCreating}>
+          <Button onClick={handleSubmit} disabled={isCreating || !formData.company_id}>
             {isCreating ? "Criando..." : "Criar Convite"}
           </Button>
         </DialogFooter>
