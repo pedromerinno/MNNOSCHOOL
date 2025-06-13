@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -31,8 +30,8 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
     cidade: '',
     aniversario: '',
     data_inicio: '',
-    tipo_contrato: 'not_specified',
-    nivel_colaborador: 'not_specified',
+    tipo_contrato: 'not_specified' as const,
+    nivel_colaborador: 'not_specified' as const,
     password: '',
   });
 
