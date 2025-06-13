@@ -146,6 +146,22 @@ export const CultureManual: React.FC<CultureManualProps> = ({
           </CardContent>
         </Card>
 
+        {videoUrl && (
+          <Card className="md:col-span-2 transition-all duration-200 shadow-none rounded-xl overflow-hidden">
+            <CardHeader>
+              <CardTitle className="text-lg font-normal text-zinc-400">
+                Vídeo Institucional
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <VideoPlayer 
+                videoUrl={videoUrl} 
+                description={videoDescription || ''} 
+              />
+            </CardContent>
+          </Card>
+        )}
+
         {companyHistory && (
           <Card className="md:col-span-2 transition-all duration-200 shadow-none rounded-xl bg-gray-50 dark:bg-gray-900">
             <CardHeader>
@@ -159,22 +175,6 @@ export const CultureManual: React.FC<CultureManualProps> = ({
                   {companyHistory}
                 </p>
               </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {videoUrl && (
-          <Card className="md:col-span-2 transition-all duration-200 shadow-none rounded-xl overflow-hidden">
-            <CardHeader>
-              <CardTitle className="text-lg font-normal text-zinc-400">
-                Vídeo Institucional
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <VideoPlayer 
-                videoUrl={videoUrl} 
-                description={videoDescription || ''} 
-              />
             </CardContent>
           </Card>
         )}
