@@ -25,7 +25,11 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
   const handleButtonClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    handleCourseClick();
+    console.log('🎯 FeaturedCourse: Button clicked, navigating to course', { 
+      courseId: course.id, 
+      courseTitle: course.title 
+    });
+    navigate(`/courses/${course.id}`);
   };
   
   return (
@@ -98,7 +102,7 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
           </div>
           
           <Button 
-            className="bg-white text-black hover:bg-gray-100 rounded-full gap-2 px-6 relative z-20"
+            className="bg-white text-black hover:bg-gray-100 rounded-full gap-2 px-6"
             onClick={handleButtonClick}
           >
             Assistir agora
