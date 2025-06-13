@@ -18,6 +18,7 @@ const Integration = () => {
   const [userRole, setUserRole] = useState<JobRole | null>(null);
   const [isLoadingRoles, setIsLoadingRoles] = useState(false);
   const [activeTab, setActiveTab] = useState("culture");
+  const [refreshKey, setRefreshKey] = useState(0);
   
   // Memoizar dados da empresa para evitar re-renderizações desnecessárias
   const companyData = useMemo(() => {
@@ -34,7 +35,7 @@ const Integration = () => {
       video_institucional: selectedCompany.video_institucional,
       descricao_video: selectedCompany.descricao_video
     };
-  }, [selectedCompany]);
+  }, [selectedCompany, refreshKey]);
   
   const fetchJobRoles = async (companyId: string) => {
     if (!companyId || isLoadingRoles) return;
@@ -94,7 +95,7 @@ const Integration = () => {
     }
   }, [companyData?.id]);
   
-  // Escutar mudanças de empresa do CompanySelector
+  // Escutar mudanças de empresa e dados de integração
   useEffect(() => {
     const handleCompanyChange = (event: CustomEvent<{company: Company}>) => {
       const newCompany = event.detail.company;
@@ -103,6 +104,9 @@ const Integration = () => {
       if (newCompany.id !== companyData?.id) {
         fetchJobRoles(newCompany.id);
       }
+      
+      // Force refresh do componente
+      setRefreshKey(prev => prev + 1);
     };
     
     const handleCompanyUpdated = (event: CustomEvent<{company: Company}>) => {
@@ -111,6 +115,18 @@ const Integration = () => {
       
       if (updatedCompany.id === companyData?.id) {
         fetchJobRoles(updatedCompany.id);
+        // Force refresh do componente
+        setRefreshKey(prev => prev + 1);
+      }
+    };
+    
+    const handleIntegrationDataUpdated = (event: CustomEvent<{company: Company}>) => {
+      const updatedCompany = event.detail.company;
+      console.log("Integration data updated:", updatedCompany.nome);
+      
+      if (updatedCompany.id === companyData?.id) {
+        // Force refresh do componente para mostrar novos dados
+        setRefreshKey(prev => prev + 1);
       }
     };
     
@@ -125,6 +141,9 @@ const Integration = () => {
     window.addEventListener('company-changed', handleCompanyChange as EventListener);
     window.addEventListener('company-navigation-change', handleCompanyChange as EventListener);
     window.addEventListener('company-updated', handleCompanyUpdated as EventListener);
+    window.addEventListener('company-data-updated', handleCompanyUpdated as EventListener);
+    window.addEventListener('integration-data-updated', handleIntegrationDataUpdated as EventListener);
+    window.addEventListener('force-company-refresh', handleIntegrationDataUpdated as EventListener);
     window.addEventListener('user-role-updated', handleRoleUpdated as EventListener);
     
     // Cleanup
@@ -132,6 +151,9 @@ const Integration = () => {
       window.removeEventListener('company-changed', handleCompanyChange as EventListener);
       window.removeEventListener('company-navigation-change', handleCompanyChange as EventListener);
       window.removeEventListener('company-updated', handleCompanyUpdated as EventListener);
+      window.removeEventListener('company-data-updated', handleCompanyUpdated as EventListener);
+      window.removeEventListener('integration-data-updated', handleIntegrationDataUpdated as EventListener);
+      window.removeEventListener('force-company-refresh', handleIntegrationDataUpdated as EventListener);
       window.removeEventListener('user-role-updated', handleRoleUpdated as EventListener);
     };
   }, [companyData?.id]);
@@ -163,6 +185,7 @@ const Integration = () => {
         companyColor={companyData.cor_principal}
       />
       <IntegrationTabs
+        key={refreshKey}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         company={companyData}
