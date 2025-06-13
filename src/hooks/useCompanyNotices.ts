@@ -94,7 +94,8 @@ export function useCompanyNotices(showOnlyVisible: boolean = true) {
     const cachedData = getCache({ key: cacheKey });
     const hasLocalData = !!cachedData && Array.isArray(cachedData) && cachedData.length > 0;
     
-    if (!shouldMakeRequest(forceRefresh, hasLocalData, noticesInstanceIdRef.current, cacheKey) || fetchingRef.current) {
+    // Para admin (showOnlyVisible=false), sempre fazer a requisição para garantir dados atualizados
+    if (!forceRefresh && showOnlyVisible && !shouldMakeRequest(forceRefresh, hasLocalData, noticesInstanceIdRef.current, cacheKey) || fetchingRef.current) {
       if (hasLocalData) {
         console.log(`[${noticesInstanceIdRef.current}] Using cached data for notices of company ${targetCompanyId}`);
         setNotices(cachedData);
@@ -147,7 +148,10 @@ export function useCompanyNotices(showOnlyVisible: boolean = true) {
       
       // Apply visibility filter only if showOnlyVisible is true
       if (showOnlyVisible) {
+        console.log('Applying visibility filter - showing only visible notices');
         query = query.eq('visibilidade', true);
+      } else {
+        console.log('NOT applying visibility filter - showing all notices including hidden ones');
       }
       
       const { data: noticesData, error: noticesError } = await query
@@ -187,7 +191,7 @@ export function useCompanyNotices(showOnlyVisible: boolean = true) {
         }, 100);
       }
       
-      console.log(`Retrieved ${noticesData.length} notices`);
+      console.log(`Retrieved ${noticesData.length} notices (showOnlyVisible: ${showOnlyVisible})`);
       
       const authorIds = [...new Set(noticesData.map(n => n.created_by))];
       
