@@ -5,7 +5,7 @@ import { Play, CheckCircle, Clock, PlayCircle, BookOpen, Video, FileText, HelpCi
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { calculateTotalDuration, formatDuration } from "@/utils/durationUtils";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 interface LessonPlaylistProps {
   lessons: Array<{
@@ -33,7 +33,11 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
   const [localLessons, setLocalLessons] = useState(lessons);
   const [navigatingToLesson, setNavigatingToLesson] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { courseId: paramCourseId } = useParams();
+  const effectiveCourseId = courseId || paramCourseId;
   const totalDuration = calculateTotalDuration(localLessons);
+
+  console.log('🎯 LessonPlaylist: courseId atual:', effectiveCourseId, 'currentLessonId:', currentLessonId);
 
   // Sync local lessons with props
   useEffect(() => {
@@ -42,15 +46,31 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
 
   // Clear navigating state when current lesson changes
   useEffect(() => {
-    setNavigatingToLesson(null);
-  }, [currentLessonId]);
+    if (navigatingToLesson && navigatingToLesson === currentLessonId) {
+      console.log('✅ LessonPlaylist: Navegação completa para:', currentLessonId);
+      setNavigatingToLesson(null);
+    }
+  }, [currentLessonId, navigatingToLesson]);
 
   const handleLessonClick = (lessonId: string) => {
-    if (lessonId === currentLessonId || navigatingToLesson) return;
+    if (lessonId === currentLessonId || navigatingToLesson) {
+      console.log('🚫 LessonPlaylist: Clique ignorado - mesma aula ou já navegando');
+      return;
+    }
     
-    console.log('🔗 LessonPlaylist: Navegando para aula:', lessonId);
+    console.log('🔗 LessonPlaylist: Iniciando navegação para aula:', lessonId, 'do curso:', effectiveCourseId);
+    
+    if (!effectiveCourseId) {
+      console.error('❌ LessonPlaylist: courseId não encontrado');
+      return;
+    }
+    
     setNavigatingToLesson(lessonId);
-    navigate(`/courses/${courseId}/lessons/${lessonId}`);
+    
+    // Navegação direta usando window.location para garantir que funcione
+    const newUrl = `/courses/${effectiveCourseId}/lessons/${lessonId}`;
+    console.log('🌐 LessonPlaylist: Navegando para URL:', newUrl);
+    window.location.href = newUrl;
   };
 
   const getTypeIcon = (type: string) => {

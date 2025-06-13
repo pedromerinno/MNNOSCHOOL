@@ -50,14 +50,9 @@ const LessonPage = () => {
     };
   }, [navigate]);
 
-  // Handle navigation state
+  // Handle navigation state - simplificado
   useEffect(() => {
-    setIsNavigating(true);
-    const timer = setTimeout(() => {
-      setIsNavigating(false);
-    }, 500);
-    
-    return () => clearTimeout(timer);
+    setIsNavigating(false); // Sempre limpar o estado quando mudar de aula
   }, [lessonId]);
   
   // Use o hook otimizado
@@ -157,11 +152,8 @@ const LessonPage = () => {
     }
   };
 
-  // Show navigation skeleton when transitioning between lessons
-  if (isNavigating && lesson) {
-    return <LessonNavigationSkeleton />;
-  }
-
+  // Show navigation skeleton when transitioning between lessons - removido pois estava causando problemas
+  
   // Loading otimizado - mostrar conteúdo se disponível
   if (loading && !lesson && !isFromCache) {
     return <LessonSkeleton />;
@@ -187,7 +179,7 @@ const LessonPage = () => {
                   style={{
                     '--hover-color': companyColor
                   } as React.CSSProperties}
-                  onClick={() => window.location.href = `/courses/${courseId}`}
+                  onClick={() => navigate(`/courses/${courseId}`)}
                 >
                   <ChevronLeft className="h-4 w-4" />
                   <BookOpen className="h-4 w-4" />
@@ -220,7 +212,7 @@ const LessonPage = () => {
               <div className="p-4">
                 <LessonPlaylist
                   lessons={displayLesson?.course_lessons || []}
-                  currentLessonId={displayLesson?.id}
+                  currentLessonId={displayLesson?.id || ''}
                   onLessonSelect={() => {}} // Not used anymore
                   loading={loading && !isFromCache && !lesson}
                   companyColor={companyColor}
