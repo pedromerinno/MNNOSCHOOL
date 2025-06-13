@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useCompanyNotices } from "@/hooks/useCompanyNotices";
 import NewNoticeDialog from "./dialogs/NewNoticeDialog";
+import { EditNoticeDialog } from "./dialogs/EditNoticeDialog";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar, User, Plus, MoreHorizontal, Pencil, Trash2, Eye, EyeOff } from 'lucide-react';
@@ -17,11 +18,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Notice } from "@/hooks/useNotifications";
 
 export const CompanyNoticesAdminList: React.FC = () => {
   const { selectedCompany } = useCompanies();
   const { notices, isLoading, fetchNotices, deleteNotice } = useCompanyNotices();
   const [isNewNoticeDialogOpen, setIsNewNoticeDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
+  const [localNotices, setLocalNotices] = useState<Notice[]>([]);
+
+  // Sync local notices with fetched notices
+  useEffect(() => {
+    setLocalNotices(notices);
+  }, [notices]);
 
   // Auto-refresh when component mounts
   useEffect(() => {
@@ -30,8 +40,21 @@ export const CompanyNoticesAdminList: React.FC = () => {
     }
   }, [selectedCompany, fetchNotices]);
 
+  const updateLocalNotice = (noticeId: string, updates: Partial<Notice>) => {
+    setLocalNotices(prev => 
+      prev.map(notice => 
+        notice.id === noticeId 
+          ? { ...notice, ...updates }
+          : notice
+      )
+    );
+  };
+
   const handleToggleVisibility = async (noticeId: string, currentVisibility: boolean) => {
     try {
+      // Update local state immediately for instant feedback
+      updateLocalNotice(noticeId, { visibilidade: !currentVisibility } as any);
+
       const { error } = await supabase
         .from('company_notices')
         .update({ visibilidade: !currentVisibility })
@@ -40,11 +63,15 @@ export const CompanyNoticesAdminList: React.FC = () => {
       if (error) throw error;
 
       toast.success(`Aviso ${!currentVisibility ? 'publicado' : 'ocultado'} com sucesso`);
-      // Instant refresh after update
+      
+      // Refresh to ensure consistency
       await fetchNotices();
     } catch (error) {
       console.error('Error toggling notice visibility:', error);
       toast.error('Erro ao alterar visibilidade do aviso');
+      
+      // Revert local state on error
+      updateLocalNotice(noticeId, { visibilidade: currentVisibility } as any);
     }
   };
 
@@ -53,17 +80,30 @@ export const CompanyNoticesAdminList: React.FC = () => {
       const success = await deleteNotice(noticeId);
       if (success) {
         toast.success('Aviso excluído com sucesso');
-        // Instant refresh after delete
         await fetchNotices();
       }
     }
   };
 
+  const handleEditNotice = (notice: Notice) => {
+    setSelectedNotice(notice);
+    setIsEditDialogOpen(true);
+  };
+
   const handleDialogOpenChange = (open: boolean) => {
     setIsNewNoticeDialogOpen(open);
-    // Refresh notices when dialog closes
     if (!open && selectedCompany) {
       fetchNotices();
+    }
+  };
+
+  const handleEditDialogClose = (open: boolean) => {
+    setIsEditDialogOpen(open);
+    if (!open) {
+      setSelectedNotice(null);
+      if (selectedCompany) {
+        fetchNotices();
+      }
     }
   };
 
@@ -99,7 +139,7 @@ export const CompanyNoticesAdminList: React.FC = () => {
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
           <span className="ml-2">Carregando avisos...</span>
         </div>
-      ) : notices.length === 0 ? (
+      ) : localNotices.length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center">
             <h3 className="text-lg font-medium mb-2">Nenhum aviso encontrado</h3>
@@ -117,7 +157,7 @@ export const CompanyNoticesAdminList: React.FC = () => {
         </Card>
       ) : (
         <div className="grid gap-4">
-          {notices.map((notice) => (
+          {localNotices.map((notice) => (
             <Card key={notice.id} className="relative border border-gray-200 dark:border-gray-700">
               <CardHeader className="pb-4">
                 <div className="flex justify-between items-start">
@@ -133,11 +173,11 @@ export const CompanyNoticesAdminList: React.FC = () => {
                     <CardTitle className="text-lg mb-3 font-semibold">{notice.title}</CardTitle>
                     <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                       <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        <span>{format(new Date(notice.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</span>
+                        <Calendar className="h-3 w-3" />
+                        <span>{format(new Date(notice.created_at), "dd/MM/yyyy", { locale: ptBR })}</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <User className="h-4 w-4" />
+                        <User className="h-3 w-3" />
                         <span>{notice.author?.display_name || 'Usuário'}</span>
                       </div>
                     </div>
@@ -163,7 +203,7 @@ export const CompanyNoticesAdminList: React.FC = () => {
                           </>
                         )}
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleEditNotice(notice)}>
                         <Pencil className="mr-2 h-4 w-4" />
                         Editar Aviso
                       </DropdownMenuItem>
@@ -181,14 +221,13 @@ export const CompanyNoticesAdminList: React.FC = () => {
               <CardContent className="pt-0">
                 <p className="text-gray-700 dark:text-gray-300 mb-4">{notice.content}</p>
                 
-                {/* Company badge at the bottom with logo */}
                 <div className="flex items-center justify-between mt-4">
                   <div className="flex items-center gap-2">
                     {selectedCompany.logo && (
                       <img 
                         src={selectedCompany.logo} 
                         alt={selectedCompany.nome}
-                        className="w-6 h-6 rounded object-cover"
+                        className="w-5 h-5 rounded object-cover"
                       />
                     )}
                     <Badge 
@@ -218,6 +257,13 @@ export const CompanyNoticesAdminList: React.FC = () => {
       <NewNoticeDialog
         open={isNewNoticeDialogOpen}
         onOpenChange={handleDialogOpenChange}
+      />
+
+      <EditNoticeDialog
+        open={isEditDialogOpen}
+        onOpenChange={handleEditDialogClose}
+        notice={selectedNotice}
+        companyId={selectedCompany.id}
       />
     </div>
   );
