@@ -78,7 +78,7 @@ export function useCompanyNotices(showOnlyVisible: boolean = true) {
     }
     
     // Evitar requisições duplicadas para a mesma empresa em um curto período de tempo
-    if (lastFetchedCompanyIdRef.current === targetCompanyId && !forceRefresh) {
+    if (lastFetchedCompanyIdRef.current === targetCompanyId && !forceRefresh && showOnlyVisible) {
       console.log(`Ignorando fetch duplicado para empresa: ${targetCompanyId}`);
       return;
     }
@@ -91,11 +91,13 @@ export function useCompanyNotices(showOnlyVisible: boolean = true) {
 
     const cacheKey = `notices_${targetCompanyId}_${showOnlyVisible ? 'visible' : 'all'}`;
     
-    const cachedData = getCache({ key: cacheKey });
+    // Para admin (showOnlyVisible=false), sempre buscar dados frescos para garantir que avisos ocultos apareçam
+    const shouldUseCache = showOnlyVisible && !forceRefresh;
+    const cachedData = shouldUseCache ? getCache({ key: cacheKey }) : null;
     const hasLocalData = !!cachedData && Array.isArray(cachedData) && cachedData.length > 0;
     
-    // Para admin (showOnlyVisible=false), sempre fazer a requisição para garantir dados atualizados
-    if (!forceRefresh && showOnlyVisible && !shouldMakeRequest(forceRefresh, hasLocalData, noticesInstanceIdRef.current, cacheKey) || fetchingRef.current) {
+    // Só usar cache se estivermos mostrando apenas visíveis (home widget)
+    if (shouldUseCache && !shouldMakeRequest(forceRefresh, hasLocalData, noticesInstanceIdRef.current, cacheKey) && !fetchingRef.current) {
       if (hasLocalData) {
         console.log(`[${noticesInstanceIdRef.current}] Using cached data for notices of company ${targetCompanyId}`);
         setNotices(cachedData);
@@ -220,7 +222,10 @@ export function useCompanyNotices(showOnlyVisible: boolean = true) {
       
       const noticesWithCompanies = await Promise.all(noticesWithCompaniesPromises);
       
-      setCache({ key: cacheKey }, noticesWithCompanies);
+      // Só fazer cache para dados de home widget (showOnlyVisible=true)
+      if (showOnlyVisible) {
+        setCache({ key: cacheKey }, noticesWithCompanies);
+      }
       
       setNotices(noticesWithCompanies);
       
@@ -534,15 +539,20 @@ export function useCompanyNotices(showOnlyVisible: boolean = true) {
     if (selectedCompany?.id) {
       console.log(`Selected company changed to: ${selectedCompany.id}, will fetch notices`);
       
-      // Usar um timeout para debounce
-      if (pendingFetchTimeoutRef.current !== null) {
-        clearTimeout(pendingFetchTimeoutRef.current);
+      // Para admin (showOnlyVisible=false), sempre fazer fetch imediato sem debounce
+      if (!showOnlyVisible) {
+        fetchNotices(selectedCompany.id, true);
+      } else {
+        // Usar um timeout para debounce apenas para home widget
+        if (pendingFetchTimeoutRef.current !== null) {
+          clearTimeout(pendingFetchTimeoutRef.current);
+        }
+        
+        pendingFetchTimeoutRef.current = window.setTimeout(() => {
+          fetchNotices(selectedCompany.id);
+          pendingFetchTimeoutRef.current = null;
+        }, 800);
       }
-      
-      pendingFetchTimeoutRef.current = window.setTimeout(() => {
-        fetchNotices(selectedCompany.id);
-        pendingFetchTimeoutRef.current = null;
-      }, 800);
     } else {
       setNotices([]);
       setCurrentNotice(null);
@@ -555,7 +565,7 @@ export function useCompanyNotices(showOnlyVisible: boolean = true) {
         pendingFetchTimeoutRef.current = null;
       }
     };
-  }, [selectedCompany?.id, fetchNotices]);
+  }, [selectedCompany?.id, fetchNotices, showOnlyVisible]);
 
   return {
     notices,
