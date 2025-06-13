@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Play, CheckCircle, Clock, PlayCircle, BookOpen, Video, FileText, HelpCircle } from "lucide-react";
@@ -31,12 +30,42 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
   courseId
 }) => {
   const [navigatingToLesson, setNavigatingToLesson] = useState<string | null>(null);
+  const [localLessons, setLocalLessons] = useState(lessons);
   const navigate = useNavigate();
   const { courseId: paramCourseId } = useParams();
   const effectiveCourseId = courseId || paramCourseId;
-  const totalDuration = calculateTotalDuration(lessons);
+  const totalDuration = calculateTotalDuration(localLessons);
 
   console.log('🎯 LessonPlaylist: courseId atual:', effectiveCourseId, 'currentLessonId:', currentLessonId);
+
+  // Atualizar lessons locais quando props mudam
+  useEffect(() => {
+    setLocalLessons(lessons);
+  }, [lessons]);
+
+  // Escutar atualizações de título das aulas
+  useEffect(() => {
+    const handleLessonFieldUpdate = (event: CustomEvent) => {
+      const { lessonId, field, value } = event.detail;
+      
+      if (field === 'title') {
+        console.log('📝 Atualizando título na playlist:', lessonId, value);
+        setLocalLessons(prevLessons => 
+          prevLessons.map(lesson => 
+            lesson.id === lessonId 
+              ? { ...lesson, title: value }
+              : lesson
+          )
+        );
+      }
+    };
+
+    window.addEventListener('lesson-field-updated', handleLessonFieldUpdate as EventListener);
+    
+    return () => {
+      window.removeEventListener('lesson-field-updated', handleLessonFieldUpdate as EventListener);
+    };
+  }, []);
 
   // Clear navigating state when current lesson changes
   useEffect(() => {
@@ -136,7 +165,7 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
               className="w-2 h-2 rounded-full"
               style={{ backgroundColor: companyColor }}
             ></div>
-            <span className="font-medium">{lessons.length} aulas</span>
+            <span className="font-medium">{localLessons.length} aulas</span>
           </div>
           <div className="w-1 h-1 bg-muted-foreground/40 rounded-full"></div>
           <div className="flex items-center gap-1.5 text-muted-foreground">
@@ -151,7 +180,7 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
           <PlaylistSkeleton />
         ) : (
           <>
-            {lessons.map((lesson, index) => {
+            {localLessons.map((lesson, index) => {
               const isCurrentLesson = lesson.id === currentLessonId;
               const isNavigating = navigatingToLesson === lesson.id;
               

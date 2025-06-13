@@ -49,17 +49,11 @@ export const EditableText: React.FC<EditableTextProps> = ({
       setIsSaving(true);
       try {
         await onSave(editValue.trim());
-        
-        // Dispatch evento para atualização imediata na playlist
-        window.dispatchEvent(new CustomEvent('lesson-field-updated', {
-          detail: {
-            lessonId: 'current', // Será atualizado pelo componente pai
-            field: 'title',
-            value: editValue.trim()
-          }
-        }));
+        // Não precisa mais disparar evento aqui, o hook useLessonEdit já faz isso
       } catch (error) {
         console.error('Error saving:', error);
+        // Reverter o valor em caso de erro
+        setEditValue(value);
       } finally {
         setIsSaving(false);
       }
