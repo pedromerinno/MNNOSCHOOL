@@ -77,10 +77,19 @@ export function useCompanyNotices(showOnlyVisible: boolean = true) {
       return;
     }
     
-    // Evitar requisições duplicadas para a mesma empresa em um curto período de tempo
-    if (lastFetchedCompanyIdRef.current === targetCompanyId && !forceRefresh && showOnlyVisible) {
-      console.log(`Ignorando fetch duplicado para empresa: ${targetCompanyId}`);
-      return;
+    // Para admin (showOnlyVisible=false), sempre buscar dados frescos
+    if (!showOnlyVisible) {
+      // Evitar requisições duplicadas para admin
+      if (fetchingRef.current) {
+        console.log('Admin fetch already in progress, skipping');
+        return;
+      }
+    } else {
+      // Para home widget, usar lógica de cache
+      if (lastFetchedCompanyIdRef.current === targetCompanyId && !forceRefresh) {
+        console.log(`Ignorando fetch duplicado para empresa: ${targetCompanyId}`);
+        return;
+      }
     }
     
     // Limpar qualquer timeout pendente
@@ -91,30 +100,32 @@ export function useCompanyNotices(showOnlyVisible: boolean = true) {
 
     const cacheKey = `notices_${targetCompanyId}_${showOnlyVisible ? 'visible' : 'all'}`;
     
-    // Para admin (showOnlyVisible=false), sempre buscar dados frescos para garantir que avisos ocultos apareçam
-    const shouldUseCache = showOnlyVisible && !forceRefresh;
-    const cachedData = shouldUseCache ? getCache({ key: cacheKey }) : null;
-    const hasLocalData = !!cachedData && Array.isArray(cachedData) && cachedData.length > 0;
-    
-    // Só usar cache se estivermos mostrando apenas visíveis (home widget)
-    if (shouldUseCache && !shouldMakeRequest(forceRefresh, hasLocalData, noticesInstanceIdRef.current, cacheKey) && !fetchingRef.current) {
-      if (hasLocalData) {
-        console.log(`[${noticesInstanceIdRef.current}] Using cached data for notices of company ${targetCompanyId}`);
-        setNotices(cachedData);
-        if (cachedData.length > 0) {
-          setCurrentNotice(cachedData[0]);
-          setCurrentIndex(0);
+    // Só usar cache para home widget (showOnlyVisible=true)
+    if (showOnlyVisible) {
+      const cachedData = getCache({ key: cacheKey });
+      const hasLocalData = !!cachedData && Array.isArray(cachedData) && cachedData.length > 0;
+      
+      if (!shouldMakeRequest(forceRefresh, hasLocalData, noticesInstanceIdRef.current, cacheKey) && !fetchingRef.current) {
+        if (hasLocalData) {
+          console.log(`[${noticesInstanceIdRef.current}] Using cached data for notices of company ${targetCompanyId}`);
+          setNotices(cachedData);
+          if (cachedData.length > 0) {
+            setCurrentNotice(cachedData[0]);
+            setCurrentIndex(0);
+          }
+          setIsLoading(false);
         }
-        setIsLoading(false);
+        return;
       }
-      return;
     }
 
     try {
       setIsLoading(true);
       setError(null);
       fetchingRef.current = true;
-      startRequest(cacheKey);
+      if (showOnlyVisible) {
+        startRequest(cacheKey);
+      }
       lastFetchedCompanyIdRef.current = targetCompanyId;
       
       console.log(`Fetching notices for company: ${targetCompanyId}, showOnlyVisible: ${showOnlyVisible}`);
@@ -133,27 +144,29 @@ export function useCompanyNotices(showOnlyVisible: boolean = true) {
         setNotices([]);
         setCurrentNotice(null);
         setIsLoading(false);
-        completeRequest();
+        if (showOnlyVisible) {
+          completeRequest();
+          setCache({ key: cacheKey }, []);
+        }
         fetchingRef.current = false;
-        setCache({ key: cacheKey }, []);
         return;
       }
       
       const noticeIds = noticeRelations.map(item => item.notice_id);
       console.log(`Found ${noticeIds.length} notice IDs for company: ${targetCompanyId}`);
       
-      // Build query based on visibility filter
+      // Build query - para admin não aplicar filtro de visibilidade
       let query = supabase
         .from('company_notices')
         .select('*')
         .in('id', noticeIds);
       
-      // Apply visibility filter only if showOnlyVisible is true
+      // Aplicar filtro de visibilidade apenas para home widget
       if (showOnlyVisible) {
         console.log('Applying visibility filter - showing only visible notices');
         query = query.eq('visibilidade', true);
       } else {
-        console.log('NOT applying visibility filter - showing all notices including hidden ones');
+        console.log('Admin mode - showing all notices including hidden ones');
       }
       
       const { data: noticesData, error: noticesError } = await query
@@ -173,11 +186,15 @@ export function useCompanyNotices(showOnlyVisible: boolean = true) {
           });
         }, 100);
         
-        clearCache({ key: cacheKey });
+        if (showOnlyVisible) {
+          clearCache({ key: cacheKey });
+        }
         setNotices([]);
         setCurrentNotice(null);
         setIsLoading(false);
-        resetRequestState();
+        if (showOnlyVisible) {
+          resetRequestState();
+        }
         fetchingRef.current = false;
         return;
       }
@@ -236,11 +253,15 @@ export function useCompanyNotices(showOnlyVisible: boolean = true) {
         setCurrentNotice(null);
       }
       
-      completeRequest();
+      if (showOnlyVisible) {
+        completeRequest();
+      }
     } catch (err: any) {
       console.error('Erro ao buscar avisos:', err);
       setError(err.message || 'Erro ao buscar avisos');
-      resetRequestState();
+      if (showOnlyVisible) {
+        resetRequestState();
+      }
     } finally {
       setIsLoading(false);
       fetchingRef.current = false;
@@ -539,11 +560,11 @@ export function useCompanyNotices(showOnlyVisible: boolean = true) {
     if (selectedCompany?.id) {
       console.log(`Selected company changed to: ${selectedCompany.id}, will fetch notices`);
       
-      // Para admin (showOnlyVisible=false), sempre fazer fetch imediato sem debounce
+      // Para admin (showOnlyVisible=false), fazer fetch imediato
       if (!showOnlyVisible) {
         fetchNotices(selectedCompany.id, true);
       } else {
-        // Usar um timeout para debounce apenas para home widget
+        // Para home widget, usar debounce
         if (pendingFetchTimeoutRef.current !== null) {
           clearTimeout(pendingFetchTimeoutRef.current);
         }
