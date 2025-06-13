@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Company } from "@/types/company";
 import { useCompanies } from "@/hooks/useCompanies";
+import { useCompanySync } from "@/hooks/company/useCompanySync";
 
 export const useSettingsManagement = () => {
   const { 
@@ -13,6 +14,8 @@ export const useSettingsManagement = () => {
     forceGetUserCompanies,
     user
   } = useCompanies();
+  
+  const { syncCompanyData, forceCompanyUpdate } = useCompanySync();
   
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -151,24 +154,11 @@ export const useSettingsManagement = () => {
       
       toast.success("Informações de integração atualizadas com sucesso");
       
-      // Dispatch comprehensive events to update company data everywhere
-      window.dispatchEvent(new CustomEvent('company-updated', { 
-        detail: { company: updatedCompany } 
-      }));
+      // Use the sync utility to propagate changes everywhere
+      syncCompanyData(updatedCompany);
       
-      window.dispatchEvent(new CustomEvent('settings-company-changed', { 
-        detail: { company: updatedCompany } 
-      }));
-      
-      window.dispatchEvent(new CustomEvent('company-changed', { 
-        detail: { company: updatedCompany } 
-      }));
-      
-      // Force refresh event for other components that need to reload data
-      window.dispatchEvent(new Event('company-relation-changed'));
-      
-      // Force reload companies to ensure fresh data everywhere
-      window.dispatchEvent(new Event('force-reload-companies'));
+      // Force update global company state
+      forceCompanyUpdate(updatedCompany);
       
     } catch (error: any) {
       console.error("Erro ao salvar informações:", error);

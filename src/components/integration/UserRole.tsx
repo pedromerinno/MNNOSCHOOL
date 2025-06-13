@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BriefcaseBusiness, User } from "lucide-react";
 import { UserProfile } from "@/types/user";
@@ -19,6 +19,8 @@ interface UserRoleProps {
 }
 
 export const UserRole: React.FC<UserRoleProps> = ({ role, companyColor, userProfile }) => {
+  const [refreshKey, setRefreshKey] = useState(0);
+  
   // Function to get user's initials for avatar fallback
   const getInitials = (name: string | null): string => {
     if (!name) return "U";
@@ -30,6 +32,27 @@ export const UserRole: React.FC<UserRoleProps> = ({ role, companyColor, userProf
       .substring(0, 2);
   };
   
+  // Listen for company data updates to refresh content
+  useEffect(() => {
+    const handleCompanyDataUpdate = () => {
+      console.log('[UserRole] Company data updated, refreshing component');
+      setRefreshKey(prev => prev + 1);
+    };
+
+    // Listen for various company update events
+    window.addEventListener('company-data-updated', handleCompanyDataUpdate);
+    window.addEventListener('integration-data-updated', handleCompanyDataUpdate);
+    window.addEventListener('company-updated', handleCompanyDataUpdate);
+    window.addEventListener('force-company-refresh', handleCompanyDataUpdate);
+    
+    return () => {
+      window.removeEventListener('company-data-updated', handleCompanyDataUpdate);
+      window.removeEventListener('integration-data-updated', handleCompanyDataUpdate);
+      window.removeEventListener('company-updated', handleCompanyDataUpdate);
+      window.removeEventListener('force-company-refresh', handleCompanyDataUpdate);
+    };
+  }, []);
+  
   // Store the company logo in localStorage when the component mounts
   React.useEffect(() => {
     const companyLogo = localStorage.getItem('selectedCompanyLogo');
@@ -38,10 +61,10 @@ export const UserRole: React.FC<UserRoleProps> = ({ role, companyColor, userProf
       const logoUrl = localStorage.getItem('selectedCompanyLogo') || "/placeholder.svg";
       localStorage.setItem('selectedCompanyLogo', logoUrl);
     }
-  }, []);
+  }, [refreshKey]); // Add refreshKey as dependency
   
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" key={refreshKey}>
       {/* Introduction Card */}
       <Card className="transition-all duration-200 shadow-sm bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800">
         <CardContent className="p-6 md:p-8">

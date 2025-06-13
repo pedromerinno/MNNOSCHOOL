@@ -7,6 +7,7 @@ import { CompanySelector } from '@/components/admin/integration/CompanySelector'
 import { SettingsTabs } from './SettingsTabs';
 import { NoCompanySelected } from './NoCompanySelected';
 import { toast } from 'sonner';
+import { useCompanySync } from '@/hooks/company/useCompanySync';
 
 export const SettingsManagement: React.FC = () => {
   const {
@@ -20,13 +21,15 @@ export const SettingsManagement: React.FC = () => {
     handleFormSubmit
   } = useSettingsManagement();
   
+  const { syncCompanyData } = useCompanySync();
+  
   console.log('[SettingsManagement] Current state:', {
     companiesCount: companies.length,
     isLoading,
     selectedCompany: selectedCompany?.nome || 'none'
   });
   
-  // Função de envio de formulário melhorada para garantir tratamento adequado de promises
+  // Função de envio de formulário melhorada para garantir sincronização adequada
   const onFormSubmit = async (data: any): Promise<void> => {
     try {
       // Prevenção explícita de comportamento padrão caso seja chamado de um evento
@@ -37,7 +40,23 @@ export const SettingsManagement: React.FC = () => {
       
       // Aguarda a conclusão da promise para garantir que o processo seja finalizado
       await handleFormSubmit(data);
-      // A mensagem de toast de sucesso é tratada em handleFormSubmit
+      
+      // Força sincronização completa após salvar
+      if (selectedCompany) {
+        const updatedCompany = { ...selectedCompany, ...data };
+        syncCompanyData(updatedCompany);
+        
+        // Força reload de dados relacionados à empresa
+        window.dispatchEvent(new CustomEvent('company-data-updated', { 
+          detail: { company: updatedCompany } 
+        }));
+        
+        // Força atualização global do estado da empresa
+        window.dispatchEvent(new CustomEvent('force-company-refresh', { 
+          detail: { companyId: selectedCompany.id } 
+        }));
+      }
+      
     } catch (error) {
       console.error("Erro no envio do formulário:", error);
       toast.error("Ocorreu um erro ao salvar as configurações");
