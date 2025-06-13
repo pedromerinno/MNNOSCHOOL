@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,17 @@ interface CreateUserDialogProps {
   onSuccess: () => void;
 }
 
+const initialFormData = {
+  email: '',
+  display_name: '',
+  cidade: '',
+  aniversario: '',
+  data_inicio: '',
+  tipo_contrato: 'not_specified' as const,
+  nivel_colaborador: 'not_specified' as const,
+  password: '',
+};
+
 export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
   isOpen,
   onOpenChange,
@@ -24,16 +36,7 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
   const [isCreating, setIsCreating] = useState(false);
   const [inviteLink, setInviteLink] = useState('');
   const [showInviteLink, setShowInviteLink] = useState(false);
-  const [formData, setFormData] = useState({
-    email: '',
-    display_name: '',
-    cidade: '',
-    aniversario: '',
-    data_inicio: '',
-    tipo_contrato: 'not_specified' as const,
-    nivel_colaborador: 'not_specified' as const,
-    password: '',
-  });
+  const [formData, setFormData] = useState(initialFormData);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -163,16 +166,7 @@ Por favor, altere sua senha no primeiro acesso.
   };
 
   const handleClose = () => {
-    setFormData({
-      email: '',
-      display_name: '',
-      cidade: '',
-      aniversario: '',
-      data_inicio: '',
-      tipo_contrato: 'not_specified',
-      nivel_colaborador: 'not_specified',
-      password: '',
-    });
+    setFormData(initialFormData);
     setInviteLink('');
     setShowInviteLink(false);
     onOpenChange(false);

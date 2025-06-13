@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -137,6 +138,18 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
     return 'user';
   };
 
+  // Verificar se o usuário atual pode alterar as permissões de outro usuário
+  const canChangePermissions = (targetUser: UserProfile): boolean => {
+    // Super admins podem alterar qualquer um
+    if (isSuperAdmin) return true;
+    
+    // Admins não podem alterar super admins
+    if (targetUser.super_admin) return false;
+    
+    // Admins podem alterar usuários regulares
+    return userProfile?.is_admin || false;
+  };
+
   if (loading && users.length === 0) {
     return (
       <Card>
@@ -213,21 +226,27 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Select
-                        value={getUserPermissionValue(user)}
-                        onValueChange={(value) => handlePermissionChange(user.id, value)}
-                      >
-                        <SelectTrigger className="w-32">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="user">Usuário</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                          {isSuperAdmin && (
-                            <SelectItem value="super_admin">Super Admin</SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
+                      {canChangePermissions(user) ? (
+                        <Select
+                          value={getUserPermissionValue(user)}
+                          onValueChange={(value) => handlePermissionChange(user.id, value)}
+                        >
+                          <SelectTrigger className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="user">Usuário</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                            {isSuperAdmin && (
+                              <SelectItem value="super_admin">Super Admin</SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Badge variant="outline" className="text-xs">
+                          {user.super_admin ? 'Super Admin' : user.is_admin ? 'Admin' : 'Usuário'}
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell>
                       <UserActionsDropdown
