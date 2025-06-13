@@ -64,10 +64,10 @@ export const NotificationsWidget = () => {
   // Effect otimizado para buscar avisos quando empresa muda
   useEffect(() => {
     if (selectedCompany?.id && mountedRef.current) {
-      // Usar debounce para evitar múltiplas chamadas
+      // Usar debounce menor para home
       const timeoutId = setTimeout(() => {
         fetchNoticesForCompany(selectedCompany.id);
-      }, 100);
+      }, 50);
 
       return () => clearTimeout(timeoutId);
     } else {

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useCompanies } from "@/hooks/useCompanies";
 import { toast } from "sonner";
+import { useOptimizedCache } from "@/hooks/useOptimizedCache";
 
 export interface ReceivedFeedback {
   id: string;
@@ -13,7 +14,6 @@ export interface ReceivedFeedback {
     id: string;
     display_name: string | null;
     avatar: string | null;
-    // Using cargo_id instead of cargo
     cargo_id?: string | null;
   } | null;
 }
@@ -22,6 +22,7 @@ export const useReceivedFeedbacks = () => {
   const [feedbacks, setFeedbacks] = useState<ReceivedFeedback[]>([]);
   const [loading, setLoading] = useState(true);
   const { selectedCompany } = useCompanies();
+  const { getCache, setCache } = useOptimizedCache();
 
   useEffect(() => {
     const fetchFeedbacks = async () => {
@@ -33,20 +34,31 @@ export const useReceivedFeedbacks = () => {
 
       try {
         setLoading(true);
+        
+        // Verificar cache primeiro
+        const cacheKey = `feedbacks_${selectedCompany.id}`;
+        const cachedData = getCache<ReceivedFeedback[]>(cacheKey);
+        if (cachedData && Array.isArray(cachedData)) {
+          console.log(`Using cached feedbacks for company ${selectedCompany.id}`);
+          setFeedbacks(cachedData);
+          setLoading(false);
+          return;
+        }
+
         const { data: { user } } = await supabase.auth.getUser();
         
         if (!user) {
           throw new Error('User not authenticated');
         }
 
-        // First, fetch the feedbacks
+        // Buscar feedbacks com limite menor para home
         const { data: feedbackData, error } = await supabase
           .from('user_feedbacks')
           .select('id, content, created_at, from_user_id')
           .eq('to_user_id', user.id)
           .eq('company_id', selectedCompany.id)
           .order('created_at', { ascending: false })
-          .limit(5);
+          .limit(3); // Reduzir limite para home
 
         if (error) {
           throw error;
@@ -54,41 +66,41 @@ export const useReceivedFeedbacks = () => {
 
         if (!feedbackData || feedbackData.length === 0) {
           setFeedbacks([]);
+          // Cache vazio também
+          setCache(cacheKey, [], 1);
           setLoading(false);
           return;
         }
 
-        // Then fetch the associated profiles - updated to use cargo_id field
-        const enrichedFeedbacks = await Promise.all(
-          (feedbackData || []).map(async (feedback) => {
-            if (!feedback.from_user_id) {
-              return {
-                ...feedback,
-                from_profile: null
-              };
-            }
-
-            const { data: profileData, error: profileError } = await supabase
+        // Buscar perfis em batch
+        const userIds = [...new Set(feedbackData.map(f => f.from_user_id).filter(Boolean))];
+        const profilesPromise = userIds.length > 0 
+          ? supabase
               .from('profiles')
               .select('id, display_name, avatar, cargo_id')
-              .eq('id', feedback.from_user_id)
-              .single();
+              .in('id', userIds)
+          : Promise.resolve({ data: [], error: null });
 
-            if (profileError) {
-              console.error('Error fetching profile:', profileError);
-              return {
-                ...feedback,
-                from_profile: null
-              };
-            }
+        const { data: profilesData, error: profilesError } = await profilesPromise;
 
-            return {
-              ...feedback,
-              from_profile: profileData || null
-            };
-          })
-        );
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
+        }
+
+        // Criar mapa de perfis
+        const profilesMap = new Map();
+        profilesData?.forEach(profile => {
+          profilesMap.set(profile.id, profile);
+        });
+
+        // Enriquecer feedbacks com perfis
+        const enrichedFeedbacks = feedbackData.map(feedback => ({
+          ...feedback,
+          from_profile: feedback.from_user_id ? profilesMap.get(feedback.from_user_id) || null : null
+        }));
         
+        // Cache com TTL menor
+        setCache(cacheKey, enrichedFeedbacks, 1);
         setFeedbacks(enrichedFeedbacks);
       } catch (err) {
         console.error('Error fetching feedbacks:', err);
@@ -98,8 +110,13 @@ export const useReceivedFeedbacks = () => {
       }
     };
 
-    fetchFeedbacks();
-  }, [selectedCompany]);
+    // Debounce para evitar múltiplas chamadas
+    const timeoutId = setTimeout(() => {
+      fetchFeedbacks();
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [selectedCompany, getCache, setCache]);
 
   return { feedbacks, loading };
 };
