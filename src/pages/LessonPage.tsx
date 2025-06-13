@@ -9,7 +9,6 @@ import { LessonContent } from '@/components/lessons/LessonContent';
 import { LessonActions } from '@/components/courses/LessonActions';
 import { LessonComments } from '@/components/courses/LessonComments';
 import { LessonSkeleton } from '@/components/lessons/LessonSkeleton';
-import { LessonNavigationSkeleton } from '@/components/lessons/LessonNavigationSkeleton';
 import { LessonNotFound } from '@/components/lessons/LessonNotFound';
 import { CourseDescription } from '@/components/courses/CourseDescription';
 import { LessonPlaylist } from '@/components/lessons/LessonPlaylist';
@@ -24,7 +23,6 @@ const LessonPage = () => {
   const { courseId, lessonId } = useParams<{ courseId: string, lessonId: string }>();
   const [showLessonManager, setShowLessonManager] = useState(false);
   const [localUpdates, setLocalUpdates] = useState<Record<string, any>>({});
-  const [isNavigating, setIsNavigating] = useState(false);
   const { userProfile } = useAuth();
   const { selectedCompany } = useCompanies();
   const navigate = useNavigate();
@@ -49,11 +47,6 @@ const LessonPage = () => {
       window.removeEventListener('company-changed', handleCompanyChange);
     };
   }, [navigate]);
-
-  // Handle navigation state - simplificado
-  useEffect(() => {
-    setIsNavigating(false); // Sempre limpar o estado quando mudar de aula
-  }, [lessonId]);
   
   // Use o hook otimizado
   const { 
@@ -89,16 +82,28 @@ const LessonPage = () => {
     };
   }, [lesson, localUpdates]);
 
-  // Listen for lesson field updates
+  // Listen for lesson field updates - otimizado
   useEffect(() => {
     const handleLessonFieldUpdated = (event: CustomEvent) => {
       const { lessonId: updatedLessonId, field, value } = event.detail;
       
       if (updatedLessonId === lessonId) {
+        console.log('📝 LessonPage: Campo atualizado:', field, '=', value);
         setLocalUpdates(prev => ({
           ...prev,
           [field]: value
         }));
+        
+        // Atualizar cache também
+        if (lesson) {
+          const updatedLesson = { ...lesson, [field]: value };
+          window.dispatchEvent(new CustomEvent('lesson-updated', {
+            detail: { 
+              lessonId: updatedLessonId,
+              data: updatedLesson
+            }
+          }));
+        }
       }
     };
 
@@ -107,12 +112,13 @@ const LessonPage = () => {
     return () => {
       window.removeEventListener('lesson-field-updated', handleLessonFieldUpdated as EventListener);
     };
-  }, [lessonId]);
+  }, [lessonId, lesson]);
 
   // Listen for lesson updates
   useEffect(() => {
     const handleLessonUpdated = (event: CustomEvent) => {
       if (event.detail?.lessonId === lessonId) {
+        console.log('🔄 LessonPage: Recebido evento de atualização para:', lessonId);
         if (refreshLessonData) {
           refreshLessonData();
         }
@@ -126,9 +132,9 @@ const LessonPage = () => {
     };
   }, [lessonId, refreshLessonData]);
 
-  // Scroll to top when changing lessons
+  // Scroll to top when changing lessons - otimizado
   useEffect(() => {
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     setShowAutoplayPrompt(false);
     setLocalUpdates({}); // Limpar updates locais
   }, [lessonId, setShowAutoplayPrompt]);
@@ -151,8 +157,6 @@ const LessonPage = () => {
       console.error("Error adding lesson:", error);
     }
   };
-
-  // Show navigation skeleton when transitioning between lessons - removido pois estava causando problemas
   
   // Loading otimizado - mostrar conteúdo se disponível
   if (loading && !lesson && !isFromCache) {

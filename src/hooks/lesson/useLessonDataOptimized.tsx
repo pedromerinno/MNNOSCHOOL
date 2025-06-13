@@ -72,7 +72,7 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
       const cached = getCachedLesson(lessonId);
       if (cached) {
         console.log('📦 useLessonDataOptimized: Encontrou cache para:', lessonId);
-        setCachedLesson(cached);
+        setCachedLesson({ ...cached }); // Clone para evitar mutações
         setIsFromCache(true);
       } else {
         console.log('❌ useLessonDataOptimized: Sem cache para:', lessonId);
@@ -83,7 +83,7 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
   }, [lessonId, getCachedLesson]);
 
   // Use os hooks apenas quando necessário
-  const shouldFetch = currentLessonId && !isFromCache;
+  const shouldFetch = currentLessonId && (!isFromCache || !cachedLesson);
   const { lesson, loading, error, refetch } = useLessonFetch(shouldFetch ? currentLessonId : undefined);
   const { completed, markLessonCompleted } = useLessonProgress(
     currentLessonId, 
@@ -100,9 +100,13 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
     if (lesson && currentLessonId && !loading) {
       console.log('💾 useLessonDataOptimized: Salvando cache para:', currentLessonId);
       setCachedData(currentLessonId, lesson);
-      setCachedLesson(lesson);
+      
+      // Atualizar cachedLesson apenas se for diferente
+      if (!cachedLesson || JSON.stringify(cachedLesson) !== JSON.stringify(lesson)) {
+        setCachedLesson({ ...lesson });
+      }
     }
-  }, [lesson, currentLessonId, loading]);
+  }, [lesson, currentLessonId, loading, cachedLesson]);
 
   // Update current lesson ID quando o prop muda
   useEffect(() => {
@@ -112,7 +116,7 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
     }
   }, [lessonId, currentLessonId]);
 
-  // Refresh que limpa cache
+  // Refresh que limpa cache seletivamente
   const refreshLessonData = useCallback(() => {
     if (currentLessonId) {
       console.log('🔄 useLessonDataOptimized: Limpando cache para:', currentLessonId);
@@ -134,12 +138,31 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
     }
   }, [currentLessonId, refetch]);
 
+  // Atualizar cache quando receber eventos externos
+  useEffect(() => {
+    const handleLessonUpdated = (event: CustomEvent) => {
+      const { lessonId: updatedLessonId, data } = event.detail;
+      
+      if (updatedLessonId === currentLessonId && data) {
+        console.log('🔄 useLessonDataOptimized: Atualizando cache via evento:', updatedLessonId);
+        setCachedData(updatedLessonId, data);
+        setCachedLesson({ ...data });
+      }
+    };
+
+    window.addEventListener('lesson-updated', handleLessonUpdated as EventListener);
+    
+    return () => {
+      window.removeEventListener('lesson-updated', handleLessonUpdated as EventListener);
+    };
+  }, [currentLessonId]);
+
   // Usar lesson do cache ou fetched
   const currentLesson = cachedLesson || lesson;
 
   return { 
     lesson: currentLesson, 
-    loading: loading && !isFromCache, 
+    loading: loading && !cachedLesson, 
     error, 
     markLessonCompleted,
     navigateToLesson: () => {}, // Não usado mais
@@ -148,6 +171,6 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
     toggleLikeLesson,
     completed,
     refreshLessonData,
-    isFromCache
+    isFromCache: !!cachedLesson
   };
 };
