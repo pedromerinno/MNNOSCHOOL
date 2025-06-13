@@ -41,6 +41,14 @@ export const CompanyNoticesAdminList: React.FC = () => {
     }
   };
 
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsNewNoticeDialogOpen(open);
+    // Refresh notices when dialog closes
+    if (!open && selectedCompany) {
+      fetchNotices();
+    }
+  };
+
   if (!selectedCompany) {
     return (
       <div className="text-center p-8">
@@ -129,11 +137,7 @@ export const CompanyNoticesAdminList: React.FC = () => {
 
       <NewNoticeDialog
         open={isNewNoticeDialogOpen}
-        onOpenChange={setIsNewNoticeDialogOpen}
-        onSuccess={() => {
-          fetchNotices();
-          setIsNewNoticeDialogOpen(false);
-        }}
+        onOpenChange={handleDialogOpenChange}
       />
     </div>
   );
