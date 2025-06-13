@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useCompanyNotices } from "@/hooks/useCompanyNotices";
-import { NewNoticeDialog } from "./dialogs/NewNoticeDialog";
+import NewNoticeDialog from "./dialogs/NewNoticeDialog";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Eye, EyeOff, Plus } from 'lucide-react';
@@ -14,27 +14,27 @@ import { toast } from "sonner";
 
 export const CompanyNoticesAdminList: React.FC = () => {
   const { selectedCompany } = useCompanies();
-  const { notices, loading, refreshNotices } = useCompanyNotices();
+  const { notices, isLoading, fetchNotices } = useCompanyNotices();
   const [isNewNoticeDialogOpen, setIsNewNoticeDialogOpen] = useState(false);
 
   // Auto-refresh when component mounts
   useEffect(() => {
     if (selectedCompany) {
-      refreshNotices();
+      fetchNotices();
     }
-  }, [selectedCompany, refreshNotices]);
+  }, [selectedCompany, fetchNotices]);
 
-  const handleToggleVisibility = async (noticeId: string, currentVisibilidade: boolean) => {
+  const handleToggleVisibility = async (noticeId: string, currentVisibility: boolean) => {
     try {
       const { error } = await supabase
-        .from('avisos_empresa')
-        .update({ visibilidade: !currentVisibilidade })
+        .from('company_notices')
+        .update({ visibilidade: !currentVisibility })
         .eq('id', noticeId);
 
       if (error) throw error;
 
-      toast.success(`Aviso ${!currentVisibilidade ? 'publicado' : 'ocultado'} com sucesso`);
-      refreshNotices();
+      toast.success(`Aviso ${!currentVisibility ? 'publicado' : 'ocultado'} com sucesso`);
+      fetchNotices();
     } catch (error) {
       console.error('Error toggling notice visibility:', error);
       toast.error('Erro ao alterar visibilidade do aviso');
@@ -65,7 +65,7 @@ export const CompanyNoticesAdminList: React.FC = () => {
         </Button>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center items-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
           <span className="ml-2">Carregando avisos...</span>
@@ -90,7 +90,7 @@ export const CompanyNoticesAdminList: React.FC = () => {
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <CardTitle className="text-lg">{notice.titulo}</CardTitle>
+                    <CardTitle className="text-lg">{notice.title}</CardTitle>
                     <p className="text-sm text-gray-500 mt-1">
                       {format(new Date(notice.created_at), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
                     </p>
@@ -120,7 +120,7 @@ export const CompanyNoticesAdminList: React.FC = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-700 dark:text-gray-300">{notice.conteudo}</p>
+                <p className="text-gray-700 dark:text-gray-300">{notice.content}</p>
               </CardContent>
             </Card>
           ))}
@@ -132,7 +132,7 @@ export const CompanyNoticesAdminList: React.FC = () => {
         onOpenChange={setIsNewNoticeDialogOpen}
         companyId={selectedCompany.id}
         onSuccess={() => {
-          refreshNotices();
+          fetchNotices();
           setIsNewNoticeDialogOpen(false);
         }}
       />
