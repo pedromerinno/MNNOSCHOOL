@@ -8,6 +8,7 @@ import { UserActionsDropdown } from './user/UserActionsDropdown';
 import { EditUserProfileDialog } from './user/EditUserProfileDialog';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface UserTableOptimizedProps {
   users: UserProfile[];
@@ -22,8 +23,12 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
   onToggle,
   onRefresh
 }) => {
+  const { userProfile } = useAuth();
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+
+  // Verificar se o usuário atual é super admin
+  const isSuperAdmin = userProfile?.super_admin;
 
   const formatDate = (dateString?: string | null): string => {
     if (!dateString) return "-";
@@ -218,7 +223,9 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
                         <SelectContent>
                           <SelectItem value="user">Usuário</SelectItem>
                           <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="super_admin">Super Admin</SelectItem>
+                          {isSuperAdmin && (
+                            <SelectItem value="super_admin">Super Admin</SelectItem>
+                          )}
                         </SelectContent>
                       </Select>
                     </TableCell>
