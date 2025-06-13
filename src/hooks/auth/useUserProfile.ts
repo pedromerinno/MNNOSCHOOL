@@ -63,7 +63,15 @@ export const useUserProfile = () => {
       
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          *,
+          aniversario,
+          tipo_contrato,
+          cidade,
+          data_inicio,
+          manual_cultura_aceito,
+          nivel_colaborador
+        `)
         .eq('id', userId)
         .single();
 
@@ -84,7 +92,14 @@ export const useUserProfile = () => {
           avatar: data.avatar,
           cargo_id: data.cargo_id,
           primeiro_login: data.primeiro_login,
-          created_at: data.created_at
+          created_at: data.created_at,
+          // Novas colunas
+          aniversario: data.aniversario,
+          tipo_contrato: data.tipo_contrato,
+          cidade: data.cidade,
+          data_inicio: data.data_inicio,
+          manual_cultura_aceito: data.manual_cultura_aceito,
+          nivel_colaborador: data.nivel_colaborador
         };
         
         setUserProfile(profile);

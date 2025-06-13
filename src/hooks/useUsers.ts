@@ -15,6 +15,13 @@ export interface UserProfile {
   avatar?: string | null;
   cargo_id?: string | null;
   created_at?: string | null;
+  // Novas colunas adicionadas
+  aniversario?: string | null;
+  tipo_contrato?: 'CLT' | 'PJ' | 'Fornecedor' | null;
+  cidade?: string | null;
+  data_inicio?: string | null;
+  manual_cultura_aceito?: boolean | null;
+  nivel_colaborador?: 'Junior' | 'Pleno' | 'Senior' | null;
 }
 
 export function useUsers() {
@@ -129,7 +136,20 @@ export function useUsers() {
         // Super admin vê todos os usuários - com limite para performance
         const { data: allUsers, error } = await supabase
           .from('profiles')
-          .select('id, display_name, is_admin, super_admin, email, created_at')
+          .select(`
+            id, 
+            display_name, 
+            is_admin, 
+            super_admin, 
+            email, 
+            created_at,
+            aniversario,
+            tipo_contrato,
+            cidade,
+            data_inicio,
+            manual_cultura_aceito,
+            nivel_colaborador
+          `)
           .order('display_name', { ascending: true })
           .limit(50); // Limitar para evitar sobrecarga
           
@@ -164,7 +184,13 @@ export function useUsers() {
               is_admin, 
               super_admin, 
               email, 
-              created_at
+              created_at,
+              aniversario,
+              tipo_contrato,
+              cidade,
+              data_inicio,
+              manual_cultura_aceito,
+              nivel_colaborador
             )
           `)
           .in('empresa_id', companyIds)

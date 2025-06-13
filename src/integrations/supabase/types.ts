@@ -507,39 +507,57 @@ export type Database = {
       }
       profiles: {
         Row: {
+          aniversario: string | null
           avatar: string | null
           cargo_id: string | null
+          cidade: string | null
           created_at: string
+          data_inicio: string | null
           display_name: string | null
           email: string | null
           id: string
           is_admin: boolean | null
+          manual_cultura_aceito: boolean | null
+          nivel_colaborador: string | null
           primeiro_login: boolean | null
           super_admin: boolean | null
+          tipo_contrato: string | null
           updated_at: string
         }
         Insert: {
+          aniversario?: string | null
           avatar?: string | null
           cargo_id?: string | null
+          cidade?: string | null
           created_at?: string
+          data_inicio?: string | null
           display_name?: string | null
           email?: string | null
           id: string
           is_admin?: boolean | null
+          manual_cultura_aceito?: boolean | null
+          nivel_colaborador?: string | null
           primeiro_login?: boolean | null
           super_admin?: boolean | null
+          tipo_contrato?: string | null
           updated_at?: string
         }
         Update: {
+          aniversario?: string | null
           avatar?: string | null
           cargo_id?: string | null
+          cidade?: string | null
           created_at?: string
+          data_inicio?: string | null
           display_name?: string | null
           email?: string | null
           id?: string
           is_admin?: boolean | null
+          manual_cultura_aceito?: boolean | null
+          nivel_colaborador?: string | null
           primeiro_login?: boolean | null
           super_admin?: boolean | null
+          tipo_contrato?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -886,15 +904,21 @@ export type Database = {
       get_all_users_secure: {
         Args: Record<PropertyKey, never>
         Returns: {
+          aniversario: string | null
           avatar: string | null
           cargo_id: string | null
+          cidade: string | null
           created_at: string
+          data_inicio: string | null
           display_name: string | null
           email: string | null
           id: string
           is_admin: boolean | null
+          manual_cultura_aceito: boolean | null
+          nivel_colaborador: string | null
           primeiro_login: boolean | null
           super_admin: boolean | null
+          tipo_contrato: string | null
           updated_at: string
         }[]
       }

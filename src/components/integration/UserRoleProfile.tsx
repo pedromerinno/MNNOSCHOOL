@@ -5,11 +5,13 @@ import { UserProfile } from "@/types/user";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
 interface UserRoleProfileProps {
   userProfile: UserProfile;
   roleTitle: string;
   companyColor: string;
 }
+
 export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
   userProfile,
   roleTitle,
@@ -32,6 +34,18 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
       return "";
     }
   };
+
+  // Format birthday date (only day and month)
+  const formatBirthday = (dateString?: string | null): string => {
+    if (!dateString) return "";
+    try {
+      return format(new Date(dateString), 'dd \'de\' MMMM', {
+        locale: ptBR
+      });
+    } catch (error) {
+      return "";
+    }
+  };
   
   // Calculate lighter color for background
   const getLighterColor = (color: string, opacity: number = 0.1): string => {
@@ -43,7 +57,8 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
     return `${color.split(')')[0]}, ${opacity})`;
   };
   
-  return <Card className="border border-blue-100 dark:border-blue-900/30 shadow-sm" 
+  return (
+    <Card className="border border-blue-100 dark:border-blue-900/30 shadow-sm" 
          style={{ 
            backgroundColor: getLighterColor(companyColor, 0.05),
            borderColor: getLighterColor(companyColor, 0.2)
@@ -54,8 +69,8 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
             <div className="flex flex-col mb-4 md:mb-0">
               <h2 className="text-2xl font-bold text-blue-600" style={{
-              color: companyColor
-            }}>
+                color: companyColor
+              }}>
                 {userProfile.display_name?.toUpperCase() || "USUÁRIO"}
               </h2>
               <p className="text-gray-600 dark:text-gray-400">{roleTitle}</p>
@@ -68,8 +83,8 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
                 </AvatarFallback>
               </Avatar>
               <div className="h-16 w-16 rounded-full flex items-center justify-center overflow-hidden bg-white z-0" style={{
-              border: `2px solid ${companyColor}`
-            }}>
+                border: `2px solid ${companyColor}`
+              }}>
                 {/* Use company logo from the selected company */}
                 <img 
                   src={window.localStorage.getItem('selectedCompanyLogo') || "/placeholder.svg"} 
@@ -92,8 +107,8 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
                 backgroundColor: getLighterColor(companyColor, 0.15),
               }}>
                 <h3 style={{
-                color: companyColor
-              }} className="text-sm font-semibold text-blue-600 text-center py-[20px]">
+                  color: companyColor
+                }} className="text-sm font-semibold text-blue-600 text-center py-[20px]">
                   INFORMAÇÕES DO COLABORADOR
                 </h3>
               </div>
@@ -102,8 +117,8 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
                 <div>
                   <p className="text-gray-500 text-sm mb-2">Nome</p>
                   <p className="text-blue-600 font-medium" style={{
-                  color: companyColor
-                }}>
+                    color: companyColor
+                  }}>
                     {userProfile.display_name || "Não informado"}
                   </p>
                 </div>
@@ -111,41 +126,68 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
                 <div>
                   <p className="text-gray-500 text-sm mb-2">Cidade</p>
                   <p className="text-gray-700 dark:text-gray-300 font-medium">
-                    São Paulo
+                    {userProfile.cidade || "Não informado"}
                   </p>
                 </div>
 
                 <div>
                   <p className="text-gray-500 text-sm mb-2">Aniversário</p>
                   <p className="text-gray-700 dark:text-gray-300 font-medium">
-                    15 de Março
+                    {formatBirthday(userProfile.aniversario) || "Não informado"}
                   </p>
                 </div>
 
                 <div>
-                  <p className="text-gray-500 text-sm mb-2">Formato de Trabalho</p>
-                  <p className="text-gray-700 dark:text-gray-300 font-medium">Remoto</p>
+                  <p className="text-gray-500 text-sm mb-2">Nível</p>
+                  <p className="text-gray-700 dark:text-gray-300 font-medium">
+                    {userProfile.nivel_colaborador || "Não informado"}
+                  </p>
                 </div>
 
                 <div>
                   <p className="text-gray-500 text-sm mb-2">Tipo de Contrato</p>
-                  <p className="text-gray-700 dark:text-gray-300 font-medium">CLT</p>
+                  <p className="text-gray-700 dark:text-gray-300 font-medium">
+                    {userProfile.tipo_contrato || "Não informado"}
+                  </p>
                 </div>
 
                 <div>
                   <p className="text-gray-500 text-sm mb-2">Data de Início</p>
                   <p className="text-gray-700 dark:text-gray-300 font-medium">
-                    {formatDate(userProfile.created_at)}
+                    {formatDate(userProfile.data_inicio) || "Não informado"}
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Role information section */}
-            
+            {/* Manual de cultura status */}
+            <div>
+              <div className="rounded-md py-2 px-4 mb-8" style={{ 
+                backgroundColor: getLighterColor(companyColor, 0.15),
+              }}>
+                <h3 style={{
+                  color: companyColor
+                }} className="text-sm font-semibold text-blue-600 text-center py-[20px]">
+                  STATUS DO MANUAL DE CULTURA
+                </h3>
+              </div>
+
+              <div className="px-4">
+                <div className="flex items-center justify-between p-4 rounded-lg border">
+                  <span className="text-gray-700 dark:text-gray-300">Manual de Cultura</span>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    userProfile.manual_cultura_aceito 
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
+                      : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                  }`}>
+                    {userProfile.manual_cultura_aceito ? 'Aceito' : 'Pendente'}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </CardContent>
-    </Card>;
+    </Card>
+  );
 };
-

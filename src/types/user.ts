@@ -7,6 +7,13 @@ export interface UserProfile {
   super_admin?: boolean | null;
   avatar?: string | null;
   cargo_id?: string | null;
-  primeiro_login?: boolean | null; // Adicionado o campo primeiro_login
-  created_at?: string | null; // Campo para data de criação do perfil
+  primeiro_login?: boolean | null;
+  created_at?: string | null;
+  // Novas colunas adicionadas
+  aniversario?: string | null; // Data de aniversário
+  tipo_contrato?: 'CLT' | 'PJ' | 'Fornecedor' | null; // Tipo de contrato
+  cidade?: string | null; // Cidade onde mora
+  data_inicio?: string | null; // Data de início na empresa
+  manual_cultura_aceito?: boolean | null; // Se aceitou o manual de cultura
+  nivel_colaborador?: 'Junior' | 'Pleno' | 'Senior' | null; // Nível do colaborador
 }
