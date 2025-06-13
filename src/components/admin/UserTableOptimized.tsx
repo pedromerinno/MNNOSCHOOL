@@ -59,9 +59,16 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
   };
 
   const handleEditSuccess = () => {
+    // Forçar refresh imediato dos dados
     if (onRefresh) {
       onRefresh();
     }
+    
+    // Fechar o dialog após o refresh
+    setTimeout(() => {
+      setEditDialogOpen(false);
+      setEditingUser(null);
+    }, 100);
   };
 
   const handlePermissionChange = async (userId: string, permission: string) => {

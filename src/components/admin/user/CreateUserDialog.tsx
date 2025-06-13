@@ -31,8 +31,8 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
     cidade: '',
     aniversario: '',
     data_inicio: '',
-    tipo_contrato: '',
-    nivel_colaborador: '',
+    tipo_contrato: 'not_specified',
+    nivel_colaborador: 'not_specified',
     password: '',
   });
 
@@ -105,8 +105,8 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
         const updateData: any = {
           display_name: formData.display_name,
           cidade: formData.cidade || null,
-          tipo_contrato: formData.tipo_contrato || null,
-          nivel_colaborador: formData.nivel_colaborador || null,
+          tipo_contrato: formData.tipo_contrato === 'not_specified' ? null : formData.tipo_contrato,
+          nivel_colaborador: formData.nivel_colaborador === 'not_specified' ? null : formData.nivel_colaborador,
           primeiro_login: true,
         };
 
@@ -170,8 +170,8 @@ Por favor, altere sua senha no primeiro acesso.
       cidade: '',
       aniversario: '',
       data_inicio: '',
-      tipo_contrato: '',
-      nivel_colaborador: '',
+      tipo_contrato: 'not_specified',
+      nivel_colaborador: 'not_specified',
       password: '',
     });
     setInviteLink('');
@@ -308,7 +308,7 @@ Por favor, altere sua senha no primeiro acesso.
                 <SelectValue placeholder="Selecione o tipo de contrato" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Não informado</SelectItem>
+                <SelectItem value="not_specified">Não informado</SelectItem>
                 <SelectItem value="CLT">CLT</SelectItem>
                 <SelectItem value="PJ">PJ</SelectItem>
                 <SelectItem value="Fornecedor">Fornecedor</SelectItem>
@@ -326,7 +326,7 @@ Por favor, altere sua senha no primeiro acesso.
                 <SelectValue placeholder="Selecione o nível" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Não informado</SelectItem>
+                <SelectItem value="not_specified">Não informado</SelectItem>
                 <SelectItem value="Junior">Junior</SelectItem>
                 <SelectItem value="Pleno">Pleno</SelectItem>
                 <SelectItem value="Senior">Senior</SelectItem>
