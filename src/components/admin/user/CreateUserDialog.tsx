@@ -82,55 +82,93 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
       // Gerar senha se não foi fornecida
       const password = formData.password || generateRandomPassword();
 
-      // Criar usuário via Supabase Admin API
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: formData.email,
-        password: password,
-        email_confirm: true,
-        user_metadata: {
-          display_name: formData.display_name,
+      // Primeiro, vamos tentar criar um convite por email
+      // Isso é uma abordagem mais segura que não requer permissões de admin
+      const { data: inviteData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
+        formData.email,
+        {
+          data: {
+            display_name: formData.display_name,
+          },
+          redirectTo: `${window.location.origin}/signup`
         }
-      });
+      );
 
-      if (authError) {
-        console.error('Erro ao criar usuário:', authError);
-        toast({
-          title: "Erro",
-          description: authError.message || "Erro ao criar usuário",
-          variant: "destructive",
+      if (inviteError) {
+        // Se o convite falhar, vamos tentar a abordagem de criação direta
+        console.log('Convite falhou, tentando criação direta:', inviteError);
+        
+        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+          email: formData.email,
+          password: password,
+          email_confirm: true,
+          user_metadata: {
+            display_name: formData.display_name,
+          }
         });
+
+        if (authError) {
+          console.error('Erro ao criar usuário:', authError);
+          
+          // Verificar se é um erro de permissões
+          if (authError.message.includes('User not allowed') || authError.message.includes('not authorized')) {
+            toast({
+              title: "Erro de Permissão",
+              description: "Você não possui permissões suficientes para criar usuários. Entre em contato com um super administrador.",
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Erro",
+              description: authError.message || "Erro ao criar usuário",
+              variant: "destructive",
+            });
+          }
+          return;
+        }
+
+        if (authData?.user) {
+          // Atualizar perfil com informações adicionais
+          const updateData: any = {
+            display_name: formData.display_name,
+            cidade: formData.cidade || null,
+            tipo_contrato: formData.tipo_contrato === 'not_specified' ? null : formData.tipo_contrato,
+            nivel_colaborador: formData.nivel_colaborador === 'not_specified' ? null : formData.nivel_colaborador,
+            primeiro_login: true,
+          };
+
+          if (formData.aniversario) {
+            updateData.aniversario = formData.aniversario;
+          }
+          if (formData.data_inicio) {
+            updateData.data_inicio = formData.data_inicio;
+          }
+
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .update(updateData)
+            .eq('id', authData.user.id);
+
+          if (profileError) {
+            console.error('Erro ao atualizar perfil:', profileError);
+          }
+        }
+      } else {
+        console.log('Convite enviado com sucesso:', inviteData);
+        
+        toast({
+          title: "Convite Enviado",
+          description: `Um convite foi enviado para ${formData.email}. O usuário receberá um email para completar o cadastro.`,
+        });
+
+        onSuccess();
+        handleClose();
         return;
       }
 
-      if (authData?.user) {
-        // Atualizar perfil com informações adicionais
-        const updateData: any = {
-          display_name: formData.display_name,
-          cidade: formData.cidade || null,
-          tipo_contrato: formData.tipo_contrato === 'not_specified' ? null : formData.tipo_contrato,
-          nivel_colaborador: formData.nivel_colaborador === 'not_specified' ? null : formData.nivel_colaborador,
-          primeiro_login: true,
-        };
-
-        if (formData.aniversario) {
-          updateData.aniversario = formData.aniversario;
-        }
-        if (formData.data_inicio) {
-          updateData.data_inicio = formData.data_inicio;
-        }
-
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update(updateData)
-          .eq('id', authData.user.id);
-
-        if (profileError) {
-          console.error('Erro ao atualizar perfil:', profileError);
-        }
-
-        // Criar link de convite
-        const baseUrl = window.location.origin;
-        const inviteText = `
+      // Criar link de informações para o novo usuário
+      const baseUrl = window.location.origin;
+      const inviteText = `
 Olá ${formData.display_name}!
 
 Você foi convidado(a) para acessar nossa plataforma.
@@ -141,23 +179,22 @@ Senha temporária: ${password}
 Acesse: ${baseUrl}/login
 
 Por favor, altere sua senha no primeiro acesso.
-        `.trim();
+      `.trim();
 
-        setInviteLink(inviteText);
-        setShowInviteLink(true);
+      setInviteLink(inviteText);
+      setShowInviteLink(true);
 
-        toast({
-          title: "Sucesso",
-          description: "Usuário criado com sucesso!",
-        });
+      toast({
+        title: "Sucesso",
+        description: "Usuário criado com sucesso!",
+      });
 
-        onSuccess();
-      }
+      onSuccess();
     } catch (error: any) {
       console.error('Erro ao criar usuário:', error);
       toast({
         title: "Erro",
-        description: "Erro ao criar usuário",
+        description: "Erro ao criar usuário. Verifique suas permissões.",
         variant: "destructive",
       });
     } finally {
