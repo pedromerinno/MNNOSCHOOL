@@ -67,7 +67,10 @@ export const CompanyNoticesAdminList: React.FC = () => {
             Gerencie os avisos para {selectedCompany.nome}
           </p>
         </div>
-        <Button onClick={() => setIsNewNoticeDialogOpen(true)}>
+        <Button 
+          onClick={() => setIsNewNoticeDialogOpen(true)}
+          className="bg-black hover:bg-gray-800 text-white rounded-xl"
+        >
           <Plus className="mr-2 h-4 w-4" />
           Novo Aviso
         </Button>
@@ -85,7 +88,10 @@ export const CompanyNoticesAdminList: React.FC = () => {
             <p className="text-gray-500 mb-4">
               Crie o primeiro aviso para {selectedCompany.nome}
             </p>
-            <Button onClick={() => setIsNewNoticeDialogOpen(true)}>
+            <Button 
+              onClick={() => setIsNewNoticeDialogOpen(true)}
+              className="bg-black hover:bg-gray-800 text-white rounded-xl"
+            >
               <Plus className="mr-2 h-4 w-4" />
               Criar Primeiro Aviso
             </Button>

@@ -95,10 +95,10 @@ const Courses = () => {
             </div>
             <Button
               onClick={() => setIsNewCourseDialogOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-black hover:bg-gray-800 text-white rounded-xl"
             >
               <PlusCircle className="mr-2 h-4 w-4" />
-              Adicionar Curso
+              Novo Curso
             </Button>
           </div>
         </div>
