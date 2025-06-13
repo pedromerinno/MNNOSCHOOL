@@ -1,9 +1,12 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import { VideoPlayer } from './video-playlist/VideoPlayer';
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface CultureManualProps {
   companyValues: any;
@@ -22,7 +25,11 @@ export const CultureManual: React.FC<CultureManualProps> = ({
   videoUrl,
   videoDescription
 }) => {
-  const [accepted, setAccepted] = useState(false);
+  const { userProfile, updateUserProfile } = useAuth();
+  const [isUpdating, setIsUpdating] = useState(false);
+  
+  // Verificar se o manual já foi aceito
+  const isManualAccepted = userProfile?.manual_cultura_aceito || false;
 
   // Memoizar os valores para evitar re-processamento
   const values = useMemo(() => {
@@ -57,6 +64,35 @@ export const CultureManual: React.FC<CultureManualProps> = ({
     
     return [];
   }, [companyValues]);
+
+  const handleAcceptManual = async () => {
+    if (!userProfile?.id || isManualAccepted) {
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ manual_cultura_aceito: true })
+        .eq('id', userProfile.id);
+
+      if (error) {
+        console.error('Erro ao atualizar manual de cultura:', error);
+        toast.error('Erro ao aceitar o manual de cultura');
+        return;
+      }
+
+      // Atualizar o perfil localmente
+      updateUserProfile({ manual_cultura_aceito: true });
+      toast.success('Manual de cultura aceito com sucesso!');
+    } catch (error) {
+      console.error('Erro ao aceitar manual:', error);
+      toast.error('Erro ao aceitar o manual de cultura');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   return (
     <div className="space-y-12">
@@ -143,7 +179,7 @@ export const CultureManual: React.FC<CultureManualProps> = ({
           </Card>
         )}
 
-        {/* Botão de aceite - simplificado */}
+        {/* Botão de aceite integrado com banco de dados */}
         <Card className="md:col-span-2 transition-all duration-200 shadow-none rounded-xl bg-gradient-to-r from-primary/10 to-primary/5">
           <CardContent className="p-8 text-center">
             <div className="flex items-center justify-center mb-4">
@@ -151,18 +187,27 @@ export const CultureManual: React.FC<CultureManualProps> = ({
               <h3 className="text-xl font-semibold">Manual de Cultura</h3>
             </div>
             <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-2xl mx-auto">
-              Ao aceitar este manual, você confirma que leu e compreendeu nossa cultura, valores e missão.
+              {isManualAccepted 
+                ? "Você já aceitou este manual de cultura."
+                : "Ao aceitar este manual, você confirma que leu e compreendeu nossa cultura, valores e missão."
+              }
             </p>
             <Button 
-              onClick={() => setAccepted(!accepted)}
+              onClick={handleAcceptManual}
+              disabled={isManualAccepted || isUpdating}
               style={{ 
-                backgroundColor: accepted ? companyColor : undefined,
+                backgroundColor: isManualAccepted ? companyColor : undefined,
                 borderColor: companyColor 
               }}
-              variant={accepted ? "default" : "outline"}
+              variant={isManualAccepted ? "default" : "outline"}
               size="lg"
             >
-              {accepted ? "✓ Manual Aceito" : "Aceitar Manual de Cultura"}
+              {isUpdating 
+                ? "Processando..." 
+                : isManualAccepted 
+                  ? "✓ Manual Aceito" 
+                  : "Aceitar Manual de Cultura"
+              }
             </Button>
           </CardContent>
         </Card>
