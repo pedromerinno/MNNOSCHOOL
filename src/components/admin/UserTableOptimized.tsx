@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -65,35 +64,58 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
     }
   };
 
-  const handlePermissionChange = (userId: string, permission: string) => {
+  const handlePermissionChange = async (userId: string, permission: string) => {
     const currentUser = users.find(u => u.id === userId);
     if (!currentUser) return;
 
-    switch (permission) {
-      case 'user':
-        // Remove both admin and super admin
-        if (currentUser.super_admin) {
-          onToggle(userId, true, true); // Remove super admin
+    console.log('Changing permission for user:', userId, 'to:', permission);
+    console.log('Current user permissions:', { 
+      is_admin: currentUser.is_admin, 
+      super_admin: currentUser.super_admin 
+    });
+
+    try {
+      switch (permission) {
+        case 'user':
+          // Remove both admin and super admin
+          if (currentUser.super_admin) {
+            console.log('Removing super admin permission');
+            await onToggle(userId, true, true); // Remove super admin
+          }
+          if (currentUser.is_admin) {
+            console.log('Removing admin permission');
+            await onToggle(userId, true, false); // Remove admin
+          }
+          break;
+        case 'admin':
+          // Set as admin, remove super admin if needed
+          if (currentUser.super_admin) {
+            console.log('Removing super admin permission first');
+            await onToggle(userId, true, true); // Remove super admin first
+          }
+          if (!currentUser.is_admin) {
+            console.log('Adding admin permission');
+            await onToggle(userId, false, false); // Add admin
+          }
+          break;
+        case 'super_admin':
+          // Set as super admin
+          if (!currentUser.super_admin) {
+            console.log('Adding super admin permission');
+            await onToggle(userId, false, true); // Add super admin
+          }
+          break;
+      }
+      
+      // Refresh the data after permission change
+      setTimeout(() => {
+        if (onRefresh) {
+          onRefresh();
         }
-        if (currentUser.is_admin) {
-          onToggle(userId, true, false); // Remove admin
-        }
-        break;
-      case 'admin':
-        // Set as admin, remove super admin if needed
-        if (currentUser.super_admin) {
-          onToggle(userId, true, true); // Remove super admin first
-        }
-        if (!currentUser.is_admin) {
-          onToggle(userId, false, false); // Add admin
-        }
-        break;
-      case 'super_admin':
-        // Set as super admin
-        if (!currentUser.super_admin) {
-          onToggle(userId, false, true); // Add super admin
-        }
-        break;
+      }, 500);
+      
+    } catch (error) {
+      console.error('Error changing user permissions:', error);
     }
   };
 
