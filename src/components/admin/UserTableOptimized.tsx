@@ -16,13 +16,15 @@ interface UserTableOptimizedProps {
   loading: boolean;
   onToggle: (userId: string, currentStatus: boolean | null, isSuperAdmin?: boolean) => void;
   onRefresh?: () => void;
+  onDeleteUser?: (userId: string) => void;
 }
 
 export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
   users,
   loading,
   onToggle,
-  onRefresh
+  onRefresh,
+  onDeleteUser
 }) => {
   const { userProfile } = useAuth();
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
@@ -177,10 +179,10 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
     // Admins não podem ver ações para super admins
     if (targetUser.super_admin) return false;
     
-    // Admins podem ver ações para usuários regulares
-    if (isAdmin && !targetUser.is_admin) return true;
+    // Admins podem ver ações para usuários regulares e outros admins
+    if (isAdmin) return true;
     
-    // Usuários regulares não podem ver ações para admins ou super admins
+    // Usuários regulares não podem ver ações
     return false;
   };
 
@@ -235,7 +237,10 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
                       <Avatar className="h-10 w-10">
                         <AvatarImage 
                           src={user.avatar || undefined} 
-                          alt={user.display_name || user.email || 'Usuário'} 
+                          alt={user.display_name || user.email || 'Usuário'}
+                          onError={(e) => {
+                            console.log('Error loading avatar for user:', user.email, 'URL:', user.avatar);
+                          }}
                         />
                         <AvatarFallback className="bg-slate-100 text-slate-600 font-medium">
                           {getInitials(user.display_name, user.email)}
@@ -300,6 +305,8 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
                           user={user}
                           onEditProfile={handleEditProfile}
                           onToggleAdmin={onToggle}
+                          onDeleteUser={onDeleteUser}
+                          canDelete={isSuperAdmin || (isAdmin && !user.super_admin)}
                         />
                       ) : (
                         <div className="w-8 h-8" />
