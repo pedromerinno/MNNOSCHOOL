@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -166,7 +165,7 @@ export const CultureManual: React.FC<CultureManualProps> = ({
           <Card className="md:col-span-2 transition-all duration-200 shadow-none rounded-xl bg-gray-50 dark:bg-gray-900">
             <CardHeader>
               <CardTitle className="text-lg font-normal text-zinc-400">
-                Nossa História
+                Declaração de Cultura
               </CardTitle>
             </CardHeader>
             <CardContent className="py-[30px] px-[20px]">
