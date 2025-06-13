@@ -74,88 +74,90 @@ export const NotificationsWidget = () => {
 
   return (
     <>
-      <Card className="h-full bg-white dark:bg-card border border-gray-200 dark:border-gray-800 shadow-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-semibold flex items-center justify-between">
+      <Card className="border-0 shadow-none overflow-hidden rounded-[30px] bg-white dark:bg-card h-full">
+        <CardContent className="p-0 flex flex-col h-full">
+          <div className="p-8 flex justify-between items-center">
             <div className="flex items-center gap-2">
               <Bell className="h-5 w-5 text-blue-600" />
-              <span>Avisos da Empresa</span>
+              <h3 className="text-xl font-medium dark:text-white">Avisos da Empresa</h3>
             </div>
             {unreadCount > 0 && (
               <Badge variant="destructive" className="text-xs px-2 py-1">
                 {unreadCount}
               </Badge>
             )}
-          </CardTitle>
+          </div>
           {selectedCompany && (
-            <p className="text-sm text-muted-foreground">
-              {selectedCompany.nome}
-            </p>
-          )}
-        </CardHeader>
-        <CardContent className="pt-0">
-          {isLoading ? (
-            <div className="space-y-3">
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-3/4"></div>
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-1/2"></div>
-            </div>
-          ) : !selectedCompany ? (
-            <div className="text-center py-8">
-              <Bell className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+            <div className="px-8 pb-4">
               <p className="text-sm text-muted-foreground">
-                Selecione uma empresa para ver os avisos
+                {selectedCompany.nome}
               </p>
             </div>
-          ) : recentNotices.length === 0 ? (
-            <div className="text-center py-8">
-              <Bell className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground mb-2">Nenhum aviso disponível</p>
-              <p className="text-xs text-gray-400">Os avisos aparecerão aqui quando publicados</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {recentNotices.map((notice) => (
-                <div
-                  key={notice.id}
-                  className="group p-3 rounded-lg border border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-600 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-all duration-200 cursor-pointer"
-                  onClick={() => handleMarkAsRead(notice.id)}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-blue-700 dark:group-hover:text-blue-300">
-                        {notice.title}
-                      </h4>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
-                        {notice.content}
-                      </p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge variant="outline" className="text-xs px-2 py-0.5 capitalize">
-                          {notice.type}
-                        </Badge>
-                        <span className="text-xs text-gray-400">
-                          {format(new Date(notice.created_at), "dd MMM", {
-                            locale: ptBR,
-                          })}
-                        </span>
+          )}
+          
+          <div className="px-8 pb-8 flex-1">
+            {isLoading ? (
+              <div className="space-y-4">
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-3/4"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-1/2"></div>
+              </div>
+            ) : !selectedCompany ? (
+              <div className="text-center py-8">
+                <Bell className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">
+                  Selecione uma empresa para ver os avisos
+                </p>
+              </div>
+            ) : recentNotices.length === 0 ? (
+              <div className="text-center py-8">
+                <Bell className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground mb-2">Nenhum aviso disponível</p>
+                <p className="text-xs text-gray-400">Os avisos aparecerão aqui quando publicados</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {recentNotices.map((notice) => (
+                  <div
+                    key={notice.id}
+                    className="group p-3 rounded-lg border border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-600 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-all duration-200 cursor-pointer"
+                    onClick={() => handleMarkAsRead(notice.id)}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-blue-700 dark:group-hover:text-blue-300">
+                          {notice.title}
+                        </h4>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                          {notice.content}
+                        </p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="outline" className="text-xs px-2 py-0.5 capitalize">
+                            {notice.type}
+                          </Badge>
+                          <span className="text-xs text-gray-400">
+                            {format(new Date(notice.created_at), "dd MMM", {
+                              locale: ptBR,
+                            })}
+                          </span>
+                        </div>
                       </div>
+                      <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
                     </div>
-                    <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
                   </div>
-                </div>
-              ))}
-              
-              {notices.length > 3 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowAllNotices(true)}
-                  className="w-full mt-4 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950/20"
-                >
-                  Ver todos os avisos ({notices.length})
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              )}
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {notices.length > 3 && (
+            <div className="border-t border-gray-100 dark:border-gray-800 py-6 text-center">
+              <button 
+                onClick={() => setShowAllNotices(true)}
+                className="text-base text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+              >
+                ver todos ({notices.length})
+              </button>
             </div>
           )}
         </CardContent>
