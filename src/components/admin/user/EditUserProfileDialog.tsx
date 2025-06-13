@@ -31,8 +31,8 @@ export const EditUserProfileDialog: React.FC<EditUserProfileDialogProps> = ({
     cidade: user?.cidade || '',
     aniversario: user?.aniversario ? format(new Date(user.aniversario), 'yyyy-MM-dd') : '',
     data_inicio: user?.data_inicio ? format(new Date(user.data_inicio), 'yyyy-MM-dd') : '',
-    tipo_contrato: user?.tipo_contrato || '',
-    nivel_colaborador: user?.nivel_colaborador || '',
+    tipo_contrato: user?.tipo_contrato || 'not_specified',
+    nivel_colaborador: user?.nivel_colaborador || 'not_specified',
   });
 
   React.useEffect(() => {
@@ -43,8 +43,8 @@ export const EditUserProfileDialog: React.FC<EditUserProfileDialogProps> = ({
         cidade: user.cidade || '',
         aniversario: user.aniversario ? format(new Date(user.aniversario), 'yyyy-MM-dd') : '',
         data_inicio: user.data_inicio ? format(new Date(user.data_inicio), 'yyyy-MM-dd') : '',
-        tipo_contrato: user.tipo_contrato || '',
-        nivel_colaborador: user.nivel_colaborador || '',
+        tipo_contrato: user.tipo_contrato || 'not_specified',
+        nivel_colaborador: user.nivel_colaborador || 'not_specified',
       });
     }
   }, [user]);
@@ -64,8 +64,8 @@ export const EditUserProfileDialog: React.FC<EditUserProfileDialogProps> = ({
       const updateData: any = {
         display_name: formData.display_name,
         cidade: formData.cidade,
-        tipo_contrato: formData.tipo_contrato || null,
-        nivel_colaborador: formData.nivel_colaborador || null,
+        tipo_contrato: formData.tipo_contrato === 'not_specified' ? null : formData.tipo_contrato,
+        nivel_colaborador: formData.nivel_colaborador === 'not_specified' ? null : formData.nivel_colaborador,
       };
 
       if (formData.aniversario) {
@@ -178,7 +178,7 @@ export const EditUserProfileDialog: React.FC<EditUserProfileDialogProps> = ({
                 <SelectValue placeholder="Selecione o tipo de contrato" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Não informado</SelectItem>
+                <SelectItem value="not_specified">Não informado</SelectItem>
                 <SelectItem value="CLT">CLT</SelectItem>
                 <SelectItem value="PJ">PJ</SelectItem>
                 <SelectItem value="Fornecedor">Fornecedor</SelectItem>
@@ -196,7 +196,7 @@ export const EditUserProfileDialog: React.FC<EditUserProfileDialogProps> = ({
                 <SelectValue placeholder="Selecione o nível" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Não informado</SelectItem>
+                <SelectItem value="not_specified">Não informado</SelectItem>
                 <SelectItem value="Junior">Junior</SelectItem>
                 <SelectItem value="Pleno">Pleno</SelectItem>
                 <SelectItem value="Senior">Senior</SelectItem>
