@@ -30,11 +30,14 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
 
   // Verificar se o usuário atual é super admin
   const isSuperAdmin = userProfile?.super_admin;
+  const isAdmin = userProfile?.is_admin;
 
   const formatDate = (dateString?: string | null): string => {
     if (!dateString) return "-";
     try {
-      return format(new Date(dateString), 'dd/MM/yyyy', { locale: ptBR });
+      // Criar a data assumindo que é uma data local (sem conversão de timezone)
+      const date = new Date(dateString + 'T00:00:00');
+      return format(date, 'dd/MM/yyyy', { locale: ptBR });
     } catch (error) {
       return "-";
     }
@@ -43,7 +46,9 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
   const formatBirthday = (dateString?: string | null): string => {
     if (!dateString) return "-";
     try {
-      return format(new Date(dateString), 'dd/MM', { locale: ptBR });
+      // Criar a data assumindo que é uma data local (sem conversão de timezone)
+      const date = new Date(dateString + 'T00:00:00');
+      return format(date, 'dd/MM', { locale: ptBR });
     } catch (error) {
       return "-";
     }
@@ -147,7 +152,22 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
     if (targetUser.super_admin) return false;
     
     // Admins podem alterar usuários regulares
-    return userProfile?.is_admin || false;
+    return isAdmin || false;
+  };
+
+  // Verificar se pode mostrar o botão de ações
+  const canShowActions = (targetUser: UserProfile): boolean => {
+    // Super admins podem ver ações para qualquer usuário
+    if (isSuperAdmin) return true;
+    
+    // Admins não podem ver ações para super admins
+    if (targetUser.super_admin) return false;
+    
+    // Admins podem ver ações para usuários regulares
+    if (isAdmin && !targetUser.is_admin) return true;
+    
+    // Usuários regulares não podem ver ações para admins ou super admins
+    return false;
   };
 
   if (loading && users.length === 0) {
@@ -249,11 +269,15 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
                       )}
                     </TableCell>
                     <TableCell>
-                      <UserActionsDropdown
-                        user={user}
-                        onEditProfile={handleEditProfile}
-                        onToggleAdmin={onToggle}
-                      />
+                      {canShowActions(user) ? (
+                        <UserActionsDropdown
+                          user={user}
+                          onEditProfile={handleEditProfile}
+                          onToggleAdmin={onToggle}
+                        />
+                      ) : (
+                        <div className="w-8 h-8" />
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
