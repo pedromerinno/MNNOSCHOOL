@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -81,7 +82,6 @@ export const NotificationsWidget = () => {
         <CardContent className="p-0 flex flex-col h-full">
           <div className="p-8 flex justify-between items-center">
             <div className="flex items-center gap-2">
-              <Bell className="h-5 w-5 text-blue-600" />
               <h3 className="text-xl font-medium dark:text-white">Avisos da Empresa</h3>
             </div>
             {unreadCount > 0 && (
