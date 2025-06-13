@@ -79,7 +79,7 @@ export function useCompanyNotices() {
       
       console.log(`Fetching notices for company: ${targetCompanyId}`);
       
-      // Buscar apenas os avisos necessários com limit para melhor performance
+      // Buscar avisos com dados do autor em uma query separada para evitar erros de join
       const { data: noticesData, error: noticesError } = await supabase
         .from('company_notices')
         .select(`
@@ -91,16 +91,11 @@ export function useCompanyNotices() {
           updated_at,
           company_id,
           created_by,
-          visibilidade,
-          profiles:created_by (
-            id,
-            display_name,
-            avatar
-          )
+          visibilidade
         `)
         .eq('company_id', targetCompanyId)
         .order('created_at', { ascending: false })
-        .limit(50) // Limitar para melhor performance
+        .limit(50)
         .abortSignal(signal);
       
       if (noticesError) throw noticesError;
@@ -110,9 +105,33 @@ export function useCompanyNotices() {
       
       console.log(`Retrieved ${noticesData?.length || 0} notices`);
       
-      // Mapear avisos com autores de forma otimizada
+      // Buscar perfis dos autores em uma query separada
+      const authorIds = [...new Set(noticesData?.map(notice => notice.created_by) || [])];
+      const { data: authorsData } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar')
+        .in('id', authorIds);
+      
+      if (!mountedRef.current || signal.aborted) return;
+      
+      // Criar mapa de autores para facilitar o lookup
+      const authorsMap = new Map<string, NoticeAuthor>();
+      authorsData?.forEach(author => {
+        authorsMap.set(author.id, {
+          id: author.id,
+          display_name: author.display_name || 'Usuário',
+          avatar: author.avatar
+        });
+      });
+      
+      // Mapear avisos com autores
       const noticesWithAuthors = (noticesData || []).map((notice) => {
-        const author = notice.profiles as NoticeAuthor;
+        const author = authorsMap.get(notice.created_by) || {
+          id: notice.created_by,
+          display_name: 'Usuário',
+          avatar: null
+        };
+        
         return { 
           ...notice, 
           author,
