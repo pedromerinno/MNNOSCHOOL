@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Table,
   TableBody,
@@ -42,6 +43,8 @@ export const CourseTable: React.FC<CourseTableProps> = ({
   onManageCompanies,
   onViewLessons
 }) => {
+  const navigate = useNavigate();
+
   const handleDelete = async (courseId: string) => {
     if (window.confirm('Tem certeza que deseja excluir este curso? Esta ação não pode ser desfeita.')) {
       try {
@@ -55,6 +58,10 @@ export const CourseTable: React.FC<CourseTableProps> = ({
         toast.error('Erro ao excluir curso');
       }
     }
+  };
+
+  const handleCourseClick = (courseId: string) => {
+    navigate(`/courses/${courseId}`);
   };
 
   if (loading) {
@@ -115,15 +122,26 @@ export const CourseTable: React.FC<CourseTableProps> = ({
                     <img 
                       src={course.image_url} 
                       alt={course.title} 
-                      className="w-12 h-12 object-cover rounded-md border border-gray-200 dark:border-gray-700"
+                      className="w-12 h-12 object-cover rounded-md border border-gray-200 dark:border-gray-700 cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => handleCourseClick(course.id)}
                     />
                   ) : (
-                    <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-md flex items-center justify-center">
+                    <div 
+                      className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-md flex items-center justify-center cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                      onClick={() => handleCourseClick(course.id)}
+                    >
                       <Image className="w-6 h-6 text-gray-400" />
                     </div>
                   )}
                 </TableCell>
-                <TableCell className="font-medium text-gray-900 dark:text-gray-100 py-3">{course.title}</TableCell>
+                <TableCell className="font-medium text-gray-900 dark:text-gray-100 py-3">
+                  <span 
+                    className="cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    onClick={() => handleCourseClick(course.id)}
+                  >
+                    {course.title}
+                  </span>
+                </TableCell>
                 <TableCell className="text-gray-600 dark:text-gray-300 py-3">{course.instructor || '-'}</TableCell>
                 <TableCell className="text-gray-600 dark:text-gray-300 hidden md:table-cell py-3">
                   {course.description 
