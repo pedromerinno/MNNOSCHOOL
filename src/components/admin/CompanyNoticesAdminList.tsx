@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,7 +21,8 @@ import { Notice } from "@/hooks/useNotifications";
 
 export const CompanyNoticesAdminList: React.FC = () => {
   const { selectedCompany } = useCompanies();
-  const { notices, isLoading, fetchNotices, deleteNotice } = useCompanyNotices();
+  // Show all notices in admin (including hidden ones)
+  const { notices, isLoading, fetchNotices, deleteNotice } = useCompanyNotices(false);
   const [isNewNoticeDialogOpen, setIsNewNoticeDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);

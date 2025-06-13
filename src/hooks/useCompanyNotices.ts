@@ -14,7 +14,7 @@ export interface NoticeFormData {
   companies?: string[];
 }
 
-export function useCompanyNotices() {
+export function useCompanyNotices(showOnlyVisible: boolean = true) {
   const { user } = useAuth();
   const { selectedCompany } = useCompanies();
   const [notices, setNotices] = useState<Notice[]>([]);
@@ -89,7 +89,7 @@ export function useCompanyNotices() {
       pendingFetchTimeoutRef.current = null;
     }
 
-    const cacheKey = `notices_${targetCompanyId}`;
+    const cacheKey = `notices_${targetCompanyId}_${showOnlyVisible ? 'visible' : 'all'}`;
     
     const cachedData = getCache({ key: cacheKey });
     const hasLocalData = !!cachedData && Array.isArray(cachedData) && cachedData.length > 0;
@@ -114,7 +114,7 @@ export function useCompanyNotices() {
       startRequest(cacheKey);
       lastFetchedCompanyIdRef.current = targetCompanyId;
       
-      console.log(`Fetching notices for company: ${targetCompanyId}`);
+      console.log(`Fetching notices for company: ${targetCompanyId}, showOnlyVisible: ${showOnlyVisible}`);
       
       const { data: noticeRelations, error: relationsError } = await supabase
         .from('notice_companies')
@@ -139,18 +139,27 @@ export function useCompanyNotices() {
       const noticeIds = noticeRelations.map(item => item.notice_id);
       console.log(`Found ${noticeIds.length} notice IDs for company: ${targetCompanyId}`);
       
-      // Fetch notices and filter by visibility (only visible notices for end users)
-      const { data: noticesData, error: noticesError } = await supabase
+      // Build query based on visibility filter
+      let query = supabase
         .from('company_notices')
         .select('*')
-        .in('id', noticeIds)
-        .eq('visibilidade', true) // Only fetch visible notices
+        .in('id', noticeIds);
+      
+      // Apply visibility filter only if showOnlyVisible is true
+      if (showOnlyVisible) {
+        query = query.eq('visibilidade', true);
+      }
+      
+      const { data: noticesData, error: noticesError } = await query
         .order('created_at', { ascending: false });
       
       if (noticesError) throw noticesError;
       
       if (!noticesData || noticesData.length === 0) {
-        console.log(`No visible notice data found for IDs: ${noticeIds.join(', ')}`);
+        const logMessage = showOnlyVisible 
+          ? `No visible notice data found for IDs: ${noticeIds.join(', ')}`
+          : `No notice data found for IDs: ${noticeIds.join(', ')}`;
+        console.log(logMessage);
         
         setTimeout(() => {
           cleanupInvalidRelations(targetCompanyId, noticeIds).catch(err => {
@@ -236,7 +245,8 @@ export function useCompanyNotices() {
     startRequest, 
     completeRequest, 
     resetRequestState,
-    cleanupInvalidRelations
+    cleanupInvalidRelations,
+    showOnlyVisible
   ]);
 
   const createNotice = async (data: NoticeFormData) => {
@@ -312,7 +322,8 @@ export function useCompanyNotices() {
       }
 
       for (const companyId of data.companies) {
-        clearCache({ key: `notices_${companyId}` });
+        clearCache({ key: `notices_${companyId}_visible` });
+        clearCache({ key: `notices_${companyId}_all` });
       }
 
       await fetchNotices(undefined, true);
@@ -442,7 +453,8 @@ export function useCompanyNotices() {
 
       const allAffectedCompanies = [...companiesToAdd, ...companiesToRemove, ...currentCompanyIds];
       for (const companyId of allAffectedCompanies) {
-        clearCache({ key: `notices_${companyId}` });
+        clearCache({ key: `notices_${companyId}_visible` });
+        clearCache({ key: `notices_${companyId}_all` });
       }
 
       await fetchNotices(undefined, true);
@@ -480,7 +492,8 @@ export function useCompanyNotices() {
       
       if (relatedCompanies && relatedCompanies.length > 0) {
         for (const item of relatedCompanies) {
-          clearCache({ key: `notices_${item.company_id}` });
+          clearCache({ key: `notices_${item.company_id}_visible` });
+          clearCache({ key: `notices_${item.company_id}_all` });
         }
       }
       

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,6 +19,7 @@ export const NotificationsWidget = () => {
   const lastFetchedCompanyRef = useRef<string | null>(null);
   const fetchInProgressRef = useRef(false);
 
+  // Show only visible notices in home widget (default true)
   const { 
     notices, 
     isLoading, 
