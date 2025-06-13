@@ -9,6 +9,7 @@ import { LessonContent } from '@/components/lessons/LessonContent';
 import { LessonActions } from '@/components/courses/LessonActions';
 import { LessonComments } from '@/components/courses/LessonComments';
 import { LessonSkeleton } from '@/components/lessons/LessonSkeleton';
+import { LessonNavigationSkeleton } from '@/components/lessons/LessonNavigationSkeleton';
 import { LessonNotFound } from '@/components/lessons/LessonNotFound';
 import { CourseDescription } from '@/components/courses/CourseDescription';
 import { LessonPlaylist } from '@/components/lessons/LessonPlaylist';
@@ -23,6 +24,7 @@ const LessonPage = () => {
   const { courseId, lessonId } = useParams<{ courseId: string, lessonId: string }>();
   const [showLessonManager, setShowLessonManager] = useState(false);
   const [localUpdates, setLocalUpdates] = useState<Record<string, any>>({});
+  const [isNavigating, setIsNavigating] = useState(false);
   const { userProfile } = useAuth();
   const { selectedCompany } = useCompanies();
   const navigate = useNavigate();
@@ -47,6 +49,16 @@ const LessonPage = () => {
       window.removeEventListener('company-changed', handleCompanyChange);
     };
   }, [navigate]);
+
+  // Handle navigation state
+  useEffect(() => {
+    setIsNavigating(true);
+    const timer = setTimeout(() => {
+      setIsNavigating(false);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [lessonId]);
   
   // Use o hook otimizado
   const { 
@@ -144,6 +156,11 @@ const LessonPage = () => {
       console.error("Error adding lesson:", error);
     }
   };
+
+  // Show navigation skeleton when transitioning between lessons
+  if (isNavigating && lesson) {
+    return <LessonNavigationSkeleton />;
+  }
 
   // Loading otimizado - mostrar conteúdo se disponível
   if (loading && !lesson && !isFromCache) {
