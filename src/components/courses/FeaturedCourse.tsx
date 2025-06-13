@@ -33,7 +33,7 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
       className="rounded-2xl overflow-hidden mb-8 bg-[#1A1F2C] h-[350px] relative cursor-pointer"
       onClick={handleCourseClick}
     >
-      {/* Background image - clickable */}
+      {/* Background image */}
       <div 
         className="absolute inset-0 w-full h-full"
         style={{
@@ -48,7 +48,7 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
       <div className="absolute inset-0 bg-gradient-to-tr from-black/70 to-transparent" />
       
       {/* Content */}
-      <div className="relative z-10 h-full p-8 md:p-12 flex flex-col">
+      <div className="relative z-10 h-full p-8 md:p-12 flex flex-col pointer-events-none">
         <div className="flex-1">
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-6">
             {course.title}
@@ -98,7 +98,7 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
           </div>
           
           <Button 
-            className="bg-white text-black hover:bg-gray-100 rounded-full gap-2 px-6"
+            className="bg-white text-black hover:bg-gray-100 rounded-full gap-2 px-6 pointer-events-auto"
             onClick={handleButtonClick}
           >
             Assistir agora
