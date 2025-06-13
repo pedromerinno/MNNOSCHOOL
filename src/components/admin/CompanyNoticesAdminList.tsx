@@ -90,6 +90,11 @@ export const CompanyNoticesAdminList: React.FC = () => {
     setIsEditDialogOpen(true);
   };
 
+  const handleNoticeUpdated = (updatedNotice: Notice) => {
+    // Update the notice in local state immediately
+    updateLocalNotice(updatedNotice.id, updatedNotice);
+  };
+
   const handleDialogOpenChange = (open: boolean) => {
     setIsNewNoticeDialogOpen(open);
     if (!open && selectedCompany) {
@@ -264,6 +269,7 @@ export const CompanyNoticesAdminList: React.FC = () => {
         onOpenChange={handleEditDialogClose}
         notice={selectedNotice}
         companyId={selectedCompany.id}
+        onNoticeUpdated={handleNoticeUpdated}
       />
     </div>
   );
