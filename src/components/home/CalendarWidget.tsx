@@ -1,4 +1,3 @@
-
 import { useState, memo, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,7 +16,7 @@ export const CalendarWidget = memo(() => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const { selectedCompany } = useCompanies();
   
-  const companyColor = selectedCompany?.cor_principal || "#a16207"; // amber-700 default
+  const companyColor = selectedCompany?.cor_principal || "#000000"; // black default
   
   const getMonthName = (date: Date) => {
     return date.toLocaleDateString('pt-BR', { month: 'long' });

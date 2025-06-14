@@ -32,14 +32,14 @@ export const CompanySelector = memo(() => {
     }
   }, [user?.id, selectCompany]);
 
-  const displayName = selectedCompany?.nome || "merinno";
+  const displayName = selectedCompany?.nome || "BUSINESS";
 
   if (isLoading) {
     return <span className="text-lg font-bold text-foreground">{displayName}</span>;
   }
 
   if (!user || userCompanies.length === 0) {
-    return <span className="text-lg font-bold text-foreground">merinno</span>;
+    return <span className="text-lg font-bold text-foreground">BUSINESS</span>;
   }
 
   if (userCompanies.length === 1) {
