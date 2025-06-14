@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -86,15 +85,17 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
       return;
     }
 
+    if (!userProfile?.id) {
+      toast({
+        title: "Erro",
+        description: "Usuário não identificado",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsCreating(true);
     try {
-      // Obter usuário atual usando supabase.auth.getUser()
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      
-      if (!currentUser) {
-        throw new Error('Usuário não autenticado');
-      }
-
       // Criar dados do convite no banco de dados
       const inviteData = {
         email: formData.email.toLowerCase(),
@@ -105,7 +106,7 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
         data_inicio: formData.data_inicio || null,
         tipo_contrato: formData.tipo_contrato !== 'not_specified' ? formData.tipo_contrato : null,
         nivel_colaborador: formData.nivel_colaborador !== 'not_specified' ? formData.nivel_colaborador : null,
-        created_by: currentUser.id,
+        created_by: userProfile.id,
         expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 dias
       };
 
