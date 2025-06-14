@@ -46,10 +46,14 @@ CREATE POLICY "Admins can manage invites for their companies"
     )
   );
 
--- Política para permitir que qualquer usuário autenticado busque convites pelo próprio email
+-- Política mais simples para usuários verificarem convites pelo próprio email
 CREATE POLICY "Users can check their own invites" 
   ON public.user_invites 
   FOR SELECT
   USING (
-    email = (SELECT email FROM auth.users WHERE id = auth.uid())
+    email = (
+      SELECT p.email 
+      FROM profiles p 
+      WHERE p.id = auth.uid()
+    )
   );
