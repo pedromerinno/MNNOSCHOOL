@@ -18,7 +18,7 @@ export const CompanyRequiredWrapper = ({ children }: CompanyRequiredWrapperProps
     pathname: location.pathname
   });
 
-  // MUITO SIMPLES: Se está carregando, mostrar skeleton
+  // Se está carregando auth, mostrar skeleton
   if (loading) {
     console.log("[CompanyRequiredWrapper] Loading auth - showing skeleton");
     return <IndexSkeleton />;
@@ -30,7 +30,7 @@ export const CompanyRequiredWrapper = ({ children }: CompanyRequiredWrapperProps
     return <Navigate to="/login" replace />;
   }
 
-  // Se tem usuário, sempre permitir acesso
+  // Se tem usuário, sempre permitir acesso - sem verificações complicadas
   console.log("[CompanyRequiredWrapper] User authenticated - allowing access");
   return <>{children}</>;
 };

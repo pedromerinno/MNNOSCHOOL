@@ -7,7 +7,7 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { LessonHeader } from '@/components/lessons/LessonHeader';
 import { LessonContent } from '@/components/lessons/LessonContent';
 import { LessonActions } from '@/components/courses/LessonActions';
-import { LessonSkeleton } from '@/components/lessons/LessonSkeleton';
+import { LessonNavigationSkeleton } from '@/components/lessons/LessonNavigationSkeleton';
 import { LessonNotFound } from '@/components/lessons/LessonNotFound';
 import { CourseDescription } from '@/components/courses/CourseDescription';
 import { LessonPlaylist } from '@/components/lessons/LessonPlaylist';
@@ -29,24 +29,7 @@ const LessonPage = () => {
   
   console.log('📍 LessonPage: Renderizando com lessonId:', lessonId, ', courseId:', courseId);
   
-  // Listen for company changes and redirect to courses page
-  useEffect(() => {
-    const handleCompanyChange = () => {
-      navigate('/courses');
-    };
-
-    window.addEventListener('company-selected', handleCompanyChange);
-    window.addEventListener('company-selector-changed', handleCompanyChange);
-    window.addEventListener('company-changed', handleCompanyChange);
-    
-    return () => {
-      window.removeEventListener('company-selected', handleCompanyChange);
-      window.removeEventListener('company-selector-changed', handleCompanyChange);
-      window.removeEventListener('company-changed', handleCompanyChange);
-    };
-  }, [navigate]);
-  
-  // Use o hook otimizado
+  // Use o hook otimizado apenas uma vez
   const { 
     lesson, 
     loading, 
@@ -56,12 +39,11 @@ const LessonPage = () => {
     userLiked,
     toggleLikeLesson,
     completed,
-    refreshLessonData,
-    isFromCache
+    refreshLessonData
   } = useLessonDataOptimized(lessonId);
 
-  // Use lessons hook apenas para admin
-  const { handleCreateLesson } = useLessons(isAdmin ? (courseId || '') : '');
+  // Use lessons hook apenas para admin - com guard para evitar chamadas desnecessárias
+  const { handleCreateLesson } = useLessons(isAdmin && courseId ? courseId : '');
 
   const {
     showAutoplayPrompt,
@@ -70,13 +52,33 @@ const LessonPage = () => {
     cancelAutoplay
   } = useAutoplayNavigation(null, courseId);
 
-  // Scroll to top when changing lessons - otimizado
+  // Memoize company change handler to prevent recreating on every render
+  const handleCompanyChange = useMemo(() => {
+    return () => navigate('/courses');
+  }, [navigate]);
+
+  // Listen for company changes and redirect to courses page
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    setShowAutoplayPrompt(false);
+    window.addEventListener('company-selected', handleCompanyChange);
+    window.addEventListener('company-selector-changed', handleCompanyChange);
+    window.addEventListener('company-changed', handleCompanyChange);
+    
+    return () => {
+      window.removeEventListener('company-selected', handleCompanyChange);
+      window.removeEventListener('company-selector-changed', handleCompanyChange);
+      window.removeEventListener('company-changed', handleCompanyChange);
+    };
+  }, [handleCompanyChange]);
+
+  // Scroll to top when changing lessons - apenas quando lessonId muda
+  useEffect(() => {
+    if (lessonId) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setShowAutoplayPrompt(false);
+    }
   }, [lessonId, setShowAutoplayPrompt]);
 
-  // Clean up autoplay
+  // Clean up autoplay apenas no unmount
   useEffect(() => {
     return () => {
       cancelAutoplay();
@@ -97,11 +99,15 @@ const LessonPage = () => {
   
   // Loading otimizado - mostrar skeleton apenas se realmente necessário
   if (loading && !lesson) {
-    return <LessonSkeleton />;
+    return <LessonNavigationSkeleton />;
   }
 
   if (!lesson && !loading) {
     return <LessonNotFound courseId={courseId} />;
+  }
+
+  if (!lesson) {
+    return <LessonNavigationSkeleton />;
   }
 
   return (
@@ -155,7 +161,7 @@ const LessonPage = () => {
                   lessons={lesson?.course_lessons || []}
                   currentLessonId={lesson?.id || ''}
                   onLessonSelect={() => {}} // Not used anymore
-                  loading={loading && !lesson}
+                  loading={false} // Never loading here since we have lesson data
                   companyColor={companyColor}
                   courseId={courseId}
                 />
@@ -165,36 +171,32 @@ const LessonPage = () => {
           
           {/* Content area */}
           <div className="flex-1 p-6 lg:px-10 lg:py-8">
-            {lesson && (
-              <>
-                <LessonHeader lesson={lesson} courseId={courseId} hideBackButton={true} />
+            <LessonHeader lesson={lesson} courseId={courseId} hideBackButton={true} />
 
-                <LessonActions
-                  completed={completed}
-                  onMarkCompleted={markLessonCompleted}
-                  likes={likes}
-                  userLiked={userLiked}
-                  onToggleLike={toggleLikeLesson}
-                  lessonType={lesson?.type}
-                  lessonDuration={lesson?.duration}
+            <LessonActions
+              completed={completed}
+              onMarkCompleted={markLessonCompleted}
+              likes={likes}
+              userLiked={userLiked}
+              onToggleLike={toggleLikeLesson}
+              lessonType={lesson?.type}
+              lessonDuration={lesson?.duration}
+            />
+            
+            <div className="mt-8 space-y-10">
+              <div className="rounded-xl overflow-hidden shadow-sm">
+                <LessonContent 
+                  lesson={lesson}
+                  onVideoEnd={handleVideoEnd}
+                  showAutoplayPrompt={false}
                 />
-                
-                <div className="mt-8 space-y-10">
-                  <div className="rounded-xl overflow-hidden shadow-sm">
-                    <LessonContent 
-                      lesson={lesson}
-                      onVideoEnd={handleVideoEnd}
-                      showAutoplayPrompt={false}
-                    />
-                  </div>
-                  
-                  <CourseDescription 
-                    description={lesson?.description || null} 
-                    lessonId={lesson?.id}
-                  />
-                </div>
-              </>
-            )}
+              </div>
+              
+              <CourseDescription 
+                description={lesson?.description || null} 
+                lessonId={lesson?.id}
+              />
+            </div>
           </div>
         </div>
       </DashboardLayout>
