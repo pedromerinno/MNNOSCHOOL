@@ -33,12 +33,18 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
+DECLARE
+  user_is_admin boolean;
+  user_is_super_admin boolean;
 BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM profiles p
-    WHERE p.id = auth.uid() 
-    AND (p.is_admin = true OR p.super_admin = true)
-  );
+  SELECT 
+    COALESCE(is_admin, false),
+    COALESCE(super_admin, false)
+  INTO user_is_admin, user_is_super_admin
+  FROM profiles 
+  WHERE id = auth.uid();
+  
+  RETURN COALESCE(user_is_admin, false) OR COALESCE(user_is_super_admin, false);
 END;
 $$;
 
@@ -47,18 +53,7 @@ CREATE POLICY "Admins can manage invites for their companies"
   ON public.user_invites 
   FOR ALL 
   USING (
-    public.is_user_admin_for_invites() AND (
-      EXISTS (
-        SELECT 1 FROM profiles p
-        WHERE p.id = auth.uid() 
-        AND p.super_admin = true
-      ) OR
-      EXISTS (
-        SELECT 1 FROM user_empresa ue 
-        WHERE ue.user_id = auth.uid() 
-        AND ue.empresa_id = user_invites.company_id
-      )
-    )
+    public.is_user_admin_for_invites()
   );
 
 -- Política para usuários verificarem convites pelo próprio email
