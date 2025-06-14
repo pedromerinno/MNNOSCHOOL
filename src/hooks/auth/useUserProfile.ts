@@ -15,6 +15,90 @@ export const useUserProfile = () => {
   const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
   const CACHE_KEY = 'user_profile';
 
+  // Função para verificar e aplicar convites pendentes
+  const checkAndApplyInvite = useCallback(async (userId: string, userEmail: string) => {
+    try {
+      console.log('[useUserProfile] Verificando convites pendentes para:', userEmail);
+      
+      const { data: invites, error: inviteError } = await supabase
+        .from('user_invites')
+        .select('*')
+        .eq('email', userEmail.toLowerCase())
+        .gt('expires_at', new Date().toISOString())
+        .eq('used', false)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (inviteError) {
+        console.error('[useUserProfile] Erro ao buscar convites:', inviteError);
+        return;
+      }
+
+      if (invites && invites.length > 0) {
+        const invite = invites[0];
+        console.log('[useUserProfile] Convite encontrado:', invite);
+
+        // Aplicar dados do convite ao perfil
+        const profileUpdates: any = {
+          display_name: invite.display_name,
+          primeiro_login: false
+        };
+
+        // Adicionar dados opcionais se existirem
+        if (invite.cidade) profileUpdates.cidade = invite.cidade;
+        if (invite.aniversario) profileUpdates.aniversario = invite.aniversario;
+        if (invite.data_inicio) profileUpdates.data_inicio = invite.data_inicio;
+        if (invite.tipo_contrato) profileUpdates.tipo_contrato = invite.tipo_contrato;
+        if (invite.nivel_colaborador) profileUpdates.nivel_colaborador = invite.nivel_colaborador;
+
+        // Atualizar perfil
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update(profileUpdates)
+          .eq('id', userId);
+
+        if (updateError) {
+          console.error('[useUserProfile] Erro ao atualizar perfil com convite:', updateError);
+          return;
+        }
+
+        // Vincular usuário à empresa
+        const { error: companyError } = await supabase
+          .from('user_empresa')
+          .insert({
+            user_id: userId,
+            empresa_id: invite.company_id
+          });
+
+        if (companyError) {
+          console.error('[useUserProfile] Erro ao vincular usuário à empresa:', companyError);
+        } else {
+          console.log('[useUserProfile] Usuário vinculado à empresa com sucesso');
+          
+          // Disparar evento para atualizar dados de empresa
+          window.dispatchEvent(new CustomEvent('company-relation-changed'));
+        }
+
+        // Marcar convite como usado
+        const { error: markUsedError } = await supabase
+          .from('user_invites')
+          .update({ used: true, used_at: new Date().toISOString() })
+          .eq('id', invite.id);
+
+        if (markUsedError) {
+          console.error('[useUserProfile] Erro ao marcar convite como usado:', markUsedError);
+        }
+
+        console.log('[useUserProfile] Convite aplicado com sucesso');
+        toast.success('Seu perfil foi configurado automaticamente com base no convite!');
+      } else {
+        console.log('[useUserProfile] Nenhum convite pendente encontrado para:', userEmail);
+      }
+    } catch (error) {
+      console.error('[useUserProfile] Erro ao verificar convites:', error);
+    }
+  }, []);
+
   // Função para sincronizar email do perfil com email de autenticação
   const syncEmailWithAuth = useCallback(async (userId: string, authEmail: string) => {
     try {
@@ -98,6 +182,11 @@ export const useUserProfile = () => {
             return;
           }
           
+          // Verificar e aplicar convites após criar perfil
+          if (user?.email) {
+            await checkAndApplyInvite(userId, user.email);
+          }
+          
           // Buscar o perfil recém-criado
           const { data: newData, error: newError } = await supabase
             .from('profiles')
@@ -125,6 +214,30 @@ export const useUserProfile = () => {
         }
       } else {
         profileData = data;
+        
+        // Se é o primeiro login e há um email, verificar convites
+        if (profileData.primeiro_login && user?.email) {
+          await checkAndApplyInvite(userId, user.email);
+          
+          // Recarregar perfil após aplicar convite
+          const { data: updatedData } = await supabase
+            .from('profiles')
+            .select(`
+              *,
+              aniversario,
+              tipo_contrato,
+              cidade,
+              data_inicio,
+              manual_cultura_aceito,
+              nivel_colaborador
+            `)
+            .eq('id', userId)
+            .single();
+            
+          if (updatedData) {
+            profileData = updatedData;
+          }
+        }
       }
 
       if (profileData) {
@@ -168,7 +281,7 @@ export const useUserProfile = () => {
       fetchInProgress.current = false;
       setIsLoading(false);
     }
-  }, [setCache, syncEmailWithAuth]);
+  }, [setCache, syncEmailWithAuth, checkAndApplyInvite]);
 
   // Load profile from cache only once
   useEffect(() => {
@@ -238,6 +351,7 @@ export const useUserProfile = () => {
     updateUserProfile,
     updateUserData,
     setUserProfile,
-    syncEmailWithAuth
+    syncEmailWithAuth,
+    checkAndApplyInvite
   };
 };

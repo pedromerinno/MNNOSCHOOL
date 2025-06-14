@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Copy } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CreateUserDialogProps {
   isOpen: boolean;
@@ -87,9 +88,9 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
 
     setIsCreating(true);
     try {
-      // Criar dados do convite que serão aplicados quando o usuário se registrar
+      // Criar dados do convite no banco de dados
       const inviteData = {
-        email: formData.email,
+        email: formData.email.toLowerCase(),
         display_name: formData.display_name,
         company_id: formData.company_id,
         cidade: formData.cidade || null,
@@ -97,16 +98,31 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
         data_inicio: formData.data_inicio || null,
         tipo_contrato: formData.tipo_contrato !== 'not_specified' ? formData.tipo_contrato : null,
         nivel_colaborador: formData.nivel_colaborador !== 'not_specified' ? formData.nivel_colaborador : null,
+        created_by: user?.id,
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 dias
       };
 
-      console.log('Convite criado para:', inviteData);
+      console.log('Criando convite:', inviteData);
+
+      // Salvar convite no banco
+      const { data: inviteRecord, error: inviteError } = await supabase
+        .from('user_invites')
+        .insert(inviteData)
+        .select()
+        .single();
+
+      if (inviteError) {
+        throw inviteError;
+      }
+
+      console.log('Convite salvo:', inviteRecord);
 
       // Salvar dados do convite criado para mostrar no sucesso
       setCreatedInvite({
         email: formData.email,
         display_name: formData.display_name,
         company: userCompanies.find(c => c.id === formData.company_id)?.nome || 'Empresa',
-        inviteData: inviteData,
+        inviteId: inviteRecord.id,
       });
 
       setShowSuccess(true);
@@ -114,7 +130,7 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
 
       toast({
         title: "Convite Criado",
-        description: "Convite criado com sucesso! O usuário poderá se cadastrar usando o email fornecido.",
+        description: "Convite criado com sucesso! O usuário poderá se cadastrar usando o email fornecido e será automaticamente vinculado à empresa.",
       });
 
     } catch (error: any) {
@@ -171,9 +187,9 @@ Link da plataforma: https://school.merinno.com/signup
 
 Instruções:
 1. O usuário deve acessar o link acima
-2. Fazer cadastro usando o email: ${createdInvite.email}
+2. Fazer cadastro usando EXATAMENTE o email: ${createdInvite.email}
 3. Definir sua própria senha no cadastro
-4. Após o login, o perfil estará completo com as informações pré-cadastradas
+4. Após o cadastro, as informações do perfil e a vinculação à empresa serão aplicadas automaticamente
     `.trim();
 
     return (
@@ -206,8 +222,8 @@ Instruções:
 
             <div className="bg-blue-50 p-3 rounded-md">
               <p className="text-sm text-blue-700">
-                <strong>Importante:</strong> O usuário precisa se cadastrar usando o email fornecido. 
-                As informações do perfil serão aplicadas automaticamente após o cadastro.
+                <strong>Importante:</strong> O usuário precisa se cadastrar usando EXATAMENTE o email fornecido. 
+                As informações do perfil e a vinculação à empresa serão aplicadas automaticamente após o cadastro.
               </p>
             </div>
           </div>
