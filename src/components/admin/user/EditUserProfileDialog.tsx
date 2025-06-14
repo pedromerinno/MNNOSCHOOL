@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { UserProfile } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { format } from 'date-fns';
 
 interface EditUserProfileDialogProps {
   isOpen: boolean;
@@ -29,8 +28,8 @@ export const EditUserProfileDialog: React.FC<EditUserProfileDialogProps> = ({
     display_name: user?.display_name || '',
     email: user?.email || '',
     cidade: user?.cidade || '',
-    aniversario: user?.aniversario ? format(new Date(user.aniversario), 'yyyy-MM-dd') : '',
-    data_inicio: user?.data_inicio ? format(new Date(user.data_inicio), 'yyyy-MM-dd') : '',
+    aniversario: user?.aniversario || '',
+    data_inicio: user?.data_inicio || '',
     tipo_contrato: user?.tipo_contrato || 'not_specified',
     nivel_colaborador: user?.nivel_colaborador || 'not_specified',
   });
@@ -41,8 +40,8 @@ export const EditUserProfileDialog: React.FC<EditUserProfileDialogProps> = ({
         display_name: user.display_name || '',
         email: user.email || '',
         cidade: user.cidade || '',
-        aniversario: user.aniversario ? format(new Date(user.aniversario), 'yyyy-MM-dd') : '',
-        data_inicio: user.data_inicio ? format(new Date(user.data_inicio), 'yyyy-MM-dd') : '',
+        aniversario: user.aniversario || '',
+        data_inicio: user.data_inicio || '',
         tipo_contrato: user.tipo_contrato || 'not_specified',
         nivel_colaborador: user.nivel_colaborador || 'not_specified',
       });
