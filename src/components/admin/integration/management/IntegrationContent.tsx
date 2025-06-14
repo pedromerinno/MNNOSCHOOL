@@ -98,7 +98,7 @@ export const IntegrationContent: React.FC<IntegrationContentProps> = ({
               <JobRolesManager company={company} />
             </TabsContent>
             <TabsContent value="access" className="m-0">
-              <AccessManagement company={company} />
+              <AccessManagement companyId={company.id} companyColor={company?.cor_principal} />
             </TabsContent>
             <TabsContent value="collaborators" className="m-0">
               <CollaboratorsManagement company={company} />

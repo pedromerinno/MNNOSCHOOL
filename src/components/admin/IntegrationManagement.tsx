@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -208,7 +207,7 @@ export const IntegrationManagement: React.FC = () => {
                   <JobRolesManager company={selectedCompany} />
                 </TabsContent>
                 <TabsContent value="access" className="m-0">
-                  <AccessManagement company={selectedCompany} />
+                  <AccessManagement companyId={selectedCompany.id} companyColor={selectedCompany?.cor_principal} />
                 </TabsContent>
               </div>
             </Tabs>

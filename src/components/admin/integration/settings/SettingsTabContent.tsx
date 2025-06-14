@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback } from 'react';
 import { TabsContent } from "@/components/ui/tabs";
 import { Company } from "@/types/company";
@@ -66,7 +65,7 @@ export const SettingsTabContent: React.FC<SettingsTabContentProps> = ({
       case "cargo":
         return <JobRolesManager key={getKey("cargo")} company={company} />;
       case "access":
-        return <AccessManagement key={getKey("access")} company={company} />;
+        return <AccessManagement key={getKey("access")} companyId={company.id} companyColor={company?.cor_principal} />;
       case "collaborators":
         return <CollaboratorsManagement key={getKey("collaborators")} company={company} />;
       case "courses":
