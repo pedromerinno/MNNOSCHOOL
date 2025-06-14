@@ -191,11 +191,23 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
   const currentAvatarUrl = avatarPreview || userProfile?.avatar || defaultAvatarUrl;
   const currentName = form.watch("name") || userProfile?.display_name || email?.split('@')[0] || "U";
   
-  // Lógica simplificada - mostrar botão se tem preview OU se o avatar atual é diferente do padrão
-  const showRemoveButton = Boolean(
-    avatarPreview || 
-    (userProfile?.avatar && userProfile.avatar !== defaultAvatarUrl && userProfile.avatar.trim() !== "")
-  );
+  // Lógica SUPER SIMPLIFICADA - mostrar se tem qualquer coisa diferente do padrão
+  const hasPreview = Boolean(avatarPreview && avatarPreview.trim() !== "");
+  const hasUserAvatar = Boolean(userProfile?.avatar && userProfile.avatar.trim() !== "" && userProfile.avatar !== defaultAvatarUrl);
+  const showRemoveButton = hasPreview || hasUserAvatar;
+
+  // Console logs detalhados para debug
+  console.log('[ProfilePopover] Debug completo:', {
+    avatarPreview,
+    'userProfile?.avatar': userProfile?.avatar,
+    defaultAvatarUrl,
+    hasPreview,
+    hasUserAvatar,
+    showRemoveButton,
+    'avatarPreview && avatarPreview.trim() !== ""': Boolean(avatarPreview && avatarPreview.trim() !== ""),
+    'userProfile?.avatar && userProfile.avatar.trim() !== ""': Boolean(userProfile?.avatar && userProfile.avatar.trim() !== ""),
+    'userProfile.avatar !== defaultAvatarUrl': userProfile?.avatar !== defaultAvatarUrl
+  });
 
   const handleOpenDialog = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -203,18 +215,6 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
     console.log('[ProfilePopover] Tentando abrir dialog');
     setOpen(true);
   };
-
-  console.log('[ProfilePopover] Estado atual:', { 
-    open,
-    currentAvatarUrl, 
-    currentName, 
-    isUploading, 
-    showRemoveButton,
-    userProfileAvatar: userProfile?.avatar,
-    avatarPreview,
-    defaultAvatarUrl,
-    'avatar equals default': userProfile?.avatar === defaultAvatarUrl
-  });
 
   return (
     <>
@@ -262,7 +262,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
                   />
                 </label>
                 
-                {/* Botão de exclusão - SEMPRE mostrar se showRemoveButton for true */}
+                {/* Botão de exclusão - MOSTRAR SEMPRE quando showRemoveButton for true */}
                 {showRemoveButton && (
                   <Button
                     type="button"
@@ -277,16 +277,18 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
                   </Button>
                 )}
                 
-                {/* Debug info mais detalhado */}
-                <div className="text-xs text-gray-400 mt-2 text-center bg-gray-50 p-2 rounded border">
-                  <div className="font-semibold mb-1">Debug Info:</div>
-                  <div>showRemoveButton: <span className="font-mono">{showRemoveButton.toString()}</span></div>
-                  <div>avatarPreview: <span className="font-mono">{avatarPreview || 'null'}</span></div>
-                  <div>userProfile?.avatar: <span className="font-mono">{userProfile?.avatar || 'null'}</span></div>
-                  <div>defaultAvatarUrl: <span className="font-mono">{defaultAvatarUrl}</span></div>
-                  <div>avatar === default: <span className="font-mono">{(userProfile?.avatar === defaultAvatarUrl).toString()}</span></div>
-                  <div>avatar !== default: <span className="font-mono">{(userProfile?.avatar !== defaultAvatarUrl).toString()}</span></div>
-                  <div>avatar trim: <span className="font-mono">{userProfile?.avatar?.trim() || 'null'}</span></div>
+                {/* Debug info SUPER detalhado */}
+                <div className="text-xs text-gray-400 mt-2 text-center bg-yellow-50 p-3 rounded border border-yellow-200 w-full">
+                  <div className="font-bold mb-2 text-black">🔍 DEBUG INFO:</div>
+                  <div className="space-y-1 text-left">
+                    <div><strong>showRemoveButton:</strong> <span className="font-mono bg-white px-1 rounded">{showRemoveButton.toString()}</span></div>
+                    <div><strong>hasPreview:</strong> <span className="font-mono bg-white px-1 rounded">{hasPreview.toString()}</span></div>
+                    <div><strong>hasUserAvatar:</strong> <span className="font-mono bg-white px-1 rounded">{hasUserAvatar.toString()}</span></div>
+                    <div><strong>avatarPreview:</strong> <span className="font-mono bg-white px-1 rounded text-xs">{avatarPreview || 'VAZIO'}</span></div>
+                    <div><strong>userProfile?.avatar:</strong> <span className="font-mono bg-white px-1 rounded text-xs">{userProfile?.avatar || 'VAZIO'}</span></div>
+                    <div><strong>defaultAvatarUrl:</strong> <span className="font-mono bg-white px-1 rounded text-xs">{defaultAvatarUrl}</span></div>
+                    <div><strong>São iguais?:</strong> <span className="font-mono bg-white px-1 rounded">{(userProfile?.avatar === defaultAvatarUrl).toString()}</span></div>
+                  </div>
                 </div>
               </div>
             </div>
