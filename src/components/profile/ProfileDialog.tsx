@@ -134,7 +134,7 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
       };
       reader.readAsDataURL(file);
       
-      // Upload para o Supabase (já atualiza o perfil no banco)
+      // Upload para o Supabase (já atualiza o perfil no banco automaticamente)
       const publicUrl = await uploadAvatarImage(file, user.id);
       console.log('[ProfileDialog] Upload concluído, URL:', publicUrl);
       
@@ -142,12 +142,12 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
       form.setValue("avatar", publicUrl);
       setAvatarPreview(publicUrl);
       
-      // Forçar atualização do contexto de autenticação
+      // Forçar atualização do contexto de autenticação para refletir a mudança
       await updateUserProfile({ avatar: publicUrl });
       
       toast({
-        title: "Imagem carregada",
-        description: "Sua foto de perfil foi carregada com sucesso!",
+        title: "Imagem carregada e salva",
+        description: "Sua foto de perfil foi carregada e salva automaticamente!",
       });
       
     } catch (error: any) {
@@ -199,7 +199,7 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
                 <AvatarImage 
                   src={currentAvatarUrl} 
                   alt="Avatar preview"
-                  key={currentAvatarUrl} // Force re-render when URL changes
+                  key={`${currentAvatarUrl}-${Date.now()}`} // Force re-render when URL changes
                   onLoad={() => console.log('[ProfileDialog] Avatar carregado:', currentAvatarUrl)}
                   onError={() => console.error('[ProfileDialog] Erro ao carregar avatar:', currentAvatarUrl)}
                 />

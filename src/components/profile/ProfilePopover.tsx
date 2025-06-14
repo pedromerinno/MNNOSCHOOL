@@ -113,7 +113,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
       };
       reader.readAsDataURL(file);
       
-      // Upload para o Supabase (já atualiza o perfil no banco)
+      // Upload para o Supabase (já atualiza o perfil no banco automaticamente)
       const publicUrl = await uploadAvatarImage(file, user.id);
       console.log('[ProfilePopover] Upload concluído, URL:', publicUrl);
       
@@ -121,12 +121,12 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
       form.setValue("avatar", publicUrl);
       setAvatarPreview(publicUrl);
       
-      // Forçar atualização do contexto de autenticação
+      // Forçar atualização do contexto de autenticação para refletir a mudança
       await updateUserProfile({ avatar: publicUrl });
       
       toast({
-        title: "Imagem carregada",
-        description: "Sua foto de perfil foi carregada com sucesso!",
+        title: "Imagem carregada e salva",
+        description: "Sua foto de perfil foi carregada e salva automaticamente!",
       });
       
     } catch (error: any) {
@@ -172,7 +172,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
                 <AvatarImage 
                   src={currentAvatarUrl} 
                   alt="Avatar preview"
-                  key={currentAvatarUrl} // Force re-render when URL changes
+                  key={`${currentAvatarUrl}-${Date.now()}`} // Force re-render when URL changes
                   onLoad={() => console.log('[ProfilePopover] Avatar carregado:', currentAvatarUrl)}
                   onError={() => console.error('[ProfilePopover] Erro ao carregar avatar:', currentAvatarUrl)}
                 />
