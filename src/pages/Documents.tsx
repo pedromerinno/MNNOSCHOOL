@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DocumentPreview } from "@/components/documents/DocumentPreview";
 import { DocumentTabs } from "@/components/documents/DocumentTabs";
-import { useDocumentManager } from "@/hooks/useDocumentManager";
+import { useDocumentManagerOptimized } from "@/hooks/documents/useDocumentManagerOptimized";
 import { UserDocument, DocumentType } from "@/types/document";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -15,8 +15,9 @@ import { PagePreloader } from "@/components/ui/PagePreloader";
 
 const Documents = () => {
   const navigate = useNavigate();
-  const { selectedCompany, isLoading } = useCompanies();
+  const { selectedCompany } = useCompanies();
   const [activeTab, setActiveTab] = useState("all");
+  
   const {
     documents,
     isUploading,
@@ -31,8 +32,8 @@ const Documents = () => {
     handleDocumentUpload,
     canDeleteDocument,
     refreshDocuments,
-    isLoading: isLoadingDocuments
-  } = useDocumentManager();
+    isLoading
+  } = useDocumentManagerOptimized();
 
   const handleUpload = async (
     attachmentType: 'file' | 'link',
@@ -42,24 +43,20 @@ const Documents = () => {
     name: string
   ) => {
     const success = await handleDocumentUpload(attachmentType, fileOrUrl, documentType, description, name);
-    if (success) {
-      await refreshDocuments();
-    }
     return success;
   };
 
   const handleDocumentDelete = async (document: UserDocument) => {
-    // Verifica se o usuário tem permissão para excluir antes de continuar
     if (!canDeleteDocument(document)) {
       alert("Você só pode excluir documentos que você mesmo enviou.");
       return;
     }
     
     await handleDelete(document.id);
-    await refreshDocuments();
   };
 
-  if (isLoading || isLoadingDocuments) {
+  // Show loading only on initial load
+  if (isLoading) {
     return <PagePreloader />;
   }
 
