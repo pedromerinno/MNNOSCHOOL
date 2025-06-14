@@ -1,13 +1,12 @@
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Company } from "@/types/company";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useCompanies } from "@/hooks/useCompanies";
 
 interface InviteCompanySelectorProps {
   selectedCompany: Company | null;
@@ -20,50 +19,14 @@ export const InviteCompanySelector: React.FC<InviteCompanySelectorProps> = ({
   onCompanyChange,
   disabled = false
 }) => {
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { user, userProfile } = useAuth();
-
-  const loadCompanies = useCallback(async () => {
-    if (!user?.id || !userProfile) return;
-    
-    setLoading(true);
-    setError(null);
-    
-    try {
-      if (userProfile.super_admin) {
-        // Super admin sees all companies
-        const { data, error } = await supabase
-          .from('empresas')
-          .select('*')
-          .order('nome')
-          .limit(50);
-          
-        if (error) throw error;
-        setCompanies(data || []);
-      } else {
-        // Regular admin sees only their companies
-        const { data, error } = await supabase
-          .rpc('get_user_companies', { user_id: user.id });
-          
-        if (error) throw error;
-        setCompanies(data || []);
-      }
-    } catch (err: any) {
-      console.error('Error loading companies for invite:', err);
-      setError('Erro ao carregar empresas');
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id, userProfile]);
-
-  useEffect(() => {
-    loadCompanies();
-  }, [loadCompanies]);
+  const { userCompanies, isLoading, error, forceGetUserCompanies, user } = useCompanies({ 
+    skipLoadingInOnboarding: false 
+  });
 
   const handleRetry = () => {
-    loadCompanies();
+    if (user?.id) {
+      forceGetUserCompanies(user.id);
+    }
   };
 
   if (error) {
@@ -73,15 +36,15 @@ export const InviteCompanySelector: React.FC<InviteCompanySelectorProps> = ({
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Erro de conexão</AlertTitle>
           <AlertDescription>
-            {error}
+            Erro ao carregar empresas
             <Button 
               variant="outline" 
               size="sm" 
               onClick={handleRetry} 
               className="mt-2 w-full"
-              disabled={loading}
+              disabled={isLoading}
             >
-              {loading ? "Carregando..." : "Tentar novamente"}
+              {isLoading ? "Carregando..." : "Tentar novamente"}
             </Button>
           </AlertDescription>
         </Alert>
@@ -93,10 +56,10 @@ export const InviteCompanySelector: React.FC<InviteCompanySelectorProps> = ({
     <Select 
       value={selectedCompany?.id || ''} 
       onValueChange={onCompanyChange}
-      disabled={disabled || loading}
+      disabled={disabled || isLoading}
     >
       <SelectTrigger className="w-full">
-        <SelectValue placeholder={loading ? "Carregando empresas..." : "Selecione uma empresa"}>
+        <SelectValue placeholder={isLoading ? "Carregando empresas..." : "Selecione uma empresa"}>
           {selectedCompany && selectedCompany.nome && (
             <div className="flex items-center">
               <Avatar className="h-5 w-5 mr-2">
@@ -120,7 +83,7 @@ export const InviteCompanySelector: React.FC<InviteCompanySelectorProps> = ({
         </SelectValue>
       </SelectTrigger>
       <SelectContent>
-        {companies.map(company => (
+        {userCompanies.map(company => (
           <SelectItem key={company.id} value={company.id}>
             <div className="flex items-center">
               <Avatar className="h-5 w-5 mr-2">

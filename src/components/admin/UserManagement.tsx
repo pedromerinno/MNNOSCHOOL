@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { UserTableOptimized } from './UserTableOptimized';
 import { useUsers } from '@/hooks/useUsers';
@@ -25,8 +24,8 @@ export const UserManagement = () => {
   const [selectedInviteCompany, setSelectedInviteCompany] = useState<Company | null>(null);
   const { toast } = useToast();
 
-  // Use companies with skipLoadingInOnboarding to prevent conflicts
-  const { userCompanies, isLoading: companiesLoading } = useCompanies({ 
+  // Use companies hook for invite functionality
+  const { userCompanies } = useCompanies({ 
     skipLoadingInOnboarding: false 
   });
 
@@ -34,8 +33,7 @@ export const UserManagement = () => {
     usersCount: users.length,
     loading,
     isRefreshing,
-    companiesCount: userCompanies?.length || 0,
-    companiesLoading
+    companiesCount: userCompanies?.length || 0
   });
 
   const handleRefresh = async () => {
