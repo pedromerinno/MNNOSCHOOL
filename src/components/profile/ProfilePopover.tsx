@@ -37,6 +37,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
   const { user, userProfile, updateUserProfile } = useAuth();
   const [open, setOpen] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState("https://i.pravatar.cc/150?img=68");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<UserProfileFormValues>({
@@ -50,14 +51,15 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
   // Update form values when userProfile changes
   useEffect(() => {
     if (userProfile) {
-      form.reset({
+      const profileData = {
         name: userProfile.display_name || email?.split('@')[0] || "",
         avatar: userProfile.avatar || "https://i.pravatar.cc/150?img=68"
-      });
+      };
       
-      if (userProfile.avatar) {
-        setAvatarPreview(userProfile.avatar);
-      }
+      form.reset(profileData);
+      setAvatarPreview(profileData.avatar);
+      
+      console.log('[ProfilePopover] Form reset with profile data:', profileData);
     }
   }, [userProfile, email, form]);
 
@@ -74,17 +76,22 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
-      console.log('[ProfilePopover] Chamando updateUserProfile...');
+      console.log('[ProfilePopover] Chamando updateUserProfile com dados:', {
+        display_name: values.name,
+        avatar: values.avatar
+      });
       
-      // Usar o hook updateUserProfile que foi corrigido
       await updateUserProfile({
         display_name: values.name,
         avatar: values.avatar
       });
       
-      console.log('[ProfilePopover] Perfil atualizado com sucesso!');
+      console.log('[ProfilePopover] Perfil atualizado com sucesso no banco!');
       
+      // Chamar onSave para atualizar outros componentes
       onSave(values);
       
       // Dispatch custom event to notify other components about profile update
@@ -101,6 +108,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
       });
       
       setOpen(false);
+      
     } catch (error: any) {
       console.error('[ProfilePopover] Erro ao atualizar perfil:', error);
       toast({
@@ -108,15 +116,44 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
         description: error.message || "Não foi possível salvar as alterações",
         variant: "destructive",
       });
+      
+      // Em caso de erro, reverter o preview para o valor original
+      const originalAvatar = userProfile?.avatar || "https://i.pravatar.cc/150?img=68";
+      setAvatarPreview(originalAvatar);
+      form.setValue("avatar", originalAvatar);
+      
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Validar tamanho do arquivo (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Arquivo muito grande",
+          description: "Por favor, selecione uma imagem menor que 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validar tipo do arquivo
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Tipo de arquivo inválido",
+          description: "Por favor, selecione apenas imagens",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
+        console.log('[ProfilePopover] Nova imagem carregada, atualizando preview');
         setAvatarPreview(result);
         form.setValue("avatar", result);
       };
@@ -124,13 +161,30 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
     }
   };
 
+  // Reset form quando abrir o dialog
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    
+    if (newOpen && userProfile) {
+      // Resetar form com dados atuais do perfil
+      const currentData = {
+        name: userProfile.display_name || email?.split('@')[0] || "",
+        avatar: userProfile.avatar || "https://i.pravatar.cc/150?img=68"
+      };
+      
+      form.reset(currentData);
+      setAvatarPreview(currentData.avatar);
+      console.log('[ProfilePopover] Dialog aberto, resetando form com dados atuais:', currentData);
+    }
+  };
+
   return (
     <>
-      <div onClick={() => setOpen(true)}>
+      <div onClick={() => handleOpenChange(true)}>
         {children}
       </div>
       
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="w-full max-w-sm sm:max-w-md" style={{ pointerEvents: 'auto' }}>
           <DialogHeader>
             <DialogTitle className="text-center">Editar Perfil</DialogTitle>
@@ -180,11 +234,14 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
               <Button 
                 type="button" 
                 variant="outline" 
-                onClick={() => setOpen(false)}
+                onClick={() => handleOpenChange(false)}
+                disabled={isSubmitting}
               >
                 Cancelar
               </Button>
-              <Button type="submit">Salvar</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Salvando..." : "Salvar"}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
