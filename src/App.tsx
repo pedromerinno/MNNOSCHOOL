@@ -7,7 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CompaniesProvider } from "@/hooks/useCompanies.tsx";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
-import { CompanyRequiredCheck } from "@/components/auth/CompanyRequiredCheck";
+import { CompanyRequiredWrapper } from "@/components/auth/CompanyRequiredWrapper";
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import Courses from "./pages/Courses";
@@ -35,7 +35,7 @@ function App() {
                   
                   {/* Rotas protegidas - com verificação de empresa */}
                   <Route path="/*" element={
-                    <CompanyRequiredCheck>
+                    <CompanyRequiredWrapper>
                       <Routes>
                         <Route path="/" element={<Index />} />
                         <Route path="/admin" element={<Admin />} />
@@ -43,7 +43,7 @@ function App() {
                         <Route path="/courses/:courseId/lessons/:lessonId" element={<LessonPage />} />
                         <Route path="/documents" element={<Documents />} />
                       </Routes>
-                    </CompanyRequiredCheck>
+                    </CompanyRequiredWrapper>
                   } />
                 </Routes>
               </OnboardingProvider>
