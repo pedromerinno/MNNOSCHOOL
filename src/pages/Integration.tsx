@@ -13,7 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const Integration = () => {
   const { selectedCompany, isLoading } = useCompanies();
-  const { userProfile, fetchUserProfile } = useAuth();
+  const { userProfile } = useAuth();
   const [jobRoles, setJobRoles] = useState<JobRole[]>([]);
   const [userRole, setUserRole] = useState<JobRole | null>(null);
   const [isLoadingRoles, setIsLoadingRoles] = useState(false);
@@ -110,9 +110,6 @@ const Integration = () => {
     console.log('[Integration] Fetching user role for user:', userProfile.id, 'company:', companyId);
     
     try {
-      // Primeiro atualizar o perfil do usuário
-      await fetchUserProfile(userProfile.id);
-      
       // Buscar perfil atualizado do usuário
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
