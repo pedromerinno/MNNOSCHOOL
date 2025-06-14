@@ -99,7 +99,7 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Upload de Documento</DialogTitle>
           <DialogDescription>
-            Faça upload de um documento para o colaborador
+            Faça upload de um documento ou adicione um link para o colaborador
           </DialogDescription>
         </DialogHeader>
         
