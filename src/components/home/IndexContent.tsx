@@ -57,7 +57,6 @@ export const IndexContent = () => {
         onOpenChange={setShowCompanyDialog}
         onCompanyCreated={handleCompanyCreated}
         onCompanyTypeSelect={handleCompanyTypeSelect}
-        onComplete={handleCompanyComplete}
       />
       
       <UserProfileDialog 
