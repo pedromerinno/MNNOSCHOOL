@@ -3,6 +3,7 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompanies } from '@/hooks/useCompanies';
 import { CompanySelectionDialog } from '@/components/home/CompanySelectionDialog';
+import { MainNavigationMenu } from '@/components/navigation/MainNavigationMenu';
 
 interface CompanyRequiredWrapperProps {
   children: React.ReactNode;
@@ -57,6 +58,7 @@ export const CompanyRequiredWrapper: React.FC<CompanyRequiredWrapperProps> = ({ 
 
   return (
     <>
+      <MainNavigationMenu />
       {children}
       
       <CompanySelectionDialog
