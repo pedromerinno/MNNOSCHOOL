@@ -53,16 +53,16 @@ export const IndexContent = () => {
       <UserHome />
       
       <CompanySelectionDialog 
-        isOpen={showCompanyDialog}
-        setIsOpen={setShowCompanyDialog}
+        open={showCompanyDialog}
+        onOpenChange={setShowCompanyDialog}
         onCompanyCreated={handleCompanyCreated}
         onCompanyTypeSelect={handleCompanyTypeSelect}
         onComplete={handleCompanyComplete}
       />
       
       <UserProfileDialog 
-        isOpen={showProfileDialog}
-        setIsOpen={setShowProfileDialog}
+        open={showProfileDialog}
+        onOpenChange={setShowProfileDialog}
         onComplete={handleProfileComplete}
       />
     </div>
