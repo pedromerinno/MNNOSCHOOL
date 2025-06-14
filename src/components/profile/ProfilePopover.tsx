@@ -40,7 +40,6 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
   const [open, setOpen] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
-  const [showAvatarActions, setShowAvatarActions] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<UserProfileFormValues>({
@@ -190,12 +189,17 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
 
   const currentAvatarUrl = avatarPreview || userProfile?.avatar || "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png";
   const currentName = form.watch("name") || userProfile?.display_name || email?.split('@')[0] || "U";
-  const hasCustomAvatar = (avatarPreview || userProfile?.avatar) && 
-    (avatarPreview || userProfile?.avatar) !== "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png" &&
-    (avatarPreview || userProfile?.avatar) !== "";
+  
+  // Verificar se tem uma imagem personalizada (diferente da padrão)
+  const hasCustomAvatar = Boolean(
+    (avatarPreview || userProfile?.avatar) && 
+    (avatarPreview || userProfile?.avatar) !== "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png"
+  );
 
-  const handleOpenDialog = () => {
-    console.log('[ProfilePopover] Abrindo dialog de perfil');
+  const handleOpenDialog = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('[ProfilePopover] Tentando abrir dialog');
     setOpen(true);
   };
 
@@ -216,48 +220,26 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
       </div>
       
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="w-full max-w-sm sm:max-w-md">
+        <DialogContent className="w-full max-w-md mx-auto">
           <DialogHeader>
-            <DialogTitle className="text-center">Editar Perfil</DialogTitle>
-            <DialogDescription className="text-center">
+            <DialogTitle>Editar Perfil</DialogTitle>
+            <DialogDescription>
               Atualize suas informações de perfil aqui.
             </DialogDescription>
           </DialogHeader>
           
           <form onSubmit={form.handleSubmit(handleProfileUpdate)} className="space-y-6">
             <div className="flex flex-col items-center gap-4">
-              <div 
-                className="relative group"
-                onMouseEnter={() => setShowAvatarActions(true)}
-                onMouseLeave={() => setShowAvatarActions(false)}
-              >
+              <div className="relative">
                 <Avatar className="h-24 w-24">
                   <AvatarImage 
                     src={currentAvatarUrl} 
                     alt="Avatar preview"
-                    key={currentAvatarUrl}
                     onLoad={() => console.log('[ProfilePopover] Avatar carregado:', currentAvatarUrl)}
                     onError={() => console.error('[ProfilePopover] Erro ao carregar avatar:', currentAvatarUrl)}
                   />
                   <AvatarFallback>{currentName.charAt(0)?.toUpperCase()}</AvatarFallback>
                 </Avatar>
-                
-                {/* Overlay com botão de exclusão no hover */}
-                {hasCustomAvatar && showAvatarActions && (
-                  <div className="absolute inset-0 bg-black bg-opacity-60 rounded-full flex items-center justify-center transition-opacity">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-10 w-10 text-white hover:bg-red-500 hover:text-white transition-colors"
-                      onClick={handleDeleteAvatar}
-                      disabled={isUploading}
-                      title="Remover foto"
-                    >
-                      <Trash2 className="h-5 w-5" />
-                    </Button>
-                  </div>
-                )}
               </div>
               
               <div className="flex flex-col items-center gap-3">
@@ -277,7 +259,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
                   />
                 </label>
                 
-                {/* Botão de exclusão sempre visível quando há imagem personalizada */}
+                {/* Botão de exclusão - sempre visível quando há imagem personalizada */}
                 {hasCustomAvatar && (
                   <Button
                     type="button"
@@ -300,7 +282,6 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
                 id="name"
                 placeholder="Seu nome"
                 {...form.register("name")}
-                className="w-full text-center"
               />
               {form.formState.errors.name && (
                 <p className="text-sm font-medium text-destructive">{form.formState.errors.name.message}</p>
