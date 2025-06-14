@@ -17,12 +17,10 @@ import {
 
 interface CleanupUserCompaniesButtonProps {
   userId: string;
-  onCleanupComplete?: () => void;
 }
 
 export const CleanupUserCompaniesButton: React.FC<CleanupUserCompaniesButtonProps> = ({
-  userId,
-  onCleanupComplete
+  userId
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { cleanupUserCompanies } = useCleanupUserCompanies();
@@ -31,7 +29,6 @@ export const CleanupUserCompaniesButton: React.FC<CleanupUserCompaniesButtonProp
     setIsLoading(true);
     try {
       await cleanupUserCompanies(userId);
-      onCleanupComplete?.();
     } finally {
       setIsLoading(false);
     }
@@ -43,7 +40,7 @@ export const CleanupUserCompaniesButton: React.FC<CleanupUserCompaniesButtonProp
         <Button
           variant="outline"
           size="sm"
-          className="text-orange-600 hover:text-orange-700"
+          className="text-orange-600 hover:text-orange-700 w-full"
         >
           <Trash2 className="h-4 w-4 mr-1" />
           Limpar Vínculos

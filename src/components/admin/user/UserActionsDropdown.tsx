@@ -15,24 +15,41 @@ interface UserActionsDropdownProps {
   user: {
     id: string;
     display_name: string | null;
-    is_admin: boolean;
-    super_admin: boolean;
+    is_admin: boolean | null;
+    super_admin?: boolean | null;
   };
-  onEditClick: () => void;
-  onDeleteClick: () => void;
-  onToggleAdmin: () => void;
-  onManageCompanies: () => void;
-  onRefresh?: () => void;
+  onEditProfile: (user: any) => void;
+  onToggleAdmin: (userId: string, currentStatus: boolean | null, isSuperAdmin?: boolean) => void;
+  onDeleteUser?: (userId: string) => void;
+  canDelete?: boolean;
 }
 
 export const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({
   user,
-  onEditClick,
-  onDeleteClick,
+  onEditProfile,
   onToggleAdmin,
-  onManageCompanies,
-  onRefresh
+  onDeleteUser,
+  canDelete = false
 }) => {
+  const handleEditClick = () => {
+    onEditProfile(user);
+  };
+
+  const handleDeleteClick = () => {
+    if (onDeleteUser) {
+      onDeleteUser(user.id);
+    }
+  };
+
+  const handleToggleAdmin = () => {
+    onToggleAdmin(user.id, user.is_admin, false);
+  };
+
+  const handleManageCompanies = () => {
+    // TODO: Implement company management functionality
+    console.log('Manage companies for user:', user.id);
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -42,12 +59,12 @@ export const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuItem onClick={onEditClick}>
+        <DropdownMenuItem onClick={handleEditClick}>
           <Edit className="mr-2 h-4 w-4" />
           Editar
         </DropdownMenuItem>
         
-        <DropdownMenuItem onClick={onManageCompanies}>
+        <DropdownMenuItem onClick={handleManageCompanies}>
           <Building className="mr-2 h-4 w-4" />
           Gerenciar Empresas
         </DropdownMenuItem>
@@ -57,13 +74,12 @@ export const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({
         <div className="p-1">
           <CleanupUserCompaniesButton 
             userId={user.id}
-            onCleanupComplete={onRefresh}
           />
         </div>
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem onClick={onToggleAdmin}>
+        <DropdownMenuItem onClick={handleToggleAdmin}>
           {user.is_admin ? (
             <>
               <ShieldOff className="mr-2 h-4 w-4" />
@@ -77,15 +93,18 @@ export const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({
           )}
         </DropdownMenuItem>
 
-        <DropdownMenuSeparator />
-
-        <DropdownMenuItem 
-          onClick={onDeleteClick}
-          className="text-red-600 focus:text-red-600"
-        >
-          <Trash2 className="mr-2 h-4 w-4" />
-          Excluir
-        </DropdownMenuItem>
+        {canDelete && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              onClick={handleDeleteClick}
+              className="text-red-600 focus:text-red-600"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Excluir
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
