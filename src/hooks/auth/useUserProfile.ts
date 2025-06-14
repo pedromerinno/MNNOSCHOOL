@@ -62,6 +62,7 @@ export const useUserProfile = () => {
         await syncEmailWithAuth(userId, user.email);
       }
       
+      let profileData;
       const { data, error } = await supabase
         .from('profiles')
         .select(`
@@ -117,31 +118,33 @@ export const useUserProfile = () => {
             return;
           }
           
-          data = newData;
+          profileData = newData;
         } else {
           console.error('Erro ao buscar perfil:', error);
           return;
         }
+      } else {
+        profileData = data;
       }
 
-      if (data) {
+      if (profileData) {
         const profile: UserProfile = {
-          id: data.id,
-          email: data.email || user?.email || null,
-          display_name: data.display_name,
-          is_admin: data.is_admin,
-          super_admin: data.super_admin,
-          avatar: data.avatar,
-          cargo_id: data.cargo_id,
-          primeiro_login: data.primeiro_login,
-          created_at: data.created_at,
+          id: profileData.id,
+          email: profileData.email || user?.email || null,
+          display_name: profileData.display_name,
+          is_admin: profileData.is_admin,
+          super_admin: profileData.super_admin,
+          avatar: profileData.avatar,
+          cargo_id: profileData.cargo_id,
+          primeiro_login: profileData.primeiro_login,
+          created_at: profileData.created_at,
           // Novas colunas com type casting seguro
-          aniversario: data.aniversario,
-          tipo_contrato: data.tipo_contrato as 'CLT' | 'PJ' | 'Fornecedor' | null,
-          cidade: data.cidade,
-          data_inicio: data.data_inicio,
-          manual_cultura_aceito: data.manual_cultura_aceito,
-          nivel_colaborador: data.nivel_colaborador as 'Junior' | 'Pleno' | 'Senior' | null
+          aniversario: profileData.aniversario,
+          tipo_contrato: profileData.tipo_contrato as 'CLT' | 'PJ' | 'Fornecedor' | null,
+          cidade: profileData.cidade,
+          data_inicio: profileData.data_inicio,
+          manual_cultura_aceito: profileData.manual_cultura_aceito,
+          nivel_colaborador: profileData.nivel_colaborador as 'Junior' | 'Pleno' | 'Senior' | null
         };
         
         console.log('[useUserProfile] Profile loaded:', profile.display_name, 'with extra data:', {
