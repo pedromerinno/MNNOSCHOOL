@@ -41,10 +41,17 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
       console.log('UserNavigation: Detected company relation change');
     };
     
+    // Listener para abrir o diálogo de perfil via evento personalizado
+    const handleOpenProfileDialog = () => {
+      setIsProfileOpen(true);
+    };
+    
     window.addEventListener('company-relation-changed', handleCompanyRelationChange);
+    window.addEventListener('open-profile-dialog', handleOpenProfileDialog);
     
     return () => {
       window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
+      window.removeEventListener('open-profile-dialog', handleOpenProfileDialog);
     };
   }, []);
 

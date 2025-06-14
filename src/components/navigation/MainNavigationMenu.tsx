@@ -8,6 +8,7 @@ import { NotificationButton } from "@/components/navigation/NotificationButton";
 import { UserNavigation } from "@/components/navigation/UserNavigation";
 import { AuthButtons } from "@/components/navigation/AuthButtons";
 import { CompanySelector } from "@/components/navigation/CompanySelector";
+import { ProfileUpdateBanner } from "@/components/navigation/ProfileUpdateBanner";
 import { memo } from "react";
 
 export const MainNavigationMenu = memo(() => {
@@ -21,33 +22,37 @@ export const MainNavigationMenu = memo(() => {
   };
 
   return (
-    <header 
-      className="sticky top-0 z-40 w-full border-b shadow-sm bg-[#F8F7F4] dark:bg-[#191919]"
-    >
-      <div className="w-full px-4 h-16 flex items-center justify-between">
-        <div className="flex items-center space-x-4 md:space-x-8">
-          <div className="flex items-center">
-            <CompanySelector />
+    <>
+      <header 
+        className="sticky top-0 z-40 w-full border-b shadow-sm bg-[#F8F7F4] dark:bg-[#191919]"
+      >
+        <div className="w-full px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center space-x-4 md:space-x-8">
+            <div className="flex items-center">
+              <CompanySelector />
+            </div>
+            
+            <NavMenuLinks adminLabel={getAdminLabel()} />
           </div>
           
-          <NavMenuLinks adminLabel={getAdminLabel()} />
+          <div className="flex items-center space-x-2 md:space-x-3">
+            <SearchBar />
+            
+            <ThemeToggle />
+            
+            {user ? (
+              <UserNavigation />
+            ) : (
+              <AuthButtons />
+            )}
+            
+            <NotificationButton />
+          </div>
         </div>
-        
-        <div className="flex items-center space-x-2 md:space-x-3">
-          <SearchBar />
-          
-          <ThemeToggle />
-          
-          {user ? (
-            <UserNavigation />
-          ) : (
-            <AuthButtons />
-          )}
-          
-          <NotificationButton />
-        </div>
-      </div>
-    </header>
+      </header>
+      
+      {user && <ProfileUpdateBanner />}
+    </>
   );
 });
 
