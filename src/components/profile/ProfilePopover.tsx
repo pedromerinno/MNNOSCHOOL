@@ -190,15 +190,21 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
   const currentAvatarUrl = avatarPreview || userProfile?.avatar || "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png";
   const currentName = form.watch("name") || userProfile?.display_name || email?.split('@')[0] || "U";
   
-  // Melhorar a detecção de avatar personalizado
+  // Detectar se existe avatar personalizado de forma mais robusta
   const defaultAvatarUrl = "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png";
-  const userAvatarUrl = avatarPreview || userProfile?.avatar;
+  const actualAvatarUrl = userProfile?.avatar;
   
-  // Avatar é personalizado se existe e não é a imagem padrão
+  // Avatar é personalizado se:
+  // 1. Existe no perfil
+  // 2. Não é null ou undefined  
+  // 3. Não é string vazia
+  // 4. Não é a imagem padrão
+  // 5. OU se temos um preview de upload
   const hasCustomAvatar = Boolean(
-    userAvatarUrl && 
-    userAvatarUrl.trim() !== "" && 
-    userAvatarUrl !== defaultAvatarUrl
+    avatarPreview || 
+    (actualAvatarUrl && 
+     actualAvatarUrl.trim() !== "" && 
+     actualAvatarUrl !== defaultAvatarUrl)
   );
 
   const handleOpenDialog = (e: React.MouseEvent) => {
@@ -214,9 +220,8 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
     currentName, 
     isUploading, 
     hasCustomAvatar,
-    userAvatar: userProfile?.avatar,
-    preview: avatarPreview,
-    userAvatarUrl,
+    actualAvatarUrl,
+    avatarPreview,
     defaultAvatarUrl
   });
 
@@ -281,14 +286,13 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
                   </Button>
                 )}
                 
-                {/* Debug info - remover em produção */}
-                {process.env.NODE_ENV === 'development' && (
-                  <div className="text-xs text-gray-400 mt-2">
-                    <div>hasCustomAvatar: {hasCustomAvatar.toString()}</div>
-                    <div>userAvatarUrl: {userAvatarUrl || 'null'}</div>
-                    <div>isDefault: {(userAvatarUrl === defaultAvatarUrl).toString()}</div>
-                  </div>
-                )}
+                {/* Debug info - mostrar informações para debug */}
+                <div className="text-xs text-gray-400 mt-2 text-center">
+                  <div>hasCustomAvatar: {hasCustomAvatar.toString()}</div>
+                  <div>actualAvatarUrl: {actualAvatarUrl || 'null'}</div>
+                  <div>avatarPreview: {avatarPreview || 'null'}</div>
+                  <div>isDefault: {(actualAvatarUrl === defaultAvatarUrl).toString()}</div>
+                </div>
               </div>
             </div>
             
