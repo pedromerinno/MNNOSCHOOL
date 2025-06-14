@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -295,10 +296,41 @@ export function useUsers() {
     }
   }, [users, toast, setCachedUsers]);
 
+  const deleteUser = useCallback(async (userId: string) => {
+    try {
+      console.log('[useUsers] Deleting user:', userId);
+      
+      const { error } = await supabase.rpc('delete_user_safely', {
+        target_user_id: userId
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Atualizar estado local removendo o usuário
+      const updatedUsers = users.filter(user => user.id !== userId);
+      setUsers(updatedUsers);
+      setCachedUsers(updatedUsers);
+      
+      toast({
+        title: 'Sucesso',
+        description: 'Usuário excluído com sucesso.',
+      });
+    } catch (error: any) {
+      console.error('[useUsers] Error deleting user:', error);
+      toast({
+        title: 'Erro',
+        description: error.message || 'Ocorreu um erro ao excluir o usuário',
+        variant: 'destructive',
+      });
+    }
+  }, [users, toast, setCachedUsers]);
+
   useEffect(() => {
     console.log('[useUsers] Component mounted, starting fetch...');
     fetchUsers();
   }, [fetchUsers]);
 
-  return { users, loading, fetchUsers, toggleAdminStatus };
+  return { users, loading, fetchUsers, toggleAdminStatus, deleteUser };
 }

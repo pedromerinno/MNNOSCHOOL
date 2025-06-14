@@ -925,6 +925,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_user_safely: {
+        Args: { target_user_id: string }
+        Returns: boolean
+      }
       get_all_companies_for_admin: {
         Args: Record<PropertyKey, never>
         Returns: {

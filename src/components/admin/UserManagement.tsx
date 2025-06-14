@@ -16,7 +16,7 @@ import { useCompanies } from '@/hooks/useCompanies';
 import { Company } from '@/types/company';
 
 export const UserManagement = () => {
-  const { users, loading, fetchUsers, toggleAdminStatus } = useUsers();
+  const { users, loading, fetchUsers, toggleAdminStatus, deleteUser } = useUsers();
   const [initialSetupDone, setInitialSetupDone] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [permissionError, setPermissionError] = useState(false);
@@ -81,6 +81,10 @@ export const UserManagement = () => {
     setSelectedInviteCompany(company || null);
   };
 
+  const handleDeleteUser = async (userId: string) => {
+    await deleteUser(userId);
+  };
+
   // Se não há usuários e não está carregando, mostrar estado vazio específico
   if (!loading && users.length === 0 && !permissionError) {
     return (
@@ -137,6 +141,7 @@ export const UserManagement = () => {
           loading={isRefreshing} 
           onToggle={toggleAdminStatus}
           onRefresh={handleRefresh}
+          onDeleteUser={handleDeleteUser}
         />
       )}
 
