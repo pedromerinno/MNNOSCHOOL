@@ -20,10 +20,16 @@ export const useProfileCompletionCheck = () => {
   const hasCompany = userCompanies.length > 0;
   const isSuperAdmin = userProfile?.super_admin;
   
-  // Check profile completion status - only once
+  // Check profile completion status - only once and only when data is fully loaded
   useEffect(() => {
+    // Wait for all data to be loaded before making decisions
     if (user && userProfile && !profileChecked && !hasInitializedDialogs.current && !isLoading) {
-      console.log("[useProfileCompletionCheck] Checking profile completion");
+      console.log("[useProfileCompletionCheck] Checking profile completion", {
+        hasCompany,
+        isSuperAdmin,
+        isProfileComplete: isProfileComplete()
+      });
+      
       setProfileChecked(true);
       hasInitializedDialogs.current = true;
       
@@ -32,10 +38,16 @@ export const useProfileCompletionCheck = () => {
         console.log("[useProfileCompletionCheck] Profile incomplete, showing profile dialog");
         setShowProfileDialog(true);
       } else if (!isSuperAdmin && !hasCompany) {
-        // Only open company dialog if profile is complete, user is not super admin, and has no companies
+        // Only open company dialog if:
+        // 1. Profile is complete
+        // 2. User is not super admin
+        // 3. User has no companies
+        // 4. Companies data has been loaded (not loading)
         console.log("[useProfileCompletionCheck] Profile complete but no companies, showing company dialog");
         setShowCompanyDialog(true);
         companyDialogTriggeredByProfile.current = true;
+      } else {
+        console.log("[useProfileCompletionCheck] User already has companies or is super admin, no dialog needed");
       }
     }
   }, [user, userProfile, hasCompany, profileChecked, isSuperAdmin, isLoading]);
@@ -52,9 +64,10 @@ export const useProfileCompletionCheck = () => {
     // Close profile dialog
     setShowProfileDialog(false);
     
-    // Open company dialog if user has no companies and is not super admin
-    if (!isSuperAdmin && !hasCompany) {
-      console.log("[useProfileCompletionCheck] Profile completed, showing company dialog");
+    // Only open company dialog if user still has no companies and is not super admin
+    // and companies data has been loaded
+    if (!isSuperAdmin && !hasCompany && !isLoading) {
+      console.log("[useProfileCompletionCheck] Profile completed, checking if company dialog needed");
       setShowCompanyDialog(true);
       companyDialogTriggeredByProfile.current = true;
     }

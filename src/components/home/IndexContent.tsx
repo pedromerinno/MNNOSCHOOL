@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useCompanyInitialization } from "@/hooks/home/useCompanyInitialization";
@@ -46,7 +46,8 @@ export const IndexContent = () => {
       selectedCompany: selectedCompany?.nome,
       isLoading,
       showCompanyDialog,
-      showProfileDialog
+      showProfileDialog,
+      hasUserCompanies: userCompanies.length > 0
     });
   }, [user, userProfile, userCompanies, selectedCompany, isLoading, showCompanyDialog, showProfileDialog]);
 
@@ -61,18 +62,23 @@ export const IndexContent = () => {
       <div className="min-h-screen bg-background">
         <UserHome />
         
-        <CompanySelectionDialog 
-          open={showCompanyDialog}
-          onOpenChange={setShowCompanyDialog}
-          onCompanyCreated={handleCompanyCreated}
-          onCompanyTypeSelect={handleCompanyTypeSelect}
-        />
+        {/* Só mostrar dialogs se necessário */}
+        {showCompanyDialog && (
+          <CompanySelectionDialog 
+            open={showCompanyDialog}
+            onOpenChange={setShowCompanyDialog}
+            onCompanyCreated={handleCompanyCreated}
+            onCompanyTypeSelect={handleCompanyTypeSelect}
+          />
+        )}
         
-        <UserProfileDialog 
-          open={showProfileDialog}
-          onOpenChange={setShowProfileDialog}
-          onProfileComplete={handleProfileComplete}
-        />
+        {showProfileDialog && (
+          <UserProfileDialog 
+            open={showProfileDialog}
+            onOpenChange={setShowProfileDialog}
+            onProfileComplete={handleProfileComplete}
+          />
+        )}
       </div>
     );
   }
@@ -87,18 +93,22 @@ export const IndexContent = () => {
     <div className="min-h-screen bg-background">
       <UserHome />
       
-      <CompanySelectionDialog 
-        open={showCompanyDialog}
-        onOpenChange={setShowCompanyDialog}
-        onCompanyCreated={handleCompanyCreated}
-        onCompanyTypeSelect={handleCompanyTypeSelect}
-      />
+      {showCompanyDialog && (
+        <CompanySelectionDialog 
+          open={showCompanyDialog}
+          onOpenChange={setShowCompanyDialog}
+          onCompanyCreated={handleCompanyCreated}
+          onCompanyTypeSelect={handleCompanyTypeSelect}
+        />
+      )}
       
-      <UserProfileDialog 
-        open={showProfileDialog}
-        onOpenChange={setShowProfileDialog}
-        onProfileComplete={handleProfileComplete}
-      />
+      {showProfileDialog && (
+        <UserProfileDialog 
+          open={showProfileDialog}
+          onOpenChange={setShowProfileDialog}
+          onProfileComplete={handleProfileComplete}
+        />
+      )}
     </div>
   );
 };

@@ -49,8 +49,9 @@ export const useCompanyInitialization = () => {
       return false;
     }
     
-    // Não mostrar se já tem empresas
+    // IMPORTANTE: Não mostrar se já tem empresas
     if (userCompanies.length > 0) {
+      console.log("[useCompanyInitialization] User has companies, not showing dialog");
       return false;
     }
     
@@ -60,7 +61,9 @@ export const useCompanyInitialization = () => {
     }
     
     // Só mostrar se o perfil está completo mas não tem empresas
-    return !!userProfile.display_name && userCompanies.length === 0;
+    const shouldShow = !!userProfile.display_name && userCompanies.length === 0;
+    console.log("[useCompanyInitialization] Should show company dialog:", shouldShow);
+    return shouldShow;
   };
 
   // Controle unificado do diálogo de empresa
