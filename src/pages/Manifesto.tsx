@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, Video, Users, FileText, Quote, ArrowRight, Play } from "lucide-react";
@@ -7,6 +6,7 @@ import { useCompanies } from "@/hooks/useCompanies";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 
 const Manifesto = () => {
   const { user } = useAuth();
@@ -88,8 +88,8 @@ const Manifesto = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-8">
+    <DashboardLayout>
+      <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6 dark:text-white">
           {selectedCompany ? `Sobre a ${selectedCompany.nome}` : 'Manifesto do Grupo'}
         </h1>
@@ -247,8 +247,8 @@ const Manifesto = () => {
             </div>
           )}
         </div>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

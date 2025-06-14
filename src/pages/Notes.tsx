@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -7,6 +8,7 @@ import { NoteFormDialog } from '@/components/notes/NoteFormDialog';
 import { EmptyNotesList } from '@/components/notes/EmptyNotesList';
 import { Note } from '@/types/note';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 
 const Notes = () => {
   const { notes, isLoading, addNote, updateNote, deleteNote, togglePinned } = useNotes();
@@ -78,34 +80,36 @@ const Notes = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Notas</h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Crie e gerencie suas notas pessoais para se manter organizado
-          </p>
+    <DashboardLayout>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Notas</h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              Crie e gerencie suas notas pessoais para se manter organizado
+            </p>
+          </div>
+          
+          <Button
+            onClick={handleAddNote}
+            variant="default"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center mt-4 md:mt-0"
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            Nova Nota
+          </Button>
         </div>
-        
-        <Button
-          onClick={handleAddNote}
-          variant="default"
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center mt-4 md:mt-0"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          Nova Nota
-        </Button>
+
+        {renderContent()}
+
+        <NoteFormDialog
+          isOpen={isDialogOpen}
+          onClose={() => setIsDialogOpen(false)}
+          onSave={handleSaveNote}
+          note={selectedNote}
+        />
       </div>
-
-      {renderContent()}
-
-      <NoteFormDialog
-        isOpen={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
-        onSave={handleSaveNote}
-        note={selectedNote}
-      />
-    </div>
+    </DashboardLayout>
   );
 };
 

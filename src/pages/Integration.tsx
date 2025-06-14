@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useCompanies } from "@/hooks/useCompanies";
 import { LoadingState } from '@/components/integration/video-playlist/LoadingState';
-import { IntegrationLayout } from '@/components/integration/layout/IntegrationLayout';
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { CompanyHeader } from '@/components/integration/header/CompanyHeader';
 import { IntegrationTabs } from '@/components/integration/tabs/IntegrationTabs';
 import { Company } from "@/types/company";
@@ -283,25 +282,25 @@ const Integration = () => {
   // Loading state
   if (isLoading && !companyData) {
     return (
-      <IntegrationLayout>
+      <DashboardLayout>
         <LoadingState />
-      </IntegrationLayout>
+      </DashboardLayout>
     );
   }
 
   // Sem empresa selecionada
   if (!companyData) {
     return (
-      <IntegrationLayout>
+      <DashboardLayout>
         <div className="flex items-center justify-center h-64">
           <p className="text-gray-500">Nenhuma empresa selecionada</p>
         </div>
-      </IntegrationLayout>
+      </DashboardLayout>
     );
   }
 
   return (
-    <IntegrationLayout>
+    <DashboardLayout>
       <CompanyHeader 
         company={companyData} 
         companyColor={companyData.cor_principal}
@@ -316,7 +315,7 @@ const Integration = () => {
         isLoadingRoles={isLoadingRoles}
         userRole={userRole}
       />
-    </IntegrationLayout>
+    </DashboardLayout>
   );
 };
 

@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { PageLayout } from "@/components/layout/PageLayout";
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { DocumentPreview } from "@/components/documents/DocumentPreview";
 import { DocumentTabs } from "@/components/documents/DocumentTabs";
 import { useDocumentManager } from "@/hooks/useDocumentManager";
@@ -50,27 +50,36 @@ const Documents = () => {
   };
 
   return (
-    <PageLayout title="Documentos">
-      <DocumentTabs
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        documents={documents}
-        uploadOpen={uploadOpen}
-        setUploadOpen={setUploadOpen}
-        isUploading={isUploading}
-        onUpload={handleUpload}
-        onDownload={downloadDocument}
-        onPreview={handlePreview}
-        onDelete={handleDocumentDelete}
-        canDeleteDocument={canDeleteDocument}
-      />
+    <DashboardLayout>
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Documentos</h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Gerencie seus documentos e arquivos
+          </p>
+        </div>
 
-      <DocumentPreview
-        open={previewOpen}
-        onOpenChange={setPreviewOpen}
-        url={previewUrl}
-      />
-    </PageLayout>
+        <DocumentTabs
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          documents={documents}
+          uploadOpen={uploadOpen}
+          setUploadOpen={setUploadOpen}
+          isUploading={isUploading}
+          onUpload={handleUpload}
+          onDownload={downloadDocument}
+          onPreview={handlePreview}
+          onDelete={handleDocumentDelete}
+          canDeleteDocument={canDeleteDocument}
+        />
+
+        <DocumentPreview
+          open={previewOpen}
+          onOpenChange={setPreviewOpen}
+          url={previewUrl}
+        />
+      </div>
+    </DashboardLayout>
   );
 };
 
