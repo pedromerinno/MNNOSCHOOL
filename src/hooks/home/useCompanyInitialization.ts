@@ -37,37 +37,9 @@ export const useCompanyInitialization = () => {
     companyDialogTriggeredByProfile
   } = useProfileCompletionCheck();
 
-  // Verificar se o usuário realmente precisa do diálogo de empresa
-  const shouldShowCompanyDialog = () => {
-    // Não mostrar se está carregando
-    if (isLoading || !user || !userProfile) {
-      return false;
-    }
-    
-    // Não mostrar para super admins
-    if (userProfile.super_admin) {
-      return false;
-    }
-    
-    // IMPORTANTE: Não mostrar se já tem empresas
-    if (userCompanies.length > 0) {
-      console.log("[useCompanyInitialization] User has companies, not showing dialog");
-      return false;
-    }
-    
-    // Não mostrar se já foi mostrado antes
-    if (hasShownCompanyDialogRef.current) {
-      return false;
-    }
-    
-    // Só mostrar se o perfil está completo mas não tem empresas
-    const shouldShow = !!userProfile.display_name && userCompanies.length === 0;
-    console.log("[useCompanyInitialization] Should show company dialog:", shouldShow);
-    return shouldShow;
-  };
-
-  // Controle unificado do diálogo de empresa
-  const showCompanyDialog = profileShowCompanyDialog && shouldShowCompanyDialog();
+  // Simplified check - just use what the profile completion check returns
+  // No additional overrides here to avoid conflicts
+  const showCompanyDialog = profileShowCompanyDialog;
   
   function setShowDialog(show: boolean) {
     profileSetShowCompanyDialog(show);

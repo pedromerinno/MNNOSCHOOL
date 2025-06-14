@@ -57,13 +57,14 @@ export const IndexContent = () => {
   }
 
   // Se é super admin ou tem empresas, mostrar home normal
+  // IMPORTANTE: Não mostrar dialogs se o usuário já tem empresas
   if (user && userProfile && (userProfile.super_admin || userCompanies.length > 0)) {
     return (
       <div className="min-h-screen bg-background">
         <UserHome />
         
-        {/* Só mostrar dialogs se necessário */}
-        {showCompanyDialog && (
+        {/* Só mostrar dialogs se necessário E se o usuário não tem empresas */}
+        {showCompanyDialog && userCompanies.length === 0 && (
           <CompanySelectionDialog 
             open={showCompanyDialog}
             onOpenChange={setShowCompanyDialog}
@@ -93,7 +94,8 @@ export const IndexContent = () => {
     <div className="min-h-screen bg-background">
       <UserHome />
       
-      {showCompanyDialog && (
+      {/* Só mostrar dialogs se o usuário realmente não tem empresas */}
+      {showCompanyDialog && userCompanies.length === 0 && (
         <CompanySelectionDialog 
           open={showCompanyDialog}
           onOpenChange={setShowCompanyDialog}
