@@ -17,6 +17,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 
 const userProfileSchema = z.object({
   name: z.string().min(2, {
@@ -38,6 +39,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
   const [open, setOpen] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState("https://i.pravatar.cc/150?img=68");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<UserProfileFormValues>({
@@ -62,6 +64,53 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
       console.log('[ProfilePopover] Form reset with profile data:', profileData);
     }
   }, [userProfile, email, form]);
+
+  const uploadAvatarToStorage = async (file: File): Promise<string | null> => {
+    if (!user) return null;
+    
+    try {
+      setIsUploadingAvatar(true);
+      
+      // Generate unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+      
+      console.log('[ProfilePopover] Uploading avatar to:', filePath);
+      
+      // Upload file to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+      
+      if (error) {
+        console.error('[ProfilePopover] Storage upload error:', error);
+        throw error;
+      }
+      
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+      
+      console.log('[ProfilePopover] Avatar uploaded successfully:', publicUrl);
+      return publicUrl;
+      
+    } catch (error: any) {
+      console.error('[ProfilePopover] Error uploading avatar:', error);
+      toast({
+        title: "Erro no upload",
+        description: "Não foi possível fazer upload da imagem",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
 
   const handleProfileUpdate = async (values: UserProfileFormValues) => {
     console.log('[ProfilePopover] Iniciando atualização de perfil com valores:', values);
@@ -127,37 +176,44 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
     }
   };
 
-  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      // Validar tamanho do arquivo (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: "Arquivo muito grande",
-          description: "Por favor, selecione uma imagem menor que 5MB",
-          variant: "destructive",
-        });
-        return;
-      }
+    if (!file) return;
+    
+    // Validar tamanho do arquivo (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Arquivo muito grande",
+        description: "Por favor, selecione uma imagem menor que 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
 
-      // Validar tipo do arquivo
-      if (!file.type.startsWith('image/')) {
-        toast({
-          title: "Tipo de arquivo inválido",
-          description: "Por favor, selecione apenas imagens",
-          variant: "destructive",
-        });
-        return;
-      }
+    // Validar tipo do arquivo
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Tipo de arquivo inválido",
+        description: "Por favor, selecione apenas imagens",
+        variant: "destructive",
+      });
+      return;
+    }
 
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        console.log('[ProfilePopover] Nova imagem carregada, atualizando preview');
-        setAvatarPreview(result);
-        form.setValue("avatar", result);
-      };
-      reader.readAsDataURL(file);
+    // Create preview immediately
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      setAvatarPreview(result);
+    };
+    reader.readAsDataURL(file);
+    
+    // Upload to storage
+    const uploadedUrl = await uploadAvatarToStorage(file);
+    if (uploadedUrl) {
+      console.log('[ProfilePopover] Setting avatar URL:', uploadedUrl);
+      form.setValue("avatar", uploadedUrl);
+      setAvatarPreview(uploadedUrl);
     }
   };
 
@@ -204,7 +260,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
                 <label htmlFor="avatar-upload" className="cursor-pointer">
                   <div className="flex items-center gap-2 text-sm text-merinno-blue hover:underline">
                     <Upload className="h-4 w-4" />
-                    <span>Alterar foto</span>
+                    <span>{isUploadingAvatar ? "Enviando..." : "Alterar foto"}</span>
                   </div>
                   <input
                     id="avatar-upload"
@@ -212,6 +268,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
                     accept="image/*"
                     className="hidden"
                     onChange={handleAvatarChange}
+                    disabled={isUploadingAvatar}
                   />
                 </label>
               </div>
@@ -235,11 +292,14 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
                 type="button" 
                 variant="outline" 
                 onClick={() => handleOpenChange(false)}
-                disabled={isSubmitting}
+                disabled={isSubmitting || isUploadingAvatar}
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting || isUploadingAvatar}
+              >
                 {isSubmitting ? "Salvando..." : "Salvar"}
               </Button>
             </DialogFooter>
