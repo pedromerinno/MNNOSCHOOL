@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { CompanyNoticesAdminList } from '@/components/admin/CompanyNoticesAdminList';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
+import { AdminPageSkeleton } from '@/components/admin/AdminPageSkeleton';
 import { toast } from 'sonner';
 
 const AdminPage = () => {
@@ -24,10 +25,8 @@ const AdminPage = () => {
   
   const location = useLocation();
   
-  // Initialize with the appropriate default tab based on user role
-  const [activeTab, setActiveTab] = useState(userProfile?.super_admin ? "platform" : "companies");
-  const [isReady, setIsReady] = useState(false);
-  const [hasInitialized, setHasInitialized] = useState(false);
+  const [activeTab, setActiveTab] = useState("");
+  const [isInitialized, setIsInitialized] = useState(false);
 
   console.log('[Admin] Current state:', {
     activeTab,
@@ -35,58 +34,58 @@ const AdminPage = () => {
     isAdmin: userProfile?.is_admin,
     isSuperAdmin: userProfile?.super_admin,
     authLoading,
-    isReady
+    isInitialized
   });
 
   // Verificação melhorada de permissões de admin
   const hasAdminAccess = Boolean(userProfile?.is_admin || userProfile?.super_admin);
 
-  // Inicialização melhorada para evitar recarregamentos
+  // Inicialização mais robusta para evitar flashes
   useEffect(() => {
-    // Prevent multiple initializations
-    if (hasInitialized || authLoading) {
+    // Aguardar até que o auth esteja completo e o userProfile esteja disponível
+    if (authLoading || !userProfile) {
       return;
     }
     
     console.log("Admin page - Auth loading complete", { userProfile });
     
-    // Verificar se o usuário tem permissões de admin - removida toast redundante
+    // Verificar se o usuário tem permissões de admin
     if (!hasAdminAccess) {
       console.log("Admin page - No admin access detected");
       return;
     }
     
-    // Lógica para determinar a aba inicial
+    // Determinar a aba inicial baseada no perfil do usuário
     const params = new URLSearchParams(location.search);
     const tabParam = params.get('tab');
     
-    // Definir a aba ativa sem navegação
+    let initialTab = "";
+    
     if (tabParam) {
-      setActiveTab(tabParam);
+      initialTab = tabParam;
     } else {
-      // Se não houver parâmetro, use o padrão
-      const defaultTab = userProfile?.super_admin ? "platform" : "companies";
-      
-      // Atualiza a URL sem causar navegação
-      if (defaultTab) {
-        const newUrl = new URL(window.location.href);
-        newUrl.searchParams.set('tab', defaultTab);
-        window.history.replaceState({}, '', newUrl.toString());
-        setActiveTab(defaultTab);
-      }
+      // Definir aba padrão baseada no tipo de usuário
+      initialTab = userProfile?.super_admin ? "platform" : "companies";
     }
     
-    setHasInitialized(true);
-    setIsReady(true);
-  }, [authLoading, location.search, userProfile, hasInitialized, hasAdminAccess]);
+    // Atualizar URL e estado apenas uma vez
+    if (initialTab) {
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set('tab', initialTab);
+      window.history.replaceState({}, '', newUrl.toString());
+      setActiveTab(initialTab);
+    }
+    
+    // Marcar como inicializado para parar de mostrar skeleton
+    setIsInitialized(true);
+  }, [authLoading, userProfile, hasAdminAccess, location.search]);
 
-  // Manipulador de mudança de aba otimizado para evitar recarregamentos
+  // Manipulador de mudança de aba
   const handleTabChange = useCallback((tab: string) => {
-    // Atualiza o estado diretamente
     setActiveTab(tab);
     console.log("Mudando para a aba:", tab);
     
-    // Atualiza URL sem causar recarregamento
+    // Atualizar URL sem causar recarregamento
     const newUrl = new URL(window.location.href);
     newUrl.searchParams.set('tab', tab);
     window.history.replaceState({}, '', newUrl.toString());
@@ -106,21 +105,12 @@ const AdminPage = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [activeTab]);
 
-  if (authLoading || !isReady) {
-    return (
-      <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
+  // Mostrar skeleton enquanto carrega ou não está inicializado
+  if (authLoading || !userProfile || !isInitialized) {
+    return <AdminPageSkeleton />;
   }
 
-  // Log detalhado para debugging
-  console.log("Admin page - Auth check", { 
-    is_admin: userProfile?.is_admin, 
-    super_admin: userProfile?.super_admin,
-    hasAccess: hasAdminAccess
-  });
-
+  // Verificar acesso após carregamento completo
   if (!hasAdminAccess) {
     console.log("Admin page - Access denied, redirecting to home");
     return <Navigate to="/" replace />;
