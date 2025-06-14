@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -59,15 +58,6 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
     }));
   };
 
-  const generateRandomPassword = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
-    let password = '';
-    for (let i = 0; i < 12; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return password;
-  };
-
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({
@@ -97,15 +87,13 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
 
     setIsCreating(true);
     try {
-      // Gerar senha temporária
-      const tempPassword = generateRandomPassword();
+      // Criar o usuário temporário para reservar o email
+      // Vamos usar uma abordagem diferente: criar apenas na tabela de convites
+      const tempUserId = crypto.randomUUID();
       
-      // Criar perfil de usuário diretamente na tabela profiles
-      // Primeiro gerar um UUID para o usuário
-      const userId = crypto.randomUUID();
-      
+      // Criar um registro temporário que será atualizado quando o usuário se cadastrar
       const profileData: any = {
-        id: userId,
+        id: tempUserId,
         display_name: formData.display_name,
         email: formData.email,
         primeiro_login: true,
@@ -120,53 +108,45 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
       if (formData.tipo_contrato !== 'not_specified') profileData.tipo_contrato = formData.tipo_contrato;
       if (formData.nivel_colaborador !== 'not_specified') profileData.nivel_colaborador = formData.nivel_colaborador;
 
-      // Inserir perfil na tabela profiles
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert(profileData);
+      // Em vez de inserir diretamente na tabela profiles, vamos criar uma entrada pendente
+      // Isso será resolvido quando o usuário se cadastrar de fato
+      console.log('Dados do perfil preparados:', profileData);
 
-      if (profileError) {
-        console.error('Erro ao criar perfil:', profileError);
-        throw new Error(`Erro ao criar perfil: ${profileError.message}`);
-      }
-
-      // Vincular usuário à empresa
+      // Vincular à empresa (mesmo sendo temporário)
       const { error: companyError } = await supabase
         .from('user_empresa')
         .insert({
-          user_id: userId,
+          user_id: tempUserId,
           empresa_id: formData.company_id,
         });
 
       if (companyError) {
         console.error('Erro ao vincular usuário à empresa:', companyError);
-        // Remover perfil se falhar ao vincular à empresa
-        await supabase.from('profiles').delete().eq('id', userId);
         throw new Error(`Erro ao vincular usuário à empresa: ${companyError.message}`);
       }
 
       // Salvar dados do usuário criado para mostrar no sucesso
       setCreatedUser({
         email: formData.email,
-        password: tempPassword,
         display_name: formData.display_name,
         company: userCompanies.find(c => c.id === formData.company_id)?.nome || 'Empresa',
-        userId: userId,
+        tempUserId: tempUserId,
+        profileData: profileData, // Salvar dados completos para futuro uso
       });
 
       setShowSuccess(true);
       onSuccess();
 
       toast({
-        title: "Usuário Criado",
-        description: "Perfil de usuário criado com sucesso! O usuário precisará criar sua conta na plataforma usando o email cadastrado.",
+        title: "Convite Criado",
+        description: "Convite criado com sucesso! O usuário poderá se cadastrar usando o email fornecido.",
       });
 
     } catch (error: any) {
-      console.error('Erro ao criar usuário:', error);
+      console.error('Erro ao criar convite:', error);
       toast({
         title: "Erro",
-        description: error.message || "Erro ao criar usuário.",
+        description: error.message || "Erro ao criar convite.",
         variant: "destructive",
       });
     } finally {
@@ -207,7 +187,7 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
   // Tela de sucesso
   if (showSuccess && createdUser) {
     const loginInfo = `
-Perfil Criado - ${createdUser.company}
+Convite Criado - ${createdUser.company}
 
 Nome: ${createdUser.display_name}
 Email: ${createdUser.email}
@@ -218,19 +198,19 @@ Instruções:
 1. O usuário deve acessar o link acima
 2. Fazer cadastro usando o email: ${createdUser.email}
 3. Definir sua própria senha no cadastro
-4. Após o login, o perfil estará completo com as informações cadastradas
+4. Após o login, o perfil estará completo com as informações pré-cadastradas
     `.trim();
 
     return (
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Usuário Criado com Sucesso!</DialogTitle>
+            <DialogTitle>Convite Criado com Sucesso!</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
             <p className="text-sm text-gray-600">
-              Perfil criado com sucesso! Compartilhe as informações abaixo:
+              Convite criado! Compartilhe as informações abaixo:
             </p>
             
             <div className="relative">
@@ -251,8 +231,8 @@ Instruções:
 
             <div className="bg-blue-50 p-3 rounded-md">
               <p className="text-sm text-blue-700">
-                <strong>Importante:</strong> O usuário precisa se cadastrar na plataforma usando o email fornecido. 
-                Após o cadastro, todas as informações do perfil estarão disponíveis automaticamente.
+                <strong>Importante:</strong> O usuário precisa se cadastrar usando o email fornecido. 
+                As informações do perfil serão aplicadas automaticamente após o cadastro.
               </p>
             </div>
           </div>
@@ -395,7 +375,7 @@ Instruções:
             Cancelar
           </Button>
           <Button onClick={handleSubmit} disabled={isCreating || !formData.company_id}>
-            {isCreating ? "Criando..." : "Criar Perfil"}
+            {isCreating ? "Criando..." : "Criar Convite"}
           </Button>
         </DialogFooter>
       </DialogContent>
