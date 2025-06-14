@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Upload } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -49,6 +49,10 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
   const [avatarPreview, setAvatarPreview] = useState<string>("https://i.pravatar.cc/150?img=68");
   const [isLoadingCompanies, setIsLoadingCompanies] = useState(false);
   const { toast } = useToast();
+  
+  // Controle para evitar múltiplas requisições
+  const hasLoadedCompaniesRef = useRef(false);
+  const dialogOpenedRef = useRef(false);
 
   const form = useForm<UserProfileFormValues>({
     resolver: zodResolver(userProfileSchema),
@@ -71,16 +75,28 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
     }
   }, [userProfile, email, form]);
 
-  // Force reload companies when dialog opens
+  // Force reload companies when dialog opens - only once per dialog session
   useEffect(() => {
-    if (isOpen && user?.id) {
+    if (isOpen && user?.id && !dialogOpenedRef.current) {
       console.log('[ProfileDialog] Dialog opened, reloading companies for user:', user.id);
-      setIsLoadingCompanies(true);
-      forceGetUserCompanies(user.id).finally(() => {
-        setIsLoadingCompanies(false);
-      });
+      dialogOpenedRef.current = true;
+      hasLoadedCompaniesRef.current = false;
+      
+      // Only reload if we don't have companies or this is the first time opening
+      if (userCompanies.length === 0 || !hasLoadedCompaniesRef.current) {
+        setIsLoadingCompanies(true);
+        forceGetUserCompanies(user.id).finally(() => {
+          setIsLoadingCompanies(false);
+          hasLoadedCompaniesRef.current = true;
+        });
+      }
     }
-  }, [isOpen, user?.id, forceGetUserCompanies]);
+    
+    // Reset control when dialog closes
+    if (!isOpen) {
+      dialogOpenedRef.current = false;
+    }
+  }, [isOpen, user?.id, forceGetUserCompanies, userCompanies.length]);
 
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
