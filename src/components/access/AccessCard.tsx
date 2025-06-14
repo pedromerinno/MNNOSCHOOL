@@ -87,7 +87,7 @@ export const AccessCard = ({ item, onClick, companyColor, onEdit, onAccessUpdate
     </>
   );
 
-  const CardContent = () => (
+  const AccessCardContent = () => (
     <Card 
       className="hover:shadow-md transition-all duration-200 cursor-pointer group dark:hover:shadow-gray-800 relative overflow-hidden p-5 space-y-4"
       onClick={onClick}
@@ -170,7 +170,7 @@ export const AccessCard = ({ item, onClick, companyColor, onEdit, onAccessUpdate
     return (
       <ContextMenu>
         <ContextMenuTrigger>
-          <CardContent />
+          <AccessCardContent />
         </ContextMenuTrigger>
         <ContextMenuContent>
           <ContextMenuItem onClick={handleEdit}>
@@ -190,5 +190,5 @@ export const AccessCard = ({ item, onClick, companyColor, onEdit, onAccessUpdate
     );
   }
 
-  return <CardContent />;
+  return <AccessCardContent />;
 };
