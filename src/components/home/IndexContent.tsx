@@ -24,43 +24,35 @@ export const IndexContent = () => {
     shouldShowNoCompaniesState
   } = useIndexContentState();
 
-  // Mostrar skeleton enquanto dados não estão prontos
+  // Mostrar skeleton apenas enquanto não tem dados básicos
   if (!isPageReady || !user) {
     return <IndexSkeleton />;
   }
 
-  // Mostrar conteúdo principal se usuário pode acessar
-  if (shouldShowContent) {
-    return (
-      <div className="min-h-screen bg-background">
-        <UserHome />
-        
-        <CompanySelectionDialog 
-          open={showCompanyDialog}
-          onOpenChange={setShowCompanyDialog}
-          onCompanyCreated={() => {
-            handleCompanyComplete();
-            if (user?.id) {
-              forceGetUserCompanies(user.id);
-            }
-          }}
-          onCompanyTypeSelect={() => {}}
-        />
-        
-        <UserProfileDialog 
-          open={showProfileDialog}
-          onOpenChange={setShowProfileDialog}
-          onProfileComplete={handleProfileComplete}
-        />
-      </div>
-    );
-  }
-
-  // Mostrar estado de "sem empresas" se aplicável
-  if (shouldShowNoCompaniesState) {
-    return <NoCompaniesAvailable />;
-  }
-
-  // Fallback para casos não cobertos - mostrar skeleton
-  return <IndexSkeleton />;
+  // Sempre mostrar o conteúdo principal quando a página está pronta
+  return (
+    <div className="min-h-screen bg-background">
+      <UserHome />
+      
+      <CompanySelectionDialog 
+        open={showCompanyDialog}
+        onOpenChange={setShowCompanyDialog}
+        onCompanyCreated={() => {
+          handleCompanyComplete();
+          if (user?.id) {
+            forceGetUserCompanies(user.id);
+          }
+        }}
+        onCompanyTypeSelect={() => {}}
+      />
+      
+      <UserProfileDialog 
+        open={showProfileDialog}
+        onOpenChange={setShowProfileDialog}
+        onProfileComplete={handleProfileComplete}
+      />
+      
+      {shouldShowNoCompaniesState && <NoCompaniesAvailable />}
+    </div>
+  );
 };

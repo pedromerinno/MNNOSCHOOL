@@ -2,12 +2,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
-import { useOptimizedCache } from "@/hooks/useOptimizedCache";
 
 export const useIndexContentState = () => {
   const { user, userProfile, loading: authLoading } = useAuth();
   const { userCompanies, isLoading: companiesLoading, selectedCompany } = useCompanies();
-  const { isCacheReady, getCacheState } = useOptimizedCache();
   
   const [isPageReady, setIsPageReady] = useState(false);
   const [showCompanyDialog, setShowCompanyDialog] = useState(false);
@@ -18,38 +16,33 @@ export const useIndexContentState = () => {
 
   // Verificar se todos os dados essenciais estão prontos
   const allDataReady = !authLoading && user && userProfile && !companiesLoading;
-  const cacheReady = isCacheReady('userCompanies') && isCacheReady('selectedCompany');
 
-  // Determinar se a página está pronta para mostrar conteúdo
+  // Determinar se a página está pronta para mostrar conteúdo (menos restritivo)
   useEffect(() => {
-    if (allDataReady && cacheReady && !hasCheckedInitialState.current) {
-      console.log('[IndexContentState] All data ready, checking initial state...');
+    if (allDataReady && !hasCheckedInitialState.current) {
+      console.log('[IndexContentState] Auth and profile data ready, setting page ready...');
       hasCheckedInitialState.current = true;
+      setIsPageReady(true);
       
-      // Pequeno delay para garantir que todos os dados estão estabilizados
-      setTimeout(() => {
-        setIsPageReady(true);
+      // Verificar se precisa mostrar diálogos apenas após dados estarem prontos
+      if (!dialogsInitialized.current) {
+        dialogsInitialized.current = true;
         
-        // Verificar se precisa mostrar diálogos apenas após dados estarem prontos
-        if (!dialogsInitialized.current) {
-          dialogsInitialized.current = true;
-          
-          // Verificar perfil incompleto
-          if (!userProfile?.display_name) {
-            console.log('[IndexContentState] Profile incomplete, showing profile dialog');
-            setShowProfileDialog(true);
-            return;
-          }
-          
-          // Verificar se precisa do diálogo de empresa (apenas para não-super-admins sem empresas)
-          if (!userProfile?.super_admin && userCompanies.length === 0) {
-            console.log('[IndexContentState] No companies found, showing company dialog');
-            setShowCompanyDialog(true);
-          }
+        // Verificar perfil incompleto
+        if (!userProfile?.display_name) {
+          console.log('[IndexContentState] Profile incomplete, showing profile dialog');
+          setShowProfileDialog(true);
+          return;
         }
-      }, 100);
+        
+        // Verificar se precisa do diálogo de empresa (apenas para não-super-admins sem empresas)
+        if (!userProfile?.super_admin && userCompanies.length === 0) {
+          console.log('[IndexContentState] No companies found, showing company dialog');
+          setShowCompanyDialog(true);
+        }
+      }
     }
-  }, [allDataReady, cacheReady, userProfile, userCompanies.length]);
+  }, [allDataReady, userProfile, userCompanies.length]);
 
   // Handlers para os diálogos
   const handleProfileComplete = () => {
@@ -74,7 +67,9 @@ export const useIndexContentState = () => {
     // Usuário com empresas pode ver o conteúdo
     if (userCompanies.length > 0) return true;
     
-    // Caso contrário, mostrar estado de "sem empresas"
+    // Se não tem empresas mas não está mostrando os diálogos, mostrar conteúdo também
+    if (!showCompanyDialog && !showProfileDialog) return true;
+    
     return false;
   };
 
@@ -96,7 +91,6 @@ export const useIndexContentState = () => {
     handleCompanyComplete,
     shouldShowContent: shouldShowContent(),
     shouldShowNoCompaniesState: shouldShowNoCompaniesState(),
-    allDataReady,
-    cacheReady
+    allDataReady
   };
 };
