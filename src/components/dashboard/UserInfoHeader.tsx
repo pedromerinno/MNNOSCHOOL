@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,6 +23,31 @@ export const UserInfoHeader = () => {
     totalAvailableCourses: 0
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [displayName, setDisplayName] = useState("");
+  const [displayAvatar, setDisplayAvatar] = useState("");
+
+  // Listen for profile updates
+  useEffect(() => {
+    const handleProfileUpdate = (event: CustomEvent) => {
+      console.log('UserInfoHeader: Profile updated', event.detail);
+      setDisplayName(event.detail.display_name);
+      if (event.detail.avatar) {
+        setDisplayAvatar(event.detail.avatar);
+      }
+    };
+
+    window.addEventListener('profile-updated', handleProfileUpdate as EventListener);
+    
+    return () => {
+      window.removeEventListener('profile-updated', handleProfileUpdate as EventListener);
+    };
+  }, []);
+
+  // Update display values when userProfile changes
+  useEffect(() => {
+    setDisplayName(userProfile?.display_name || user?.email?.split('@')[0] || "Usuário");
+    setDisplayAvatar(userProfile?.avatar || "");
+  }, [userProfile, user]);
 
   // Função memorizada de busca de estatísticas para evitar rerenders
   const fetchUserStats = useCallback(async () => {
@@ -134,8 +158,8 @@ export const UserInfoHeader = () => {
   }, [user?.id, selectedCompany?.id, fetchUserStats]);
 
   // Get user initials for avatar fallback
-  const userInitials = userProfile?.display_name ? 
-    getInitials(userProfile.display_name) : 
+  const userInitials = displayName ? 
+    getInitials(displayName) : 
     user?.email ? getInitials(user.email) : "U";
 
   return (
@@ -146,7 +170,7 @@ export const UserInfoHeader = () => {
             <Skeleton className="h-16 w-16 rounded-full" />
           ) : (
             <Avatar className="h-16 w-16 mr-4">
-              <AvatarImage src={userProfile?.avatar || ""} alt={userProfile?.display_name || "User"} />
+              <AvatarImage src={displayAvatar} alt={displayName || "User"} />
               <AvatarFallback className="text-lg font-medium bg-primary/10 text-primary">
                 {userInitials}
               </AvatarFallback>
@@ -162,7 +186,7 @@ export const UserInfoHeader = () => {
             ) : (
               <>
                 <h2 className="text-xl font-semibold">
-                  {userProfile?.display_name || user?.email?.split('@')[0] || "Usuário"}
+                  {displayName}
                 </h2>
                 <p className="text-gray-500 dark:text-gray-400">{user?.email}</p>
                 

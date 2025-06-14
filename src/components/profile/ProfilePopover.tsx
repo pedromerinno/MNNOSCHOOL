@@ -70,6 +70,14 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
       
       onSave(values);
       
+      // Dispatch custom event to notify other components about profile update
+      window.dispatchEvent(new CustomEvent('profile-updated', {
+        detail: {
+          display_name: values.name,
+          avatar: values.avatar
+        }
+      }));
+      
       toast({
         title: "Perfil atualizado",
         description: "Suas alterações foram salvas com sucesso.",
