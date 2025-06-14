@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
@@ -16,7 +15,7 @@ function Calendar({
   ...props
 }: CalendarProps) {
   const { selectedCompany } = useCompanies();
-  const companyColor = selectedCompany?.cor_principal || "#a16207"; // amber-700 default
+  const companyColor = selectedCompany?.cor_principal || "#000000"; // Default to black
   
   // Convert hex to RGB for CSS variables
   const hexToRgb = (hex: string) => {
@@ -25,7 +24,7 @@ function Calendar({
       r: parseInt(result[1], 16),
       g: parseInt(result[2], 16),
       b: parseInt(result[3], 16)
-    } : { r: 161, g: 98, b: 7 }; // Default amber-700
+    } : { r: 0, g: 0, b: 0 }; // Default to black RGB
   };
   
   const rgb = hexToRgb(companyColor);
