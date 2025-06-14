@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useCompanies } from "@/hooks/useCompanies";
+import { supabase } from "@/integrations/supabase/client";
 
 interface NewAccessDialogProps {
   open: boolean;
@@ -47,19 +48,51 @@ export const NewAccessDialog: React.FC<NewAccessDialogProps> = ({ open, onOpenCh
     }
   };
 
+  const resetForm = () => {
+    setToolName("");
+    setUsername("");
+    setPassword("");
+    setUrl("");
+    setNotes("");
+  };
+
   const handleSave = async () => {
     try {
+      if (!tool_name || !username || !password) {
+        toast.error('Por favor, preencha todos os campos obrigatórios');
+        return;
+      }
+
+      if (!selectedCompany?.id) {
+        toast.error('Por favor, selecione uma empresa');
+        return;
+      }
+
       setLoading(true);
-      await new Promise(res => setTimeout(res, 1200));
+
+      const { error } = await supabase
+        .from('company_access')
+        .insert({
+          company_id: selectedCompany.id,
+          tool_name: tool_name,
+          username: username,
+          password: password,
+          url: url || null,
+          notes: notes || null
+        });
+
+      if (error) throw error;
+
       toast.success("Acesso criado com sucesso.");
+      
+      // Dispatch event to notify other components
+      window.dispatchEvent(new CustomEvent('access-created'));
+      
       onOpenChange(false);
-      setToolName("");
-      setUsername("");
-      setPassword("");
-      setUrl("");
-      setNotes("");
-    } catch (e) {
-      toast.error("Erro ao criar acesso.");
+      resetForm();
+    } catch (error: any) {
+      console.error('Error saving access:', error);
+      toast.error(`Erro ao criar acesso: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -120,20 +153,20 @@ export const NewAccessDialog: React.FC<NewAccessDialogProps> = ({ open, onOpenCh
         </div>
         <div className="space-y-3 py-2">
           <div>
-            <Label>Nome da Ferramenta</Label>
+            <Label>Nome da Ferramenta *</Label>
             <Input value={tool_name} onChange={e => setToolName(e.target.value)} />
           </div>
           <div>
-            <Label>Usuário</Label>
+            <Label>Usuário *</Label>
             <Input value={username} onChange={e => setUsername(e.target.value)} />
           </div>
           <div>
-            <Label>Senha</Label>
+            <Label>Senha *</Label>
             <Input type="password" value={password} onChange={e => setPassword(e.target.value)} />
           </div>
           <div>
             <Label>URL</Label>
-            <Input value={url} onChange={e => setUrl(e.target.value)} />
+            <Input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://..." />
           </div>
           <div>
             <Label>Observações</Label>
