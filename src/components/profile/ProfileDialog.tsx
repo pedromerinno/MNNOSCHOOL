@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Upload } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -134,6 +133,13 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
       <DialogContent 
         className="sm:max-w-[425px] overflow-y-auto max-h-[85vh]"
         style={{ pointerEvents: 'auto' }}
+        onPointerDownOutside={(e) => {
+          // Previne fechar o dialog quando clicar fora
+          const target = e.target as Element;
+          if (target.closest('[data-company-remove-button]')) {
+            e.preventDefault();
+          }
+        }}
       >
         <DialogHeader>
           <DialogTitle>Editar Perfil</DialogTitle>
@@ -184,7 +190,7 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
             <div className="border-t pt-4">
               {isLoadingCompanies ? (
                 <div className="flex items-center justify-center p-4">
-                  <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
+                  <div className="w-3 h-3 border border-gray-300 border-t-blue-500 rounded-full animate-spin" />
                   <span className="ml-2 text-sm text-muted-foreground">Carregando empresas...</span>
                 </div>
               ) : (
