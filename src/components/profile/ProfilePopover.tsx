@@ -190,10 +190,13 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
   const currentAvatarUrl = avatarPreview || userProfile?.avatar || "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png";
   const currentName = form.watch("name") || userProfile?.display_name || email?.split('@')[0] || "U";
   
-  // Simplificar a lógica - mostrar botão de remover se há avatar no perfil OU preview
-  const shouldShowDeleteButton = Boolean(
+  // Verificar se tem avatar personalizado
+  const defaultAvatarUrl = "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png";
+  const hasCustomAvatar = Boolean(
     avatarPreview || 
-    (userProfile?.avatar && userProfile.avatar.trim() !== "")
+    (userProfile?.avatar && 
+     userProfile.avatar !== defaultAvatarUrl && 
+     userProfile.avatar.trim() !== "")
   );
 
   const handleOpenDialog = (e: React.MouseEvent) => {
@@ -208,7 +211,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
     currentAvatarUrl, 
     currentName, 
     isUploading, 
-    shouldShowDeleteButton,
+    hasCustomAvatar,
     userProfileAvatar: userProfile?.avatar,
     avatarPreview
   });
@@ -259,8 +262,8 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
                   />
                 </label>
                 
-                {/* Botão de exclusão - mostrar se há avatar */}
-                {shouldShowDeleteButton && (
+                {/* Botão de exclusão - sempre visível se tem avatar personalizado */}
+                {hasCustomAvatar && (
                   <Button
                     type="button"
                     variant="outline"
@@ -274,11 +277,13 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
                   </Button>
                 )}
                 
-                {/* Debug info - para debug apenas */}
-                <div className="text-xs text-gray-400 mt-2 text-center">
-                  <div>shouldShowDeleteButton: {shouldShowDeleteButton.toString()}</div>
-                  <div>userProfileAvatar: {userProfile?.avatar || 'null'}</div>
+                {/* Debug info - temporário para debug */}
+                <div className="text-xs text-gray-400 mt-2 text-center bg-gray-50 p-2 rounded">
+                  <div>hasCustomAvatar: {hasCustomAvatar.toString()}</div>
+                  <div>userProfile?.avatar: {userProfile?.avatar || 'null'}</div>
                   <div>avatarPreview: {avatarPreview || 'null'}</div>
+                  <div>currentAvatarUrl: {currentAvatarUrl}</div>
+                  <div>isDefault: {(userProfile?.avatar === defaultAvatarUrl).toString()}</div>
                 </div>
               </div>
             </div>
