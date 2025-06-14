@@ -168,7 +168,11 @@ export const CompanyManagementSection = ({
           }
         }}
       >
-        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+        <AlertDialogContent 
+          className="pointer-events-auto"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-destructive" />
@@ -180,7 +184,12 @@ export const CompanyManagementSection = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isUnlinking}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel 
+              disabled={isUnlinking}
+              onClick={() => setCompanyToRemove(null)}
+            >
+              Cancelar
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleUnlinkCompany}
               disabled={isUnlinking}

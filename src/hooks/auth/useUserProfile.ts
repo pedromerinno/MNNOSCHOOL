@@ -15,7 +15,7 @@ export const useUserProfile = () => {
   const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
   const CACHE_KEY = 'user_profile';
 
-  // Função para verificar e aplicar convites pendentes (APENAS UM)
+  // Função para verificar e aplicar convites pendentes (APENAS UM) - SIMPLIFICADA
   const checkAndApplyInvite = useCallback(async (userId: string, userEmail: string) => {
     try {
       console.log('[useUserProfile] Verificando convites pendentes para:', userEmail);
@@ -28,15 +28,15 @@ export const useUserProfile = () => {
         .gt('expires_at', new Date().toISOString())
         .eq('used', false)
         .order('created_at', { ascending: false })
-        .limit(1); // Garantir que pegamos apenas 1
+        .limit(1);
 
       if (inviteError) {
-        console.error('[useUserProfile] Erro ao buscar convites:', inviteError);
-        return;
+        console.log('[useUserProfile] Não foi possível buscar convites (normal se não houver permissão):', inviteError.message);
+        return; // Não é um erro crítico
       }
 
       if (invites && invites.length > 0) {
-        const invite = invites[0]; // Pegar apenas o primeiro convite
+        const invite = invites[0];
         console.log('[useUserProfile] Aplicando convite mais recente:', invite);
 
         // Verificar se o usuário já não está vinculado a esta empresa
@@ -50,7 +50,6 @@ export const useUserProfile = () => {
         if (existingRelation) {
           console.log('[useUserProfile] Usuário já vinculado a esta empresa, marcando convite como usado');
           
-          // Marcar convite como usado mesmo se já vinculado
           await supabase
             .from('user_invites')
             .update({ used: true, used_at: new Date().toISOString() })
@@ -65,7 +64,6 @@ export const useUserProfile = () => {
           primeiro_login: false
         };
 
-        // Adicionar dados opcionais se existirem
         if (invite.cidade) profileUpdates.cidade = invite.cidade;
         if (invite.aniversario) profileUpdates.aniversario = invite.aniversario;
         if (invite.data_inicio) profileUpdates.data_inicio = invite.data_inicio;
@@ -83,7 +81,7 @@ export const useUserProfile = () => {
           return;
         }
 
-        // Vincular usuário APENAS à empresa do convite
+        // Vincular usuário à empresa
         const { error: companyError } = await supabase
           .from('user_empresa')
           .insert({
@@ -95,43 +93,23 @@ export const useUserProfile = () => {
           console.error('[useUserProfile] Erro ao vincular usuário à empresa:', companyError);
         } else {
           console.log('[useUserProfile] Usuário vinculado à empresa com sucesso:', invite.company_id);
-          
-          // Disparar evento para atualizar dados de empresa
           window.dispatchEvent(new CustomEvent('company-relation-changed'));
         }
 
-        // Marcar APENAS este convite como usado
-        const { error: markUsedError } = await supabase
+        // Marcar convite como usado
+        await supabase
           .from('user_invites')
           .update({ used: true, used_at: new Date().toISOString() })
           .eq('id', invite.id);
 
-        if (markUsedError) {
-          console.error('[useUserProfile] Erro ao marcar convite como usado:', markUsedError);
-        }
-
-        // Marcar outros convites para o mesmo email como expirados para evitar múltiplas vinculações
-        const { error: expireOthersError } = await supabase
-          .from('user_invites')
-          .update({ 
-            used: true, 
-            used_at: new Date().toISOString() 
-          })
-          .eq('email', userEmail.toLowerCase())
-          .eq('used', false)
-          .neq('id', invite.id);
-
-        if (expireOthersError) {
-          console.error('[useUserProfile] Erro ao expirar outros convites:', expireOthersError);
-        }
-
-        console.log('[useUserProfile] Convite aplicado com sucesso e outros convites expirados');
+        console.log('[useUserProfile] Convite aplicado com sucesso');
         toast.success(`Seu perfil foi configurado automaticamente! Bem-vindo à empresa.`);
       } else {
         console.log('[useUserProfile] Nenhum convite pendente encontrado para:', userEmail);
       }
     } catch (error) {
-      console.error('[useUserProfile] Erro ao verificar convites:', error);
+      console.log('[useUserProfile] Erro ao verificar convites (não crítico):', error);
+      // Não fazer nada - convites são opcionais
     }
   }, []);
 
@@ -144,7 +122,6 @@ export const useUserProfile = () => {
         .eq('id', userId)
         .single();
 
-      // Se o email do perfil não existe ou é diferente do email de auth, atualiza
       if (!profileData?.email || profileData.email !== authEmail) {
         const { error } = await supabase
           .from('profiles')
@@ -163,7 +140,6 @@ export const useUserProfile = () => {
   }, []);
 
   const fetchUserProfile = useCallback(async (userId: string, forceRefresh: boolean = false) => {
-    // Prevent multiple fetches, but allow force refresh
     if (fetchInProgress.current && !forceRefresh) {
       return;
     }
@@ -174,10 +150,8 @@ export const useUserProfile = () => {
       
       console.log('[useUserProfile] Fetching user profile for:', userId, 'forceRefresh:', forceRefresh);
       
-      // Buscar dados do usuário autenticado para obter email atual
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Sincronizar email antes de buscar o perfil
       if (user?.email) {
         await syncEmailWithAuth(userId, user.email);
       }
@@ -201,7 +175,6 @@ export const useUserProfile = () => {
         if (error.code === 'PGRST116') {
           console.log('No profile found for user, creating one...');
           
-          // Se não encontrar perfil, criar um básico
           const newProfile = {
             id: userId,
             email: user?.email || null,
@@ -218,12 +191,11 @@ export const useUserProfile = () => {
             return;
           }
           
-          // Verificar e aplicar convites após criar perfil
+          // Verificar convites apenas uma vez após criar perfil
           if (user?.email) {
             await checkAndApplyInvite(userId, user.email);
           }
           
-          // Buscar o perfil recém-criado
           const { data: newData, error: newError } = await supabase
             .from('profiles')
             .select(`
@@ -251,11 +223,10 @@ export const useUserProfile = () => {
       } else {
         profileData = data;
         
-        // Se é o primeiro login e há um email, verificar convites
+        // Verificar convites apenas se é primeiro login
         if (profileData.primeiro_login && user?.email) {
           await checkAndApplyInvite(userId, user.email);
           
-          // Recarregar perfil após aplicar convite
           const { data: updatedData } = await supabase
             .from('profiles')
             .select(`
@@ -287,7 +258,6 @@ export const useUserProfile = () => {
           cargo_id: profileData.cargo_id,
           primeiro_login: profileData.primeiro_login,
           created_at: profileData.created_at,
-          // Novas colunas com type casting seguro
           aniversario: profileData.aniversario,
           tipo_contrato: profileData.tipo_contrato as 'CLT' | 'PJ' | 'Fornecedor' | null,
           cidade: profileData.cidade,
@@ -306,7 +276,6 @@ export const useUserProfile = () => {
         setUserProfile(profile);
         setCache({ key: CACHE_KEY, expirationMinutes: 5 }, profile);
         
-        // Se é um refresh forçado, não marcar como fetched para permitir futuras atualizações
         if (!forceRefresh) {
           hasFetchedOnce.current = true;
         }
