@@ -37,25 +37,31 @@ export const useCompanyInitialization = () => {
     companyDialogTriggeredByProfile
   } = useProfileCompletionCheck();
 
-  // CRITICAL: Override company dialog to false if user has companies
-  const showCompanyDialog = userCompanies.length > 0 ? false : profileShowCompanyDialog;
+  // ABSOLUTE CRITICAL CHECK: Never show company dialog if user has companies
+  const hasUserCompanies = userCompanies.length > 0;
+  const shouldShowCompanyDialog = profileShowCompanyDialog && !hasUserCompanies;
   
-  console.log("[useCompanyInitialization] State check", {
+  console.log("[useCompanyInitialization] CRITICAL DECISION POINT:", {
     userCompaniesLength: userCompanies.length,
+    hasUserCompanies,
     profileShowCompanyDialog,
-    finalShowCompanyDialog: showCompanyDialog,
+    shouldShowCompanyDialog,
     showProfileDialog,
     userEmail: user?.email,
     isSuperAdmin: userProfile?.super_admin
   });
+
+  // If user has companies, always return false for company dialog
+  const showCompanyDialog = hasUserCompanies ? false : shouldShowCompanyDialog;
   
   function setShowDialog(show: boolean) {
-    // Additional safety check - don't allow opening if user has companies
-    if (show && userCompanies.length > 0) {
-      console.log("[useCompanyInitialization] Preventing dialog open - user has companies");
+    // CRITICAL SAFETY: Never allow opening dialog if user has companies
+    if (show && hasUserCompanies) {
+      console.log("[useCompanyInitialization] BLOCKED: Cannot open dialog - user has companies");
       return;
     }
     
+    console.log("[useCompanyInitialization] Setting company dialog:", show);
     profileSetShowCompanyDialog(show);
     
     if (show) {
