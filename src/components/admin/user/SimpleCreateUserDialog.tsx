@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Copy } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
-import { supabase } from "@/integrations/supabase/client";
 
 interface SimpleCreateUserDialogProps {
   isOpen: boolean;
@@ -25,10 +24,9 @@ export const SimpleCreateUserDialog: React.FC<SimpleCreateUserDialogProps> = ({
 }) => {
   const { toast } = useToast();
   const { userProfile } = useAuth();
-  const { userCompanies, forceGetUserCompanies, user } = useCompanies();
-  const [isCreating, setIsCreating] = useState(false);
-  const [createdInvite, setCreatedInvite] = useState<any>(null);
-  const [showSuccess, setShowSuccess] = useState(false);
+  const { userCompanies } = useCompanies();
+  const [showInviteText, setShowInviteText] = useState(false);
+  const [inviteText, setInviteText] = useState('');
   
   const [formData, setFormData] = useState({
     email: '',
@@ -38,13 +36,6 @@ export const SimpleCreateUserDialog: React.FC<SimpleCreateUserDialogProps> = ({
 
   // Verificar se o usuário tem permissão para criar convites
   const canCreateInvites = userProfile?.super_admin || userProfile?.is_admin;
-
-  // Carregar empresas quando o diálogo abrir
-  useEffect(() => {
-    if (isOpen && user?.id && userCompanies.length === 0) {
-      forceGetUserCompanies(user.id);
-    }
-  }, [isOpen, user?.id, userCompanies.length, forceGetUserCompanies]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -57,20 +48,11 @@ export const SimpleCreateUserDialog: React.FC<SimpleCreateUserDialogProps> = ({
     navigator.clipboard.writeText(text);
     toast({
       title: "Copiado!",
-      description: "Informação copiada para a área de transferência",
+      description: "Texto do convite copiado para a área de transferência",
     });
   };
 
-  const handleSubmit = async () => {
-    if (!canCreateInvites) {
-      toast({
-        title: "Erro de Permissão",
-        description: "Você não possui permissões para criar convites.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const generateInviteText = () => {
     if (!formData.email || !formData.display_name || !formData.company_id) {
       toast({
         title: "Erro",
@@ -80,62 +62,47 @@ export const SimpleCreateUserDialog: React.FC<SimpleCreateUserDialogProps> = ({
       return;
     }
 
-    setIsCreating(true);
-    try {
-      // Criar convite simples
-      const inviteData = {
-        email: formData.email.toLowerCase(),
-        display_name: formData.display_name,
-        company_id: formData.company_id,
-        created_by: userProfile?.id,
-        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 dias
-      };
+    const selectedCompany = userCompanies.find(c => c.id === formData.company_id);
+    const signupUrl = `${window.location.origin}/signup`;
+    
+    const inviteMessage = `🎉 Convite para ${selectedCompany?.nome || 'nossa empresa'}
 
-      const { data: inviteRecord, error: inviteError } = await supabase
-        .from('user_invites')
-        .insert(inviteData)
-        .select()
-        .single();
+Olá ${formData.display_name}!
 
-      if (inviteError) {
-        console.error('Erro ao criar convite:', inviteError);
-        throw inviteError;
-      }
+Você foi convidado(a) para fazer parte da nossa plataforma de gestão educacional e empresarial.
 
-      // Salvar dados do convite criado
-      const selectedCompany = userCompanies.find(c => c.id === formData.company_id);
-      setCreatedInvite({
-        email: formData.email,
-        display_name: formData.display_name,
-        company: selectedCompany?.nome || 'Empresa',
-        companyId: formData.company_id,
-        inviteId: inviteRecord.id,
-      });
+📧 Email para cadastro: ${formData.email}
+🏢 Código da Empresa: ${formData.company_id}
+🔗 Link de Cadastro: ${signupUrl}
 
-      setShowSuccess(true);
-      onSuccess();
+📋 INSTRUÇÕES PARA CADASTRO:
 
-      toast({
-        title: "Convite Criado",
-        description: "Convite criado com sucesso! Compartilhe as informações com o novo usuário.",
-      });
+1. Acesse o link de cadastro acima
+2. Crie sua conta usando exatamente o email: ${formData.email}
+3. Após o cadastro, você será automaticamente vinculado à empresa
+4. Caso não seja vinculado automaticamente, use o código da empresa: ${formData.company_id}
 
-    } catch (error: any) {
-      console.error('Erro ao criar convite:', error);
-      toast({
-        title: "Erro",
-        description: error.message || "Erro ao criar convite.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsCreating(false);
-    }
+⚠️ IMPORTANTE:
+- Use exatamente o email fornecido para garantir a vinculação automática
+- Mantenha o código da empresa em local seguro
+- Em caso de dúvidas, entre em contato conosco
+
+Bem-vindo(a) à ${selectedCompany?.nome || 'nossa empresa'}! 🚀`;
+
+    setInviteText(inviteMessage);
+    setShowInviteText(true);
+    onSuccess();
+
+    toast({
+      title: "Convite Gerado",
+      description: "Texto do convite foi gerado com sucesso! Copie e compartilhe com o novo usuário.",
+    });
   };
 
   const handleClose = () => {
     setFormData({ email: '', display_name: '', company_id: '' });
-    setCreatedInvite(null);
-    setShowSuccess(false);
+    setInviteText('');
+    setShowInviteText(false);
     onOpenChange(false);
   };
 
@@ -162,48 +129,31 @@ export const SimpleCreateUserDialog: React.FC<SimpleCreateUserDialogProps> = ({
     );
   }
 
-  // Tela de sucesso
-  if (showSuccess && createdInvite) {
-    const signupUrl = `${window.location.origin}/signup`;
-    const inviteInfo = `
-Convite para ${createdInvite.company}
-
-Nome: ${createdInvite.display_name}
-Email: ${createdInvite.email}
-Código da Empresa: ${createdInvite.companyId}
-
-Link de Cadastro: ${signupUrl}
-
-Instruções:
-1. Acesse o link de cadastro acima
-2. Crie sua conta usando o email: ${createdInvite.email}
-3. Após o cadastro, você será automaticamente vinculado à empresa
-4. Se não for vinculado automaticamente, use o código da empresa: ${createdInvite.companyId}
-    `.trim();
-
+  // Tela com o texto do convite gerado
+  if (showInviteText) {
     return (
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Convite Criado com Sucesso!</DialogTitle>
+            <DialogTitle>Convite Gerado com Sucesso!</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
             <p className="text-sm text-gray-600">
-              Convite criado! Compartilhe as informações abaixo com o novo usuário:
+              Copie o texto abaixo e compartilhe com o novo usuário:
             </p>
             
             <div className="relative">
               <Textarea
-                value={inviteInfo}
+                value={inviteText}
                 readOnly
-                className="min-h-[200px] font-mono text-sm"
+                className="min-h-[300px] font-mono text-sm resize-none"
               />
               <Button
                 size="sm"
                 variant="outline"
                 className="absolute top-2 right-2"
-                onClick={() => copyToClipboard(inviteInfo)}
+                onClick={() => copyToClipboard(inviteText)}
               >
                 <Copy className="h-4 w-4" />
               </Button>
@@ -218,6 +168,16 @@ Instruções:
           </div>
 
           <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowInviteText(false);
+                setInviteText('');
+                setFormData({ email: '', display_name: '', company_id: '' });
+              }}
+            >
+              Criar Novo Convite
+            </Button>
             <Button onClick={handleClose}>Fechar</Button>
           </DialogFooter>
         </DialogContent>
@@ -230,7 +190,7 @@ Instruções:
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Criar Convite de Usuário</DialogTitle>
+          <DialogTitle>Gerar Convite de Usuário</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4 py-4">
@@ -282,6 +242,13 @@ Instruções:
               placeholder="Nome completo do usuário"
             />
           </div>
+
+          <div className="bg-yellow-50 p-3 rounded-md">
+            <p className="text-sm text-yellow-700">
+              <strong>Nota:</strong> Isso gerará apenas um texto de convite para ser compartilhado. 
+              Nenhum registro será criado no banco de dados.
+            </p>
+          </div>
         </div>
 
         <DialogFooter>
@@ -289,10 +256,10 @@ Instruções:
             Cancelar
           </Button>
           <Button 
-            onClick={handleSubmit} 
-            disabled={isCreating || !formData.company_id || !formData.email || !formData.display_name}
+            onClick={generateInviteText} 
+            disabled={!formData.company_id || !formData.email || !formData.display_name}
           >
-            {isCreating ? "Criando..." : "Criar Convite"}
+            Gerar Convite
           </Button>
         </DialogFooter>
       </DialogContent>
