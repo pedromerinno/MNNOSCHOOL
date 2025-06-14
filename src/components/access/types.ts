@@ -8,4 +8,5 @@ export type AccessItem = {
   url: string | null;
   notes: string | null;
   created_at: string;
+  created_by: string | null;
 };

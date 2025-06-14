@@ -13,6 +13,7 @@ export type Database = {
         Row: {
           company_id: string
           created_at: string
+          created_by: string | null
           id: string
           notes: string | null
           password: string
@@ -23,6 +24,7 @@ export type Database = {
         Insert: {
           company_id: string
           created_at?: string
+          created_by?: string | null
           id?: string
           notes?: string | null
           password: string
@@ -33,6 +35,7 @@ export type Database = {
         Update: {
           company_id?: string
           created_at?: string
+          created_by?: string | null
           id?: string
           notes?: string | null
           password?: string

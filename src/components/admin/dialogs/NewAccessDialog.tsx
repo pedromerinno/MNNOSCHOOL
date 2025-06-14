@@ -68,6 +68,11 @@ export const NewAccessDialog: React.FC<NewAccessDialogProps> = ({ open, onOpenCh
         return;
       }
 
+      if (!user?.id) {
+        toast.error('Usuário não autenticado');
+        return;
+      }
+
       setLoading(true);
 
       const { error } = await supabase
@@ -78,7 +83,8 @@ export const NewAccessDialog: React.FC<NewAccessDialogProps> = ({ open, onOpenCh
           username: username,
           password: password,
           url: url || null,
-          notes: notes || null
+          notes: notes || null,
+          created_by: user.id
         });
 
       if (error) throw error;

@@ -22,8 +22,10 @@ export const AccessCard = ({ item, onClick, companyColor, onEdit, onAccessUpdate
   const { user } = useCompanies();
   const [isDeleting, setIsDeleting] = useState(false);
   
-  // Check if user is admin or super admin
+  // Check if user is admin, super admin, or the creator of this access
   const isAdmin = user?.is_admin || user?.super_admin;
+  const isCreator = item.created_by === user?.id;
+  const canEdit = isAdmin || isCreator;
 
   const copyToClipboard = (text: string, type: string) => {
     navigator.clipboard.writeText(text)
@@ -116,7 +118,7 @@ export const AccessCard = ({ item, onClick, companyColor, onEdit, onAccessUpdate
                 <ExternalLink size={18} />
               </a>
             )}
-            {isAdmin && (
+            {canEdit && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                   <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -165,8 +167,8 @@ export const AccessCard = ({ item, onClick, companyColor, onEdit, onAccessUpdate
     </Card>
   );
 
-  // If user is admin, wrap with context menu for right-click actions
-  if (isAdmin) {
+  // If user can edit, wrap with context menu for right-click actions
+  if (canEdit) {
     return (
       <ContextMenu>
         <ContextMenuTrigger>
