@@ -26,7 +26,6 @@ const initialFormData = {
   data_inicio: '',
   tipo_contrato: 'not_specified' as const,
   nivel_colaborador: 'not_specified' as const,
-  password: '',
   company_id: '',
 };
 
@@ -69,11 +68,6 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
     return password;
   };
 
-  const handleGeneratePassword = () => {
-    const newPassword = generateRandomPassword();
-    handleInputChange('password', newPassword);
-  };
-
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({
@@ -103,33 +97,20 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
 
     setIsCreating(true);
     try {
-      // Gerar senha se não foi fornecida
-      const password = formData.password || generateRandomPassword();
-
-      // Criar usuário no Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: formData.email,
-        password: password,
-        email_confirm: true, // Auto-confirmar email
-        user_metadata: {
-          display_name: formData.display_name,
-        }
-      });
-
-      if (authError) {
-        throw new Error(`Erro ao criar usuário: ${authError.message}`);
-      }
-
-      if (!authData.user) {
-        throw new Error('Usuário não foi criado corretamente');
-      }
-
-      // Atualizar perfil com informações extras
+      // Gerar senha temporária
+      const tempPassword = generateRandomPassword();
+      
+      // Criar perfil de usuário diretamente na tabela profiles
+      // Primeiro gerar um UUID para o usuário
+      const userId = crypto.randomUUID();
+      
       const profileData: any = {
-        id: authData.user.id,
+        id: userId,
         display_name: formData.display_name,
         email: formData.email,
         primeiro_login: true,
+        is_admin: false,
+        super_admin: false,
       };
 
       // Adicionar campos opcionais se preenchidos
@@ -139,34 +120,38 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
       if (formData.tipo_contrato !== 'not_specified') profileData.tipo_contrato = formData.tipo_contrato;
       if (formData.nivel_colaborador !== 'not_specified') profileData.nivel_colaborador = formData.nivel_colaborador;
 
+      // Inserir perfil na tabela profiles
       const { error: profileError } = await supabase
         .from('profiles')
-        .upsert(profileData);
+        .insert(profileData);
 
       if (profileError) {
-        console.error('Erro ao atualizar perfil:', profileError);
-        // Não falhar por causa do perfil, continuar
+        console.error('Erro ao criar perfil:', profileError);
+        throw new Error(`Erro ao criar perfil: ${profileError.message}`);
       }
 
       // Vincular usuário à empresa
       const { error: companyError } = await supabase
         .from('user_empresa')
         .insert({
-          user_id: authData.user.id,
+          user_id: userId,
           empresa_id: formData.company_id,
         });
 
       if (companyError) {
         console.error('Erro ao vincular usuário à empresa:', companyError);
-        // Não falhar por causa da vinculação, continuar
+        // Remover perfil se falhar ao vincular à empresa
+        await supabase.from('profiles').delete().eq('id', userId);
+        throw new Error(`Erro ao vincular usuário à empresa: ${companyError.message}`);
       }
 
       // Salvar dados do usuário criado para mostrar no sucesso
       setCreatedUser({
         email: formData.email,
-        password: password,
+        password: tempPassword,
         display_name: formData.display_name,
         company: userCompanies.find(c => c.id === formData.company_id)?.nome || 'Empresa',
+        userId: userId,
       });
 
       setShowSuccess(true);
@@ -174,7 +159,7 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
 
       toast({
         title: "Usuário Criado",
-        description: "Usuário criado com sucesso! Compartilhe as credenciais com o novo colaborador.",
+        description: "Perfil de usuário criado com sucesso! O usuário precisará criar sua conta na plataforma usando o email cadastrado.",
       });
 
     } catch (error: any) {
@@ -222,18 +207,18 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
   // Tela de sucesso
   if (showSuccess && createdUser) {
     const loginInfo = `
-Credenciais de Acesso - ${createdUser.company}
+Perfil Criado - ${createdUser.company}
 
 Nome: ${createdUser.display_name}
 Email: ${createdUser.email}
-Senha: ${createdUser.password}
 
-Link de acesso: ${window.location.origin}/login
+Link da plataforma: ${window.location.origin}
 
 Instruções:
-1. Acesse o link acima
-2. Use o email e senha fornecidos
-3. Complete seu perfil no primeiro acesso
+1. O usuário deve acessar o link acima
+2. Fazer cadastro usando o email: ${createdUser.email}
+3. Definir sua própria senha no cadastro
+4. Após o login, o perfil estará completo com as informações cadastradas
     `.trim();
 
     return (
@@ -245,7 +230,7 @@ Instruções:
           
           <div className="space-y-4 py-4">
             <p className="text-sm text-gray-600">
-              Usuário criado com sucesso! Compartilhe as credenciais abaixo:
+              Perfil criado com sucesso! Compartilhe as informações abaixo:
             </p>
             
             <div className="relative">
@@ -266,8 +251,8 @@ Instruções:
 
             <div className="bg-blue-50 p-3 rounded-md">
               <p className="text-sm text-blue-700">
-                <strong>Importante:</strong> O usuário foi criado com todas as informações fornecidas. 
-                No primeiro acesso, ele poderá completar seu perfil.
+                <strong>Importante:</strong> O usuário precisa se cadastrar na plataforma usando o email fornecido. 
+                Após o cadastro, todas as informações do perfil estarão disponíveis automaticamente.
               </p>
             </div>
           </div>
@@ -336,26 +321,6 @@ Instruções:
               onChange={(e) => handleInputChange('display_name', e.target.value)}
               placeholder="Nome completo do usuário"
             />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password">Senha</Label>
-            <div className="flex gap-2">
-              <Input
-                id="password"
-                type="text"
-                value={formData.password}
-                onChange={(e) => handleInputChange('password', e.target.value)}
-                placeholder="Deixe vazio para gerar automaticamente"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleGeneratePassword}
-              >
-                Gerar
-              </Button>
-            </div>
           </div>
 
           <div className="space-y-2">
@@ -430,7 +395,7 @@ Instruções:
             Cancelar
           </Button>
           <Button onClick={handleSubmit} disabled={isCreating || !formData.company_id}>
-            {isCreating ? "Criando..." : "Criar Usuário"}
+            {isCreating ? "Criando..." : "Criar Perfil"}
           </Button>
         </DialogFooter>
       </DialogContent>
