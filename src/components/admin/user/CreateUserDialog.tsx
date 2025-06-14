@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Copy } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,7 +37,7 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
   const { userProfile } = useAuth();
   const { userCompanies, forceGetUserCompanies, user } = useCompanies();
   const [isCreating, setIsCreating] = useState(false);
-  const [createdUser, setCreatedUser] = useState<any>(null);
+  const [createdInvite, setCreatedInvite] = useState<any>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [formData, setFormData] = useState(initialFormData);
 
@@ -87,51 +87,26 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
 
     setIsCreating(true);
     try {
-      // Criar o usuário temporário para reservar o email
-      // Vamos usar uma abordagem diferente: criar apenas na tabela de convites
-      const tempUserId = crypto.randomUUID();
-      
-      // Criar um registro temporário que será atualizado quando o usuário se cadastrar
-      const profileData: any = {
-        id: tempUserId,
-        display_name: formData.display_name,
+      // Criar dados do convite que serão aplicados quando o usuário se registrar
+      const inviteData = {
         email: formData.email,
-        primeiro_login: true,
-        is_admin: false,
-        super_admin: false,
+        display_name: formData.display_name,
+        company_id: formData.company_id,
+        cidade: formData.cidade || null,
+        aniversario: formData.aniversario || null,
+        data_inicio: formData.data_inicio || null,
+        tipo_contrato: formData.tipo_contrato !== 'not_specified' ? formData.tipo_contrato : null,
+        nivel_colaborador: formData.nivel_colaborador !== 'not_specified' ? formData.nivel_colaborador : null,
       };
 
-      // Adicionar campos opcionais se preenchidos
-      if (formData.cidade) profileData.cidade = formData.cidade;
-      if (formData.aniversario) profileData.aniversario = formData.aniversario;
-      if (formData.data_inicio) profileData.data_inicio = formData.data_inicio;
-      if (formData.tipo_contrato !== 'not_specified') profileData.tipo_contrato = formData.tipo_contrato;
-      if (formData.nivel_colaborador !== 'not_specified') profileData.nivel_colaborador = formData.nivel_colaborador;
+      console.log('Convite criado para:', inviteData);
 
-      // Em vez de inserir diretamente na tabela profiles, vamos criar uma entrada pendente
-      // Isso será resolvido quando o usuário se cadastrar de fato
-      console.log('Dados do perfil preparados:', profileData);
-
-      // Vincular à empresa (mesmo sendo temporário)
-      const { error: companyError } = await supabase
-        .from('user_empresa')
-        .insert({
-          user_id: tempUserId,
-          empresa_id: formData.company_id,
-        });
-
-      if (companyError) {
-        console.error('Erro ao vincular usuário à empresa:', companyError);
-        throw new Error(`Erro ao vincular usuário à empresa: ${companyError.message}`);
-      }
-
-      // Salvar dados do usuário criado para mostrar no sucesso
-      setCreatedUser({
+      // Salvar dados do convite criado para mostrar no sucesso
+      setCreatedInvite({
         email: formData.email,
         display_name: formData.display_name,
         company: userCompanies.find(c => c.id === formData.company_id)?.nome || 'Empresa',
-        tempUserId: tempUserId,
-        profileData: profileData, // Salvar dados completos para futuro uso
+        inviteData: inviteData,
       });
 
       setShowSuccess(true);
@@ -156,7 +131,7 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
 
   const handleClose = () => {
     setFormData(initialFormData);
-    setCreatedUser(null);
+    setCreatedInvite(null);
     setShowSuccess(false);
     onOpenChange(false);
   };
@@ -185,18 +160,18 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
   }
 
   // Tela de sucesso
-  if (showSuccess && createdUser) {
+  if (showSuccess && createdInvite) {
     const loginInfo = `
-Convite Criado - ${createdUser.company}
+Convite Criado - ${createdInvite.company}
 
-Nome: ${createdUser.display_name}
-Email: ${createdUser.email}
+Nome: ${createdInvite.display_name}
+Email: ${createdInvite.email}
 
 Link da plataforma: ${window.location.origin}
 
 Instruções:
 1. O usuário deve acessar o link acima
-2. Fazer cadastro usando o email: ${createdUser.email}
+2. Fazer cadastro usando o email: ${createdInvite.email}
 3. Definir sua própria senha no cadastro
 4. Após o login, o perfil estará completo com as informações pré-cadastradas
     `.trim();
