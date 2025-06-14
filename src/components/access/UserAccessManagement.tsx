@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Trash2, Edit, Key } from "lucide-react";
+import { Plus, Trash2, Edit, Key, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -34,6 +34,7 @@ export const UserAccessManagement: React.FC<UserAccessManagementProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentAccess, setCurrentAccess] = useState<UserAccessItem | null>(null);
+  const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(new Set());
   const [formData, setFormData] = useState({
     tool_name: '',
     username: '',
@@ -172,6 +173,18 @@ export const UserAccessManagement: React.FC<UserAccessManagementProps> = ({
     navigator.clipboard.writeText(text)
       .then(() => toast.success(message))
       .catch(() => toast.error('Falha ao copiar para a área de transferência'));
+  };
+
+  const togglePasswordVisibility = (itemId: string) => {
+    setVisiblePasswords(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId);
+      } else {
+        newSet.add(itemId);
+      }
+      return newSet;
+    });
   };
 
   return (
@@ -342,7 +355,21 @@ export const UserAccessManagement: React.FC<UserAccessManagementProps> = ({
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
-                        <span>••••••••</span>
+                        <span className="font-mono">
+                          {visiblePasswords.has(item.id) ? item.password : '••••••••'}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => togglePasswordVisibility(item.id)}
+                        >
+                          {visiblePasswords.has(item.id) ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
