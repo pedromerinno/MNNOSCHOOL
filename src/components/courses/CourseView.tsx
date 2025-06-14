@@ -17,6 +17,8 @@ export const CourseView: React.FC = () => {
   const { userCompanies, selectedCompany } = useCompanies();
   const navigate = useNavigate();
   
+  console.log(`[CourseView] Rendering for courseId: ${courseId}`);
+  
   const {
     course,
     loading,
@@ -71,11 +73,14 @@ export const CourseView: React.FC = () => {
     };
   }, [courseId, refreshCourseData]);
 
+  console.log(`[CourseView] State - loading: ${loading}, course: ${course?.title || 'none'}, error: ${error?.message || 'none'}`);
+
   if (loading) {
     return <CourseViewSkeleton />;
   }
 
-  if (!course || error) {
+  if (error || !course) {
+    console.log(`[CourseView] Showing CourseNotFound - error: ${error?.message}, course: ${course}`);
     return <CourseNotFound />;
   }
 
