@@ -1,34 +1,38 @@
 
 import React from 'react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Edit, Shield, ShieldCheck, Trash } from "lucide-react";
-import { UserProfile } from "@/hooks/useUsers";
+import { MoreHorizontal, Edit, Trash2, Shield, ShieldOff, Building } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { CleanupUserCompaniesButton } from './CleanupUserCompaniesButton';
 
 interface UserActionsDropdownProps {
-  user: UserProfile;
-  onEditProfile: (user: UserProfile) => void;
-  onToggleAdmin: (userId: string, currentStatus: boolean | null, isSuperAdmin?: boolean) => void;
-  onDeleteUser?: (userId: string) => void;
-  canDelete?: boolean;
+  user: {
+    id: string;
+    display_name: string | null;
+    is_admin: boolean;
+    super_admin: boolean;
+  };
+  onEditClick: () => void;
+  onDeleteClick: () => void;
+  onToggleAdmin: () => void;
+  onManageCompanies: () => void;
+  onRefresh?: () => void;
 }
 
 export const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({
   user,
-  onEditProfile,
+  onEditClick,
+  onDeleteClick,
   onToggleAdmin,
-  onDeleteUser,
-  canDelete = false
+  onManageCompanies,
+  onRefresh
 }) => {
-  const handleDeleteUser = () => {
-    if (onDeleteUser && canDelete) {
-      const confirmDelete = window.confirm(`Tem certeza que deseja excluir o usuário ${user.display_name || user.email}?`);
-      if (confirmDelete) {
-        onDeleteUser(user.id);
-      }
-    }
-  };
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -37,36 +41,51 @@ export const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => onEditProfile(user)}>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuItem onClick={onEditClick}>
           <Edit className="mr-2 h-4 w-4" />
-          Editar Perfil
-        </DropdownMenuItem>
-        <DropdownMenuItem 
-          onClick={() => onToggleAdmin(user.id, user.is_admin, false)}
-        >
-          <Shield className="mr-2 h-4 w-4" />
-          {user.is_admin ? 'Remover Admin' : 'Tornar Admin'}
-        </DropdownMenuItem>
-        <DropdownMenuItem 
-          onClick={() => onToggleAdmin(user.id, user.super_admin, true)}
-        >
-          <ShieldCheck className="mr-2 h-4 w-4" />
-          {user.super_admin ? 'Remover Super Admin' : 'Tornar Super Admin'}
+          Editar
         </DropdownMenuItem>
         
-        {canDelete && onDeleteUser && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              onClick={handleDeleteUser}
-              className="text-red-600 focus:text-red-600"
-            >
-              <Trash className="mr-2 h-4 w-4" />
-              Excluir Usuário
-            </DropdownMenuItem>
-          </>
-        )}
+        <DropdownMenuItem onClick={onManageCompanies}>
+          <Building className="mr-2 h-4 w-4" />
+          Gerenciar Empresas
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+        
+        <div className="p-1">
+          <CleanupUserCompaniesButton 
+            userId={user.id}
+            onCleanupComplete={onRefresh}
+          />
+        </div>
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuItem onClick={onToggleAdmin}>
+          {user.is_admin ? (
+            <>
+              <ShieldOff className="mr-2 h-4 w-4" />
+              Remover Admin
+            </>
+          ) : (
+            <>
+              <Shield className="mr-2 h-4 w-4" />
+              Tornar Admin
+            </>
+          )}
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuItem 
+          onClick={onDeleteClick}
+          className="text-red-600 focus:text-red-600"
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          Excluir
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

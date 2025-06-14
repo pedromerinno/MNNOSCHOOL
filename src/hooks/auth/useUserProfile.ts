@@ -15,11 +15,12 @@ export const useUserProfile = () => {
   const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
   const CACHE_KEY = 'user_profile';
 
-  // Função para verificar e aplicar convites pendentes
+  // Função para verificar e aplicar convites pendentes (APENAS UM)
   const checkAndApplyInvite = useCallback(async (userId: string, userEmail: string) => {
     try {
       console.log('[useUserProfile] Verificando convites pendentes para:', userEmail);
       
+      // Buscar APENAS o convite mais recente e não usado
       const { data: invites, error: inviteError } = await supabase
         .from('user_invites')
         .select('*')
@@ -27,7 +28,7 @@ export const useUserProfile = () => {
         .gt('expires_at', new Date().toISOString())
         .eq('used', false)
         .order('created_at', { ascending: false })
-        .limit(1);
+        .limit(1); // Garantir que pegamos apenas 1
 
       if (inviteError) {
         console.error('[useUserProfile] Erro ao buscar convites:', inviteError);
@@ -35,8 +36,28 @@ export const useUserProfile = () => {
       }
 
       if (invites && invites.length > 0) {
-        const invite = invites[0];
-        console.log('[useUserProfile] Convite encontrado:', invite);
+        const invite = invites[0]; // Pegar apenas o primeiro convite
+        console.log('[useUserProfile] Aplicando convite mais recente:', invite);
+
+        // Verificar se o usuário já não está vinculado a esta empresa
+        const { data: existingRelation } = await supabase
+          .from('user_empresa')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('empresa_id', invite.company_id)
+          .single();
+
+        if (existingRelation) {
+          console.log('[useUserProfile] Usuário já vinculado a esta empresa, marcando convite como usado');
+          
+          // Marcar convite como usado mesmo se já vinculado
+          await supabase
+            .from('user_invites')
+            .update({ used: true, used_at: new Date().toISOString() })
+            .eq('id', invite.id);
+          
+          return;
+        }
 
         // Aplicar dados do convite ao perfil
         const profileUpdates: any = {
@@ -62,7 +83,7 @@ export const useUserProfile = () => {
           return;
         }
 
-        // Vincular usuário à empresa
+        // Vincular usuário APENAS à empresa do convite
         const { error: companyError } = await supabase
           .from('user_empresa')
           .insert({
@@ -73,13 +94,13 @@ export const useUserProfile = () => {
         if (companyError) {
           console.error('[useUserProfile] Erro ao vincular usuário à empresa:', companyError);
         } else {
-          console.log('[useUserProfile] Usuário vinculado à empresa com sucesso');
+          console.log('[useUserProfile] Usuário vinculado à empresa com sucesso:', invite.company_id);
           
           // Disparar evento para atualizar dados de empresa
           window.dispatchEvent(new CustomEvent('company-relation-changed'));
         }
 
-        // Marcar convite como usado
+        // Marcar APENAS este convite como usado
         const { error: markUsedError } = await supabase
           .from('user_invites')
           .update({ used: true, used_at: new Date().toISOString() })
@@ -89,8 +110,23 @@ export const useUserProfile = () => {
           console.error('[useUserProfile] Erro ao marcar convite como usado:', markUsedError);
         }
 
-        console.log('[useUserProfile] Convite aplicado com sucesso');
-        toast.success('Seu perfil foi configurado automaticamente com base no convite!');
+        // Marcar outros convites para o mesmo email como expirados para evitar múltiplas vinculações
+        const { error: expireOthersError } = await supabase
+          .from('user_invites')
+          .update({ 
+            used: true, 
+            used_at: new Date().toISOString() 
+          })
+          .eq('email', userEmail.toLowerCase())
+          .eq('used', false)
+          .neq('id', invite.id);
+
+        if (expireOthersError) {
+          console.error('[useUserProfile] Erro ao expirar outros convites:', expireOthersError);
+        }
+
+        console.log('[useUserProfile] Convite aplicado com sucesso e outros convites expirados');
+        toast.success(`Seu perfil foi configurado automaticamente! Bem-vindo à empresa.`);
       } else {
         console.log('[useUserProfile] Nenhum convite pendente encontrado para:', userEmail);
       }
