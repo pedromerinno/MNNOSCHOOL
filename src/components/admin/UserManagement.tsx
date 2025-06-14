@@ -1,9 +1,9 @@
+
 import React, { useState } from 'react';
 import { UserTableOptimized } from './UserTableOptimized';
 import { useUsers } from '@/hooks/useUsers';
 import { AdminSetup } from './user/AdminSetup';
 import { PermissionError } from './user/PermissionError';
-import { AddAdminDialog } from './user/AddAdminDialog';
 import { CreateUserDialog } from './user/CreateUserDialog';
 import { UserManagementHeader } from './user/UserManagementHeader';
 import { UserManagementSkeleton } from './user/UserManagementSkeleton';
@@ -20,7 +20,6 @@ export const UserManagement = () => {
   const [initialSetupDone, setInitialSetupDone] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [permissionError, setPermissionError] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [showInviteInfo, setShowInviteInfo] = useState(false);
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [selectedInviteCompany, setSelectedInviteCompany] = useState<Company | null>(null);
@@ -87,7 +86,6 @@ export const UserManagement = () => {
     return (
       <div className="space-y-4">
         <UserManagementHeader 
-          onAddAdminClick={() => setIsDialogOpen(true)}
           onRefreshClick={handleRefresh}
           loading={loading}
           isRefreshing={isRefreshing}
@@ -114,7 +112,6 @@ export const UserManagement = () => {
   return (
     <div className="space-y-4">
       <UserManagementHeader 
-        onAddAdminClick={() => setIsDialogOpen(true)}
         onRefreshClick={handleRefresh}
         loading={loading}
         isRefreshing={isRefreshing}
@@ -198,12 +195,6 @@ export const UserManagement = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      <AddAdminDialog
-        isOpen={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        fetchUsers={fetchUsers}
-      />
 
       <CreateUserDialog
         isOpen={showCreateUser}

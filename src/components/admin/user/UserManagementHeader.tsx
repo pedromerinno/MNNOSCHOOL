@@ -1,10 +1,9 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { RefreshCw, UserPlus, Plus, Users } from 'lucide-react';
+import { RefreshCw, Plus, Users } from 'lucide-react';
 
 interface UserManagementHeaderProps {
-  onAddAdminClick: () => void;
   onRefreshClick: () => void;
   loading: boolean;
   isRefreshing: boolean;
@@ -13,7 +12,6 @@ interface UserManagementHeaderProps {
 }
 
 export const UserManagementHeader: React.FC<UserManagementHeaderProps> = ({
-  onAddAdminClick,
   onRefreshClick,
   loading,
   isRefreshing,
@@ -42,15 +40,6 @@ export const UserManagementHeader: React.FC<UserManagementHeaderProps> = ({
               Criar Usuário
             </Button>
           )}
-          <Button 
-            onClick={onAddAdminClick} 
-            variant="outline" 
-            size="sm" 
-            className="flex items-center gap-2 rounded-xl px-[15px] py-[20px]"
-          >
-            <UserPlus className="h-4 w-4" />
-            Adicionar Admin
-          </Button>
           {onInviteUser && (
             <Button 
               onClick={onInviteUser} 
