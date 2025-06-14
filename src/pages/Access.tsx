@@ -1,4 +1,5 @@
 
+import { useNavigate } from 'react-router-dom';
 import { useCompanies } from "@/hooks/useCompanies";
 import { useAccessItems } from "@/hooks/useAccessItems";
 import { LoadingState } from "@/components/access/LoadingState";
@@ -10,25 +11,18 @@ import { ArrowLeft } from "lucide-react";
 import { CompanyThemedBadge } from "@/components/ui/badge";
 import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 import { AdminFloatingActionButton } from "@/components/admin/AdminFloatingActionButton";
+import { PagePreloader } from "@/components/ui/PagePreloader";
 
 const Access = () => {
-  const { selectedCompany, user } = useCompanies();
-  const { accessItems, isLoading, hasPermission, refetch } = useAccessItems({
+  const navigate = useNavigate();
+  const { selectedCompany, user, isLoading } = useCompanies();
+  const { accessItems, isLoading: isLoadingAccess, hasPermission, refetch } = useAccessItems({
     companyId: selectedCompany?.id,
     userId: user?.id
   });
 
-  if (isLoading) {
-    return (
-      <>
-        <MainNavigationMenu />
-        <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
-          <main className="container mx-auto px-6 py-12">
-            <LoadingState />
-          </main>
-        </div>
-      </>
-    );
+  if (isLoading || isLoadingAccess) {
+    return <PagePreloader />;
   }
 
   if (!selectedCompany) {
@@ -42,7 +36,7 @@ const Access = () => {
                 variant="ghost" 
                 size="sm" 
                 className="p-0 hover:bg-transparent" 
-                onClick={() => window.history.back()}
+                onClick={() => navigate('/')}
               >
                 <ArrowLeft className="h-5 w-5 text-gray-500" />
               </Button>
@@ -77,7 +71,7 @@ const Access = () => {
                 variant="ghost" 
                 size="sm" 
                 className="p-0 hover:bg-transparent" 
-                onClick={() => window.history.back()}
+                onClick={() => navigate('/')}
               >
                 <ArrowLeft className="h-5 w-5 text-gray-500" />
               </Button>
@@ -85,11 +79,9 @@ const Access = () => {
                 <h1 className="text-3xl font-bold dark:text-white">
                   Senhas e Acessos
                 </h1>
-                {selectedCompany && (
-                  <CompanyThemedBadge variant="beta">
-                    {selectedCompany.nome}
-                  </CompanyThemedBadge>
-                )}
+                <CompanyThemedBadge variant="beta">
+                  {selectedCompany.nome}
+                </CompanyThemedBadge>
               </div>
             </div>
             
@@ -116,7 +108,7 @@ const Access = () => {
               variant="ghost" 
               size="sm" 
               className="p-0 hover:bg-transparent" 
-              onClick={() => window.history.back()}
+              onClick={() => navigate('/')}
             >
               <ArrowLeft className="h-5 w-5 text-gray-500" />
             </Button>
@@ -124,11 +116,9 @@ const Access = () => {
               <h1 className="text-3xl font-bold dark:text-white">
                 Senhas e Acessos
               </h1>
-              {selectedCompany && (
-                <CompanyThemedBadge variant="beta">
-                  {selectedCompany.nome}
-                </CompanyThemedBadge>
-              )}
+              <CompanyThemedBadge variant="beta">
+                {selectedCompany.nome}
+              </CompanyThemedBadge>
             </div>
           </div>
           

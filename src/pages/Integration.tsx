@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCompanies } from "@/hooks/useCompanies";
 import { LoadingState } from '@/components/integration/video-playlist/LoadingState';
 import { CompanyHeader } from '@/components/integration/header/CompanyHeader';
@@ -13,8 +14,10 @@ import { ArrowLeft } from "lucide-react";
 import { CompanyThemedBadge } from "@/components/ui/badge";
 import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 import { AdminFloatingActionButton } from "@/components/admin/AdminFloatingActionButton";
+import { PagePreloader } from "@/components/ui/PagePreloader";
 
 const Integration = () => {
+  const navigate = useNavigate();
   const { selectedCompany, isLoading } = useCompanies();
   const { userProfile } = useAuth();
   const [jobRoles, setJobRoles] = useState<JobRole[]>([]);
@@ -284,21 +287,12 @@ const Integration = () => {
   }, [companyData?.id, userProfile?.id]);
 
   // Loading state
-  if (isLoading && !companyData) {
-    return (
-      <>
-        <MainNavigationMenu />
-        <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
-          <main className="container mx-auto px-6 py-12">
-            <LoadingState />
-          </main>
-        </div>
-      </>
-    );
+  if (isLoading && !currentCompanyData && !selectedCompany) {
+    return <PagePreloader />;
   }
 
   // Sem empresa selecionada
-  if (!companyData) {
+  if (!selectedCompany && !currentCompanyData) {
     return (
       <>
         <MainNavigationMenu />
@@ -309,7 +303,7 @@ const Integration = () => {
                 variant="ghost" 
                 size="sm" 
                 className="p-0 hover:bg-transparent" 
-                onClick={() => window.history.back()}
+                onClick={() => navigate('/')}
               >
                 <ArrowLeft className="h-5 w-5 text-gray-500" />
               </Button>
@@ -332,6 +326,8 @@ const Integration = () => {
     );
   }
 
+  const companyData = currentCompanyData || selectedCompany;
+
   return (
     <>
       <MainNavigationMenu />
@@ -342,7 +338,7 @@ const Integration = () => {
               variant="ghost" 
               size="sm" 
               className="p-0 hover:bg-transparent" 
-              onClick={() => window.history.back()}
+              onClick={() => navigate('/')}
             >
               <ArrowLeft className="h-5 w-5 text-gray-500" />
             </Button>
@@ -350,9 +346,9 @@ const Integration = () => {
               <h1 className="text-3xl font-bold dark:text-white">
                 Integração
               </h1>
-              {selectedCompany && (
+              {companyData && (
                 <CompanyThemedBadge variant="beta">
-                  {selectedCompany.nome}
+                  {companyData.nome}
                 </CompanyThemedBadge>
               )}
             </div>
@@ -361,14 +357,14 @@ const Integration = () => {
           <div className="bg-white dark:bg-card rounded-xl shadow-sm p-6">
             <CompanyHeader 
               company={companyData} 
-              companyColor={companyData.cor_principal}
+              companyColor={companyData?.cor_principal}
             />
             <IntegrationTabs
               key={refreshKey}
               activeTab={activeTab}
               setActiveTab={setActiveTab}
               company={companyData}
-              companyColor={companyData.cor_principal}
+              companyColor={companyData?.cor_principal}
               jobRoles={jobRoles}
               isLoadingRoles={isLoadingRoles}
               userRole={userRole}

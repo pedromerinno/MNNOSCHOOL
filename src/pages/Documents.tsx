@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DocumentPreview } from "@/components/documents/DocumentPreview";
 import { DocumentTabs } from "@/components/documents/DocumentTabs";
 import { useDocumentManager } from "@/hooks/useDocumentManager";
@@ -10,9 +11,11 @@ import { CompanyThemedBadge } from "@/components/ui/badge";
 import { useCompanies } from "@/hooks/useCompanies";
 import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 import { AdminFloatingActionButton } from "@/components/admin/AdminFloatingActionButton";
+import { PagePreloader } from "@/components/ui/PagePreloader";
 
 const Documents = () => {
-  const { selectedCompany } = useCompanies();
+  const navigate = useNavigate();
+  const { selectedCompany, isLoading } = useCompanies();
   const [activeTab, setActiveTab] = useState("all");
   const {
     documents,
@@ -27,7 +30,8 @@ const Documents = () => {
     handleDelete,
     handleDocumentUpload,
     canDeleteDocument,
-    refreshDocuments
+    refreshDocuments,
+    isLoading: isLoadingDocuments
   } = useDocumentManager();
 
   const handleUpload = async (
@@ -55,6 +59,10 @@ const Documents = () => {
     await refreshDocuments();
   };
 
+  if (isLoading || isLoadingDocuments) {
+    return <PagePreloader />;
+  }
+
   return (
     <>
       <MainNavigationMenu />
@@ -65,7 +73,7 @@ const Documents = () => {
               variant="ghost" 
               size="sm" 
               className="p-0 hover:bg-transparent" 
-              onClick={() => window.history.back()}
+              onClick={() => navigate('/')}
             >
               <ArrowLeft className="h-5 w-5 text-gray-500" />
             </Button>

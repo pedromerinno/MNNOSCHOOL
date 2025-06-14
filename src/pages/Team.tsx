@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useCompanies } from "@/hooks/useCompanies";
 import { TeamMembersList } from "@/components/team/TeamMembersList";
 import { EmptyState } from "@/components/team/EmptyState";
@@ -13,8 +13,10 @@ import { ArrowLeft } from "lucide-react";
 import { CompanyThemedBadge } from "@/components/ui/badge";
 import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 import { AdminFloatingActionButton } from "@/components/admin/AdminFloatingActionButton";
+import { PagePreloader } from "@/components/ui/PagePreloader";
 
 const Team = () => {
+  const navigate = useNavigate();
   const { selectedCompany, isLoading: companiesLoading } = useCompanies();
   const { userProfile } = useAuth();
 
@@ -41,37 +43,9 @@ const Team = () => {
     return <Navigate to="/" replace />;
   }
 
-  // Loading companies
-  if (companiesLoading) {
-    return (
-      <>
-        <MainNavigationMenu />
-        <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
-          <main className="container mx-auto px-6 py-12">
-            <div className="flex items-center mb-12 gap-4">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="p-0 hover:bg-transparent" 
-                onClick={() => window.history.back()}
-              >
-                <ArrowLeft className="h-5 w-5 text-gray-500" />
-              </Button>
-              <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold dark:text-white">
-                  Equipe
-                </h1>
-              </div>
-            </div>
-            
-            <div className="bg-white dark:bg-card rounded-xl shadow-sm p-6">
-              <TeamMembersSkeletonList />
-            </div>
-          </main>
-          <AdminFloatingActionButton />
-        </div>
-      </>
-    );
+  // Loading companies or members
+  if (companiesLoading || membersLoading) {
+    return <PagePreloader />;
   }
 
   // No company selected
@@ -86,7 +60,7 @@ const Team = () => {
                 variant="ghost" 
                 size="sm" 
                 className="p-0 hover:bg-transparent" 
-                onClick={() => window.history.back()}
+                onClick={() => navigate('/')}
               >
                 <ArrowLeft className="h-5 w-5 text-gray-500" />
               </Button>
@@ -110,44 +84,6 @@ const Team = () => {
     );
   }
 
-  // Loading members
-  if (membersLoading) {
-    return (
-      <>
-        <MainNavigationMenu />
-        <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
-          <main className="container mx-auto px-6 py-12">
-            <div className="flex items-center mb-12 gap-4">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="p-0 hover:bg-transparent" 
-                onClick={() => window.history.back()}
-              >
-                <ArrowLeft className="h-5 w-5 text-gray-500" />
-              </Button>
-              <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold dark:text-white">
-                  Equipe
-                </h1>
-                {selectedCompany && (
-                  <CompanyThemedBadge variant="beta">
-                    {selectedCompany.nome}
-                  </CompanyThemedBadge>
-                )}
-              </div>
-            </div>
-            
-            <div className="bg-white dark:bg-card rounded-xl shadow-sm p-6">
-              <TeamMembersSkeletonList />
-            </div>
-          </main>
-          <AdminFloatingActionButton />
-        </div>
-      </>
-    );
-  }
-
   // Error state
   if (membersError) {
     return (
@@ -160,7 +96,7 @@ const Team = () => {
                 variant="ghost" 
                 size="sm" 
                 className="p-0 hover:bg-transparent" 
-                onClick={() => window.history.back()}
+                onClick={() => navigate('/')}
               >
                 <ArrowLeft className="h-5 w-5 text-gray-500" />
               </Button>
@@ -168,11 +104,9 @@ const Team = () => {
                 <h1 className="text-3xl font-bold dark:text-white">
                   Equipe
                 </h1>
-                {selectedCompany && (
-                  <CompanyThemedBadge variant="beta">
-                    {selectedCompany.nome}
-                  </CompanyThemedBadge>
-                )}
+                <CompanyThemedBadge variant="beta">
+                  {selectedCompany.nome}
+                </CompanyThemedBadge>
               </div>
             </div>
             
@@ -199,7 +133,7 @@ const Team = () => {
               variant="ghost" 
               size="sm" 
               className="p-0 hover:bg-transparent" 
-              onClick={() => window.history.back()}
+              onClick={() => navigate('/')}
             >
               <ArrowLeft className="h-5 w-5 text-gray-500" />
             </Button>
@@ -207,11 +141,9 @@ const Team = () => {
               <h1 className="text-3xl font-bold dark:text-white">
                 Equipe
               </h1>
-              {selectedCompany && (
-                <CompanyThemedBadge variant="beta">
-                  {selectedCompany.nome}
-                </CompanyThemedBadge>
-              )}
+              <CompanyThemedBadge variant="beta">
+                {selectedCompany.nome}
+              </CompanyThemedBadge>
             </div>
           </div>
           
