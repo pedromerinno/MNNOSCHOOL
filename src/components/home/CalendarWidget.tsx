@@ -1,163 +1,139 @@
 
-import { useState, memo, useMemo } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useCompanies } from "@/hooks/useCompanies";
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useCompanies } from '@/hooks/useCompanies';
 
-interface CalendarDay {
-  day: number;
-  isCurrentMonth: boolean;
-  isToday?: boolean;
-  isPrevMonth?: boolean;
-  isNextMonth?: boolean;
-}
-
-export const CalendarWidget = memo(() => {
-  const [currentDate, setCurrentDate] = useState(new Date());
+export const CalendarWidget = () => {
   const { selectedCompany } = useCompanies();
-  
-  const companyColor = selectedCompany?.cor_principal || "#a16207"; // amber-700 default
-  
-  const getMonthName = (date: Date) => {
-    return date.toLocaleDateString('pt-BR', { month: 'long' });
+  const [currentDate, setCurrentDate] = React.useState(new Date());
+
+  const monthNames = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+  ];
+
+  const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+  const getDaysInMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   };
-  
-  const getYear = (date: Date) => {
-    return date.getFullYear();
+
+  const getFirstDayOfMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
   };
-  
-  const goToPreviousMonth = () => {
+
+  const navigateMonth = (direction: 'prev' | 'next') => {
     setCurrentDate(prev => {
-      const prevMonth = new Date(prev);
-      prevMonth.setMonth(prev.getMonth() - 1);
-      return prevMonth;
+      const newDate = new Date(prev);
+      if (direction === 'prev') {
+        newDate.setMonth(prev.getMonth() - 1);
+      } else {
+        newDate.setMonth(prev.getMonth() + 1);
+      }
+      return newDate;
     });
   };
-  
-  const goToNextMonth = () => {
-    setCurrentDate(prev => {
-      const nextMonth = new Date(prev);
-      nextMonth.setMonth(prev.getMonth() + 1);
-      return nextMonth;
-    });
-  };
-  
-  const calendarDays = useMemo(() => {
-    const getDaysInMonth = (date: Date) => {
-      const year = date.getFullYear();
-      const month = date.getMonth();
-      return new Date(year, month + 1, 0).getDate();
-    };
-    
-    const getFirstDayOfMonth = (date: Date) => {
-      const year = date.getFullYear();
-      const month = date.getMonth();
-      const dayOfWeek = new Date(year, month, 1).getDay();
-      return dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    };
-    
-    const isToday = (date: Date) => {
-      const today = new Date();
-      return (
-        date.getDate() === today.getDate() &&
-        date.getMonth() === today.getMonth() &&
-        date.getFullYear() === today.getFullYear()
-      );
-    };
-    
+
+  const renderCalendarDays = () => {
     const daysInMonth = getDaysInMonth(currentDate);
-    const firstDayOfMonth = getFirstDayOfMonth(currentDate);
+    const firstDay = getFirstDayOfMonth(currentDate);
+    const today = new Date();
+    const isCurrentMonth = currentDate.getMonth() === today.getMonth() && 
+                          currentDate.getFullYear() === today.getFullYear();
     
-    const daysFromPrevMonth = firstDayOfMonth;
-    const prevMonth = new Date(currentDate);
-    prevMonth.setMonth(prevMonth.getMonth() - 1);
-    const daysInPrevMonth = getDaysInMonth(prevMonth);
+    const days = [];
     
-    const prevMonthDays: CalendarDay[] = Array.from({ length: daysFromPrevMonth }, (_, i) => ({
-      day: daysInPrevMonth - daysFromPrevMonth + i + 1,
-      isCurrentMonth: false,
-      isPrevMonth: true,
-      isToday: false
-    }));
+    // Add empty cells for days before the first day of month
+    for (let i = 0; i < firstDay; i++) {
+      const prevMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 0);
+      const prevMonthDay = prevMonth.getDate() - (firstDay - i - 1);
+      days.push(
+        <div key={`prev-${i}`} className="h-8 w-8 flex items-center justify-center text-xs text-gray-400">
+          {prevMonthDay}
+        </div>
+      );
+    }
     
-    const currentMonthDays: CalendarDay[] = Array.from({ length: daysInMonth }, (_, i) => ({
-      day: i + 1,
-      isCurrentMonth: true,
-      isToday: isToday(new Date(currentDate.getFullYear(), currentDate.getMonth(), i + 1))
-    }));
+    // Add days of current month
+    for (let day = 1; day <= daysInMonth; day++) {
+      const isToday = isCurrentMonth && day === today.getDate();
+      
+      days.push(
+        <div
+          key={day}
+          className={`h-8 w-8 flex items-center justify-center text-xs cursor-pointer rounded-full transition-colors ${
+            isToday 
+              ? 'bg-black text-white font-medium' 
+              : 'text-white hover:bg-gray-600'
+          }`}
+        >
+          {day}
+        </div>
+      );
+    }
     
-    const totalCells = 42;
-    const daysFromNextMonth = totalCells - (prevMonthDays.length + currentMonthDays.length);
+    // Fill remaining cells with next month days
+    const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+    const remainingCells = totalCells - (firstDay + daysInMonth);
     
-    const nextMonthDays: CalendarDay[] = Array.from({ length: daysFromNextMonth }, (_, i) => ({
-      day: i + 1,
-      isCurrentMonth: false,
-      isNextMonth: true,
-      isToday: false
-    }));
+    for (let day = 1; day <= remainingCells; day++) {
+      days.push(
+        <div key={`next-${day}`} className="h-8 w-8 flex items-center justify-center text-xs text-gray-400">
+          {day}
+        </div>
+      );
+    }
     
-    return [...prevMonthDays, ...currentMonthDays, ...nextMonthDays];
-  }, [currentDate]);
-  
+    return days;
+  };
+
+  // Use company color or default to black
+  const calendarColor = selectedCompany?.cor_principal || '#000000';
+
   return (
-    <Card 
-      className="border-0 rounded-[30px] overflow-hidden text-white"
-      style={{ backgroundColor: companyColor }}
-    >
-      <CardContent className="p-0">
-        <div className="p-8 flex justify-between items-center">
-          <h3 className="text-xl font-medium capitalize">
-            {getMonthName(currentDate)} {getYear(currentDate)}
+    <Card className="w-full max-w-sm">
+      <CardContent 
+        className="p-6 text-white rounded-lg"
+        style={{ backgroundColor: calendarColor }}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-medium">
+            {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
           </h3>
-          <div className="flex space-x-2">
-            <Button 
-              size="icon" 
-              variant="ghost" 
-              className="text-white hover:bg-white/10 h-12 w-12 rounded-full border border-white/30"
-              onClick={goToPreviousMonth}
+          <div className="flex space-x-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigateMonth('prev')}
+              className="h-6 w-6 p-0 text-white hover:bg-white/20"
             >
-              <ChevronLeft className="h-5 w-5" />
+              <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button 
-              size="icon" 
-              variant="ghost" 
-              className="text-white hover:bg-white/10 h-12 w-12 rounded-full border border-white/30"
-              onClick={goToNextMonth}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigateMonth('next')}
+              className="h-6 w-6 p-0 text-white hover:bg-white/20"
             >
-              <ChevronRight className="h-5 w-5" />
+              <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
         
-        <div className="px-8 pb-8 pt-2">
-          <div className="grid grid-cols-7 text-center text-[11px] mb-3">
-            <div>Seg</div>
-            <div>Ter</div>
-            <div>Qua</div>
-            <div>Qui</div>
-            <div>Sex</div>
-            <div>Sab</div>
-            <div>Dom</div>
-          </div>
-          
-          <div className="grid grid-cols-7 gap-1 text-center">
-            {calendarDays.map((day, index) => (
-              <div 
-                key={index} 
-                className={`h-10 w-10 flex items-center justify-center text-sm rounded-full mx-auto
-                  ${!day.isCurrentMonth ? 'text-white/50' : ''}
-                  ${day.isToday ? 'bg-white font-medium' : ''}
-                  ${day.isCurrentMonth && !day.isToday ? 'hover:bg-white/20 cursor-pointer' : ''}
-                `}
-                style={day.isToday ? { color: companyColor } : {}}
-              >
-                {day.day}
-              </div>
-            ))}
-          </div>
+        <div className="grid grid-cols-7 gap-1 mb-2">
+          {dayNames.map(day => (
+            <div key={day} className="h-8 flex items-center justify-center text-xs font-medium text-gray-300">
+              {day}
+            </div>
+          ))}
+        </div>
+        
+        <div className="grid grid-cols-7 gap-1">
+          {renderCalendarDays()}
         </div>
       </CardContent>
     </Card>
   );
-});
+};
