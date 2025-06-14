@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -85,10 +86,11 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
       return;
     }
 
+    // Usar diretamente o ID do perfil do contexto, sem chamar supabase.auth.getUser()
     if (!userProfile?.id) {
       toast({
         title: "Erro",
-        description: "Usuário não identificado",
+        description: "Usuário não identificado. Por favor, faça login novamente.",
         variant: "destructive",
       });
       return;
@@ -106,7 +108,7 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
         data_inicio: formData.data_inicio || null,
         tipo_contrato: formData.tipo_contrato !== 'not_specified' ? formData.tipo_contrato : null,
         nivel_colaborador: formData.nivel_colaborador !== 'not_specified' ? formData.nivel_colaborador : null,
-        created_by: userProfile.id,
+        created_by: userProfile.id, // Usar diretamente do contexto
         expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 dias
       };
 
@@ -120,6 +122,7 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
         .single();
 
       if (inviteError) {
+        console.error('Erro ao criar convite:', inviteError);
         throw inviteError;
       }
 
@@ -143,11 +146,21 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
 
     } catch (error: any) {
       console.error('Erro ao criar convite:', error);
-      toast({
-        title: "Erro",
-        description: error.message || "Erro ao criar convite.",
-        variant: "destructive",
-      });
+      
+      // Tratar erro de permissão especificamente
+      if (error.message?.includes('permission denied') || error.message?.includes('insufficient_privilege')) {
+        toast({
+          title: "Erro de Permissão",
+          description: "Você não tem permissões suficientes para criar convites. Verifique se você é administrador.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Erro",
+          description: error.message || "Erro ao criar convite.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsCreating(false);
     }
