@@ -1,95 +1,36 @@
 
-import React from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useCompanies } from '@/hooks/useCompanies';
-import { CompanySelectionDialog } from '@/components/home/CompanySelectionDialog';
-import { MainNavigationMenu } from '@/components/navigation/MainNavigationMenu';
+import { ReactNode } from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { IndexSkeleton } from "@/components/home/IndexSkeleton";
 
 interface CompanyRequiredWrapperProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
-export const CompanyRequiredWrapper: React.FC<CompanyRequiredWrapperProps> = ({ children }) => {
-  const { user, userProfile } = useAuth();
-  const { userCompanies, isLoading, forceGetUserCompanies } = useCompanies();
-  const [showCompanyDialog, setShowCompanyDialog] = React.useState(false);
+export const CompanyRequiredWrapper = ({ children }: CompanyRequiredWrapperProps) => {
+  const { user, loading } = useAuth();
+  const location = useLocation();
 
-  console.log('[CompanyRequiredWrapper] Current state:', {
-    user: user?.email,
-    isLoading,
-    userCompaniesCount: userCompanies?.length || 0,
-    isSuperAdmin: userProfile?.super_admin
+  console.log("[CompanyRequiredWrapper] Current state:", {
+    user: user ? { email: user.email } : undefined,
+    loading,
+    pathname: location.pathname
   });
 
-  // Always execute hooks in the same order
-  const needsCompany = React.useMemo(() => {
-    if (!user || !userProfile || isLoading) {
-      return false;
-    }
-
-    // Super admins don't need company association
-    if (userProfile.super_admin) {
-      return false;
-    }
-
-    // Regular users need at least one company
-    return !userCompanies || userCompanies.length === 0;
-  }, [user, userProfile, userCompanies, isLoading]);
-
-  const isChecking = !user || !userProfile || isLoading;
-
-  React.useEffect(() => {
-    if (needsCompany && !showCompanyDialog && !isChecking) {
-      setShowCompanyDialog(true);
-    }
-  }, [needsCompany, showCompanyDialog, isChecking]);
-
-  const handleCompanyCreated = () => {
-    console.log('[CompanyRequiredWrapper] Company created, closing dialog and refreshing companies');
-    setShowCompanyDialog(false);
-    if (user?.id) {
-      forceGetUserCompanies(user.id);
-    }
-  };
-
-  const handleCompanyTypeSelect = (isExisting: boolean) => {
-    console.log('Company type selected:', isExisting);
-  };
-
-  // Close dialog automatically when user gets companies
-  React.useEffect(() => {
-    if (userCompanies && userCompanies.length > 0 && showCompanyDialog) {
-      console.log('[CompanyRequiredWrapper] User now has companies, closing dialog');
-      setShowCompanyDialog(false);
-    }
-  }, [userCompanies, showCompanyDialog]);
-
-  if (isChecking) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
-      </div>
-    );
+  // MUITO SIMPLES: Se está carregando, mostrar skeleton
+  if (loading) {
+    console.log("[CompanyRequiredWrapper] Loading auth - showing skeleton");
+    return <IndexSkeleton />;
   }
 
-  return (
-    <>
-      <MainNavigationMenu />
-      {children}
-      
-      <CompanySelectionDialog
-        open={showCompanyDialog}
-        onOpenChange={(open) => {
-          if (!open && needsCompany) {
-            return; // Don't allow closing if user still needs company
-          }
-          setShowCompanyDialog(open);
-        }}
-        onCompanyTypeSelect={handleCompanyTypeSelect}
-        onCompanyCreated={handleCompanyCreated}
-        userId={user?.id}
-        forceGetUserCompanies={forceGetUserCompanies}
-      />
-    </>
-  );
+  // Se não tem usuário, redirecionar para login
+  if (!user) {
+    console.log("[CompanyRequiredWrapper] No user - redirecting to login");
+    return <Navigate to="/login" replace />;
+  }
+
+  // Se tem usuário, sempre permitir acesso
+  console.log("[CompanyRequiredWrapper] User authenticated - allowing access");
+  return <>{children}</>;
 };

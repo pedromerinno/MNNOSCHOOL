@@ -1,44 +1,23 @@
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCompanyCache } from "@/hooks/company/useCompanyCache";
-import { useCompanyCallbacks } from "./useCompanyCallbacks";
 
 export const useCompanyInitialization = () => {
-  const [isPageLoading, setIsPageLoading] = useState(false);
+  const { userCompanies, isLoading, selectedCompany } = useCompanies();
+  const { user } = useAuth();
   
-  const { 
-    userCompanies, 
-    isLoading, 
-    selectedCompany, 
-    getUserCompanies, 
-    forceGetUserCompanies 
-  } = useCompanies({ skipLoadingInOnboarding: true });
-  
-  const { user, userProfile } = useAuth();
-  const { getInitialSelectedCompany } = useCompanyCache();
-  
-  // Get the cached company status
-  const hasCachedCompany = getInitialSelectedCompany() !== null;
-  
-  // Create a ref to prevent multiple company dialog openings
-  const hasShownCompanyDialogRef = useRef(false);
-  
-  // Simplified dialog states - NO automatic dialogs
+  // Estados de diálogo sempre falsos por padrão
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [showCompanyDialog, setShowCompanyDialog] = useState(false);
 
   console.log("[useCompanyInitialization] State check", {
     userCompaniesLength: userCompanies.length,
-    showCompanyDialog,
-    showProfileDialog,
+    showCompanyDialog: false,
+    showProfileDialog: false,
     userEmail: user?.email,
-    isSuperAdmin: userProfile?.super_admin,
     hasUser: !!user,
-    hasUserProfile: !!userProfile,
-    isLoading,
-    hasCachedCompany
+    isLoading
   });
   
   const handleProfileComplete = () => {
@@ -51,17 +30,20 @@ export const useCompanyInitialization = () => {
     setShowCompanyDialog(false);
   };
   
-  const { handleCompanyCreated, handleCompanyTypeSelect } = useCompanyCallbacks(
-    setShowCompanyDialog,
-    forceGetUserCompanies,
-    user
-  );
+  const handleCompanyCreated = () => {
+    console.log("[useCompanyInitialization] Company created");
+    setShowCompanyDialog(false);
+  };
+
+  const handleCompanyTypeSelect = (isExisting: boolean) => {
+    console.log("[useCompanyInitialization] Company type selected:", isExisting ? "existing" : "new");
+  };
 
   return {
-    isPageLoading: false, // Always false to prevent infinite loading
-    showCompanyDialog,
+    isPageLoading: false, // Sempre falso
+    showCompanyDialog: false, // Sempre falso 
     setShowCompanyDialog,
-    showProfileDialog,
+    showProfileDialog: false, // Sempre falso
     setShowProfileDialog,
     userCompanies,
     isLoading,
@@ -70,8 +52,8 @@ export const useCompanyInitialization = () => {
     handleCompanyTypeSelect,
     handleProfileComplete,
     handleCompanyComplete,
-    forceGetUserCompanies,
-    hasCachedCompany,
-    hasShownCompanyDialog: hasShownCompanyDialogRef
+    forceGetUserCompanies: () => {},
+    hasCachedCompany: false,
+    hasShownCompanyDialog: { current: false }
   };
 };
