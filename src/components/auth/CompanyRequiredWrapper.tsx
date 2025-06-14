@@ -45,6 +45,7 @@ export const CompanyRequiredWrapper: React.FC<CompanyRequiredWrapperProps> = ({ 
   }, [needsCompany, showCompanyDialog, isChecking]);
 
   const handleCompanyCreated = () => {
+    console.log('[CompanyRequiredWrapper] Company created, closing dialog and refreshing companies');
     setShowCompanyDialog(false);
     if (user?.id) {
       forceGetUserCompanies(user.id);
@@ -54,6 +55,14 @@ export const CompanyRequiredWrapper: React.FC<CompanyRequiredWrapperProps> = ({ 
   const handleCompanyTypeSelect = (isExisting: boolean) => {
     console.log('Company type selected:', isExisting);
   };
+
+  // Close dialog automatically when user gets companies
+  React.useEffect(() => {
+    if (userCompanies && userCompanies.length > 0 && showCompanyDialog) {
+      console.log('[CompanyRequiredWrapper] User now has companies, closing dialog');
+      setShowCompanyDialog(false);
+    }
+  }, [userCompanies, showCompanyDialog]);
 
   if (isChecking) {
     return (
