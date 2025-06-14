@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -45,6 +44,14 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
   // Verificar se o usuário tem permissão para criar usuários
   const canCreateUsers = userProfile?.super_admin || userProfile?.is_admin;
 
+  // Log para debugging
+  console.log('[CreateUserDialog] Permissions:', {
+    is_admin: userProfile?.is_admin,
+    super_admin: userProfile?.super_admin,
+    canCreateUsers,
+    userProfileId: userProfile?.id
+  });
+
   // Carregar empresas quando o diálogo abrir
   useEffect(() => {
     if (isOpen && user?.id && userCompanies.length === 0) {
@@ -68,7 +75,13 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
   };
 
   const handleSubmit = async () => {
+    console.log('[CreateUserDialog] Iniciando criação de convite...');
+    
     if (!canCreateUsers) {
+      console.error('[CreateUserDialog] Usuário sem permissões:', {
+        is_admin: userProfile?.is_admin,
+        super_admin: userProfile?.super_admin
+      });
       toast({
         title: "Erro de Permissão",
         description: "Você não possui permissões suficientes para criar usuários.",
@@ -86,8 +99,8 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
       return;
     }
 
-    // Usar diretamente o ID do perfil do contexto, sem chamar supabase.auth.getUser()
     if (!userProfile?.id) {
+      console.error('[CreateUserDialog] UserProfile ID não encontrado:', userProfile);
       toast({
         title: "Erro",
         description: "Usuário não identificado. Por favor, faça login novamente.",
@@ -98,6 +111,27 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
 
     setIsCreating(true);
     try {
+      // Primeiro, vamos testar se conseguimos verificar as permissões diretamente
+      console.log('[CreateUserDialog] Verificando permissões no banco...');
+      
+      const { data: permissionCheck, error: permissionError } = await supabase
+        .rpc('is_user_admin_for_invites');
+        
+      console.log('[CreateUserDialog] Resultado da verificação de permissão:', {
+        permissionCheck,
+        permissionError
+      });
+
+      if (permissionError) {
+        console.error('[CreateUserDialog] Erro na verificação de permissão:', permissionError);
+        throw new Error(`Erro de permissão: ${permissionError.message}`);
+      }
+
+      if (!permissionCheck) {
+        console.error('[CreateUserDialog] Usuário não tem permissões segundo o banco');
+        throw new Error('Você não tem permissões suficientes para criar convites.');
+      }
+
       // Criar dados do convite no banco de dados
       const inviteData = {
         email: formData.email.toLowerCase(),
@@ -108,11 +142,11 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
         data_inicio: formData.data_inicio || null,
         tipo_contrato: formData.tipo_contrato !== 'not_specified' ? formData.tipo_contrato : null,
         nivel_colaborador: formData.nivel_colaborador !== 'not_specified' ? formData.nivel_colaborador : null,
-        created_by: userProfile.id, // Usar diretamente do contexto
+        created_by: userProfile.id,
         expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 dias
       };
 
-      console.log('Criando convite:', inviteData);
+      console.log('[CreateUserDialog] Dados do convite:', inviteData);
 
       // Salvar convite no banco
       const { data: inviteRecord, error: inviteError } = await supabase
@@ -122,11 +156,11 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
         .single();
 
       if (inviteError) {
-        console.error('Erro ao criar convite:', inviteError);
+        console.error('[CreateUserDialog] Erro ao criar convite:', inviteError);
         throw inviteError;
       }
 
-      console.log('Convite salvo:', inviteRecord);
+      console.log('[CreateUserDialog] Convite salvo com sucesso:', inviteRecord);
 
       // Salvar dados do convite criado para mostrar no sucesso
       setCreatedInvite({
@@ -145,7 +179,7 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
       });
 
     } catch (error: any) {
-      console.error('Erro ao criar convite:', error);
+      console.error('[CreateUserDialog] Erro ao criar convite:', error);
       
       // Tratar erro de permissão especificamente
       if (error.message?.includes('permission denied') || error.message?.includes('insufficient_privilege')) {
@@ -186,6 +220,9 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
             <p className="text-muted-foreground">
               Você não possui permissões suficientes para criar usuários.
             </p>
+            <div className="mt-2 text-xs text-gray-500">
+              Debug: is_admin={userProfile?.is_admin ? 'true' : 'false'}, super_admin={userProfile?.super_admin ? 'true' : 'false'}
+            </div>
           </div>
 
           <DialogFooter>
