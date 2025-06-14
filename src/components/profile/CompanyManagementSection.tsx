@@ -83,7 +83,8 @@ export const CompanyManagementSection = ({
     }
   };
 
-  const handleRemoveClick = (company: Company) => {
+  const handleRemoveClick = (e: React.MouseEvent, company: Company) => {
+    e.stopPropagation();
     setCompanyToRemove(company);
   };
 
@@ -153,7 +154,7 @@ export const CompanyManagementSection = ({
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8"
-                  onClick={() => handleRemoveClick(company)}
+                  onClick={(e) => handleRemoveClick(e, company)}
                   disabled={isUnlinking}
                 >
                   <X className="h-4 w-4" />

@@ -184,7 +184,7 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
             <div className="border-t pt-4">
               {isLoadingCompanies ? (
                 <div className="flex items-center justify-center p-4">
-                  <div className="animate-spin h-6 w-6 border-t-2 border-blue-500 border-r-2 rounded-full" />
+                  <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
                   <span className="ml-2 text-sm text-muted-foreground">Carregando empresas...</span>
                 </div>
               ) : (
