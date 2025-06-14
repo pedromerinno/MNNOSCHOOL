@@ -42,6 +42,19 @@ export const uploadAvatarImage = async (file: File, userId: string): Promise<str
     
     console.log('URL pública gerada:', publicUrl);
     
+    // Atualizar o perfil no banco imediatamente após o upload
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ avatar: publicUrl })
+      .eq('id', userId);
+    
+    if (updateError) {
+      console.error('Erro ao atualizar perfil no banco:', updateError);
+      throw updateError;
+    }
+    
+    console.log('Perfil atualizado no banco com nova imagem');
+    
     return publicUrl;
   } catch (error) {
     console.error('Erro no upload da imagem:', error);

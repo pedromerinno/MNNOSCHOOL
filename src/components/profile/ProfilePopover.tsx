@@ -55,7 +55,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
     
     if (userProfile) {
       const displayName = userProfile.display_name || email?.split('@')[0] || "";
-      const avatarUrl = userProfile.avatar || "https://i.pravatar.cc/150?img=68";
+      const avatarUrl = userProfile.avatar || "";
       
       console.log('[ProfilePopover] Definindo valores:', { displayName, avatarUrl });
       
@@ -113,13 +113,16 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
       };
       reader.readAsDataURL(file);
       
-      // Upload para o Supabase
+      // Upload para o Supabase (já atualiza o perfil no banco)
       const publicUrl = await uploadAvatarImage(file, user.id);
       console.log('[ProfilePopover] Upload concluído, URL:', publicUrl);
       
-      // Atualizar form com a URL real
+      // Atualizar form e preview com a URL real
       form.setValue("avatar", publicUrl);
       setAvatarPreview(publicUrl);
+      
+      // Forçar atualização do contexto de autenticação
+      await updateUserProfile({ avatar: publicUrl });
       
       toast({
         title: "Imagem carregada",
@@ -135,7 +138,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
       });
       
       // Reverter para a imagem anterior em caso de erro
-      const previousAvatar = userProfile?.avatar || "https://i.pravatar.cc/150?img=68";
+      const previousAvatar = userProfile?.avatar || "";
       setAvatarPreview(previousAvatar);
       form.setValue("avatar", previousAvatar);
     } finally {
@@ -169,6 +172,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
                 <AvatarImage 
                   src={currentAvatarUrl} 
                   alt="Avatar preview"
+                  key={currentAvatarUrl} // Force re-render when URL changes
                   onLoad={() => console.log('[ProfilePopover] Avatar carregado:', currentAvatarUrl)}
                   onError={() => console.error('[ProfilePopover] Erro ao carregar avatar:', currentAvatarUrl)}
                 />

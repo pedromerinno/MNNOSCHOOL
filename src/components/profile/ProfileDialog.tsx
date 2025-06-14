@@ -65,7 +65,7 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
     
     if (userProfile) {
       const displayName = userProfile.display_name || email?.split('@')[0] || "";
-      const avatarUrl = userProfile.avatar || "https://i.pravatar.cc/150?img=68";
+      const avatarUrl = userProfile.avatar || "";
       
       console.log('[ProfileDialog] Definindo valores:', { displayName, avatarUrl });
       
@@ -134,13 +134,16 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
       };
       reader.readAsDataURL(file);
       
-      // Upload para o Supabase
+      // Upload para o Supabase (já atualiza o perfil no banco)
       const publicUrl = await uploadAvatarImage(file, user.id);
       console.log('[ProfileDialog] Upload concluído, URL:', publicUrl);
       
-      // Atualizar form com a URL real
+      // Atualizar form e preview com a URL real
       form.setValue("avatar", publicUrl);
       setAvatarPreview(publicUrl);
+      
+      // Forçar atualização do contexto de autenticação
+      await updateUserProfile({ avatar: publicUrl });
       
       toast({
         title: "Imagem carregada",
@@ -156,7 +159,7 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
       });
       
       // Reverter para a imagem anterior em caso de erro
-      const previousAvatar = userProfile?.avatar || "https://i.pravatar.cc/150?img=68";
+      const previousAvatar = userProfile?.avatar || "";
       setAvatarPreview(previousAvatar);
       form.setValue("avatar", previousAvatar);
     } finally {
@@ -196,6 +199,7 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
                 <AvatarImage 
                   src={currentAvatarUrl} 
                   alt="Avatar preview"
+                  key={currentAvatarUrl} // Force re-render when URL changes
                   onLoad={() => console.log('[ProfileDialog] Avatar carregado:', currentAvatarUrl)}
                   onError={() => console.error('[ProfileDialog] Erro ao carregar avatar:', currentAvatarUrl)}
                 />
