@@ -7,23 +7,7 @@ interface CacheItem<T> {
   expirationMinutes: number;
 }
 
-interface CacheState {
-  isLoading: boolean;
-  hasInitialized: boolean;
-}
-
-const cacheStateMap = new Map<string, CacheState>();
-
 export const useOptimizedCache = () => {
-  const getCacheState = useCallback((key: string): CacheState => {
-    return cacheStateMap.get(key) || { isLoading: false, hasInitialized: false };
-  }, []);
-
-  const setCacheState = useCallback((key: string, state: Partial<CacheState>) => {
-    const currentState = getCacheState(key);
-    cacheStateMap.set(key, { ...currentState, ...state });
-  }, [getCacheState]);
-
   const setCache = useCallback(<T>(key: string, data: T, expirationMinutes: number = 15) => {
     try {
       const item: CacheItem<T> = {
@@ -53,7 +37,6 @@ export const useOptimizedCache = () => {
       }
       
       localStorage.setItem(`cache_${key}`, serialized);
-      setCacheState(key, { hasInitialized: true });
       console.log(`[Cache] Armazenou ${key} com sucesso (${serialized.length} bytes)`);
     } catch (error: any) {
       console.warn(`[Cache] Falha ao armazenar ${key}:`, error.message);
@@ -83,15 +66,12 @@ export const useOptimizedCache = () => {
         }
       }
     }
-  }, [setCacheState]);
+  }, []);
 
   const getCache = useCallback(<T>(key: string): T | null => {
     try {
       const cached = localStorage.getItem(`cache_${key}`);
-      if (!cached) {
-        setCacheState(key, { hasInitialized: true });
-        return null;
-      }
+      if (!cached) return null;
 
       const item: CacheItem<T> = JSON.parse(cached);
       const now = Date.now();
@@ -100,11 +80,9 @@ export const useOptimizedCache = () => {
       if (now > expirationTime) {
         console.log(`[Cache] Item ${key} expirado, removendo...`);
         localStorage.removeItem(`cache_${key}`);
-        setCacheState(key, { hasInitialized: true });
         return null;
       }
 
-      setCacheState(key, { hasInitialized: true });
       console.log(`[Cache] Recuperou ${key} do cache`);
       return item.data;
     } catch (error) {
@@ -113,33 +91,18 @@ export const useOptimizedCache = () => {
       try {
         localStorage.removeItem(`cache_${key}`);
       } catch {}
-      setCacheState(key, { hasInitialized: true });
       return null;
     }
-  }, [setCacheState]);
-
-  const isCacheReady = useCallback((key: string): boolean => {
-    const state = getCacheState(key);
-    return state.hasInitialized && !state.isLoading;
-  }, [getCacheState]);
-
-  const startCacheOperation = useCallback((key: string) => {
-    setCacheState(key, { isLoading: true });
-  }, [setCacheState]);
-
-  const endCacheOperation = useCallback((key: string) => {
-    setCacheState(key, { isLoading: false, hasInitialized: true });
-  }, [setCacheState]);
+  }, []);
 
   const clearCache = useCallback((key: string) => {
     try {
       localStorage.removeItem(`cache_${key}`);
-      setCacheState(key, { isLoading: false, hasInitialized: true });
       console.log(`[Cache] Limpou ${key}`);
     } catch (error) {
       console.warn(`[Cache] Falha ao limpar ${key}:`, error);
     }
-  }, [setCacheState]);
+  }, []);
 
   const clearExpiredCache = useCallback(() => {
     try {
@@ -184,23 +147,11 @@ export const useOptimizedCache = () => {
           localStorage.removeItem(key);
         }
       });
-      // Limpar estados de cache
-      cacheStateMap.clear();
       console.log('[Cache] Limpou todo o cache');
     } catch (error) {
       console.warn('[Cache] Falha ao limpar todo o cache:', error);
     }
   }, []);
 
-  return { 
-    setCache, 
-    getCache, 
-    clearCache, 
-    clearExpiredCache, 
-    clearAllCache,
-    isCacheReady,
-    startCacheOperation,
-    endCacheOperation,
-    getCacheState
-  };
+  return { setCache, getCache, clearCache, clearExpiredCache, clearAllCache };
 };
