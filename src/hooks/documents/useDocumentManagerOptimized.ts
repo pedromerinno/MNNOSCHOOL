@@ -9,6 +9,7 @@ import { useDocumentPreview } from './useDocumentPreview';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompanies } from '@/hooks/useCompanies';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useDocumentManagerOptimized = () => {
   const [documents, setDocuments] = useState<UserDocument[]>([]);
@@ -77,6 +78,42 @@ export const useDocumentManagerOptimized = () => {
     }
   }, [user?.id, selectedCompany?.id, fetchDocuments]);
 
+  // Função para upload de links
+  const uploadDocumentLink = useCallback(async (
+    linkUrl: string,
+    name: string,
+    documentType: DocumentType,
+    description: string
+  ): Promise<boolean> => {
+    if (!user?.id || !selectedCompany?.id) {
+      toast.error('Usuário ou empresa não encontrados');
+      return false;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('user_documents')
+        .insert({
+          user_id: user.id,
+          company_id: selectedCompany.id,
+          name: name,
+          link_url: linkUrl,
+          attachment_type: 'link',
+          document_type: documentType,
+          description: description || null,
+          uploaded_by: user.id
+        });
+
+      if (error) throw error;
+      
+      return true;
+    } catch (error: any) {
+      console.error('Erro ao adicionar link do documento:', error);
+      toast.error('Erro ao adicionar link');
+      return false;
+    }
+  }, [user?.id, selectedCompany?.id]);
+
   const handleDocumentUpload = useCallback(async (
     attachmentType: 'file' | 'link',
     fileOrUrl: File | string,
@@ -92,14 +129,15 @@ export const useDocumentManagerOptimized = () => {
     try {
       setIsUploading(true);
       
-      // Corrigir chamada para uploadDocument com parâmetros corretos
-      const success = await uploadDocument(
-        attachmentType,
-        fileOrUrl,
-        documentType,
-        description,
-        name
-      );
+      let success = false;
+      
+      if (attachmentType === 'file' && fileOrUrl instanceof File) {
+        // Para arquivos, usar o hook de upload
+        success = await uploadDocument(fileOrUrl, documentType, description);
+      } else if (attachmentType === 'link' && typeof fileOrUrl === 'string') {
+        // Para links, usar nossa função específica
+        success = await uploadDocumentLink(fileOrUrl, name, documentType, description);
+      }
 
       if (success) {
         // Refresh documents after successful upload
@@ -115,7 +153,7 @@ export const useDocumentManagerOptimized = () => {
     } finally {
       setIsUploading(false);
     }
-  }, [user?.id, selectedCompany?.id, uploadDocument, fetchDocuments]);
+  }, [user?.id, selectedCompany?.id, uploadDocument, uploadDocumentLink, fetchDocuments]);
 
   const handleDelete = useCallback(async (documentId: string) => {
     try {
