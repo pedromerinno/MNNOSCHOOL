@@ -21,11 +21,13 @@ export const useAccessItems = ({ companyId, userId }: UseAccessItemsProps) => {
       console.log('No companyId or userId provided:', { companyId, userId });
       setAccessItems([]);
       setIsLoading(false);
+      setHasPermission(true);
       return;
     }
     
     if (lastSelectedCompanyIdRef.current === companyId && !forceRefresh) {
       console.log('Already fetched data for this company, skipping duplicate fetch');
+      setIsLoading(false);
       return;
     }
 
@@ -41,19 +43,6 @@ export const useAccessItems = ({ companyId, userId }: UseAccessItemsProps) => {
     try {
       console.log('Fetching access items for company:', companyId, 'User ID:', userId);
       
-      // Primeiro, vamos verificar se o usuário pertence à empresa
-      const { data: userCompanyData, error: userCompanyError } = await supabase
-        .from('user_empresa')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('empresa_id', companyId);
-      
-      if (userCompanyError) {
-        console.error('Erro ao verificar vínculo usuário-empresa:', userCompanyError);
-      } else {
-        console.log('Vínculo usuário-empresa encontrado:', userCompanyData);
-      }
-      
       const { data, error } = await supabase
         .from('company_access')
         .select('*')
@@ -61,24 +50,26 @@ export const useAccessItems = ({ companyId, userId }: UseAccessItemsProps) => {
         .order('tool_name');
       
       if (error) {
-        console.error('Erro detalhado da consulta:', error);
+        console.error('Error fetching access items:', error);
         if (error.code === '42501' || error.message.includes('policy')) {
-          console.log('Acesso negado pela política RLS:', error.message);
+          console.log('Access denied by RLS policy:', error.message);
           setHasPermission(false);
           setAccessItems([]);
         } else {
-          console.error('Outro tipo de erro ao buscar itens de acesso:', error);
-          throw error;
+          console.error('Other error type:', error);
+          setAccessItems([]);
+          toast.error('Erro ao carregar informações de acesso');
         }
       } else {
-        console.log('Itens de acesso encontrados:', data?.length, 'itens:', data);
+        console.log('Access items found:', data?.length, 'items');
         setAccessItems(data as AccessItem[] || []);
         lastSelectedCompanyIdRef.current = companyId;
+        setHasPermission(true);
       }
     } catch (error: any) {
-      console.error('Erro ao carregar informações de acesso:', error);
-      toast.error('Não foi possível carregar os dados de acesso');
+      console.error('Exception while loading access items:', error);
       setAccessItems([]);
+      setHasPermission(false);
     } finally {
       setIsLoading(false);
       setRequestInProgress(false);
@@ -86,14 +77,18 @@ export const useAccessItems = ({ companyId, userId }: UseAccessItemsProps) => {
   };
 
   useEffect(() => {
-    fetchAccessItems();
+    if (companyId && userId) {
+      fetchAccessItems();
+    }
   }, [companyId, userId]);
 
   // Listen for access creation events
   useEffect(() => {
     const handleAccessCreated = () => {
       console.log('Access created event received, refreshing data');
-      fetchAccessItems(true);
+      if (companyId && userId) {
+        fetchAccessItems(true);
+      }
     };
 
     window.addEventListener('access-created', handleAccessCreated);
@@ -107,6 +102,10 @@ export const useAccessItems = ({ companyId, userId }: UseAccessItemsProps) => {
     accessItems,
     isLoading,
     hasPermission,
-    refetch: () => fetchAccessItems(true)
+    refetch: () => {
+      if (companyId && userId) {
+        fetchAccessItems(true);
+      }
+    }
   };
 };

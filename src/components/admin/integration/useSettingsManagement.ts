@@ -41,8 +41,9 @@ export const useSettingsManagement = () => {
 
   // Force load companies if we have a user but no companies
   useEffect(() => {
-    if (user?.id && !isLoadingCompanies && userCompanies.length === 0) {
+    if (user?.id && !isLoadingCompanies && userCompanies.length === 0 && !hasInitialized.current) {
       console.log('[useSettingsManagement] No companies loaded, forcing fetch...');
+      hasInitialized.current = true;
       forceGetUserCompanies(user.id).catch(error => {
         console.error('[useSettingsManagement] Error forcing companies fetch:', error);
       });
@@ -51,9 +52,8 @@ export const useSettingsManagement = () => {
 
   // Initialize selected company when companies are available
   useEffect(() => {
-    if (!hasInitialized.current && companies.length > 0) {
+    if (companies.length > 0 && !selectedCompany) {
       console.log('[useSettingsManagement] Initializing selected company');
-      hasInitialized.current = true;
       
       // First priority: global selected company if it exists in user companies
       if (globalSelectedCompany && companies.some(c => c.id === globalSelectedCompany.id)) {
@@ -66,33 +66,7 @@ export const useSettingsManagement = () => {
         setSelectedCompany(companies[0]);
       }
     }
-  }, [companies, globalSelectedCompany]);
-
-  // Listen for global company changes and sync
-  useEffect(() => {
-    const handleGlobalCompanyChange = (event: CustomEvent<{company: Company}>) => {
-      const newCompany = event.detail.company;
-      
-      // Only update if the company is in our available companies and different from current
-      if (companies.some(c => c.id === newCompany.id) && (!selectedCompany || selectedCompany.id !== newCompany.id)) {
-        console.log("[useSettingsManagement] Global company changed, updating selected company:", newCompany.nome);
-        setSelectedCompany(newCompany);
-      }
-    };
-
-    // Listen to multiple company change events
-    window.addEventListener('company-changed', handleGlobalCompanyChange as EventListener);
-    window.addEventListener('company-navigation-change', handleGlobalCompanyChange as EventListener);
-    window.addEventListener('company-selected', handleGlobalCompanyChange as EventListener);
-    window.addEventListener('settings-company-changed', handleGlobalCompanyChange as EventListener);
-    
-    return () => {
-      window.removeEventListener('company-changed', handleGlobalCompanyChange as EventListener);
-      window.removeEventListener('company-navigation-change', handleGlobalCompanyChange as EventListener);
-      window.removeEventListener('company-selected', handleGlobalCompanyChange as EventListener);
-      window.removeEventListener('settings-company-changed', handleGlobalCompanyChange as EventListener);
-    };
-  }, [companies, selectedCompany]);
+  }, [companies, globalSelectedCompany, selectedCompany]);
 
   const handleCompanyChange = (companyId: string) => {
     const company = companies.find(c => c.id === companyId);
@@ -105,11 +79,6 @@ export const useSettingsManagement = () => {
       
       // Broadcast company change for other components to react
       window.dispatchEvent(new CustomEvent('settings-company-changed', { 
-        detail: { company } 
-      }));
-      
-      // Also dispatch global company change event
-      window.dispatchEvent(new CustomEvent('company-changed', { 
         detail: { company } 
       }));
     }

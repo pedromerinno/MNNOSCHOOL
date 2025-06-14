@@ -17,6 +17,8 @@ import Team from "./pages/Team";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import LessonPage from "./pages/LessonPage";
+import Integration from "./pages/Integration";
+import Access from "./pages/Access";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +48,8 @@ function App() {
                       <Route path="/documents" element={<Documents />} />
                       <Route path="/community" element={<Community />} />
                       <Route path="/team" element={<Team />} />
+                      <Route path="/integration" element={<Integration />} />
+                      <Route path="/access" element={<Access />} />
                     </Routes>
                   </CompanyRequiredWrapper>
                 } />

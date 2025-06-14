@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Trash2, Edit, Key, Eye, EyeOff } from "lucide-react";
+import { Plus, Trash2, Edit, Key, Eye, EyeOff, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -28,7 +28,7 @@ interface AccessManagementProps {
 
 export const AccessManagement: React.FC<AccessManagementProps> = ({
   companyId,
-  companyColor
+  companyColor = "#1EAEDB"
 }) => {
   const [accessItems, setAccessItems] = useState<AccessItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -50,6 +50,8 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({
   }, [companyId]);
 
   const fetchAccessItems = async () => {
+    if (!companyId) return;
+    
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -58,11 +60,17 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({
         .eq('company_id', companyId)
         .order('tool_name');
       
-      if (error) throw error;
-      setAccessItems(data as AccessItem[] || []);
+      if (error) {
+        console.error('Error fetching access items:', error);
+        toast.error('Erro ao carregar itens de acesso');
+        setAccessItems([]);
+      } else {
+        setAccessItems(data as AccessItem[] || []);
+      }
     } catch (error: any) {
       console.error('Error fetching access items:', error);
       toast.error('Erro ao carregar itens de acesso');
+      setAccessItems([]);
     } finally {
       setIsLoading(false);
     }
@@ -189,6 +197,14 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({
     });
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex justify-center p-6">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -287,11 +303,7 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({
         </Dialog>
       </div>
 
-      {isLoading ? (
-        <div className="flex justify-center p-6">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      ) : accessItems.length === 0 ? (
+      {accessItems.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center p-6">
             <Key className="h-12 w-12 text-muted-foreground mb-4" />
@@ -344,64 +356,54 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({
                         <span>{item.username}</span>
                         <Button
                           variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
+                          size="sm"
                           onClick={() => copyToClipboard(item.username, 'Usuário copiado!')}
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
-                            <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
-                          </svg>
+                          <Copy className="h-3 w-3" />
                         </Button>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
-                        <span className="font-mono">
+                        <span>
                           {visiblePasswords.has(item.id) ? item.password : '••••••••'}
                         </span>
                         <Button
                           variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
+                          size="sm"
                           onClick={() => togglePasswordVisibility(item.id)}
                         >
                           {visiblePasswords.has(item.id) ? (
-                            <EyeOff className="h-4 w-4" />
+                            <EyeOff className="h-3 w-3" />
                           ) : (
-                            <Eye className="h-4 w-4" />
+                            <Eye className="h-3 w-3" />
                           )}
                         </Button>
                         <Button
                           variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
+                          size="sm"
                           onClick={() => copyToClipboard(item.password, 'Senha copiada!')}
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
-                            <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
-                          </svg>
+                          <Copy className="h-3 w-3" />
                         </Button>
                       </div>
                     </TableCell>
+                    <TableCell>{item.notes || '-'}</TableCell>
                     <TableCell>
-                      <span className="text-sm text-muted-foreground">
-                        {item.notes || '-'}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-1">
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
-                          <Edit className="h-4 w-4" />
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(item)}
+                        >
+                          <Edit className="h-3 w-3" />
                         </Button>
                         <Button
                           variant="ghost"
-                          size="icon"
-                          className="text-red-600"
+                          size="sm"
                           onClick={() => handleDelete(item.id)}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3 w-3" />
                         </Button>
                       </div>
                     </TableCell>
