@@ -40,14 +40,14 @@ const AdminPage = () => {
   // Verificação melhorada de permissões de admin
   const hasAdminAccess = Boolean(userProfile?.is_admin || userProfile?.super_admin);
 
-  // Inicialização mais robusta para evitar flashes
+  // Inicialização ÚNICA das abas - só executa uma vez quando o componente monta
   useEffect(() => {
     // Aguardar até que o auth esteja completo e o userProfile esteja disponível
-    if (authLoading || !userProfile) {
+    if (authLoading || !userProfile || isInitialized) {
       return;
     }
     
-    console.log("Admin page - Auth loading complete", { userProfile });
+    console.log("Admin page - Initializing tabs for the first time", { userProfile });
     
     // Verificar se o usuário tem permissões de admin
     if (!hasAdminAccess) {
@@ -55,7 +55,7 @@ const AdminPage = () => {
       return;
     }
     
-    // Determinar a aba inicial baseada no perfil do usuário
+    // Determinar a aba inicial baseada na URL ou perfil do usuário
     const params = new URLSearchParams(location.search);
     const tabParam = params.get('tab');
     
@@ -64,11 +64,11 @@ const AdminPage = () => {
     if (tabParam) {
       initialTab = tabParam;
     } else {
-      // Definir aba padrão baseada no tipo de usuário
+      // Definir aba padrão baseada no tipo de usuário APENAS se não há parâmetro na URL
       initialTab = userProfile?.super_admin ? "platform" : "companies";
     }
     
-    // Atualizar URL e estado apenas uma vez
+    // Atualizar URL e estado apenas na inicialização
     if (initialTab) {
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.set('tab', initialTab);
@@ -76,14 +76,15 @@ const AdminPage = () => {
       setActiveTab(initialTab);
     }
     
-    // Marcar como inicializado para parar de mostrar skeleton
+    // Marcar como inicializado para NÃO executar novamente
     setIsInitialized(true);
-  }, [authLoading, userProfile, hasAdminAccess, location.search]);
+    console.log("Admin page - Initialization complete with tab:", initialTab);
+  }, [authLoading, userProfile, hasAdminAccess]); // Removido location.search da dependência
 
-  // Manipulador de mudança de aba
+  // Manipulador de mudança de aba - NÃO deve interferir com a inicialização
   const handleTabChange = useCallback((tab: string) => {
+    console.log("Admin page - User changing tab to:", tab);
     setActiveTab(tab);
-    console.log("Mudando para a aba:", tab);
     
     // Atualizar URL sem causar recarregamento
     const newUrl = new URL(window.location.href);
@@ -97,6 +98,7 @@ const AdminPage = () => {
       const params = new URLSearchParams(window.location.search);
       const tabParam = params.get('tab');
       if (tabParam && tabParam !== activeTab) {
+        console.log("Admin page - Browser navigation detected, changing to:", tabParam);
         setActiveTab(tabParam);
       }
     };
