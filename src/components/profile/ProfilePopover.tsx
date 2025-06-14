@@ -17,6 +17,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { uploadAvatarImage } from "@/utils/imageUpload";
 
 const userProfileSchema = z.object({
   name: z.string().min(2, {
@@ -34,35 +35,43 @@ interface ProfilePopoverProps {
 }
 
 export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps) => {
-  const { userProfile, updateUserProfile } = useAuth();
+  const { userProfile, updateUserProfile, user } = useAuth();
   const [open, setOpen] = useState(false);
-  const [avatarPreview, setAvatarPreview] = useState("https://i.pravatar.cc/150?img=68");
+  const [avatarPreview, setAvatarPreview] = useState<string>("");
+  const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<UserProfileFormValues>({
     resolver: zodResolver(userProfileSchema),
     defaultValues: {
       name: "",
-      avatar: "https://i.pravatar.cc/150?img=68",
+      avatar: "",
     },
   });
 
-  // Update form values when userProfile changes
+  // Atualizar valores do form quando userProfile mudar
   useEffect(() => {
+    console.log('[ProfilePopover] userProfile atualizado:', userProfile);
+    
     if (userProfile) {
+      const displayName = userProfile.display_name || email?.split('@')[0] || "";
+      const avatarUrl = userProfile.avatar || "https://i.pravatar.cc/150?img=68";
+      
+      console.log('[ProfilePopover] Definindo valores:', { displayName, avatarUrl });
+      
       form.reset({
-        name: userProfile.display_name || email?.split('@')[0] || "",
-        avatar: userProfile.avatar || "https://i.pravatar.cc/150?img=68"
+        name: displayName,
+        avatar: avatarUrl
       });
       
-      if (userProfile.avatar) {
-        setAvatarPreview(userProfile.avatar);
-      }
+      setAvatarPreview(avatarUrl);
     }
   }, [userProfile, email, form]);
 
   const handleProfileUpdate = async (values: UserProfileFormValues) => {
     try {
+      console.log('[ProfilePopover] Atualizando perfil com valores:', values);
+      
       await updateUserProfile({
         display_name: values.name,
         avatar: values.avatar || null
@@ -77,6 +86,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
       
       setOpen(false);
     } catch (error: any) {
+      console.error('[ProfilePopover] Erro ao atualizar perfil:', error);
       toast({
         title: "Erro ao atualizar perfil",
         description: error.message || "Não foi possível salvar as alterações",
@@ -85,18 +95,58 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
     }
   };
 
-  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (!file || !user) return;
+    
+    console.log('[ProfilePopover] Arquivo selecionado:', file.name, file.type, file.size);
+    
+    setIsUploading(true);
+    
+    try {
+      // Criar preview imediato
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
+        console.log('[ProfilePopover] Preview criado');
         setAvatarPreview(result);
-        form.setValue("avatar", result);
       };
       reader.readAsDataURL(file);
+      
+      // Upload para o Supabase
+      const publicUrl = await uploadAvatarImage(file, user.id);
+      console.log('[ProfilePopover] Upload concluído, URL:', publicUrl);
+      
+      // Atualizar form com a URL real
+      form.setValue("avatar", publicUrl);
+      setAvatarPreview(publicUrl);
+      
+      toast({
+        title: "Imagem carregada",
+        description: "Sua foto de perfil foi carregada com sucesso!",
+      });
+      
+    } catch (error: any) {
+      console.error('[ProfilePopover] Erro no upload:', error);
+      toast({
+        title: "Erro no upload",
+        description: error.message || "Não foi possível carregar a imagem",
+        variant: "destructive",
+      });
+      
+      // Reverter para a imagem anterior em caso de erro
+      const previousAvatar = userProfile?.avatar || "https://i.pravatar.cc/150?img=68";
+      setAvatarPreview(previousAvatar);
+      form.setValue("avatar", previousAvatar);
+    } finally {
+      setIsUploading(false);
     }
   };
+
+  const currentAvatarUrl = avatarPreview || userProfile?.avatar || "https://i.pravatar.cc/150?img=68";
+  const currentName = form.watch("name") || userProfile?.display_name || email?.split('@')[0] || "U";
+
+  console.log('[ProfilePopover] Renderizando com:', { currentAvatarUrl, currentName, isUploading });
 
   return (
     <>
@@ -116,15 +166,20 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
           <form onSubmit={form.handleSubmit(handleProfileUpdate)} className="space-y-6">
             <div className="flex flex-col items-center gap-4">
               <Avatar className="h-24 w-24">
-                <AvatarImage src={avatarPreview} alt="Avatar preview" />
-                <AvatarFallback>{form.getValues().name?.charAt(0)?.toUpperCase() || "U"}</AvatarFallback>
+                <AvatarImage 
+                  src={currentAvatarUrl} 
+                  alt="Avatar preview"
+                  onLoad={() => console.log('[ProfilePopover] Avatar carregado:', currentAvatarUrl)}
+                  onError={() => console.error('[ProfilePopover] Erro ao carregar avatar:', currentAvatarUrl)}
+                />
+                <AvatarFallback>{currentName.charAt(0)?.toUpperCase()}</AvatarFallback>
               </Avatar>
               
               <div className="flex items-center gap-2">
                 <label htmlFor="avatar-upload" className="cursor-pointer">
                   <div className="flex items-center gap-2 text-sm text-merinno-blue hover:underline">
                     <Upload className="h-4 w-4" />
-                    <span>Alterar foto</span>
+                    <span>{isUploading ? "Carregando..." : "Alterar foto"}</span>
                   </div>
                   <input
                     id="avatar-upload"
@@ -132,6 +187,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
                     accept="image/*"
                     className="hidden"
                     onChange={handleAvatarChange}
+                    disabled={isUploading}
                   />
                 </label>
               </div>
@@ -155,10 +211,13 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
                 type="button" 
                 variant="outline" 
                 onClick={() => setOpen(false)}
+                disabled={isUploading}
               >
                 Cancelar
               </Button>
-              <Button type="submit">Salvar</Button>
+              <Button type="submit" disabled={isUploading}>
+                {isUploading ? "Salvando..." : "Salvar"}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>

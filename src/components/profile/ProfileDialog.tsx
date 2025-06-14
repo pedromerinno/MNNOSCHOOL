@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Upload } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -25,6 +26,7 @@ import {
 } from "@/components/ui/form";
 import { CompanyManagementSection } from "./CompanyManagementSection";
 import { useCompanies } from "@/hooks/useCompanies";
+import { uploadAvatarImage } from "@/utils/imageUpload";
 
 const userProfileSchema = z.object({
   name: z.string().min(2, {
@@ -45,28 +47,34 @@ interface ProfileDialogProps {
 export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialogProps) => {
   const { userProfile, updateUserProfile, user } = useAuth();
   const { userCompanies, forceGetUserCompanies } = useCompanies();
-  const [avatarPreview, setAvatarPreview] = useState<string>("https://i.pravatar.cc/150?img=68");
+  const [avatarPreview, setAvatarPreview] = useState<string>("");
   const [isLoadingCompanies, setIsLoadingCompanies] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<UserProfileFormValues>({
     resolver: zodResolver(userProfileSchema),
     defaultValues: {
       name: "",
-      avatar: "https://i.pravatar.cc/150?img=68",
+      avatar: "",
     },
   });
 
   useEffect(() => {
+    console.log('[ProfileDialog] userProfile atualizado:', userProfile);
+    
     if (userProfile) {
+      const displayName = userProfile.display_name || email?.split('@')[0] || "";
+      const avatarUrl = userProfile.avatar || "https://i.pravatar.cc/150?img=68";
+      
+      console.log('[ProfileDialog] Definindo valores:', { displayName, avatarUrl });
+      
       form.reset({
-        name: userProfile.display_name || email?.split('@')[0] || "",
-        avatar: userProfile.avatar || "https://i.pravatar.cc/150?img=68"
+        name: displayName,
+        avatar: avatarUrl
       });
       
-      if (userProfile.avatar) {
-        setAvatarPreview(userProfile.avatar);
-      }
+      setAvatarPreview(avatarUrl);
     }
   }, [userProfile, email, form]);
 
@@ -81,18 +89,10 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
     }
   }, [isOpen, user?.id, userCompanies.length, forceGetUserCompanies]);
 
-  useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      if (name === 'avatar' && value.avatar) {
-        setAvatarPreview(value.avatar);
-      }
-    });
-    
-    return () => subscription.unsubscribe();
-  }, [form]);
-
   const handleProfileUpdate = async (values: UserProfileFormValues) => {
     try {
+      console.log('[ProfileDialog] Atualizando perfil com valores:', values);
+      
       await updateUserProfile({
         display_name: values.name,
         avatar: values.avatar || null
@@ -107,6 +107,7 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
       
       setIsOpen(false);
     } catch (error: any) {
+      console.error('[ProfileDialog] Erro ao atualizar perfil:', error);
       toast({
         title: "Erro ao atualizar perfil",
         description: error.message || "Não foi possível salvar as alterações",
@@ -115,18 +116,58 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
     }
   };
 
-  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (!file || !user) return;
+    
+    console.log('[ProfileDialog] Arquivo selecionado:', file.name, file.type, file.size);
+    
+    setIsUploading(true);
+    
+    try {
+      // Criar preview imediato
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
+        console.log('[ProfileDialog] Preview criado');
         setAvatarPreview(result);
-        form.setValue("avatar", result);
       };
       reader.readAsDataURL(file);
+      
+      // Upload para o Supabase
+      const publicUrl = await uploadAvatarImage(file, user.id);
+      console.log('[ProfileDialog] Upload concluído, URL:', publicUrl);
+      
+      // Atualizar form com a URL real
+      form.setValue("avatar", publicUrl);
+      setAvatarPreview(publicUrl);
+      
+      toast({
+        title: "Imagem carregada",
+        description: "Sua foto de perfil foi carregada com sucesso!",
+      });
+      
+    } catch (error: any) {
+      console.error('[ProfileDialog] Erro no upload:', error);
+      toast({
+        title: "Erro no upload",
+        description: error.message || "Não foi possível carregar a imagem",
+        variant: "destructive",
+      });
+      
+      // Reverter para a imagem anterior em caso de erro
+      const previousAvatar = userProfile?.avatar || "https://i.pravatar.cc/150?img=68";
+      setAvatarPreview(previousAvatar);
+      form.setValue("avatar", previousAvatar);
+    } finally {
+      setIsUploading(false);
     }
   };
+
+  const currentAvatarUrl = avatarPreview || userProfile?.avatar || "https://i.pravatar.cc/150?img=68";
+  const currentName = form.watch("name") || userProfile?.display_name || email?.split('@')[0] || "U";
+
+  console.log('[ProfileDialog] Renderizando com:', { currentAvatarUrl, currentName, isUploading });
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -152,22 +193,28 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
           <form onSubmit={form.handleSubmit(handleProfileUpdate)} className="space-y-6">
             <div className="flex flex-col items-center gap-4 mb-4">
               <Avatar className="h-24 w-24">
-                <AvatarImage src={avatarPreview} alt="Avatar preview" />
-                <AvatarFallback>{form.getValues().name?.charAt(0)?.toUpperCase() || "U"}</AvatarFallback>
+                <AvatarImage 
+                  src={currentAvatarUrl} 
+                  alt="Avatar preview"
+                  onLoad={() => console.log('[ProfileDialog] Avatar carregado:', currentAvatarUrl)}
+                  onError={() => console.error('[ProfileDialog] Erro ao carregar avatar:', currentAvatarUrl)}
+                />
+                <AvatarFallback>{currentName.charAt(0)?.toUpperCase()}</AvatarFallback>
               </Avatar>
               
               <div className="flex items-center gap-2">
-                <label htmlFor="avatar-upload" className="cursor-pointer">
+                <label htmlFor="avatar-upload-dialog" className="cursor-pointer">
                   <div className="flex items-center gap-2 text-sm text-blue-600 hover:underline">
                     <Upload className="h-4 w-4" />
-                    <span>Alterar foto</span>
+                    <span>{isUploading ? "Carregando..." : "Alterar foto"}</span>
                   </div>
                   <input
-                    id="avatar-upload"
+                    id="avatar-upload-dialog"
                     type="file"
                     accept="image/*"
                     className="hidden"
                     onChange={handleAvatarChange}
+                    disabled={isUploading}
                   />
                 </label>
               </div>
@@ -206,10 +253,13 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
                 type="button" 
                 variant="outline" 
                 onClick={() => setIsOpen(false)}
+                disabled={isUploading}
               >
                 Cancelar
               </Button>
-              <Button type="submit">Salvar alterações</Button>
+              <Button type="submit" disabled={isUploading}>
+                {isUploading ? "Salvando..." : "Salvar alterações"}
+              </Button>
             </div>
           </form>
         </Form>
