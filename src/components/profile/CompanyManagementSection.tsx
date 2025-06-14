@@ -87,6 +87,10 @@ export const CompanyManagementSection = ({
     setCompanyToRemove(company);
   };
 
+  const handleCancelRemove = () => {
+    setCompanyToRemove(null);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
@@ -163,16 +167,12 @@ export const CompanyManagementSection = ({
       <AlertDialog 
         open={!!companyToRemove} 
         onOpenChange={(open) => {
-          if (!open) {
+          if (!open && !isUnlinking) {
             setCompanyToRemove(null);
           }
         }}
       >
-        <AlertDialogContent 
-          className="pointer-events-auto"
-          onPointerDownOutside={(e) => e.preventDefault()}
-          onEscapeKeyDown={(e) => e.preventDefault()}
-        >
+        <AlertDialogContent className="pointer-events-auto">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-destructive" />
@@ -186,7 +186,7 @@ export const CompanyManagementSection = ({
           <AlertDialogFooter>
             <AlertDialogCancel 
               disabled={isUnlinking}
-              onClick={() => setCompanyToRemove(null)}
+              onClick={handleCancelRemove}
             >
               Cancelar
             </AlertDialogCancel>
