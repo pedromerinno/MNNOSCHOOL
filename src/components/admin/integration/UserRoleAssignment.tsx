@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -9,7 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfile } from "@/hooks/useUsers";
 import { JobRole } from "@/types/job-roles";
@@ -109,7 +109,11 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
   
   const handleSaveRole = async () => {
     if (!selectedRoleId) {
-      toast.error("Por favor, selecione um cargo");
+      toast({
+        title: "Erro",
+        description: "Por favor, selecione um cargo",
+        variant: "destructive",
+      });
       return;
     }
     
