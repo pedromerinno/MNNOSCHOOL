@@ -4,7 +4,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useCompanyInitialization } from "@/hooks/home/useCompanyInitialization";
 import { usePageLoadingState } from "@/hooks/home/usePageLoadingState";
-import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 import { UserHome } from "@/components/home/UserHome";
 import { IndexSkeleton } from "@/components/home/IndexSkeleton";
 import { NoCompaniesAvailable } from "@/components/home/NoCompaniesAvailable";
@@ -49,7 +48,6 @@ export const IndexContent = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <MainNavigationMenu />
       <UserHome />
       
       <CompanySelectionDialog 
