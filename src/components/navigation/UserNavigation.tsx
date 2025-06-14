@@ -45,24 +45,13 @@ export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" 
     const handleOpenProfileDialog = () => {
       setIsProfileOpen(true);
     };
-
-    // Listener para atualização de perfil
-    const handleProfileUpdate = (event: CustomEvent) => {
-      console.log('UserNavigation: Profile updated', event.detail);
-      setDisplayName(event.detail.display_name);
-      if (event.detail.avatar) {
-        setDisplayAvatar(event.detail.avatar);
-      }
-    };
     
     window.addEventListener('company-relation-changed', handleCompanyRelationChange);
     window.addEventListener('open-profile-dialog', handleOpenProfileDialog);
-    window.addEventListener('profile-updated', handleProfileUpdate as EventListener);
     
     return () => {
       window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
       window.removeEventListener('open-profile-dialog', handleOpenProfileDialog);
-      window.removeEventListener('profile-updated', handleProfileUpdate as EventListener);
     };
   }, []);
 
