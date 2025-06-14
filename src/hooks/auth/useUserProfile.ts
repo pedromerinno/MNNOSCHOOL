@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfile } from '@/types/user';
@@ -41,16 +42,17 @@ export const useUserProfile = () => {
     }
   }, []);
 
-  const fetchUserProfile = useCallback(async (userId: string) => {
-    // Prevent multiple fetches and excessive calls
-    if (fetchInProgress.current || hasFetchedOnce.current) {
+  const fetchUserProfile = useCallback(async (userId: string, forceRefresh: boolean = false) => {
+    // Prevent multiple fetches, but allow force refresh
+    if (fetchInProgress.current && !forceRefresh) {
       return;
     }
 
     try {
       fetchInProgress.current = true;
-      hasFetchedOnce.current = true;
       setIsLoading(true);
+      
+      console.log('[useUserProfile] Fetching user profile for:', userId, 'forceRefresh:', forceRefresh);
       
       // Buscar dados do usuário autenticado para obter email atual
       const { data: { user } } = await supabase.auth.getUser();
@@ -101,8 +103,14 @@ export const useUserProfile = () => {
           nivel_colaborador: data.nivel_colaborador as 'Junior' | 'Pleno' | 'Senior' | null
         };
         
+        console.log('[useUserProfile] Profile updated:', profile.display_name, 'cargo_id:', profile.cargo_id);
         setUserProfile(profile);
         setCache({ key: CACHE_KEY, expirationMinutes: 5 }, profile);
+        
+        // Se é um refresh forçado, não marcar como fetched para permitir futuras atualizações
+        if (!forceRefresh) {
+          hasFetchedOnce.current = true;
+        }
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
