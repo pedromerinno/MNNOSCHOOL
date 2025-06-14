@@ -73,24 +73,15 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
     }
 
     try {
-      // Salvar diretamente no banco de dados via Supabase
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          display_name: values.name,
-          avatar: values.avatar
-        })
-        .eq('id', user.id);
-
-      if (error) {
-        throw error;
-      }
-
-      // Atualizar o contexto local
+      console.log('[ProfilePopover] Iniciando atualização do perfil:', values);
+      
+      // Atualizar o perfil usando o hook useUserProfile
       await updateUserProfile({
         display_name: values.name,
         avatar: values.avatar
       });
+      
+      console.log('[ProfilePopover] Perfil atualizado com sucesso via hook');
       
       onSave(values);
       
@@ -109,7 +100,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
       
       setOpen(false);
     } catch (error: any) {
-      console.error('Erro ao atualizar perfil:', error);
+      console.error('[ProfilePopover] Erro ao atualizar perfil:', error);
       toast({
         title: "Erro ao atualizar perfil",
         description: error.message || "Não foi possível salvar as alterações",

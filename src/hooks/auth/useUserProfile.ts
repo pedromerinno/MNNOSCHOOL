@@ -305,12 +305,50 @@ export const useUserProfile = () => {
     clearCache({ key: CACHE_KEY });
   }, [clearCache]);
 
-  const updateUserProfile = useCallback((userData: Partial<UserProfile>) => {
-    setUserProfile(prev => prev ? ({
-      ...prev,
-      ...userData,
-    }) : null);
-  }, []);
+  const updateUserProfile = useCallback(async (userData: Partial<UserProfile>) => {
+    const currentUserId = userProfile?.id;
+    
+    if (!currentUserId) {
+      console.error('No user ID available for profile update');
+      return;
+    }
+
+    try {
+      console.log('[useUserProfile] Atualizando perfil do usuário:', currentUserId, userData);
+      
+      // Atualizar diretamente no banco de dados
+      const { error } = await supabase
+        .from('profiles')
+        .update(userData)
+        .eq('id', currentUserId);
+
+      if (error) {
+        console.error('[useUserProfile] Erro ao atualizar perfil no banco:', error);
+        throw error;
+      }
+
+      console.log('[useUserProfile] Perfil atualizado com sucesso no banco de dados');
+      
+      // Atualizar estado local
+      setUserProfile(prev => prev ? ({
+        ...prev,
+        ...userData,
+      }) : null);
+      
+      // Atualizar cache
+      const cachedProfile = getCache<UserProfile>({ key: CACHE_KEY });
+      if (cachedProfile) {
+        setCache({ key: CACHE_KEY, expirationMinutes: 5 }, {
+          ...cachedProfile,
+          ...userData
+        });
+      }
+      
+    } catch (error: any) {
+      console.error('[useUserProfile] Erro ao atualizar perfil:', error);
+      throw error;
+    }
+  }, [userProfile?.id, setCache, getCache]);
 
   const updateUserData = async (userId: string, userData: Partial<UserProfile>) => {
     if (!userId) {
