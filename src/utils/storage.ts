@@ -8,8 +8,15 @@ export const deleteOldAvatar = async (avatarUrl: string) => {
   }
   
   try {
-    // Extract file name from URL
-    const fileName = avatarUrl.split('/').pop();
+    // Extract file name from URL - handle both old and new formats
+    const urlParts = avatarUrl.split('/');
+    let fileName = urlParts.pop();
+    
+    // If the URL contains the user folder structure, get just the filename
+    if (fileName && fileName.includes('?')) {
+      fileName = fileName.split('?')[0];
+    }
+    
     if (!fileName) {
       console.log('[Storage] Nome do arquivo não encontrado na URL:', avatarUrl);
       return;
@@ -36,47 +43,61 @@ export const uploadAvatar = async (file: File, userId: string): Promise<string |
     const fileExt = file.name.split('.').pop();
     const fileName = `${userId}-${Date.now()}.${fileExt}`;
     
-    console.log('[Storage] Iniciando upload para bucket avatars:', fileName);
-    console.log('[Storage] Tamanho do arquivo:', file.size, 'bytes');
-    console.log('[Storage] Tipo do arquivo:', file.type);
+    console.log('[Storage] === INÍCIO UPLOAD ===');
+    console.log('[Storage] Bucket: avatars');
+    console.log('[Storage] Arquivo:', fileName);
+    console.log('[Storage] Tamanho:', file.size, 'bytes');
+    console.log('[Storage] Tipo:', file.type);
     
     // Upload file to Supabase Storage
     const { data, error } = await supabase.storage
       .from('avatars')
       .upload(fileName, file, {
         cacheControl: '3600',
-        upsert: false
+        upsert: true // Allow overwrite
       });
     
     if (error) {
-      console.error('[Storage] Erro no upload:', error);
+      console.error('[Storage] ❌ Erro no upload:', error);
       throw new Error(`Erro no upload: ${error.message}`);
     }
     
-    console.log('[Storage] Upload bem-sucedido, dados:', data);
+    console.log('[Storage] ✅ Upload bem-sucedido, dados:', data);
     
     // Get public URL
     const { data: { publicUrl } } = supabase.storage
       .from('avatars')
       .getPublicUrl(fileName);
     
-    console.log('[Storage] URL pública gerada:', publicUrl);
+    console.log('[Storage] 🔗 URL pública gerada:', publicUrl);
     
     // Verificar se o arquivo foi realmente salvo
     const { data: fileList, error: listError } = await supabase.storage
       .from('avatars')
-      .list('', { search: fileName });
+      .list('', { search: fileName.split('.')[0] });
     
     if (listError) {
-      console.error('[Storage] Erro ao verificar arquivo:', listError);
+      console.error('[Storage] ❌ Erro ao verificar arquivo:', listError);
     } else {
-      console.log('[Storage] Arquivo encontrado na verificação:', fileList?.length > 0);
+      console.log('[Storage] ✅ Arquivo encontrado na verificação:', fileList?.length > 0);
+      if (fileList && fileList.length > 0) {
+        console.log('[Storage] 📁 Arquivos encontrados:', fileList.map(f => f.name));
+      }
     }
     
+    // Test if the URL is accessible
+    try {
+      const response = await fetch(publicUrl, { method: 'HEAD' });
+      console.log('[Storage] 🌐 Teste de acesso à URL - Status:', response.status);
+    } catch (fetchError) {
+      console.error('[Storage] ❌ Erro ao testar URL:', fetchError);
+    }
+    
+    console.log('[Storage] === FIM UPLOAD ===');
     return publicUrl;
     
   } catch (error: any) {
-    console.error('[Storage] Erro completo no upload:', error);
+    console.error('[Storage] ❌ Erro completo no upload:', error);
     throw error;
   }
 };

@@ -58,7 +58,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
         avatar: userProfile.avatar || ""
       };
       
-      console.log('[ProfilePopover] Atualizando dados do perfil:', profileData);
+      console.log('[ProfilePopover] 🔄 Atualizando dados do perfil:', profileData);
       
       form.reset(profileData);
       setAvatarPreview(profileData.avatar || "");
@@ -73,7 +73,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
         avatar: userProfile.avatar || ""
       };
       
-      console.log('[ProfilePopover] Resetando form ao abrir:', currentData);
+      console.log('[ProfilePopover] 🚪 Resetando form ao abrir:', currentData);
       form.reset(currentData);
       setAvatarPreview(currentData.avatar || "");
     }
@@ -81,10 +81,10 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
 
   const handleProfileUpdate = async (values: UserProfileFormValues) => {
     console.log('[ProfilePopover] === INÍCIO handleProfileUpdate ===');
-    console.log('[ProfilePopover] Valores recebidos:', values);
+    console.log('[ProfilePopover] 📝 Valores recebidos:', values);
     
     if (!user?.id) {
-      console.error('[ProfilePopover] Usuário não encontrado');
+      console.error('[ProfilePopover] ❌ Usuário não encontrado');
       toast({
         title: "Erro",
         description: "Usuário não encontrado",
@@ -96,7 +96,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
     setIsSubmitting(true);
 
     try {
-      console.log('[ProfilePopover] Chamando updateUserProfile...');
+      console.log('[ProfilePopover] 🔄 Chamando updateUserProfile...');
       
       await updateUserProfile({
         display_name: values.name,
@@ -144,7 +144,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
     if (!file || !user?.id) return;
     
     console.log('[ProfilePopover] === INÍCIO handleAvatarChange ===');
-    console.log('[ProfilePopover] Arquivo selecionado:', {
+    console.log('[ProfilePopover] 📁 Arquivo selecionado:', {
       name: file.name,
       size: file.size,
       type: file.type
@@ -174,17 +174,17 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
       
       // Create immediate preview
       const previewUrl = URL.createObjectURL(file);
-      console.log('[ProfilePopover] Preview local criado:', previewUrl);
+      console.log('[ProfilePopover] 👁️ Preview local criado:', previewUrl);
       setAvatarPreview(previewUrl);
       
       // Delete old avatar if exists
       if (userProfile?.avatar && !userProfile.avatar.includes('pravatar.cc')) {
-        console.log('[ProfilePopover] Deletando avatar antigo...');
+        console.log('[ProfilePopover] 🗑️ Deletando avatar antigo...');
         await deleteOldAvatar(userProfile.avatar);
       }
       
       // Upload to storage
-      console.log('[ProfilePopover] Iniciando upload...');
+      console.log('[ProfilePopover] ⬆️ Iniciando upload...');
       const uploadedUrl = await uploadAvatar(file, user.id);
       
       if (uploadedUrl) {
@@ -192,10 +192,10 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
         
         // Update form and preview with the uploaded URL
         form.setValue("avatar", uploadedUrl);
-        setAvatarPreview(uploadedUrl);
         
-        // Clean up the local preview URL
+        // Clean up the local preview URL and set the uploaded URL
         URL.revokeObjectURL(previewUrl);
+        setAvatarPreview(uploadedUrl);
         
         toast({
           title: "Upload concluído",
@@ -220,7 +220,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
   };
 
   const handleOpenChange = (newOpen: boolean) => {
-    console.log('[ProfilePopover] Dialog state changing to:', newOpen);
+    console.log('[ProfilePopover] 🚪 Dialog state changing to:', newOpen);
     setOpen(newOpen);
     
     if (newOpen && userProfile) {
@@ -230,15 +230,15 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
         avatar: userProfile.avatar || ""
       };
       
-      console.log('[ProfilePopover] Resetando ao abrir dialog:', currentData);
+      console.log('[ProfilePopover] 🔄 Resetando ao abrir dialog:', currentData);
       form.reset(currentData);
       setAvatarPreview(currentData.avatar || "");
     }
   };
 
   const currentFormValues = form.watch();
-  console.log('[ProfilePopover] Form values atuais:', currentFormValues);
-  console.log('[ProfilePopover] Avatar preview atual:', avatarPreview);
+  console.log('[ProfilePopover] 📋 Form values atuais:', currentFormValues);
+  console.log('[ProfilePopover] 🖼️ Avatar preview atual:', avatarPreview);
 
   return (
     <>
@@ -263,10 +263,11 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
                     <AvatarImage 
                       src={avatarPreview} 
                       alt="Avatar preview"
+                      key={avatarPreview} // Force re-render when URL changes
                       onLoad={() => console.log('[ProfilePopover] ✅ Avatar carregado:', avatarPreview)}
                       onError={(e) => {
                         console.log('[ProfilePopover] ❌ Erro ao carregar avatar:', avatarPreview);
-                        console.log('[ProfilePopover] Evento de erro:', e);
+                        console.log('[ProfilePopover] 🔍 Evento de erro:', e);
                       }}
                     />
                   ) : (
