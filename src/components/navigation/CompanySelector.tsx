@@ -19,7 +19,7 @@ export const CompanySelector = memo(() => {
     isLoading 
   } = useCompanies();
   
-  const [displayName, setDisplayName] = useState<string>("BUSINESS");
+  const [displayName, setDisplayName] = useState<string>("");
 
   // Atualizar displayName sempre que selectedCompany mudar
   useEffect(() => {
@@ -28,9 +28,12 @@ export const CompanySelector = memo(() => {
     } else if (userCompanies.length > 0) {
       setDisplayName(userCompanies[0].nome);
     } else {
-      setDisplayName("BUSINESS");
+      // Só mostrar BUSINESS se não há empresas carregadas ainda
+      if (!isLoading) {
+        setDisplayName("BUSINESS");
+      }
     }
-  }, [selectedCompany, userCompanies]);
+  }, [selectedCompany, userCompanies, isLoading]);
 
   // Função para lidar com mudança de empresa
   const handleCompanyChange = useCallback((company: any) => {
@@ -66,8 +69,17 @@ export const CompanySelector = memo(() => {
     };
   }, []);
 
+  // Durante o loading, não mostrar nada se há empresas para carregar
   if (isLoading) {
-    return <span className="text-lg font-bold text-foreground">{displayName}</span>;
+    // Se há uma empresa selecionada ou empresas no cache, mostrar o nome
+    if (selectedCompany?.nome) {
+      return <span className="text-lg font-bold text-foreground">{selectedCompany.nome}</span>;
+    }
+    if (userCompanies.length > 0) {
+      return <span className="text-lg font-bold text-foreground">{userCompanies[0].nome}</span>;
+    }
+    // Durante loading inicial, não mostrar nada para evitar o flash de BUSINESS
+    return <span className="text-lg font-bold text-foreground"></span>;
   }
 
   if (!user || userCompanies.length === 0) {
@@ -76,6 +88,11 @@ export const CompanySelector = memo(() => {
 
   if (userCompanies.length === 1) {
     return <span className="text-lg font-bold text-foreground">{displayName}</span>;
+  }
+
+  // Não renderizar o dropdown se displayName está vazio (evita flash)
+  if (!displayName) {
+    return <span className="text-lg font-bold text-foreground"></span>;
   }
 
   return (
