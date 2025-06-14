@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { UserTableOptimized } from './UserTableOptimized';
 import { useUsers } from '@/hooks/useUsers';
 import { AdminSetup } from './user/AdminSetup';
 import { PermissionError } from './user/PermissionError';
-import { CreateUserDialog } from './user/CreateUserDialog';
+import { SimpleCreateUserDialog } from './user/SimpleCreateUserDialog';
 import { UserManagementHeader } from './user/UserManagementHeader';
 import { UserManagementSkeleton } from './user/UserManagementSkeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -146,9 +147,9 @@ export const UserManagement = () => {
       <Dialog open={showInviteInfo} onOpenChange={setShowInviteInfo}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Informações para Convite</DialogTitle>
+            <DialogTitle>Informações para Convite Manual</DialogTitle>
             <DialogDescription>
-              Selecione a empresa e compartilhe o ID com o novo usuário durante o cadastro:
+              Use este método apenas se preferir enviar o código da empresa manualmente:
             </DialogDescription>
           </DialogHeader>
           
@@ -171,7 +172,7 @@ export const UserManagement = () => {
                       navigator.clipboard.writeText(selectedInviteCompany?.id || '');
                       toast({
                         title: "Sucesso",
-                        description: "ID copiado para a área de transferência!",
+                        description: "Código da empresa copiado!",
                       });
                     }}
                     variant="outline"
@@ -181,12 +182,12 @@ export const UserManagement = () => {
                 </div>
                 
                 <p className="text-sm text-muted-foreground">
-                  O novo usuário deve usar este ID ao se cadastrar para ser vinculado à empresa corretamente.
+                  O usuário deve usar este código ao se cadastrar para ser vinculado à empresa.
                 </p>
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Selecione uma empresa para ver o ID
+                Selecione uma empresa para ver o código
               </p>
             )}
           </div>
@@ -199,7 +200,7 @@ export const UserManagement = () => {
         </DialogContent>
       </Dialog>
 
-      <CreateUserDialog
+      <SimpleCreateUserDialog
         isOpen={showCreateUser}
         onOpenChange={setShowCreateUser}
         onSuccess={handleCreateUserSuccess}

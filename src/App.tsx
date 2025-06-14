@@ -1,149 +1,68 @@
 
-import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
-
+import { CompaniesProvider } from "@/hooks/useCompanies";
+import { OnboardingProvider } from "@/contexts/OnboardingContext";
+import { CompanyRequiredCheck } from "@/components/auth/CompanyRequiredCheck";
 import Index from "./pages/Index";
+import Admin from "./pages/Admin";
+import Courses from "./pages/Courses";
+import Documents from "./pages/Documents";
+import Discussions from "./pages/Discussions";
+import Access from "./pages/Access";
+import Feedback from "./pages/Feedback";
+import Profile from "./pages/Profile";
+import Onboarding from "./pages/Onboarding";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import PasswordReset from "./pages/PasswordReset";
-import ResetPasswordConfirm from "./pages/ResetPasswordConfirm";
-import TermsOfUse from "./pages/TermsOfUse";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import Courses from "./pages/Courses";
-import MyCourses from "./pages/MyCourses";
-import CourseDetails from "./pages/CourseDetails";
 import LessonPage from "./pages/LessonPage";
-import NotFound from "./pages/NotFound";
-import Integration from "./pages/Integration";
-import Access from "./pages/Access";
-import Documents from "./pages/Documents";
-import School from "./pages/School";
-import Community from "./pages/Community";
-import Admin from "./pages/Admin";
-import Notes from "./pages/Notes";
-import Manifesto from "./pages/Manifesto";
-import Team from "./pages/Team";
-import TeamMemberProfile from "./pages/TeamMemberProfile";
-import CompanyPage from "./pages/CompanyPage";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
-const App = () => {
-  console.log("App component rendering");
-  
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AuthProvider>
-          <TooltipProvider>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/password-reset" element={<PasswordReset />} />
-              <Route path="/reset-password-confirm" element={<ResetPasswordConfirm />} />
-              <Route path="/termos" element={<TermsOfUse />} />
-              <Route path="/privacidade" element={<PrivacyPolicy />} />
-              
-              <Route element={<ProtectedRoute />}>
-                <Route path="/" element={<>
-                  <MainNavigationMenu />
-                  <Index />
-                </>} />
-                
-                <Route path="/courses" element={<>
-                  <MainNavigationMenu />
-                  <Courses />
-                </>} />
-                <Route path="/my-courses" element={<>
-                  <MainNavigationMenu />
-                  <MyCourses />
-                </>} />
-                <Route path="/courses/:courseId" element={<>
-                  <MainNavigationMenu />
-                  <CourseDetails />
-                </>} />
-                <Route path="/courses/:courseId/lessons/:lessonId" element={<>
-                  <MainNavigationMenu />
-                  <LessonPage />
-                </>} />
-                
-                <Route path="/integration" element={<>
-                  <MainNavigationMenu />
-                  <Integration />
-                </>} />
-                <Route path="/access" element={<>
-                  <MainNavigationMenu />
-                  <Access />
-                </>} />
-                <Route path="/documents" element={<>
-                  <MainNavigationMenu />
-                  <Documents />
-                </>} />
-                <Route path="/school" element={<>
-                  <MainNavigationMenu />
-                  <School />
-                </>} />
-                <Route path="/community" element={<>
-                  <MainNavigationMenu />
-                  <Community />
-                </>} />
-                <Route path="/notes" element={<>
-                  <MainNavigationMenu />
-                  <Notes />
-                </>} />
-                <Route path="/manifesto" element={<>
-                  <MainNavigationMenu />
-                  <Manifesto />
-                </>} />
-                
-                <Route 
-                  path="/admin" 
-                  element={<>
-                    <MainNavigationMenu />
-                    <Admin />
-                  </>} 
-                />
-
-                <Route path="/team" element={<>
-                  <MainNavigationMenu />
-                  <Team />
-                </>} />
-                
-                <Route path="/team/:memberId" element={<>
-                  <MainNavigationMenu />
-                  <TeamMemberProfile />
-                </>} />
-
-                <Route path="/company/:companyId" element={<>
-                  <MainNavigationMenu />
-                  <CompanyPage />
-                </>} />
-              
-              </Route>
-              
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <Toaster />
-            <Sonner />
-          </TooltipProvider>
-        </AuthProvider>
-      </BrowserRouter>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <CompaniesProvider>
+              <OnboardingProvider>
+                <Routes>
+                  {/* Rotas públicas - sem verificação de empresa */}
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<Signup />} />
+                  <Route path="/onboarding" element={<Onboarding />} />
+                  
+                  {/* Rotas protegidas - com verificação de empresa */}
+                  <Route path="/*" element={
+                    <CompanyRequiredCheck>
+                      <Routes>
+                        <Route path="/" element={<Index />} />
+                        <Route path="/admin" element={<Admin />} />
+                        <Route path="/courses" element={<Courses />} />
+                        <Route path="/courses/:courseId/lessons/:lessonId" element={<LessonPage />} />
+                        <Route path="/documents" element={<Documents />} />
+                        <Route path="/discussions" element={<Discussions />} />
+                        <Route path="/access" element={<Access />} />
+                        <Route path="/feedback" element={<Feedback />} />
+                        <Route path="/profile" element={<Profile />} />
+                      </Routes>
+                    </CompanyRequiredCheck>
+                  } />
+                </Routes>
+              </OnboardingProvider>
+            </CompaniesProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
     </QueryClientProvider>
   );
-};
+}
 
 export default App;

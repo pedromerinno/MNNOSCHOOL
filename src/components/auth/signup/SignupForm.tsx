@@ -56,7 +56,7 @@ export const SignupForm = () => {
     try {
       const displayName = email.split('@')[0];
       
-      console.log("Iniciando cadastro");
+      console.log("Iniciando cadastro com detecção automática de convites");
       const result = await signUp(email, password, displayName);
       
       console.log("Resultado do cadastro:", result);
@@ -66,10 +66,13 @@ export const SignupForm = () => {
           console.log("Cadastro feito com sucesso! Email de confirmação enviado.");
           setNeedsEmailConfirmation(true);
           setIsSuccess(true);
-          setEmailAlreadyRegistered(false); // Garantir que esta flag esteja falsa
+          setEmailAlreadyRegistered(false);
+          
+          toast.success("Cadastro realizado! Verifique seu email para confirmar a conta.");
         } else {
           console.log("Cadastro realizado com sucesso e sessão iniciada!");
-          // Navegação feita pelo useAuthMethods
+          toast.success("Cadastro realizado com sucesso! Verificando vinculação com empresa...");
+          // Navegação e detecção de convites feita pelo useAuth
         }
       } else {
         console.error("Erro no cadastro:", result.error);
@@ -82,12 +85,15 @@ export const SignupForm = () => {
           console.log("Email já registrado detectado!");
           setEmailAlreadyRegistered(true);
           toast.error("Este e-mail já está cadastrado. Por favor, faça login.");
+        } else {
+          toast.error(result.error?.message || "Erro no cadastro. Tente novamente.");
         }
       }
     } catch (error) {
       console.error("Erro no cadastro:", error);
       setIsSuccess(false);
       setNeedsEmailConfirmation(false);
+      toast.error("Erro inesperado no cadastro. Tente novamente.");
     } finally {
       setIsRegistering(false);
     }
@@ -104,14 +110,17 @@ export const SignupForm = () => {
       
       if (result.success) {
         setEmailResent(true);
+        toast.success("Email de confirmação reenviado!");
         setTimeout(() => {
           setEmailResent(false);
         }, 5000);
       } else if (result.error?.code === 'email_already_registered') {
         setEmailAlreadyRegistered(true);
         setNeedsEmailConfirmation(false);
-        setIsSuccess(false); // Garantir que a tela de sucesso não seja mostrada
+        setIsSuccess(false);
         toast.error("Este e-mail já está cadastrado. Por favor, faça login.");
+      } else {
+        toast.error("Erro ao reenviar email. Tente novamente.");
       }
     } finally {
       setIsResending(false);
