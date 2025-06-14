@@ -187,16 +187,14 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
     }
   };
 
-  const currentAvatarUrl = avatarPreview || userProfile?.avatar || "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png";
+  const defaultAvatarUrl = "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png";
+  const currentAvatarUrl = avatarPreview || userProfile?.avatar || defaultAvatarUrl;
   const currentName = form.watch("name") || userProfile?.display_name || email?.split('@')[0] || "U";
   
-  // Verificar se tem avatar personalizado
-  const defaultAvatarUrl = "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png";
-  const hasCustomAvatar = Boolean(
+  // Lógica simplificada - mostrar botão se tem preview OU se o avatar atual é diferente do padrão
+  const showRemoveButton = Boolean(
     avatarPreview || 
-    (userProfile?.avatar && 
-     userProfile.avatar !== defaultAvatarUrl && 
-     userProfile.avatar.trim() !== "")
+    (userProfile?.avatar && userProfile.avatar !== defaultAvatarUrl && userProfile.avatar.trim() !== "")
   );
 
   const handleOpenDialog = (e: React.MouseEvent) => {
@@ -211,9 +209,11 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
     currentAvatarUrl, 
     currentName, 
     isUploading, 
-    hasCustomAvatar,
+    showRemoveButton,
     userProfileAvatar: userProfile?.avatar,
-    avatarPreview
+    avatarPreview,
+    defaultAvatarUrl,
+    'avatar equals default': userProfile?.avatar === defaultAvatarUrl
   });
 
   return (
@@ -262,8 +262,8 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
                   />
                 </label>
                 
-                {/* Botão de exclusão - sempre visível se tem avatar personalizado */}
-                {hasCustomAvatar && (
+                {/* Botão de exclusão - SEMPRE mostrar se showRemoveButton for true */}
+                {showRemoveButton && (
                   <Button
                     type="button"
                     variant="outline"
@@ -277,13 +277,16 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
                   </Button>
                 )}
                 
-                {/* Debug info - temporário para debug */}
-                <div className="text-xs text-gray-400 mt-2 text-center bg-gray-50 p-2 rounded">
-                  <div>hasCustomAvatar: {hasCustomAvatar.toString()}</div>
-                  <div>userProfile?.avatar: {userProfile?.avatar || 'null'}</div>
-                  <div>avatarPreview: {avatarPreview || 'null'}</div>
-                  <div>currentAvatarUrl: {currentAvatarUrl}</div>
-                  <div>isDefault: {(userProfile?.avatar === defaultAvatarUrl).toString()}</div>
+                {/* Debug info mais detalhado */}
+                <div className="text-xs text-gray-400 mt-2 text-center bg-gray-50 p-2 rounded border">
+                  <div className="font-semibold mb-1">Debug Info:</div>
+                  <div>showRemoveButton: <span className="font-mono">{showRemoveButton.toString()}</span></div>
+                  <div>avatarPreview: <span className="font-mono">{avatarPreview || 'null'}</span></div>
+                  <div>userProfile?.avatar: <span className="font-mono">{userProfile?.avatar || 'null'}</span></div>
+                  <div>defaultAvatarUrl: <span className="font-mono">{defaultAvatarUrl}</span></div>
+                  <div>avatar === default: <span className="font-mono">{(userProfile?.avatar === defaultAvatarUrl).toString()}</span></div>
+                  <div>avatar !== default: <span className="font-mono">{(userProfile?.avatar !== defaultAvatarUrl).toString()}</span></div>
+                  <div>avatar trim: <span className="font-mono">{userProfile?.avatar?.trim() || 'null'}</span></div>
                 </div>
               </div>
             </div>
