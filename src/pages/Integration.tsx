@@ -66,6 +66,7 @@ const Integration = () => {
     };
   }, [currentCompanyData, selectedCompany, refreshKey]);
   
+  // Função para buscar cargos
   const fetchJobRoles = async (companyId: string) => {
     if (!companyId || isLoadingRoles) return;
     
@@ -292,7 +293,7 @@ const Integration = () => {
   }
 
   // Sem empresa selecionada
-  if (!selectedCompany && !currentCompanyData) {
+  if (!companyData) {
     return (
       <>
         <MainNavigationMenu />
@@ -325,8 +326,6 @@ const Integration = () => {
       </>
     );
   }
-
-  const companyData = currentCompanyData || selectedCompany;
 
   return (
     <>
