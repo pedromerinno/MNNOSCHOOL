@@ -192,7 +192,14 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
   const currentName = form.watch("name") || userProfile?.display_name || email?.split('@')[0] || "U";
   const hasCustomAvatar = (avatarPreview || userProfile?.avatar) && (avatarPreview || userProfile?.avatar) !== "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png";
 
-  console.log('[ProfilePopover] Renderizando com:', { currentAvatarUrl, currentName, isUploading, hasCustomAvatar });
+  console.log('[ProfilePopover] Renderizando com:', { 
+    currentAvatarUrl, 
+    currentName, 
+    isUploading, 
+    hasCustomAvatar,
+    userAvatar: userProfile?.avatar,
+    preview: avatarPreview 
+  });
 
   return (
     <>
@@ -212,7 +219,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
           <form onSubmit={form.handleSubmit(handleProfileUpdate)} className="space-y-6">
             <div className="flex flex-col items-center gap-4">
               <div 
-                className="relative"
+                className="relative group"
                 onMouseEnter={() => setShowAvatarActions(true)}
                 onMouseLeave={() => setShowAvatarActions(false)}
               >
@@ -227,23 +234,25 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
                   <AvatarFallback>{currentName.charAt(0)?.toUpperCase()}</AvatarFallback>
                 </Avatar>
                 
-                {showAvatarActions && hasCustomAvatar && (
-                  <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+                {/* Overlay com botão de exclusão - aparece sempre que tem imagem personalizada E mouse está em cima */}
+                {hasCustomAvatar && showAvatarActions && (
+                  <div className="absolute inset-0 bg-black bg-opacity-60 rounded-full flex items-center justify-center transition-opacity">
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-white hover:bg-red-500 hover:text-white"
+                      className="h-10 w-10 text-white hover:bg-red-500 hover:text-white transition-colors"
                       onClick={handleDeleteAvatar}
                       disabled={isUploading}
+                      title="Remover foto"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-5 w-5" />
                     </Button>
                   </div>
                 )}
               </div>
               
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col items-center gap-2">
                 <label htmlFor="avatar-upload" className="cursor-pointer">
                   <div className="flex items-center gap-2 text-sm text-merinno-blue hover:underline">
                     <Upload className="h-4 w-4" />
@@ -258,6 +267,18 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
                     disabled={isUploading}
                   />
                 </label>
+                
+                {/* Botão de exclusão alternativo sempre visível quando tem imagem personalizada */}
+                {hasCustomAvatar && (
+                  <button
+                    type="button"
+                    onClick={handleDeleteAvatar}
+                    disabled={isUploading}
+                    className="text-xs text-red-500 hover:text-red-700 hover:underline disabled:opacity-50"
+                  >
+                    Remover foto atual
+                  </button>
+                )}
               </div>
             </div>
             
