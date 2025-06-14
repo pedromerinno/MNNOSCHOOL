@@ -113,7 +113,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
       };
       reader.readAsDataURL(file);
       
-      // Upload para o Supabase (já atualiza o perfil no banco)
+      // Upload para o Supabase
       const publicUrl = await uploadAvatarImage(file, user.id);
       console.log('[ProfilePopover] Upload concluído, URL:', publicUrl);
       
@@ -146,7 +146,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
     }
   };
 
-  const currentAvatarUrl = avatarPreview || userProfile?.avatar || "https://i.pravatar.cc/150?img=68";
+  const currentAvatarUrl = avatarPreview || userProfile?.avatar || "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png";
   const currentName = form.watch("name") || userProfile?.display_name || email?.split('@')[0] || "U";
 
   console.log('[ProfilePopover] Renderizando com:', { currentAvatarUrl, currentName, isUploading });

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Upload } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -134,7 +133,7 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
       };
       reader.readAsDataURL(file);
       
-      // Upload para o Supabase (já atualiza o perfil no banco)
+      // Upload para o Supabase
       const publicUrl = await uploadAvatarImage(file, user.id);
       console.log('[ProfileDialog] Upload concluído, URL:', publicUrl);
       
@@ -167,7 +166,7 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
     }
   };
 
-  const currentAvatarUrl = avatarPreview || userProfile?.avatar || "https://i.pravatar.cc/150?img=68";
+  const currentAvatarUrl = avatarPreview || userProfile?.avatar || "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png";
   const currentName = form.watch("name") || userProfile?.display_name || email?.split('@')[0] || "U";
 
   console.log('[ProfileDialog] Renderizando com:', { currentAvatarUrl, currentName, isUploading });

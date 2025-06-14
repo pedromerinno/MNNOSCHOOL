@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -138,6 +137,8 @@ export const UserInfoHeader = () => {
     getInitials(userProfile.display_name) : 
     user?.email ? getInitials(user.email) : "U";
 
+  const avatarUrl = userProfile?.avatar || "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png";
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-8">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
@@ -146,7 +147,7 @@ export const UserInfoHeader = () => {
             <Skeleton className="h-16 w-16 rounded-full" />
           ) : (
             <Avatar className="h-16 w-16 mr-4">
-              <AvatarImage src={userProfile?.avatar || ""} alt={userProfile?.display_name || "User"} />
+              <AvatarImage src={avatarUrl} alt={userProfile?.display_name || "User"} />
               <AvatarFallback className="text-lg font-medium bg-primary/10 text-primary">
                 {userInitials}
               </AvatarFallback>

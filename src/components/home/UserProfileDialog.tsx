@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -143,6 +142,9 @@ export const UserProfileDialog: React.FC<UserProfileDialogProps> = ({
     handleSaveProfile();
   };
 
+  const fallbackAvatarUrl = "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png";
+  const currentAvatarUrl = avatarUrl || fallbackAvatarUrl;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md sm:max-w-lg p-0 overflow-hidden">
@@ -186,13 +188,10 @@ export const UserProfileDialog: React.FC<UserProfileDialogProps> = ({
                 <>
                   <div className="flex flex-col items-center justify-center space-y-6">
                     <Avatar className="h-32 w-32 border-2 border-gray-200 ring-4 ring-gray-50">
-                      {avatarUrl ? (
-                        <AvatarImage src={avatarUrl} alt="Foto de perfil" />
-                      ) : (
-                        <AvatarFallback className="bg-gray-100 text-xl">
-                          {displayName.substring(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      )}
+                      <AvatarImage src={currentAvatarUrl} alt="Foto de perfil" />
+                      <AvatarFallback className="bg-gray-100 text-xl">
+                        {displayName.substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
                     </Avatar>
                     
                     <div className="flex gap-4">

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogOut, User, ChevronDown, Building } from "lucide-react";
@@ -23,7 +22,7 @@ interface UserNavigationProps {
   avatarUrl?: string;
 }
 
-export const UserNavigation = ({ avatarUrl = "https://i.pravatar.cc/150?img=68" }: UserNavigationProps) => {
+export const UserNavigation = ({ avatarUrl = "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png" }: UserNavigationProps) => {
   const { user, signOut, userProfile } = useAuth();
   const [displayName, setDisplayName] = useState<string>("");
   const [displayAvatar, setDisplayAvatar] = useState<string>(avatarUrl);
