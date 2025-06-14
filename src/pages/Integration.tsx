@@ -19,23 +19,46 @@ const Integration = () => {
   const [isLoadingRoles, setIsLoadingRoles] = useState(false);
   const [activeTab, setActiveTab] = useState("culture");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [currentCompanyData, setCurrentCompanyData] = useState<Company | null>(null);
   
-  // Memoizar dados da empresa para evitar re-renderizações desnecessárias
+  // Função para buscar dados atualizados da empresa
+  const fetchCompanyData = async (companyId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('empresas')
+        .select('*')
+        .eq('id', companyId)
+        .single();
+        
+      if (error) {
+        console.error("Error fetching company data:", error);
+        return null;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error("Error fetching company data:", error);
+      return null;
+    }
+  };
+  
+  // Memoizar dados da empresa com dados atualizados do banco
   const companyData = useMemo(() => {
-    if (!selectedCompany) return null;
+    const company = currentCompanyData || selectedCompany;
+    if (!company) return null;
     
     return {
-      id: selectedCompany.id,
-      nome: selectedCompany.nome,
-      logo: selectedCompany.logo,
-      cor_principal: selectedCompany.cor_principal || "#1EAEDB",
-      valores: selectedCompany.valores,
-      missao: selectedCompany.missao,
-      historia: selectedCompany.historia,
-      video_institucional: selectedCompany.video_institucional,
-      descricao_video: selectedCompany.descricao_video
+      id: company.id,
+      nome: company.nome,
+      logo: company.logo,
+      cor_principal: company.cor_principal || "#1EAEDB",
+      valores: company.valores,
+      missao: company.missao,
+      historia: company.historia,
+      video_institucional: company.video_institucional,
+      descricao_video: company.descricao_video
     };
-  }, [selectedCompany, refreshKey]);
+  }, [currentCompanyData, selectedCompany, refreshKey]);
   
   const fetchJobRoles = async (companyId: string) => {
     if (!companyId || isLoadingRoles) return;
@@ -80,9 +103,21 @@ const Integration = () => {
     }
   };
   
+  // Função para atualizar dados da empresa
+  const refreshCompanyData = async (companyId: string) => {
+    const updatedCompany = await fetchCompanyData(companyId);
+    if (updatedCompany) {
+      setCurrentCompanyData(updatedCompany);
+      console.log("Company data refreshed:", updatedCompany.nome);
+    }
+  };
+  
   // Efeito para carregar dados da empresa e cargos
   useEffect(() => {
     if (companyData?.id) {
+      // Buscar dados atualizados da empresa
+      refreshCompanyData(companyData.id);
+      
       // Armazenar logo da empresa no localStorage
       if (companyData.logo) {
         localStorage.setItem('selectedCompanyLogo', companyData.logo);
@@ -93,7 +128,7 @@ const Integration = () => {
       // Buscar cargos apenas se necessário
       fetchJobRoles(companyData.id);
     }
-  }, [companyData?.id]);
+  }, [selectedCompany?.id]);
   
   // Escutar mudanças de empresa e dados de integração
   useEffect(() => {
@@ -102,6 +137,7 @@ const Integration = () => {
       console.log("Company changed in Integration page:", newCompany.nome);
       
       if (newCompany.id !== companyData?.id) {
+        refreshCompanyData(newCompany.id);
         fetchJobRoles(newCompany.id);
       }
       
@@ -114,6 +150,8 @@ const Integration = () => {
       console.log("Company updated in Integration page:", updatedCompany.nome);
       
       if (updatedCompany.id === companyData?.id) {
+        // Atualizar dados locais com os dados do evento
+        setCurrentCompanyData(updatedCompany);
         fetchJobRoles(updatedCompany.id);
         // Force refresh do componente
         setRefreshKey(prev => prev + 1);
@@ -125,6 +163,8 @@ const Integration = () => {
       console.log("Integration data updated:", updatedCompany.nome);
       
       if (updatedCompany.id === companyData?.id) {
+        // Buscar dados atualizados do banco para garantir consistência
+        refreshCompanyData(updatedCompany.id);
         // Force refresh do componente para mostrar novos dados
         setRefreshKey(prev => prev + 1);
       }
