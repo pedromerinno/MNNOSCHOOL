@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -303,6 +302,7 @@ export const UserAccessManagement: React.FC<UserAccessManagementProps> = ({
                   <TableHead>URL</TableHead>
                   <TableHead>Usuário</TableHead>
                   <TableHead>Senha</TableHead>
+                  <TableHead>Observações</TableHead>
                   <TableHead className="w-[100px]">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -355,6 +355,11 @@ export const UserAccessManagement: React.FC<UserAccessManagementProps> = ({
                           </svg>
                         </Button>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm text-muted-foreground">
+                        {item.notes || '-'}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-1">
