@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,7 +35,7 @@ interface ProfilePopoverProps {
 }
 
 export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps) => {
-  const { userProfile, updateUserProfile } = useAuth();
+  const { user, userProfile, updateUserProfile } = useAuth();
   const [open, setOpen] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState("https://i.pravatar.cc/150?img=68");
   const { toast } = useToast();
@@ -62,10 +63,33 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
   }, [userProfile, email, form]);
 
   const handleProfileUpdate = async (values: UserProfileFormValues) => {
+    if (!user?.id) {
+      toast({
+        title: "Erro",
+        description: "Usuário não encontrado",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
+      // Salvar diretamente no banco de dados via Supabase
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          display_name: values.name,
+          avatar: values.avatar
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        throw error;
+      }
+
+      // Atualizar o contexto local
       await updateUserProfile({
         display_name: values.name,
-        avatar: values.avatar || null
+        avatar: values.avatar
       });
       
       onSave(values);
@@ -85,6 +109,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
       
       setOpen(false);
     } catch (error: any) {
+      console.error('Erro ao atualizar perfil:', error);
       toast({
         title: "Erro ao atualizar perfil",
         description: error.message || "Não foi possível salvar as alterações",
