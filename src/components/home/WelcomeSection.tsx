@@ -26,7 +26,7 @@ export const WelcomeSection = () => {
     navigate('/integration');
   };
 
-  const defaultPhrase = "Construindo um futuro melhor para empresas e colaboradores";
+  const defaultPhrase = "Juntos, estamos desenhando o futuro de grandes empresas";
   const companyPhrase = displayCompany?.frase_institucional || defaultPhrase;
 
   return (
