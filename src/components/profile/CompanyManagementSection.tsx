@@ -44,10 +44,9 @@ export const CompanyManagementSection = ({
       await removeUserFromCompany(user.id, companyToRemove.id);
       setCompanyToRemove(null);
       
-      // Force reload companies and dispatch event
+      // Force reload companies
       if (user?.id) {
         await forceGetUserCompanies(user.id);
-        window.dispatchEvent(new CustomEvent('company-relation-changed'));
       }
       
       toast.success('Empresa desvinculada com sucesso!');
@@ -70,10 +69,9 @@ export const CompanyManagementSection = ({
       await assignUserToCompany(user.id, companyId.trim());
       setCompanyId("");
       
-      // Force reload companies and dispatch event
+      // Force reload companies
       if (user?.id) {
         await forceGetUserCompanies(user.id);
-        window.dispatchEvent(new CustomEvent('company-relation-changed'));
       }
       
       toast.success('Empresa vinculada com sucesso!');
@@ -83,6 +81,10 @@ export const CompanyManagementSection = ({
     } finally {
       setIsLinking(false);
     }
+  };
+
+  const handleRemoveClick = (company: Company) => {
+    setCompanyToRemove(company);
   };
 
   return (
@@ -147,7 +149,7 @@ export const CompanyManagementSection = ({
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8"
-                  onClick={() => setCompanyToRemove(company)}
+                  onClick={() => handleRemoveClick(company)}
                   disabled={isUnlinking}
                 >
                   <X className="h-4 w-4" />
@@ -158,7 +160,11 @@ export const CompanyManagementSection = ({
         </div>
       )}
 
-      <AlertDialog open={!!companyToRemove} onOpenChange={() => setCompanyToRemove(null)}>
+      <AlertDialog open={!!companyToRemove} onOpenChange={(open) => {
+        if (!open) {
+          setCompanyToRemove(null);
+        }
+      }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">

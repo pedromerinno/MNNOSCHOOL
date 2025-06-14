@@ -145,8 +145,16 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
     }
   };
 
+  // Prevent dialog from closing when clicking on child dialogs
+  const handleDialogOpenChange = (open: boolean) => {
+    // Only allow closing if we're not in the middle of operations
+    if (!open && !isLoadingCompanies) {
+      setIsOpen(false);
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
       <DialogContent 
         className="sm:max-w-[425px] overflow-y-auto max-h-[85vh]"
         style={{ pointerEvents: 'auto' }}
