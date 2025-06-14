@@ -10,6 +10,7 @@ export const useCompanyCheck = () => {
   const [isChecking, setIsChecking] = useState(true);
 
   const checkUserCompany = useCallback(() => {
+    // Sempre executa a mesma lógica, apenas com diferentes resultados
     if (!user || !userProfile || isLoading) {
       setIsChecking(true);
       return;
@@ -28,6 +29,7 @@ export const useCompanyCheck = () => {
     setIsChecking(false);
   }, [user, userProfile, userCompanies, isLoading]);
 
+  // Este useEffect sempre executa
   useEffect(() => {
     checkUserCompany();
   }, [checkUserCompany]);

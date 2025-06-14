@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCompanyCheck } from '@/hooks/useCompanyCheck';
 import { CompanySelectionDialog } from '@/components/home/CompanySelectionDialog';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,8 +24,8 @@ export const CompanyRequiredCheck: React.FC<CompanyRequiredCheckProps> = ({ chil
     );
   }
 
-  // Se precisa de empresa, força a abertura do diálogo
-  React.useEffect(() => {
+  // Efeito sempre executado, mas com condições internas
+  useEffect(() => {
     if (needsCompany && !showCompanyDialog) {
       setShowCompanyDialog(true);
     }
