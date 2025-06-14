@@ -10,7 +10,9 @@ export const useUserProfile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const fetchInProgress = useRef(false);
   const hasFetchedOnce = useRef(false);
-  const hasCheckedInvites = useRef(false); // Novo: controla se já verificou convites
+  const hasCheckedInvites = useRef(false);
+  const hasEmailSynced = useRef(false);
+  const lastFetchedUserId = useRef<string | null>(null);
   const { getCache, setCache, clearCache } = useCache();
   
   const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
@@ -18,17 +20,14 @@ export const useUserProfile = () => {
 
   // Função para verificar e aplicar convites pendentes (APENAS UMA VEZ POR SESSÃO)
   const checkAndApplyInvite = useCallback(async (userId: string, userEmail: string) => {
-    // Se já verificou convites nesta sessão, não verificar novamente
     if (hasCheckedInvites.current) {
-      console.log('[useUserProfile] Convites já foram verificados nesta sessão');
       return;
     }
 
     try {
       console.log('[useUserProfile] Verificando convites pendentes para:', userEmail);
-      hasCheckedInvites.current = true; // Marcar como verificado
+      hasCheckedInvites.current = true;
       
-      // Buscar APENAS o convite mais recente e não usado
       const { data: invites, error: inviteError } = await supabase
         .from('user_invites')
         .select('*')
@@ -40,14 +39,13 @@ export const useUserProfile = () => {
 
       if (inviteError) {
         console.log('[useUserProfile] Não foi possível buscar convites (normal se não houver permissão):', inviteError.message);
-        return; // Não é um erro crítico
+        return;
       }
 
       if (invites && invites.length > 0) {
         const invite = invites[0];
         console.log('[useUserProfile] Aplicando convite mais recente:', invite);
 
-        // Verificar se o usuário já não está vinculado a esta empresa
         const { data: existingRelation } = await supabase
           .from('user_empresa')
           .select('id')
@@ -66,7 +64,6 @@ export const useUserProfile = () => {
           return;
         }
 
-        // Aplicar dados do convite ao perfil
         const profileUpdates: any = {
           display_name: invite.display_name,
           primeiro_login: false
@@ -78,7 +75,6 @@ export const useUserProfile = () => {
         if (invite.tipo_contrato) profileUpdates.tipo_contrato = invite.tipo_contrato;
         if (invite.nivel_colaborador) profileUpdates.nivel_colaborador = invite.nivel_colaborador;
 
-        // Atualizar perfil
         const { error: updateError } = await supabase
           .from('profiles')
           .update(profileUpdates)
@@ -89,7 +85,6 @@ export const useUserProfile = () => {
           return;
         }
 
-        // Vincular usuário à empresa
         const { error: companyError } = await supabase
           .from('user_empresa')
           .insert({
@@ -104,7 +99,6 @@ export const useUserProfile = () => {
           window.dispatchEvent(new CustomEvent('company-relation-changed'));
         }
 
-        // Marcar convite como usado
         await supabase
           .from('user_invites')
           .update({ used: true, used_at: new Date().toISOString() })
@@ -112,17 +106,18 @@ export const useUserProfile = () => {
 
         console.log('[useUserProfile] Convite aplicado com sucesso');
         toast.success(`Seu perfil foi configurado automaticamente! Bem-vindo à empresa.`);
-      } else {
-        console.log('[useUserProfile] Nenhum convite pendente encontrado para:', userEmail);
       }
     } catch (error) {
       console.log('[useUserProfile] Erro ao verificar convites (não crítico):', error);
-      // Não fazer nada - convites são opcionais
     }
   }, []);
 
-  // Função para sincronizar email do perfil com email de autenticação
+  // Função para sincronizar email apenas uma vez
   const syncEmailWithAuth = useCallback(async (userId: string, authEmail: string) => {
+    if (hasEmailSynced.current) {
+      return;
+    }
+
     try {
       const { data: profileData } = await supabase
         .from('profiles')
@@ -140,7 +135,10 @@ export const useUserProfile = () => {
           console.error('Erro ao sincronizar email:', error);
         } else {
           console.log('Email sincronizado com sucesso');
+          hasEmailSynced.current = true;
         }
+      } else {
+        hasEmailSynced.current = true;
       }
     } catch (error) {
       console.error('Erro ao verificar sincronização de email:', error);
@@ -148,7 +146,13 @@ export const useUserProfile = () => {
   }, []);
 
   const fetchUserProfile = useCallback(async (userId: string, forceRefresh: boolean = false) => {
+    // Evitar múltiplas requisições para o mesmo usuário
     if (fetchInProgress.current && !forceRefresh) {
+      return;
+    }
+
+    // Se já buscou para este usuário e não é refresh forçado, usar cache
+    if (lastFetchedUserId.current === userId && hasFetchedOnce.current && !forceRefresh) {
       return;
     }
 
@@ -160,7 +164,8 @@ export const useUserProfile = () => {
       
       const { data: { user } } = await supabase.auth.getUser();
       
-      if (user?.email) {
+      // Sincronizar email apenas uma vez
+      if (user?.email && !hasEmailSynced.current) {
         await syncEmailWithAuth(userId, user.email);
       }
       
@@ -200,7 +205,7 @@ export const useUserProfile = () => {
           }
           
           // Verificar convites apenas uma vez após criar perfil
-          if (user?.email) {
+          if (user?.email && !hasCheckedInvites.current) {
             await checkAndApplyInvite(userId, user.email);
           }
           
@@ -235,6 +240,7 @@ export const useUserProfile = () => {
         if (profileData.primeiro_login && user?.email && !hasCheckedInvites.current) {
           await checkAndApplyInvite(userId, user.email);
           
+          // Buscar perfil atualizado após aplicar convite
           const { data: updatedData } = await supabase
             .from('profiles')
             .select(`
@@ -284,6 +290,7 @@ export const useUserProfile = () => {
         setUserProfile(profile);
         setCache({ key: CACHE_KEY, expirationMinutes: 5 }, profile);
         
+        lastFetchedUserId.current = userId;
         if (!forceRefresh) {
           hasFetchedOnce.current = true;
         }
@@ -303,6 +310,7 @@ export const useUserProfile = () => {
       if (cachedProfile) {
         setUserProfile(cachedProfile);
         hasFetchedOnce.current = true;
+        lastFetchedUserId.current = cachedProfile.id;
       }
     }
   }, [getCache]);
@@ -310,7 +318,9 @@ export const useUserProfile = () => {
   const clearProfile = useCallback(() => {
     setUserProfile(null);
     hasFetchedOnce.current = false;
-    hasCheckedInvites.current = false; // Reset invite check
+    hasCheckedInvites.current = false;
+    hasEmailSynced.current = false;
+    lastFetchedUserId.current = null;
     clearCache({ key: CACHE_KEY });
   }, [clearCache]);
 
