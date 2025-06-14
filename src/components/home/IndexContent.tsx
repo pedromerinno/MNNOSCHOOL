@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { UserHome } from "@/components/home/UserHome";
 import { IndexSkeleton } from "@/components/home/IndexSkeleton";
-import { NoCompaniesAvailable } from "@/components/home/NoCompaniesAvailable";
+import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 
 export const IndexContent = () => {
   const { user, userProfile, loading: authLoading } = useAuth();
@@ -23,7 +23,7 @@ export const IndexContent = () => {
     });
   }, [user, userProfile, userCompanies, selectedCompany, isLoading, authLoading]);
 
-  // MUITO SIMPLES: Apenas mostrar skeleton se ainda está carregando auth E não tem usuário
+  // Mostrar skeleton apenas se ainda está carregando auth E não tem usuário
   if (authLoading && !user) {
     console.log("[IndexContent] Showing skeleton - auth loading and no user");
     return <IndexSkeleton />;
@@ -35,11 +35,14 @@ export const IndexContent = () => {
     return <IndexSkeleton />;
   }
 
-  // Se tem usuário, sempre mostrar a home - sem verificações complicadas
-  console.log("[IndexContent] User authenticated - showing UserHome");
+  // Se tem usuário, sempre mostrar a home com header
+  console.log("[IndexContent] User authenticated - showing UserHome with header");
   return (
-    <div className="min-h-screen bg-background">
-      <UserHome />
-    </div>
+    <>
+      <MainNavigationMenu />
+      <div className="min-h-screen bg-background">
+        <UserHome />
+      </div>
+    </>
   );
 };
