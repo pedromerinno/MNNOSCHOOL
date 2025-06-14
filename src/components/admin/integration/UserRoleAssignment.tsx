@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -16,6 +15,7 @@ import { UserProfile } from "@/hooks/useUsers";
 import { JobRole } from "@/types/job-roles";
 import { AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
 
 interface UserRoleAssignmentProps {
   user: UserProfile;
@@ -28,6 +28,7 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
   companyId,
   onSuccess 
 }) => {
+  const { toast } = useToast();
   const [roles, setRoles] = useState<JobRole[]>([]);
   const [selectedRoleId, setSelectedRoleId] = useState<string>("");
   const [currentRoleId, setCurrentRoleId] = useState<string>("");
@@ -153,7 +154,20 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
         }
       }));
       
-      toast.success("Cargo atualizado com sucesso");
+      // Disparar evento específico para atualizar a página de integração
+      window.dispatchEvent(new CustomEvent('integration-role-updated', {
+        detail: { 
+          userId: user.id,
+          roleId: selectedRoleId,
+          companyId: companyId,
+          roleTitle: updatedRole?.title
+        }
+      }));
+      
+      toast({
+        title: "Sucesso",
+        description: "Cargo atualizado com sucesso",
+      });
       
       if (onSuccess) {
         onSuccess();
@@ -162,7 +176,11 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
     } catch (error: any) {
       console.error("[UserRoleAssignment] Error updating role:", error);
       setError(`Erro ao atualizar cargo: ${error.message}`);
-      toast.error(`Erro ao atualizar cargo: ${error.message}`);
+      toast({
+        title: "Erro",
+        description: `Erro ao atualizar cargo: ${error.message}`,
+        variant: "destructive",
+      });
     } finally {
       setIsSaving(false);
     }
@@ -204,7 +222,20 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
         }
       }));
       
-      toast.success("Cargo removido com sucesso");
+      // Disparar evento específico para atualizar a página de integração
+      window.dispatchEvent(new CustomEvent('integration-role-updated', {
+        detail: { 
+          userId: user.id,
+          roleId: null,
+          companyId: companyId,
+          roleTitle: null
+        }
+      }));
+      
+      toast({
+        title: "Sucesso",
+        description: "Cargo removido com sucesso",
+      });
       
       if (onSuccess) {
         onSuccess();
@@ -213,7 +244,11 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
     } catch (error: any) {
       console.error("[UserRoleAssignment] Error removing role:", error);
       setError(`Erro ao remover cargo: ${error.message}`);
-      toast.error(`Erro ao remover cargo: ${error.message}`);
+      toast({
+        title: "Erro",
+        description: `Erro ao remover cargo: ${error.message}`,
+        variant: "destructive",
+      });
     } finally {
       setIsSaving(false);
     }

@@ -103,6 +103,50 @@ const Integration = () => {
     }
   };
   
+  // Função para buscar cargo específico do usuário logado
+  const fetchUserRole = async (companyId: string) => {
+    if (!userProfile?.id || !companyId) return;
+    
+    try {
+      // Buscar perfil atualizado do usuário
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('cargo_id')
+        .eq('id', userProfile.id)
+        .single();
+        
+      if (profileError) {
+        console.error("Error fetching user profile:", profileError);
+        return;
+      }
+      
+      if (profile?.cargo_id) {
+        // Buscar detalhes do cargo
+        const { data: roleData, error: roleError } = await supabase
+          .from('job_roles')
+          .select('*')
+          .eq('id', profile.cargo_id)
+          .eq('company_id', companyId)
+          .single();
+          
+        if (roleError) {
+          console.error("Error fetching user role:", roleError);
+          setUserRole(null);
+          return;
+        }
+        
+        console.log("User role updated:", roleData?.title);
+        setUserRole(roleData);
+      } else {
+        console.log("User has no role assigned");
+        setUserRole(null);
+      }
+    } catch (error) {
+      console.error("Error fetching user role:", error);
+      setUserRole(null);
+    }
+  };
+  
   // Função para atualizar dados da empresa
   const refreshCompanyData = async (companyId: string) => {
     const updatedCompany = await fetchCompanyData(companyId);
@@ -177,6 +221,20 @@ const Integration = () => {
       }
     };
     
+    // Novo handler para atualização específica do cargo na integração
+    const handleIntegrationRoleUpdated = (event: CustomEvent) => {
+      console.log("Integration role updated event detected:", event.detail);
+      const { userId, companyId } = event.detail;
+      
+      // Se o usuário atualizado é o usuário logado e a empresa é a atual
+      if (userId === userProfile?.id && companyId === companyData?.id) {
+        console.log("Updating current user role in integration page");
+        fetchUserRole(companyId);
+        // Force refresh do componente
+        setRefreshKey(prev => prev + 1);
+      }
+    };
+    
     // Adicionar listeners
     window.addEventListener('company-changed', handleCompanyChange as EventListener);
     window.addEventListener('company-navigation-change', handleCompanyChange as EventListener);
@@ -185,6 +243,7 @@ const Integration = () => {
     window.addEventListener('integration-data-updated', handleIntegrationDataUpdated as EventListener);
     window.addEventListener('force-company-refresh', handleIntegrationDataUpdated as EventListener);
     window.addEventListener('user-role-updated', handleRoleUpdated as EventListener);
+    window.addEventListener('integration-role-updated', handleIntegrationRoleUpdated as EventListener);
     
     // Cleanup
     return () => {
@@ -195,8 +254,9 @@ const Integration = () => {
       window.removeEventListener('integration-data-updated', handleIntegrationDataUpdated as EventListener);
       window.removeEventListener('force-company-refresh', handleIntegrationDataUpdated as EventListener);
       window.removeEventListener('user-role-updated', handleRoleUpdated as EventListener);
+      window.removeEventListener('integration-role-updated', handleIntegrationRoleUpdated as EventListener);
     };
-  }, [companyData?.id]);
+  }, [companyData?.id, userProfile?.id]);
 
   // Loading state
   if (isLoading && !companyData) {
