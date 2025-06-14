@@ -4,7 +4,7 @@ import { useAccessItems } from "@/hooks/useAccessItems";
 import { LoadingState } from "@/components/access/LoadingState";
 import { EmptyState } from "@/components/access/EmptyState";
 import { AccessDescription } from "@/components/access/AccessDescription";
-import { AccessContent } from "@/components/access/AccessContent";
+import { AccessTabs } from "@/components/access/AccessTabs";
 import { PageLayout } from "@/components/layout/PageLayout";
 
 const Access = () => {
@@ -40,22 +40,11 @@ const Access = () => {
     );
   }
 
-  if (accessItems.length === 0) {
-    return (
-      <PageLayout title="Senhas e Acessos">
-        <EmptyState 
-          title="Nenhum acesso cadastrado"
-          description={`Não há informações de acesso cadastradas para ${selectedCompany.nome}. Peça ao administrador para adicionar os acessos necessários.`}
-        />
-      </PageLayout>
-    );
-  }
-
   return (
     <PageLayout title="Senhas e Acessos">
       <AccessDescription companyName={selectedCompany.nome} />
-      <AccessContent 
-        items={accessItems}
+      <AccessTabs 
+        companyAccessItems={accessItems}
         companyColor={selectedCompany.cor_principal}
       />
     </PageLayout>

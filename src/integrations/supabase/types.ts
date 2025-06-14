@@ -600,6 +600,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_access: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          password: string
+          tool_name: string
+          updated_at: string
+          url: string | null
+          user_id: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          password: string
+          tool_name: string
+          updated_at?: string
+          url?: string | null
+          user_id: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          password?: string
+          tool_name?: string
+          updated_at?: string
+          url?: string | null
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
       user_course_progress: {
         Row: {
           completed: boolean

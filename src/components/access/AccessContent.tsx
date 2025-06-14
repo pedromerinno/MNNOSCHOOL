@@ -18,15 +18,23 @@ export const AccessContent = ({ items, companyColor }: AccessContentProps) => {
     setIsDialogOpen(true);
   };
 
+  if (items.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-500">
+          Nenhum acesso compartilhado foi cadastrado pela empresa ainda.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <>
-      <div className="bg-white dark:bg-card rounded-xl shadow-sm p-6">
-        <AccessList 
-          items={items}
-          onSelectAccess={openAccessDetails}
-          companyColor={companyColor}
-        />
-      </div>
+      <AccessList 
+        items={items}
+        onSelectAccess={openAccessDetails}
+        companyColor={companyColor}
+      />
 
       <AccessDetails 
         access={selectedAccess}
