@@ -53,7 +53,7 @@ export const uploadAvatarImage = async (file: File, userId: string): Promise<str
       throw updateError;
     }
     
-    console.log('Perfil atualizado no banco automaticamente com nova imagem');
+    console.log('Perfil atualizado no banco com nova imagem');
     
     return publicUrl;
   } catch (error) {
