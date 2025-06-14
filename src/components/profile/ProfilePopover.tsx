@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Upload, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -17,6 +18,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { uploadAvatarImage } from "@/utils/imageUpload";
+import { supabase } from "@/integrations/supabase/client";
 
 const userProfileSchema = z.object({
   name: z.string().min(2, {
@@ -149,7 +151,20 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
     try {
       setIsUploading(true);
       
-      // Atualizar perfil no banco removendo a imagem
+      console.log('[ProfilePopover] Removendo avatar do usuário:', user.id);
+      
+      // Atualizar diretamente no banco de dados
+      const { error } = await supabase
+        .from('profiles')
+        .update({ avatar: null })
+        .eq('id', user.id);
+
+      if (error) {
+        console.error('[ProfilePopover] Erro ao atualizar banco:', error);
+        throw error;
+      }
+      
+      // Atualizar contexto
       await updateUserProfile({ avatar: null });
       
       // Limpar preview e form
@@ -177,7 +192,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
   const currentName = form.watch("name") || userProfile?.display_name || email?.split('@')[0] || "U";
   const hasCustomAvatar = (avatarPreview || userProfile?.avatar) && (avatarPreview || userProfile?.avatar) !== "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png";
 
-  console.log('[ProfilePopover] Renderizando com:', { currentAvatarUrl, currentName, isUploading });
+  console.log('[ProfilePopover] Renderizando com:', { currentAvatarUrl, currentName, isUploading, hasCustomAvatar });
 
   return (
     <>
