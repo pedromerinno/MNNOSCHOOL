@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { Upload } from "lucide-react";
+import { Upload, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -39,6 +38,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
   const [open, setOpen] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
+  const [showAvatarActions, setShowAvatarActions] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<UserProfileFormValues>({
@@ -121,9 +121,6 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
       form.setValue("avatar", publicUrl);
       setAvatarPreview(publicUrl);
       
-      // Forçar atualização do contexto de autenticação
-      await updateUserProfile({ avatar: publicUrl });
-      
       toast({
         title: "Imagem carregada",
         description: "Sua foto de perfil foi carregada com sucesso!",
@@ -146,8 +143,39 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
     }
   };
 
+  const handleDeleteAvatar = async () => {
+    if (!user) return;
+    
+    try {
+      setIsUploading(true);
+      
+      // Atualizar perfil no banco removendo a imagem
+      await updateUserProfile({ avatar: null });
+      
+      // Limpar preview e form
+      setAvatarPreview("");
+      form.setValue("avatar", "");
+      
+      toast({
+        title: "Imagem removida",
+        description: "Sua foto de perfil foi removida com sucesso!",
+      });
+      
+    } catch (error: any) {
+      console.error('[ProfilePopover] Erro ao remover avatar:', error);
+      toast({
+        title: "Erro ao remover imagem",
+        description: error.message || "Não foi possível remover a imagem",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const currentAvatarUrl = avatarPreview || userProfile?.avatar || "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png";
   const currentName = form.watch("name") || userProfile?.display_name || email?.split('@')[0] || "U";
+  const hasCustomAvatar = (avatarPreview || userProfile?.avatar) && (avatarPreview || userProfile?.avatar) !== "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png";
 
   console.log('[ProfilePopover] Renderizando com:', { currentAvatarUrl, currentName, isUploading });
 
@@ -168,16 +196,37 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
           
           <form onSubmit={form.handleSubmit(handleProfileUpdate)} className="space-y-6">
             <div className="flex flex-col items-center gap-4">
-              <Avatar className="h-24 w-24">
-                <AvatarImage 
-                  src={currentAvatarUrl} 
-                  alt="Avatar preview"
-                  key={currentAvatarUrl} // Force re-render when URL changes
-                  onLoad={() => console.log('[ProfilePopover] Avatar carregado:', currentAvatarUrl)}
-                  onError={() => console.error('[ProfilePopover] Erro ao carregar avatar:', currentAvatarUrl)}
-                />
-                <AvatarFallback>{currentName.charAt(0)?.toUpperCase()}</AvatarFallback>
-              </Avatar>
+              <div 
+                className="relative"
+                onMouseEnter={() => setShowAvatarActions(true)}
+                onMouseLeave={() => setShowAvatarActions(false)}
+              >
+                <Avatar className="h-24 w-24">
+                  <AvatarImage 
+                    src={currentAvatarUrl} 
+                    alt="Avatar preview"
+                    key={currentAvatarUrl}
+                    onLoad={() => console.log('[ProfilePopover] Avatar carregado:', currentAvatarUrl)}
+                    onError={() => console.error('[ProfilePopover] Erro ao carregar avatar:', currentAvatarUrl)}
+                  />
+                  <AvatarFallback>{currentName.charAt(0)?.toUpperCase()}</AvatarFallback>
+                </Avatar>
+                
+                {showAvatarActions && hasCustomAvatar && (
+                  <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-white hover:bg-red-500 hover:text-white"
+                      onClick={handleDeleteAvatar}
+                      disabled={isUploading}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
               
               <div className="flex items-center gap-2">
                 <label htmlFor="avatar-upload" className="cursor-pointer">
