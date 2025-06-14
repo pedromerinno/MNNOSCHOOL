@@ -11,6 +11,8 @@ import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import Courses from "./pages/Courses";
 import Documents from "./pages/Documents";
+import Community from "./pages/Community";
+import Team from "./pages/Team";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import LessonPage from "./pages/LessonPage";
@@ -40,6 +42,8 @@ function App() {
                       <Route path="/courses" element={<Courses />} />
                       <Route path="/courses/:courseId/lessons/:lessonId" element={<LessonPage />} />
                       <Route path="/documents" element={<Documents />} />
+                      <Route path="/community" element={<Community />} />
+                      <Route path="/team" element={<Team />} />
                     </Routes>
                   </CompanyRequiredWrapper>
                 } />
