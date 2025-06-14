@@ -89,9 +89,12 @@ export const useLessonDataOptimized = (lessonId: string | undefined) => {
     }
   }, [lessonId, refetch]);
 
+  // Não mostrar loading se já temos dados em cache
+  const shouldShowLoading = loading && !currentLesson;
+
   return { 
     lesson: currentLesson, 
-    loading: loading && !currentLesson, 
+    loading: shouldShowLoading, 
     error, 
     markLessonCompleted,
     likes,

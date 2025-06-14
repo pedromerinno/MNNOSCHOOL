@@ -92,14 +92,13 @@ export const useDocumentManagerOptimized = () => {
     try {
       setIsUploading(true);
       
+      // Corrigir chamada para uploadDocument com parâmetros corretos
       const success = await uploadDocument(
         attachmentType,
         fileOrUrl,
         documentType,
         description,
-        name,
-        user.id,
-        selectedCompany.id
+        name
       );
 
       if (success) {

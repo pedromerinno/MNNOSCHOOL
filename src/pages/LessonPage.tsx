@@ -7,7 +7,6 @@ import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 import { LessonHeader } from '@/components/lessons/LessonHeader';
 import { LessonContent } from '@/components/lessons/LessonContent';
 import { LessonActions } from '@/components/courses/LessonActions';
-import { LessonNavigationSkeleton } from '@/components/lessons/LessonNavigationSkeleton';
 import { LessonNotFound } from '@/components/lessons/LessonNotFound';
 import { CourseDescription } from '@/components/courses/CourseDescription';
 import { LessonPlaylist } from '@/components/lessons/LessonPlaylist';
@@ -29,7 +28,7 @@ const LessonPage = () => {
   
   console.log('📍 LessonPage: Renderizando com lessonId:', lessonId, ', courseId:', courseId);
   
-  // Use o hook otimizado apenas uma vez
+  // Use o hook otimizado
   const { 
     lesson, 
     loading, 
@@ -97,16 +96,7 @@ const LessonPage = () => {
     }
   };
   
-  // Loading otimizado - mostrar skeleton apenas se realmente necessário
-  if (loading && !lesson) {
-    return (
-      <>
-        <MainNavigationMenu />
-        <LessonNavigationSkeleton />
-      </>
-    );
-  }
-
+  // Se não tem lesson e não está carregando, mostrar not found
   if (!lesson && !loading) {
     return (
       <>
@@ -116,11 +106,17 @@ const LessonPage = () => {
     );
   }
 
+  // Se não tem lesson mas está carregando, mostrar uma página básica sem skeleton
   if (!lesson) {
     return (
       <>
         <MainNavigationMenu />
-        <LessonNavigationSkeleton />
+        <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919] flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">Carregando aula...</p>
+          </div>
+        </div>
       </>
     );
   }
