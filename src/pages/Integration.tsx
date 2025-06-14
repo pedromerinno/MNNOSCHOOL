@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useCompanies } from "@/hooks/useCompanies";
 import { LoadingState } from '@/components/integration/video-playlist/LoadingState';
-import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { CompanyHeader } from '@/components/integration/header/CompanyHeader';
 import { IntegrationTabs } from '@/components/integration/tabs/IntegrationTabs';
 import { Company } from "@/types/company";
@@ -9,6 +8,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { JobRole } from "@/types/job-roles";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { CompanyThemedBadge } from "@/components/ui/badge";
+import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
+import { AdminFloatingActionButton } from "@/components/admin/AdminFloatingActionButton";
 
 const Integration = () => {
   const { selectedCompany, isLoading } = useCompanies();
@@ -282,40 +286,98 @@ const Integration = () => {
   // Loading state
   if (isLoading && !companyData) {
     return (
-      <DashboardLayout>
-        <LoadingState />
-      </DashboardLayout>
+      <>
+        <MainNavigationMenu />
+        <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
+          <main className="container mx-auto px-6 py-12">
+            <LoadingState />
+          </main>
+        </div>
+      </>
     );
   }
 
   // Sem empresa selecionada
   if (!companyData) {
     return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <p className="text-gray-500">Nenhuma empresa selecionada</p>
+      <>
+        <MainNavigationMenu />
+        <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
+          <main className="container mx-auto px-6 py-12">
+            <div className="flex items-center mb-12 gap-4">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="p-0 hover:bg-transparent" 
+                onClick={() => window.history.back()}
+              >
+                <ArrowLeft className="h-5 w-5 text-gray-500" />
+              </Button>
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-bold dark:text-white">
+                  Integração
+                </h1>
+              </div>
+            </div>
+            
+            <div className="bg-white dark:bg-card rounded-xl shadow-sm p-6">
+              <div className="flex items-center justify-center h-64">
+                <p className="text-gray-500">Nenhuma empresa selecionada</p>
+              </div>
+            </div>
+          </main>
+          <AdminFloatingActionButton />
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   return (
-    <DashboardLayout>
-      <CompanyHeader 
-        company={companyData} 
-        companyColor={companyData.cor_principal}
-      />
-      <IntegrationTabs
-        key={refreshKey}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        company={companyData}
-        companyColor={companyData.cor_principal}
-        jobRoles={jobRoles}
-        isLoadingRoles={isLoadingRoles}
-        userRole={userRole}
-      />
-    </DashboardLayout>
+    <>
+      <MainNavigationMenu />
+      <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
+        <main className="container mx-auto px-6 py-12">
+          <div className="flex items-center mb-12 gap-4">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="p-0 hover:bg-transparent" 
+              onClick={() => window.history.back()}
+            >
+              <ArrowLeft className="h-5 w-5 text-gray-500" />
+            </Button>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold dark:text-white">
+                Integração
+              </h1>
+              {selectedCompany && (
+                <CompanyThemedBadge variant="beta">
+                  {selectedCompany.nome}
+                </CompanyThemedBadge>
+              )}
+            </div>
+          </div>
+          
+          <div className="bg-white dark:bg-card rounded-xl shadow-sm p-6">
+            <CompanyHeader 
+              company={companyData} 
+              companyColor={companyData.cor_principal}
+            />
+            <IntegrationTabs
+              key={refreshKey}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              company={companyData}
+              companyColor={companyData.cor_principal}
+              jobRoles={jobRoles}
+              isLoadingRoles={isLoadingRoles}
+              userRole={userRole}
+            />
+          </div>
+        </main>
+        <AdminFloatingActionButton />
+      </div>
+    </>
   );
 };
 
