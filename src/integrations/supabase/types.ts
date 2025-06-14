@@ -805,6 +805,65 @@ export type Database = {
           },
         ]
       }
+      user_invites: {
+        Row: {
+          aniversario: string | null
+          cidade: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          data_inicio: string | null
+          display_name: string
+          email: string
+          expires_at: string
+          id: string
+          nivel_colaborador: string | null
+          tipo_contrato: string | null
+          used: boolean
+          used_at: string | null
+        }
+        Insert: {
+          aniversario?: string | null
+          cidade?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          data_inicio?: string | null
+          display_name: string
+          email: string
+          expires_at: string
+          id?: string
+          nivel_colaborador?: string | null
+          tipo_contrato?: string | null
+          used?: boolean
+          used_at?: string | null
+        }
+        Update: {
+          aniversario?: string | null
+          cidade?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          data_inicio?: string | null
+          display_name?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          nivel_colaborador?: string | null
+          tipo_contrato?: string | null
+          used?: boolean
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_invites_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_lesson_progress: {
         Row: {
           completed: boolean
