@@ -14,6 +14,13 @@ export const CompanyRequiredWrapper: React.FC<CompanyRequiredWrapperProps> = ({ 
   const { userCompanies, isLoading, forceGetUserCompanies } = useCompanies();
   const [showCompanyDialog, setShowCompanyDialog] = React.useState(false);
 
+  console.log('[CompanyRequiredWrapper] Current state:', {
+    user: user?.email,
+    isLoading,
+    userCompaniesCount: userCompanies?.length || 0,
+    isSuperAdmin: userProfile?.super_admin
+  });
+
   // Always execute hooks in the same order
   const needsCompany = React.useMemo(() => {
     if (!user || !userProfile || isLoading) {
