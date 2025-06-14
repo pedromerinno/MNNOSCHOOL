@@ -62,7 +62,7 @@ export const IndexContent = () => {
       <UserProfileDialog 
         open={showProfileDialog}
         onOpenChange={setShowProfileDialog}
-        onComplete={handleProfileComplete}
+        onProfileComplete={handleProfileComplete}
       />
     </div>
   );
