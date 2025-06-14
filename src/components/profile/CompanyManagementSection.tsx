@@ -42,7 +42,6 @@ export const CompanyManagementSection = ({
     setIsUnlinking(true);
     try {
       await removeUserFromCompany(user.id, companyToRemove.id);
-      setCompanyToRemove(null);
       
       // Force reload companies
       if (user?.id) {
@@ -50,6 +49,7 @@ export const CompanyManagementSection = ({
       }
       
       toast.success('Empresa desvinculada com sucesso!');
+      setCompanyToRemove(null);
     } catch (error) {
       console.error('Erro ao desvincular empresa:', error);
       toast.error('Erro ao desvincular empresa');
@@ -160,12 +160,15 @@ export const CompanyManagementSection = ({
         </div>
       )}
 
-      <AlertDialog open={!!companyToRemove} onOpenChange={(open) => {
-        if (!open) {
-          setCompanyToRemove(null);
-        }
-      }}>
-        <AlertDialogContent>
+      <AlertDialog 
+        open={!!companyToRemove} 
+        onOpenChange={(open) => {
+          if (!open) {
+            setCompanyToRemove(null);
+          }
+        }}
+      >
+        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-destructive" />
