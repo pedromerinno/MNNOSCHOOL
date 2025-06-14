@@ -26,6 +26,7 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
   const { user } = useAuth();
   const initialDataLoaded = useRef(false);
   const hasRegistered = useRef(false);
+  const lastFetchTime = useRef(0);
   
   // Register hook with global state
   useEffect(() => {
@@ -113,14 +114,22 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
   // Listen for company selection events
   useCompanyEvents(setSelectedCompany);
   
-  // Simplified and faster initial data loading
+  // Optimized data loading with throttling
   const loadInitialData = useCallback(async () => {
     if (skipLoadingInOnboarding || !user?.id || initialDataLoaded.current) {
       return;
     }
     
+    // Throttle requests - only allow one fetch per 5 seconds
+    const now = Date.now();
+    if (now - lastFetchTime.current < 5000) {
+      console.log('[useCompanies] Throttling request, too soon since last fetch');
+      return;
+    }
+    
     try {
       initialDataLoaded.current = true;
+      lastFetchTime.current = now;
       
       // Try to get stored company first for immediate UI update
       const storedCompany = getStoredCompany();
@@ -128,14 +137,33 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
         setSelectedCompany(storedCompany);
       }
       
-      // Check if user is super admin
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('super_admin')
-        .eq('id', user.id)
-        .single();
+      // Check if user is super admin (cached check first)
+      const cachedProfile = localStorage.getItem(`profile_${user.id}`);
+      let isSuperAdmin = false;
       
-      if (profileData?.super_admin) {
+      if (cachedProfile) {
+        try {
+          const profile = JSON.parse(cachedProfile);
+          isSuperAdmin = profile.super_admin === true;
+        } catch (e) {
+          // Fallback to DB check
+        }
+      }
+      
+      if (!cachedProfile) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('super_admin')
+          .eq('id', user.id)
+          .single();
+          
+        if (profileData) {
+          localStorage.setItem(`profile_${user.id}`, JSON.stringify(profileData));
+          isSuperAdmin = profileData.super_admin === true;
+        }
+      }
+      
+      if (isSuperAdmin) {
         // For super admin, get all companies directly
         const { data: allCompanies, error: companiesError } = await supabase
           .from('empresas')
@@ -165,12 +193,14 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     }
   }, [user?.id, skipLoadingInOnboarding, loadInitialData]);
   
-  // Auto-select company when user companies are loaded
+  // Auto-select company when user companies are loaded (only if no company selected)
   useEffect(() => {
     if (userCompanies.length > 0 && !selectedCompany && !skipLoadingInOnboarding) {
-      setSelectedCompany(userCompanies[0]);
+      const storedCompany = getStoredCompany();
+      const companyToSelect = storedCompany || userCompanies[0];
+      setSelectedCompany(companyToSelect);
     }
-  }, [userCompanies.length, selectedCompany, skipLoadingInOnboarding, setSelectedCompany]);
+  }, [userCompanies.length, selectedCompany, skipLoadingInOnboarding, setSelectedCompany, getStoredCompany]);
   
   // Simplified event listeners
   useEffect(() => {
@@ -179,15 +209,17 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     }
     
     const handleCompanyRelationChange = () => {
-      if (user?.id) {
+      if (user?.id && Date.now() - lastFetchTime.current > 5000) {
         forceGetUserCompanies(user.id);
+        lastFetchTime.current = Date.now();
       }
     };
 
     const handleForceReload = () => {
-      if (user?.id) {
+      if (user?.id && Date.now() - lastFetchTime.current > 5000) {
         forceGetUserCompanies(user.id);
-      } else {
+        lastFetchTime.current = Date.now();
+      } else if (!user?.id) {
         fetchCompanies();
       }
     };

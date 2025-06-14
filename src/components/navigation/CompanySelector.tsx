@@ -1,5 +1,5 @@
 
-import { useEffect, memo, useCallback } from "react";
+import { useEffect, memo, useCallback, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -18,11 +18,25 @@ export const CompanySelector = memo(() => {
     selectCompany, 
     isLoading 
   } = useCompanies();
+  
+  const [displayName, setDisplayName] = useState<string>("BUSINESS");
+
+  // Atualizar displayName sempre que selectedCompany mudar
+  useEffect(() => {
+    if (selectedCompany?.nome) {
+      setDisplayName(selectedCompany.nome);
+    } else if (userCompanies.length > 0) {
+      setDisplayName(userCompanies[0].nome);
+    } else {
+      setDisplayName("BUSINESS");
+    }
+  }, [selectedCompany, userCompanies]);
 
   // Função para lidar com mudança de empresa
   const handleCompanyChange = useCallback((company: any) => {
     if (user?.id && company) {
       selectCompany(user.id, company);
+      setDisplayName(company.nome);
       
       // Force immediate update of other components
       const event = new CustomEvent('company-selector-changed', { 
@@ -32,7 +46,25 @@ export const CompanySelector = memo(() => {
     }
   }, [user?.id, selectCompany]);
 
-  const displayName = selectedCompany?.nome || "BUSINESS";
+  // Escutar mudanças de empresa vindas de outras partes da aplicação
+  useEffect(() => {
+    const handleCompanyUpdate = (event: CustomEvent) => {
+      const { company } = event.detail;
+      if (company?.nome) {
+        setDisplayName(company.nome);
+      }
+    };
+
+    window.addEventListener('company-updated', handleCompanyUpdate as EventListener);
+    window.addEventListener('company-changed', handleCompanyUpdate as EventListener);
+    window.addEventListener('company-selected', handleCompanyUpdate as EventListener);
+    
+    return () => {
+      window.removeEventListener('company-updated', handleCompanyUpdate as EventListener);
+      window.removeEventListener('company-changed', handleCompanyUpdate as EventListener);
+      window.removeEventListener('company-selected', handleCompanyUpdate as EventListener);
+    };
+  }, []);
 
   if (isLoading) {
     return <span className="text-lg font-bold text-foreground">{displayName}</span>;
