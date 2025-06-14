@@ -56,23 +56,22 @@ export const IndexContent = () => {
     return <IndexSkeleton />;
   }
 
+  // CRITICAL CHECK: If user has companies, NEVER show company dialog
+  const shouldShowCompanyDialog = showCompanyDialog && userCompanies.length === 0;
+  
+  console.log("[IndexContent] Dialog decision:", {
+    showCompanyDialog,
+    userCompaniesLength: userCompanies.length,
+    shouldShowCompanyDialog
+  });
+
   // Se é super admin ou tem empresas, mostrar home normal
-  // IMPORTANTE: Não mostrar dialogs se o usuário já tem empresas
   if (user && userProfile && (userProfile.super_admin || userCompanies.length > 0)) {
     return (
       <div className="min-h-screen bg-background">
         <UserHome />
         
-        {/* Só mostrar dialogs se necessário E se o usuário não tem empresas */}
-        {showCompanyDialog && userCompanies.length === 0 && (
-          <CompanySelectionDialog 
-            open={showCompanyDialog}
-            onOpenChange={setShowCompanyDialog}
-            onCompanyCreated={handleCompanyCreated}
-            onCompanyTypeSelect={handleCompanyTypeSelect}
-          />
-        )}
-        
+        {/* Profile dialog can show for users with companies */}
         {showProfileDialog && (
           <UserProfileDialog 
             open={showProfileDialog}
@@ -89,15 +88,15 @@ export const IndexContent = () => {
     return <NoCompaniesAvailable />;
   }
 
-  // Default case
+  // Default case - show home with dialogs only if user has no companies
   return (
     <div className="min-h-screen bg-background">
       <UserHome />
       
-      {/* Só mostrar dialogs se o usuário realmente não tem empresas */}
-      {showCompanyDialog && userCompanies.length === 0 && (
+      {/* ONLY show company dialog if user truly has no companies */}
+      {shouldShowCompanyDialog && (
         <CompanySelectionDialog 
-          open={showCompanyDialog}
+          open={shouldShowCompanyDialog}
           onOpenChange={setShowCompanyDialog}
           onCompanyCreated={handleCompanyCreated}
           onCompanyTypeSelect={handleCompanyTypeSelect}

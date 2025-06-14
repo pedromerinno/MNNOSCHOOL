@@ -37,11 +37,25 @@ export const useCompanyInitialization = () => {
     companyDialogTriggeredByProfile
   } = useProfileCompletionCheck();
 
-  // Simplified check - just use what the profile completion check returns
-  // No additional overrides here to avoid conflicts
-  const showCompanyDialog = profileShowCompanyDialog;
+  // CRITICAL: Override company dialog to false if user has companies
+  const showCompanyDialog = userCompanies.length > 0 ? false : profileShowCompanyDialog;
+  
+  console.log("[useCompanyInitialization] State check", {
+    userCompaniesLength: userCompanies.length,
+    profileShowCompanyDialog,
+    finalShowCompanyDialog: showCompanyDialog,
+    showProfileDialog,
+    userEmail: user?.email,
+    isSuperAdmin: userProfile?.super_admin
+  });
   
   function setShowDialog(show: boolean) {
+    // Additional safety check - don't allow opening if user has companies
+    if (show && userCompanies.length > 0) {
+      console.log("[useCompanyInitialization] Preventing dialog open - user has companies");
+      return;
+    }
+    
     profileSetShowCompanyDialog(show);
     
     if (show) {
