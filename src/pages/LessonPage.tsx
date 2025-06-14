@@ -3,7 +3,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLessonDataOptimized } from '@/hooks/lesson/useLessonDataOptimized';
 import { useAutoplayNavigation } from '@/hooks/lesson/useAutoplayNavigation';
-import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 import { LessonHeader } from '@/components/lessons/LessonHeader';
 import { LessonContent } from '@/components/lessons/LessonContent';
 import { LessonActions } from '@/components/courses/LessonActions';
@@ -99,21 +99,37 @@ const LessonPage = () => {
   
   // Loading otimizado - mostrar skeleton apenas se realmente necessário
   if (loading && !lesson) {
-    return <LessonNavigationSkeleton />;
+    return (
+      <>
+        <MainNavigationMenu />
+        <LessonNavigationSkeleton />
+      </>
+    );
   }
 
   if (!lesson && !loading) {
-    return <LessonNotFound courseId={courseId} />;
+    return (
+      <>
+        <MainNavigationMenu />
+        <LessonNotFound courseId={courseId} />
+      </>
+    );
   }
 
   if (!lesson) {
-    return <LessonNavigationSkeleton />;
+    return (
+      <>
+        <MainNavigationMenu />
+        <LessonNavigationSkeleton />
+      </>
+    );
   }
 
   return (
     <>
-      <DashboardLayout fullWidth>
-        <div className="flex flex-col lg:flex-row w-full min-h-[calc(100vh-80px)]">
+      <MainNavigationMenu />
+      <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919] flex flex-col">
+        <div className="flex flex-col lg:flex-row w-full flex-1">
           {/* Sidebar */}
           <div className="lg:w-1/4 lg:min-h-full border-r border-border/60 bg-muted/20">
             <div className="lg:w-[calc(25%-1px)] lg:fixed top-[80px] h-[calc(100vh-80px)] overflow-y-auto">
@@ -199,7 +215,7 @@ const LessonPage = () => {
             </div>
           </div>
         </div>
-      </DashboardLayout>
+      </div>
 
       {/* Lesson Manager Dialog */}
       {isAdmin && (

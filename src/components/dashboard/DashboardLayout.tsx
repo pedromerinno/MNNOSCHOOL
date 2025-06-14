@@ -1,6 +1,6 @@
 
 import { ReactNode } from "react";
-import { DashboardHeader } from "./DashboardHeader";
+import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 import { useCompanies } from "@/hooks/useCompanies";
 import { AdminFloatingActionButton } from "../admin/AdminFloatingActionButton";
 
@@ -15,7 +15,7 @@ export const DashboardLayout = ({ children, fullWidth = false }: DashboardLayout
   
   return (
     <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919] flex flex-col">
-      <DashboardHeader />
+      <MainNavigationMenu />
       <main className="flex-1">
         <div className={fullWidth ? "w-full" : "w-full px-4 lg:px-8"}>
           {children}
