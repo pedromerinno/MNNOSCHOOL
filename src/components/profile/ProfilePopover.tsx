@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Upload, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -190,11 +189,10 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
   const currentAvatarUrl = avatarPreview || userProfile?.avatar || "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png";
   const currentName = form.watch("name") || userProfile?.display_name || email?.split('@')[0] || "U";
   
-  // Verificar se tem uma imagem personalizada (diferente da padrão)
-  const hasCustomAvatar = Boolean(
-    (avatarPreview || userProfile?.avatar) && 
-    (avatarPreview || userProfile?.avatar) !== "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png"
-  );
+  // Verificar se tem uma imagem personalizada (diferente da padrão e não vazia)
+  const userAvatarUrl = avatarPreview || userProfile?.avatar;
+  const defaultAvatarUrl = "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png";
+  const hasCustomAvatar = Boolean(userAvatarUrl && userAvatarUrl !== defaultAvatarUrl && userAvatarUrl.trim() !== "");
 
   const handleOpenDialog = (e: React.MouseEvent) => {
     e.preventDefault();
