@@ -10,26 +10,32 @@ export const usePageLoadingState = (
 ) => {
   const [pageLoading, setPageLoading] = useState(true);
   
-  // Handle page loading state
+  // Simplified loading logic with timeout
   useEffect(() => {
+    // Always stop loading after a maximum of 1 second
+    const timeoutId = setTimeout(() => {
+      console.log("[usePageLoadingState] Timeout - forcing loading to stop");
+      setPageLoading(false);
+    }, 1000);
+    
+    // Stop loading immediately if we have cached data
     if (hasCachedCompany) {
-      setTimeout(() => setPageLoading(false), 50);
+      console.log("[usePageLoadingState] Has cached company - stopping loading");
+      setPageLoading(false);
+      clearTimeout(timeoutId);
       return;
     }
     
-    if (selectedCompany || (fetchCount > 0 && !isLoading)) {
+    // Stop loading if companies fetch is complete
+    if (fetchCount > 0 && !isLoading) {
+      console.log("[usePageLoadingState] Fetch complete - stopping loading");
       setPageLoading(false);
+      clearTimeout(timeoutId);
+      return;
     }
     
-    const timeoutId = setTimeout(() => {
-      if (isPageLoading) {
-        console.log("[Index] Finalizando loading por timeout de segurança");
-        setPageLoading(false);
-      }
-    }, 2000);
-    
     return () => clearTimeout(timeoutId);
-  }, [isLoading, fetchCount, selectedCompany, isPageLoading, hasCachedCompany]);
+  }, [hasCachedCompany, selectedCompany, isLoading, fetchCount]);
 
   return {
     isPageLoading: pageLoading,
