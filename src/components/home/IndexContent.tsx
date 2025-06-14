@@ -11,7 +11,7 @@ import { CompanySelectionDialog } from "@/components/home/CompanySelectionDialog
 import { UserProfileDialog } from "@/components/home/UserProfileDialog";
 
 export const IndexContent = () => {
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, loading: authLoading } = useAuth();
   const { selectedCompany, isLoading, getUserCompanies, userCompanies, fetchCount } = useCompanies();
   
   const {
@@ -45,28 +45,44 @@ export const IndexContent = () => {
       userCompaniesCount: userCompanies?.length || 0,
       selectedCompany: selectedCompany?.nome,
       isLoading,
+      authLoading,
       showCompanyDialog,
       showProfileDialog,
       hasUserCompanies: userCompanies.length > 0
     });
-  }, [user, userProfile, userCompanies, selectedCompany, isLoading, showCompanyDialog, showProfileDialog]);
+  }, [user, userProfile, userCompanies, selectedCompany, isLoading, authLoading, showCompanyDialog, showProfileDialog]);
 
   // Mostrar skeleton enquanto carrega dados iniciais
-  if (pageLoadingState || isLoading || !user) {
+  if (pageLoadingState || isLoading || authLoading) {
+    console.log("[IndexContent] Showing skeleton - loading state");
+    return <IndexSkeleton />;
+  }
+
+  // Se não tem usuário logado ainda, continuar mostrando skeleton
+  if (!user) {
+    console.log("[IndexContent] No user - showing skeleton");
+    return <IndexSkeleton />;
+  }
+
+  // Se não tem perfil de usuário ainda, continuar mostrando skeleton
+  if (!userProfile) {
+    console.log("[IndexContent] No user profile - showing skeleton");
     return <IndexSkeleton />;
   }
 
   // CRITICAL CHECK: If user has companies, NEVER show company dialog
-  const shouldShowCompanyDialog = showCompanyDialog && userCompanies.length === 0;
+  const shouldShowCompanyDialog = showCompanyDialog && userCompanies.length === 0 && !userProfile.super_admin;
   
   console.log("[IndexContent] Dialog decision:", {
     showCompanyDialog,
     userCompaniesLength: userCompanies.length,
-    shouldShowCompanyDialog
+    shouldShowCompanyDialog,
+    isSuperAdmin: userProfile.super_admin
   });
 
   // Se é super admin ou tem empresas, mostrar home normal
-  if (user && userProfile && (userProfile.super_admin || userCompanies.length > 0)) {
+  if (userProfile.super_admin || userCompanies.length > 0) {
+    console.log("[IndexContent] User has access - showing UserHome");
     return (
       <div className="min-h-screen bg-background">
         <UserHome />
@@ -84,11 +100,13 @@ export const IndexContent = () => {
   }
 
   // Se não é super admin e não tem empresas, mostrar tela de empresas não disponíveis
-  if (!isLoading && user && userProfile && !userProfile.super_admin && userCompanies.length === 0) {
+  if (!userProfile.super_admin && userCompanies.length === 0) {
+    console.log("[IndexContent] User has no companies - showing NoCompaniesAvailable");
     return <NoCompaniesAvailable />;
   }
 
-  // Default case - show home with dialogs only if user has no companies
+  // Default case - should not reach here but showing home as fallback
+  console.log("[IndexContent] Default case - showing UserHome with dialogs");
   return (
     <div className="min-h-screen bg-background">
       <UserHome />
