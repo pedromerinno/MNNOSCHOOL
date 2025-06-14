@@ -190,21 +190,10 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
   const currentAvatarUrl = avatarPreview || userProfile?.avatar || "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png";
   const currentName = form.watch("name") || userProfile?.display_name || email?.split('@')[0] || "U";
   
-  // Detectar se existe avatar personalizado de forma mais robusta
-  const defaultAvatarUrl = "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png";
-  const actualAvatarUrl = userProfile?.avatar;
-  
-  // Avatar é personalizado se:
-  // 1. Existe no perfil
-  // 2. Não é null ou undefined  
-  // 3. Não é string vazia
-  // 4. Não é a imagem padrão
-  // 5. OU se temos um preview de upload
-  const hasCustomAvatar = Boolean(
+  // Simplificar a lógica - mostrar botão de remover se há avatar no perfil OU preview
+  const shouldShowDeleteButton = Boolean(
     avatarPreview || 
-    (actualAvatarUrl && 
-     actualAvatarUrl.trim() !== "" && 
-     actualAvatarUrl !== defaultAvatarUrl)
+    (userProfile?.avatar && userProfile.avatar.trim() !== "")
   );
 
   const handleOpenDialog = (e: React.MouseEvent) => {
@@ -219,10 +208,9 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
     currentAvatarUrl, 
     currentName, 
     isUploading, 
-    hasCustomAvatar,
-    actualAvatarUrl,
-    avatarPreview,
-    defaultAvatarUrl
+    shouldShowDeleteButton,
+    userProfileAvatar: userProfile?.avatar,
+    avatarPreview
   });
 
   return (
@@ -271,8 +259,8 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
                   />
                 </label>
                 
-                {/* Botão de exclusão - mostrar sempre que há avatar personalizado */}
-                {hasCustomAvatar && (
+                {/* Botão de exclusão - mostrar se há avatar */}
+                {shouldShowDeleteButton && (
                   <Button
                     type="button"
                     variant="outline"
@@ -286,12 +274,11 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
                   </Button>
                 )}
                 
-                {/* Debug info - mostrar informações para debug */}
+                {/* Debug info - para debug apenas */}
                 <div className="text-xs text-gray-400 mt-2 text-center">
-                  <div>hasCustomAvatar: {hasCustomAvatar.toString()}</div>
-                  <div>actualAvatarUrl: {actualAvatarUrl || 'null'}</div>
+                  <div>shouldShowDeleteButton: {shouldShowDeleteButton.toString()}</div>
+                  <div>userProfileAvatar: {userProfile?.avatar || 'null'}</div>
                   <div>avatarPreview: {avatarPreview || 'null'}</div>
-                  <div>isDefault: {(actualAvatarUrl === defaultAvatarUrl).toString()}</div>
                 </div>
               </div>
             </div>
