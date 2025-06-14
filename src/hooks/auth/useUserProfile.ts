@@ -78,15 +78,56 @@ export const useUserProfile = () => {
 
       if (error) {
         if (error.code === 'PGRST116') {
-          console.log('No profile found for user');
+          console.log('No profile found for user, creating one...');
+          
+          // Se não encontrar perfil, criar um básico
+          const newProfile = {
+            id: userId,
+            email: user?.email || null,
+            display_name: user?.user_metadata?.display_name || user?.email?.split('@')[0] || null,
+            primeiro_login: true,
+          };
+          
+          const { error: createError } = await supabase
+            .from('profiles')
+            .insert(newProfile);
+            
+          if (createError) {
+            console.error('Erro ao criar perfil:', createError);
+            return;
+          }
+          
+          // Buscar o perfil recém-criado
+          const { data: newData, error: newError } = await supabase
+            .from('profiles')
+            .select(`
+              *,
+              aniversario,
+              tipo_contrato,
+              cidade,
+              data_inicio,
+              manual_cultura_aceito,
+              nivel_colaborador
+            `)
+            .eq('id', userId)
+            .single();
+            
+          if (newError || !newData) {
+            console.error('Erro ao buscar perfil recém-criado:', newError);
+            return;
+          }
+          
+          data = newData;
+        } else {
+          console.error('Erro ao buscar perfil:', error);
+          return;
         }
-        return;
       }
 
       if (data) {
         const profile: UserProfile = {
           id: data.id,
-          email: data.email || user?.email || null, // Usar email do auth como fallback
+          email: data.email || user?.email || null,
           display_name: data.display_name,
           is_admin: data.is_admin,
           super_admin: data.super_admin,
@@ -103,7 +144,13 @@ export const useUserProfile = () => {
           nivel_colaborador: data.nivel_colaborador as 'Junior' | 'Pleno' | 'Senior' | null
         };
         
-        console.log('[useUserProfile] Profile updated:', profile.display_name, 'cargo_id:', profile.cargo_id);
+        console.log('[useUserProfile] Profile loaded:', profile.display_name, 'with extra data:', {
+          cidade: profile.cidade,
+          aniversario: profile.aniversario,
+          tipo_contrato: profile.tipo_contrato,
+          nivel_colaborador: profile.nivel_colaborador
+        });
+        
         setUserProfile(profile);
         setCache({ key: CACHE_KEY, expirationMinutes: 5 }, profile);
         

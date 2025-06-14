@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -38,8 +39,8 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
   const { userProfile } = useAuth();
   const { userCompanies, forceGetUserCompanies, user } = useCompanies();
   const [isCreating, setIsCreating] = useState(false);
-  const [inviteLink, setInviteLink] = useState('');
-  const [showInviteLink, setShowInviteLink] = useState(false);
+  const [createdUser, setCreatedUser] = useState<any>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [formData, setFormData] = useState(initialFormData);
 
   // Verificar se o usuário tem permissão para criar usuários
@@ -82,11 +83,10 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
   };
 
   const handleSubmit = async () => {
-    // Verificar permissões
     if (!canCreateUsers) {
       toast({
         title: "Erro de Permissão",
-        description: "Você não possui permissões suficientes para criar usuários. Entre em contato com um super administrador.",
+        description: "Você não possui permissões suficientes para criar usuários.",
         variant: "destructive",
       });
       return;
@@ -106,43 +106,82 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
       // Gerar senha se não foi fornecida
       const password = formData.password || generateRandomPassword();
 
-      // Encontrar a empresa selecionada
-      const selectedCompany = userCompanies.find(company => company.id === formData.company_id);
-      const companyName = selectedCompany?.nome || 'Empresa não encontrada';
-
-      // Criar um convite personalizado com as informações do usuário
-      const baseUrl = window.location.origin;
-      const signupUrl = `${baseUrl}/signup`;
-      
-      const inviteText = `
-Olá ${formData.display_name}!
-
-Você foi convidado(a) para acessar nossa plataforma da empresa ${companyName}.
-
-Email: ${formData.email}
-Senha sugerida: ${password}
-
-Para completar seu cadastro, acesse: ${signupUrl}
-
-Use o email acima e crie sua senha no primeiro acesso.
-
-Por favor, complete seu cadastro e entre em contato com um administrador para que sua conta seja vinculada à empresa ${companyName}.
-      `.trim();
-
-      setInviteLink(inviteText);
-      setShowInviteLink(true);
-
-      toast({
-        title: "Convite Criado",
-        description: "Convite criado com sucesso! Compartilhe as informações com o novo usuário.",
+      // Criar usuário no Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: formData.email,
+        password: password,
+        email_confirm: true, // Auto-confirmar email
+        user_metadata: {
+          display_name: formData.display_name,
+        }
       });
 
+      if (authError) {
+        throw new Error(`Erro ao criar usuário: ${authError.message}`);
+      }
+
+      if (!authData.user) {
+        throw new Error('Usuário não foi criado corretamente');
+      }
+
+      // Atualizar perfil com informações extras
+      const profileData: any = {
+        id: authData.user.id,
+        display_name: formData.display_name,
+        email: formData.email,
+        primeiro_login: true,
+      };
+
+      // Adicionar campos opcionais se preenchidos
+      if (formData.cidade) profileData.cidade = formData.cidade;
+      if (formData.aniversario) profileData.aniversario = formData.aniversario;
+      if (formData.data_inicio) profileData.data_inicio = formData.data_inicio;
+      if (formData.tipo_contrato !== 'not_specified') profileData.tipo_contrato = formData.tipo_contrato;
+      if (formData.nivel_colaborador !== 'not_specified') profileData.nivel_colaborador = formData.nivel_colaborador;
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert(profileData);
+
+      if (profileError) {
+        console.error('Erro ao atualizar perfil:', profileError);
+        // Não falhar por causa do perfil, continuar
+      }
+
+      // Vincular usuário à empresa
+      const { error: companyError } = await supabase
+        .from('user_empresa')
+        .insert({
+          user_id: authData.user.id,
+          empresa_id: formData.company_id,
+        });
+
+      if (companyError) {
+        console.error('Erro ao vincular usuário à empresa:', companyError);
+        // Não falhar por causa da vinculação, continuar
+      }
+
+      // Salvar dados do usuário criado para mostrar no sucesso
+      setCreatedUser({
+        email: formData.email,
+        password: password,
+        display_name: formData.display_name,
+        company: userCompanies.find(c => c.id === formData.company_id)?.nome || 'Empresa',
+      });
+
+      setShowSuccess(true);
       onSuccess();
+
+      toast({
+        title: "Usuário Criado",
+        description: "Usuário criado com sucesso! Compartilhe as credenciais com o novo colaborador.",
+      });
+
     } catch (error: any) {
-      console.error('Erro ao criar convite:', error);
+      console.error('Erro ao criar usuário:', error);
       toast({
         title: "Erro",
-        description: "Erro ao criar convite para usuário.",
+        description: error.message || "Erro ao criar usuário.",
         variant: "destructive",
       });
     } finally {
@@ -152,12 +191,12 @@ Por favor, complete seu cadastro e entre em contato com um administrador para qu
 
   const handleClose = () => {
     setFormData(initialFormData);
-    setInviteLink('');
-    setShowInviteLink(false);
+    setCreatedUser(null);
+    setShowSuccess(false);
     onOpenChange(false);
   };
 
-  // Se o usuário não tem permissão, mostrar mensagem
+  // Se o usuário não tem permissão
   if (!canCreateUsers) {
     return (
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -168,37 +207,50 @@ Por favor, complete seu cadastro e entre em contato com um administrador para qu
           
           <div className="py-4">
             <p className="text-muted-foreground">
-              Você não possui permissões suficientes para criar usuários. 
-              Entre em contato com um super administrador.
+              Você não possui permissões suficientes para criar usuários.
             </p>
           </div>
 
           <DialogFooter>
-            <Button onClick={() => onOpenChange(false)}>
-              Fechar
-            </Button>
+            <Button onClick={() => onOpenChange(false)}>Fechar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     );
   }
 
-  if (showInviteLink) {
+  // Tela de sucesso
+  if (showSuccess && createdUser) {
+    const loginInfo = `
+Credenciais de Acesso - ${createdUser.company}
+
+Nome: ${createdUser.display_name}
+Email: ${createdUser.email}
+Senha: ${createdUser.password}
+
+Link de acesso: ${window.location.origin}/login
+
+Instruções:
+1. Acesse o link acima
+2. Use o email e senha fornecidos
+3. Complete seu perfil no primeiro acesso
+    `.trim();
+
     return (
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Convite Criado com Sucesso!</DialogTitle>
+            <DialogTitle>Usuário Criado com Sucesso!</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
             <p className="text-sm text-gray-600">
-              Copie as informações abaixo e envie para o novo usuário:
+              Usuário criado com sucesso! Compartilhe as credenciais abaixo:
             </p>
             
             <div className="relative">
               <Textarea
-                value={inviteLink}
+                value={loginInfo}
                 readOnly
                 className="min-h-[200px] font-mono text-sm"
               />
@@ -206,23 +258,29 @@ Por favor, complete seu cadastro e entre em contato com um administrador para qu
                 size="sm"
                 variant="outline"
                 className="absolute top-2 right-2"
-                onClick={() => copyToClipboard(inviteLink)}
+                onClick={() => copyToClipboard(loginInfo)}
               >
                 <Copy className="h-4 w-4" />
               </Button>
             </div>
+
+            <div className="bg-blue-50 p-3 rounded-md">
+              <p className="text-sm text-blue-700">
+                <strong>Importante:</strong> O usuário foi criado com todas as informações fornecidas. 
+                No primeiro acesso, ele poderá completar seu perfil.
+              </p>
+            </div>
           </div>
 
           <DialogFooter>
-            <Button onClick={handleClose}>
-              Fechar
-            </Button>
+            <Button onClick={handleClose}>Fechar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     );
   }
 
+  // Formulário principal
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
@@ -257,11 +315,6 @@ Por favor, complete seu cadastro e entre em contato com um administrador para qu
                 ))}
               </SelectContent>
             </Select>
-            {userCompanies.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                Carregando empresas disponíveis...
-              </p>
-            )}
           </div>
 
           <div className="space-y-2">
@@ -286,7 +339,7 @@ Por favor, complete seu cadastro e entre em contato com um administrador para qu
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Senha Sugerida</Label>
+            <Label htmlFor="password">Senha</Label>
             <div className="flex gap-2">
               <Input
                 id="password"
@@ -377,7 +430,7 @@ Por favor, complete seu cadastro e entre em contato com um administrador para qu
             Cancelar
           </Button>
           <Button onClick={handleSubmit} disabled={isCreating || !formData.company_id}>
-            {isCreating ? "Criando..." : "Criar Convite"}
+            {isCreating ? "Criando..." : "Criar Usuário"}
           </Button>
         </DialogFooter>
       </DialogContent>
