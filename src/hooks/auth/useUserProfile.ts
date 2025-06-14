@@ -10,15 +10,23 @@ export const useUserProfile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const fetchInProgress = useRef(false);
   const hasFetchedOnce = useRef(false);
+  const hasCheckedInvites = useRef(false); // Novo: controla se já verificou convites
   const { getCache, setCache, clearCache } = useCache();
   
   const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
   const CACHE_KEY = 'user_profile';
 
-  // Função para verificar e aplicar convites pendentes (APENAS UM) - SIMPLIFICADA
+  // Função para verificar e aplicar convites pendentes (APENAS UMA VEZ POR SESSÃO)
   const checkAndApplyInvite = useCallback(async (userId: string, userEmail: string) => {
+    // Se já verificou convites nesta sessão, não verificar novamente
+    if (hasCheckedInvites.current) {
+      console.log('[useUserProfile] Convites já foram verificados nesta sessão');
+      return;
+    }
+
     try {
       console.log('[useUserProfile] Verificando convites pendentes para:', userEmail);
+      hasCheckedInvites.current = true; // Marcar como verificado
       
       // Buscar APENAS o convite mais recente e não usado
       const { data: invites, error: inviteError } = await supabase
@@ -223,8 +231,8 @@ export const useUserProfile = () => {
       } else {
         profileData = data;
         
-        // Verificar convites apenas se é primeiro login
-        if (profileData.primeiro_login && user?.email) {
+        // Verificar convites apenas se é primeiro login E ainda não verificou
+        if (profileData.primeiro_login && user?.email && !hasCheckedInvites.current) {
           await checkAndApplyInvite(userId, user.email);
           
           const { data: updatedData } = await supabase
@@ -302,6 +310,7 @@ export const useUserProfile = () => {
   const clearProfile = useCallback(() => {
     setUserProfile(null);
     hasFetchedOnce.current = false;
+    hasCheckedInvites.current = false; // Reset invite check
     clearCache({ key: CACHE_KEY });
   }, [clearCache]);
 
