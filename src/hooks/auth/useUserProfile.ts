@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfile } from '@/types/user';
@@ -306,15 +305,19 @@ export const useUserProfile = () => {
   }, [clearCache]);
 
   const updateUserProfile = useCallback(async (userData: Partial<UserProfile>) => {
-    console.log('[useUserProfile] Iniciando updateUserProfile com dados:', userData);
+    console.log('[useUserProfile] === INÍCIO updateUserProfile ===');
+    console.log('[useUserProfile] Dados recebidos:', userData);
+    console.log('[useUserProfile] userProfile.id atual:', userProfile?.id);
     
     if (!userProfile?.id) {
-      console.error('[useUserProfile] Nenhum ID de usuário disponível');
+      console.error('[useUserProfile] ERRO: Nenhum ID de usuário disponível');
       throw new Error('Nenhum ID de usuário disponível para atualização');
     }
 
     try {
-      console.log('[useUserProfile] Atualizando perfil no banco para usuário:', userProfile.id);
+      console.log('[useUserProfile] Executando UPDATE no banco de dados...');
+      console.log('[useUserProfile] userId:', userProfile.id);
+      console.log('[useUserProfile] dados para update:', userData);
       
       // Atualizar diretamente no banco de dados usando o ID do perfil atual
       const { data, error } = await supabase
@@ -325,23 +328,31 @@ export const useUserProfile = () => {
         .single();
 
       if (error) {
-        console.error('[useUserProfile] Erro ao atualizar perfil:', error);
+        console.error('[useUserProfile] ERRO no UPDATE do banco:', error);
+        console.error('[useUserProfile] Código do erro:', error.code);
+        console.error('[useUserProfile] Mensagem do erro:', error.message);
+        console.error('[useUserProfile] Detalhes do erro:', error.details);
         throw new Error(`Erro na atualização: ${error.message}`);
       }
 
-      console.log('[useUserProfile] Perfil atualizado com sucesso no banco:', data);
+      console.log('[useUserProfile] ✅ UPDATE executado com sucesso!');
+      console.log('[useUserProfile] Dados retornados do banco:', data);
       
       // Atualizar estado local
       const updatedProfile = { ...userProfile, ...userData };
+      console.log('[useUserProfile] Atualizando estado local com:', updatedProfile);
       setUserProfile(updatedProfile);
       
       // Atualizar cache
       setCache({ key: CACHE_KEY, expirationMinutes: 5 }, updatedProfile);
+      console.log('[useUserProfile] Cache atualizado');
       
-      console.log('[useUserProfile] Estado local e cache atualizados');
+      console.log('[useUserProfile] === FIM updateUserProfile - SUCESSO ===');
       
     } catch (error: any) {
+      console.error('[useUserProfile] === FIM updateUserProfile - ERRO ===');
       console.error('[useUserProfile] Erro completo:', error);
+      console.error('[useUserProfile] Stack trace:', error.stack);
       throw error;
     }
   }, [userProfile, setCache]);

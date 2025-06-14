@@ -17,7 +17,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
+import { uploadAvatar, deleteOldAvatar } from "@/utils/storage";
 
 const userProfileSchema = z.object({
   name: z.string().min(2, {
@@ -64,68 +64,6 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
       console.log('[ProfilePopover] Form reset with profile data:', profileData);
     }
   }, [userProfile, email, form]);
-
-  const uploadAvatarToStorage = async (file: File): Promise<string | null> => {
-    if (!user) return null;
-    
-    try {
-      setIsUploadingAvatar(true);
-      
-      // Generate unique filename
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = fileName;
-      
-      console.log('[ProfilePopover] Uploading avatar to:', filePath);
-      
-      // Delete old avatar if exists
-      if (userProfile?.avatar && !userProfile.avatar.includes('pravatar.cc')) {
-        try {
-          const oldFileName = userProfile.avatar.split('/').pop();
-          if (oldFileName) {
-            await supabase.storage
-              .from('avatars')
-              .remove([oldFileName]);
-            console.log('[ProfilePopover] Old avatar deleted');
-          }
-        } catch (error) {
-          console.log('[ProfilePopover] Could not delete old avatar:', error);
-        }
-      }
-      
-      // Upload new file to Supabase Storage
-      const { data, error } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-      
-      if (error) {
-        console.error('[ProfilePopover] Storage upload error:', error);
-        throw error;
-      }
-      
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-      
-      console.log('[ProfilePopover] Avatar uploaded successfully:', publicUrl);
-      return publicUrl;
-      
-    } catch (error: any) {
-      console.error('[ProfilePopover] Error uploading avatar:', error);
-      toast({
-        title: "Erro no upload",
-        description: "Não foi possível fazer upload da imagem",
-        variant: "destructive",
-      });
-      return null;
-    } finally {
-      setIsUploadingAvatar(false);
-    }
-  };
 
   const handleProfileUpdate = async (values: UserProfileFormValues) => {
     console.log('[ProfilePopover] Iniciando atualização de perfil com valores:', values);
@@ -188,7 +126,9 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
 
   const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file || !user?.id) return;
+    
+    console.log('[ProfilePopover] Iniciando upload de avatar:', file.name, file.size);
     
     // Validar tamanho do arquivo (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
@@ -210,20 +150,52 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
       return;
     }
 
-    // Create preview immediately
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      setAvatarPreview(result);
-    };
-    reader.readAsDataURL(file);
-    
-    // Upload to storage
-    const uploadedUrl = await uploadAvatarToStorage(file);
-    if (uploadedUrl) {
-      console.log('[ProfilePopover] Setting avatar URL:', uploadedUrl);
-      form.setValue("avatar", uploadedUrl);
-      setAvatarPreview(uploadedUrl);
+    try {
+      setIsUploadingAvatar(true);
+      
+      // Create preview immediately
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setAvatarPreview(result);
+        console.log('[ProfilePopover] Preview criado localmente');
+      };
+      reader.readAsDataURL(file);
+      
+      // Delete old avatar if exists
+      if (userProfile?.avatar && !userProfile.avatar.includes('pravatar.cc')) {
+        console.log('[ProfilePopover] Deletando avatar antigo:', userProfile.avatar);
+        await deleteOldAvatar(userProfile.avatar);
+      }
+      
+      // Upload to storage
+      console.log('[ProfilePopover] Fazendo upload para storage...');
+      const uploadedUrl = await uploadAvatar(file, user.id);
+      
+      if (uploadedUrl) {
+        console.log('[ProfilePopover] Upload concluído, URL:', uploadedUrl);
+        form.setValue("avatar", uploadedUrl);
+        setAvatarPreview(uploadedUrl);
+        
+        toast({
+          title: "Upload concluído",
+          description: "Imagem carregada com sucesso! Clique em 'Salvar' para confirmar.",
+        });
+      } else {
+        throw new Error('Falha no upload - URL não retornada');
+      }
+    } catch (error: any) {
+      console.error('[ProfilePopover] Erro no upload:', error);
+      toast({
+        title: "Erro no upload",
+        description: error.message || "Não foi possível fazer upload da imagem",
+        variant: "destructive",
+      });
+      
+      // Restore previous avatar preview on error
+      setAvatarPreview(userProfile?.avatar || "");
+    } finally {
+      setIsUploadingAvatar(false);
     }
   };
 
