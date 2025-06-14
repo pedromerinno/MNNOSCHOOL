@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Upload, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -189,10 +190,16 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
   const currentAvatarUrl = avatarPreview || userProfile?.avatar || "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png";
   const currentName = form.watch("name") || userProfile?.display_name || email?.split('@')[0] || "U";
   
-  // Verificar se tem uma imagem personalizada (diferente da padrão e não vazia)
-  const userAvatarUrl = avatarPreview || userProfile?.avatar;
+  // Melhorar a detecção de avatar personalizado
   const defaultAvatarUrl = "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png";
-  const hasCustomAvatar = Boolean(userAvatarUrl && userAvatarUrl !== defaultAvatarUrl && userAvatarUrl.trim() !== "");
+  const userAvatarUrl = avatarPreview || userProfile?.avatar;
+  
+  // Avatar é personalizado se existe e não é a imagem padrão
+  const hasCustomAvatar = Boolean(
+    userAvatarUrl && 
+    userAvatarUrl.trim() !== "" && 
+    userAvatarUrl !== defaultAvatarUrl
+  );
 
   const handleOpenDialog = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -208,7 +215,9 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
     isUploading, 
     hasCustomAvatar,
     userAvatar: userProfile?.avatar,
-    preview: avatarPreview 
+    preview: avatarPreview,
+    userAvatarUrl,
+    defaultAvatarUrl
   });
 
   return (
@@ -240,7 +249,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
                 </Avatar>
               </div>
               
-              <div className="flex flex-col items-center gap-3">
+              <div className="flex flex-col items-center gap-3 w-full">
                 {/* Botão de upload */}
                 <label htmlFor="avatar-upload" className="cursor-pointer">
                   <div className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors">
@@ -257,7 +266,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
                   />
                 </label>
                 
-                {/* Botão de exclusão - sempre visível quando há imagem personalizada */}
+                {/* Botão de exclusão - mostrar sempre que há avatar personalizado */}
                 {hasCustomAvatar && (
                   <Button
                     type="button"
@@ -265,11 +274,20 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
                     size="sm"
                     onClick={handleDeleteAvatar}
                     disabled={isUploading}
-                    className="text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700 hover:border-red-400 transition-colors"
+                    className="text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700 hover:border-red-400 transition-colors flex items-center gap-2"
                   >
-                    <Trash2 className="h-4 w-4 mr-2" />
+                    <Trash2 className="h-4 w-4" />
                     Remover foto
                   </Button>
+                )}
+                
+                {/* Debug info - remover em produção */}
+                {process.env.NODE_ENV === 'development' && (
+                  <div className="text-xs text-gray-400 mt-2">
+                    <div>hasCustomAvatar: {hasCustomAvatar.toString()}</div>
+                    <div>userAvatarUrl: {userAvatarUrl || 'null'}</div>
+                    <div>isDefault: {(userAvatarUrl === defaultAvatarUrl).toString()}</div>
+                  </div>
                 )}
               </div>
             </div>
