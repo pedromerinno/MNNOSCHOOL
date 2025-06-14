@@ -50,16 +50,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
     },
   });
 
-  // Debug: Log userProfile changes
-  useEffect(() => {
-    console.log('[ProfilePopover] userProfile changed:', {
-      display_name: userProfile?.display_name,
-      avatar: userProfile?.avatar,
-      email: userProfile?.email
-    });
-  }, [userProfile]);
-
-  // Update form values when userProfile changes
+  // Update form values and avatar preview when userProfile changes
   useEffect(() => {
     if (userProfile) {
       const profileData = {
@@ -67,16 +58,26 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
         avatar: userProfile.avatar || ""
       };
       
-      console.log('[ProfilePopover] Updating form with profile data:', profileData);
+      console.log('[ProfilePopover] Atualizando dados do perfil:', profileData);
+      
       form.reset(profileData);
       setAvatarPreview(profileData.avatar || "");
     }
   }, [userProfile, email, form]);
 
-  // Debug: Log avatarPreview changes
+  // Reset form when dialog opens
   useEffect(() => {
-    console.log('[ProfilePopover] avatarPreview changed to:', avatarPreview);
-  }, [avatarPreview]);
+    if (open && userProfile) {
+      const currentData = {
+        name: userProfile.display_name || email?.split('@')[0] || "",
+        avatar: userProfile.avatar || ""
+      };
+      
+      console.log('[ProfilePopover] Resetando form ao abrir:', currentData);
+      form.reset(currentData);
+      setAvatarPreview(currentData.avatar || "");
+    }
+  }, [open, userProfile, email, form]);
 
   const handleProfileUpdate = async (values: UserProfileFormValues) => {
     console.log('[ProfilePopover] === INÍCIO handleProfileUpdate ===');
@@ -95,10 +96,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
     setIsSubmitting(true);
 
     try {
-      console.log('[ProfilePopover] Chamando updateUserProfile com dados:', {
-        display_name: values.name,
-        avatar: values.avatar
-      });
+      console.log('[ProfilePopover] Chamando updateUserProfile...');
       
       await updateUserProfile({
         display_name: values.name,
@@ -107,18 +105,19 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
       
       console.log('[ProfilePopover] ✅ Perfil atualizado com sucesso!');
       
-      // Chamar onSave para atualizar outros componentes
+      // Update local preview to match saved data
+      setAvatarPreview(values.avatar || "");
+      
+      // Call onSave callback
       onSave(values);
       
-      // Dispatch custom event to notify other components about profile update
+      // Dispatch global event for other components
       window.dispatchEvent(new CustomEvent('profile-updated', {
         detail: {
           display_name: values.name,
           avatar: values.avatar
         }
       }));
-      
-      console.log('[ProfilePopover] Evento profile-updated disparado');
       
       toast({
         title: "Perfil atualizado",
@@ -151,7 +150,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
       type: file.type
     });
     
-    // Validar tamanho do arquivo (max 5MB)
+    // Validate file
     if (file.size > 5 * 1024 * 1024) {
       toast({
         title: "Arquivo muito grande",
@@ -161,7 +160,6 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
       return;
     }
 
-    // Validar tipo do arquivo
     if (!file.type.startsWith('image/')) {
       toast({
         title: "Tipo de arquivo inválido",
@@ -174,29 +172,30 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
     try {
       setIsUploadingAvatar(true);
       
-      // Create preview immediately
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        console.log('[ProfilePopover] Preview local criado:', result.substring(0, 50) + '...');
-        setAvatarPreview(result);
-      };
-      reader.readAsDataURL(file);
+      // Create immediate preview
+      const previewUrl = URL.createObjectURL(file);
+      console.log('[ProfilePopover] Preview local criado:', previewUrl);
+      setAvatarPreview(previewUrl);
       
       // Delete old avatar if exists
       if (userProfile?.avatar && !userProfile.avatar.includes('pravatar.cc')) {
-        console.log('[ProfilePopover] Deletando avatar antigo:', userProfile.avatar);
+        console.log('[ProfilePopover] Deletando avatar antigo...');
         await deleteOldAvatar(userProfile.avatar);
       }
       
       // Upload to storage
-      console.log('[ProfilePopover] Iniciando upload para storage...');
+      console.log('[ProfilePopover] Iniciando upload...');
       const uploadedUrl = await uploadAvatar(file, user.id);
       
       if (uploadedUrl) {
         console.log('[ProfilePopover] ✅ Upload concluído, URL:', uploadedUrl);
+        
+        // Update form and preview with the uploaded URL
         form.setValue("avatar", uploadedUrl);
         setAvatarPreview(uploadedUrl);
+        
+        // Clean up the local preview URL
+        URL.revokeObjectURL(previewUrl);
         
         toast({
           title: "Upload concluído",
@@ -220,25 +219,23 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
     }
   };
 
-  // Reset form quando abrir o dialog
   const handleOpenChange = (newOpen: boolean) => {
     console.log('[ProfilePopover] Dialog state changing to:', newOpen);
     setOpen(newOpen);
     
     if (newOpen && userProfile) {
-      // Resetar form com dados atuais do perfil
+      // Reset everything when opening
       const currentData = {
         name: userProfile.display_name || email?.split('@')[0] || "",
         avatar: userProfile.avatar || ""
       };
       
-      console.log('[ProfilePopover] Resetando form ao abrir dialog:', currentData);
+      console.log('[ProfilePopover] Resetando ao abrir dialog:', currentData);
       form.reset(currentData);
       setAvatarPreview(currentData.avatar || "");
     }
   };
 
-  // Debug: Log form values
   const currentFormValues = form.watch();
   console.log('[ProfilePopover] Form values atuais:', currentFormValues);
   console.log('[ProfilePopover] Avatar preview atual:', avatarPreview);
@@ -262,13 +259,19 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
             <div className="flex flex-col items-center gap-4">
               <div className="relative">
                 <Avatar className="h-24 w-24">
-                  <AvatarImage 
-                    src={avatarPreview} 
-                    alt="Avatar preview"
-                    onLoad={() => console.log('[ProfilePopover] Avatar image loaded successfully:', avatarPreview)}
-                    onError={() => console.log('[ProfilePopover] Avatar image failed to load:', avatarPreview)}
-                  />
-                  <AvatarFallback>{form.getValues().name?.charAt(0)?.toUpperCase() || "U"}</AvatarFallback>
+                  {avatarPreview ? (
+                    <AvatarImage 
+                      src={avatarPreview} 
+                      alt="Avatar preview"
+                      onLoad={() => console.log('[ProfilePopover] ✅ Avatar carregado:', avatarPreview)}
+                      onError={(e) => {
+                        console.log('[ProfilePopover] ❌ Erro ao carregar avatar:', avatarPreview);
+                        console.log('[ProfilePopover] Evento de erro:', e);
+                      }}
+                    />
+                  ) : (
+                    <AvatarFallback>{form.getValues().name?.charAt(0)?.toUpperCase() || "U"}</AvatarFallback>
+                  )}
                 </Avatar>
                 {avatarPreview && (
                   <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border border-white"></div>
@@ -294,7 +297,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
               
               {avatarPreview && (
                 <div className="text-xs text-gray-500 text-center max-w-64 truncate">
-                  {avatarPreview.substring(0, 40)}...
+                  URL: {avatarPreview.substring(0, 40)}...
                 </div>
               )}
             </div>

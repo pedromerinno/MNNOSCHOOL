@@ -22,13 +22,21 @@ Avatar.displayName = AvatarPrimitive.Root.displayName
 const AvatarImage = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Image>,
   React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>
->(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Image
-    ref={ref}
-    className={cn("aspect-square h-full w-full", className)}
-    {...props}
-  />
-))
+>(({ className, src, alt, ...props }, ref) => {
+  console.log('[AvatarImage] Tentando carregar imagem:', src);
+  
+  return (
+    <AvatarPrimitive.Image
+      ref={ref}
+      src={src}
+      alt={alt}
+      className={cn("aspect-square h-full w-full object-cover", className)}
+      onLoad={() => console.log('[AvatarImage] ✅ Imagem carregada com sucesso:', src)}
+      onError={(e) => console.log('[AvatarImage] ❌ Erro ao carregar imagem:', src, e)}
+      {...props}
+    />
+  );
+})
 AvatarImage.displayName = AvatarPrimitive.Image.displayName
 
 const AvatarFallback = React.forwardRef<
