@@ -37,7 +37,7 @@ interface ProfilePopoverProps {
 export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps) => {
   const { user, userProfile, updateUserProfile } = useAuth();
   const [open, setOpen] = useState(false);
-  const [avatarPreview, setAvatarPreview] = useState("https://i.pravatar.cc/150?img=68");
+  const [avatarPreview, setAvatarPreview] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const { toast } = useToast();
@@ -46,7 +46,7 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
     resolver: zodResolver(userProfileSchema),
     defaultValues: {
       name: "",
-      avatar: "https://i.pravatar.cc/150?img=68",
+      avatar: "",
     },
   });
 
@@ -55,11 +55,11 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
     if (userProfile) {
       const profileData = {
         name: userProfile.display_name || email?.split('@')[0] || "",
-        avatar: userProfile.avatar || "https://i.pravatar.cc/150?img=68"
+        avatar: userProfile.avatar || ""
       };
       
       form.reset(profileData);
-      setAvatarPreview(profileData.avatar);
+      setAvatarPreview(profileData.avatar || "");
       
       console.log('[ProfilePopover] Form reset with profile data:', profileData);
     }
@@ -74,11 +74,26 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
       // Generate unique filename
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
+      const filePath = fileName;
       
       console.log('[ProfilePopover] Uploading avatar to:', filePath);
       
-      // Upload file to Supabase Storage
+      // Delete old avatar if exists
+      if (userProfile?.avatar && !userProfile.avatar.includes('pravatar.cc')) {
+        try {
+          const oldFileName = userProfile.avatar.split('/').pop();
+          if (oldFileName) {
+            await supabase.storage
+              .from('avatars')
+              .remove([oldFileName]);
+            console.log('[ProfilePopover] Old avatar deleted');
+          }
+        } catch (error) {
+          console.log('[ProfilePopover] Could not delete old avatar:', error);
+        }
+      }
+      
+      // Upload new file to Supabase Storage
       const { data, error } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, {
@@ -166,11 +181,6 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
         variant: "destructive",
       });
       
-      // Em caso de erro, reverter o preview para o valor original
-      const originalAvatar = userProfile?.avatar || "https://i.pravatar.cc/150?img=68";
-      setAvatarPreview(originalAvatar);
-      form.setValue("avatar", originalAvatar);
-      
     } finally {
       setIsSubmitting(false);
     }
@@ -225,11 +235,11 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
       // Resetar form com dados atuais do perfil
       const currentData = {
         name: userProfile.display_name || email?.split('@')[0] || "",
-        avatar: userProfile.avatar || "https://i.pravatar.cc/150?img=68"
+        avatar: userProfile.avatar || ""
       };
       
       form.reset(currentData);
-      setAvatarPreview(currentData.avatar);
+      setAvatarPreview(currentData.avatar || "");
       console.log('[ProfilePopover] Dialog aberto, resetando form com dados atuais:', currentData);
     }
   };
