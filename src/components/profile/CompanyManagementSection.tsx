@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface CompanyManagementSectionProps {
   userCompanies: Company[];
@@ -29,6 +30,8 @@ export const CompanyManagementSection = ({
 }: CompanyManagementSectionProps) => {
   const [companyToRemove, setCompanyToRemove] = useState<Company | null>(null);
   const [companyId, setCompanyId] = useState("");
+  const [isLinking, setIsLinking] = useState(false);
+  const [isUnlinking, setIsUnlinking] = useState(false);
   const { removeUserFromCompany, assignUserToCompany } = useCompanyUserManagement();
   const { user } = useAuth();
   const { forceGetUserCompanies } = useCompanies();
@@ -36,22 +39,49 @@ export const CompanyManagementSection = ({
   const handleUnlinkCompany = async () => {
     if (!companyToRemove || !user?.id) return;
     
-    await removeUserFromCompany(user.id, companyToRemove.id);
-    setCompanyToRemove(null);
-    
-    if (user?.id) {
-      await forceGetUserCompanies(user.id);
+    setIsUnlinking(true);
+    try {
+      await removeUserFromCompany(user.id, companyToRemove.id);
+      setCompanyToRemove(null);
+      
+      // Force reload companies and dispatch event
+      if (user?.id) {
+        await forceGetUserCompanies(user.id);
+        window.dispatchEvent(new CustomEvent('company-relation-changed'));
+      }
+      
+      toast.success('Empresa desvinculada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao desvincular empresa:', error);
+      toast.error('Erro ao desvincular empresa');
+    } finally {
+      setIsUnlinking(false);
     }
   };
 
   const handleLinkCompany = async () => {
-    if (!user?.id || !companyId.trim()) return;
+    if (!user?.id || !companyId.trim()) {
+      toast.error('Por favor, informe o ID da empresa');
+      return;
+    }
     
-    await assignUserToCompany(user.id, companyId.trim());
-    setCompanyId("");
-    
-    if (user?.id) {
-      await forceGetUserCompanies(user.id);
+    setIsLinking(true);
+    try {
+      await assignUserToCompany(user.id, companyId.trim());
+      setCompanyId("");
+      
+      // Force reload companies and dispatch event
+      if (user?.id) {
+        await forceGetUserCompanies(user.id);
+        window.dispatchEvent(new CustomEvent('company-relation-changed'));
+      }
+      
+      toast.success('Empresa vinculada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao vincular empresa:', error);
+      toast.error('Erro ao vincular empresa. Verifique se o ID está correto.');
+    } finally {
+      setIsLinking(false);
     }
   };
 
@@ -68,15 +98,17 @@ export const CompanyManagementSection = ({
           value={companyId}
           onChange={(e) => setCompanyId(e.target.value)}
           className="flex-1"
+          disabled={isLinking}
         />
         <Button 
           variant="outline" 
           size="sm"
           onClick={handleLinkCompany}
+          disabled={isLinking || !companyId.trim()}
           className="shrink-0"
         >
           <Link className="h-4 w-4 mr-2" />
-          Vincular
+          {isLinking ? "Vinculando..." : "Vincular"}
         </Button>
       </div>
       
@@ -116,6 +148,7 @@ export const CompanyManagementSection = ({
                   size="icon"
                   className="h-8 w-8"
                   onClick={() => setCompanyToRemove(company)}
+                  disabled={isUnlinking}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -138,12 +171,13 @@ export const CompanyManagementSection = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={isUnlinking}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleUnlinkCompany}
+              disabled={isUnlinking}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Desvincular
+              {isUnlinking ? "Desvinculando..." : "Desvincular"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

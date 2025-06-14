@@ -45,8 +45,9 @@ interface ProfileDialogProps {
 
 export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialogProps) => {
   const { userProfile, updateUserProfile, user } = useAuth();
-  const { userCompanies, isLoading: companiesLoading, forceGetUserCompanies } = useCompanies();
+  const { userCompanies, forceGetUserCompanies } = useCompanies();
   const [avatarPreview, setAvatarPreview] = useState<string>("https://i.pravatar.cc/150?img=68");
+  const [isLoadingCompanies, setIsLoadingCompanies] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<UserProfileFormValues>({
@@ -73,7 +74,11 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
   // Force reload companies when dialog opens
   useEffect(() => {
     if (isOpen && user?.id) {
-      forceGetUserCompanies(user.id);
+      console.log('[ProfileDialog] Dialog opened, reloading companies for user:', user.id);
+      setIsLoadingCompanies(true);
+      forceGetUserCompanies(user.id).finally(() => {
+        setIsLoadingCompanies(false);
+      });
     }
   }, [isOpen, user?.id, forceGetUserCompanies]);
 
@@ -177,7 +182,7 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
             />
 
             <div className="border-t pt-4">
-              {companiesLoading ? (
+              {isLoadingCompanies ? (
                 <div className="flex items-center justify-center p-4">
                   <div className="animate-spin h-6 w-6 border-t-2 border-blue-500 border-r-2 rounded-full" />
                   <span className="ml-2 text-sm text-muted-foreground">Carregando empresas...</span>
