@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AccessList } from "./AccessList";
 import { AccessDetails } from "./AccessDetails";
 import { AccessItem } from "./types";
@@ -13,12 +13,17 @@ export const AccessContent = ({ items, companyColor }: AccessContentProps) => {
   const [selectedAccess, setSelectedAccess] = useState<AccessItem | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+  // Debug: Log items when they change
+  useEffect(() => {
+    console.log('AccessContent recebeu items:', items?.length, 'itens:', items);
+  }, [items]);
+
   const openAccessDetails = (access: AccessItem) => {
     setSelectedAccess(access);
     setIsDialogOpen(true);
   };
 
-  if (items.length === 0) {
+  if (!items || items.length === 0) {
     return (
       <div className="text-center py-8">
         <p className="text-gray-500">

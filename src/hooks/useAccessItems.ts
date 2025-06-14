@@ -19,6 +19,7 @@ export const useAccessItems = ({ companyId, userId }: UseAccessItemsProps) => {
   useEffect(() => {
     const fetchAccessItems = async () => {
       if (!companyId || !userId) {
+        console.log('No companyId or userId provided:', { companyId, userId });
         setAccessItems([]);
         setIsLoading(false);
         return;
@@ -41,6 +42,19 @@ export const useAccessItems = ({ companyId, userId }: UseAccessItemsProps) => {
       try {
         console.log('Fetching access items for company:', companyId, 'User ID:', userId);
         
+        // Primeiro, vamos verificar se o usuário pertence à empresa
+        const { data: userCompanyData, error: userCompanyError } = await supabase
+          .from('user_empresa')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('empresa_id', companyId);
+        
+        if (userCompanyError) {
+          console.error('Erro ao verificar vínculo usuário-empresa:', userCompanyError);
+        } else {
+          console.log('Vínculo usuário-empresa encontrado:', userCompanyData);
+        }
+        
         const { data, error } = await supabase
           .from('company_access')
           .select('*')
@@ -48,16 +62,17 @@ export const useAccessItems = ({ companyId, userId }: UseAccessItemsProps) => {
           .order('tool_name');
         
         if (error) {
+          console.error('Erro detalhado da consulta:', error);
           if (error.code === '42501' || error.message.includes('policy')) {
             console.log('Acesso negado pela política RLS:', error.message);
             setHasPermission(false);
             setAccessItems([]);
           } else {
-            console.error('Erro ao buscar itens de acesso:', error);
+            console.error('Outro tipo de erro ao buscar itens de acesso:', error);
             throw error;
           }
         } else {
-          console.log('Itens de acesso encontrados:', data?.length);
+          console.log('Itens de acesso encontrados:', data?.length, 'itens:', data);
           setAccessItems(data as AccessItem[] || []);
           lastSelectedCompanyIdRef.current = companyId;
         }
