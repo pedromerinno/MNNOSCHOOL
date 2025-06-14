@@ -194,7 +194,13 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
     (avatarPreview || userProfile?.avatar) !== "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png" &&
     (avatarPreview || userProfile?.avatar) !== "";
 
+  const handleOpenDialog = () => {
+    console.log('[ProfilePopover] Abrindo dialog de perfil');
+    setOpen(true);
+  };
+
   console.log('[ProfilePopover] Estado atual:', { 
+    open,
     currentAvatarUrl, 
     currentName, 
     isUploading, 
@@ -205,12 +211,12 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
 
   return (
     <>
-      <div onClick={() => setOpen(true)}>
+      <div onClick={handleOpenDialog} className="cursor-pointer">
         {children}
       </div>
       
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="w-full max-w-sm sm:max-w-md" style={{ pointerEvents: 'auto' }}>
+        <DialogContent className="w-full max-w-sm sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-center">Editar Perfil</DialogTitle>
             <DialogDescription className="text-center">
