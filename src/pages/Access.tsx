@@ -9,7 +9,7 @@ import { PageLayout } from "@/components/layout/PageLayout";
 
 const Access = () => {
   const { selectedCompany, user } = useCompanies();
-  const { accessItems, isLoading, hasPermission } = useAccessItems({
+  const { accessItems, isLoading, hasPermission, refetch } = useAccessItems({
     companyId: selectedCompany?.id,
     userId: user?.id
   });
@@ -46,6 +46,7 @@ const Access = () => {
       <AccessTabs 
         companyAccessItems={accessItems}
         companyColor={selectedCompany.cor_principal}
+        onAccessUpdated={refetch}
       />
     </PageLayout>
   );

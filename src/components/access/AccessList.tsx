@@ -6,10 +6,12 @@ import { AccessItem } from './types';
 interface AccessListProps {
   items: AccessItem[];
   onSelectAccess: (access: AccessItem) => void;
+  onEdit?: (access: AccessItem) => void;
+  onAccessUpdated?: () => void;
   companyColor?: string;
 }
 
-export const AccessList = ({ items, onSelectAccess, companyColor }: AccessListProps) => {
+export const AccessList = ({ items, onSelectAccess, onEdit, onAccessUpdated, companyColor }: AccessListProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {items.map((item) => (
@@ -17,6 +19,8 @@ export const AccessList = ({ items, onSelectAccess, companyColor }: AccessListPr
           key={item.id}
           item={item}
           onClick={() => onSelectAccess(item)}
+          onEdit={onEdit}
+          onAccessUpdated={onAccessUpdated}
           companyColor={companyColor}
         />
       ))}

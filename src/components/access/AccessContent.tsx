@@ -2,16 +2,20 @@
 import React, { useState, useEffect } from 'react';
 import { AccessList } from "./AccessList";
 import { AccessDetails } from "./AccessDetails";
+import { EditAccessDialog } from "./EditAccessDialog";
 import { AccessItem } from "./types";
 
 interface AccessContentProps {
   items: AccessItem[];
   companyColor?: string;
+  onAccessUpdated?: () => void;
 }
 
-export const AccessContent = ({ items, companyColor }: AccessContentProps) => {
+export const AccessContent = ({ items, companyColor, onAccessUpdated }: AccessContentProps) => {
   const [selectedAccess, setSelectedAccess] = useState<AccessItem | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingAccess, setEditingAccess] = useState<AccessItem | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   // Debug: Log items when they change
   useEffect(() => {
@@ -21,6 +25,17 @@ export const AccessContent = ({ items, companyColor }: AccessContentProps) => {
   const openAccessDetails = (access: AccessItem) => {
     setSelectedAccess(access);
     setIsDialogOpen(true);
+  };
+
+  const handleEdit = (access: AccessItem) => {
+    setEditingAccess(access);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleAccessUpdated = () => {
+    if (onAccessUpdated) {
+      onAccessUpdated();
+    }
   };
 
   if (!items || items.length === 0) {
@@ -38,6 +53,8 @@ export const AccessContent = ({ items, companyColor }: AccessContentProps) => {
       <AccessList 
         items={items}
         onSelectAccess={openAccessDetails}
+        onEdit={handleEdit}
+        onAccessUpdated={handleAccessUpdated}
         companyColor={companyColor}
       />
 
@@ -46,6 +63,13 @@ export const AccessContent = ({ items, companyColor }: AccessContentProps) => {
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
         companyColor={companyColor}
+      />
+
+      <EditAccessDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        accessItem={editingAccess}
+        onAccessUpdated={handleAccessUpdated}
       />
     </>
   );
