@@ -63,7 +63,10 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
   }, [userProfile, email, form]);
 
   const handleProfileUpdate = async (values: UserProfileFormValues) => {
+    console.log('[ProfilePopover] handleProfileUpdate iniciado com valores:', values);
+    
     if (!user?.id) {
+      console.error('[ProfilePopover] Usuário não encontrado:', user);
       toast({
         title: "Erro",
         description: "Usuário não encontrado",
@@ -72,8 +75,11 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
       return;
     }
 
+    console.log('[ProfilePopover] User ID disponível:', user.id);
+    console.log('[ProfilePopover] UserProfile atual:', userProfile);
+
     try {
-      console.log('[ProfilePopover] Iniciando atualização do perfil:', values);
+      console.log('[ProfilePopover] Iniciando atualização do perfil via hook...');
       
       // Atualizar o perfil usando o hook useUserProfile
       await updateUserProfile({
@@ -82,6 +88,20 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
       });
       
       console.log('[ProfilePopover] Perfil atualizado com sucesso via hook');
+      
+      // Verificar se realmente foi salvo no banco
+      console.log('[ProfilePopover] Verificando se foi salvo no banco...');
+      const { data: verificationData, error: verificationError } = await supabase
+        .from('profiles')
+        .select('display_name, avatar')
+        .eq('id', user.id)
+        .single();
+
+      if (verificationError) {
+        console.error('[ProfilePopover] Erro ao verificar salvamento:', verificationError);
+      } else {
+        console.log('[ProfilePopover] Dados verificados no banco:', verificationData);
+      }
       
       onSave(values);
       
@@ -100,7 +120,8 @@ export const ProfilePopover = ({ children, email, onSave }: ProfilePopoverProps)
       
       setOpen(false);
     } catch (error: any) {
-      console.error('[ProfilePopover] Erro ao atualizar perfil:', error);
+      console.error('[ProfilePopover] Erro completo ao atualizar perfil:', error);
+      console.error('[ProfilePopover] Error stack:', error.stack);
       toast({
         title: "Erro ao atualizar perfil",
         description: error.message || "Não foi possível salvar as alterações",

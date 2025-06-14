@@ -306,46 +306,82 @@ export const useUserProfile = () => {
   }, [clearCache]);
 
   const updateUserProfile = useCallback(async (userData: Partial<UserProfile>) => {
+    console.log('[useUserProfile] updateUserProfile chamado com dados:', userData);
+    
     const currentUserId = userProfile?.id;
     
     if (!currentUserId) {
-      console.error('No user ID available for profile update');
-      return;
+      console.error('[useUserProfile] No user ID available for profile update. userProfile:', userProfile);
+      throw new Error('No user ID available for profile update');
     }
 
     try {
-      console.log('[useUserProfile] Atualizando perfil do usuário:', currentUserId, userData);
+      console.log('[useUserProfile] Tentando atualizar perfil no banco de dados...');
+      console.log('[useUserProfile] User ID:', currentUserId);
+      console.log('[useUserProfile] Dados para atualização:', userData);
       
+      // Primeiro, vamos verificar se o perfil existe
+      const { data: existingProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', currentUserId)
+        .single();
+
+      if (fetchError) {
+        console.error('[useUserProfile] Erro ao buscar perfil existente:', fetchError);
+        throw new Error(`Erro ao buscar perfil: ${fetchError.message}`);
+      }
+
+      console.log('[useUserProfile] Perfil existente encontrado:', existingProfile);
+
       // Atualizar diretamente no banco de dados
-      const { error } = await supabase
+      const { data: updatedData, error } = await supabase
         .from('profiles')
         .update(userData)
-        .eq('id', currentUserId);
+        .eq('id', currentUserId)
+        .select()
+        .single();
 
       if (error) {
         console.error('[useUserProfile] Erro ao atualizar perfil no banco:', error);
-        throw error;
+        throw new Error(`Erro na atualização: ${error.message}`);
       }
 
-      console.log('[useUserProfile] Perfil atualizado com sucesso no banco de dados');
+      console.log('[useUserProfile] Perfil atualizado com sucesso no banco de dados:', updatedData);
+      
+      // Verificar se a atualização foi realmente aplicada
+      const { data: verificationData, error: verificationError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', currentUserId)
+        .single();
+
+      if (verificationError) {
+        console.error('[useUserProfile] Erro ao verificar atualização:', verificationError);
+      } else {
+        console.log('[useUserProfile] Dados verificados após atualização:', verificationData);
+      }
       
       // Atualizar estado local
-      setUserProfile(prev => prev ? ({
-        ...prev,
-        ...userData,
-      }) : null);
+      setUserProfile(prev => {
+        const updated = prev ? ({ ...prev, ...userData }) : null;
+        console.log('[useUserProfile] Estado local atualizado:', updated);
+        return updated;
+      });
       
       // Atualizar cache
       const cachedProfile = getCache<UserProfile>({ key: CACHE_KEY });
       if (cachedProfile) {
-        setCache({ key: CACHE_KEY, expirationMinutes: 5 }, {
-          ...cachedProfile,
-          ...userData
-        });
+        const updatedCache = { ...cachedProfile, ...userData };
+        setCache({ key: CACHE_KEY, expirationMinutes: 5 }, updatedCache);
+        console.log('[useUserProfile] Cache atualizado:', updatedCache);
       }
       
+      console.log('[useUserProfile] Atualização de perfil concluída com sucesso');
+      
     } catch (error: any) {
-      console.error('[useUserProfile] Erro ao atualizar perfil:', error);
+      console.error('[useUserProfile] Erro completo ao atualizar perfil:', error);
+      console.error('[useUserProfile] Stack trace:', error.stack);
       throw error;
     }
   }, [userProfile?.id, setCache, getCache]);
