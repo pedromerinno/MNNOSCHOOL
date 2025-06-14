@@ -167,7 +167,7 @@ Convite Criado - ${createdInvite.company}
 Nome: ${createdInvite.display_name}
 Email: ${createdInvite.email}
 
-Link da plataforma: ${window.location.origin}
+Link da plataforma: https://school.merinno.com/signup
 
 Instruções:
 1. O usuário deve acessar o link acima
