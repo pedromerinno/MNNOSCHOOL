@@ -2,9 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, BookOpen, Users, Trash2 } from "lucide-react";
+import { Plus, BookOpen, Users, Trash2, Filter } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useCompanies } from "@/hooks/useCompanies";
 import { SuggestCourseToUserDialog } from './SuggestCourseToUserDialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -34,20 +36,67 @@ interface SuggestedCourse {
   };
 }
 
+interface CompanyUser {
+  id: string;
+  display_name: string;
+  email: string;
+}
+
 export const SuggestedCoursesManagement: React.FC = () => {
+  const { selectedCompany } = useCompanies();
   const [suggestions, setSuggestions] = useState<SuggestedCourse[]>([]);
+  const [filteredSuggestions, setFilteredSuggestions] = useState<SuggestedCourse[]>([]);
+  const [companyUsers, setCompanyUsers] = useState<CompanyUser[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [isSuggestDialogOpen, setIsSuggestDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [suggestionToDelete, setSuggestionToDelete] = useState<SuggestedCourse | null>(null);
 
+  const fetchCompanyUsers = async () => {
+    if (!selectedCompany?.id) return;
+
+    try {
+      const { data: users, error } = await supabase
+        .from('user_empresa')
+        .select(`
+          user_id,
+          profiles!inner(id, display_name, email)
+        `)
+        .eq('empresa_id', selectedCompany.id);
+
+      if (error) {
+        console.error('Error fetching company users:', error);
+        return;
+      }
+
+      const formattedUsers = users?.map(u => ({
+        id: u.profiles.id,
+        display_name: u.profiles.display_name || 'Usuário sem nome',
+        email: u.profiles.email || ''
+      })) || [];
+
+      setCompanyUsers(formattedUsers);
+    } catch (error) {
+      console.error('Error fetching company users:', error);
+    }
+  };
+
   const fetchSuggestions = async () => {
+    if (!selectedCompany?.id) {
+      setSuggestions([]);
+      setFilteredSuggestions([]);
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // Fetch suggestions with manual joins to avoid foreign key issues
+      // Fetch suggestions filtered by selected company
       const { data: suggestionsData, error } = await supabase
         .from('user_course_suggestions')
         .select('*')
+        .eq('company_id', selectedCompany.id)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -58,6 +107,7 @@ export const SuggestedCoursesManagement: React.FC = () => {
 
       if (!suggestionsData || suggestionsData.length === 0) {
         setSuggestions([]);
+        setFilteredSuggestions([]);
         return;
       }
 
@@ -65,23 +115,20 @@ export const SuggestedCoursesManagement: React.FC = () => {
       const courseIds = [...new Set(suggestionsData.map(s => s.course_id))];
       const userIds = [...new Set(suggestionsData.map(s => s.user_id))];
       const suggestedByIds = [...new Set(suggestionsData.map(s => s.suggested_by))];
-      const companyIds = [...new Set(suggestionsData.map(s => s.company_id))];
 
       // Fetch all related data in parallel
-      const [coursesResponse, usersResponse, suggestedByResponse, companiesResponse] = await Promise.all([
+      const [coursesResponse, usersResponse, suggestedByResponse] = await Promise.all([
         supabase.from('courses').select('id, title, instructor').in('id', courseIds),
         supabase.from('profiles').select('id, display_name, email').in('id', userIds),
-        supabase.from('profiles').select('id, display_name').in('id', suggestedByIds),
-        supabase.from('empresas').select('id, nome').in('id', companyIds)
+        supabase.from('profiles').select('id, display_name').in('id', suggestedByIds)
       ]);
 
       // Check for errors
-      if (coursesResponse.error || usersResponse.error || suggestedByResponse.error || companiesResponse.error) {
+      if (coursesResponse.error || usersResponse.error || suggestedByResponse.error) {
         console.error('Error fetching related data:', {
           courses: coursesResponse.error,
           users: usersResponse.error,
-          suggestedBy: suggestedByResponse.error,
-          companies: companiesResponse.error
+          suggestedBy: suggestedByResponse.error
         });
         toast.error('Erro ao carregar dados relacionados');
         return;
@@ -91,7 +138,6 @@ export const SuggestedCoursesManagement: React.FC = () => {
       const coursesMap = new Map(coursesResponse.data?.map(c => [c.id, c]) || []);
       const usersMap = new Map(usersResponse.data?.map(u => [u.id, u]) || []);
       const suggestedByMap = new Map(suggestedByResponse.data?.map(u => [u.id, u]) || []);
-      const companiesMap = new Map(companiesResponse.data?.map(c => [c.id, c]) || []);
 
       // Combine the data
       const enrichedSuggestions = suggestionsData.map(suggestion => ({
@@ -99,10 +145,11 @@ export const SuggestedCoursesManagement: React.FC = () => {
         course: coursesMap.get(suggestion.course_id) || { title: 'Curso não encontrado' },
         user: usersMap.get(suggestion.user_id) || { display_name: 'Usuário não encontrado', email: '' },
         suggested_by_profile: suggestedByMap.get(suggestion.suggested_by) || { display_name: 'Usuário não encontrado' },
-        company: companiesMap.get(suggestion.company_id) || { nome: 'Empresa não encontrada' }
+        company: { nome: selectedCompany.nome }
       }));
 
       setSuggestions(enrichedSuggestions);
+      setFilteredSuggestions(enrichedSuggestions);
     } catch (error) {
       console.error('Error fetching suggestions:', error);
       toast.error('Erro ao carregar sugestões de cursos');
@@ -142,9 +189,41 @@ export const SuggestedCoursesManagement: React.FC = () => {
     setDeleteDialogOpen(true);
   };
 
+  const handleUserFilter = (userId: string) => {
+    setSelectedUserId(userId);
+    if (userId === 'all') {
+      setFilteredSuggestions(suggestions);
+    } else {
+      setFilteredSuggestions(suggestions.filter(s => s.user_id === userId));
+    }
+  };
+
   useEffect(() => {
-    fetchSuggestions();
-  }, []);
+    if (selectedCompany?.id) {
+      fetchSuggestions();
+      fetchCompanyUsers();
+    }
+  }, [selectedCompany?.id]);
+
+  useEffect(() => {
+    handleUserFilter(selectedUserId);
+  }, [suggestions]);
+
+  if (!selectedCompany) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="text-center">
+          <BookOpen className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+            Nenhuma empresa selecionada
+          </h3>
+          <p className="text-gray-500 dark:text-gray-400">
+            Selecione uma empresa para gerenciar suas sugestões de cursos.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -160,7 +239,7 @@ export const SuggestedCoursesManagement: React.FC = () => {
         <div>
           <h2 className="text-xl font-semibold">Gerenciar Sugestões de Cursos</h2>
           <p className="text-gray-500 dark:text-gray-400">
-            Gerencie todas as sugestões de cursos para usuários
+            Gerencie sugestões de cursos para {selectedCompany.nome}
           </p>
         </div>
         
@@ -173,22 +252,60 @@ export const SuggestedCoursesManagement: React.FC = () => {
         </Button>
       </div>
 
+      {/* Filter Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Filter className="h-4 w-4" />
+            Filtros
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-4 items-center">
+            <div className="min-w-[200px]">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
+                Filtrar por usuário:
+              </label>
+              <Select value={selectedUserId} onValueChange={handleUserFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um usuário" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os usuários</SelectItem>
+                  {companyUsers.map((user) => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.display_name} ({user.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="text-sm text-gray-500">
+              {filteredSuggestions.length} de {suggestions.length} sugestões
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
-            Sugestões de Cursos ({suggestions.length})
+            Sugestões de Cursos ({filteredSuggestions.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {suggestions.length === 0 ? (
+          {filteredSuggestions.length === 0 ? (
             <div className="text-center py-12">
               <BookOpen className="h-12 w-12 mx-auto text-gray-400 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                Nenhuma sugestão encontrada
+                {selectedUserId === 'all' ? 'Nenhuma sugestão encontrada' : 'Nenhuma sugestão para este usuário'}
               </h3>
               <p className="text-gray-500 dark:text-gray-400 mb-6">
-                Ainda não há sugestões de cursos. Comece criando uma nova sugestão.
+                {selectedUserId === 'all' 
+                  ? 'Ainda não há sugestões de cursos para esta empresa. Comece criando uma nova sugestão.'
+                  : 'Não há sugestões de cursos para o usuário selecionado.'
+                }
               </p>
               <Button onClick={() => setIsSuggestDialogOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -201,7 +318,6 @@ export const SuggestedCoursesManagement: React.FC = () => {
                 <TableRow>
                   <TableHead>Curso</TableHead>
                   <TableHead>Usuário</TableHead>
-                  <TableHead>Empresa</TableHead>
                   <TableHead>Sugerido por</TableHead>
                   <TableHead>Motivo</TableHead>
                   <TableHead>Data</TableHead>
@@ -209,7 +325,7 @@ export const SuggestedCoursesManagement: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {suggestions.map((suggestion) => (
+                {filteredSuggestions.map((suggestion) => (
                   <TableRow key={suggestion.id}>
                     <TableCell>
                       <div>
@@ -226,9 +342,6 @@ export const SuggestedCoursesManagement: React.FC = () => {
                         <div className="font-medium">{suggestion.user?.display_name}</div>
                         <div className="text-sm text-gray-500">{suggestion.user?.email}</div>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{suggestion.company?.nome}</Badge>
                     </TableCell>
                     <TableCell>{suggestion.suggested_by_profile?.display_name}</TableCell>
                     <TableCell className="max-w-xs truncate">
