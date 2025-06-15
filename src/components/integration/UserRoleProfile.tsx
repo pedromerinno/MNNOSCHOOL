@@ -61,110 +61,101 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
   };
   
   return (
-    <Card className="border border-blue-100 dark:border-blue-900/30 shadow-sm rounded-2xl overflow-hidden" 
+    <Card className="border border-blue-100 dark:border-blue-900/30 shadow-sm rounded-2xl" 
          style={{ 
            backgroundColor: getLighterColor(companyColor, 0.05),
            borderColor: getLighterColor(companyColor, 0.2)
          }}>
-      <CardContent className="p-0">
+      <CardContent className="p-6 md:p-8">
         <div className="flex flex-col">
-          {/* Header with elegant background and user profile */}
-          <div 
-            className="py-16 px-8"
-            style={{
-              background: `linear-gradient(135deg, ${companyColor}08 0%, ${companyColor}03 50%, white 100%)`
-            }}
-          >
-            {/* User profile section centered */}
-            <div className="text-center mb-8 max-w-3xl mx-auto">
-              <div className="flex justify-center items-center mb-6 relative">
-                <Avatar className="w-20 h-20 ring-4 ring-white shadow-lg">
-                  <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.display_name || "User"} />
-                  <AvatarFallback 
-                    className="text-white font-semibold text-lg"
-                    style={{ backgroundColor: companyColor }}
-                  >
-                    {getInitials(userProfile.display_name)}
-                  </AvatarFallback>
-                </Avatar>
-                
-                <div 
-                  className="w-16 h-16 rounded-full flex items-center justify-center overflow-hidden bg-white shadow-lg ml-[-8px]"
-                  style={{
-                    border: `3px solid ${companyColor}`
-                  }}
-                >
-                  <img 
-                    src={selectedCompany?.logo || "/placeholder.svg"} 
-                    alt="Company Logo" 
-                    className="w-full h-full object-cover" 
-                    onError={e => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = "/placeholder.svg";
-                    }} 
-                  />
-                </div>
-              </div>
-              
-              <h2 className="text-3xl font-bold mb-2" style={{ color: companyColor }}>
+          {/* Header with user name and role */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+            <div className="flex flex-col mb-4 md:mb-0">
+              <h2 className="text-2xl font-bold text-blue-600" style={{
+                color: companyColor
+              }}>
                 {userProfile.display_name?.toUpperCase() || "USUÁRIO"}
               </h2>
-              <p className="text-lg text-gray-600 dark:text-gray-400">{roleTitle}</p>
-              <div className="w-16 h-0.5 mx-auto mt-4" style={{ backgroundColor: companyColor }} />
+              <p className="text-gray-600 dark:text-gray-400">{roleTitle}</p>
+            </div>
+            <div className="flex items-center relative">
+              <Avatar className="h-16 w-16 z-10">
+                <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.display_name || "User"} />
+                <AvatarFallback className="bg-gray-200 text-gray-700">
+                  {getInitials(userProfile.display_name)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="h-16 w-16 rounded-full flex items-center justify-center overflow-hidden bg-white shadow-lg ml-[-12px] mt-2" style={{
+                border: `3px solid ${companyColor}`
+              }}>
+                <img 
+                  src={selectedCompany?.logo || "/placeholder.svg"} 
+                  alt="Company Logo" 
+                  className="w-full h-full object-cover" 
+                  onError={e => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = "/placeholder.svg";
+                  }} 
+                />
+              </div>
             </div>
           </div>
 
-          {/* Content sections with improved spacing */}
-          <div className="p-8 space-y-12">
+          {/* Information sections */}
+          <div className="space-y-10">
             {/* User information section */}
             <div>
-              <div className="rounded-xl py-4 px-6 mb-8 text-center" style={{ 
-                backgroundColor: getLighterColor(companyColor, 0.12),
+              <div className="rounded-xl py-2 px-4 mb-8" style={{ 
+                backgroundColor: getLighterColor(companyColor, 0.15),
               }}>
-                <h3 style={{ color: companyColor }} className="text-sm font-semibold tracking-wide">
+                <h3 style={{
+                  color: companyColor
+                }} className="text-sm font-semibold text-blue-600 text-center py-[20px]">
                   INFORMAÇÕES DO COLABORADOR
                 </h3>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-gray-100 shadow-sm">
-                  <p className="text-gray-500 text-sm mb-3 font-medium">Nome</p>
-                  <p className="font-semibold text-lg" style={{ color: companyColor }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10 px-4">
+                <div>
+                  <p className="text-gray-500 text-sm mb-2">Nome</p>
+                  <p className="text-blue-600 font-medium" style={{
+                    color: companyColor
+                  }}>
                     {userProfile.display_name || "Não informado"}
                   </p>
                 </div>
 
-                <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-gray-100 shadow-sm">
-                  <p className="text-gray-500 text-sm mb-3 font-medium">Cidade</p>
-                  <p className="text-gray-700 dark:text-gray-300 font-semibold text-lg">
+                <div>
+                  <p className="text-gray-500 text-sm mb-2">Cidade</p>
+                  <p className="text-gray-700 dark:text-gray-300 font-medium">
                     {userProfile.cidade || "Não informado"}
                   </p>
                 </div>
 
-                <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-gray-100 shadow-sm">
-                  <p className="text-gray-500 text-sm mb-3 font-medium">Aniversário</p>
-                  <p className="text-gray-700 dark:text-gray-300 font-semibold text-lg">
+                <div>
+                  <p className="text-gray-500 text-sm mb-2">Aniversário</p>
+                  <p className="text-gray-700 dark:text-gray-300 font-medium">
                     {formatBirthday(userProfile.aniversario) || "Não informado"}
                   </p>
                 </div>
 
-                <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-gray-100 shadow-sm">
-                  <p className="text-gray-500 text-sm mb-3 font-medium">Nível</p>
-                  <p className="text-gray-700 dark:text-gray-300 font-semibold text-lg">
+                <div>
+                  <p className="text-gray-500 text-sm mb-2">Nível</p>
+                  <p className="text-gray-700 dark:text-gray-300 font-medium">
                     {userProfile.nivel_colaborador || "Não informado"}
                   </p>
                 </div>
 
-                <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-gray-100 shadow-sm">
-                  <p className="text-gray-500 text-sm mb-3 font-medium">Tipo de Contrato</p>
-                  <p className="text-gray-700 dark:text-gray-300 font-semibold text-lg">
+                <div>
+                  <p className="text-gray-500 text-sm mb-2">Tipo de Contrato</p>
+                  <p className="text-gray-700 dark:text-gray-300 font-medium">
                     {userProfile.tipo_contrato || "Não informado"}
                   </p>
                 </div>
 
-                <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-gray-100 shadow-sm">
-                  <p className="text-gray-500 text-sm mb-3 font-medium">Data de Início</p>
-                  <p className="text-gray-700 dark:text-gray-300 font-semibold text-lg">
+                <div>
+                  <p className="text-gray-500 text-sm mb-2">Data de Início</p>
+                  <p className="text-gray-700 dark:text-gray-300 font-medium">
                     {formatDate(userProfile.data_inicio) || "Não informado"}
                   </p>
                 </div>
@@ -173,26 +164,26 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
 
             {/* Manual de cultura status */}
             <div>
-              <div className="rounded-xl py-4 px-6 mb-8 text-center" style={{ 
-                backgroundColor: getLighterColor(companyColor, 0.12),
+              <div className="rounded-xl py-2 px-4 mb-8" style={{ 
+                backgroundColor: getLighterColor(companyColor, 0.15),
               }}>
-                <h3 style={{ color: companyColor }} className="text-sm font-semibold tracking-wide">
+                <h3 style={{
+                  color: companyColor
+                }} className="text-sm font-semibold text-blue-600 text-center py-[20px]">
                   STATUS DO MANUAL DE CULTURA
                 </h3>
               </div>
 
-              <div className="max-w-2xl mx-auto">
-                <div className="bg-white/70 backdrop-blur-sm rounded-xl p-6 border border-gray-100 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-700 dark:text-gray-300 font-medium">Manual de Cultura</span>
-                    <span className={`px-4 py-2 rounded-full text-sm font-semibold ${
-                      userProfile.manual_cultura_aceito 
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
-                        : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                    }`}>
-                      {userProfile.manual_cultura_aceito ? '✓ Aceito' : 'Pendente'}
-                    </span>
-                  </div>
+              <div className="px-4">
+                <div className="flex items-center justify-between p-4 rounded-xl border">
+                  <span className="text-gray-700 dark:text-gray-300">Manual de Cultura</span>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    userProfile.manual_cultura_aceito 
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
+                      : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                  }`}>
+                    {userProfile.manual_cultura_aceito ? 'Aceito' : 'Pendente'}
+                  </span>
                 </div>
               </div>
             </div>
