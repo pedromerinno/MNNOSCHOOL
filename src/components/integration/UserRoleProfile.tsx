@@ -85,7 +85,7 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
                   {getInitials(userProfile.display_name)}
                 </AvatarFallback>
               </Avatar>
-              <div className="h-16 w-16 rounded-full flex items-center justify-center overflow-hidden bg-white shadow-lg ml-[-12px] mt-2" style={{
+              <div className="h-16 w-16 rounded-full flex items-center justify-center overflow-hidden bg-white shadow-lg ml-[-12px]" style={{
                 border: `3px solid ${companyColor}`
               }}>
                 <img 
