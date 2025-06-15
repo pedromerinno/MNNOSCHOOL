@@ -61,138 +61,157 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
   };
   
   return (
-    <Card className="border border-blue-100 dark:border-blue-900/30 shadow-sm rounded-2xl overflow-hidden" 
-         style={{ 
-           backgroundColor: getLighterColor(companyColor, 0.05),
-           borderColor: getLighterColor(companyColor, 0.2)
-         }}>
+    <Card className="border-0 shadow-lg rounded-3xl overflow-hidden bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
       <CardContent className="p-0">
         <div className="flex flex-col">
-          {/* Header with elegant background and user profile */}
+          {/* Header com perfil elegante */}
           <div 
-            className="py-16 px-8"
+            className="relative py-20 px-8"
             style={{
-              background: `linear-gradient(135deg, ${companyColor}08 0%, ${companyColor}03 50%, white 100%)`
+              background: `linear-gradient(135deg, ${companyColor}12 0%, ${companyColor}08 50%, transparent 100%)`
             }}
           >
             {/* User profile section centered */}
-            <div className="text-center mb-8 max-w-3xl mx-auto">
-              <div className="flex justify-center items-center mb-6 relative">
-                <Avatar className="w-20 h-20 ring-4 ring-white shadow-lg">
-                  <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.display_name || "User"} />
-                  <AvatarFallback 
-                    className="text-white font-semibold text-lg"
-                    style={{ backgroundColor: companyColor }}
+            <div className="text-center max-w-4xl mx-auto">
+              {/* Avatar e logo da empresa */}
+              <div className="flex justify-center items-center mb-8">
+                <div className="relative">
+                  <Avatar className="w-24 h-24 ring-4 ring-white shadow-xl">
+                    <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.display_name || "User"} />
+                    <AvatarFallback 
+                      className="text-white font-bold text-xl"
+                      style={{ backgroundColor: companyColor }}
+                    >
+                      {getInitials(userProfile.display_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  
+                  {/* Logo da empresa posicionado elegantemente */}
+                  <div 
+                    className="absolute -bottom-2 -right-2 w-12 h-12 rounded-full flex items-center justify-center bg-white shadow-lg border-2"
+                    style={{ borderColor: companyColor }}
                   >
-                    {getInitials(userProfile.display_name)}
-                  </AvatarFallback>
-                </Avatar>
-                
-                <div 
-                  className="w-16 h-16 rounded-full flex items-center justify-center overflow-hidden bg-white shadow-lg ml-[-8px]"
-                  style={{
-                    border: `3px solid ${companyColor}`
-                  }}
-                >
-                  <img 
-                    src={selectedCompany?.logo || "/placeholder.svg"} 
-                    alt="Company Logo" 
-                    className="w-full h-full object-cover" 
-                    onError={e => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = "/placeholder.svg";
-                    }} 
-                  />
+                    <img 
+                      src={selectedCompany?.logo || "/placeholder.svg"} 
+                      alt="Company Logo" 
+                      className="w-8 h-8 object-cover rounded-full" 
+                      onError={e => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = "/placeholder.svg";
+                      }} 
+                    />
+                  </div>
                 </div>
               </div>
               
-              <h2 className="text-3xl font-bold mb-2" style={{ color: companyColor }}>
-                {userProfile.display_name?.toUpperCase() || "USUÁRIO"}
-              </h2>
-              <p className="text-lg text-gray-600 dark:text-gray-400">{roleTitle}</p>
-              <div className="w-16 h-0.5 mx-auto mt-4" style={{ backgroundColor: companyColor }} />
+              {/* Nome e cargo */}
+              <div className="space-y-3">
+                <h1 className="text-4xl font-bold tracking-tight" style={{ color: companyColor }}>
+                  {userProfile.display_name?.toUpperCase() || "USUÁRIO"}
+                </h1>
+                <p className="text-xl text-gray-600 dark:text-gray-300 font-medium">
+                  {roleTitle}
+                </p>
+                <div 
+                  className="w-20 h-1 mx-auto rounded-full"
+                  style={{ backgroundColor: companyColor }}
+                />
+              </div>
             </div>
           </div>
 
-          {/* Content sections with improved spacing */}
-          <div className="p-8 space-y-12">
-            {/* User information section */}
+          {/* Content sections */}
+          <div className="px-8 py-12 space-y-16">
+            {/* Informações do colaborador */}
             <div>
-              <div className="rounded-xl py-4 px-6 mb-8 text-center" style={{ 
-                backgroundColor: getLighterColor(companyColor, 0.12),
-              }}>
-                <h3 style={{ color: companyColor }} className="text-sm font-semibold tracking-wide">
-                  INFORMAÇÕES DO COLABORADOR
-                </h3>
+              <div className="text-center mb-10">
+                <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  Informações do Colaborador
+                </h2>
+                <div 
+                  className="w-16 h-0.5 mx-auto rounded-full"
+                  style={{ backgroundColor: companyColor }}
+                />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-gray-100 shadow-sm">
-                  <p className="text-gray-500 text-sm mb-3 font-medium">Nome</p>
-                  <p className="font-semibold text-lg" style={{ color: companyColor }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow">
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Nome</p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     {userProfile.display_name || "Não informado"}
                   </p>
                 </div>
 
-                <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-gray-100 shadow-sm">
-                  <p className="text-gray-500 text-sm mb-3 font-medium">Cidade</p>
-                  <p className="text-gray-700 dark:text-gray-300 font-semibold text-lg">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow">
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Cidade</p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     {userProfile.cidade || "Não informado"}
                   </p>
                 </div>
 
-                <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-gray-100 shadow-sm">
-                  <p className="text-gray-500 text-sm mb-3 font-medium">Aniversário</p>
-                  <p className="text-gray-700 dark:text-gray-300 font-semibold text-lg">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow">
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Aniversário</p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     {formatBirthday(userProfile.aniversario) || "Não informado"}
                   </p>
                 </div>
 
-                <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-gray-100 shadow-sm">
-                  <p className="text-gray-500 text-sm mb-3 font-medium">Nível</p>
-                  <p className="text-gray-700 dark:text-gray-300 font-semibold text-lg">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow">
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Nível</p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     {userProfile.nivel_colaborador || "Não informado"}
                   </p>
                 </div>
 
-                <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-gray-100 shadow-sm">
-                  <p className="text-gray-500 text-sm mb-3 font-medium">Tipo de Contrato</p>
-                  <p className="text-gray-700 dark:text-gray-300 font-semibold text-lg">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow">
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Tipo de Contrato</p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     {userProfile.tipo_contrato || "Não informado"}
                   </p>
                 </div>
 
-                <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-gray-100 shadow-sm">
-                  <p className="text-gray-500 text-sm mb-3 font-medium">Data de Início</p>
-                  <p className="text-gray-700 dark:text-gray-300 font-semibold text-lg">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow">
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Data de Início</p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     {formatDate(userProfile.data_inicio) || "Não informado"}
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Manual de cultura status */}
+            {/* Status do manual de cultura */}
             <div>
-              <div className="rounded-xl py-4 px-6 mb-8 text-center" style={{ 
-                backgroundColor: getLighterColor(companyColor, 0.12),
-              }}>
-                <h3 style={{ color: companyColor }} className="text-sm font-semibold tracking-wide">
-                  STATUS DO MANUAL DE CULTURA
-                </h3>
+              <div className="text-center mb-10">
+                <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  Status do Manual de Cultura
+                </h2>
+                <div 
+                  className="w-16 h-0.5 mx-auto rounded-full"
+                  style={{ backgroundColor: companyColor }}
+                />
               </div>
 
-              <div className="max-w-2xl mx-auto">
-                <div className="bg-white/70 backdrop-blur-sm rounded-xl p-6 border border-gray-100 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-700 dark:text-gray-300 font-medium">Manual de Cultura</span>
-                    <span className={`px-4 py-2 rounded-full text-sm font-semibold ${
-                      userProfile.manual_cultura_aceito 
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
-                        : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                    }`}>
-                      {userProfile.manual_cultura_aceito ? '✓ Aceito' : 'Pendente'}
+              <div className="max-w-md mx-auto">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm border border-gray-100 dark:border-gray-700 text-center">
+                  <div className="flex items-center justify-center mb-4">
+                    <div 
+                      className={`w-4 h-4 rounded-full mr-3 ${
+                        userProfile.manual_cultura_aceito 
+                          ? 'bg-green-500' 
+                          : 'bg-yellow-500'
+                      }`}
+                    />
+                    <span className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                      Manual de Cultura
                     </span>
                   </div>
+                  <span className={`inline-flex px-4 py-2 rounded-full text-sm font-semibold ${
+                    userProfile.manual_cultura_aceito 
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
+                      : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                  }`}>
+                    {userProfile.manual_cultura_aceito ? '✓ Aceito' : 'Pendente'}
+                  </span>
                 </div>
               </div>
             </div>
