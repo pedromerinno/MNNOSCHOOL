@@ -69,6 +69,22 @@ const LessonPage = () => {
     };
   }, [handleCompanyChange]);
 
+  // Listen for lesson data refresh events from lesson manager
+  useEffect(() => {
+    const handleLessonDataRefresh = (event: CustomEvent) => {
+      if (event.detail?.courseId === courseId) {
+        console.log('🔄 Lesson data refresh event received, refreshing lesson data');
+        refreshLessonData();
+      }
+    };
+
+    window.addEventListener('lesson-data-refresh', handleLessonDataRefresh as EventListener);
+    
+    return () => {
+      window.removeEventListener('lesson-data-refresh', handleLessonDataRefresh as EventListener);
+    };
+  }, [courseId, refreshLessonData]);
+
   // Scroll to top when changing lessons - apenas quando lessonId muda
   useEffect(() => {
     if (lessonId) {

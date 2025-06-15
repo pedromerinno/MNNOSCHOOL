@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -84,10 +83,25 @@ export const LessonManager: React.FC<LessonManagerProps> = ({
   const handleClose = () => {
     onClose();
     
-    // Trigger course refresh when lesson manager closes
+    // Trigger immediate course and lesson refresh when lesson manager closes
     setTimeout(() => {
+      // Trigger course refresh for CourseView
       window.dispatchEvent(new CustomEvent('course-updated', {
         detail: { courseId }
+      }));
+      
+      // Trigger lesson data refresh for LessonPage
+      window.dispatchEvent(new CustomEvent('lesson-data-refresh', {
+        detail: { courseId }
+      }));
+      
+      // Also trigger lesson field update to refresh current lesson if in lesson page
+      window.dispatchEvent(new CustomEvent('lesson-field-updated', {
+        detail: { 
+          lessonId: 'current',
+          field: 'refresh',
+          value: Date.now()
+        }
       }));
     }, 100);
   };
