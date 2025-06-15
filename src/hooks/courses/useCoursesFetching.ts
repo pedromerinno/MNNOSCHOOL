@@ -41,6 +41,8 @@ export function useCoursesFetching(
         .eq('id', user.id)
         .single();
       
+      console.log('User profile:', userProfile);
+      
       const { data: companyAccess, error: accessError } = await supabase
         .from('company_courses')
         .select('course_id')
@@ -62,6 +64,7 @@ export function useCoursesFetching(
       }
       
       const courseIds = companyAccess.map(access => access.course_id);
+      console.log('All company course IDs:', courseIds);
       
       // Get courses with job role restrictions
       const { data: courseJobRoles } = await supabase
@@ -69,25 +72,40 @@ export function useCoursesFetching(
         .select('course_id, job_role_id')
         .in('course_id', courseIds);
       
+      console.log('Course job roles restrictions:', courseJobRoles);
+      
       // Filter courses based on user's job role and admin status
       let availableCourseIds = courseIds;
       
-      // If user is not admin and there are job role restrictions
-      if (!userProfile?.is_admin && !userProfile?.super_admin && courseJobRoles && courseJobRoles.length > 0) {
-        const restrictedCourseIds = courseJobRoles.map(cjr => cjr.course_id);
+      // If user is not admin and has a job role, apply filtering
+      if (!userProfile?.is_admin && !userProfile?.super_admin) {
         const userJobRoleId = userProfile?.cargo_id;
+        console.log('User job role ID:', userJobRoleId);
         
-        // Get courses that the user can access based on their job role
-        const accessibleRestrictedCourses = courseJobRoles
-          .filter(cjr => cjr.job_role_id === userJobRoleId)
-          .map(cjr => cjr.course_id);
-        
-        // Get courses without restrictions
-        const unrestrictedCourseIds = courseIds.filter(id => !restrictedCourseIds.includes(id));
-        
-        // Combine unrestricted courses and accessible restricted courses
-        availableCourseIds = [...unrestrictedCourseIds, ...accessibleRestrictedCourses];
+        if (courseJobRoles && courseJobRoles.length > 0) {
+          // Get all courses that have role restrictions
+          const restrictedCourseIds = [...new Set(courseJobRoles.map(cjr => cjr.course_id))];
+          console.log('Courses with role restrictions:', restrictedCourseIds);
+          
+          // Get courses without any restrictions (available to all)
+          const unrestrictedCourseIds = courseIds.filter(id => !restrictedCourseIds.includes(id));
+          console.log('Unrestricted courses:', unrestrictedCourseIds);
+          
+          // Get courses that the user can access based on their job role
+          let accessibleRestrictedCourses: string[] = [];
+          if (userJobRoleId) {
+            accessibleRestrictedCourses = courseJobRoles
+              .filter(cjr => cjr.job_role_id === userJobRoleId)
+              .map(cjr => cjr.course_id);
+            console.log('Accessible restricted courses for user role:', accessibleRestrictedCourses);
+          }
+          
+          // Combine unrestricted courses and accessible restricted courses
+          availableCourseIds = [...unrestrictedCourseIds, ...accessibleRestrictedCourses];
+        }
       }
+      
+      console.log('Final available course IDs for user:', availableCourseIds);
       
       if (availableCourseIds.length === 0) {
         console.log(`No accessible courses for user in company ${selectedCompany.nome}`);
