@@ -6,6 +6,7 @@ import { UserManagement } from '@/components/admin/UserManagement';
 import { CompanyManagement } from '@/components/admin/CompanyManagement';
 import { SettingsManagement } from '@/components/admin/integration/SettingsManagement';
 import { BackgroundManager } from '@/components/admin/BackgroundManager';
+import { SuggestedCoursesManagement } from '@/components/admin/integration/suggested-courses/SuggestedCoursesManagement';
 import { useAuth } from '@/contexts/AuthContext';
 import { ArrowLeft } from 'lucide-react';
 import { CourseManagement } from '@/components/admin/CourseManagement';
@@ -136,6 +137,8 @@ const AdminPage = () => {
         return <CourseManagement />;
       case "notices":
         return <CompanyNoticesAdminList />;
+      case "suggested-courses":
+        return <SuggestedCoursesManagement />;
       case "settings":
         return <SettingsManagement />;
       default:
