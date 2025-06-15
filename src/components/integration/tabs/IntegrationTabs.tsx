@@ -38,9 +38,10 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
         <TabsList className="grid grid-cols-4 w-full rounded-2xl p-1.5 bg-gray-100 dark:bg-gray-800 gap-2">
           <TabsTrigger 
             value="culture" 
-            className="flex items-center gap-2 rounded-xl py-4 px-6 transition-colors data-[state=active]:bg-white data-[state=active]:shadow-sm" 
+            className="flex items-center gap-2 rounded-xl py-4 px-6 transition-colors" 
             style={{
-              backgroundColor: activeTab === "culture" ? "white" : undefined,
+              backgroundColor: activeTab === "culture" ? `${companyColor}10` : undefined,
+              borderColor: activeTab === "culture" ? companyColor : undefined,
               color: activeTab === "culture" ? companyColor : undefined
             }}
           >
@@ -50,9 +51,10 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
           
           <TabsTrigger 
             value="videos" 
-            className="flex items-center gap-2 rounded-xl py-4 px-6 transition-colors data-[state=active]:bg-white data-[state=active]:shadow-sm" 
+            className="flex items-center gap-2 rounded-xl py-4 px-6 transition-colors" 
             style={{
-              backgroundColor: activeTab === "videos" ? "white" : undefined,
+              backgroundColor: activeTab === "videos" ? `${companyColor}10` : undefined,
+              borderColor: activeTab === "videos" ? companyColor : undefined,
               color: activeTab === "videos" ? companyColor : undefined
             }}
           >
@@ -62,9 +64,10 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
           
           <TabsTrigger 
             value="role" 
-            className="flex items-center gap-2 rounded-xl py-4 px-6 transition-colors data-[state=active]:bg-white data-[state=active]:shadow-sm" 
+            className="flex items-center gap-2 rounded-xl py-4 px-6 transition-colors" 
             style={{
-              backgroundColor: activeTab === "role" ? "white" : undefined,
+              backgroundColor: activeTab === "role" ? `${companyColor}10` : undefined,
+              borderColor: activeTab === "role" ? companyColor : undefined,
               color: activeTab === "role" ? companyColor : undefined
             }}
           >
@@ -74,9 +77,10 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
           
           <TabsTrigger 
             value="suggested-courses" 
-            className="flex items-center gap-2 rounded-xl py-4 px-6 transition-colors data-[state=active]:bg-white data-[state=active]:shadow-sm" 
+            className="flex items-center gap-2 rounded-xl py-4 px-6 transition-colors" 
             style={{
-              backgroundColor: activeTab === "suggested-courses" ? "white" : undefined,
+              backgroundColor: activeTab === "suggested-courses" ? `${companyColor}10` : undefined,
+              borderColor: activeTab === "suggested-courses" ? companyColor : undefined,
               color: activeTab === "suggested-courses" ? companyColor : undefined
             }}
           >
