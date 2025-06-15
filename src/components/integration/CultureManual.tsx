@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { VideoPlayer } from './video-playlist/VideoPlayer';
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface CultureManualProps {
   companyValues: any;
@@ -30,6 +30,17 @@ export const CultureManual: React.FC<CultureManualProps> = ({
   
   // Verificar se o manual já foi aceito
   const isManualAccepted = userProfile?.manual_cultura_aceito || false;
+
+  // Function to get user's initials for avatar fallback
+  const getInitials = (name: string | null): string => {
+    if (!name) return "U";
+    return name
+      .split(" ")
+      .map(part => part[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2);
+  };
 
   // Memoizar os valores para evitar re-processamento
   const values = useMemo(() => {
@@ -163,85 +174,34 @@ export const CultureManual: React.FC<CultureManualProps> = ({
         )}
 
         {companyHistory && (
-          <div className="md:col-span-2 relative">
-            {/* Background decorativo */}
-            <div 
-              className="absolute inset-0 rounded-3xl opacity-5"
-              style={{ backgroundColor: companyColor }}
-            />
-            <div 
-              className="absolute top-8 left-8 w-24 h-24 rounded-full opacity-10"
-              style={{ backgroundColor: companyColor }}
-            />
-            <div 
-              className="absolute bottom-8 right-8 w-16 h-16 rounded-full opacity-10"
-              style={{ backgroundColor: companyColor }}
-            />
-            
-            {/* Conteúdo principal */}
-            <Card className="relative transition-all duration-200 shadow-lg rounded-3xl border-0 overflow-hidden">
-              <div 
-                className="absolute top-0 left-0 w-full h-2"
-                style={{ backgroundColor: companyColor }}
-              />
-              
-              <CardHeader className="text-center pb-6 pt-8">
-                <div className="flex items-center justify-center mb-4">
-                  <div 
-                    className="p-3 rounded-full mr-4"
-                    style={{ backgroundColor: `${companyColor}20` }}
-                  >
-                    <Quote 
-                      className="h-6 w-6" 
-                      style={{ color: companyColor }} 
-                    />
-                  </div>
-                  <CardTitle className="text-2xl font-bold text-gray-800 dark:text-white">
-                    Nossa Declaração de Cultura
-                  </CardTitle>
-                </div>
-                <div 
-                  className="w-20 h-1 mx-auto rounded-full"
-                  style={{ backgroundColor: companyColor }}
-                />
-              </CardHeader>
-              
-              <CardContent className="px-12 py-8">
-                <div className="relative">
-                  {/* Quote marks decorativas */}
-                  <div 
-                    className="absolute -top-4 -left-4 text-6xl font-serif opacity-20"
-                    style={{ color: companyColor }}
-                  >
-                    "
-                  </div>
-                  <div 
-                    className="absolute -bottom-8 -right-4 text-6xl font-serif opacity-20 rotate-180"
-                    style={{ color: companyColor }}
-                  >
-                    "
-                  </div>
-                  
-                  <div className="prose prose-lg dark:prose-invert max-w-none text-center">
-                    <p className="text-gray-700 dark:text-gray-200 leading-relaxed text-lg font-medium whitespace-pre-line relative z-10">
-                      {companyHistory}
-                    </p>
-                  </div>
-                </div>
-                
-                {/* Elementos decorativos na parte inferior */}
-                <div className="flex justify-center mt-8 space-x-2">
-                  {[1, 2, 3].map((dot) => (
-                    <div
-                      key={dot}
-                      className="w-2 h-2 rounded-full"
+          <Card className="md:col-span-2 transition-all duration-200 shadow-sm rounded-xl">
+            <CardHeader className="text-center pb-6">
+              {userProfile && (
+                <div className="flex justify-center mb-4">
+                  <Avatar className="w-16 h-16">
+                    <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.display_name || ""} />
+                    <AvatarFallback 
+                      className="text-white text-lg font-semibold"
                       style={{ backgroundColor: companyColor }}
-                    />
-                  ))}
+                    >
+                      {getInitials(userProfile.display_name)}
+                    </AvatarFallback>
+                  </Avatar>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              )}
+              <CardTitle className="text-2xl font-bold text-gray-800 dark:text-white">
+                Nossa Declaração de Cultura
+              </CardTitle>
+            </CardHeader>
+            
+            <CardContent className="px-8 py-6">
+              <div className="text-center">
+                <p className="text-gray-700 dark:text-gray-200 leading-relaxed text-lg whitespace-pre-line font-mono">
+                  {companyHistory}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Botão de aceite integrado com banco de dados */}
