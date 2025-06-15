@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,15 +44,10 @@ export const SuggestedCoursesManagement: React.FC = () => {
   const fetchSuggestions = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      // Fetch suggestions with manual joins to avoid foreign key issues
+      const { data: suggestionsData, error } = await supabase
         .from('user_course_suggestions')
-        .select(`
-          *,
-          course:courses(title, instructor),
-          user:profiles!user_course_suggestions_user_id_fkey(display_name, email),
-          suggested_by_profile:profiles!user_course_suggestions_suggested_by_fkey(display_name),
-          company:empresas!user_course_suggestions_company_id_fkey(nome)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -60,7 +56,53 @@ export const SuggestedCoursesManagement: React.FC = () => {
         return;
       }
 
-      setSuggestions(data || []);
+      if (!suggestionsData || suggestionsData.length === 0) {
+        setSuggestions([]);
+        return;
+      }
+
+      // Get unique IDs for batch fetching
+      const courseIds = [...new Set(suggestionsData.map(s => s.course_id))];
+      const userIds = [...new Set(suggestionsData.map(s => s.user_id))];
+      const suggestedByIds = [...new Set(suggestionsData.map(s => s.suggested_by))];
+      const companyIds = [...new Set(suggestionsData.map(s => s.company_id))];
+
+      // Fetch all related data in parallel
+      const [coursesResponse, usersResponse, suggestedByResponse, companiesResponse] = await Promise.all([
+        supabase.from('courses').select('id, title, instructor').in('id', courseIds),
+        supabase.from('profiles').select('id, display_name, email').in('id', userIds),
+        supabase.from('profiles').select('id, display_name').in('id', suggestedByIds),
+        supabase.from('empresas').select('id, nome').in('id', companyIds)
+      ]);
+
+      // Check for errors
+      if (coursesResponse.error || usersResponse.error || suggestedByResponse.error || companiesResponse.error) {
+        console.error('Error fetching related data:', {
+          courses: coursesResponse.error,
+          users: usersResponse.error,
+          suggestedBy: suggestedByResponse.error,
+          companies: companiesResponse.error
+        });
+        toast.error('Erro ao carregar dados relacionados');
+        return;
+      }
+
+      // Create lookup maps
+      const coursesMap = new Map(coursesResponse.data?.map(c => [c.id, c]) || []);
+      const usersMap = new Map(usersResponse.data?.map(u => [u.id, u]) || []);
+      const suggestedByMap = new Map(suggestedByResponse.data?.map(u => [u.id, u]) || []);
+      const companiesMap = new Map(companiesResponse.data?.map(c => [c.id, c]) || []);
+
+      // Combine the data
+      const enrichedSuggestions = suggestionsData.map(suggestion => ({
+        ...suggestion,
+        course: coursesMap.get(suggestion.course_id) || { title: 'Curso não encontrado' },
+        user: usersMap.get(suggestion.user_id) || { display_name: 'Usuário não encontrado', email: '' },
+        suggested_by_profile: suggestedByMap.get(suggestion.suggested_by) || { display_name: 'Usuário não encontrado' },
+        company: companiesMap.get(suggestion.company_id) || { nome: 'Empresa não encontrada' }
+      }));
+
+      setSuggestions(enrichedSuggestions);
     } catch (error) {
       console.error('Error fetching suggestions:', error);
       toast.error('Erro ao carregar sugestões de cursos');
