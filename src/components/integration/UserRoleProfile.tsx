@@ -6,7 +6,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useCompanies } from "@/hooks/useCompanies";
-import { User, MapPin, Calendar, TrendingUp, FileText, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { User, MapPin, Calendar, TrendingUp, FileText, Clock, CheckCircle2, AlertCircle, Building2 } from "lucide-react";
 
 interface UserRoleProfileProps {
   userProfile: UserProfile;
@@ -70,16 +70,8 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
               <p className="text-base font-medium text-gray-500">{roleTitle}</p>
             </div>
             
-            <div className="flex items-center gap-4">
-              {/* User avatar */}
-              <Avatar className="h-16 w-16">
-                <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.display_name || "User"} />
-                <AvatarFallback className="bg-gray-100 text-gray-600 text-base font-medium">
-                  {getInitials(userProfile.display_name)}
-                </AvatarFallback>
-              </Avatar>
-              
-              {/* Company logo */}
+            <div className="relative flex items-center">
+              {/* Company logo positioned behind the avatar */}
               <div className="h-16 w-16 rounded-full overflow-hidden bg-white flex items-center justify-center shadow-sm">
                 <img 
                   src={selectedCompany?.logo || "/placeholder.svg"} 
@@ -91,6 +83,14 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
                   }} 
                 />
               </div>
+              
+              {/* User avatar positioned slightly in front and to the right */}
+              <Avatar className="h-16 w-16 -ml-4 relative z-10 border-2 border-white shadow-lg">
+                <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.display_name || "User"} />
+                <AvatarFallback className="bg-gray-100 text-gray-600 text-base font-medium">
+                  {getInitials(userProfile.display_name)}
+                </AvatarFallback>
+              </Avatar>
             </div>
           </div>
 

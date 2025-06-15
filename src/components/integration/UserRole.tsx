@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BriefcaseBusiness, User } from "lucide-react";
+import { Building2, User } from "lucide-react";
 import { UserProfile } from "@/types/user";
 import { UserRoleProfile } from "./UserRoleProfile";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -99,15 +99,25 @@ export const UserRole: React.FC<UserRoleProps> = ({ role, companyColor, userProf
       
       {/* Role Description Card */}
       <Card className="transition-all duration-200 shadow-sm border-gray-100 dark:border-gray-800">
-        <CardHeader className="flex flex-row items-center gap-4 pb-2">
-          <BriefcaseBusiness style={{ color: companyColor }} className="h-8 w-8" />
+        <CardHeader className="flex flex-row items-center gap-4 pb-4">
+          <div 
+            className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm"
+            style={{ backgroundColor: `${companyColor}15`, border: `1px solid ${companyColor}30` }}
+          >
+            <Building2 style={{ color: companyColor }} className="h-6 w-6" />
+          </div>
           <div>
-            <CardTitle className="text-lg">SOBRE O CARGO</CardTitle>
+            <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">
+              SOBRE O CARGO
+            </CardTitle>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Detalhes e responsabilidades da posição
+            </p>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6 pt-2">
-          <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-lg">
-            <h3 className="font-medium mb-3 text-lg">{role.title}</h3>
+        <CardContent className="space-y-6 pt-0">
+          <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-xl border border-gray-100 dark:border-gray-700">
+            <h3 className="font-semibold mb-3 text-lg text-gray-900 dark:text-white">{role.title}</h3>
             {role.description && (
               <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line leading-relaxed">
                 {role.description}
@@ -117,8 +127,8 @@ export const UserRole: React.FC<UserRoleProps> = ({ role, companyColor, userProf
 
           {role.responsibilities && (
             <div>
-              <h4 className="font-medium mb-2 text-md">Responsabilidades</h4>
-              <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line leading-relaxed bg-gray-50 dark:bg-gray-800/50 p-4 rounded-md">
+              <h4 className="font-semibold mb-3 text-lg text-gray-900 dark:text-white">Responsabilidades</h4>
+              <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line leading-relaxed bg-gray-50 dark:bg-gray-800/50 p-5 rounded-xl border border-gray-100 dark:border-gray-700">
                 {role.responsibilities}
               </p>
             </div>
@@ -126,8 +136,8 @@ export const UserRole: React.FC<UserRoleProps> = ({ role, companyColor, userProf
 
           {role.requirements && (
             <div>
-              <h4 className="font-medium mb-2 text-md">Requisitos</h4>
-              <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line leading-relaxed bg-gray-50 dark:bg-gray-800/50 p-4 rounded-md">
+              <h4 className="font-semibold mb-3 text-lg text-gray-900 dark:text-white">Requisitos</h4>
+              <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line leading-relaxed bg-gray-50 dark:bg-gray-800/50 p-5 rounded-xl border border-gray-100 dark:border-gray-700">
                 {role.requirements}
               </p>
             </div>
@@ -135,8 +145,8 @@ export const UserRole: React.FC<UserRoleProps> = ({ role, companyColor, userProf
 
           {role.expectations && (
             <div>
-              <h4 className="font-medium mb-2 text-md">Expectativas</h4>
-              <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line leading-relaxed bg-gray-50 dark:bg-gray-800/50 p-4 rounded-md">
+              <h4 className="font-semibold mb-3 text-lg text-gray-900 dark:text-white">Expectativas</h4>
+              <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line leading-relaxed bg-gray-50 dark:bg-gray-800/50 p-5 rounded-xl border border-gray-100 dark:border-gray-700">
                 {role.expectations}
               </p>
             </div>
