@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, User, FileText, Target, Award, CheckCircle, Briefcase } from "lucide-react";
@@ -65,8 +66,8 @@ export const UserRole: React.FC<UserRoleProps> = ({ role, companyColor, userProf
   return (
     <div className="space-y-8" key={refreshKey}>
       {/* Introduction Card */}
-      <Card className="transition-all duration-200 border-gray-100 dark:border-gray-800">
-        <CardContent className="p-6 md:p-8">
+      <Card className="transition-all duration-200 border-gray-100 dark:border-gray-800 rounded-3xl">
+        <CardContent className="p-8 md:p-10">
           <div className="flex items-center gap-4 mb-4">
             {userProfile && (
               <Avatar className="w-10 h-10">
@@ -97,17 +98,17 @@ export const UserRole: React.FC<UserRoleProps> = ({ role, companyColor, userProf
       )}
       
       {/* Modern Role Description Card */}
-      <Card className="transition-all duration-300 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-        <CardHeader className="pb-6">
-          <div className="flex items-center gap-4">
+      <Card className="transition-all duration-300 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-3xl">
+        <CardHeader className="pb-8 p-8">
+          <div className="flex items-center gap-6">
             <div 
-              className="w-12 h-12 rounded-2xl flex items-center justify-center"
+              className="w-16 h-16 rounded-3xl flex items-center justify-center"
               style={{ 
                 background: `linear-gradient(135deg, ${companyColor}20 0%, ${companyColor}10 100%)`,
                 border: `1px solid ${companyColor}30` 
               }}
             >
-              <Briefcase style={{ color: companyColor }} className="h-6 w-6" />
+              <Briefcase style={{ color: companyColor }} className="h-8 w-8" />
             </div>
             <div className="flex-1">
               <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
@@ -120,19 +121,19 @@ export const UserRole: React.FC<UserRoleProps> = ({ role, companyColor, userProf
           </div>
         </CardHeader>
         
-        <CardContent className="space-y-6 pt-0">
+        <CardContent className="space-y-8 pt-0 px-8 pb-8">
           {/* Description Section */}
           {role.description && (
-            <div className="bg-gray-50/50 dark:bg-gray-800/30 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
-              <div className="flex items-start gap-4">
+            <div className="bg-gray-50/50 dark:bg-gray-800/30 rounded-3xl p-8 border border-gray-100 dark:border-gray-700">
+              <div className="flex items-start gap-6">
                 <div 
-                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-1"
+                  className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 mt-1"
                   style={{ backgroundColor: `${companyColor}15` }}
                 >
-                  <FileText style={{ color: companyColor }} className="h-5 w-5" />
+                  <FileText style={{ color: companyColor }} className="h-6 w-6" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Sobre a Posição</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Sobre a Posição</h3>
                   <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                     {role.description}
                   </p>
@@ -143,16 +144,16 @@ export const UserRole: React.FC<UserRoleProps> = ({ role, companyColor, userProf
 
           {/* Responsibilities Section */}
           {role.responsibilities && (
-            <div className="bg-gray-50/50 dark:bg-gray-800/30 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
-              <div className="flex items-start gap-4">
+            <div className="bg-gray-50/50 dark:bg-gray-800/30 rounded-3xl p-8 border border-gray-100 dark:border-gray-700">
+              <div className="flex items-start gap-6">
                 <div 
-                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-1"
+                  className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 mt-1"
                   style={{ backgroundColor: `${companyColor}15` }}
                 >
-                  <CheckCircle style={{ color: companyColor }} className="h-5 w-5" />
+                  <CheckCircle style={{ color: companyColor }} className="h-6 w-6" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Responsabilidades</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Responsabilidades</h3>
                   <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
                     {role.responsibilities}
                   </p>
@@ -163,16 +164,16 @@ export const UserRole: React.FC<UserRoleProps> = ({ role, companyColor, userProf
 
           {/* Requirements Section */}
           {role.requirements && (
-            <div className="bg-gray-50/50 dark:bg-gray-800/30 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
-              <div className="flex items-start gap-4">
+            <div className="bg-gray-50/50 dark:bg-gray-800/30 rounded-3xl p-8 border border-gray-100 dark:border-gray-700">
+              <div className="flex items-start gap-6">
                 <div 
-                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-1"
+                  className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 mt-1"
                   style={{ backgroundColor: `${companyColor}15` }}
                 >
-                  <Award style={{ color: companyColor }} className="h-5 w-5" />
+                  <Award style={{ color: companyColor }} className="h-6 w-6" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Requisitos</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Requisitos</h3>
                   <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
                     {role.requirements}
                   </p>
@@ -183,16 +184,16 @@ export const UserRole: React.FC<UserRoleProps> = ({ role, companyColor, userProf
 
           {/* Expectations Section */}
           {role.expectations && (
-            <div className="bg-gray-50/50 dark:bg-gray-800/30 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
-              <div className="flex items-start gap-4">
+            <div className="bg-gray-50/50 dark:bg-gray-800/30 rounded-3xl p-8 border border-gray-100 dark:border-gray-700">
+              <div className="flex items-start gap-6">
                 <div 
-                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-1"
+                  className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 mt-1"
                   style={{ backgroundColor: `${companyColor}15` }}
                 >
-                  <Target style={{ color: companyColor }} className="h-5 w-5" />
+                  <Target style={{ color: companyColor }} className="h-6 w-6" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Expectativas</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Expectativas</h3>
                   <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
                     {role.expectations}
                   </p>
