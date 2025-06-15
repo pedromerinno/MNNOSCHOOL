@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Quote } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { VideoPlayer } from './video-playlist/VideoPlayer';
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -176,80 +176,45 @@ export const CultureManual: React.FC<CultureManualProps> = ({
 
         {companyHistory && (
           <div className="md:col-span-2">
-            {/* Carta de Declaração de Cultura */}
-            <div className="relative">
-              {/* Papel de carta com sombra elegante */}
-              <div className="bg-white dark:bg-gray-50 shadow-2xl rounded-none border border-gray-200 relative">
-                {/* Borda decorativa superior */}
-                <div 
-                  className="h-2 w-full rounded-t-none" 
-                  style={{ backgroundColor: companyColor }}
-                />
-                
-                {/* Cabeçalho da carta */}
-                <div className="px-12 pt-12 pb-8 text-center border-b border-gray-100">
-                  {userProfile && (
-                    <div className="flex justify-center mb-6">
-                      <Avatar className="w-20 h-20 ring-4 ring-white shadow-lg">
-                        <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.display_name || ""} />
-                        <AvatarFallback 
-                          className="text-white text-xl font-bold"
-                          style={{ backgroundColor: companyColor }}
-                        >
-                          {getInitials(userProfile.display_name)}
-                        </AvatarFallback>
-                      </Avatar>
-                    </div>
-                  )}
-                  
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                    Declaração de Cultura
-                  </h2>
-                  <div className="w-16 h-0.5 mx-auto" style={{ backgroundColor: companyColor }} />
-                </div>
-                
-                {/* Corpo da carta */}
-                <div className="px-12 py-10">
-                  <div className="relative">
-                    {/* Aspas decorativas */}
-                    <Quote 
-                      className="absolute -top-4 -left-2 h-8 w-8 opacity-20" 
-                      style={{ color: companyColor }}
-                    />
-                    
-                    <p className="text-gray-800 leading-relaxed text-lg font-mono indent-8 whitespace-pre-line relative z-10">
-                      {companyHistory}
-                    </p>
-                    
-                    <Quote 
-                      className="absolute -bottom-4 -right-2 h-8 w-8 opacity-20 rotate-180" 
-                      style={{ color: companyColor }}
-                    />
+            <div className="bg-white dark:bg-gray-50 rounded-lg border border-gray-100 p-12 max-w-4xl mx-auto">
+              {/* Header com foto do usuário */}
+              <div className="text-center mb-8">
+                {userProfile && (
+                  <div className="flex justify-center mb-6">
+                    <Avatar className="w-16 h-16">
+                      <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.display_name || ""} />
+                      <AvatarFallback 
+                        className="text-white font-semibold"
+                        style={{ backgroundColor: companyColor }}
+                      >
+                        {getInitials(userProfile.display_name)}
+                      </AvatarFallback>
+                    </Avatar>
                   </div>
-                </div>
+                )}
                 
-                {/* Rodapé da carta */}
-                <div className="px-12 pb-10">
-                  <div className="text-right">
-                    <div className="w-32 h-0.5 ml-auto mb-4" style={{ backgroundColor: companyColor }} />
-                    <p className="text-gray-600 text-sm">
-                      Com os melhores cumprimentos,
-                    </p>
-                    <p className="text-gray-800 font-semibold mt-1">
-                      Equipe de Gestão
-                    </p>
-                  </div>
-                </div>
-                
-                {/* Selo decorativo */}
-                <div className="absolute bottom-8 left-12">
-                  <div 
-                    className="w-16 h-16 rounded-full flex items-center justify-center opacity-10"
-                    style={{ backgroundColor: companyColor }}
-                  >
-                    <Sparkles className="h-8 w-8" style={{ color: companyColor }} />
-                  </div>
-                </div>
+                <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+                  Declaração de Cultura
+                </h2>
+                <div className="w-12 h-0.5 mx-auto" style={{ backgroundColor: companyColor }} />
+              </div>
+              
+              {/* Conteúdo da carta */}
+              <div className="mb-8">
+                <p className="text-gray-800 leading-relaxed text-base font-mono whitespace-pre-line">
+                  {companyHistory}
+                </p>
+              </div>
+              
+              {/* Assinatura */}
+              <div className="text-right">
+                <div className="w-24 h-0.5 ml-auto mb-3" style={{ backgroundColor: companyColor }} />
+                <p className="text-gray-600 text-sm">
+                  Com os melhores cumprimentos,
+                </p>
+                <p className="text-gray-800 font-medium">
+                  Equipe de Gestão
+                </p>
               </div>
             </div>
           </div>
