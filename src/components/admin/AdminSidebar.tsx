@@ -73,12 +73,12 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, onTabChan
   return (
     <Sidebar className="border-r min-h-full">
       <SidebarContent className="flex flex-col h-full">
-        <SidebarGroup className="flex-1 py-4">
-          <SidebarGroupLabel className="px-4 py-3 text-sm font-semibold text-sidebar-foreground/80 border-b mb-2">
+        <SidebarGroup className="flex-1 py-6">
+          <SidebarGroupLabel className="px-4 py-3 text-sm font-semibold text-sidebar-foreground/80 border-b mb-4">
             Administração
           </SidebarGroupLabel>
-          <SidebarGroupContent className="px-3 space-y-1">
-            <SidebarMenu className="space-y-1">
+          <SidebarGroupContent className="px-3 space-y-2 mt-2">
+            <SidebarMenu className="space-y-2">
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.tab}>
                   <SidebarMenuButton 

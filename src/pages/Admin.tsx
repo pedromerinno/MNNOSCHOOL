@@ -149,12 +149,12 @@ const AdminPage = () => {
   return (
     <>
       <MainNavigationMenu />
-      <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="container mx-auto px-0 lg:px-4 py-6 max-w-[1500px]">
           <SidebarProvider defaultOpen={true}>
             <div className="flex w-full h-[calc(100vh-120px)] rounded-lg overflow-hidden bg-background shadow-sm border">
               <AdminSidebar activeTab={activeTab} onTabChange={handleTabChange} />
-              <div className="flex-1 overflow-auto bg-background">
+              <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900">
                 <div className="p-6 h-full">
                   <ErrorBoundary>
                     {getActiveContent()}
