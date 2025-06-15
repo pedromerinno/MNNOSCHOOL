@@ -62,7 +62,7 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
       <CardContent 
         className="p-8 rounded-3xl"
         style={{
-          border: `1px solid ${companyColor}20`
+          border: `1px solid ${companyColor}30`
         }}
       >
         <div className="flex flex-col">
