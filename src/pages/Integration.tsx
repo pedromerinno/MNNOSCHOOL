@@ -15,6 +15,7 @@ import { CompanyThemedBadge } from "@/components/ui/badge";
 import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 import { AdminFloatingActionButton } from "@/components/admin/AdminFloatingActionButton";
 import { PagePreloader } from "@/components/ui/PagePreloader";
+import { Footer } from "@/components/home/Footer";
 
 const Integration = () => {
   const navigate = useNavigate();
@@ -321,6 +322,7 @@ const Integration = () => {
               </div>
             </div>
           </main>
+          <Footer />
           <AdminFloatingActionButton />
         </div>
       </>
@@ -370,6 +372,7 @@ const Integration = () => {
             />
           </div>
         </main>
+        <Footer />
         <AdminFloatingActionButton />
       </div>
     </>
