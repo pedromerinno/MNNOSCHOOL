@@ -76,7 +76,7 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
             
             <div className="relative flex items-center">
               {/* Company logo positioned behind the avatar */}
-              <div className="h-16 w-16 rounded-full overflow-hidden bg-white flex items-center justify-center shadow-sm">
+              <div className="h-16 w-16 rounded-full overflow-hidden bg-white flex items-center justify-center shadow-sm border-2 border-white">
                 <img 
                   src={selectedCompany?.logo || "/placeholder.svg"} 
                   alt="Company Logo" 
