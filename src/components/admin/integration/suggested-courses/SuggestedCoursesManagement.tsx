@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, BookOpen, Users, Trash2, Filter } from "lucide-react";
+import { Plus, BookOpen, Users, Trash2, Filter, Edit } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -11,6 +10,7 @@ import { SuggestCourseToUserDialog } from './SuggestCourseToUserDialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface SuggestedCourse {
   id: string;
@@ -23,10 +23,12 @@ interface SuggestedCourse {
   course: {
     title: string;
     instructor?: string;
+    image_url?: string;
   };
   user: {
     display_name: string;
     email: string;
+    avatar?: string;
   };
   suggested_by_profile: {
     display_name: string;
@@ -52,6 +54,7 @@ export const SuggestedCoursesManagement: React.FC = () => {
   const [isSuggestDialogOpen, setIsSuggestDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [suggestionToDelete, setSuggestionToDelete] = useState<SuggestedCourse | null>(null);
+  const [editingSuggestion, setEditingSuggestion] = useState<SuggestedCourse | null>(null);
 
   const fetchCompanyUsers = async () => {
     if (!selectedCompany?.id) return;
@@ -118,8 +121,8 @@ export const SuggestedCoursesManagement: React.FC = () => {
 
       // Fetch all related data in parallel
       const [coursesResponse, usersResponse, suggestedByResponse] = await Promise.all([
-        supabase.from('courses').select('id, title, instructor').in('id', courseIds),
-        supabase.from('profiles').select('id, display_name, email').in('id', userIds),
+        supabase.from('courses').select('id, title, instructor, image_url').in('id', courseIds),
+        supabase.from('profiles').select('id, display_name, email, avatar').in('id', userIds),
         supabase.from('profiles').select('id, display_name').in('id', suggestedByIds)
       ]);
 
@@ -195,6 +198,23 @@ export const SuggestedCoursesManagement: React.FC = () => {
       setFilteredSuggestions(suggestions);
     } else {
       setFilteredSuggestions(suggestions.filter(s => s.user_id === userId));
+    }
+  };
+
+  const handleEditSuggestion = (suggestion: SuggestedCourse) => {
+    setEditingSuggestion(suggestion);
+    setIsSuggestDialogOpen(true);
+  };
+
+  const handleSuggestionCreated = () => {
+    fetchSuggestions();
+    setEditingSuggestion(null);
+  };
+
+  const handleDialogClose = (open: boolean) => {
+    setIsSuggestDialogOpen(open);
+    if (!open) {
+      setEditingSuggestion(null);
     }
   };
 
@@ -328,19 +348,37 @@ export const SuggestedCoursesManagement: React.FC = () => {
                 {filteredSuggestions.map((suggestion) => (
                   <TableRow key={suggestion.id}>
                     <TableCell>
-                      <div>
-                        <div className="font-medium">{suggestion.course?.title}</div>
-                        {suggestion.course?.instructor && (
-                          <div className="text-sm text-gray-500">
-                            {suggestion.course.instructor}
-                          </div>
-                        )}
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                          {suggestion.course?.image_url ? (
+                            <img 
+                              src={suggestion.course.image_url} 
+                              alt={suggestion.course?.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <BookOpen className="h-6 w-6 text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <div className="font-medium">{suggestion.course?.title}</div>
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div>
-                        <div className="font-medium">{suggestion.user?.display_name}</div>
-                        <div className="text-sm text-gray-500">{suggestion.user?.email}</div>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={suggestion.user?.avatar} alt={suggestion.user?.display_name} />
+                          <AvatarFallback>
+                            {suggestion.user?.display_name?.charAt(0)?.toUpperCase() || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-medium">{suggestion.user?.display_name}</div>
+                          <div className="text-sm text-gray-500">{suggestion.user?.email}</div>
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>{suggestion.suggested_by_profile?.display_name}</TableCell>
@@ -351,14 +389,24 @@ export const SuggestedCoursesManagement: React.FC = () => {
                       {new Date(suggestion.created_at).toLocaleDateString('pt-BR')}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => confirmDeleteSuggestion(suggestion)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditSuggestion(suggestion)}
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => confirmDeleteSuggestion(suggestion)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -370,8 +418,9 @@ export const SuggestedCoursesManagement: React.FC = () => {
 
       <SuggestCourseToUserDialog
         open={isSuggestDialogOpen}
-        onOpenChange={setIsSuggestDialogOpen}
-        onSuggestionCreated={fetchSuggestions}
+        onOpenChange={handleDialogClose}
+        onSuggestionCreated={handleSuggestionCreated}
+        editingSuggestion={editingSuggestion}
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

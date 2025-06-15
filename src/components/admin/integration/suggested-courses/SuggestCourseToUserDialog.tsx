@@ -1,25 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
-
-interface User {
-  id: string;
-  display_name: string;
-  email: string;
-}
-
-interface Company {
-  id: string;
-  nome: string;
-}
+import { useCompanies } from "@/hooks/useCompanies";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Course {
   id: string;
@@ -27,241 +17,264 @@ interface Course {
   instructor?: string;
 }
 
+interface CompanyUser {
+  id: string;
+  display_name: string;
+  email: string;
+}
+
+interface EditingSuggestion {
+  id: string;
+  course_id: string;
+  user_id: string;
+  reason: string;
+}
+
 interface SuggestCourseToUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuggestionCreated: () => void;
+  editingSuggestion?: EditingSuggestion | null;
 }
 
 export const SuggestCourseToUserDialog: React.FC<SuggestCourseToUserDialogProps> = ({
   open,
   onOpenChange,
-  onSuggestionCreated
+  onSuggestionCreated,
+  editingSuggestion = null
 }) => {
+  const { selectedCompany } = useCompanies();
   const { userProfile } = useAuth();
-  const [users, setUsers] = useState<User[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
-  const [selectedUser, setSelectedUser] = useState<string>('');
-  const [selectedCompany, setSelectedCompany] = useState<string>('');
-  const [selectedCourse, setSelectedCourse] = useState<string>('');
-  const [reason, setReason] = useState('');
+  const [users, setUsers] = useState<CompanyUser[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState<string>('');
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [reason, setReason] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fetchInitialData = async () => {
-    setIsLoading(true);
+  const isEditing = Boolean(editingSuggestion);
+
+  // Load data when dialog opens or when editing suggestion changes
+  useEffect(() => {
+    if (open && selectedCompany?.id) {
+      fetchCourses();
+      fetchUsers();
+    }
+  }, [open, selectedCompany?.id]);
+
+  // Set form data when editing
+  useEffect(() => {
+    if (editingSuggestion) {
+      setSelectedCourseId(editingSuggestion.course_id);
+      setSelectedUserId(editingSuggestion.user_id);
+      setReason(editingSuggestion.reason);
+    } else {
+      // Reset form for new suggestion
+      setSelectedCourseId('');
+      setSelectedUserId('');
+      setReason('');
+    }
+  }, [editingSuggestion]);
+
+  const fetchCourses = async () => {
     try {
-      // Fetch users
-      const { data: usersData, error: usersError } = await supabase
-        .from('profiles')
-        .select('id, display_name, email')
-        .order('display_name');
+      const { data, error } = await supabase
+        .from('company_courses')
+        .select(`
+          course_id,
+          courses!inner(id, title, instructor)
+        `)
+        .eq('empresa_id', selectedCompany!.id);
 
-      if (usersError) {
-        console.error('Error fetching users:', usersError);
-        toast.error('Erro ao carregar usuários');
+      if (error) {
+        console.error('Error fetching courses:', error);
         return;
       }
 
-      setUsers(usersData || []);
-
-      // Fetch companies
-      const { data: companiesData, error: companiesError } = await supabase
-        .from('empresas')
-        .select('id, nome')
-        .order('nome');
-
-      if (companiesError) {
-        console.error('Error fetching companies:', companiesError);
-        toast.error('Erro ao carregar empresas');
-        return;
-      }
-
-      setCompanies(companiesData || []);
-
-      // Fetch courses
-      const { data: coursesData, error: coursesError } = await supabase
-        .from('courses')
-        .select('id, title, instructor')
-        .order('title');
-
-      if (coursesError) {
-        console.error('Error fetching courses:', coursesError);
-        toast.error('Erro ao carregar cursos');
-        return;
-      }
-
-      setCourses(coursesData || []);
+      const courseList = data?.map(item => item.courses).filter(Boolean) || [];
+      setCourses(courseList);
     } catch (error) {
-      console.error('Error fetching initial data:', error);
-      toast.error('Erro ao carregar dados');
+      console.error('Error fetching courses:', error);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_empresa')
+        .select(`
+          user_id,
+          profiles!inner(id, display_name, email)
+        `)
+        .eq('empresa_id', selectedCompany!.id);
+
+      if (error) {
+        console.error('Error fetching users:', error);
+        return;
+      }
+
+      const userList = data?.map(item => ({
+        id: item.profiles.id,
+        display_name: item.profiles.display_name || 'Usuário sem nome',
+        email: item.profiles.email || ''
+      })) || [];
+
+      setUsers(userList);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!selectedCourseId || !selectedUserId || !reason.trim()) {
+      toast.error('Por favor, preencha todos os campos obrigatórios');
+      return;
+    }
+
+    if (!userProfile?.id || !selectedCompany?.id) {
+      toast.error('Erro de autenticação');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      if (isEditing) {
+        // Update existing suggestion
+        const { error } = await supabase
+          .from('user_course_suggestions')
+          .update({
+            course_id: selectedCourseId,
+            user_id: selectedUserId,
+            reason: reason.trim(),
+          })
+          .eq('id', editingSuggestion!.id);
+
+        if (error) {
+          console.error('Error updating suggestion:', error);
+          toast.error('Erro ao atualizar sugestão de curso');
+          return;
+        }
+
+        toast.success('Sugestão de curso atualizada com sucesso!');
+      } else {
+        // Create new suggestion
+        const { error } = await supabase
+          .from('user_course_suggestions')
+          .insert({
+            course_id: selectedCourseId,
+            user_id: selectedUserId,
+            suggested_by: userProfile.id,
+            company_id: selectedCompany.id,
+            reason: reason.trim(),
+          });
+
+        if (error) {
+          if (error.code === '23505') {
+            toast.error('Este curso já foi sugerido para este usuário nesta empresa');
+          } else {
+            console.error('Error creating suggestion:', error);
+            toast.error('Erro ao criar sugestão de curso');
+          }
+          return;
+        }
+
+        toast.success('Sugestão de curso criada com sucesso!');
+      }
+
+      // Reset form and close dialog
+      setSelectedCourseId('');
+      setSelectedUserId('');
+      setReason('');
+      onSuggestionCreated();
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error submitting suggestion:', error);
+      toast.error('Erro ao processar sugestão');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!selectedUser || !selectedCompany || !selectedCourse || !reason.trim()) {
-      toast.error('Preencha todos os campos obrigatórios');
-      return;
-    }
-
-    if (!userProfile?.id) {
-      toast.error('Usuário não autenticado');
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const { error } = await supabase
-        .from('user_course_suggestions')
-        .insert({
-          user_id: selectedUser,
-          course_id: selectedCourse,
-          company_id: selectedCompany,
-          suggested_by: userProfile.id,
-          reason: reason.trim()
-        });
-
-      if (error) {
-        console.error('Error creating suggestion:', error);
-        if (error.code === '23505') {
-          toast.error('Este curso já foi sugerido para este usuário nesta empresa');
-        } else {
-          toast.error('Erro ao criar sugestão');
-        }
-        return;
-      }
-
-      toast.success('Sugestão de curso criada com sucesso');
-      onSuggestionCreated();
-      onOpenChange(false);
-      resetForm();
-    } catch (error) {
-      console.error('Error creating suggestion:', error);
-      toast.error('Erro ao criar sugestão');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const resetForm = () => {
-    setSelectedUser('');
-    setSelectedCompany('');
-    setSelectedCourse('');
+  const handleCancel = () => {
+    setSelectedCourseId('');
+    setSelectedUserId('');
     setReason('');
+    onOpenChange(false);
   };
-
-  useEffect(() => {
-    if (open) {
-      fetchInitialData();
-    } else {
-      resetForm();
-    }
-  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Sugerir Curso para Usuário</DialogTitle>
+          <DialogTitle>
+            {isEditing ? 'Editar Sugestão de Curso' : 'Sugerir Curso para Usuário'}
+          </DialogTitle>
         </DialogHeader>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="course">Curso *</Label>
+            <Select value={selectedCourseId} onValueChange={setSelectedCourseId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um curso" />
+              </SelectTrigger>
+              <SelectContent>
+                {courses.map((course) => (
+                  <SelectItem key={course.id} value={course.id}>
+                    {course.title}
+                    {course.instructor && ` - ${course.instructor}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="user">Usuário *</Label>
-              <Select value={selectedUser} onValueChange={setSelectedUser}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um usuário" />
-                </SelectTrigger>
-                <SelectContent>
-                  {users.map((user) => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.display_name} ({user.email})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="company">Empresa *</Label>
-              <Select value={selectedCompany} onValueChange={setSelectedCompany}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma empresa" />
-                </SelectTrigger>
-                <SelectContent>
-                  {companies.map((company) => (
-                    <SelectItem key={company.id} value={company.id}>
-                      {company.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="user">Usuário *</Label>
+            <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um usuário" />
+              </SelectTrigger>
+              <SelectContent>
+                {users.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.display_name} ({user.email})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="course">Curso *</Label>
-              <Select value={selectedCourse} onValueChange={setSelectedCourse}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um curso" />
-                </SelectTrigger>
-                <SelectContent>
-                  {courses.map((course) => (
-                    <SelectItem key={course.id} value={course.id}>
-                      {course.title}
-                      {course.instructor && ` - ${course.instructor}`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="reason">Motivo da Sugestão *</Label>
+            <Textarea
+              id="reason"
+              placeholder="Explique por que este curso seria útil para este usuário..."
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              rows={3}
+            />
+          </div>
+        </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="reason">Motivo da Sugestão *</Label>
-              <Textarea
-                id="reason"
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                placeholder="Explique por que este curso é adequado para este usuário..."
-                rows={4}
-              />
-            </div>
-
-            <div className="flex justify-end space-x-3 pt-4">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => onOpenChange(false)}
-                disabled={isSubmitting}
-              >
-                Cancelar
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={isSubmitting}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Criando...
-                  </>
-                ) : (
-                  'Criar Sugestão'
-                )}
-              </Button>
-            </div>
-          </form>
-        )}
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCancel}
+            disabled={isLoading}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            onClick={handleSubmit}
+            disabled={isLoading || !selectedCourseId || !selectedUserId || !reason.trim()}
+          >
+            {isLoading ? 'Processando...' : (isEditing ? 'Atualizar' : 'Sugerir Curso')}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
