@@ -6,7 +6,6 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useCompanies } from "@/hooks/useCompanies";
-import { MapPin, Calendar, Award, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 
 interface UserRoleProfileProps {
   userProfile: UserProfile;
@@ -52,21 +51,22 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
   };
   
   return (
-    <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-      <CardContent className="p-0">
+    <Card className="shadow-md border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+      <CardContent className="p-6">
         {/* Header - Cartão do Colaborador */}
         <div 
-          className="relative rounded-t-lg p-6"
+          className="relative rounded-lg p-6 mb-6"
           style={{
-            background: `linear-gradient(135deg, ${companyColor} 0%, ${companyColor}90 100%)`
+            background: `linear-gradient(135deg, ${companyColor}15 0%, ${companyColor}05 100%)`
           }}
         >
           <div className="flex items-center gap-4">
             {/* Avatar */}
-            <Avatar className="w-20 h-20 ring-4 ring-white/20">
+            <Avatar className="w-16 h-16 ring-2 ring-white shadow-md">
               <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.display_name || "User"} />
               <AvatarFallback 
-                className="text-white font-bold text-xl bg-white/20"
+                className="text-white font-semibold text-lg"
+                style={{ backgroundColor: companyColor }}
               >
                 {getInitials(userProfile.display_name)}
               </AvatarFallback>
@@ -74,22 +74,25 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
             
             {/* Informações principais */}
             <div className="flex-1">
-              <h2 className="text-2xl font-bold text-white mb-1">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                 {userProfile.display_name || "Usuário"}
               </h2>
-              <p className="text-lg text-white/90 font-medium mb-2">
+              <p className="text-md text-gray-600 dark:text-gray-300 font-medium">
                 {roleTitle}
               </p>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-white/80" />
-                <span className="text-sm text-white/80 font-medium">
+              <div className="flex items-center gap-2 mt-2">
+                <div 
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: companyColor }}
+                />
+                <span className="text-sm text-gray-500 dark:text-gray-400">
                   {selectedCompany?.nome}
                 </span>
               </div>
             </div>
             
-            {/* Logo da empresa */}
-            <div className="w-16 h-16 rounded-xl overflow-hidden bg-white/10 backdrop-blur-sm">
+            {/* Logo da empresa (sem bordas) */}
+            <div className="w-12 h-12 rounded-lg overflow-hidden bg-white shadow-sm">
               <img 
                 src={selectedCompany?.logo || "/placeholder.svg"} 
                 alt="Company Logo" 
@@ -103,109 +106,58 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
           </div>
         </div>
 
-        {/* Informações detalhadas */}
-        <div className="p-6 space-y-6">
-          {/* Grid de informações pessoais */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <MapPin className="w-4 h-4 text-gray-500" />
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Cidade</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {userProfile.cidade || "Não informado"}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <Calendar className="w-4 h-4 text-gray-500" />
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Aniversário</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {formatBirthday(userProfile.aniversario)}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <Award className="w-4 h-4 text-gray-500" />
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Nível</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {userProfile.nivel_colaborador || "Não definido"}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <Clock className="w-4 h-4 text-gray-500" />
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Data de Início</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {formatDate(userProfile.data_inicio)}
-                </p>
-              </div>
-            </div>
+        {/* Informações em grid compacto */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Cidade</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              {userProfile.cidade || "—"}
+            </p>
           </div>
 
-          {/* Informações de contato */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
-              Informações de Contato
-            </h3>
-            <div className="grid gap-3">
-              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <span className="text-sm text-gray-600 dark:text-gray-400">E-mail</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {userProfile.email}
-                </span>
-              </div>
-              
-              {userProfile.telefone && (
-                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Telefone</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {userProfile.telefone}
-                  </span>
-                </div>
-              )}
-            </div>
+          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Aniversário</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              {formatBirthday(userProfile.aniversario)}
+            </p>
           </div>
 
-          {/* Status de integração */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
-              Status de Integração
-            </h3>
-            
-            <div className="flex items-center justify-between p-4 border rounded-lg border-gray-200 dark:border-gray-700">
-              <div className="flex items-center gap-3">
-                {userProfile.manual_cultura_aceito ? (
-                  <CheckCircle2 className="w-5 h-5 text-green-500" />
-                ) : (
-                  <AlertCircle className="w-5 h-5 text-yellow-500" />
-                )}
-                <div>
-                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    Manual de Cultura
-                  </span>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {userProfile.manual_cultura_aceito 
-                      ? 'Lido e aceito pelo colaborador' 
-                      : 'Aguardando leitura e aceite'
-                    }
-                  </p>
-                </div>
-              </div>
-              <span className={`text-xs px-3 py-1 rounded-full font-medium ${
+          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Nível</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              {userProfile.nivel_colaborador || "—"}
+            </p>
+          </div>
+
+          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Início</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              {formatDate(userProfile.data_inicio)}
+            </p>
+          </div>
+        </div>
+
+        {/* Status do manual - mais compacto */}
+        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div className="flex items-center gap-3">
+            <div 
+              className={`w-3 h-3 rounded-full ${
                 userProfile.manual_cultura_aceito 
-                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
-                  : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-              }`}>
-                {userProfile.manual_cultura_aceito ? 'Concluído' : 'Pendente'}
-              </span>
-            </div>
+                  ? 'bg-green-500' 
+                  : 'bg-yellow-500'
+              }`}
+            />
+            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              Manual de Cultura
+            </span>
           </div>
+          <span className={`text-xs px-3 py-1 rounded-full font-medium ${
+            userProfile.manual_cultura_aceito 
+              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+              : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+          }`}>
+            {userProfile.manual_cultura_aceito ? 'Aceito' : 'Pendente'}
+          </span>
         </div>
       </CardContent>
     </Card>
