@@ -191,7 +191,7 @@ export const CultureManual: React.FC<CultureManualProps> = ({
                 <div className="text-center mb-16 max-w-4xl mx-auto">
                   {userProfile && (
                     <div className="flex justify-center items-center mb-10 relative">
-                      <Avatar className="w-20 h-20 border-4 border-white shadow-lg">
+                      <Avatar className="w-20 h-20">
                         <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.display_name || ""} />
                         <AvatarFallback 
                           className="text-white font-semibold text-lg"
@@ -202,7 +202,7 @@ export const CultureManual: React.FC<CultureManualProps> = ({
                       </Avatar>
                       
                       <div 
-                        className="w-20 h-20 rounded-full flex items-center justify-center overflow-hidden bg-white shadow-lg ml-[-12px] border-4 border-white"
+                        className="w-20 h-20 rounded-full flex items-center justify-center overflow-hidden bg-white ml-[-12px]"
                       >
                         <img 
                           src={companyLogo || "/placeholder.svg"} 
