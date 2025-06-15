@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Plus, Trash2, User } from "lucide-react";
+import { BookOpen, Plus, User, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -70,7 +70,6 @@ export const SuggestedCourses: React.FC<SuggestedCoursesProps> = ({ companyColor
         return;
       }
 
-      // Buscar os perfis dos usuários que sugeriram os cursos
       const suggesterIds = suggestions.map(s => s.suggested_by);
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
@@ -83,7 +82,6 @@ export const SuggestedCourses: React.FC<SuggestedCoursesProps> = ({ companyColor
         return;
       }
 
-      // Combinar os dados
       const enrichedSuggestions = suggestions.map(suggestion => {
         const suggesterProfile = profiles?.find(p => p.id === suggestion.suggested_by);
         return {
@@ -131,61 +129,65 @@ export const SuggestedCourses: React.FC<SuggestedCoursesProps> = ({ companyColor
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="p-6 flex items-center justify-center">
-          <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
-        </CardContent>
-      </Card>
+      <div className="flex items-center justify-center py-16">
+        <div className="w-6 h-6 border-2 border-gray-200 border-t-gray-600 rounded-full animate-spin" />
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold">Cursos Sugeridos</h2>
-          <p className="text-gray-500 dark:text-gray-400">
-            Cursos recomendados especialmente para você
-          </p>
-        </div>
-        
-        {isAdmin && (
+    <div className="space-y-8">
+      {/* Header minimal */}
+      <div className="text-center space-y-2">
+        <h2 className="text-3xl font-light text-gray-900 dark:text-gray-100">
+          Cursos Sugeridos
+        </h2>
+        <p className="text-gray-500 dark:text-gray-400 font-light">
+          Recomendações especiais para você
+        </p>
+      </div>
+
+      {/* Action button - só aparece se for admin */}
+      {isAdmin && (
+        <div className="flex justify-center">
           <Button 
             onClick={() => setIsSuggestDialogOpen(true)}
-            style={{ backgroundColor: companyColor }}
-            className="text-white hover:opacity-90"
+            className="bg-gray-900 hover:bg-gray-800 text-white px-6 py-2 rounded-full transition-all duration-200 font-medium"
           >
             <Plus className="h-4 w-4 mr-2" />
             Sugerir Curso
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
+      {/* Courses grid */}
       {suggestedCourses.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <BookOpen className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium mb-2">Nenhum curso sugerido</h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
-              {isAdmin 
-                ? "Ainda não há cursos sugeridos para este usuário. Que tal sugerir alguns?" 
-                : "Ainda não há cursos sugeridos para você. Quando houver, aparecerão aqui!"
-              }
-            </p>
-            {isAdmin && (
-              <Button 
-                onClick={() => setIsSuggestDialogOpen(true)}
-                variant="outline"
-                style={{ borderColor: companyColor, color: companyColor }}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Sugerir Curso
-              </Button>
-            )}
-          </CardContent>
-        </Card>
+        <div className="text-center py-20">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+            <BookOpen className="h-8 w-8 text-gray-400" />
+          </div>
+          <h3 className="text-xl font-light text-gray-900 dark:text-gray-100 mb-2">
+            Nenhum curso sugerido
+          </h3>
+          <p className="text-gray-500 dark:text-gray-400 font-light max-w-md mx-auto mb-8">
+            {isAdmin 
+              ? "Ainda não há cursos sugeridos para este usuário. Que tal sugerir alguns?" 
+              : "Ainda não há cursos sugeridos para você. Quando houver, aparecerão aqui!"
+            }
+          </p>
+          {isAdmin && (
+            <Button 
+              onClick={() => setIsSuggestDialogOpen(true)}
+              variant="outline"
+              className="border-gray-300 hover:bg-gray-50 px-6 py-2 rounded-full"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Sugerir Curso
+            </Button>
+          )}
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
           {suggestedCourses.map((suggestion) => (
             <SuggestedCourseCard
               key={suggestion.id}
