@@ -1,35 +1,24 @@
 
 import React from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
-import { useMyCourses } from "@/hooks/my-courses";
 import { CourseFilters } from "@/components/courses/CourseFilters";
 import { RecentCourses } from "@/components/courses/RecentCourses";
 import { FilteredCoursesList } from "@/components/courses/FilteredCoursesList";
 import { CourseSidebar } from "@/components/courses/CourseSidebar";
 import { useCompanies } from "@/hooks/useCompanies";
+import { useMyCourses } from "@/hooks/my-courses";
 
 const MyCourses = () => {
   const { selectedCompany, isLoading: companyLoading } = useCompanies();
-  const {
-    activeFilter,
-    stats,
-    recentCourses,
-    filteredCourses,
-    loading,
-    hoursWatched,
-    handleFilterChange,
-    companyColor
-  } = useMyCourses();
-
+  
   console.log("MyCourses render:", {
     selectedCompany: selectedCompany?.nome || "none",
-    companyLoading,
-    loading,
-    coursesCount: filteredCourses.length
+    companyLoading
   });
 
   // Show loading if company is still loading
   if (companyLoading) {
+    console.log("MyCourses: Company still loading");
     return (
       <DashboardLayout>
         <div className="container mx-auto max-w-screen-2xl px-4 py-8 bg-transparent dark:bg-[#191919]">
@@ -43,6 +32,7 @@ const MyCourses = () => {
 
   // Show message if no company is selected
   if (!selectedCompany) {
+    console.log("MyCourses: No company selected");
     return (
       <DashboardLayout>
         <div className="container mx-auto max-w-screen-2xl px-4 py-8 bg-transparent dark:bg-[#191919]">
@@ -56,6 +46,28 @@ const MyCourses = () => {
       </DashboardLayout>
     );
   }
+
+  return <MyCoursesContent selectedCompany={selectedCompany} />;
+};
+
+// Componente separado para o conteúdo quando há empresa selecionada
+const MyCoursesContent = ({ selectedCompany }: { selectedCompany: any }) => {
+  const {
+    activeFilter,
+    stats,
+    recentCourses,
+    filteredCourses,
+    loading,
+    hoursWatched,
+    handleFilterChange,
+    companyColor
+  } = useMyCourses();
+
+  console.log("MyCoursesContent render:", {
+    loading,
+    coursesCount: filteredCourses.length,
+    recentCount: recentCourses.length
+  });
 
   return (
     <DashboardLayout>

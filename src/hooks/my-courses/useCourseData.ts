@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -16,7 +16,7 @@ export const useCourseData = (
 ) => {
   const { selectedCompany } = useCompanies();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const fetchCourseData = useCallback(async () => {
     if (!selectedCompany?.id) {
@@ -31,9 +31,9 @@ export const useCourseData = (
     }
     
     setLoading(true);
+    console.log("Fetching course data for company:", selectedCompany.nome);
+    
     try {
-      console.log("Fetching course data for company:", selectedCompany.nome);
-      
       // Get user ID
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {

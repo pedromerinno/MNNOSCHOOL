@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useFilteredCourses } from "./useFilteredCourses";
 import { useCourseStats } from "./useCourseStats";
@@ -9,6 +9,8 @@ import { FilterOption } from "./types";
 
 export const useMyCourses = () => {
   const { selectedCompany } = useCompanies();
+  const hasLoadedRef = useRef(false);
+  const lastCompanyIdRef = useRef<string | null>(null);
   
   // Use our smaller, specialized hooks
   const { 
@@ -48,8 +50,27 @@ export const useMyCourses = () => {
 
   // Load course data when component mounts or when company changes
   useEffect(() => {
-    console.log("Effect triggered - selectedCompany:", selectedCompany?.nome || "none");
-    fetchCourseData();
+    const companyId = selectedCompany?.id;
+    
+    console.log("useMyCourses effect triggered:", {
+      companyId,
+      companyName: selectedCompany?.nome,
+      hasLoaded: hasLoadedRef.current,
+      lastCompanyId: lastCompanyIdRef.current
+    });
+    
+    // Only fetch if company ID exists and has changed
+    if (companyId && (companyId !== lastCompanyIdRef.current || !hasLoadedRef.current)) {
+      console.log("Fetching course data for company change");
+      lastCompanyIdRef.current = companyId;
+      hasLoadedRef.current = true;
+      fetchCourseData();
+    } else if (!companyId) {
+      // Reset everything if no company selected
+      console.log("No company selected, resetting data");
+      hasLoadedRef.current = false;
+      lastCompanyIdRef.current = null;
+    }
   }, [selectedCompany?.id, fetchCourseData]);
 
   return {
