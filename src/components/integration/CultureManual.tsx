@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -163,6 +164,11 @@ export const CultureManual: React.FC<CultureManualProps> = ({
 
         {videoUrl && (
           <Card className="md:col-span-2 transition-all duration-200 shadow-none rounded-xl overflow-hidden">
+            <CardHeader>
+              <CardTitle className="text-lg font-normal text-zinc-400">
+                Vídeo Institucional
+              </CardTitle>
+            </CardHeader>
             <CardContent className="p-0">
               <VideoPlayer 
                 videoUrl={videoUrl} 
@@ -185,7 +191,7 @@ export const CultureManual: React.FC<CultureManualProps> = ({
                 <div className="text-center mb-16 max-w-4xl mx-auto">
                   {userProfile && (
                     <div className="flex justify-center items-center mb-10 relative">
-                      <Avatar className="w-20 h-20">
+                      <Avatar className="w-20 h-20 border-4 border-white shadow-lg">
                         <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.display_name || ""} />
                         <AvatarFallback 
                           className="text-white font-semibold text-lg"
@@ -196,7 +202,7 @@ export const CultureManual: React.FC<CultureManualProps> = ({
                       </Avatar>
                       
                       <div 
-                        className="w-20 h-20 rounded-full flex items-center justify-center overflow-hidden bg-white ml-[-12px]"
+                        className="w-20 h-20 rounded-full flex items-center justify-center overflow-hidden bg-white shadow-lg ml-[-12px] border-4 border-white"
                       >
                         <img 
                           src={companyLogo || "/placeholder.svg"} 
