@@ -68,15 +68,7 @@ export const UserRole: React.FC<UserRoleProps> = ({ role, companyColor, userProf
       {/* Introduction Card */}
       <Card className="transition-all duration-200 border-gray-100 dark:border-gray-800 rounded-3xl">
         <CardContent className="p-8 md:p-10">
-          <div className="flex items-center gap-4 mb-4">
-            {userProfile && (
-              <Avatar className="w-10 h-10">
-                <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.display_name || ""} />
-                <AvatarFallback className="bg-gray-200 text-gray-700">
-                  {getInitials(userProfile.display_name)}
-                </AvatarFallback>
-              </Avatar>
-            )}
+          <div className="mb-4">
             <h2 className="text-xl font-semibold">Descrição do Cargo</h2>
           </div>
           

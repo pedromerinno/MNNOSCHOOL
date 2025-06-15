@@ -67,7 +67,6 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
               <h1 className="text-2xl font-semibold text-gray-900 mb-1">
                 {userProfile.display_name || "Usuário"}
               </h1>
-              <p className="text-base font-medium text-gray-500">{roleTitle}</p>
             </div>
             
             <div className="relative flex items-center">
@@ -85,7 +84,7 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
               </div>
               
               {/* User avatar positioned slightly in front and to the right */}
-              <Avatar className="h-16 w-16 -ml-4 relative z-10 border-2 border-white shadow-lg">
+              <Avatar className="h-16 w-16 -ml-4 relative z-10 border-2 border-white">
                 <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.display_name || "User"} />
                 <AvatarFallback className="bg-gray-100 text-gray-600 text-base font-medium">
                   {getInitials(userProfile.display_name)}
