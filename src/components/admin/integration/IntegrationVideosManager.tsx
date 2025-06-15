@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,19 +13,91 @@ import { Company } from "@/types/company";
 import { SubmitButton } from "./form/SubmitButton";
 import { VideoPlaylistManager } from "./VideoPlaylistManager";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
 interface IntegrationVideosManagerProps {
   company: Company;
 }
+
 export const IntegrationVideosManager: React.FC<IntegrationVideosManagerProps> = ({
   company
 }) => {
-  const [videoUrl, setVideoUrl] = useState(company.video_institucional || "");
-  const [videoDescription, setVideoDescription] = useState(company.descricao_video || "");
+  const [videoUrl, setVideoUrl] = useState("");
+  const [videoDescription, setVideoDescription] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("main");
+  const [currentCompanyData, setCurrentCompanyData] = useState<Company>(company);
+
+  // Função para buscar dados atualizados da empresa
+  const fetchUpdatedCompanyData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('empresas')
+        .select('*')
+        .eq('id', company.id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching updated company data:", error);
+        return;
+      }
+
+      if (data) {
+        setCurrentCompanyData(data);
+        setVideoUrl(data.video_institucional || "");
+        setVideoDescription(data.descricao_video || "");
+      }
+    } catch (error) {
+      console.error("Error fetching company data:", error);
+    }
+  };
+
+  // Inicializar dados quando o componente monta ou a empresa muda
+  useEffect(() => {
+    setCurrentCompanyData(company);
+    setVideoUrl(company.video_institucional || "");
+    setVideoDescription(company.descricao_video || "");
+  }, [company.id]);
+
+  // Buscar dados atualizados quando o componente monta
+  useEffect(() => {
+    fetchUpdatedCompanyData();
+  }, [company.id]);
+
+  // Escutar mudanças globais da empresa
+  useEffect(() => {
+    const handleCompanyUpdate = (event: CustomEvent) => {
+      const { company: updatedCompany } = event.detail;
+      if (updatedCompany && updatedCompany.id === company.id) {
+        console.log("Company data updated in IntegrationVideosManager:", updatedCompany.nome);
+        setCurrentCompanyData(updatedCompany);
+        setVideoUrl(updatedCompany.video_institucional || "");
+        setVideoDescription(updatedCompany.descricao_video || "");
+      }
+    };
+
+    const handleForceRefresh = () => {
+      console.log("Force refresh detected in IntegrationVideosManager");
+      fetchUpdatedCompanyData();
+    };
+
+    // Escutar eventos de atualização
+    window.addEventListener('company-data-updated', handleCompanyUpdate as EventListener);
+    window.addEventListener('force-company-refresh', handleForceRefresh);
+    window.addEventListener('company-relation-changed', handleForceRefresh);
+    window.addEventListener('integration-data-updated', handleCompanyUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('company-data-updated', handleCompanyUpdate as EventListener);
+      window.removeEventListener('force-company-refresh', handleForceRefresh);
+      window.removeEventListener('company-relation-changed', handleForceRefresh);
+      window.removeEventListener('integration-data-updated', handleCompanyUpdate as EventListener);
+    };
+  }, [company.id]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
+
     try {
       // Validar URL do YouTube
       if (videoUrl && !isValidYoutubeUrl(videoUrl)) {
@@ -32,17 +105,37 @@ export const IntegrationVideosManager: React.FC<IntegrationVideosManagerProps> =
         setIsSaving(false);
         return;
       }
-      const {
-        error
-      } = await supabase.from('empresas').update({
-        video_institucional: videoUrl,
-        descricao_video: videoDescription
-      }).eq('id', company.id);
+
+      const { data, error } = await supabase
+        .from('empresas')
+        .update({
+          video_institucional: videoUrl,
+          descricao_video: videoDescription
+        })
+        .eq('id', company.id)
+        .select()
+        .single();
+
       if (error) throw error;
+
+      // Atualizar estado local com dados retornados do banco
+      if (data) {
+        setCurrentCompanyData(data);
+        setVideoUrl(data.video_institucional || "");
+        setVideoDescription(data.descricao_video || "");
+      }
+
       toast.success("Vídeo institucional atualizado com sucesso");
 
-      // Disparar evento para atualizar dados da empresa em outros componentes
+      // Disparar eventos para notificar outros componentes
+      window.dispatchEvent(new CustomEvent('company-data-updated', { 
+        detail: { company: data } 
+      }));
+      window.dispatchEvent(new CustomEvent('integration-data-updated', { 
+        detail: { company: data } 
+      }));
       window.dispatchEvent(new Event('company-relation-changed'));
+
     } catch (error: any) {
       console.error("Erro ao salvar vídeo institucional:", error);
       toast.error(`Erro ao salvar: ${error.message}`);
@@ -66,8 +159,11 @@ export const IntegrationVideosManager: React.FC<IntegrationVideosManagerProps> =
     const match = url.match(regExp);
     return match && match[2].length === 11 ? match[2] : null;
   };
-  const videoId = getYoutubeVideoId(videoUrl);
-  return <div className="space-y-6">
+
+  const videoId = getYoutubeVideoId(currentCompanyData.video_institucional || "");
+
+  return (
+    <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="main">Vídeo Institucional</TabsTrigger>
@@ -82,32 +178,54 @@ export const IntegrationVideosManager: React.FC<IntegrationVideosManagerProps> =
             </p>
           </div>
           
-          
-          
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="videoUrl">URL do Vídeo (YouTube)</Label>
-              <Input id="videoUrl" value={videoUrl} onChange={e => setVideoUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=..." className={!isValidYoutubeUrl(videoUrl) ? "border-red-500" : ""} />
-              {!isValidYoutubeUrl(videoUrl) && videoUrl && <p className="text-red-500 text-sm mt-1">URL do YouTube inválida</p>}
+              <Input 
+                id="videoUrl"
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+                placeholder="https://www.youtube.com/watch?v=..."
+                className={!isValidYoutubeUrl(videoUrl) ? "border-red-500" : ""}
+              />
+              {!isValidYoutubeUrl(videoUrl) && videoUrl && (
+                <p className="text-red-500 text-sm mt-1">URL do YouTube inválida</p>
+              )}
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="videoDescription">Descrição do Vídeo</Label>
-              <Textarea id="videoDescription" value={videoDescription} onChange={e => setVideoDescription(e.target.value)} placeholder="Descreva brevemente o conteúdo do vídeo..." rows={3} />
+              <Textarea 
+                id="videoDescription"
+                value={videoDescription}
+                onChange={(e) => setVideoDescription(e.target.value)}
+                placeholder="Descreva brevemente o conteúdo do vídeo..."
+                rows={3}
+              />
             </div>
             
-            {videoId ? <div className="aspect-w-16 aspect-h-9">
-                <iframe src={`https://www.youtube-nocookie.com/embed/${videoId}`} className="w-full rounded-lg" style={{
-              aspectRatio: '16/9'
-            }} allowFullScreen frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" title="Video Institucional" />
-              </div> : <Card>
+            {videoId ? (
+              <div className="aspect-w-16 aspect-h-9">
+                <iframe 
+                  src={`https://www.youtube-nocookie.com/embed/${videoId}`}
+                  className="w-full rounded-lg"
+                  style={{ aspectRatio: '16/9' }}
+                  allowFullScreen 
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  title="Video Institucional"
+                />
+              </div>
+            ) : (
+              <Card>
                 <CardContent className="p-6 text-center py-[60px]">
                   <Video className="h-12 w-8 mx-auto text-gray-400 mb-4" />
                   <p className="text-gray-500 dark:text-gray-400">
                     Adicione uma URL do YouTube válida para visualizar o vídeo
                   </p>
                 </CardContent>
-              </Card>}
+              </Card>
+            )}
             
             <div className="flex justify-end">
               <SubmitButton isSaving={isSaving} />
@@ -116,8 +234,9 @@ export const IntegrationVideosManager: React.FC<IntegrationVideosManagerProps> =
         </TabsContent>
         
         <TabsContent value="playlist" className="mt-6">
-          <VideoPlaylistManager company={company} />
+          <VideoPlaylistManager company={currentCompanyData} />
         </TabsContent>
       </Tabs>
-    </div>;
+    </div>
+  );
 };
