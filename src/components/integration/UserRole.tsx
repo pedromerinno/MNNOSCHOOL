@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, User, FileText, Target, Award, CheckCircle, Briefcase } from "lucide-react";
@@ -66,7 +65,7 @@ export const UserRole: React.FC<UserRoleProps> = ({ role, companyColor, userProf
   return (
     <div className="space-y-8" key={refreshKey}>
       {/* Introduction Card */}
-      <Card className="transition-all duration-200 shadow-sm bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800">
+      <Card className="transition-all duration-200 border-gray-100 dark:border-gray-800">
         <CardContent className="p-6 md:p-8">
           <div className="flex items-center gap-4 mb-4">
             {userProfile && (
@@ -98,11 +97,11 @@ export const UserRole: React.FC<UserRoleProps> = ({ role, companyColor, userProf
       )}
       
       {/* Modern Role Description Card */}
-      <Card className="transition-all duration-300 shadow-lg border-0 bg-gradient-to-br from-white via-gray-50/80 to-gray-100/60 dark:from-gray-900 dark:via-gray-800/80 dark:to-gray-700/60">
-        <CardHeader className="pb-4">
-          <div className="flex items-center gap-4 mb-4">
+      <Card className="transition-all duration-300 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+        <CardHeader className="pb-6">
+          <div className="flex items-center gap-4">
             <div 
-              className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-md"
+              className="w-12 h-12 rounded-2xl flex items-center justify-center"
               style={{ 
                 background: `linear-gradient(135deg, ${companyColor}20 0%, ${companyColor}10 100%)`,
                 border: `1px solid ${companyColor}30` 
@@ -124,7 +123,7 @@ export const UserRole: React.FC<UserRoleProps> = ({ role, companyColor, userProf
         <CardContent className="space-y-6 pt-0">
           {/* Description Section */}
           {role.description && (
-            <div className="bg-white/60 dark:bg-gray-800/40 rounded-2xl p-6 border border-gray-200/50 dark:border-gray-700/50">
+            <div className="bg-gray-50/50 dark:bg-gray-800/30 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
               <div className="flex items-start gap-4">
                 <div 
                   className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-1"
@@ -144,7 +143,7 @@ export const UserRole: React.FC<UserRoleProps> = ({ role, companyColor, userProf
 
           {/* Responsibilities Section */}
           {role.responsibilities && (
-            <div className="bg-white/60 dark:bg-gray-800/40 rounded-2xl p-6 border border-gray-200/50 dark:border-gray-700/50">
+            <div className="bg-gray-50/50 dark:bg-gray-800/30 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
               <div className="flex items-start gap-4">
                 <div 
                   className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-1"
@@ -164,7 +163,7 @@ export const UserRole: React.FC<UserRoleProps> = ({ role, companyColor, userProf
 
           {/* Requirements Section */}
           {role.requirements && (
-            <div className="bg-white/60 dark:bg-gray-800/40 rounded-2xl p-6 border border-gray-200/50 dark:border-gray-700/50">
+            <div className="bg-gray-50/50 dark:bg-gray-800/30 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
               <div className="flex items-start gap-4">
                 <div 
                   className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-1"
@@ -184,7 +183,7 @@ export const UserRole: React.FC<UserRoleProps> = ({ role, companyColor, userProf
 
           {/* Expectations Section */}
           {role.expectations && (
-            <div className="bg-white/60 dark:bg-gray-800/40 rounded-2xl p-6 border border-gray-200/50 dark:border-gray-700/50">
+            <div className="bg-gray-50/50 dark:bg-gray-800/30 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
               <div className="flex items-start gap-4">
                 <div 
                   className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-1"
