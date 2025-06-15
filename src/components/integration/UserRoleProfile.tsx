@@ -62,26 +62,26 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
       <CardContent className="p-6">
         <div className="flex flex-col">
           {/* Header with user name, role and photos */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
             <div className="flex flex-col mb-4 md:mb-0">
-              <h1 className="text-2xl font-light tracking-tight text-gray-900 mb-1">
+              <h1 className="text-2xl font-semibold text-gray-900 mb-1">
                 {userProfile.display_name || "Usuário"}
               </h1>
               <p className="text-base font-medium text-gray-500">{roleTitle}</p>
             </div>
             
-            <div className="flex items-center gap-3">
+            <div className="flex items-start gap-4">
               <Avatar className="h-16 w-16">
                 <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.display_name || "User"} />
                 <AvatarFallback className="bg-gray-100 text-gray-600 text-base font-medium">
                   {getInitials(userProfile.display_name)}
                 </AvatarFallback>
               </Avatar>
-              <div className="h-16 w-16 rounded-full flex items-center justify-center overflow-hidden bg-white">
+              <div className="h-16 w-16 rounded-full overflow-hidden bg-white flex items-center justify-center mt-2">
                 <img 
                   src={selectedCompany?.logo || "/placeholder.svg"} 
                   alt="Company Logo" 
-                  className="w-12 h-12 object-contain" 
+                  className="w-full h-full object-cover rounded-full" 
                   onError={e => {
                     const target = e.target as HTMLImageElement;
                     target.src = "/placeholder.svg";
@@ -92,16 +92,16 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
           </div>
 
           {/* User information grid */}
-          <div className="mb-8">
-            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-6 text-center">
+          <div className="mb-6">
+            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 text-center">
               Informações do Colaborador
             </h2>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {/* Nome */}
-              <div className="flex flex-col items-center text-center p-4 bg-white/60 rounded-2xl border border-white/40">
-                <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center mb-3">
-                  <User size={18} className="text-gray-600" />
+              <div className="flex flex-col items-center text-center p-3 bg-white/60 rounded-2xl border border-white/40">
+                <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center mb-2">
+                  <User size={16} className="text-gray-600" />
                 </div>
                 <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Nome</p>
                 <p className="text-sm font-medium text-gray-900">
@@ -110,9 +110,9 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
               </div>
 
               {/* Cidade */}
-              <div className="flex flex-col items-center text-center p-4 bg-white/60 rounded-2xl border border-white/40">
-                <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center mb-3">
-                  <MapPin size={18} className="text-gray-600" />
+              <div className="flex flex-col items-center text-center p-3 bg-white/60 rounded-2xl border border-white/40">
+                <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center mb-2">
+                  <MapPin size={16} className="text-gray-600" />
                 </div>
                 <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Cidade</p>
                 <p className="text-sm font-medium text-gray-900">
@@ -121,9 +121,9 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
               </div>
 
               {/* Aniversário */}
-              <div className="flex flex-col items-center text-center p-4 bg-white/60 rounded-2xl border border-white/40">
-                <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center mb-3">
-                  <Calendar size={18} className="text-gray-600" />
+              <div className="flex flex-col items-center text-center p-3 bg-white/60 rounded-2xl border border-white/40">
+                <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center mb-2">
+                  <Calendar size={16} className="text-gray-600" />
                 </div>
                 <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Aniversário</p>
                 <p className="text-sm font-medium text-gray-900">
@@ -132,9 +132,9 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
               </div>
 
               {/* Nível */}
-              <div className="flex flex-col items-center text-center p-4 bg-white/60 rounded-2xl border border-white/40">
-                <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center mb-3">
-                  <TrendingUp size={18} className="text-gray-600" />
+              <div className="flex flex-col items-center text-center p-3 bg-white/60 rounded-2xl border border-white/40">
+                <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center mb-2">
+                  <TrendingUp size={16} className="text-gray-600" />
                 </div>
                 <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Nível</p>
                 <p className="text-sm font-medium text-gray-900">
@@ -143,9 +143,9 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
               </div>
 
               {/* Tipo de Contrato */}
-              <div className="flex flex-col items-center text-center p-4 bg-white/60 rounded-2xl border border-white/40">
-                <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center mb-3">
-                  <FileText size={18} className="text-gray-600" />
+              <div className="flex flex-col items-center text-center p-3 bg-white/60 rounded-2xl border border-white/40">
+                <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center mb-2">
+                  <FileText size={16} className="text-gray-600" />
                 </div>
                 <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Tipo de Contrato</p>
                 <p className="text-sm font-medium text-gray-900">
@@ -154,9 +154,9 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
               </div>
 
               {/* Data de Início */}
-              <div className="flex flex-col items-center text-center p-4 bg-white/60 rounded-2xl border border-white/40">
-                <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center mb-3">
-                  <Clock size={18} className="text-gray-600" />
+              <div className="flex flex-col items-center text-center p-3 bg-white/60 rounded-2xl border border-white/40">
+                <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center mb-2">
+                  <Clock size={16} className="text-gray-600" />
                 </div>
                 <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Data de Início</p>
                 <p className="text-sm font-medium text-gray-900">
@@ -168,16 +168,16 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
 
           {/* Manual de cultura status */}
           <div>
-            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-6 text-center">
+            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 text-center">
               Status do Manual de Cultura
             </h2>
 
-            <div className="flex flex-col items-center text-center p-6 bg-white/60 rounded-2xl border border-white/40 max-w-sm mx-auto">
-              <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center mb-4">
+            <div className="flex flex-col items-center text-center p-4 bg-white/60 rounded-2xl border border-white/40 max-w-sm mx-auto">
+              <div className="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center mb-3">
                 {userProfile.manual_cultura_aceito ? (
-                  <CheckCircle2 size={20} className="text-green-500" />
+                  <CheckCircle2 size={18} className="text-green-500" />
                 ) : (
-                  <AlertCircle size={20} className="text-amber-500" />
+                  <AlertCircle size={18} className="text-amber-500" />
                 )}
               </div>
               
