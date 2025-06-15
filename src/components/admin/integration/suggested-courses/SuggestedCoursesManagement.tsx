@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -49,9 +48,9 @@ export const SuggestedCoursesManagement: React.FC = () => {
         .select(`
           *,
           course:courses(title, instructor),
-          user:profiles!user_id(display_name, email),
-          suggested_by_profile:profiles!suggested_by(display_name),
-          company:empresas(nome)
+          user:profiles!user_course_suggestions_user_id_fkey(display_name, email),
+          suggested_by_profile:profiles!user_course_suggestions_suggested_by_fkey(display_name),
+          company:empresas!user_course_suggestions_company_id_fkey(nome)
         `)
         .order('created_at', { ascending: false });
 
