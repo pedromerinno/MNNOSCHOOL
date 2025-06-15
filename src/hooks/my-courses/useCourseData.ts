@@ -19,13 +19,27 @@ export const useCourseData = (
   const [loading, setLoading] = useState(true);
 
   const fetchCourseData = useCallback(async () => {
-    if (!selectedCompany) return;
+    if (!selectedCompany?.id) {
+      console.log("No selected company, resetting data");
+      setStats({ favorites: 0, inProgress: 0, completed: 0, videosCompleted: 0 });
+      setRecentCourses([]);
+      setFilteredCourses([]);
+      setAllCourses([]);
+      setHoursWatched(0);
+      setLoading(false);
+      return;
+    }
     
     setLoading(true);
     try {
+      console.log("Fetching course data for company:", selectedCompany.nome);
+      
       // Get user ID
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuário não autenticado');
+      if (!user) {
+        console.error('User not authenticated');
+        throw new Error('Usuário não autenticado');
+      }
       
       // Fetch courses for company
       const { data: companyAccess, error: accessError } = await supabase
@@ -33,18 +47,24 @@ export const useCourseData = (
         .select('course_id')
         .eq('empresa_id', selectedCompany.id);
       
-      if (accessError) throw accessError;
+      if (accessError) {
+        console.error('Error fetching company access:', accessError);
+        throw accessError;
+      }
       
       if (!companyAccess || companyAccess.length === 0) {
+        console.log("No courses found for company");
         setStats({ favorites: 0, inProgress: 0, completed: 0, videosCompleted: 0 });
         setRecentCourses([]);
         setFilteredCourses([]);
         setAllCourses([]);
+        setHoursWatched(0);
         setLoading(false);
         return;
       }
       
       const courseIds = companyAccess.map(access => access.course_id);
+      console.log(`Found ${courseIds.length} course IDs for company`);
       
       // Get user progress for these courses
       const { data: progressData, error: progressError } = await supabase
@@ -55,39 +75,7 @@ export const useCourseData = (
       
       if (progressError) {
         console.error('Error fetching progress:', progressError);
-        toast({
-          title: "Erro ao carregar progresso",
-          description: progressError.message,
-          variant: "destructive",
-        });
-        // Continue with empty progress data instead of throwing an error
-        const emptyProgress: any[] = [];
-        
-        // Process with empty progress data
-        const { data: coursesData, error: coursesError } = await supabase
-          .from('courses')
-          .select('*')
-          .in('id', courseIds);
-        
-        if (coursesError) throw coursesError;
-        
-        const coursesWithProgress = coursesData?.map(course => {
-          return {
-            ...course,
-            progress: 0,
-            completed: false,
-            last_accessed: null,
-            favorite: false
-          };
-        }) || [];
-        
-        setAllCourses(coursesWithProgress);
-        setFilteredCourses(coursesWithProgress);
-        setRecentCourses([]);
-        setStats({favorites: 0, inProgress: 0, completed: 0, videosCompleted: 0});
-        setHoursWatched(0);
-        setLoading(false);
-        return;
+        // Continue with empty progress data instead of throwing
       }
       
       // Fetch all courses
@@ -96,7 +84,10 @@ export const useCourseData = (
         .select('*')
         .in('id', courseIds);
       
-      if (coursesError) throw coursesError;
+      if (coursesError) {
+        console.error('Error fetching courses:', coursesError);
+        throw coursesError;
+      }
       
       // Get completed lessons count for video stats
       const { data: lessonProgressData, error: lessonProgressError } = await supabase
@@ -111,8 +102,7 @@ export const useCourseData = (
       
       const completedLessonsCount = lessonProgressData?.length || 0;
       
-      // Calculate hours watched (mock data for now, could be replaced with actual tracking)
-      // Here we estimate 15 minutes per completed lesson
+      // Calculate hours watched (estimate 15 minutes per completed lesson)
       const estimatedHoursWatched = Math.round((completedLessonsCount * 15) / 60 * 10) / 10;
       
       const progressMap = progressData || [];
@@ -159,6 +149,8 @@ export const useCourseData = (
       
       // Initially set filtered courses based on active filter
       filterCourses(coursesWithProgress, activeFilter);
+      
+      console.log(`Successfully loaded ${coursesWithProgress.length} courses`);
     } catch (error: any) {
       console.error('Error fetching course stats:', error);
       toast({
@@ -171,10 +163,11 @@ export const useCourseData = (
       setRecentCourses([]);
       setFilteredCourses([]);
       setAllCourses([]);
+      setHoursWatched(0);
     } finally {
       setLoading(false);
     }
-  }, [selectedCompany, toast, setStats, setAllCourses, setFilteredCourses, setRecentCourses, setHoursWatched, filterCourses, activeFilter]);
+  }, [selectedCompany?.id, selectedCompany?.nome, toast, setStats, setAllCourses, setFilteredCourses, setRecentCourses, setHoursWatched, filterCourses, activeFilter]);
 
   return {
     loading,

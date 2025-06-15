@@ -6,8 +6,10 @@ import { CourseFilters } from "@/components/courses/CourseFilters";
 import { RecentCourses } from "@/components/courses/RecentCourses";
 import { FilteredCoursesList } from "@/components/courses/FilteredCoursesList";
 import { CourseSidebar } from "@/components/courses/CourseSidebar";
+import { useCompanies } from "@/hooks/useCompanies";
 
 const MyCourses = () => {
+  const { selectedCompany, isLoading: companyLoading } = useCompanies();
   const {
     activeFilter,
     stats,
@@ -18,6 +20,42 @@ const MyCourses = () => {
     handleFilterChange,
     companyColor
   } = useMyCourses();
+
+  console.log("MyCourses render:", {
+    selectedCompany: selectedCompany?.nome || "none",
+    companyLoading,
+    loading,
+    coursesCount: filteredCourses.length
+  });
+
+  // Show loading if company is still loading
+  if (companyLoading) {
+    return (
+      <DashboardLayout>
+        <div className="container mx-auto max-w-screen-2xl px-4 py-8 bg-transparent dark:bg-[#191919]">
+          <div className="flex items-center justify-center py-12">
+            <div className="w-6 h-6 border-2 border-gray-200 border-t-gray-600 rounded-full animate-spin" />
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Show message if no company is selected
+  if (!selectedCompany) {
+    return (
+      <DashboardLayout>
+        <div className="container mx-auto max-w-screen-2xl px-4 py-8 bg-transparent dark:bg-[#191919]">
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <h2 className="text-xl font-semibold mb-4">Nenhuma empresa selecionada</h2>
+            <p className="text-gray-500 dark:text-gray-400">
+              Selecione uma empresa para ver seus cursos.
+            </p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>

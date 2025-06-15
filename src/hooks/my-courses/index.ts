@@ -48,8 +48,9 @@ export const useMyCourses = () => {
 
   // Load course data when component mounts or when company changes
   useEffect(() => {
+    console.log("Effect triggered - selectedCompany:", selectedCompany?.nome || "none");
     fetchCourseData();
-  }, [selectedCompany, fetchCourseData]);
+  }, [selectedCompany?.id, fetchCourseData]);
 
   return {
     activeFilter,
