@@ -34,6 +34,13 @@ export function useCoursesFetching(
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
       
+      // Get user profile to check their job role
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('cargo_id, is_admin, super_admin')
+        .eq('id', user.id)
+        .single();
+      
       const { data: companyAccess, error: accessError } = await supabase
         .from('company_courses')
         .select('course_id')
@@ -56,11 +63,47 @@ export function useCoursesFetching(
       
       const courseIds = companyAccess.map(access => access.course_id);
       
+      // Get courses with job role restrictions
+      const { data: courseJobRoles } = await supabase
+        .from('course_job_roles')
+        .select('course_id, job_role_id')
+        .in('course_id', courseIds);
+      
+      // Filter courses based on user's job role and admin status
+      let availableCourseIds = courseIds;
+      
+      // If user is not admin and there are job role restrictions
+      if (!userProfile?.is_admin && !userProfile?.super_admin && courseJobRoles && courseJobRoles.length > 0) {
+        const restrictedCourseIds = courseJobRoles.map(cjr => cjr.course_id);
+        const userJobRoleId = userProfile?.cargo_id;
+        
+        // Get courses that the user can access based on their job role
+        const accessibleRestrictedCourses = courseJobRoles
+          .filter(cjr => cjr.job_role_id === userJobRoleId)
+          .map(cjr => cjr.course_id);
+        
+        // Get courses without restrictions
+        const unrestrictedCourseIds = courseIds.filter(id => !restrictedCourseIds.includes(id));
+        
+        // Combine unrestricted courses and accessible restricted courses
+        availableCourseIds = [...unrestrictedCourseIds, ...accessibleRestrictedCourses];
+      }
+      
+      if (availableCourseIds.length === 0) {
+        console.log(`No accessible courses for user in company ${selectedCompany.nome}`);
+        setFeaturedCourses([]);
+        setAllCompanyCourses([]);
+        setLoading(false);
+        setAllCoursesLoading(false);
+        initialLoadDone.current = true;
+        return;
+      }
+      
       // Featured courses (for carousel)
       const { data: featuredCoursesData, error: featuredError } = await supabase
         .from('courses')
         .select('*')
-        .in('id', courseIds)
+        .in('id', availableCourseIds)
         .limit(5);
       
       if (featuredError) {
@@ -79,7 +122,7 @@ export function useCoursesFetching(
       const { data: allCoursesData, error: allCoursesError } = await supabase
         .from('courses')
         .select('*')
-        .in('id', courseIds)
+        .in('id', availableCourseIds)
         .order('created_at', { ascending: false });
       
       if (allCoursesError) {
@@ -88,7 +131,7 @@ export function useCoursesFetching(
       }
       
       if (allCoursesData && allCoursesData.length > 0) {
-        console.log(`Fetched ${allCoursesData.length} total courses`);
+        console.log(`Fetched ${allCoursesData.length} total accessible courses`);
         setAllCompanyCourses(allCoursesData);
       } else {
         setAllCompanyCourses([]);

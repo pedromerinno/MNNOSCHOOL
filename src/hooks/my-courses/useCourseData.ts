@@ -41,6 +41,13 @@ export const useCourseData = (
         throw new Error('Usuário não autenticado');
       }
       
+      // Get user profile to check their job role
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('cargo_id, is_admin, super_admin')
+        .eq('id', user.id)
+        .single();
+      
       // Fetch courses for company
       const { data: companyAccess, error: accessError } = await supabase
         .from('company_courses')
@@ -66,12 +73,49 @@ export const useCourseData = (
       const courseIds = companyAccess.map(access => access.course_id);
       console.log(`Found ${courseIds.length} course IDs for company`);
       
+      // Get courses with job role restrictions
+      const { data: courseJobRoles } = await supabase
+        .from('course_job_roles')
+        .select('course_id, job_role_id')
+        .in('course_id', courseIds);
+      
+      // Filter courses based on user's job role and admin status
+      let filteredCourseIds = courseIds;
+      
+      // If user is not admin and there are job role restrictions
+      if (!userProfile?.is_admin && !userProfile?.super_admin && courseJobRoles && courseJobRoles.length > 0) {
+        const restrictedCourseIds = courseJobRoles.map(cjr => cjr.course_id);
+        const userJobRoleId = userProfile?.cargo_id;
+        
+        // Get courses that the user can access based on their job role
+        const accessibleRestrictedCourses = courseJobRoles
+          .filter(cjr => cjr.job_role_id === userJobRoleId)
+          .map(cjr => cjr.course_id);
+        
+        // Get courses without restrictions
+        const unrestrictedCourseIds = courseIds.filter(id => !restrictedCourseIds.includes(id));
+        
+        // Combine unrestricted courses and accessible restricted courses
+        filteredCourseIds = [...unrestrictedCourseIds, ...accessibleRestrictedCourses];
+      }
+      
+      if (filteredCourseIds.length === 0) {
+        console.log("No accessible courses for user's job role");
+        setStats({ favorites: 0, inProgress: 0, completed: 0, videosCompleted: 0 });
+        setRecentCourses([]);
+        setFilteredCourses([]);
+        setAllCourses([]);
+        setHoursWatched(0);
+        setLoading(false);
+        return;
+      }
+      
       // Get user progress for these courses
       const { data: progressData, error: progressError } = await supabase
         .from('user_course_progress')
         .select('course_id, progress, completed, last_accessed, favorite')
         .eq('user_id', user.id)
-        .in('course_id', courseIds);
+        .in('course_id', filteredCourseIds);
       
       if (progressError) {
         console.error('Error fetching progress:', progressError);
@@ -82,7 +126,7 @@ export const useCourseData = (
       const { data: coursesData, error: coursesError } = await supabase
         .from('courses')
         .select('*')
-        .in('id', courseIds);
+        .in('id', filteredCourseIds);
       
       if (coursesError) {
         console.error('Error fetching courses:', coursesError);
@@ -150,7 +194,7 @@ export const useCourseData = (
       // Initially set filtered courses based on active filter
       filterCourses(coursesWithProgress, activeFilter);
       
-      console.log(`Successfully loaded ${coursesWithProgress.length} courses`);
+      console.log(`Successfully loaded ${coursesWithProgress.length} accessible courses`);
     } catch (error: any) {
       console.error('Error fetching course stats:', error);
       toast({

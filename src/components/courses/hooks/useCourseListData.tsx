@@ -41,6 +41,13 @@ export const useCourseListData = (filter: 'all' | 'in-progress' | 'completed' | 
           throw new Error('User not authenticated');
         }
         
+        // Get user profile to check their job role
+        const { data: userProfile } = await supabase
+          .from('profiles')
+          .select('cargo_id, is_admin, super_admin')
+          .eq('id', userId)
+          .single();
+        
         console.log("Fetching courses for company:", selectedCompany.id);
         
         // Get company course IDs
@@ -64,18 +71,51 @@ export const useCourseListData = (filter: 'all' | 'in-progress' | 'completed' | 
         const accessibleCourseIds = companyAccess.map(access => access.course_id);
         console.log(`Found ${accessibleCourseIds.length} course IDs for company`);
         
+        // Get courses with job role restrictions
+        const { data: courseJobRoles } = await supabase
+          .from('course_job_roles')
+          .select('course_id, job_role_id')
+          .in('course_id', accessibleCourseIds);
+        
+        // Filter courses based on user's job role and admin status
+        let filteredCourseIds = accessibleCourseIds;
+        
+        // If user is not admin and there are job role restrictions
+        if (!userProfile?.is_admin && !userProfile?.super_admin && courseJobRoles && courseJobRoles.length > 0) {
+          const restrictedCourseIds = courseJobRoles.map(cjr => cjr.course_id);
+          const userJobRoleId = userProfile?.cargo_id;
+          
+          // Get courses that the user can access based on their job role
+          const accessibleRestrictedCourses = courseJobRoles
+            .filter(cjr => cjr.job_role_id === userJobRoleId)
+            .map(cjr => cjr.course_id);
+          
+          // Get courses without restrictions
+          const unrestrictedCourseIds = accessibleCourseIds.filter(id => !restrictedCourseIds.includes(id));
+          
+          // Combine unrestricted courses and accessible restricted courses
+          filteredCourseIds = [...unrestrictedCourseIds, ...accessibleRestrictedCourses];
+        }
+        
+        if (filteredCourseIds.length === 0) {
+          console.log("No accessible courses for user's job role");
+          setCourses([]);
+          initialLoadComplete.current = true;
+          return;
+        }
+        
         // Fetch course data
         const { data: coursesData, error: coursesError } = await supabase
           .from('courses')
           .select('*')
-          .in('id', accessibleCourseIds);
+          .in('id', filteredCourseIds);
           
         if (coursesError) {
           throw coursesError;
         }
         
         let availableCourses = coursesData || [];
-        console.log(`Loaded ${availableCourses.length} courses`);
+        console.log(`Loaded ${availableCourses.length} accessible courses`);
         
         // Get user's course progress
         const { data: progressData, error: progressError } = await supabase
@@ -115,7 +155,7 @@ export const useCourseListData = (filter: 'all' | 'in-progress' | 'completed' | 
           );
         }
         
-        console.log(`Displaying ${finalCourses.length} courses after filtering`);
+        console.log(`Displaying ${finalCourses.length} courses after filtering by job role and progress`);
         setCourses(finalCourses);
         initialLoadComplete.current = true;
       } catch (error: any) {
