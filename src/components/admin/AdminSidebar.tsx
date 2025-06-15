@@ -74,13 +74,13 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, onTabChan
     <Sidebar className="border-r min-h-full">
       <SidebarContent className="flex flex-col h-full">
         <SidebarGroup className="flex-1 py-4">
-          <SidebarGroupLabel className="px-4 py-3 text-sm font-semibold text-sidebar-foreground/80 border-b mb-2">
+          <SidebarGroupLabel className="px-4 py-3 text-sm font-semibold text-sidebar-foreground/80 border-b mb-4">
             Administração
           </SidebarGroupLabel>
-          <SidebarGroupContent className="px-3 space-y-1">
-            <SidebarMenu className="space-y-1">
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.tab}>
+          <SidebarGroupContent className="px-3">
+            <SidebarMenu className="space-y-2 mt-4">
+              {menuItems.map((item, index) => (
+                <SidebarMenuItem key={item.tab} className={index === 0 ? "mt-2" : ""}>
                   <SidebarMenuButton 
                     onClick={() => onTabChange(item.tab)}
                     isActive={activeTab === item.tab}
