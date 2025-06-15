@@ -70,9 +70,17 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
               <p className="text-base font-medium text-gray-500">{roleTitle}</p>
             </div>
             
-            <div className="relative">
-              {/* Company logo positioned behind the avatar */}
-              <div className="absolute top-4 -right-4 h-16 w-16 rounded-full overflow-hidden bg-white flex items-center justify-center shadow-sm">
+            <div className="flex items-center gap-4">
+              {/* User avatar */}
+              <Avatar className="h-16 w-16">
+                <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.display_name || "User"} />
+                <AvatarFallback className="bg-gray-100 text-gray-600 text-base font-medium">
+                  {getInitials(userProfile.display_name)}
+                </AvatarFallback>
+              </Avatar>
+              
+              {/* Company logo */}
+              <div className="h-16 w-16 rounded-full overflow-hidden bg-white flex items-center justify-center shadow-sm">
                 <img 
                   src={selectedCompany?.logo || "/placeholder.svg"} 
                   alt="Company Logo" 
@@ -83,14 +91,6 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
                   }} 
                 />
               </div>
-              
-              {/* User avatar */}
-              <Avatar className="h-16 w-16 relative z-10">
-                <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.display_name || "User"} />
-                <AvatarFallback className="bg-gray-100 text-gray-600 text-base font-medium">
-                  {getInitials(userProfile.display_name)}
-                </AvatarFallback>
-              </Avatar>
             </div>
           </div>
 
