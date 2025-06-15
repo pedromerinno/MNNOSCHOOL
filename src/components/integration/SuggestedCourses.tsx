@@ -48,24 +48,54 @@ export const SuggestedCourses: React.FC<SuggestedCoursesProps> = ({ companyColor
     
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      // Primeiro, buscar as sugestões básicas
+      const { data: suggestions, error: suggestionsError } = await supabase
         .from('user_course_suggestions')
         .select(`
           *,
-          course:courses(*),
-          suggested_by_profile:profiles!user_course_suggestions_suggested_by_fkey(display_name)
+          course:courses(*)
         `)
         .eq('user_id', userProfile.id)
         .eq('company_id', selectedCompany.id)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching suggested courses:', error);
+      if (suggestionsError) {
+        console.error('Error fetching course suggestions:', suggestionsError);
         toast.error('Erro ao carregar cursos sugeridos');
         return;
       }
 
-      setSuggestedCourses(data || []);
+      if (!suggestions || suggestions.length === 0) {
+        setSuggestedCourses([]);
+        return;
+      }
+
+      // Buscar os perfis dos usuários que sugeriram os cursos
+      const suggesterIds = suggestions.map(s => s.suggested_by);
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .in('id', suggesterIds);
+
+      if (profilesError) {
+        console.error('Error fetching suggester profiles:', profilesError);
+        toast.error('Erro ao carregar informações dos sugestores');
+        return;
+      }
+
+      // Combinar os dados
+      const enrichedSuggestions = suggestions.map(suggestion => {
+        const suggesterProfile = profiles?.find(p => p.id === suggestion.suggested_by);
+        return {
+          ...suggestion,
+          suggested_by_profile: {
+            display_name: suggesterProfile?.display_name || 'Usuário desconhecido'
+          }
+        };
+      });
+
+      console.log(`Loaded ${enrichedSuggestions.length} course suggestions`);
+      setSuggestedCourses(enrichedSuggestions);
     } catch (error) {
       console.error('Error fetching suggested courses:', error);
       toast.error('Erro ao carregar cursos sugeridos');
