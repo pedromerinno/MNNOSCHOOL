@@ -71,23 +71,37 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, onTabChan
   ];
 
   return (
-    <Sidebar className="border-r">
-      <SidebarContent className="py-4">
-        <SidebarGroup>
-          <SidebarGroupLabel className="px-4 py-2 text-sm font-medium text-sidebar-foreground/70">
+    <Sidebar className="border-r min-h-full">
+      <SidebarContent className="flex flex-col h-full">
+        <SidebarGroup className="flex-1 py-4">
+          <SidebarGroupLabel className="px-4 py-3 text-sm font-semibold text-sidebar-foreground/80 border-b mb-2">
             Administração
           </SidebarGroupLabel>
-          <SidebarGroupContent className="px-2">
-            <SidebarMenu className="gap-2">
+          <SidebarGroupContent className="px-3 space-y-1">
+            <SidebarMenu className="space-y-1">
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.tab}>
                   <SidebarMenuButton 
                     onClick={() => onTabChange(item.tab)}
                     isActive={activeTab === item.tab}
-                    className="w-full justify-start h-10 px-3 py-2 rounded-md transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground"
+                    className={`
+                      w-full justify-start h-11 px-3 py-2 rounded-lg 
+                      transition-all duration-200 ease-in-out
+                      hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
+                      data-[active=true]:bg-primary data-[active=true]:text-primary-foreground
+                      data-[active=true]:shadow-sm data-[active=true]:font-medium
+                      group
+                    `}
                   >
-                    <item.icon className="w-4 h-4 mr-3 flex-shrink-0" />
-                    <span className="text-sm">{item.title}</span>
+                    <item.icon className={`
+                      w-4 h-4 mr-3 flex-shrink-0 transition-colors
+                      ${activeTab === item.tab ? 'text-primary-foreground' : 'text-sidebar-foreground/70'}
+                      group-hover:text-sidebar-accent-foreground
+                    `} />
+                    <span className="text-sm font-medium truncate">{item.title}</span>
+                    {activeTab === item.tab && (
+                      <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary-foreground" />
+                    )}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
