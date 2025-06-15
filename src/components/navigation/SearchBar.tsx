@@ -1,11 +1,13 @@
+
 import { Search } from "lucide-react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { fetchCourses } from "@/services/course";
+import { supabase } from "@/integrations/supabase/client";
 import { DialogTitle } from "@/components/ui/dialog";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Course {
   id: string;
@@ -16,31 +18,105 @@ interface Course {
 
 export const SearchBar = () => {
   const { selectedCompany } = useCompanies();
+  const { userProfile } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
   
-  useEffect(() => {
-    const loadCourses = async () => {
-      if (!selectedCompany?.id) return;
-      
-      try {
-        setLoading(true);
-        console.log("Fetching courses for company:", selectedCompany.id);
-        const allCourses = await fetchCourses(selectedCompany.id);
-        console.log("Loaded", allCourses.length, "courses for company", selectedCompany.id);
-        setCourses(allCourses);
-      } catch (error) {
-        console.error("Error fetching courses:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchAccessibleCourses = useCallback(async () => {
+    if (!selectedCompany?.id || !userProfile?.id) return;
     
-    loadCourses();
-  }, [selectedCompany?.id]);
+    try {
+      setLoading(true);
+      console.log("Fetching accessible courses for search, company:", selectedCompany.id);
+      
+      // Get courses available to the company
+      const { data: companyAccess, error: accessError } = await supabase
+        .from('company_courses')
+        .select('course_id')
+        .eq('empresa_id', selectedCompany.id);
+      
+      if (accessError) throw accessError;
+      
+      if (!companyAccess || companyAccess.length === 0) {
+        console.log("No courses found for this company");
+        setCourses([]);
+        return;
+      }
+      
+      const courseIds = companyAccess.map(access => access.course_id);
+      console.log('All company course IDs for search:', courseIds);
+      
+      // Get course job role restrictions
+      const { data: courseJobRoles } = await supabase
+        .from('course_job_roles')
+        .select('course_id, job_role_id')
+        .in('course_id', courseIds);
+      
+      console.log('Course job roles restrictions for search:', courseJobRoles);
+      
+      // Filter courses based on user's job role and admin status
+      let accessibleCourseIds = courseIds;
+      
+      // If user is not admin and has job role restrictions, apply filtering
+      if (!userProfile?.is_admin && !userProfile?.super_admin) {
+        const userJobRoleId = userProfile?.cargo_id;
+        console.log('User job role ID for search:', userJobRoleId);
+        
+        if (courseJobRoles && courseJobRoles.length > 0) {
+          // Get all courses that have role restrictions
+          const restrictedCourseIds = [...new Set(courseJobRoles.map(cjr => cjr.course_id))];
+          console.log('Courses with role restrictions for search:', restrictedCourseIds);
+          
+          // Get courses without any restrictions (available to all)
+          const unrestrictedCourseIds = courseIds.filter(id => !restrictedCourseIds.includes(id));
+          console.log('Unrestricted courses for search:', unrestrictedCourseIds);
+          
+          // Get courses that the user can access based on their job role
+          let accessibleRestrictedCourses: string[] = [];
+          if (userJobRoleId) {
+            accessibleRestrictedCourses = courseJobRoles
+              .filter(cjr => cjr.job_role_id === userJobRoleId)
+              .map(cjr => cjr.course_id);
+            console.log('Accessible restricted courses for user role in search:', accessibleRestrictedCourses);
+          }
+          
+          // Combine unrestricted courses and accessible restricted courses
+          accessibleCourseIds = [...unrestrictedCourseIds, ...accessibleRestrictedCourses];
+        }
+      }
+      
+      console.log('Final accessible course IDs for search:', accessibleCourseIds);
+      
+      if (accessibleCourseIds.length === 0) {
+        console.log(`No accessible courses for user in search`);
+        setCourses([]);
+        return;
+      }
+      
+      // Fetch the actual course data
+      const { data: allCourses, error: coursesError } = await supabase
+        .from('courses')
+        .select('id, title, image_url, tags')
+        .in('id', accessibleCourseIds);
+      
+      if (coursesError) throw coursesError;
+      
+      console.log(`Loaded ${allCourses?.length || 0} accessible courses for search`);
+      setCourses(allCourses || []);
+    } catch (error) {
+      console.error("Error fetching accessible courses for search:", error);
+      setCourses([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedCompany?.id, userProfile]);
+  
+  useEffect(() => {
+    fetchAccessibleCourses();
+  }, [fetchAccessibleCourses]);
 
   const filteredCourses = useMemo(() => {
     if (!searchQuery.trim()) return [];
@@ -120,7 +196,7 @@ export const SearchBar = () => {
                 ) : filteredCourses.length === 0 ? (
                   <CommandEmpty>Nenhum curso encontrado.</CommandEmpty>
                 ) : (
-                  <CommandGroup heading="Cursos sugeridos">
+                  <CommandGroup heading="Cursos disponíveis">
                     {filteredCourses.map((course) => (
                       <CommandItem
                         key={course.id}
