@@ -683,6 +683,51 @@ export type Database = {
           },
         ]
       }
+      user_course_suggestions: {
+        Row: {
+          company_id: string
+          course_id: string
+          created_at: string
+          id: string
+          reason: string
+          suggested_by: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          course_id: string
+          created_at?: string
+          id?: string
+          reason: string
+          suggested_by: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          course_id?: string
+          created_at?: string
+          id?: string
+          reason?: string
+          suggested_by?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_course_suggestions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_course_suggestions_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_documents: {
         Row: {
           attachment_type: string
