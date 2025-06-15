@@ -84,8 +84,8 @@ export const SuggestedCourseCard: React.FC<SuggestedCourseCardProps> = ({
             >
               <Trash2 className="h-3 w-3 text-gray-600 hover:text-red-600" />
             </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
       
       {/* Content */}
