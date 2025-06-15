@@ -152,10 +152,10 @@ const AdminPage = () => {
       <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
         <div className="container mx-auto px-0 lg:px-4 py-6 max-w-[1500px]">
           <SidebarProvider defaultOpen={true}>
-            <div className="flex w-full min-h-[calc(100vh-120px)] rounded-lg overflow-hidden">
+            <div className="flex w-full h-[calc(100vh-120px)] rounded-lg overflow-hidden">
               <AdminSidebar activeTab={activeTab} onTabChange={handleTabChange} />
-              <div className="flex-1 overflow-auto">
-                <div className="p-6">
+              <div className="flex-1 overflow-auto bg-background">
+                <div className="p-6 h-full">
                   <ErrorBoundary>
                     {getActiveContent()}
                   </ErrorBoundary>
