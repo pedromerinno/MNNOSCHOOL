@@ -45,6 +45,31 @@ export const updateCourse = async (courseId: string, courseData: CourseFormValue
       if (insertError) throw insertError;
     }
 
+    // Update job role relations
+    // First remove existing job role relations
+    const { error: deleteJobRoleError } = await supabase
+      .from('course_job_roles')
+      .delete()
+      .eq('course_id', courseId);
+    
+    if (deleteJobRoleError) throw deleteJobRoleError;
+
+    // Then create new job role relations if jobRoleIds array exists and is not empty
+    if (courseData.jobRoleIds && courseData.jobRoleIds.length > 0) {
+      const jobRoleRelations = courseData.jobRoleIds.map(roleId => ({
+        course_id: courseId,
+        job_role_id: roleId
+      }));
+
+      const { error: insertJobRoleError } = await supabase
+        .from('course_job_roles')
+        .insert(jobRoleRelations);
+        
+      if (insertJobRoleError) throw insertJobRoleError;
+
+      console.log(`Course-job role relations updated for course: ${courseId}`);
+    }
+
     toast.success('Curso atualizado', {
       description: 'As alterações foram salvas com sucesso.',
     });

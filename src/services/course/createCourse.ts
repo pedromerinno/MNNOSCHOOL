@@ -37,11 +37,25 @@ export const createCourse = async (courseData: CourseFormValues): Promise<string
         
       if (relationError) throw relationError;
 
-      // Notificações são criadas pelo trigger do banco de dados
       console.log(`Course-company relations created for course: ${courseId} and companies: ${courseData.companyIds.join(', ')}`);
-      console.log(`Notifications should be created by the database trigger`);
-    } else {
-      console.warn(`No company IDs provided for course: ${courseId}. No notifications will be created.`);
+    }
+
+    // Associate course with job roles if specified
+    if (courseData.jobRoleIds && courseData.jobRoleIds.length > 0) {
+      console.log(`Creating course-job role associations for course: ${courseId}, roles: ${courseData.jobRoleIds.join(', ')}`);
+      
+      const jobRoleRelations = courseData.jobRoleIds.map(roleId => ({
+        course_id: courseId,
+        job_role_id: roleId
+      }));
+      
+      const { error: jobRoleError } = await supabase
+        .from('course_job_roles')
+        .insert(jobRoleRelations);
+        
+      if (jobRoleError) throw jobRoleError;
+
+      console.log(`Course-job role relations created for course: ${courseId}`);
     }
 
     toast.success('Curso criado', {

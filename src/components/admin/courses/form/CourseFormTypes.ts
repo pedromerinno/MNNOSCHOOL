@@ -1,28 +1,25 @@
 
-import { z } from "zod";
-import { Course } from "../../courses/types";
+import * as z from "zod";
 
-// companyIds agora é um array obrigatório, sempre presente
 export const courseSchema = z.object({
-  id: z.string().optional(), // Add id field as optional
-  title: z.string().min(1, "O título é obrigatório"),
-  description: z.string().nullable().optional(),
-  image_url: z.string().nullable().optional(),
-  instructor: z.string().nullable().optional(),
-  tags: z.array(z.string()).optional().default([]),
-  companyIds: z.array(z.string()).min(1, "Selecione ao menos uma empresa"), // multi-empresa
+  title: z.string().min(1, "Título é obrigatório"),
+  description: z.string().optional(),
+  image_url: z.string().optional(),
+  instructor: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  companyIds: z.array(z.string()).min(1, "Selecione pelo menos uma empresa"),
+  jobRoleIds: z.array(z.string()).optional().default([]), // Array de IDs de cargos
 });
 
 export type CourseFormValues = z.infer<typeof courseSchema>;
 
 export interface CourseFormProps {
-  initialData?: Course | CourseFormValues | null;
+  initialData?: Partial<CourseFormValues>;
   onSubmit: (data: CourseFormValues) => void;
-  onCancel: () => void;
-  isSubmitting: boolean;
+  onCancel?: () => void;
+  isSubmitting?: boolean;
   onClose?: () => void;
-  // Passa a lista de empresas do usuário logado
-  availableCompanies?: { id: string; nome: string; logo?: string }[];
+  availableCompanies?: Array<{ id: string; nome: string }>;
   showCompanySelector?: boolean;
   preselectedCompanyId?: string;
 }

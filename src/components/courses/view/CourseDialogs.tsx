@@ -2,18 +2,16 @@
 import React from 'react';
 import { EditCourseDialog } from '../EditCourseDialog';
 import { LessonManager } from '@/components/admin/courses/LessonManager';
-import { Company } from '@/types/company';
-import { CourseFormValues } from '@/components/admin/courses/form/CourseFormTypes';
 
 interface CourseDialogsProps {
   isEditDialogOpen: boolean;
   setIsEditDialogOpen: (open: boolean) => void;
-  initialFormData: CourseFormValues;
-  handleCourseUpdate: (data: CourseFormValues) => Promise<void>;
+  initialFormData: any;
+  handleCourseUpdate: (data: any) => Promise<any>;
   isSubmitting: boolean;
-  userCompanies: Company[];
+  userCompanies: Array<{ id: string; nome: string }>;
   showLessonManager: boolean;
-  setShowLessonManager: (show: boolean) => void;
+  setShowLessonManager: (open: boolean) => void;
   courseId: string;
   courseTitle: string;
 }
@@ -33,12 +31,12 @@ export const CourseDialogs: React.FC<CourseDialogsProps> = ({
   return (
     <>
       <EditCourseDialog
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
+        isOpen={isEditDialogOpen}
+        onClose={() => setIsEditDialogOpen(false)}
         initialData={initialFormData}
         onSubmit={handleCourseUpdate}
         isSubmitting={isSubmitting}
-        userCompanies={userCompanies}
+        availableCompanies={userCompanies}
       />
 
       <LessonManager

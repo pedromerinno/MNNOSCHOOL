@@ -8,6 +8,7 @@ import { CourseFormFields } from './courses/form/CourseFormFields';
 import { TagsField } from './courses/form/TagsField';
 import { FormActions } from './courses/form/FormActions';
 import { CompanyMultiSelectorField } from "./courses/form/CompanyMultiSelectorField";
+import { JobRolesSelectorField } from "./courses/form/JobRolesSelectorField";
 
 export const CourseForm: React.FC<CourseFormProps> = ({ 
   initialData, 
@@ -37,8 +38,17 @@ export const CourseForm: React.FC<CourseFormProps> = ({
       instructor: initialData?.instructor || "",
       tags: initialData?.tags || [],
       companyIds: initialCompanyIds,
+      jobRoleIds: initialData?.jobRoleIds || [],
     },
   });
+
+  // Watch for company changes to reset job roles selection
+  const watchedCompanyIds = form.watch("companyIds");
+  
+  useEffect(() => {
+    // Reset job roles when companies change
+    form.setValue("jobRoleIds", []);
+  }, [watchedCompanyIds, form]);
 
   return (
     <Form {...form}>
@@ -53,6 +63,11 @@ export const CourseForm: React.FC<CourseFormProps> = ({
         <CourseFormFields form={form} />
 
         <TagsField form={form} />
+
+        <JobRolesSelectorField 
+          form={form} 
+          companyIds={watchedCompanyIds || []}
+        />
 
         <FormActions 
           onCancel={onClose || onCancel} 
