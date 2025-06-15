@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { UserProfile } from "@/types/user";
@@ -58,7 +59,12 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
         borderColor: `${companyColor}20`
       }}
     >
-      <CardContent className="p-8 border border-gray-200/50 rounded-3xl">
+      <CardContent 
+        className="p-8 rounded-3xl"
+        style={{
+          border: `1px solid ${companyColor}20`
+        }}
+      >
         <div className="flex flex-col">
           {/* Header with user name, role and photos */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
