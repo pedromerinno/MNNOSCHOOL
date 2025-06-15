@@ -179,102 +179,104 @@ export const CultureManual: React.FC<CultureManualProps> = ({
         )}
 
         {companyHistory && (
-          <div className="md:col-span-2 -mx-6">
-            <div 
-              className="py-16 px-6"
-              style={{
-                background: `linear-gradient(135deg, ${companyColor}08 0%, ${companyColor}03 50%, white 100%)`
-              }}
-            >
-              {/* Header centralizado com foto do usuário e logo da empresa */}
-              <div className="text-center mb-12 max-w-3xl mx-auto">
-                {userProfile && (
-                  <div className="flex justify-center items-center mb-8 relative">
-                    <Avatar className="w-16 h-16 z-10">
-                      <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.display_name || ""} />
-                      <AvatarFallback 
-                        className="text-white font-semibold"
-                        style={{ backgroundColor: companyColor }}
+          <Card className="md:col-span-2 transition-all duration-200 shadow-none rounded-xl overflow-hidden">
+            <CardContent className="p-0">
+              <div 
+                className="py-16 px-6"
+                style={{
+                  background: `linear-gradient(135deg, ${companyColor}08 0%, ${companyColor}03 50%, white 100%)`
+                }}
+              >
+                {/* Header centralizado com foto do usuário e logo da empresa */}
+                <div className="text-center mb-12 max-w-3xl mx-auto">
+                  {userProfile && (
+                    <div className="flex justify-center items-center mb-8 relative">
+                      <Avatar className="w-16 h-16 z-10">
+                        <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.display_name || ""} />
+                        <AvatarFallback 
+                          className="text-white font-semibold"
+                          style={{ backgroundColor: companyColor }}
+                        >
+                          {getInitials(userProfile.display_name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      
+                      <div 
+                        className="w-16 h-16 rounded-full flex items-center justify-center overflow-hidden bg-white shadow-md ml-[-8px] mt-4"
                       >
-                        {getInitials(userProfile.display_name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    
-                    <div 
-                      className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden bg-white shadow-md ml-[-8px] mt-4"
-                    >
-                      <img 
-                        src={companyLogo || "/placeholder.svg"} 
-                        alt={`${companyName || 'Company'} Logo`} 
-                        className="w-full h-full object-contain p-1" 
-                        onError={e => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = "/placeholder.svg";
-                        }} 
-                      />
+                        <img 
+                          src={companyLogo || "/placeholder.svg"} 
+                          alt={`${companyName || 'Company'} Logo`} 
+                          className="w-full h-full object-cover" 
+                          onError={e => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = "/placeholder.svg";
+                          }} 
+                        />
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                  
+                  <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+                    Declaração de Cultura
+                  </h2>
+                  <div className="w-16 h-0.5 mx-auto mb-8" style={{ backgroundColor: companyColor }} />
+                </div>
                 
-                <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-                  Declaração de Cultura
-                </h2>
-                <div className="w-16 h-0.5 mx-auto mb-8" style={{ backgroundColor: companyColor }} />
-              </div>
-              
-              {/* Conteúdo da carta centralizado */}
-              <div className="max-w-4xl mx-auto text-center mb-12">
-                <p className="text-gray-800 leading-relaxed text-sm font-mono whitespace-pre-line">
-                  {companyHistory}
-                </p>
-              </div>
-              
-              {/* Assinatura centralizada */}
-              <div className="text-center max-w-3xl mx-auto mb-16">
-                <div className="w-24 h-0.5 mx-auto mb-4" style={{ backgroundColor: companyColor }} />
-                <p className="text-gray-600 text-sm mb-1">
-                  Com os melhores cumprimentos,
-                </p>
-                <p className="text-gray-800 font-medium">
-                  Equipe de Gestão
-                </p>
-              </div>
-
-              {/* Seção de aceite integrada */}
-              <div className="max-w-2xl mx-auto">
-                <div className="bg-white/70 backdrop-blur-sm rounded-xl p-8 text-center border border-gray-200/50 shadow-sm">
-                  <div className="flex items-center justify-center mb-4">
-                    <Sparkles className="h-6 w-6 mr-2" style={{ color: companyColor }} />
-                    <h3 className="text-lg font-semibold">Aceite do Manual de Cultura</h3>
-                  </div>
-                  <p className="text-gray-600 mb-6 text-sm leading-relaxed">
-                    {isManualAccepted 
-                      ? "Você já aceitou este manual de cultura. Obrigado por fazer parte da nossa cultura organizacional."
-                      : "Ao aceitar este manual, você confirma que leu e compreendeu nossa cultura, valores e missão, comprometendo-se a vivenciá-los no dia a dia."
-                    }
+                {/* Conteúdo da carta centralizado */}
+                <div className="max-w-4xl mx-auto text-center mb-12">
+                  <p className="text-gray-800 leading-relaxed text-sm font-mono whitespace-pre-line">
+                    {companyHistory}
                   </p>
-                  <Button 
-                    onClick={handleAcceptManual}
-                    disabled={isManualAccepted || isUpdating}
-                    style={{ 
-                      backgroundColor: isManualAccepted ? companyColor : undefined,
-                      borderColor: companyColor 
-                    }}
-                    variant={isManualAccepted ? "default" : "outline"}
-                    size="lg"
-                    className="px-8"
-                  >
-                    {isUpdating 
-                      ? "Processando..." 
-                      : isManualAccepted 
-                        ? "✓ Manual Aceito" 
-                        : "Aceitar Manual de Cultura"
-                    }
-                  </Button>
+                </div>
+                
+                {/* Assinatura centralizada */}
+                <div className="text-center max-w-3xl mx-auto mb-16">
+                  <div className="w-24 h-0.5 mx-auto mb-4" style={{ backgroundColor: companyColor }} />
+                  <p className="text-gray-600 text-sm mb-1">
+                    Com os melhores cumprimentos,
+                  </p>
+                  <p className="text-gray-800 font-medium">
+                    Equipe de Gestão
+                  </p>
+                </div>
+
+                {/* Seção de aceite integrada */}
+                <div className="max-w-2xl mx-auto">
+                  <div className="bg-white/70 backdrop-blur-sm rounded-xl p-8 text-center border border-gray-200/50 shadow-sm">
+                    <div className="flex items-center justify-center mb-4">
+                      <Sparkles className="h-6 w-6 mr-2" style={{ color: companyColor }} />
+                      <h3 className="text-lg font-semibold">Aceite do Manual de Cultura</h3>
+                    </div>
+                    <p className="text-gray-600 mb-6 text-sm leading-relaxed">
+                      {isManualAccepted 
+                        ? "Você já aceitou este manual de cultura. Obrigado por fazer parte da nossa cultura organizacional."
+                        : "Ao aceitar este manual, você confirma que leu e compreendeu nossa cultura, valores e missão, comprometendo-se a vivenciá-los no dia a dia."
+                      }
+                    </p>
+                    <Button 
+                      onClick={handleAcceptManual}
+                      disabled={isManualAccepted || isUpdating}
+                      style={{ 
+                        backgroundColor: isManualAccepted ? companyColor : undefined,
+                        borderColor: companyColor 
+                      }}
+                      variant={isManualAccepted ? "default" : "outline"}
+                      size="lg"
+                      className="px-8"
+                    >
+                      {isUpdating 
+                        ? "Processando..." 
+                        : isManualAccepted 
+                          ? "✓ Manual Aceito" 
+                          : "Aceitar Manual de Cultura"
+                      }
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>
