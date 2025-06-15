@@ -3,6 +3,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DocumentUploadForm } from "./DocumentUploadForm";
 import { DocumentList } from "./DocumentList";
 import { UserDocument, DocumentType } from "@/types/document";
+import { FileText, Shield, ScrollText, Briefcase, Archive } from "lucide-react";
+import { useCompanies } from "@/hooks/useCompanies";
+import { useState } from "react";
 
 interface DocumentTabsProps {
   activeTab: string;
@@ -37,110 +40,85 @@ export const DocumentTabs = ({
   onDelete,
   canDeleteDocument
 }: DocumentTabsProps) => {
+  const { selectedCompany } = useCompanies();
+  const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
+
   const filterDocuments = (type?: string) => {
     if (!type || type === "all") return documents;
     return documents.filter(doc => doc.document_type === type);
   };
 
+  const tabs = [
+    {
+      value: "all",
+      label: "Todos",
+      icon: FileText
+    },
+    {
+      value: "confidentiality_agreement",
+      label: "Confidencialidade",
+      icon: Shield
+    },
+    {
+      value: "company_policy",
+      label: "Políticas",
+      icon: ScrollText
+    },
+    {
+      value: "employment_contract",
+      label: "Contratos",
+      icon: Briefcase
+    },
+    {
+      value: "other",
+      label: "Outros",
+      icon: Archive
+    }
+  ];
+
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab}>
-      <TabsList className="mb-6">
-        <TabsTrigger value="all">Todos</TabsTrigger>
-        <TabsTrigger value="confidentiality_agreement">Confidencialidade</TabsTrigger>
-        <TabsTrigger value="company_policy">Políticas</TabsTrigger>
-        <TabsTrigger value="employment_contract">Contratos</TabsTrigger>
-        <TabsTrigger value="other">Outros</TabsTrigger>
-      </TabsList>
+    <div className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid grid-cols-5 w-full rounded-2xl p-1.5 gap-2 bg-gray-100/0">
+          {tabs.map((tab) => (
+            <TabsTrigger
+              key={tab.value}
+              value={tab.value}
+              className="flex items-center gap-2 rounded-xl py-4 px-6 transition-colors"
+              style={{
+                backgroundColor: activeTab === tab.value ? `${companyColor}10` : undefined,
+                borderColor: activeTab === tab.value ? companyColor : undefined,
+                color: activeTab === tab.value ? companyColor : undefined
+              }}
+            >
+              <tab.icon className="h-4 w-4" />
+              <span className="hidden sm:inline">{tab.label}</span>
+            </TabsTrigger>
+          ))}
+        </TabsList>
 
-      <TabsContent value="all">
-        <DocumentUploadForm
-          open={uploadOpen}
-          onOpenChange={setUploadOpen}
-          onUpload={onUpload}
-          isUploading={isUploading}
-        />
-        <div className="mt-6">
-          <DocumentList
-            documents={filterDocuments()}
-            onDownload={onDownload}
-            onPreview={onPreview}
-            onDelete={onDelete}
-            canDeleteDocument={canDeleteDocument}
-          />
+        <div className="mt-10 mb-16 space-y-8">
+          {tabs.map((tab) => (
+            <TabsContent key={tab.value} value={tab.value} className="m-0">
+              <DocumentUploadForm
+                open={uploadOpen}
+                onOpenChange={setUploadOpen}
+                onUpload={onUpload}
+                isUploading={isUploading}
+              />
+              <div className="mt-6">
+                <DocumentList
+                  documents={filterDocuments(tab.value === "all" ? undefined : tab.value)}
+                  onDownload={onDownload}
+                  onPreview={onPreview}
+                  onDelete={onDelete}
+                  canDeleteDocument={canDeleteDocument}
+                />
+              </div>
+            </TabsContent>
+          ))}
         </div>
-      </TabsContent>
-
-      <TabsContent value="confidentiality_agreement">
-        <DocumentUploadForm
-          open={uploadOpen}
-          onOpenChange={setUploadOpen}
-          onUpload={onUpload}
-          isUploading={isUploading}
-        />
-        <div className="mt-6">
-          <DocumentList
-            documents={filterDocuments("confidentiality_agreement")}
-            onDownload={onDownload}
-            onPreview={onPreview}
-            onDelete={onDelete}
-            canDeleteDocument={canDeleteDocument}
-          />
-        </div>
-      </TabsContent>
-
-      <TabsContent value="company_policy">
-        <DocumentUploadForm
-          open={uploadOpen}
-          onOpenChange={setUploadOpen}
-          onUpload={onUpload}
-          isUploading={isUploading}
-        />
-        <div className="mt-6">
-          <DocumentList
-            documents={filterDocuments("company_policy")}
-            onDownload={onDownload}
-            onPreview={onPreview}
-            onDelete={onDelete}
-            canDeleteDocument={canDeleteDocument}
-          />
-        </div>
-      </TabsContent>
-
-      <TabsContent value="employment_contract">
-        <DocumentUploadForm
-          open={uploadOpen}
-          onOpenChange={setUploadOpen}
-          onUpload={onUpload}
-          isUploading={isUploading}
-        />
-        <div className="mt-6">
-          <DocumentList
-            documents={filterDocuments("employment_contract")}
-            onDownload={onDownload}
-            onPreview={onPreview}
-            onDelete={onDelete}
-            canDeleteDocument={canDeleteDocument}
-          />
-        </div>
-      </TabsContent>
-
-      <TabsContent value="other">
-        <DocumentUploadForm
-          open={uploadOpen}
-          onOpenChange={setUploadOpen}
-          onUpload={onUpload}
-          isUploading={isUploading}
-        />
-        <div className="mt-6">
-          <DocumentList
-            documents={filterDocuments("other")}
-            onDownload={onDownload}
-            onPreview={onPreview}
-            onDelete={onDelete}
-            canDeleteDocument={canDeleteDocument}
-          />
-        </div>
-      </TabsContent>
-    </Tabs>
+      </Tabs>
+    </div>
   );
 };
