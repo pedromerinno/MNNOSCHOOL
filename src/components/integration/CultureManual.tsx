@@ -180,12 +180,17 @@ export const CultureManual: React.FC<CultureManualProps> = ({
 
         {companyHistory && (
           <div className="md:col-span-2 -mx-6">
-            <div className="bg-white dark:bg-gray-50 py-16 px-6">
+            <div 
+              className="py-16 px-6"
+              style={{
+                background: `linear-gradient(135deg, ${companyColor}08 0%, ${companyColor}03 50%, white 100%)`
+              }}
+            >
               {/* Header centralizado com foto do usuário e logo da empresa */}
               <div className="text-center mb-12 max-w-3xl mx-auto">
                 {userProfile && (
-                  <div className="flex justify-center items-center gap-4 mb-8">
-                    <Avatar className="w-16 h-16">
+                  <div className="flex justify-center items-center mb-8 relative">
+                    <Avatar className="w-16 h-16 z-10">
                       <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.display_name || ""} />
                       <AvatarFallback 
                         className="text-white font-semibold"
@@ -195,13 +200,13 @@ export const CultureManual: React.FC<CultureManualProps> = ({
                       </AvatarFallback>
                     </Avatar>
                     
-                    <div className="w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden bg-white border-2" style={{
-                      borderColor: companyColor
-                    }}>
+                    <div 
+                      className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden bg-white shadow-md ml-[-8px] mt-4"
+                    >
                       <img 
                         src={companyLogo || "/placeholder.svg"} 
                         alt={`${companyName || 'Company'} Logo`} 
-                        className="w-full h-full object-contain p-2" 
+                        className="w-full h-full object-contain p-1" 
                         onError={e => {
                           const target = e.target as HTMLImageElement;
                           target.src = "/placeholder.svg";
@@ -237,12 +242,12 @@ export const CultureManual: React.FC<CultureManualProps> = ({
 
               {/* Seção de aceite integrada */}
               <div className="max-w-2xl mx-auto">
-                <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl p-8 text-center border border-gray-200">
+                <div className="bg-white/70 backdrop-blur-sm rounded-xl p-8 text-center border border-gray-200/50 shadow-sm">
                   <div className="flex items-center justify-center mb-4">
                     <Sparkles className="h-6 w-6 mr-2" style={{ color: companyColor }} />
                     <h3 className="text-lg font-semibold">Aceite do Manual de Cultura</h3>
                   </div>
-                  <p className="text-gray-600 dark:text-gray-700 mb-6 text-sm leading-relaxed">
+                  <p className="text-gray-600 mb-6 text-sm leading-relaxed">
                     {isManualAccepted 
                       ? "Você já aceitou este manual de cultura. Obrigado por fazer parte da nossa cultura organizacional."
                       : "Ao aceitar este manual, você confirma que leu e compreendeu nossa cultura, valores e missão, comprometendo-se a vivenciá-los no dia a dia."
