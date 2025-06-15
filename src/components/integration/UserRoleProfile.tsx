@@ -6,6 +6,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useCompanies } from "@/hooks/useCompanies";
+import { User, MapPin, Calendar, TrendingUp, FileText, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 
 interface UserRoleProfileProps {
   userProfile: UserProfile;
@@ -115,49 +116,83 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
                 </h3>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-2">
-                <div className="space-y-1">
-                  <p className="text-gray-500 text-sm font-medium">Nome</p>
-                  <p className="text-lg font-semibold" style={{
-                    color: companyColor
-                  }}>
-                    {userProfile.display_name || "Não informado"}
-                  </p>
+              <div className="space-y-4">
+                {/* Nome */}
+                <div className="flex items-center gap-4 p-4 bg-white dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full" style={{ backgroundColor: getLighterColor(companyColor, 0.2) }}>
+                    <User size={18} style={{ color: companyColor }} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-500 font-medium">Nome</p>
+                    <p className="text-lg font-semibold" style={{ color: companyColor }}>
+                      {userProfile.display_name || "Não informado"}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="space-y-1">
-                  <p className="text-gray-500 text-sm font-medium">Cidade</p>
-                  <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
-                    {userProfile.cidade || "Não informado"}
-                  </p>
+                {/* Cidade */}
+                <div className="flex items-center gap-4 p-4 bg-white dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full" style={{ backgroundColor: getLighterColor(companyColor, 0.2) }}>
+                    <MapPin size={18} style={{ color: companyColor }} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-500 font-medium">Cidade</p>
+                    <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                      {userProfile.cidade || "Não informado"}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="space-y-1">
-                  <p className="text-gray-500 text-sm font-medium">Aniversário</p>
-                  <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
-                    {formatBirthday(userProfile.aniversario) || "Não informado"}
-                  </p>
+                {/* Aniversário */}
+                <div className="flex items-center gap-4 p-4 bg-white dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full" style={{ backgroundColor: getLighterColor(companyColor, 0.2) }}>
+                    <Calendar size={18} style={{ color: companyColor }} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-500 font-medium">Aniversário</p>
+                    <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                      {formatBirthday(userProfile.aniversario) || "Não informado"}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="space-y-1">
-                  <p className="text-gray-500 text-sm font-medium">Nível</p>
-                  <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
-                    {userProfile.nivel_colaborador || "Não informado"}
-                  </p>
+                {/* Nível */}
+                <div className="flex items-center gap-4 p-4 bg-white dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full" style={{ backgroundColor: getLighterColor(companyColor, 0.2) }}>
+                    <TrendingUp size={18} style={{ color: companyColor }} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-500 font-medium">Nível</p>
+                    <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                      {userProfile.nivel_colaborador || "Não informado"}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="space-y-1">
-                  <p className="text-gray-500 text-sm font-medium">Tipo de Contrato</p>
-                  <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
-                    {userProfile.tipo_contrato || "Não informado"}
-                  </p>
+                {/* Tipo de Contrato */}
+                <div className="flex items-center gap-4 p-4 bg-white dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full" style={{ backgroundColor: getLighterColor(companyColor, 0.2) }}>
+                    <FileText size={18} style={{ color: companyColor }} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-500 font-medium">Tipo de Contrato</p>
+                    <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                      {userProfile.tipo_contrato || "Não informado"}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="space-y-1">
-                  <p className="text-gray-500 text-sm font-medium">Data de Início</p>
-                  <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
-                    {formatDate(userProfile.data_inicio) || "Não informado"}
-                  </p>
+                {/* Data de Início */}
+                <div className="flex items-center gap-4 p-4 bg-white dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full" style={{ backgroundColor: getLighterColor(companyColor, 0.2) }}>
+                    <Clock size={18} style={{ color: companyColor }} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-500 font-medium">Data de Início</p>
+                    <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                      {formatDate(userProfile.data_inicio) || "Não informado"}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -174,10 +209,17 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
                 </h3>
               </div>
 
-              <div className="px-2">
-                <div className="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-gray-700">
-                  <span className="text-gray-700 dark:text-gray-300 font-medium">Manual de Cultura</span>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+              <div className="flex items-center gap-4 p-4 bg-white dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700">
+                <div className="flex items-center justify-center w-10 h-10 rounded-full" style={{ backgroundColor: getLighterColor(companyColor, 0.2) }}>
+                  {userProfile.manual_cultura_aceito ? (
+                    <CheckCircle2 size={18} className="text-green-600" />
+                  ) : (
+                    <AlertCircle size={18} className="text-yellow-600" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-gray-500 font-medium">Manual de Cultura</p>
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
                     userProfile.manual_cultura_aceito 
                       ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
                       : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
