@@ -31,12 +31,12 @@ export const CourseDialogs: React.FC<CourseDialogsProps> = ({
   return (
     <>
       <EditCourseDialog
-        isOpen={isEditDialogOpen}
-        onClose={() => setIsEditDialogOpen(false)}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
         initialData={initialFormData}
         onSubmit={handleCourseUpdate}
         isSubmitting={isSubmitting}
-        availableCompanies={userCompanies}
+        userCompanies={userCompanies}
       />
 
       <LessonManager

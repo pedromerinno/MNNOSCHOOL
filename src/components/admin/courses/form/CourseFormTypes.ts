@@ -11,7 +11,9 @@ export const courseSchema = z.object({
   jobRoleIds: z.array(z.string()).optional().default([]), // Array de IDs de cargos
 });
 
-export type CourseFormValues = z.infer<typeof courseSchema>;
+export type CourseFormValues = z.infer<typeof courseSchema> & {
+  id?: string; // Add optional id property for editing
+};
 
 export interface CourseFormProps {
   initialData?: Partial<CourseFormValues>;

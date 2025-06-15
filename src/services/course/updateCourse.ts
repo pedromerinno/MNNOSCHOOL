@@ -48,7 +48,7 @@ export const updateCourse = async (courseId: string, courseData: CourseFormValue
     // Update job role relations
     // First remove existing job role relations
     const { error: deleteJobRoleError } = await supabase
-      .from('course_job_roles')
+      .from('course_job_roles' as any)
       .delete()
       .eq('course_id', courseId);
     
@@ -62,7 +62,7 @@ export const updateCourse = async (courseId: string, courseData: CourseFormValue
       }));
 
       const { error: insertJobRoleError } = await supabase
-        .from('course_job_roles')
+        .from('course_job_roles' as any)
         .insert(jobRoleRelations);
         
       if (insertJobRoleError) throw insertJobRoleError;

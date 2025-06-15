@@ -50,7 +50,7 @@ export const createCourse = async (courseData: CourseFormValues): Promise<string
       }));
       
       const { error: jobRoleError } = await supabase
-        .from('course_job_roles')
+        .from('course_job_roles' as any)
         .insert(jobRoleRelations);
         
       if (jobRoleError) throw jobRoleError;
