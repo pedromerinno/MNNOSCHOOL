@@ -1,26 +1,31 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Input } from './input';
-import { Textarea } from './textarea';
-import { Button } from './button';
-import { Check, X } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Edit2, Check, X } from "lucide-react";
+import { HtmlContent } from "./HtmlContent";
 
 interface EditableTextProps {
   value: string;
-  onSave: (newValue: string) => Promise<void>;
+  onSave: (value: string) => Promise<void> | void;
+  placeholder?: string;
   multiline?: boolean;
   className?: string;
-  placeholder?: string;
   canEdit?: boolean;
+  maxLength?: number;
+  renderAsHtml?: boolean;
 }
 
 export const EditableText: React.FC<EditableTextProps> = ({
   value,
   onSave,
+  placeholder = "Clique duas vezes para editar...",
   multiline = false,
-  className = '',
-  placeholder,
-  canEdit = true
+  className = "",
+  canEdit = true,
+  maxLength,
+  renderAsHtml = false
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value);
@@ -39,26 +44,25 @@ export const EditableText: React.FC<EditableTextProps> = ({
   }, [isEditing]);
 
   const handleDoubleClick = () => {
-    if (canEdit) {
-      setIsEditing(true);
-    }
+    if (!canEdit) return;
+    setIsEditing(true);
   };
 
   const handleSave = async () => {
-    if (editValue.trim() !== value) {
-      setIsSaving(true);
-      try {
-        await onSave(editValue.trim());
-        // Não precisa mais disparar evento aqui, o hook useLessonEdit já faz isso
-      } catch (error) {
-        console.error('Error saving:', error);
-        // Reverter o valor em caso de erro
-        setEditValue(value);
-      } finally {
-        setIsSaving(false);
-      }
+    if (editValue === value) {
+      setIsEditing(false);
+      return;
     }
-    setIsEditing(false);
+
+    setIsSaving(true);
+    try {
+      await onSave(editValue);
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error saving:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCancel = () => {
@@ -72,59 +76,91 @@ export const EditableText: React.FC<EditableTextProps> = ({
       handleSave();
     } else if (e.key === 'Escape') {
       handleCancel();
+    } else if (e.key === 'Enter' && e.ctrlKey && multiline) {
+      e.preventDefault();
+      handleSave();
     }
   };
 
-  const handleBlur = () => {
-    // Save automatically when clicking outside the field
-    handleSave();
-  };
-
-  if (!isEditing) {
+  if (isEditing) {
+    const InputComponent = multiline ? Textarea : Input;
+    
     return (
-      <div
-        className={`${className} ${canEdit ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded p-1 transition-colors' : ''}`}
-        onDoubleClick={handleDoubleClick}
-        title={canEdit ? 'Clique duas vezes para editar' : ''}
-      >
-        {value || placeholder}
+      <div className="space-y-2">
+        <InputComponent
+          ref={inputRef as any}
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          maxLength={maxLength}
+          className={`${className} focus:ring-2 focus:ring-blue-500`}
+          placeholder={placeholder}
+          rows={multiline ? 4 : undefined}
+        />
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={isSaving}
+            className="h-7 px-2"
+          >
+            {isSaving ? (
+              <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Check className="w-3 h-3" />
+            )}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleCancel}
+            disabled={isSaving}
+            className="h-7 px-2"
+          >
+            <X className="w-3 h-3" />
+          </Button>
+        </div>
+        {multiline && (
+          <p className="text-xs text-muted-foreground">
+            Pressione Ctrl+Enter para salvar ou Esc para cancelar
+          </p>
+        )}
       </div>
     );
   }
 
-  const InputComponent = multiline ? Textarea : Input;
+  const displayValue = value || placeholder;
+  const isEmpty = !value;
 
   return (
-    <div className="flex items-start gap-2">
-      <InputComponent
-        ref={inputRef as any}
-        value={editValue}
-        onChange={(e) => setEditValue(e.target.value)}
-        onKeyDown={handleKeyDown}
-        onBlur={handleBlur}
-        className={`${className} flex-1`}
-        disabled={isSaving}
-      />
-      <div className="flex gap-1">
+    <div
+      className={`
+        group relative cursor-pointer transition-all duration-200
+        ${canEdit ? 'hover:bg-muted/50 rounded-md p-2 -m-2' : ''}
+        ${isEmpty ? 'text-muted-foreground italic' : ''}
+        ${className}
+      `}
+      onDoubleClick={handleDoubleClick}
+      title={canEdit ? "Clique duas vezes para editar" : undefined}
+    >
+      {renderAsHtml && !isEmpty ? (
+        <HtmlContent content={displayValue} />
+      ) : (
+        <div className={multiline ? 'whitespace-pre-wrap' : 'truncate'}>
+          {displayValue}
+        </div>
+      )}
+      
+      {canEdit && (
         <Button
           size="sm"
           variant="ghost"
-          onClick={handleSave}
-          disabled={isSaving}
-          className="h-8 w-8 p-0"
+          className="absolute -top-1 -right-1 w-6 h-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+          onClick={() => setIsEditing(true)}
         >
-          <Check className="h-4 w-4" />
+          <Edit2 className="w-3 h-3" />
         </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={handleCancel}
-          disabled={isSaving}
-          className="h-8 w-8 p-0"
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
+      )}
     </div>
   );
 };

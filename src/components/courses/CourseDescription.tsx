@@ -37,6 +37,7 @@ export const CourseDescription: React.FC<CourseDescriptionProps> = ({
           className="text-muted-foreground leading-relaxed min-h-[100px]"
           placeholder={isAdmin ? "Clique duas vezes para adicionar uma descrição..." : "Nenhuma descrição disponível"}
           canEdit={isAdmin && !!lessonId}
+          renderAsHtml={true}
         />
       </CardContent>
     </Card>
