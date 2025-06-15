@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, BookOpen, Users, Trash2, Filter, Edit } from "lucide-react";
+import { Plus, BookOpen, Users, Filter } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useCompanies } from "@/hooks/useCompanies";
 import { SuggestCourseToUserDialog } from './SuggestCourseToUserDialog';
+import { SuggestionActionsDropdown } from './SuggestionActionsDropdown';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -389,24 +389,11 @@ export const SuggestedCoursesManagement: React.FC = () => {
                       {new Date(suggestion.created_at).toLocaleDateString('pt-BR')}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditSuggestion(suggestion)}
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => confirmDeleteSuggestion(suggestion)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      <SuggestionActionsDropdown
+                        suggestion={suggestion}
+                        onEdit={handleEditSuggestion}
+                        onDelete={confirmDeleteSuggestion}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}
