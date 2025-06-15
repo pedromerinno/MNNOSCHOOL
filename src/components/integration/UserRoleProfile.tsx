@@ -93,7 +93,7 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
             </div>
           </div>
 
-          {/* User information grid */}
+          {/* User information grid with border */}
           <div className="mb-6">
             <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 text-center">
               Informações do Colaborador
@@ -103,7 +103,7 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
               className="grid grid-cols-2 md:grid-cols-3 gap-3 p-4 rounded-2xl border-2"
               style={{
                 borderColor: companyColor,
-                background: `linear-gradient(135deg, ${companyColor}08 0%, ${companyColor}03 100%)`
+                backgroundColor: 'rgba(255, 255, 255, 0.4)'
               }}
             >
               {/* Nome */}
