@@ -59,10 +59,10 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
         borderColor: `${companyColor}20`
       }}
     >
-      <CardContent className="p-8">
+      <CardContent className="p-6">
         <div className="flex flex-col">
           {/* Header with user name, role and photos */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
             <div className="flex flex-col mb-4 md:mb-0">
               <h1 className="text-2xl font-semibold text-gray-900 mb-1">
                 {userProfile.display_name || "Usuário"}
@@ -70,7 +70,7 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
               <p className="text-base font-medium text-gray-500">{roleTitle}</p>
             </div>
             
-            <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center gap-4">
               <Avatar className="h-16 w-16">
                 <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.display_name || "User"} />
                 <AvatarFallback className="bg-gray-100 text-gray-600 text-base font-medium">
@@ -92,7 +92,7 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
           </div>
 
           {/* User information grid */}
-          <div className="mb-8">
+          <div className="mb-6">
             <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 text-center">
               Informações do Colaborador
             </h2>
