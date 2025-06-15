@@ -14,6 +14,8 @@ interface CultureManualProps {
   companyMission: string;
   companyHistory: string;
   companyColor: string;
+  companyLogo?: string;
+  companyName?: string;
   videoUrl?: string;
   videoDescription?: string;
 }
@@ -23,6 +25,8 @@ export const CultureManual: React.FC<CultureManualProps> = ({
   companyMission,
   companyHistory,
   companyColor,
+  companyLogo,
+  companyName,
   videoUrl,
   videoDescription
 }) => {
@@ -195,8 +199,8 @@ export const CultureManual: React.FC<CultureManualProps> = ({
                       borderColor: companyColor
                     }}>
                       <img 
-                        src={window.localStorage.getItem('selectedCompanyLogo') || "/placeholder.svg"} 
-                        alt="Company Logo" 
+                        src={companyLogo || "/placeholder.svg"} 
+                        alt={`${companyName || 'Company'} Logo`} 
                         className="w-full h-full object-contain p-2" 
                         onError={e => {
                           const target = e.target as HTMLImageElement;
@@ -221,7 +225,7 @@ export const CultureManual: React.FC<CultureManualProps> = ({
               </div>
               
               {/* Assinatura centralizada */}
-              <div className="text-center max-w-3xl mx-auto">
+              <div className="text-center max-w-3xl mx-auto mb-16">
                 <div className="w-24 h-0.5 mx-auto mb-4" style={{ backgroundColor: companyColor }} />
                 <p className="text-gray-600 text-sm mb-1">
                   Com os melhores cumprimentos,
@@ -230,42 +234,43 @@ export const CultureManual: React.FC<CultureManualProps> = ({
                   Equipe de Gestão
                 </p>
               </div>
+
+              {/* Seção de aceite integrada */}
+              <div className="max-w-2xl mx-auto">
+                <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl p-8 text-center border border-gray-200">
+                  <div className="flex items-center justify-center mb-4">
+                    <Sparkles className="h-6 w-6 mr-2" style={{ color: companyColor }} />
+                    <h3 className="text-lg font-semibold">Aceite do Manual de Cultura</h3>
+                  </div>
+                  <p className="text-gray-600 dark:text-gray-700 mb-6 text-sm leading-relaxed">
+                    {isManualAccepted 
+                      ? "Você já aceitou este manual de cultura. Obrigado por fazer parte da nossa cultura organizacional."
+                      : "Ao aceitar este manual, você confirma que leu e compreendeu nossa cultura, valores e missão, comprometendo-se a vivenciá-los no dia a dia."
+                    }
+                  </p>
+                  <Button 
+                    onClick={handleAcceptManual}
+                    disabled={isManualAccepted || isUpdating}
+                    style={{ 
+                      backgroundColor: isManualAccepted ? companyColor : undefined,
+                      borderColor: companyColor 
+                    }}
+                    variant={isManualAccepted ? "default" : "outline"}
+                    size="lg"
+                    className="px-8"
+                  >
+                    {isUpdating 
+                      ? "Processando..." 
+                      : isManualAccepted 
+                        ? "✓ Manual Aceito" 
+                        : "Aceitar Manual de Cultura"
+                    }
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         )}
-
-        {/* Botão de aceite integrado com banco de dados */}
-        <Card className="md:col-span-2 transition-all duration-200 shadow-none rounded-xl bg-gradient-to-r from-primary/10 to-primary/5">
-          <CardContent className="p-8 text-center">
-            <div className="flex items-center justify-center mb-4">
-              <Sparkles className="h-8 w-8 mr-2" style={{ color: companyColor }} />
-              <h3 className="text-xl font-semibold">Manual de Cultura</h3>
-            </div>
-            <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-2xl mx-auto">
-              {isManualAccepted 
-                ? "Você já aceitou este manual de cultura."
-                : "Ao aceitar este manual, você confirma que leu e compreendeu nossa cultura, valores e missão."
-              }
-            </p>
-            <Button 
-              onClick={handleAcceptManual}
-              disabled={isManualAccepted || isUpdating}
-              style={{ 
-                backgroundColor: isManualAccepted ? companyColor : undefined,
-                borderColor: companyColor 
-              }}
-              variant={isManualAccepted ? "default" : "outline"}
-              size="lg"
-            >
-              {isUpdating 
-                ? "Processando..." 
-                : isManualAccepted 
-                  ? "✓ Manual Aceito" 
-                  : "Aceitar Manual de Cultura"
-              }
-            </Button>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

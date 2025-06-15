@@ -62,7 +62,16 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
 
         <div className="mt-10 mb-16 space-y-8">
           <TabsContent value="culture" className="m-0">
-            <CultureManual companyValues={company?.valores || ""} companyMission={company?.missao || ""} companyHistory={company?.historia || ""} companyColor={companyColor} videoUrl={company?.video_institucional} videoDescription={company?.descricao_video} />
+            <CultureManual 
+              companyValues={company?.valores || ""} 
+              companyMission={company?.missao || ""} 
+              companyHistory={company?.historia || ""} 
+              companyColor={companyColor} 
+              companyLogo={company?.logo}
+              companyName={company?.nome}
+              videoUrl={company?.video_institucional} 
+              videoDescription={company?.descricao_video} 
+            />
           </TabsContent>
 
           <TabsContent value="videos" className="m-0">
