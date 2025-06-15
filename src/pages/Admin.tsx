@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
@@ -152,9 +151,9 @@ const AdminPage = () => {
       <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
         <div className="container mx-auto px-0 lg:px-4 py-6 max-w-[1500px]">
           <SidebarProvider defaultOpen={true}>
-            <div className="flex w-full h-[calc(100vh-120px)] rounded-lg overflow-hidden bg-background shadow-sm border">
+            <div className="flex w-full h-[calc(100vh-120px)] rounded-lg overflow-hidden bg-transparent shadow-sm border border-gray-200/50">
               <AdminSidebar activeTab={activeTab} onTabChange={handleTabChange} />
-              <div className="flex-1 overflow-auto bg-background">
+              <div className="flex-1 overflow-auto bg-transparent">
                 <div className="p-6 h-full">
                   <ErrorBoundary>
                     {getActiveContent()}
