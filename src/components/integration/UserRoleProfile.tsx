@@ -102,60 +102,60 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
           </div>
 
           {/* Information sections */}
-          <div className="space-y-10">
+          <div className="space-y-8">
             {/* User information section */}
             <div>
-              <div className="rounded-xl py-2 px-4 mb-8" style={{ 
+              <div className="rounded-xl py-3 px-4 mb-6" style={{ 
                 backgroundColor: getLighterColor(companyColor, 0.15),
               }}>
                 <h3 style={{
                   color: companyColor
-                }} className="text-sm font-semibold text-blue-600 text-center py-[20px]">
+                }} className="text-sm font-semibold text-center">
                   INFORMAÇÕES DO COLABORADOR
                 </h3>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10 px-4">
-                <div>
-                  <p className="text-gray-500 text-sm mb-2">Nome</p>
-                  <p className="text-blue-600 font-medium" style={{
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-2">
+                <div className="space-y-1">
+                  <p className="text-gray-500 text-sm font-medium">Nome</p>
+                  <p className="text-lg font-semibold" style={{
                     color: companyColor
                   }}>
                     {userProfile.display_name || "Não informado"}
                   </p>
                 </div>
 
-                <div>
-                  <p className="text-gray-500 text-sm mb-2">Cidade</p>
-                  <p className="text-gray-700 dark:text-gray-300 font-medium">
+                <div className="space-y-1">
+                  <p className="text-gray-500 text-sm font-medium">Cidade</p>
+                  <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
                     {userProfile.cidade || "Não informado"}
                   </p>
                 </div>
 
-                <div>
-                  <p className="text-gray-500 text-sm mb-2">Aniversário</p>
-                  <p className="text-gray-700 dark:text-gray-300 font-medium">
+                <div className="space-y-1">
+                  <p className="text-gray-500 text-sm font-medium">Aniversário</p>
+                  <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
                     {formatBirthday(userProfile.aniversario) || "Não informado"}
                   </p>
                 </div>
 
-                <div>
-                  <p className="text-gray-500 text-sm mb-2">Nível</p>
-                  <p className="text-gray-700 dark:text-gray-300 font-medium">
+                <div className="space-y-1">
+                  <p className="text-gray-500 text-sm font-medium">Nível</p>
+                  <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
                     {userProfile.nivel_colaborador || "Não informado"}
                   </p>
                 </div>
 
-                <div>
-                  <p className="text-gray-500 text-sm mb-2">Tipo de Contrato</p>
-                  <p className="text-gray-700 dark:text-gray-300 font-medium">
+                <div className="space-y-1">
+                  <p className="text-gray-500 text-sm font-medium">Tipo de Contrato</p>
+                  <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
                     {userProfile.tipo_contrato || "Não informado"}
                   </p>
                 </div>
 
-                <div>
-                  <p className="text-gray-500 text-sm mb-2">Data de Início</p>
-                  <p className="text-gray-700 dark:text-gray-300 font-medium">
+                <div className="space-y-1">
+                  <p className="text-gray-500 text-sm font-medium">Data de Início</p>
+                  <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
                     {formatDate(userProfile.data_inicio) || "Não informado"}
                   </p>
                 </div>
@@ -164,19 +164,19 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
 
             {/* Manual de cultura status */}
             <div>
-              <div className="rounded-xl py-2 px-4 mb-8" style={{ 
+              <div className="rounded-xl py-3 px-4 mb-6" style={{ 
                 backgroundColor: getLighterColor(companyColor, 0.15),
               }}>
                 <h3 style={{
                   color: companyColor
-                }} className="text-sm font-semibold text-blue-600 text-center py-[20px]">
+                }} className="text-sm font-semibold text-center">
                   STATUS DO MANUAL DE CULTURA
                 </h3>
               </div>
 
-              <div className="px-4">
-                <div className="flex items-center justify-between p-4 rounded-xl border">
-                  <span className="text-gray-700 dark:text-gray-300">Manual de Cultura</span>
+              <div className="px-2">
+                <div className="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                  <span className="text-gray-700 dark:text-gray-300 font-medium">Manual de Cultura</span>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                     userProfile.manual_cultura_aceito 
                       ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
