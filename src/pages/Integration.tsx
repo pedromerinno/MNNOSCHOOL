@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCompanies } from "@/hooks/useCompanies";
@@ -73,6 +74,7 @@ const Integration = () => {
     
     setIsLoadingRoles(true);
     try {
+      console.log('[Integration] Fetching job roles for company:', companyId);
       const { data, error } = await supabase
         .from('job_roles')
         .select('*')
@@ -87,25 +89,15 @@ const Integration = () => {
       }
       
       if (data && data.length > 0) {
-        console.log(`Fetched ${data.length} job roles for company ${companyId}`);
+        console.log(`[Integration] Fetched ${data.length} job roles for company ${companyId}`);
         setJobRoles(data);
-        
-        // Se temos um userProfile com cargo_id, vamos buscar o cargo do usuário
-        if (userProfile?.cargo_id) {
-          const userRole = data.find(role => role.id === userProfile.cargo_id);
-          if (userRole) {
-            setUserRole(userRole);
-          }
-        }
       } else {
-        console.log(`No job roles found for company ${companyId}`);
+        console.log(`[Integration] No job roles found for company ${companyId}`);
         setJobRoles([]);
-        setUserRole(null);
       }
     } catch (error) {
       console.error("Error fetching job roles:", error);
       setJobRoles([]);
-      setUserRole(null);
     } finally {
       setIsLoadingRoles(false);
     }
@@ -113,12 +105,16 @@ const Integration = () => {
   
   // Função para buscar cargo específico do usuário logado
   const fetchUserRole = async (companyId: string) => {
-    if (!userProfile?.id || !companyId) return;
+    if (!userProfile?.id || !companyId) {
+      console.log('[Integration] Missing userProfile or companyId for role fetch');
+      setUserRole(null);
+      return;
+    }
     
     console.log('[Integration] Fetching user role for user:', userProfile.id, 'company:', companyId);
     
     try {
-      // Buscar perfil atualizado do usuário
+      // Primeiro, buscar perfil atualizado do usuário
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('cargo_id')
@@ -126,14 +122,15 @@ const Integration = () => {
         .single();
         
       if (profileError) {
-        console.error("Error fetching user profile:", profileError);
+        console.error("[Integration] Error fetching user profile:", profileError);
+        setUserRole(null);
         return;
       }
       
-      console.log('[Integration] Updated user profile cargo_id:', profile?.cargo_id);
+      console.log('[Integration] User profile cargo_id:', profile?.cargo_id);
       
       if (profile?.cargo_id) {
-        // Buscar detalhes do cargo
+        // Buscar detalhes do cargo especificamente para esta empresa
         const { data: roleData, error: roleError } = await supabase
           .from('job_roles')
           .select('*')
@@ -142,19 +139,20 @@ const Integration = () => {
           .single();
           
         if (roleError) {
-          console.error("Error fetching user role:", roleError);
+          console.error("[Integration] Error fetching user role:", roleError);
+          console.log('[Integration] Role not found for this company, user has no role here');
           setUserRole(null);
           return;
         }
         
-        console.log('[Integration] User role updated:', roleData?.title);
+        console.log('[Integration] ✅ User role found:', roleData?.title);
         setUserRole(roleData);
       } else {
-        console.log('[Integration] User has no role assigned');
+        console.log('[Integration] User has no cargo_id assigned');
         setUserRole(null);
       }
     } catch (error) {
-      console.error("Error fetching user role:", error);
+      console.error("[Integration] Error in fetchUserRole:", error);
       setUserRole(null);
     }
   };
@@ -164,29 +162,39 @@ const Integration = () => {
     const updatedCompany = await fetchCompanyData(companyId);
     if (updatedCompany) {
       setCurrentCompanyData(updatedCompany);
-      console.log("Company data refreshed:", updatedCompany.nome);
+      console.log("[Integration] Company data refreshed:", updatedCompany.nome);
     }
   };
   
-  // Efeito para carregar dados da empresa e cargos
+  // Efeito principal para carregar dados quando a empresa muda
   useEffect(() => {
-    if (companyData?.id) {
+    console.log('[Integration] Main effect triggered - selectedCompany:', selectedCompany?.nome, 'userProfile:', !!userProfile);
+    
+    if (selectedCompany?.id) {
+      console.log('[Integration] Loading data for company:', selectedCompany.nome);
+      
+      // Reset user role imediatamente ao trocar empresa
+      setUserRole(null);
+      
       // Buscar dados atualizados da empresa
-      refreshCompanyData(companyData.id);
+      refreshCompanyData(selectedCompany.id);
       
       // Armazenar logo da empresa no localStorage
-      if (companyData.logo) {
-        localStorage.setItem('selectedCompanyLogo', companyData.logo);
+      if (selectedCompany.logo) {
+        localStorage.setItem('selectedCompanyLogo', selectedCompany.logo);
       } else {
         localStorage.setItem('selectedCompanyLogo', '/placeholder.svg');
       }
       
-      // Buscar cargos apenas se necessário
-      fetchJobRoles(companyData.id);
+      // Buscar cargos da empresa
+      fetchJobRoles(selectedCompany.id);
       
-      // Buscar cargo do usuário
+      // Buscar cargo do usuário para esta empresa
       if (userProfile?.id) {
-        fetchUserRole(companyData.id);
+        // Aguardar um pouco para garantir que o perfil está atualizado
+        setTimeout(() => {
+          fetchUserRole(selectedCompany.id);
+        }, 500);
       }
     }
   }, [selectedCompany?.id, userProfile?.id]);
@@ -195,13 +203,19 @@ const Integration = () => {
   useEffect(() => {
     const handleCompanyChange = (event: CustomEvent<{company: Company}>) => {
       const newCompany = event.detail.company;
-      console.log("Company changed in Integration page:", newCompany.nome);
+      console.log("[Integration] Company change event received:", newCompany.nome);
+      
+      // Reset imediato do userRole
+      setUserRole(null);
       
       if (newCompany.id !== companyData?.id) {
         refreshCompanyData(newCompany.id);
         fetchJobRoles(newCompany.id);
         if (userProfile?.id) {
-          fetchUserRole(newCompany.id);
+          // Aguardar um pouco para garantir sincronia
+          setTimeout(() => {
+            fetchUserRole(newCompany.id);
+          }, 500);
         }
       }
       
@@ -211,56 +225,56 @@ const Integration = () => {
     
     const handleCompanyUpdated = (event: CustomEvent<{company: Company}>) => {
       const updatedCompany = event.detail.company;
-      console.log("Company updated in Integration page:", updatedCompany.nome);
+      console.log("[Integration] Company updated event:", updatedCompany.nome);
       
       if (updatedCompany.id === companyData?.id) {
-        // Atualizar dados locais com os dados do evento
         setCurrentCompanyData(updatedCompany);
         fetchJobRoles(updatedCompany.id);
         if (userProfile?.id) {
-          fetchUserRole(updatedCompany.id);
+          setTimeout(() => {
+            fetchUserRole(updatedCompany.id);
+          }, 500);
         }
-        // Force refresh do componente
         setRefreshKey(prev => prev + 1);
       }
     };
     
     const handleIntegrationDataUpdated = (event: CustomEvent<{company: Company}>) => {
       const updatedCompany = event.detail.company;
-      console.log("Integration data updated:", updatedCompany.nome);
+      console.log("[Integration] Integration data updated:", updatedCompany.nome);
       
       if (updatedCompany.id === companyData?.id) {
-        // Buscar dados atualizados do banco para garantir consistência
         refreshCompanyData(updatedCompany.id);
         if (userProfile?.id) {
-          fetchUserRole(updatedCompany.id);
+          setTimeout(() => {
+            fetchUserRole(updatedCompany.id);
+          }, 500);
         }
-        // Force refresh do componente para mostrar novos dados
         setRefreshKey(prev => prev + 1);
       }
     };
     
     const handleRoleUpdated = () => {
-      console.log("User role updated event detected, refreshing data");
+      console.log("[Integration] User role updated event detected");
       if (companyData?.id) {
         fetchJobRoles(companyData.id);
         if (userProfile?.id) {
-          fetchUserRole(companyData.id);
+          setTimeout(() => {
+            fetchUserRole(companyData.id);
+          }, 500);
         }
       }
     };
     
-    // Novo handler para atualização específica do cargo na integração
     const handleIntegrationRoleUpdated = (event: CustomEvent) => {
-      console.log("Integration role updated event detected:", event.detail);
+      console.log("[Integration] Integration role updated event:", event.detail);
       const { userId, companyId } = event.detail;
       
-      // Se o usuário atualizado é o usuário logado e a empresa é a atual
       if (userId === userProfile?.id && companyId === companyData?.id) {
-        console.log("Updating current user role in integration page");
-        // Atualizar perfil do usuário e depois buscar o cargo
-        fetchUserRole(companyId);
-        // Force refresh do componente
+        console.log("[Integration] Updating current user role");
+        setTimeout(() => {
+          fetchUserRole(companyId);
+        }, 500);
         setRefreshKey(prev => prev + 1);
       }
     };
