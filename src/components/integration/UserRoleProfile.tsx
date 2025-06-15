@@ -5,6 +5,7 @@ import { UserProfile } from "@/types/user";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useCompanies } from "@/hooks/useCompanies";
 
 interface UserRoleProfileProps {
   userProfile: UserProfile;
@@ -17,6 +18,8 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
   roleTitle,
   companyColor
 }) => {
+  const { selectedCompany } = useCompanies();
+
   // Function to get user's initials for avatar fallback
   const getInitials = (name: string | null): string => {
     if (!name) return "U";
@@ -76,20 +79,19 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
               <p className="text-gray-600 dark:text-gray-400">{roleTitle}</p>
             </div>
             <div className="flex items-center gap-1">
-              <Avatar className="h-16 w-16 z-10 relative right-2">
+              <Avatar className="h-16 w-16">
                 <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.display_name || "User"} />
                 <AvatarFallback className="bg-gray-200 text-gray-700">
                   {getInitials(userProfile.display_name)}
                 </AvatarFallback>
               </Avatar>
-              <div className="h-16 w-16 rounded-full flex items-center justify-center overflow-hidden bg-white z-0" style={{
+              <div className="h-16 w-16 rounded-full flex items-center justify-center overflow-hidden bg-white shadow-md ml-[-8px]" style={{
                 border: `2px solid ${companyColor}`
               }}>
-                {/* Use company logo from the selected company */}
                 <img 
-                  src={window.localStorage.getItem('selectedCompanyLogo') || "/placeholder.svg"} 
+                  src={selectedCompany?.logo || "/placeholder.svg"} 
                   alt="Company Logo" 
-                  className="w-full h-full object-cover p-0" 
+                  className="w-full h-full object-cover" 
                   onError={e => {
                     const target = e.target as HTMLImageElement;
                     target.src = "/placeholder.svg";
