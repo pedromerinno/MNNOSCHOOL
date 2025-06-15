@@ -175,12 +175,12 @@ export const CultureManual: React.FC<CultureManualProps> = ({
         )}
 
         {companyHistory && (
-          <div className="md:col-span-2">
-            <div className="bg-white dark:bg-gray-50 rounded-lg border border-gray-100 p-12 max-w-4xl mx-auto">
-              {/* Header com foto do usuário */}
-              <div className="text-center mb-8">
+          <div className="md:col-span-2 -mx-6">
+            <div className="bg-white dark:bg-gray-50 py-16 px-6">
+              {/* Header centralizado com foto do usuário e logo da empresa */}
+              <div className="text-center mb-12 max-w-3xl mx-auto">
                 {userProfile && (
-                  <div className="flex justify-center mb-6">
+                  <div className="flex justify-center items-center gap-4 mb-8">
                     <Avatar className="w-16 h-16">
                       <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.display_name || ""} />
                       <AvatarFallback 
@@ -190,26 +190,40 @@ export const CultureManual: React.FC<CultureManualProps> = ({
                         {getInitials(userProfile.display_name)}
                       </AvatarFallback>
                     </Avatar>
+                    
+                    <div className="w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden bg-white border-2" style={{
+                      borderColor: companyColor
+                    }}>
+                      <img 
+                        src={window.localStorage.getItem('selectedCompanyLogo') || "/placeholder.svg"} 
+                        alt="Company Logo" 
+                        className="w-full h-full object-contain p-2" 
+                        onError={e => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "/placeholder.svg";
+                        }} 
+                      />
+                    </div>
                   </div>
                 )}
                 
-                <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+                <h2 className="text-2xl font-semibold text-gray-900 mb-6">
                   Declaração de Cultura
                 </h2>
-                <div className="w-12 h-0.5 mx-auto" style={{ backgroundColor: companyColor }} />
+                <div className="w-16 h-0.5 mx-auto mb-8" style={{ backgroundColor: companyColor }} />
               </div>
               
-              {/* Conteúdo da carta */}
-              <div className="mb-8">
-                <p className="text-gray-800 leading-relaxed text-base font-mono whitespace-pre-line">
+              {/* Conteúdo da carta centralizado */}
+              <div className="max-w-4xl mx-auto text-center mb-12">
+                <p className="text-gray-800 leading-relaxed text-sm font-mono whitespace-pre-line">
                   {companyHistory}
                 </p>
               </div>
               
-              {/* Assinatura */}
-              <div className="text-right">
-                <div className="w-24 h-0.5 ml-auto mb-3" style={{ backgroundColor: companyColor }} />
-                <p className="text-gray-600 text-sm">
+              {/* Assinatura centralizada */}
+              <div className="text-center max-w-3xl mx-auto">
+                <div className="w-24 h-0.5 mx-auto mb-4" style={{ backgroundColor: companyColor }} />
+                <p className="text-gray-600 text-sm mb-1">
                   Com os melhores cumprimentos,
                 </p>
                 <p className="text-gray-800 font-medium">
