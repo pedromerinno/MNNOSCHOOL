@@ -64,7 +64,7 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
           {/* Header with user name, role and photos */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
             <div className="flex flex-col mb-4 md:mb-0">
-              <h1 className="text-2xl font-semibold text-gray-900 mb-1">
+              <h1 className="text-3xl font-semibold text-gray-900 mb-1">
                 {userProfile.display_name || "Usuário"}
               </h1>
             </div>
@@ -93,13 +93,19 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
             </div>
           </div>
 
-          {/* User information grid */}
+          {/* User information grid with border */}
           <div className="mb-6">
             <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 text-center">
               Informações do Colaborador
             </h2>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div 
+              className="grid grid-cols-2 md:grid-cols-3 gap-3 p-4 rounded-2xl border-2"
+              style={{
+                borderColor: companyColor,
+                backgroundColor: 'rgba(255, 255, 255, 0.4)'
+              }}
+            >
               {/* Nome */}
               <div className="flex flex-col items-center text-center p-3 bg-white/60 rounded-2xl border border-white/40">
                 <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center mb-2">
