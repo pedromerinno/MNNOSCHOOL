@@ -10,6 +10,7 @@ import { CompanyRequiredWrapper } from "@/components/auth/CompanyRequiredWrapper
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import Courses from "./pages/Courses";
+import MyCourses from "./pages/MyCourses";
 import CourseDetails from "./pages/CourseDetails";
 import Documents from "./pages/Documents";
 import Community from "./pages/Community";
@@ -43,6 +44,7 @@ function App() {
                       <Route path="/" element={<Index />} />
                       <Route path="/admin" element={<Admin />} />
                       <Route path="/courses" element={<Courses />} />
+                      <Route path="/my-courses" element={<MyCourses />} />
                       <Route path="/courses/:courseId" element={<CourseDetails />} />
                       <Route path="/courses/:courseId/lessons/:lessonId" element={<LessonPage />} />
                       <Route path="/documents" element={<Documents />} />
