@@ -61,7 +61,7 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
   };
   
   return (
-    <Card className="border border-blue-100 dark:border-blue-900/30 shadow-sm" 
+    <Card className="border border-blue-100 dark:border-blue-900/30 shadow-sm rounded-2xl" 
          style={{ 
            backgroundColor: getLighterColor(companyColor, 0.05),
            borderColor: getLighterColor(companyColor, 0.2)
@@ -78,15 +78,15 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
               </h2>
               <p className="text-gray-600 dark:text-gray-400">{roleTitle}</p>
             </div>
-            <div className="flex items-center gap-1">
-              <Avatar className="h-16 w-16">
+            <div className="flex items-center relative">
+              <Avatar className="h-16 w-16 z-10">
                 <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.display_name || "User"} />
                 <AvatarFallback className="bg-gray-200 text-gray-700">
                   {getInitials(userProfile.display_name)}
                 </AvatarFallback>
               </Avatar>
-              <div className="h-16 w-16 rounded-full flex items-center justify-center overflow-hidden bg-white shadow-md ml-[-8px]" style={{
-                border: `2px solid ${companyColor}`
+              <div className="h-16 w-16 rounded-full flex items-center justify-center overflow-hidden bg-white shadow-lg ml-[-12px] mt-2" style={{
+                border: `3px solid ${companyColor}`
               }}>
                 <img 
                   src={selectedCompany?.logo || "/placeholder.svg"} 
@@ -105,7 +105,7 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
           <div className="space-y-10">
             {/* User information section */}
             <div>
-              <div className="rounded-md py-2 px-4 mb-8" style={{ 
+              <div className="rounded-xl py-2 px-4 mb-8" style={{ 
                 backgroundColor: getLighterColor(companyColor, 0.15),
               }}>
                 <h3 style={{
@@ -164,7 +164,7 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
 
             {/* Manual de cultura status */}
             <div>
-              <div className="rounded-md py-2 px-4 mb-8" style={{ 
+              <div className="rounded-xl py-2 px-4 mb-8" style={{ 
                 backgroundColor: getLighterColor(companyColor, 0.15),
               }}>
                 <h3 style={{
@@ -175,7 +175,7 @@ export const UserRoleProfile: React.FC<UserRoleProfileProps> = ({
               </div>
 
               <div className="px-4">
-                <div className="flex items-center justify-between p-4 rounded-lg border">
+                <div className="flex items-center justify-between p-4 rounded-xl border">
                   <span className="text-gray-700 dark:text-gray-300">Manual de Cultura</span>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                     userProfile.manual_cultura_aceito 
