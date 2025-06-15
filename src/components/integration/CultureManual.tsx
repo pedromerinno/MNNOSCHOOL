@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -164,11 +163,6 @@ export const CultureManual: React.FC<CultureManualProps> = ({
 
         {videoUrl && (
           <Card className="md:col-span-2 transition-all duration-200 shadow-none rounded-xl overflow-hidden">
-            <CardHeader>
-              <CardTitle className="text-lg font-normal text-zinc-400">
-                Vídeo Institucional
-              </CardTitle>
-            </CardHeader>
             <CardContent className="p-0">
               <VideoPlayer 
                 videoUrl={videoUrl} 
