@@ -1,24 +1,23 @@
 
 import { useState, useRef } from 'react';
-import { CollaboratorState } from './types';
-import { UserProfile } from '@/hooks/useUsers';
+import { UserProfile } from "@/hooks/useUsers";
 
-export const useCollaboratorState = (): CollaboratorState & {
-  setIsLoading: (value: boolean) => void;
-  setCompanyUsers: (users: UserProfile[]) => void;
-  setUserRoles: (roles: Record<string, string>) => void;
-  setSearchTerm: (term: string) => void;
-  setReloadTrigger: (value: React.SetStateAction<number>) => void;
-  setError: (error: string | null) => void;
-  initialFetchDone: React.MutableRefObject<boolean>;
-} => {
+export const useCollaboratorState = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [companyUsers, setCompanyUsers] = useState<UserProfile[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [userRoles, setUserRoles] = useState<Record<string, string>>({});
   const [reloadTrigger, setReloadTrigger] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const initialFetchDone = useRef(false);
+
+  // Reset state when company changes
+  const resetState = () => {
+    setCompanyUsers([]);
+    setUserRoles({});
+    setError(null);
+    initialFetchDone.current = false;
+  };
 
   return {
     isLoading,
@@ -27,12 +26,13 @@ export const useCollaboratorState = (): CollaboratorState & {
     userRoles,
     reloadTrigger,
     error,
+    initialFetchDone,
     setIsLoading,
     setCompanyUsers,
-    setUserRoles,
     setSearchTerm,
+    setUserRoles,
     setReloadTrigger,
     setError,
-    initialFetchDone
+    resetState
   };
 };

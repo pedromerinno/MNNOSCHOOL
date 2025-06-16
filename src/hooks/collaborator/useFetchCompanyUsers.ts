@@ -12,168 +12,138 @@ export const useFetchCompanyUsers = (
   initialFetchDone: React.MutableRefObject<boolean>,
   setError: (error: string | null) => void
 ) => {
-  // Function to fetch user roles
+  // Function to fetch user roles - otimizada
   const fetchUserRoles = async (userIds: string[]) => {
     if (userIds.length === 0) return {};
     
     try {
-      // First, fetch cargo_id info from profiles
+      // Query otimizada com joins para buscar roles em uma única consulta
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, cargo_id')
-        .in('id', userIds);
+        .select(`
+          id, 
+          cargo_id,
+          job_roles!left(
+            id,
+            title
+          )
+        `)
+        .in('id', userIds)
+        .not('cargo_id', 'is', null);
         
       if (error) throw error;
       
       if (!data || data.length === 0) return {};
       
-      // Filter users with assigned roles
-      const usersWithRoles = data.filter(u => u.cargo_id);
-      
-      if (usersWithRoles.length === 0) {
-        console.log("No users with assigned roles");
-        return {};
-      }
-      
-      // Extract role IDs for search
-      const cargoIds = usersWithRoles
-        .map(u => u.cargo_id)
-        .filter(Boolean) as string[];
-      
-      if (cargoIds.length === 0) return {};
-      
-      console.log(`Fetching ${cargoIds.length} roles`);
-      
-      // Fetch role details
-      const { data: rolesData, error: rolesError } = await supabase
-        .from('job_roles')
-        .select('id, title')
-        .in('id', cargoIds);
-        
-      if (rolesError) throw rolesError;
-      
-      if (!rolesData || rolesData.length === 0) return {};
-      
-      console.log(`Found ${rolesData.length} roles`);
-      
-      // Create role name map
-      const roleNameMap: Record<string, string> = {};
-      rolesData.forEach((role: any) => {
-        roleNameMap[role.id] = role.title;
-      });
-      
-      // Map users to their role names
+      // Mapear roles diretamente dos dados retornados
       const roleMap: Record<string, string> = {};
-      usersWithRoles.forEach(user => {
-        if (user.cargo_id && roleNameMap[user.cargo_id]) {
-          roleMap[user.id] = roleNameMap[user.cargo_id];
+      data.forEach((user: any) => {
+        if (user.job_roles && user.job_roles.title) {
+          roleMap[user.id] = user.job_roles.title;
         }
       });
       
       return roleMap;
     } catch (error: any) {
       console.error("Error fetching user roles:", error);
-      // Don't show toast here, just log error and return empty object
       return {};
     }
   };
 
-  // Function to fetch full user profiles
+  // Function to fetch full user profiles - otimizada
   const fetchFullUserProfiles = async (userIds: string[]): Promise<UserProfile[]> => {
     if (userIds.length === 0) return [];
     
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, display_name, email, is_admin')
-        .in('id', userIds);
+        .select(`
+          id, 
+          display_name, 
+          email, 
+          is_admin, 
+          super_admin, 
+          avatar,
+          created_at,
+          cargo_id
+        `)
+        .in('id', userIds)
+        .order('display_name', { ascending: true })
+        .limit(50); // Limitar resultados para performance
         
       if (error) throw error;
       
-      if (!data || data.length === 0) {
-        console.log("No user profiles found");
-        return [];
-      }
-      
-      return data as UserProfile[];
+      return data as UserProfile[] || [];
     } catch (error: any) {
       console.error("Error fetching user profiles:", error);
-      // Don't show toast here, just log error and return empty array
-      return [];
+      throw error;
     }
   };
 
-  // Function to fetch company users
-  const fetchCompanyUsers = useCallback(async (company: Company | null) => {
-    if (!company || !company.id) {
-      console.log("No company selected or company has no ID");
-      setIsLoading(false);
-      setCompanyUsers([]);
-      setError(null);
-      initialFetchDone.current = true;
-      return [];
-    }
-    
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      console.log("Fetching collaborators for company:", company.nome, company.id);
-      
-      // Get user_empresa relations for this company
-      const { data, error } = await supabase
-        .from('user_empresa')
-        .select('user_id')
-        .eq('empresa_id', company.id);
-        
-      if (error) {
-        console.error("Error fetching user_empresa relations:", error);
-        setError("Falha ao carregar colaboradores. Erro de banco de dados.");
-        throw error;
-      }
-      
-      if (!data || data.length === 0) {
-        console.log("No collaborators found for this company");
-        setCompanyUsers([]);
-        setUserRoles({});
-        setIsLoading(false);
-        initialFetchDone.current = true;
-        return [];
-      }
-      
-      console.log(`Found ${data.length} collaborators`);
-      const userIds = data.map(item => item.user_id);
-      
-      // Execute role fetching and profile fetching in parallel
-      const [roleMap, profiles] = await Promise.all([
-        fetchUserRoles(userIds),
-        fetchFullUserProfiles(userIds)
-      ]);
-      
-      // Set user roles
-      setUserRoles(roleMap);
-      
-      // Set complete user profiles instead of just IDs
-      setCompanyUsers(profiles);
-      
-      setIsLoading(false);
-      initialFetchDone.current = true;
-      return profiles;
-    } catch (error: any) {
-      console.error("Error fetching company users:", error);
-      setIsLoading(false);
-      initialFetchDone.current = true;
+  const fetchCompanyUsers = useCallback(async (company: Company) => {
+    if (!company?.id) {
+      console.warn("No company ID provided");
       setCompanyUsers([]);
       setUserRoles({});
-      setError(`Falha ao carregar colaboradores: ${error.message}`);
-      
-      // Only show toast for network errors, not permission errors
-      if (!error.message.includes("permission denied")) {
-        toast.error(`Erro ao carregar colaboradores: ${error.message}`);
+      return;
+    }
+
+    // Evitar fetch duplicado
+    if (initialFetchDone.current) {
+      console.log("Company users already fetched, skipping...");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      console.log(`[useFetchCompanyUsers] Fetching users for company: ${company.id}`);
+
+      // Query otimizada - buscar apenas IDs dos usuários primeiro
+      const { data: userCompanyData, error: userCompanyError } = await supabase
+        .from('user_empresa')
+        .select('user_id')
+        .eq('empresa_id', company.id)
+        .limit(100); // Limitar para performance
+
+      if (userCompanyError) throw userCompanyError;
+
+      if (!userCompanyData || userCompanyData.length === 0) {
+        console.log("No users found for company");
+        setCompanyUsers([]);
+        setUserRoles({});
+        initialFetchDone.current = true;
+        return;
       }
-      return [];
+
+      const userIds = userCompanyData.map(item => item.user_id);
+      console.log(`Found ${userIds.length} users for company`);
+
+      // Buscar perfis dos usuários e roles em paralelo para melhor performance
+      const [userProfiles, userRoles] = await Promise.all([
+        fetchFullUserProfiles(userIds),
+        fetchUserRoles(userIds)
+      ]);
+
+      console.log(`Loaded ${userProfiles.length} user profiles and ${Object.keys(userRoles).length} roles`);
+
+      setCompanyUsers(userProfiles);
+      setUserRoles(userRoles);
+      initialFetchDone.current = true;
+
+    } catch (error: any) {
+      console.error("[useFetchCompanyUsers] Error fetching company users:", error);
+      setError(error.message || "Erro ao carregar colaboradores");
+      
+      // Não mostrar toast para evitar spam de erros
+      if (!error.message?.includes('storage/bucket-not-found')) {
+        toast.error("Erro ao carregar colaboradores");
+      }
+    } finally {
+      setIsLoading(false);
     }
   }, [setCompanyUsers, setIsLoading, setUserRoles, initialFetchDone, setError]);
 
-  return { fetchCompanyUsers, fetchFullUserProfiles };
+  return { fetchCompanyUsers };
 };

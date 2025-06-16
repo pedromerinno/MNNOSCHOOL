@@ -12,7 +12,7 @@ import { UserDocumentsList } from './UserDocumentsList';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { FileText } from "lucide-react";
+import { FileText, RefreshCw } from "lucide-react";
 import { useUserDocuments } from '@/hooks/useUserDocuments';
 import { CollaboratorsHeader } from './header/CollaboratorsHeader';
 import { CollaboratorSearch } from './search/CollaboratorSearch';
@@ -68,14 +68,16 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
 
   const handleRefresh = () => {
     setRefreshing(true);
+    
+    // Reset do hook para forçar novo carregamento
     setReloadTrigger(prev => prev + 1);
     
+    // Timeout para parar o estado de refresh
     setTimeout(() => {
       setRefreshing(false);
-      if (isLoading) {
-        toast.warning("Carregamento está demorando mais que o esperado");
-      }
-    }, 5000);
+    }, 2000);
+    
+    toast.success("Recarregando colaboradores...");
   };
 
   const handleRoleUpdateSuccess = () => {
@@ -98,7 +100,8 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
     setActiveTab("documents");
   };
 
-  if (isLoading || loadingUsers) {
+  // Mostrar loading apenas se estiver realmente carregando
+  if (isLoading && filteredCompanyUsers.length === 0) {
     return <LoadingCollaborators error={error} onRetry={handleRefresh} />;
   }
 
@@ -119,7 +122,7 @@ export const CollaboratorsManagement: React.FC<CollaboratorsManagementProps> = (
         disabled={!company?.id}
       />
       
-      {filteredCompanyUsers.length === 0 ? (
+      {filteredCompanyUsers.length === 0 && !isLoading ? (
         <EmptyCollaboratorsList 
           searchTerm={searchTerm} 
           company={company} 
