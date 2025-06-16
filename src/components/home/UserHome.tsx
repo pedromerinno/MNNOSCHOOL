@@ -13,7 +13,6 @@ export const UserHome = () => {
   const { user, userProfile } = useAuth();
   const { userCompanies, isLoading, forceGetUserCompanies } = useCompanies();
   const [showCompanyDialog, setShowCompanyDialog] = useState(false);
-  const [hasCheckedCompanies, setHasCheckedCompanies] = useState(false);
 
   // Verificar se deve mostrar o diálogo de empresa
   useEffect(() => {
@@ -22,19 +21,19 @@ export const UserHome = () => {
       userProfile: !!userProfile,
       userCompaniesLength: userCompanies.length,
       isLoading,
-      hasCheckedCompanies,
       isSuperAdmin: userProfile?.super_admin
     });
 
-    // Não verificar se ainda está carregando ou se já verificou
-    if (isLoading || hasCheckedCompanies || !user || !userProfile) {
+    // Não verificar se ainda está carregando ou se não tem usuário/perfil
+    if (isLoading || !user || !userProfile) {
+      console.log("[UserHome] Still loading or no user/profile data");
       return;
     }
 
-    // Se é super admin, não precisa de empresa
+    // Se é super admin, nunca mostrar o diálogo
     if (userProfile.super_admin) {
       console.log("[UserHome] User is super admin, no company dialog needed");
-      setHasCheckedCompanies(true);
+      setShowCompanyDialog(false);
       return;
     }
 
@@ -42,10 +41,11 @@ export const UserHome = () => {
     if (userCompanies.length === 0) {
       console.log("[UserHome] User has no companies, showing dialog");
       setShowCompanyDialog(true);
+    } else {
+      console.log("[UserHome] User has companies, hiding dialog");
+      setShowCompanyDialog(false);
     }
-    
-    setHasCheckedCompanies(true);
-  }, [user, userProfile, userCompanies.length, isLoading, hasCheckedCompanies]);
+  }, [user, userProfile, userCompanies.length, isLoading]);
 
   const handleCompanyCreated = () => {
     console.log("[UserHome] Company created, closing dialog");
@@ -59,8 +59,14 @@ export const UserHome = () => {
     console.log("[UserHome] Company type selected:", isExisting ? "existing" : "new");
   };
 
-  // Mostrar dialog apenas se não é super admin, não tem empresas e não está carregando
-  const shouldShowDialog = !userProfile?.super_admin && userCompanies.length === 0 && !isLoading && hasCheckedCompanies;
+  // Só mostrar dialog se não é super admin, não tem empresas e não está carregando
+  const shouldShowDialog = !userProfile?.super_admin && userCompanies.length === 0 && !isLoading;
+  
+  console.log("[UserHome] Should show dialog:", shouldShowDialog, {
+    isSuperAdmin: userProfile?.super_admin,
+    companiesLength: userCompanies.length,
+    isLoading
+  });
   
   return (
     <>
