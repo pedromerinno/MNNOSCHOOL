@@ -123,12 +123,26 @@ src/
 - Comentários em lições
 - Favoritos
 - Categorização e tags
+- Suporte a múltiplas empresas por curso
 
 ### Componentes Principais
 - `CourseManagement`: Gestão administrativa
 - `CourseCard`: Card de curso
 - `LessonPage`: Página de lição
 - `CourseProgress`: Acompanhamento de progresso
+- `NewCourseDialog`: Criação de cursos com suporte a múltiplas empresas
+
+### Gestão de Lições
+- `LessonTable`: Tabela com drag-and-drop para reordenação
+- Ações centralizadas em dropdown menu (editar, excluir)
+- Reordenação automática com índices sequenciais
+- Interface otimizada para diferentes tipos de conteúdo
+
+### Sistema de Categorias
+- Normalização automática (lowercase, trim)
+- Remoção de duplicatas
+- Ordenação alfabética
+- Filtros case-insensitive
 
 ### Tabelas Relacionadas
 - `courses`: Dados dos cursos
@@ -168,6 +182,22 @@ src/
 
 ### Tabela
 - `user_notifications`: Notificações dos usuários
+
+## Sistema de Sugestões de Cursos
+
+### Funcionalidades
+- Sugestão de cursos para usuários específicos
+- Gestão administrativa de sugestões
+- Filtros por usuário e empresa
+- Edição e exclusão de sugestões
+
+### Componentes Principais
+- `SuggestedCoursesManagement`: Interface administrativa
+- `SuggestCourseDialog`: Diálogo para criação de sugestões
+- `SuggestionActionsDropdown`: Ações para cada sugestão
+
+### Tabela Relacionada
+- `user_course_suggestions`: Sugestões de cursos
 
 ## Padrões de Desenvolvimento
 
@@ -254,6 +284,7 @@ src/
 - `Dialog`: Modais consistentes
 - `Table`: Tabelas responsivas
 - `Form`: Formulários validados
+- `DropdownMenu`: Menus de ação padronizados
 
 ## Integração com Supabase
 
@@ -341,6 +372,12 @@ src/
 - Opções de retry
 - Fallbacks visuais
 
+### Padrões de Interface
+- Dropdowns consistentes com background adequado
+- z-index apropriado para overlays
+- Transições suaves entre estados
+- Feedback visual imediato para ações do usuário
+
 ## Performance Monitoring
 
 ### Métricas Observadas
@@ -354,3 +391,17 @@ src/
 - Lazy loading de componentes pesados
 - Debounce em campos de busca
 - Throttling em scroll handlers
+
+## Funcionalidades Recentes
+
+### Melhorias no Sistema de Cursos
+- Suporte a seleção de múltiplas empresas na criação
+- Normalização e ordenação automática de categorias
+- Interface otimizada para gestão de lições
+- Drag-and-drop para reordenação de lições
+
+### Melhorias na Interface
+- Dropdowns padronizados com ações consolidadas
+- Melhor feedback visual em operações
+- Consistência no design de componentes
+- Otimização para diferentes tamanhos de tela
