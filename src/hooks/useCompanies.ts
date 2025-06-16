@@ -120,14 +120,15 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
       return;
     }
     
-    // Throttle requests - only allow one fetch per 5 seconds
+    // Throttle requests - only allow one fetch per 2 seconds
     const now = Date.now();
-    if (now - lastFetchTime.current < 5000) {
+    if (now - lastFetchTime.current < 2000) {
       console.log('[useCompanies] Throttling request, too soon since last fetch');
       return;
     }
     
     try {
+      console.log('[useCompanies] Loading initial company data for user:', user.id);
       initialDataLoaded.current = true;
       lastFetchTime.current = now;
       
@@ -176,8 +177,10 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
         }
         
         setUserCompanies(allCompanies || []);
+        console.log('[useCompanies] Super admin companies loaded:', allCompanies?.length || 0);
       } else {
-        await getUserCompanies(user.id);
+        const companies = await getUserCompanies(user.id);
+        console.log('[useCompanies] Regular user companies loaded:', companies.length);
       }
       
     } catch (error) {
@@ -199,6 +202,7 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
       const storedCompany = getStoredCompany();
       const companyToSelect = storedCompany || userCompanies[0];
       setSelectedCompany(companyToSelect);
+      console.log('[useCompanies] Auto-selected company:', companyToSelect.nome);
     }
   }, [userCompanies.length, selectedCompany, skipLoadingInOnboarding, setSelectedCompany, getStoredCompany]);
   
@@ -209,14 +213,16 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     }
     
     const handleCompanyRelationChange = () => {
-      if (user?.id && Date.now() - lastFetchTime.current > 5000) {
+      if (user?.id && Date.now() - lastFetchTime.current > 2000) {
+        console.log('[useCompanies] Company relation changed, reloading...');
         forceGetUserCompanies(user.id);
         lastFetchTime.current = Date.now();
       }
     };
 
     const handleForceReload = () => {
-      if (user?.id && Date.now() - lastFetchTime.current > 5000) {
+      if (user?.id && Date.now() - lastFetchTime.current > 2000) {
+        console.log('[useCompanies] Force reload requested');
         forceGetUserCompanies(user.id);
         lastFetchTime.current = Date.now();
       } else if (!user?.id) {

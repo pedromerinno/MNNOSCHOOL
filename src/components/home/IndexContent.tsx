@@ -8,7 +8,7 @@ import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 
 export const IndexContent = () => {
   const { user, userProfile, loading: authLoading } = useAuth();
-  const { selectedCompany, isLoading, userCompanies } = useCompanies();
+  const { selectedCompany, isLoading } = useCompanies();
 
   // Debug log para verificar o estado
   useEffect(() => {
@@ -16,12 +16,11 @@ export const IndexContent = () => {
       user: user?.email,
       userProfile: userProfile?.display_name,
       isSuperAdmin: userProfile?.super_admin,
-      userCompaniesCount: userCompanies?.length || 0,
       selectedCompany: selectedCompany?.nome,
       isLoading,
       authLoading
     });
-  }, [user, userProfile, userCompanies, selectedCompany, isLoading, authLoading]);
+  }, [user, userProfile, selectedCompany, isLoading, authLoading]);
 
   // Mostrar skeleton apenas se ainda está carregando auth E não tem usuário
   if (authLoading && !user) {
