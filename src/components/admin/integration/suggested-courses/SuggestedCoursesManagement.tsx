@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, BookOpen, Users, Filter } from "lucide-react";
+import { Plus, BookOpen, Users, Filter, GripVertical } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -12,6 +11,7 @@ import { SuggestionActionsDropdown } from './SuggestionActionsDropdown';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
 interface SuggestedCourse {
   id: string;
@@ -21,6 +21,7 @@ interface SuggestedCourse {
   reason: string;
   created_at: string;
   company_id: string;
+  order_index?: number;
   course: {
     title: string;
     instructor?: string;
@@ -96,11 +97,12 @@ export const SuggestedCoursesManagement: React.FC = () => {
 
     setIsLoading(true);
     try {
-      // Fetch suggestions filtered by selected company
+      // Fetch suggestions filtered by selected company with order_index
       const { data: suggestionsData, error } = await supabase
         .from('user_course_suggestions')
         .select('*')
         .eq('company_id', selectedCompany.id)
+        .order('order_index', { ascending: true, nullsLast: true })
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -159,6 +161,64 @@ export const SuggestedCoursesManagement: React.FC = () => {
       toast.error('Erro ao carregar sugestões de cursos');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleReorder = async (result: any) => {
+    if (!result.destination) return;
+
+    const startIndex = result.source.index;
+    const endIndex = result.destination.index;
+
+    if (startIndex === endIndex) return;
+
+    // Create a new array with reordered items
+    const newSuggestions = Array.from(filteredSuggestions);
+    const [reorderedItem] = newSuggestions.splice(startIndex, 1);
+    newSuggestions.splice(endIndex, 0, reorderedItem);
+
+    // Update local state immediately for better UX
+    setFilteredSuggestions(newSuggestions);
+
+    try {
+      // Update order_index for all affected items
+      const updates = newSuggestions.map((suggestion, index) => ({
+        id: suggestion.id,
+        order_index: index
+      }));
+
+      // Batch update the order_index in the database
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('user_course_suggestions')
+          .update({ order_index: update.order_index })
+          .eq('id', update.id);
+
+        if (error) {
+          console.error('Error updating order:', error);
+          // Revert to original order on error
+          fetchSuggestions();
+          toast.error('Erro ao reordenar sugestões');
+          return;
+        }
+      }
+
+      toast.success('Ordem das sugestões atualizada com sucesso');
+      
+      // Update the main suggestions array as well
+      setSuggestions(prev => {
+        if (selectedUserId === 'all') {
+          return newSuggestions;
+        }
+        // If filtered by user, we need to merge back
+        const otherSuggestions = prev.filter(s => s.user_id !== selectedUserId);
+        return [...otherSuggestions, ...newSuggestions].sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+      });
+
+    } catch (error) {
+      console.error('Error reordering suggestions:', error);
+      toast.error('Erro ao reordenar sugestões');
+      fetchSuggestions(); // Revert to original order
     }
   };
 
@@ -313,6 +373,11 @@ export const SuggestedCoursesManagement: React.FC = () => {
           <CardTitle className="flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
             Sugestões de Cursos ({filteredSuggestions.length})
+            {filteredSuggestions.length > 1 && (
+              <span className="text-sm font-normal text-gray-500 ml-2">
+                Arraste para reordenar
+              </span>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -334,72 +399,93 @@ export const SuggestedCoursesManagement: React.FC = () => {
               </Button>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Curso</TableHead>
-                  <TableHead>Usuário</TableHead>
-                  <TableHead>Sugerido por</TableHead>
-                  <TableHead>Motivo</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredSuggestions.map((suggestion) => (
-                  <TableRow key={suggestion.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                          {suggestion.course?.image_url ? (
-                            <img 
-                              src={suggestion.course.image_url} 
-                              alt={suggestion.course?.title}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <BookOpen className="h-6 w-6 text-gray-400" />
-                            </div>
-                          )}
-                        </div>
-                        <div>
-                          <div className="font-medium">{suggestion.course?.title}</div>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={suggestion.user?.avatar} alt={suggestion.user?.display_name} />
-                          <AvatarFallback>
-                            {suggestion.user?.display_name?.charAt(0)?.toUpperCase() || 'U'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-medium">{suggestion.user?.display_name}</div>
-                          <div className="text-sm text-gray-500">{suggestion.user?.email}</div>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{suggestion.suggested_by_profile?.display_name}</TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {suggestion.reason}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(suggestion.created_at).toLocaleDateString('pt-BR')}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <SuggestionActionsDropdown
-                        suggestion={suggestion}
-                        onEdit={handleEditSuggestion}
-                        onDelete={confirmDeleteSuggestion}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <DragDropContext onDragEnd={handleReorder}>
+              <Droppable droppableId="suggestions">
+                {(provided) => (
+                  <div {...provided.droppableProps} ref={provided.innerRef}>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-8"></TableHead>
+                          <TableHead>Curso</TableHead>
+                          <TableHead>Usuário</TableHead>
+                          <TableHead>Sugerido por</TableHead>
+                          <TableHead>Motivo</TableHead>
+                          <TableHead>Data</TableHead>
+                          <TableHead className="text-right">Ações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredSuggestions.map((suggestion, index) => (
+                          <Draggable key={suggestion.id} draggableId={suggestion.id} index={index}>
+                            {(provided, snapshot) => (
+                              <TableRow
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                className={snapshot.isDragging ? 'shadow-lg' : ''}
+                              >
+                                <TableCell {...provided.dragHandleProps}>
+                                  <GripVertical className="h-4 w-4 text-gray-400 cursor-grab" />
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                                      {suggestion.course?.image_url ? (
+                                        <img 
+                                          src={suggestion.course.image_url} 
+                                          alt={suggestion.course?.title}
+                                          className="w-full h-full object-cover"
+                                        />
+                                      ) : (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                          <BookOpen className="h-6 w-6 text-gray-400" />
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div>
+                                      <div className="font-medium">{suggestion.course?.title}</div>
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-3">
+                                    <Avatar className="h-8 w-8">
+                                      <AvatarImage src={suggestion.user?.avatar} alt={suggestion.user?.display_name} />
+                                      <AvatarFallback>
+                                        {suggestion.user?.display_name?.charAt(0)?.toUpperCase() || 'U'}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                      <div className="font-medium">{suggestion.user?.display_name}</div>
+                                      <div className="text-sm text-gray-500">{suggestion.user?.email}</div>
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell>{suggestion.suggested_by_profile?.display_name}</TableCell>
+                                <TableCell className="max-w-xs truncate">
+                                  {suggestion.reason}
+                                </TableCell>
+                                <TableCell>
+                                  {new Date(suggestion.created_at).toLocaleDateString('pt-BR')}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <SuggestionActionsDropdown
+                                    suggestion={suggestion}
+                                    onEdit={handleEditSuggestion}
+                                    onDelete={confirmDeleteSuggestion}
+                                  />
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
           )}
         </CardContent>
       </Card>
