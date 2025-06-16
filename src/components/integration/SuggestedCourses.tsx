@@ -49,6 +49,8 @@ export const SuggestedCourses: React.FC<SuggestedCoursesProps> = ({ companyColor
     
     setIsLoading(true);
     try {
+      console.log('[SuggestedCourses] Fetching suggestions for user:', userProfile.id, 'company:', selectedCompany.id);
+      
       // Buscar as sugestões ordenadas pelo order_index definido pelo admin
       const { data: suggestions, error: suggestionsError } = await supabase
         .from('user_course_suggestions')
@@ -68,9 +70,16 @@ export const SuggestedCourses: React.FC<SuggestedCoursesProps> = ({ companyColor
       }
 
       if (!suggestions || suggestions.length === 0) {
+        console.log('[SuggestedCourses] No suggestions found for this user/company');
         setSuggestedCourses([]);
         return;
       }
+
+      console.log('[SuggestedCourses] Raw suggestions from DB:', suggestions.map(s => ({ 
+        id: s.id, 
+        order_index: s.order_index, 
+        course_title: s.course?.title 
+      })));
 
       const suggesterIds = suggestions.map(s => s.suggested_by);
       const { data: profiles, error: profilesError } = await supabase
@@ -94,7 +103,11 @@ export const SuggestedCourses: React.FC<SuggestedCoursesProps> = ({ companyColor
         };
       });
 
-      console.log(`Loaded ${enrichedSuggestions.length} course suggestions in admin-defined order`);
+      console.log('[SuggestedCourses] Final ordered suggestions:', enrichedSuggestions.map(s => ({ 
+        course_title: s.course?.title, 
+        order_index: s.order_index 
+      })));
+      
       setSuggestedCourses(enrichedSuggestions);
     } catch (error) {
       console.error('Error fetching suggested courses:', error);
