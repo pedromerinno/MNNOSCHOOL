@@ -26,7 +26,7 @@ export const VideoListItem: React.FC<VideoListItemProps> = ({
   return (
     <div 
       onClick={onClick}
-      className={`flex items-start space-x-3 p-2 rounded-md cursor-pointer transition-colors ${
+      className={`flex items-center space-x-3 p-3 rounded-md cursor-pointer transition-colors ${
         isSelected
           ? 'border-l-4' 
           : 'hover:bg-gray-100 dark:hover:bg-gray-800'
@@ -37,7 +37,7 @@ export const VideoListItem: React.FC<VideoListItemProps> = ({
           backgroundColor: `${companyColor}10` // 10% opacity
         } : {}}
     >
-      <div className="relative flex-shrink-0 w-20 h-12 rounded overflow-hidden">
+      <div className="relative flex-shrink-0 w-16 h-10 rounded overflow-hidden">
         {thumbnailUrl ? (
           <img 
             src={thumbnailUrl} 
@@ -50,16 +50,13 @@ export const VideoListItem: React.FC<VideoListItemProps> = ({
           </div>
         )}
         {duration && (
-          <div className="absolute bottom-1 right-1 bg-black/70 text-white text-xs px-1 rounded">
+          <div className="absolute bottom-0.5 right-0.5 bg-black/70 text-white text-xs px-1 rounded">
             {duration}
           </div>
         )}
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium truncate">{title}</p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-          {description}
-        </p>
       </div>
     </div>
   );
