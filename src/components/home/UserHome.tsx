@@ -59,8 +59,8 @@ export const UserHome = () => {
     console.log("[UserHome] Company type selected:", isExisting ? "existing" : "new");
   };
 
-  // Se não é super admin e não tem empresas, sempre mostrar o dialog
-  const shouldShowDialog = !userProfile?.super_admin && userCompanies.length === 0 && !isLoading;
+  // Mostrar dialog apenas se não é super admin, não tem empresas e não está carregando
+  const shouldShowDialog = !userProfile?.super_admin && userCompanies.length === 0 && !isLoading && hasCheckedCompanies;
   
   return (
     <>
@@ -75,7 +75,7 @@ export const UserHome = () => {
       </div>
 
       <CompanySelectionDialog
-        open={shouldShowDialog || showCompanyDialog}
+        open={shouldShowDialog}
         onOpenChange={(open) => {
           // Só permitir fechar se o usuário é super admin ou tem empresas
           if (!open && (userProfile?.super_admin || userCompanies.length > 0)) {

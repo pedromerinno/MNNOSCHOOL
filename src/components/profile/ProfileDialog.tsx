@@ -24,6 +24,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { CompanyManagementSection } from "./CompanyManagementSection";
 import { useCompanies } from "@/hooks/useCompanies";
 import { uploadAvatarImage } from "@/utils/imageUpload";
@@ -33,6 +40,11 @@ const userProfileSchema = z.object({
     message: "Nome precisa ter pelo menos 2 caracteres.",
   }),
   avatar: z.string().optional(),
+  aniversario: z.string().optional(),
+  cidade: z.string().optional(),
+  tipo_contrato: z.enum(['CLT', 'PJ', 'Fornecedor', 'not_specified']).optional(),
+  nivel_colaborador: z.enum(['Junior', 'Pleno', 'Senior', 'not_specified']).optional(),
+  data_inicio: z.string().optional(),
 });
 
 export type UserProfileFormValues = z.infer<typeof userProfileSchema>;
@@ -49,7 +61,6 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
   const { userCompanies } = useCompanies();
   const [avatarPreview, setAvatarPreview] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
-  const [companiesLoaded, setCompaniesLoaded] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<UserProfileFormValues>({
@@ -57,6 +68,11 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
     defaultValues: {
       name: "",
       avatar: "",
+      aniversario: "",
+      cidade: "",
+      tipo_contrato: "not_specified",
+      nivel_colaborador: "not_specified",
+      data_inicio: "",
     },
   });
 
@@ -71,19 +87,17 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
       
       form.reset({
         name: displayName,
-        avatar: avatarUrl
+        avatar: avatarUrl,
+        aniversario: userProfile.aniversario || "",
+        cidade: userProfile.cidade || "",
+        tipo_contrato: userProfile.tipo_contrato || "not_specified",
+        nivel_colaborador: userProfile.nivel_colaborador || "not_specified",
+        data_inicio: userProfile.data_inicio || "",
       });
       
       setAvatarPreview(avatarUrl);
     }
   }, [userProfile, email, form]);
-
-  // Marcar empresas como carregadas quando já existem no cache ou quando o diálogo abre
-  useEffect(() => {
-    if (isOpen && userCompanies.length > 0) {
-      setCompaniesLoaded(true);
-    }
-  }, [isOpen, userCompanies.length]);
 
   const handleProfileUpdate = async (values: UserProfileFormValues) => {
     try {
@@ -91,7 +105,12 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
       
       await updateUserProfile({
         display_name: values.name,
-        avatar: values.avatar || null
+        avatar: values.avatar || null,
+        aniversario: values.aniversario || null,
+        cidade: values.cidade || null,
+        tipo_contrato: values.tipo_contrato === 'not_specified' ? null : values.tipo_contrato,
+        nivel_colaborador: values.nivel_colaborador === 'not_specified' ? null : values.nivel_colaborador,
+        data_inicio: values.data_inicio || null,
       });
       
       onSave(values);
@@ -171,7 +190,7 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent 
-        className="sm:max-w-[425px] overflow-y-auto max-h-[85vh]"
+        className="sm:max-w-[500px] overflow-y-auto max-h-[85vh]"
         style={{ pointerEvents: 'auto' }}
         onPointerDownOutside={(e) => {
           // Previne fechar o dialog quando clicar fora
@@ -184,7 +203,7 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
         <DialogHeader>
           <DialogTitle>Editar Perfil</DialogTitle>
           <DialogDescription>
-            Atualize suas informações de perfil aqui.
+            Atualize suas informações pessoais e de perfil aqui.
           </DialogDescription>
         </DialogHeader>
         
@@ -195,7 +214,7 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
                 <AvatarImage 
                   src={currentAvatarUrl} 
                   alt="Avatar preview"
-                  key={currentAvatarUrl} // Force re-render when URL changes
+                  key={currentAvatarUrl}
                   onLoad={() => console.log('[ProfileDialog] Avatar carregado:', currentAvatarUrl)}
                   onError={() => console.error('[ProfileDialog] Erro ao carregar avatar:', currentAvatarUrl)}
                 />
@@ -220,22 +239,113 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
               </div>
             </div>
             
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Seu nome" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Nome</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Seu nome" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="aniversario"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Data de Aniversário</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="cidade"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Cidade</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Cidade onde mora" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="tipo_contrato"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo de Contrato</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o tipo" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="not_specified">Não informado</SelectItem>
+                        <SelectItem value="CLT">CLT</SelectItem>
+                        <SelectItem value="PJ">PJ</SelectItem>
+                        <SelectItem value="Fornecedor">Fornecedor</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="nivel_colaborador"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nível</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o nível" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="not_specified">Não informado</SelectItem>
+                        <SelectItem value="Junior">Junior</SelectItem>
+                        <SelectItem value="Pleno">Pleno</SelectItem>
+                        <SelectItem value="Senior">Senior</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="data_inicio"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Data de Início</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <div className="border-t pt-4">
-              {/* Usar empresas do cache ao invés de fazer nova requisição */}
               <CompanyManagementSection 
                 userCompanies={userCompanies} 
                 allowUnlink={true}
