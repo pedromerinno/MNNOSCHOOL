@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -52,7 +51,7 @@ export const SuggestedCourses: React.FC<SuggestedCoursesProps> = ({ companyColor
       console.log('[SuggestedCourses] Fetching suggestions for user:', userProfile.id, 'company:', selectedCompany.id);
       
       // Buscar as sugestões ordenadas pelo order_index definido pelo admin
-      // Usar NULLS LAST e fallback para created_at para garantir ordem consistente
+      // Usar order_index primeiro, depois created_at como fallback
       const { data: suggestions, error: suggestionsError } = await supabase
         .from('user_course_suggestions')
         .select(`
@@ -61,7 +60,7 @@ export const SuggestedCourses: React.FC<SuggestedCoursesProps> = ({ companyColor
         `)
         .eq('user_id', userProfile.id)
         .eq('company_id', selectedCompany.id)
-        .order('order_index', { ascending: true, nullsLast: true })
+        .order('order_index', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: true });
 
       if (suggestionsError) {
