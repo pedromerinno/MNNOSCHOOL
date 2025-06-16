@@ -6,6 +6,7 @@ import CompanyStep from "@/components/onboarding/steps/CompanyStep";
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCompanies } from "@/hooks/useCompanies";
 
 interface CompanySelectionDialogProps {
   open: boolean;
@@ -24,7 +25,8 @@ export const CompanySelectionDialog: React.FC<CompanySelectionDialogProps> = ({
   userId,
   forceGetUserCompanies
 }) => {
-  const { signOut } = useAuth();
+  const { signOut, userProfile } = useAuth();
+  const { userCompanies } = useCompanies();
 
   const handleLogout = () => {
     signOut();
@@ -40,9 +42,34 @@ export const CompanySelectionDialog: React.FC<CompanySelectionDialogProps> = ({
     onCompanyCreated();
   };
 
+  // Não permitir fechar o dialog se o usuário não é super admin e não tem empresas
+  const canClose = userProfile?.super_admin || userCompanies.length > 0;
+
+  const handleOpenChange = (shouldOpen: boolean) => {
+    if (!shouldOpen && !canClose) {
+      // Não permitir fechar se não pode
+      return;
+    }
+    onOpenChange(shouldOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl p-0 max-h-[90vh] h-auto overflow-hidden flex flex-col">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent 
+        className="max-w-3xl p-0 max-h-[90vh] h-auto overflow-hidden flex flex-col"
+        // Desabilitar fechar com ESC se não pode fechar
+        onEscapeKeyDown={(e) => {
+          if (!canClose) {
+            e.preventDefault();
+          }
+        }}
+        // Desabilitar fechar clicando fora se não pode fechar
+        onPointerDownOutside={(e) => {
+          if (!canClose) {
+            e.preventDefault();
+          }
+        }}
+      >
         <div className="bg-white dark:bg-gray-900 rounded-t-lg flex-1 overflow-auto">
           <div className="p-12 md:p-10">
             <DialogHeader className="mb-6">
@@ -51,7 +78,10 @@ export const CompanySelectionDialog: React.FC<CompanySelectionDialogProps> = ({
                   Configuração da Empresa
                 </DialogTitle>
                 <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
-                  Escolha entre criar uma nova empresa ou vincular-se a uma existente
+                  {canClose 
+                    ? "Escolha entre criar uma nova empresa ou vincular-se a uma existente"
+                    : "É necessário criar ou vincular-se a uma empresa para continuar"
+                  }
                 </p>
               </div>
             </DialogHeader>
@@ -59,7 +89,7 @@ export const CompanySelectionDialog: React.FC<CompanySelectionDialogProps> = ({
             <OnboardingProvider>
               <CompanyStep 
                 onNext={handleCompanyCreated}
-                onBack={() => onOpenChange(false)} 
+                onBack={() => canClose && onOpenChange(false)} 
                 onCompanyTypeSelect={onCompanyTypeSelect} 
                 onCompanyCreated={handleCompanyCreated} 
                 showBackButton={false} 

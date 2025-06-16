@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Upload } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -45,10 +46,10 @@ interface ProfileDialogProps {
 
 export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialogProps) => {
   const { userProfile, updateUserProfile, user } = useAuth();
-  const { userCompanies, forceGetUserCompanies } = useCompanies();
+  const { userCompanies } = useCompanies();
   const [avatarPreview, setAvatarPreview] = useState<string>("");
-  const [isLoadingCompanies, setIsLoadingCompanies] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [companiesLoaded, setCompaniesLoaded] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<UserProfileFormValues>({
@@ -77,16 +78,12 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
     }
   }, [userProfile, email, form]);
 
-  // Carregar empresas quando o dialog abre - uma única vez
+  // Marcar empresas como carregadas quando já existem no cache ou quando o diálogo abre
   useEffect(() => {
-    if (isOpen && user?.id && userCompanies.length === 0) {
-      console.log('[ProfileDialog] Loading companies for user:', user.id);
-      setIsLoadingCompanies(true);
-      forceGetUserCompanies(user.id).finally(() => {
-        setIsLoadingCompanies(false);
-      });
+    if (isOpen && userCompanies.length > 0) {
+      setCompaniesLoaded(true);
     }
-  }, [isOpen, user?.id, userCompanies.length, forceGetUserCompanies]);
+  }, [isOpen, userCompanies.length]);
 
   const handleProfileUpdate = async (values: UserProfileFormValues) => {
     try {
@@ -238,17 +235,11 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
             />
 
             <div className="border-t pt-4">
-              {isLoadingCompanies ? (
-                <div className="flex items-center justify-center p-4">
-                  <div className="w-3 h-3 border border-gray-300 border-t-blue-500 rounded-full animate-spin" />
-                  <span className="ml-2 text-sm text-muted-foreground">Carregando empresas...</span>
-                </div>
-              ) : (
-                <CompanyManagementSection 
-                  userCompanies={userCompanies} 
-                  allowUnlink={true}
-                />
-              )}
+              {/* Usar empresas do cache ao invés de fazer nova requisição */}
+              <CompanyManagementSection 
+                userCompanies={userCompanies} 
+                allowUnlink={true}
+              />
             </div>
             
             <div className="flex justify-end gap-2 pt-4 border-t">
