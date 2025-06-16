@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,6 +30,17 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
   const { userProfile } = useAuth();
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+
+  // Debug: Log users data to check if avatars are present
+  useEffect(() => {
+    console.log('[UserTableOptimized] Users data:', users.map(user => ({
+      id: user.id,
+      email: user.email,
+      display_name: user.display_name,
+      avatar: user.avatar,
+      hasAvatar: !!user.avatar
+    })));
+  }, [users]);
 
   // Verificar se o usuário atual é super admin
   const isSuperAdmin = userProfile?.super_admin;
@@ -228,88 +239,104 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <Avatar className="h-10 w-10">
-                        {user.avatar && (
-                          <AvatarImage 
-                            src={user.avatar} 
-                            alt={user.display_name || user.email || 'Usuário'}
-                          />
-                        )}
-                        <AvatarFallback className="bg-slate-100 text-slate-600 font-medium">
-                          {getUserInitials(user)}
-                        </AvatarFallback>
-                      </Avatar>
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {user.display_name || 'Sem nome'}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {user.email || 'Sem email'}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {user.cidade || '-'}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {formatBirthday(user.aniversario)}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {user.nivel_colaborador || '-'}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {user.tipo_contrato || '-'}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {formatDate(user.data_inicio)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant={user.manual_cultura_aceito ? "default" : "secondary"}
-                        className="text-xs"
-                      >
-                        {user.manual_cultura_aceito ? "Aceito" : "Pendente"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {canChangePermissions(user) ? (
-                        <Select
-                          value={getUserPermissionValue(user)}
-                          onValueChange={(value) => handlePermissionChange(user.id, value)}
+                {sortedUsers.map((user) => {
+                  console.log('[UserTableOptimized] Rendering user:', {
+                    id: user.id,
+                    email: user.email,
+                    avatar: user.avatar,
+                    hasAvatar: !!user.avatar
+                  });
+                  
+                  return (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <Avatar className="h-10 w-10">
+                          {user.avatar ? (
+                            <AvatarImage 
+                              src={user.avatar} 
+                              alt={user.display_name || user.email || 'Usuário'}
+                              onLoad={() => console.log('[UserTableOptimized] Avatar loaded successfully for:', user.email)}
+                              onError={(e) => {
+                                console.error('[UserTableOptimized] Avatar failed to load for:', user.email, 'URL:', user.avatar);
+                                console.error('[UserTableOptimized] Error details:', e);
+                              }}
+                            />
+                          ) : (
+                            console.log('[UserTableOptimized] No avatar for user:', user.email)
+                          )}
+                          <AvatarFallback className="bg-slate-100 text-slate-600 font-medium">
+                            {getUserInitials(user)}
+                          </AvatarFallback>
+                        </Avatar>
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {user.display_name || 'Sem nome'}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {user.email || 'Sem email'}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {user.cidade || '-'}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {formatBirthday(user.aniversario)}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {user.nivel_colaborador || '-'}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {user.tipo_contrato || '-'}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {formatDate(user.data_inicio)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={user.manual_cultura_aceito ? "default" : "secondary"}
+                          className="text-xs"
                         >
-                          <SelectTrigger className="w-32">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="user">Usuário</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
-                            {isSuperAdmin && (
-                              <SelectItem value="super_admin">Super Admin</SelectItem>
-                            )}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <Badge variant="outline" className="text-xs">
-                          {user.super_admin ? 'Super Admin' : user.is_admin ? 'Admin' : 'Usuário'}
+                          {user.manual_cultura_aceito ? "Aceito" : "Pendente"}
                         </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {canShowActions(user) ? (
-                        <UserActionsDropdown
-                          user={user}
-                          onEditProfile={handleEditProfile}
-                          onToggleAdmin={onToggle}
-                          onDeleteUser={onDeleteUser}
-                          canDelete={isSuperAdmin || (isAdmin && !user.super_admin)}
-                        />
-                      ) : (
-                        <div className="w-8 h-8" />
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                      <TableCell>
+                        {canChangePermissions(user) ? (
+                          <Select
+                            value={getUserPermissionValue(user)}
+                            onValueChange={(value) => handlePermissionChange(user.id, value)}
+                          >
+                            <SelectTrigger className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="user">Usuário</SelectItem>
+                              <SelectItem value="admin">Admin</SelectItem>
+                              {isSuperAdmin && (
+                                <SelectItem value="super_admin">Super Admin</SelectItem>
+                              )}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Badge variant="outline" className="text-xs">
+                            {user.super_admin ? 'Super Admin' : user.is_admin ? 'Admin' : 'Usuário'}
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {canShowActions(user) ? (
+                          <UserActionsDropdown
+                            user={user}
+                            onEditProfile={handleEditProfile}
+                            onToggleAdmin={onToggle}
+                            onDeleteUser={onDeleteUser}
+                            canDelete={isSuperAdmin || (isAdmin && !user.super_admin)}
+                          />
+                        ) : (
+                          <div className="w-8 h-8" />
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>

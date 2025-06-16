@@ -133,7 +133,7 @@ export function useUsers() {
         
       if (currentUserProfile?.super_admin) {
         console.log('[useUsers] Fetching all users for super admin');
-        // Super admin vê todos os usuários - com limite para performance
+        // Super admin vê todos os usuários - incluindo avatar nos campos selecionados
         const { data: allUsers, error } = await supabase
           .from('profiles')
           .select(`
@@ -142,6 +142,7 @@ export function useUsers() {
             is_admin, 
             super_admin, 
             email, 
+            avatar,
             created_at,
             aniversario,
             tipo_contrato,
@@ -160,6 +161,12 @@ export function useUsers() {
         
         if (allUsers) {
           console.log('[useUsers] Fetched', allUsers.length, 'users for super admin');
+          console.log('[useUsers] Sample user data:', allUsers.slice(0, 2).map(user => ({
+            id: user.id,
+            email: user.email,
+            avatar: user.avatar,
+            hasAvatar: !!user.avatar
+          })));
           
           // Converter dados do banco para tipos corretos
           const typedUsers: UserProfile[] = allUsers.map(user => ({
@@ -173,7 +180,7 @@ export function useUsers() {
         }
       } else if (currentUserProfile?.is_admin) {
         console.log('[useUsers] Fetching company users for admin');
-        // Admin vê apenas usuários das suas empresas
+        // Admin vê apenas usuários das suas empresas - incluindo avatar
         const companyIds = await getUserCompanyIds(currentUserId);
         
         if (companyIds.length === 0) {
@@ -192,6 +199,7 @@ export function useUsers() {
               is_admin, 
               super_admin, 
               email, 
+              avatar,
               created_at,
               aniversario,
               tipo_contrato,
@@ -223,6 +231,13 @@ export function useUsers() {
         }, []) || [];
         
         console.log('[useUsers] Fetched', uniqueUsers.length, 'company users for admin');
+        console.log('[useUsers] Sample company user data:', uniqueUsers.slice(0, 2).map(user => ({
+          id: user.id,
+          email: user.email,
+          avatar: user.avatar,
+          hasAvatar: !!user.avatar
+        })));
+        
         setUsers(uniqueUsers);
         setCachedUsers(uniqueUsers);
       } else {
