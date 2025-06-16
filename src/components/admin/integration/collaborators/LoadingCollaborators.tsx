@@ -18,19 +18,34 @@ export const LoadingCollaborators: React.FC<LoadingCollaboratorsProps> = ({
   const [showTimeoutMessage, setShowTimeoutMessage] = useState(timeout);
   const [retryCount, setRetryCount] = useState(0);
   const [autoRetrying, setAutoRetrying] = useState(false);
+  const [loadingDots, setLoadingDots] = useState('');
   
-  // Show timeout message after 5 seconds of loading
+  // Animação dos pontinhos de loading
+  useEffect(() => {
+    if (!error) {
+      const interval = setInterval(() => {
+        setLoadingDots(prev => {
+          if (prev === '...') return '';
+          return prev + '.';
+        });
+      }, 500);
+      
+      return () => clearInterval(interval);
+    }
+  }, [error]);
+
+  // Show timeout message after 3 seconds of loading (mais rápido)
   useEffect(() => {
     if (!timeout && !error) {
       const timeoutId = setTimeout(() => {
         setShowTimeoutMessage(true);
-      }, 5000);
+      }, 3000); // Reduzido de 5s para 3s
       
       return () => clearTimeout(timeoutId);
     }
   }, [timeout, error]);
 
-  // Auto-retry logic
+  // Auto-retry logic mais inteligente
   const handleRetry = useCallback(() => {
     if (onRetry) {
       setRetryCount(prev => prev + 1);
@@ -44,17 +59,17 @@ export const LoadingCollaborators: React.FC<LoadingCollaboratorsProps> = ({
     }
   }, [onRetry]);
 
-  // Auto-retry on specific errors if retry count is low
+  // Auto-retry apenas uma vez em erros de rede
   useEffect(() => {
     if (error && (
       error.includes("Failed to fetch") ||
-      error.includes("storage/bucket-not-found") ||
+      error.includes("Timeout") ||
       error.includes("net::ERR_")
-    ) && retryCount < 3 && !autoRetrying) {
+    ) && retryCount === 0 && !autoRetrying) {
       const timeoutId = setTimeout(() => {
-        console.log(`Auto-retrying after error (attempt ${retryCount + 1})`);
+        console.log(`Auto-retrying after network error`);
         handleRetry();
-      }, 3000);
+      }, 2000); // Retry mais rápido
       
       return () => clearTimeout(timeoutId);
     }
@@ -68,24 +83,31 @@ export const LoadingCollaborators: React.FC<LoadingCollaboratorsProps> = ({
           <p className="mt-2 text-gray-700 font-medium">Erro ao carregar colaboradores</p>
           <p className="text-sm text-gray-500 mt-1">{error}</p>
           {onRetry && (
-            <Button 
-              onClick={handleRetry} 
-              variant="outline" 
-              className="mt-4"
-              disabled={autoRetrying}
-            >
-              {autoRetrying ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Tentando novamente...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Tentar novamente {retryCount > 0 ? `(${retryCount})` : ''}
-                </>
+            <div className="mt-4 space-y-2">
+              <Button 
+                onClick={handleRetry} 
+                variant="outline" 
+                disabled={autoRetrying}
+                className="w-full"
+              >
+                {autoRetrying ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Tentando novamente...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Tentar novamente {retryCount > 0 ? `(${retryCount})` : ''}
+                  </>
+                )}
+              </Button>
+              {retryCount > 2 && (
+                <p className="text-xs text-amber-600">
+                  Se o problema persistir, verifique sua conexão com a internet
+                </p>
               )}
-            </Button>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -96,15 +118,32 @@ export const LoadingCollaborators: React.FC<LoadingCollaboratorsProps> = ({
     <Card className="border shadow-sm">
       <CardContent className="p-6 text-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
-        <p className="mt-2 text-gray-700 font-medium">Carregando colaboradores...</p>
+        <p className="mt-2 text-gray-700 font-medium">
+          Carregando colaboradores{loadingDots}
+        </p>
         {showTimeoutMessage ? (
-          <p className="text-xs text-amber-600 mt-1">
-            O carregamento está demorando mais que o esperado. 
-            Verifique sua conexão ou tente novamente mais tarde.
-          </p>
+          <div className="mt-2 space-y-1">
+            <p className="text-xs text-amber-600">
+              O carregamento está demorando mais que o esperado.
+            </p>
+            <p className="text-xs text-gray-500">
+              Isso pode indicar uma conexão lenta ou muitos dados para processar.
+            </p>
+            {onRetry && (
+              <Button 
+                onClick={handleRetry} 
+                variant="outline" 
+                size="sm"
+                className="mt-2"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Tentar novamente
+              </Button>
+            )}
+          </div>
         ) : (
           <p className="text-xs text-gray-400 mt-1">
-            Isso pode levar alguns instantes, aguarde...
+            Aguarde enquanto buscamos os dados...
           </p>
         )}
       </CardContent>
