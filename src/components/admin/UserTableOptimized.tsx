@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +10,7 @@ import { EditUserProfileDialog } from './user/EditUserProfileDialog';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAuth } from '@/contexts/AuthContext';
+import { getInitials } from '@/utils/stringUtils';
 
 interface UserTableOptimizedProps {
   users: UserProfile[];
@@ -67,16 +67,12 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
     });
   }, [users]);
 
-  const getInitials = (name: string | null, email: string | null): string => {
-    if (name) {
-      const nameParts = name.split(' ');
-      if (nameParts.length >= 2) {
-        return `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
-      }
-      return name.charAt(0).toUpperCase();
+  const getUserInitials = (user: UserProfile): string => {
+    if (user.display_name) {
+      return getInitials(user.display_name, 2);
     }
-    if (email) {
-      return email.charAt(0).toUpperCase();
+    if (user.email) {
+      return getInitials(user.email, 1);
     }
     return 'U';
   };
@@ -236,15 +232,14 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
                   <TableRow key={user.id}>
                     <TableCell>
                       <Avatar className="h-10 w-10">
-                        <AvatarImage 
-                          src={user.avatar || undefined} 
-                          alt={user.display_name || user.email || 'Usuário'}
-                          onError={(e) => {
-                            console.log('Error loading avatar for user:', user.email, 'URL:', user.avatar);
-                          }}
-                        />
+                        {user.avatar && (
+                          <AvatarImage 
+                            src={user.avatar} 
+                            alt={user.display_name || user.email || 'Usuário'}
+                          />
+                        )}
                         <AvatarFallback className="bg-slate-100 text-slate-600 font-medium">
-                          {getInitials(user.display_name, user.email)}
+                          {getUserInitials(user)}
                         </AvatarFallback>
                       </Avatar>
                     </TableCell>
