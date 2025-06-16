@@ -36,7 +36,7 @@ export const QuickLinks = () => {
     },
     { 
       icon: Users, 
-      label: "Comunidade", 
+      label: "Fórum", 
       path: "/community", 
       description: "Discussões e compartilhamento"
     }

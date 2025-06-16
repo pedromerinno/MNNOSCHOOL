@@ -1,3 +1,4 @@
+
 import { Link, useLocation } from "react-router-dom";
 import { 
   NavigationMenu, 
@@ -83,7 +84,7 @@ export const NavMenuLinks = ({ adminLabel = "Admin" }) => {
         
         <NavigationMenuItem>
           <Link to="/community" className={menuLinkClass('/community')}>
-            Comunidade
+            Fórum
           </Link>
         </NavigationMenuItem>
         

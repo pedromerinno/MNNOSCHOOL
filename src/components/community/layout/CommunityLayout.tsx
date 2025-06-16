@@ -23,7 +23,7 @@ export const CommunityLayout: React.FC<React.PropsWithChildren<{}>> = ({ childre
           </Button>
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold dark:text-white">
-              Comunidade
+              Fórum
             </h1>
             {selectedCompany && (
               <CompanyThemedBadge 

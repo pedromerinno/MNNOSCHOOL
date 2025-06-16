@@ -108,7 +108,7 @@ const Community = () => {
             </Button>
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-bold dark:text-white">
-                Comunidade
+                Fórum
               </h1>
             </div>
           </div>
@@ -141,7 +141,7 @@ const Community = () => {
             </Button>
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-bold dark:text-white">
-                Comunidade
+                Fórum
               </h1>
               {selectedCompany && (
                 <CompanyThemedBadge variant="beta">
@@ -220,7 +220,7 @@ const Community = () => {
           </Button>
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold dark:text-white">
-              Comunidade
+              Fórum
             </h1>
             {selectedCompany && (
               <CompanyThemedBadge variant="beta">
@@ -280,7 +280,7 @@ const Community = () => {
             <div className="text-center py-[80px]">
               <h3 className="text-lg font-medium mb-2 py-0">Nenhuma discussão encontrada</h3>
               <p className="text-sm text-gray-500 mb-4 py-[5px]">
-                {searchQuery ? "Tente uma busca diferente ou crie uma nova discussão." : "Seja o primeiro a iniciar uma conversa na comunidade!"}
+                {searchQuery ? "Tente uma busca diferente ou crie uma nova discussão." : "Seja o primeiro a iniciar uma conversa no fórum!"}
               </p>
               <Button onClick={() => setIsDialogOpen(true)} className="py-[30px] px-[30px] rounded-2xl">
                 <Plus className="h-4 w-4 mr-2" />
