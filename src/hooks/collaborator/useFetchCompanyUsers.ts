@@ -24,13 +24,10 @@ export const useFetchCompanyUsers = (
       setIsLoading(true);
       setError(null);
       
-      console.log(`[useFetchCompanyUsers] Starting optimized fetch for company: ${company.id}`);
+      console.log(`[useFetchCompanyUsers] Starting fetch for company: ${company.id}`);
       const startTime = Date.now();
 
-      // Single optimized query with join - aumentando timeout para 20s
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout mais tolerante
-      
+      // Single optimized query without aggressive timeout
       const { data, error } = await supabase
         .from('user_empresa')
         .select(`
@@ -51,10 +48,7 @@ export const useFetchCompanyUsers = (
           )
         `)
         .eq('empresa_id', company.id)
-        .limit(50)
-        .abortSignal(controller.signal);
-
-      clearTimeout(timeoutId);
+        .limit(50);
 
       if (error) throw error;
 
@@ -99,15 +93,12 @@ export const useFetchCompanyUsers = (
       console.error("[useFetchCompanyUsers] Error fetching company users:", error);
       
       if (error.name === 'AbortError') {
-        setError("Timeout - A consulta demorou muito para responder. Tente novamente.");
-      } else {
-        setError(error.message || "Erro ao carregar colaboradores");
+        console.log("[useFetchCompanyUsers] Request was aborted - this is normal if user navigated away");
+        return; // Don't show error for aborted requests
       }
       
-      // Não mostrar toast para timeouts para evitar spam
-      if (!error.message?.includes('timeout') && !error.message?.includes('Timeout')) {
-        toast.error("Erro ao carregar colaboradores");
-      }
+      setError(error.message || "Erro ao carregar colaboradores");
+      toast.error("Erro ao carregar colaboradores");
     } finally {
       setIsLoading(false);
     }

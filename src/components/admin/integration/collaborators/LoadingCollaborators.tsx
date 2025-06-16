@@ -15,7 +15,7 @@ export const LoadingCollaborators: React.FC<LoadingCollaboratorsProps> = ({
   error = null,
   onRetry
 }) => {
-  const [showTimeoutMessage, setShowTimeoutMessage] = useState(timeout);
+  const [showSlowMessage, setShowSlowMessage] = useState(false);
   const [loadingDots, setLoadingDots] = useState('');
   
   // Animação dos pontinhos de loading
@@ -32,12 +32,12 @@ export const LoadingCollaborators: React.FC<LoadingCollaboratorsProps> = ({
     }
   }, [error]);
 
-  // Show timeout message after 5 seconds (mais tolerante)
+  // Show slow message after 8 seconds (more patient)
   useEffect(() => {
     if (!timeout && !error) {
       const timeoutId = setTimeout(() => {
-        setShowTimeoutMessage(true);
-      }, 5000);
+        setShowSlowMessage(true);
+      }, 8000);
       
       return () => clearTimeout(timeoutId);
     }
@@ -72,13 +72,13 @@ export const LoadingCollaborators: React.FC<LoadingCollaboratorsProps> = ({
         <p className="mt-2 text-gray-700 font-medium">
           Carregando colaboradores{loadingDots}
         </p>
-        {showTimeoutMessage ? (
+        {showSlowMessage ? (
           <div className="mt-2 space-y-2">
             <p className="text-sm text-amber-600">
-              O carregamento está demorando mais que o esperado.
+              Carregamento mais lento que o esperado...
             </p>
             <p className="text-xs text-gray-500">
-              Aguarde mais alguns segundos ou tente novamente.
+              Aguarde mais alguns segundos.
             </p>
             {onRetry && (
               <Button 
