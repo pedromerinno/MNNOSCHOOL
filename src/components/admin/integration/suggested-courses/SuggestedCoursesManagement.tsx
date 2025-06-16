@@ -102,7 +102,7 @@ export const SuggestedCoursesManagement: React.FC = () => {
         .from('user_course_suggestions')
         .select('*')
         .eq('company_id', selectedCompany.id)
-        .order('order_index', { ascending: true, nullsLast: true })
+        .order('order_index', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false });
 
       if (error) {

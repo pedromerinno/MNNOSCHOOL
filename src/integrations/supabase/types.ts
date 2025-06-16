@@ -725,6 +725,7 @@ export type Database = {
           course_id: string
           created_at: string
           id: string
+          order_index: number | null
           reason: string
           suggested_by: string
           user_id: string
@@ -734,6 +735,7 @@ export type Database = {
           course_id: string
           created_at?: string
           id?: string
+          order_index?: number | null
           reason: string
           suggested_by: string
           user_id: string
@@ -743,6 +745,7 @@ export type Database = {
           course_id?: string
           created_at?: string
           id?: string
+          order_index?: number | null
           reason?: string
           suggested_by?: string
           user_id?: string
