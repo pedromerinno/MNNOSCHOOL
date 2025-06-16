@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -265,7 +266,7 @@ export const SuggestedCoursesManagement: React.FC = () => {
         
         <Button 
           onClick={() => setIsSuggestDialogOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700"
+          className="bg-black hover:bg-gray-800 text-white rounded-xl"
         >
           <Plus className="mr-2 h-4 w-4" />
           Nova Sugestão
@@ -300,8 +301,8 @@ export const SuggestedCoursesManagement: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="text-sm text-gray-500">
-              {filteredSuggestions.length} de {suggestions.length} sugestões
+            <div className="text-sm text-gray-500 mt-6">
+              Exibindo {filteredSuggestions.length} de {suggestions.length} sugestões
             </div>
           </div>
         </CardContent>
