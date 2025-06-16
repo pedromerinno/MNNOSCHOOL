@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, FileText, GripVertical } from "lucide-react";
+import { Pencil, Trash2, FileText, GripVertical, MoreHorizontal } from "lucide-react";
 import { 
   Table,
   TableBody,
@@ -10,6 +10,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Lesson } from '@/components/courses/CourseLessonList';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
@@ -85,7 +91,7 @@ export const LessonTable: React.FC<LessonTableProps> = ({
                 <TableHead>Título</TableHead>
                 <TableHead className="hidden md:table-cell">Tipo</TableHead>
                 <TableHead className="hidden md:table-cell">Duração</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead className="text-right w-[60px]">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <Droppable droppableId="lessons">
@@ -128,24 +134,26 @@ export const LessonTable: React.FC<LessonTableProps> = ({
                           </TableCell>
                           <TableCell className="hidden md:table-cell">{lesson.duration || '-'}</TableCell>
                           <TableCell className="text-right">
-                            <div className="flex justify-end space-x-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={() => onEditLesson(lesson)}
-                              >
-                                <Pencil className="h-4 w-4 mr-1" />
-                                <span className="hidden sm:inline">Editar</span>
-                              </Button>
-                              <Button 
-                                variant="destructive" 
-                                size="sm"
-                                onClick={() => onDeleteLesson(lesson)}
-                              >
-                                <Trash2 className="h-4 w-4 mr-1" />
-                                <span className="hidden sm:inline">Excluir</span>
-                              </Button>
-                            </div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-40">
+                                <DropdownMenuItem onClick={() => onEditLesson(lesson)}>
+                                  <Pencil className="h-4 w-4 mr-2" />
+                                  Editar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => onDeleteLesson(lesson)}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Excluir
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       )}
