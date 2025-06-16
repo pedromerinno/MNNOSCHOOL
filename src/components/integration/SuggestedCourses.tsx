@@ -52,6 +52,7 @@ export const SuggestedCourses: React.FC<SuggestedCoursesProps> = ({ companyColor
       console.log('[SuggestedCourses] Fetching suggestions for user:', userProfile.id, 'company:', selectedCompany.id);
       
       // Buscar as sugestões ordenadas pelo order_index definido pelo admin
+      // Usar NULLS LAST e fallback para created_at para garantir ordem consistente
       const { data: suggestions, error: suggestionsError } = await supabase
         .from('user_course_suggestions')
         .select(`
@@ -60,8 +61,8 @@ export const SuggestedCourses: React.FC<SuggestedCoursesProps> = ({ companyColor
         `)
         .eq('user_id', userProfile.id)
         .eq('company_id', selectedCompany.id)
-        .order('order_index', { ascending: true, nullsFirst: false })
-        .order('created_at', { ascending: false });
+        .order('order_index', { ascending: true, nullsLast: true })
+        .order('created_at', { ascending: true });
 
       if (suggestionsError) {
         console.error('Error fetching course suggestions:', suggestionsError);
@@ -75,10 +76,11 @@ export const SuggestedCourses: React.FC<SuggestedCoursesProps> = ({ companyColor
         return;
       }
 
-      console.log('[SuggestedCourses] Raw suggestions from DB:', suggestions.map(s => ({ 
+      console.log('[SuggestedCourses] Raw suggestions from DB (ordered):', suggestions.map(s => ({ 
         id: s.id, 
         order_index: s.order_index, 
-        course_title: s.course?.title 
+        course_title: s.course?.title,
+        created_at: s.created_at
       })));
 
       const suggesterIds = suggestions.map(s => s.suggested_by);
@@ -93,6 +95,7 @@ export const SuggestedCourses: React.FC<SuggestedCoursesProps> = ({ companyColor
         return;
       }
 
+      // Enriquecer com perfis dos sugestores e manter a ordem do banco
       const enrichedSuggestions = suggestions.map(suggestion => {
         const suggesterProfile = profiles?.find(p => p.id === suggestion.suggested_by);
         return {
@@ -103,9 +106,10 @@ export const SuggestedCourses: React.FC<SuggestedCoursesProps> = ({ companyColor
         };
       });
 
-      console.log('[SuggestedCourses] Final ordered suggestions:', enrichedSuggestions.map(s => ({ 
+      console.log('[SuggestedCourses] Final suggestions (maintaining DB order):', enrichedSuggestions.map(s => ({ 
         course_title: s.course?.title, 
-        order_index: s.order_index 
+        order_index: s.order_index,
+        created_at: s.created_at
       })));
       
       setSuggestedCourses(enrichedSuggestions);
