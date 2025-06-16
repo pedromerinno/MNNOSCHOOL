@@ -24,13 +24,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { CompanyManagementSection } from "./CompanyManagementSection";
 import { useCompanies } from "@/hooks/useCompanies";
 import { uploadAvatarImage } from "@/utils/imageUpload";
@@ -42,9 +35,6 @@ const userProfileSchema = z.object({
   avatar: z.string().optional(),
   aniversario: z.string().optional(),
   cidade: z.string().optional(),
-  tipo_contrato: z.enum(['CLT', 'PJ', 'Fornecedor', 'not_specified']).optional(),
-  nivel_colaborador: z.enum(['Junior', 'Pleno', 'Senior', 'not_specified']).optional(),
-  data_inicio: z.string().optional(),
 });
 
 export type UserProfileFormValues = z.infer<typeof userProfileSchema>;
@@ -70,9 +60,6 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
       avatar: "",
       aniversario: "",
       cidade: "",
-      tipo_contrato: "not_specified",
-      nivel_colaborador: "not_specified",
-      data_inicio: "",
     },
   });
 
@@ -90,9 +77,6 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
         avatar: avatarUrl,
         aniversario: userProfile.aniversario || "",
         cidade: userProfile.cidade || "",
-        tipo_contrato: userProfile.tipo_contrato || "not_specified",
-        nivel_colaborador: userProfile.nivel_colaborador || "not_specified",
-        data_inicio: userProfile.data_inicio || "",
       });
       
       setAvatarPreview(avatarUrl);
@@ -108,9 +92,6 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
         avatar: values.avatar || null,
         aniversario: values.aniversario || null,
         cidade: values.cidade || null,
-        tipo_contrato: values.tipo_contrato === 'not_specified' ? null : values.tipo_contrato,
-        nivel_colaborador: values.nivel_colaborador === 'not_specified' ? null : values.nivel_colaborador,
-        data_inicio: values.data_inicio || null,
       });
       
       onSave(values);
@@ -276,68 +257,6 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
                     <FormLabel>Cidade</FormLabel>
                     <FormControl>
                       <Input placeholder="Cidade onde mora" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="tipo_contrato"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo de Contrato</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o tipo" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="not_specified">Não informado</SelectItem>
-                        <SelectItem value="CLT">CLT</SelectItem>
-                        <SelectItem value="PJ">PJ</SelectItem>
-                        <SelectItem value="Fornecedor">Fornecedor</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="nivel_colaborador"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nível</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o nível" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="not_specified">Não informado</SelectItem>
-                        <SelectItem value="Junior">Junior</SelectItem>
-                        <SelectItem value="Pleno">Pleno</SelectItem>
-                        <SelectItem value="Senior">Senior</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="data_inicio"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Data de Início</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
