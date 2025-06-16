@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ interface SuggestedCourse {
   suggested_by: string;
   reason: string;
   created_at: string;
+  order_index?: number;
   course: {
     id: string;
     title: string;
@@ -47,7 +49,7 @@ export const SuggestedCourses: React.FC<SuggestedCoursesProps> = ({ companyColor
     
     setIsLoading(true);
     try {
-      // Primeiro, buscar as sugestões básicas
+      // Buscar as sugestões ordenadas pelo order_index definido pelo admin
       const { data: suggestions, error: suggestionsError } = await supabase
         .from('user_course_suggestions')
         .select(`
@@ -56,6 +58,7 @@ export const SuggestedCourses: React.FC<SuggestedCoursesProps> = ({ companyColor
         `)
         .eq('user_id', userProfile.id)
         .eq('company_id', selectedCompany.id)
+        .order('order_index', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false });
 
       if (suggestionsError) {
@@ -91,7 +94,7 @@ export const SuggestedCourses: React.FC<SuggestedCoursesProps> = ({ companyColor
         };
       });
 
-      console.log(`Loaded ${enrichedSuggestions.length} course suggestions`);
+      console.log(`Loaded ${enrichedSuggestions.length} course suggestions in admin-defined order`);
       setSuggestedCourses(enrichedSuggestions);
     } catch (error) {
       console.error('Error fetching suggested courses:', error);
