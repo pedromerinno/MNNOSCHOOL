@@ -33,6 +33,7 @@ export const UserHome = () => {
 
     // Se é super admin, não precisa de empresa
     if (userProfile.super_admin) {
+      console.log("[UserHome] User is super admin, no company dialog needed");
       setHasCheckedCompanies(true);
       return;
     }
@@ -41,10 +42,9 @@ export const UserHome = () => {
     if (userCompanies.length === 0) {
       console.log("[UserHome] User has no companies, showing dialog");
       setShowCompanyDialog(true);
-      setHasCheckedCompanies(true);
-    } else {
-      setHasCheckedCompanies(true);
     }
+    
+    setHasCheckedCompanies(true);
   }, [user, userProfile, userCompanies.length, isLoading, hasCheckedCompanies]);
 
   const handleCompanyCreated = () => {
@@ -58,6 +58,9 @@ export const UserHome = () => {
   const handleCompanyTypeSelect = (isExisting: boolean) => {
     console.log("[UserHome] Company type selected:", isExisting ? "existing" : "new");
   };
+
+  // Se não é super admin e não tem empresas, sempre mostrar o dialog
+  const shouldShowDialog = !userProfile?.super_admin && userCompanies.length === 0 && !isLoading;
   
   return (
     <>
@@ -72,8 +75,13 @@ export const UserHome = () => {
       </div>
 
       <CompanySelectionDialog
-        open={showCompanyDialog}
-        onOpenChange={setShowCompanyDialog}
+        open={shouldShowDialog || showCompanyDialog}
+        onOpenChange={(open) => {
+          // Só permitir fechar se o usuário é super admin ou tem empresas
+          if (!open && (userProfile?.super_admin || userCompanies.length > 0)) {
+            setShowCompanyDialog(false);
+          }
+        }}
         onCompanyTypeSelect={handleCompanyTypeSelect}
         onCompanyCreated={handleCompanyCreated}
         userId={user?.id}

@@ -42,12 +42,13 @@ export const CompanySelectionDialog: React.FC<CompanySelectionDialogProps> = ({
     onCompanyCreated();
   };
 
-  // Não permitir fechar o dialog se o usuário não é super admin e não tem empresas
+  // Determinar se pode fechar o dialog
   const canClose = userProfile?.super_admin || userCompanies.length > 0;
 
   const handleOpenChange = (shouldOpen: boolean) => {
     if (!shouldOpen && !canClose) {
-      // Não permitir fechar se não pode
+      // Não permitir fechar se o usuário não é super admin e não tem empresas
+      console.log("[CompanySelectionDialog] Cannot close - user has no companies and is not super admin");
       return;
     }
     onOpenChange(shouldOpen);
