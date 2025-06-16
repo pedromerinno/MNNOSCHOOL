@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { WelcomeSection } from "./WelcomeSection";
@@ -7,12 +6,27 @@ import { DashboardWidgets } from "./DashboardWidgets";
 import { Footer } from "./Footer";
 import { AdminFloatingActionButton } from "../admin/AdminFloatingActionButton";
 import { CompanySelectionDialog } from "./CompanySelectionDialog";
+import { UserHomeSkeleton } from "./UserHomeSkeleton";
 import { useEffect, useState } from "react";
 
 export const UserHome = () => {
-  const { user, userProfile } = useAuth();
-  const { userCompanies, isLoading, forceGetUserCompanies } = useCompanies();
+  const { user, userProfile, loading: authLoading } = useAuth();
+  const { userCompanies, isLoading, forceGetUserCompanies, selectedCompany } = useCompanies();
   const [showCompanyDialog, setShowCompanyDialog] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+
+  // Controlar loading inicial
+  useEffect(() => {
+    // Mostrar skeleton apenas no carregamento inicial
+    if (!authLoading && userProfile) {
+      // Dar um tempo para carregar as empresas
+      const timer = setTimeout(() => {
+        setIsInitialLoading(false);
+      }, 1500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [authLoading, userProfile]);
 
   // Verificar se deve mostrar o diálogo de empresa
   useEffect(() => {
@@ -58,6 +72,11 @@ export const UserHome = () => {
   const handleCompanyTypeSelect = (isExisting: boolean) => {
     console.log("[UserHome] Company type selected:", isExisting ? "existing" : "new");
   };
+
+  // Mostrar skeleton durante carregamento inicial
+  if (isInitialLoading || authLoading) {
+    return <UserHomeSkeleton />;
+  }
 
   // Só mostrar dialog se não é super admin, não tem empresas e não está carregando
   const shouldShowDialog = !userProfile?.super_admin && userCompanies.length === 0 && !isLoading;

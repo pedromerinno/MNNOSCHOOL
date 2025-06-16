@@ -8,6 +8,7 @@ import { useCompanies } from "@/hooks/useCompanies";
 import { toast } from "sonner";
 import { SuggestCourseDialog } from './suggested-courses/SuggestCourseDialog';
 import { SuggestedCourseCard } from './suggested-courses/SuggestedCourseCard';
+import { SuggestedCoursesSkeleton } from './suggested-courses/SuggestedCoursesSkeleton';
 
 interface SuggestedCourse {
   id: string;
@@ -146,11 +147,7 @@ export const SuggestedCourses: React.FC<SuggestedCoursesProps> = ({ companyColor
   }, [userProfile?.id, selectedCompany?.id]);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <div className="w-6 h-6 border-2 border-gray-200 border-t-gray-600 rounded-full animate-spin" />
-      </div>
-    );
+    return <SuggestedCoursesSkeleton />;
   }
 
   return (

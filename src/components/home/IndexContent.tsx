@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { UserHome } from "@/components/home/UserHome";
@@ -9,6 +9,19 @@ import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 export const IndexContent = () => {
   const { user, userProfile, loading: authLoading } = useAuth();
   const { selectedCompany, isLoading } = useCompanies();
+  const [showInitialSkeleton, setShowInitialSkeleton] = useState(true);
+
+  // Controlar quando parar de mostrar o skeleton inicial
+  useEffect(() => {
+    if (!authLoading && user && userProfile) {
+      // Dar um breve momento para carregar os dados iniciais
+      const timer = setTimeout(() => {
+        setShowInitialSkeleton(false);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [authLoading, user, userProfile]);
 
   // Debug log para verificar o estado
   useEffect(() => {
@@ -18,13 +31,14 @@ export const IndexContent = () => {
       isSuperAdmin: userProfile?.super_admin,
       selectedCompany: selectedCompany?.nome,
       isLoading,
-      authLoading
+      authLoading,
+      showInitialSkeleton
     });
-  }, [user, userProfile, selectedCompany, isLoading, authLoading]);
+  }, [user, userProfile, selectedCompany, isLoading, authLoading, showInitialSkeleton]);
 
-  // Mostrar skeleton apenas se ainda está carregando auth E não tem usuário
-  if (authLoading && !user) {
-    console.log("[IndexContent] Showing skeleton - auth loading and no user");
+  // Mostrar skeleton durante carregamento inicial ou auth loading
+  if (showInitialSkeleton || (authLoading && !user)) {
+    console.log("[IndexContent] Showing skeleton - initial loading or auth loading");
     return <IndexSkeleton />;
   }
 
