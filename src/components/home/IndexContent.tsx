@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { UserHome } from "@/components/home/UserHome";
-import { IndexSkeleton } from "@/components/home/IndexSkeleton";
+import { UserHomeSkeleton } from "@/components/home/UserHomeSkeleton";
 import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 
 export const IndexContent = () => {
@@ -39,13 +39,23 @@ export const IndexContent = () => {
   // Mostrar skeleton durante carregamento inicial ou auth loading
   if (showInitialSkeleton || (authLoading && !user)) {
     console.log("[IndexContent] Showing skeleton - initial loading or auth loading");
-    return <IndexSkeleton />;
+    return (
+      <>
+        <MainNavigationMenu />
+        <UserHomeSkeleton />
+      </>
+    );
   }
 
   // Se não tem usuário, redirecionar para login seria feito pelo ProtectedRoute
   if (!user) {
     console.log("[IndexContent] No user - redirecting should be handled by ProtectedRoute");
-    return <IndexSkeleton />;
+    return (
+      <>
+        <MainNavigationMenu />
+        <UserHomeSkeleton />
+      </>
+    );
   }
 
   // Se tem usuário, sempre mostrar a home com header
