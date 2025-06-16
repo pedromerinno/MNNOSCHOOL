@@ -12,75 +12,6 @@ export const useFetchCompanyUsers = (
   initialFetchDone: React.MutableRefObject<boolean>,
   setError: (error: string | null) => void
 ) => {
-  // Function to fetch users with roles in a single optimized query
-  const fetchCompanyUsersWithRoles = async (userIds: string[]): Promise<{ users: UserProfile[], roles: Record<string, string> }> => {
-    if (userIds.length === 0) return { users: [], roles: {} };
-    
-    try {
-      console.log(`[fetchCompanyUsersWithRoles] Fetching ${userIds.length} users with roles`);
-      
-      // Single optimized query with timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select(`
-          id, 
-          display_name, 
-          email, 
-          is_admin, 
-          super_admin, 
-          avatar,
-          created_at,
-          cargo_id,
-          job_roles!left(
-            id,
-            title
-          )
-        `)
-        .in('id', userIds)
-        .order('display_name', { ascending: true })
-        .limit(50)
-        .abortSignal(controller.signal);
-        
-      clearTimeout(timeoutId);
-      
-      if (error) throw error;
-      
-      const users: UserProfile[] = [];
-      const roles: Record<string, string> = {};
-      
-      data?.forEach((user: any) => {
-        users.push({
-          id: user.id,
-          display_name: user.display_name,
-          email: user.email,
-          is_admin: user.is_admin,
-          super_admin: user.super_admin,
-          avatar: user.avatar,
-          created_at: user.created_at,
-          cargo_id: user.cargo_id
-        });
-        
-        if (user.job_roles?.title) {
-          roles[user.id] = user.job_roles.title;
-        }
-      });
-      
-      console.log(`[fetchCompanyUsersWithRoles] Loaded ${users.length} users and ${Object.keys(roles).length} roles`);
-      return { users, roles };
-      
-    } catch (error: any) {
-      if (error.name === 'AbortError') {
-        console.warn("fetchCompanyUsersWithRoles timeout");
-        throw new Error("Timeout ao carregar dados dos usuários");
-      }
-      console.error("Error fetching users with roles:", error);
-      throw error;
-    }
-  };
-
   const fetchCompanyUsers = useCallback(async (company: Company) => {
     if (!company?.id) {
       console.warn("No company ID provided");
@@ -89,35 +20,45 @@ export const useFetchCompanyUsers = (
       return;
     }
 
-    // Evitar fetch duplicado
-    if (initialFetchDone.current) {
-      console.log("Company users already fetched, skipping...");
-      return;
-    }
-
     try {
       setIsLoading(true);
       setError(null);
       
-      console.log(`[useFetchCompanyUsers] Starting fetch for company: ${company.id}`);
+      console.log(`[useFetchCompanyUsers] Starting optimized fetch for company: ${company.id}`);
       const startTime = Date.now();
 
-      // Step 1: Buscar apenas IDs dos usuários com timeout otimizado
-      const controller1 = new AbortController();
-      const timeoutId1 = setTimeout(() => controller1.abort(), 5000); // 5s timeout mais agressivo
+      // Single optimized query with join - aumentando timeout para 20s
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout mais tolerante
       
-      const { data: userCompanyData, error: userCompanyError } = await supabase
+      const { data, error } = await supabase
         .from('user_empresa')
-        .select('user_id')
+        .select(`
+          user_id,
+          profiles!inner(
+            id, 
+            display_name, 
+            email, 
+            is_admin, 
+            super_admin, 
+            avatar,
+            created_at,
+            cargo_id,
+            job_roles(
+              id,
+              title
+            )
+          )
+        `)
         .eq('empresa_id', company.id)
-        .limit(30) // Limitar ainda mais para performance
-        .abortSignal(controller1.signal);
+        .limit(50)
+        .abortSignal(controller.signal);
 
-      clearTimeout(timeoutId1);
+      clearTimeout(timeoutId);
 
-      if (userCompanyError) throw userCompanyError;
+      if (error) throw error;
 
-      if (!userCompanyData || userCompanyData.length === 0) {
+      if (!data || data.length === 0) {
         console.log("No users found for company");
         setCompanyUsers([]);
         setUserRoles({});
@@ -125,11 +66,27 @@ export const useFetchCompanyUsers = (
         return;
       }
 
-      const userIds = userCompanyData.map(item => item.user_id);
-      console.log(`Found ${userIds.length} users for company`);
+      const users: UserProfile[] = [];
+      const roles: Record<string, string> = {};
 
-      // Step 2: Buscar perfis e roles em uma única query otimizada
-      const { users, roles } = await fetchCompanyUsersWithRoles(userIds);
+      data.forEach((item: any) => {
+        if (item.profiles) {
+          users.push({
+            id: item.profiles.id,
+            display_name: item.profiles.display_name,
+            email: item.profiles.email,
+            is_admin: item.profiles.is_admin,
+            super_admin: item.profiles.super_admin,
+            avatar: item.profiles.avatar,
+            created_at: item.profiles.created_at,
+            cargo_id: item.profiles.cargo_id
+          });
+          
+          if (item.profiles.job_roles?.title) {
+            roles[item.profiles.id] = item.profiles.job_roles.title;
+          }
+        }
+      });
 
       const endTime = Date.now();
       console.log(`[useFetchCompanyUsers] Completed in ${endTime - startTime}ms. Loaded ${users.length} profiles and ${Object.keys(roles).length} roles`);
@@ -142,12 +99,12 @@ export const useFetchCompanyUsers = (
       console.error("[useFetchCompanyUsers] Error fetching company users:", error);
       
       if (error.name === 'AbortError') {
-        setError("Timeout - A consulta demorou muito para responder");
+        setError("Timeout - A consulta demorou muito para responder. Tente novamente.");
       } else {
         setError(error.message || "Erro ao carregar colaboradores");
       }
       
-      // Não mostrar toast para timeouts
+      // Não mostrar toast para timeouts para evitar spam
       if (!error.message?.includes('timeout') && !error.message?.includes('Timeout')) {
         toast.error("Erro ao carregar colaboradores");
       }

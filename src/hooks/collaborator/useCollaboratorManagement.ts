@@ -84,14 +84,14 @@ export const useCollaboratorManagement = (company: Company | null): Collaborator
         return;
       }
       
-      // Skip if already loaded for this company
-      if (initialFetchDone.current && company.id === lastCompanyId) {
-        console.log("Data already loaded for this company");
-        setIsLoading(false);
-        return;
+      // Permitir reload mesmo se já carregou
+      console.log(`Loading company users for ${company.nome} (reload trigger: ${reloadTrigger})`);
+      
+      // Reset do flag para permitir novo carregamento
+      if (reloadTrigger > 0) {
+        initialFetchDone.current = false;
       }
       
-      console.log(`Loading company users for ${company.nome}`);
       try {
         await fetchCompanyUsers(company);
       } catch (error: any) {
@@ -101,7 +101,7 @@ export const useCollaboratorManagement = (company: Company | null): Collaborator
     };
     
     loadCompanyUsers();
-  }, [company, reloadTrigger, fetchCompanyUsers, setIsLoading, setCompanyUsers, setError, initialFetchDone, lastCompanyId]);
+  }, [company, reloadTrigger, fetchCompanyUsers, setIsLoading, setCompanyUsers, setError, initialFetchDone]);
   
   // Ensure all users are loaded (mas com prioridade menor)
   useEffect(() => {
@@ -110,7 +110,7 @@ export const useCollaboratorManagement = (company: Company | null): Collaborator
       // Delay para não competir com o carregamento dos colaboradores
       setTimeout(() => {
         fetchUsers();
-      }, 500);
+      }, 1000);
     }
   }, [allUsers.length, loadingUsers, fetchUsers]);
   

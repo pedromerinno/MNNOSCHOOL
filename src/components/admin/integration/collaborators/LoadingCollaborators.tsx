@@ -32,12 +32,12 @@ export const LoadingCollaborators: React.FC<LoadingCollaboratorsProps> = ({
     }
   }, [error]);
 
-  // Show timeout message after 3 seconds
+  // Show timeout message after 5 seconds (mais tolerante)
   useEffect(() => {
     if (!timeout && !error) {
       const timeoutId = setTimeout(() => {
         setShowTimeoutMessage(true);
-      }, 3000);
+      }, 5000);
       
       return () => clearTimeout(timeoutId);
     }
@@ -73,9 +73,12 @@ export const LoadingCollaborators: React.FC<LoadingCollaboratorsProps> = ({
           Carregando colaboradores{loadingDots}
         </p>
         {showTimeoutMessage ? (
-          <div className="mt-2 space-y-1">
-            <p className="text-xs text-amber-600">
+          <div className="mt-2 space-y-2">
+            <p className="text-sm text-amber-600">
               O carregamento está demorando mais que o esperado.
+            </p>
+            <p className="text-xs text-gray-500">
+              Aguarde mais alguns segundos ou tente novamente.
             </p>
             {onRetry && (
               <Button 
@@ -91,7 +94,7 @@ export const LoadingCollaborators: React.FC<LoadingCollaboratorsProps> = ({
           </div>
         ) : (
           <p className="text-xs text-gray-400 mt-1">
-            Aguarde enquanto buscamos os dados...
+            Buscando dados da empresa...
           </p>
         )}
       </CardContent>
