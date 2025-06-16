@@ -48,14 +48,24 @@ const Courses = () => {
     if (!allCompanyCourses) return [];
     const categories = new Set<string>();
     allCompanyCourses.forEach(course => {
-      course.tags?.forEach(tag => categories.add(tag));
+      course.tags?.forEach(tag => {
+        // Normalize tag to lowercase and trim whitespace to avoid duplicates
+        const normalizedTag = tag.trim().toLowerCase();
+        if (normalizedTag) {
+          categories.add(normalizedTag);
+        }
+      });
     });
-    return Array.from(categories);
+    // Convert back to array and sort alphabetically
+    return Array.from(categories).sort();
   }, [allCompanyCourses]);
 
   const filteredCourses = allCompanyCourses?.filter(course => {
     if (activeCategory === "all") return true;
-    return course.tags?.includes(activeCategory);
+    // Check if any tag matches the active category (case-insensitive)
+    return course.tags?.some(tag => 
+      tag.trim().toLowerCase() === activeCategory.toLowerCase()
+    );
   });
 
   if (companyLoading || !selectedCompany) {
