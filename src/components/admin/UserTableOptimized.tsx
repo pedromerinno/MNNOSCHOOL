@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -240,6 +241,7 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
               </TableHeader>
               <TableBody>
                 {sortedUsers.map((user) => {
+                  // Log for debugging avatar rendering
                   console.log('[UserTableOptimized] Rendering user:', {
                     id: user.id,
                     email: user.email,
@@ -251,7 +253,7 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
                     <TableRow key={user.id}>
                       <TableCell>
                         <Avatar className="h-10 w-10">
-                          {user.avatar ? (
+                          {user.avatar && (
                             <AvatarImage 
                               src={user.avatar} 
                               alt={user.display_name || user.email || 'Usuário'}
@@ -261,8 +263,6 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
                                 console.error('[UserTableOptimized] Error details:', e);
                               }}
                             />
-                          ) : (
-                            console.log('[UserTableOptimized] No avatar for user:', user.email)
                           )}
                           <AvatarFallback className="bg-slate-100 text-slate-600 font-medium">
                             {getUserInitials(user)}
