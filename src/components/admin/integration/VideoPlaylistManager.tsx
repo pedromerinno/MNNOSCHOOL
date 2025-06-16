@@ -7,12 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, Plus, Trash2, Edit, GripVertical, Image, Link, Upload } from "lucide-react";
+import { AlertCircle, Plus, Trash2, Edit, GripVertical, Image, Link, Upload, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Company } from "@/types/company";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import DragDropImageUpload from "@/components/ui/DragDropImageUpload";
 import { getYoutubeVideoId, getLoomVideoId, getEmbedUrl } from "@/components/integration/video-playlist/utils";
 
@@ -260,7 +261,7 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
           {videos.map((video, index) => (
             <Card key={video.id}>
               <CardContent className="p-4">
-                <div className="flex items-start gap-4">
+                <div className="flex items-center gap-4">
                   <div className="flex-shrink-0">
                     <GripVertical className="h-5 w-5 text-gray-400" />
                   </div>
@@ -279,14 +280,9 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
                   )}
                   
                   <div className="flex-1">
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-center justify-between">
                       <div>
                         <h4 className="font-medium">{video.title}</h4>
-                        {video.description && (
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                            {video.description}
-                          </p>
-                        )}
                         <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
                           <span>Posição: {index + 1}</span>
                           {video.duration && <span>Duração: {video.duration}</span>}
@@ -296,22 +292,30 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openEditDialog(video)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(video.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Abrir menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem onClick={() => openEditDialog(video)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Editar
+                          </DropdownMenuItem>
+                          
+                          <DropdownMenuSeparator />
+                          
+                          <DropdownMenuItem 
+                            onClick={() => handleDelete(video.id)}
+                            className="text-red-600 focus:text-red-600"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 </div>
