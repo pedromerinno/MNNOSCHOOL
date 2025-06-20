@@ -31,6 +31,9 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
     });
     navigate(`/courses/${course.id}`);
   };
+
+  // Define fallback image URL
+  const imageUrl = course.image_url || "https://images.unsplash.com/photo-1617096199719-18e5acee65f8?auto=format&fit=crop&w=1200&q=80";
   
   return (
     <div 
@@ -41,7 +44,7 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
       <div 
         className="absolute inset-0 w-full h-full"
         style={{
-          backgroundImage: `url(${course.image_url || "https://images.unsplash.com/photo-1617096199719-18e5acee65f8?auto=format&fit=crop&w=1200&q=80"})`,
+          backgroundImage: `url(${imageUrl})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat'
