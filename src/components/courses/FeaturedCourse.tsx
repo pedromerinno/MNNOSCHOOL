@@ -32,15 +32,16 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
     navigate(`/courses/${course.id}`);
   };
 
-  // Define fallback image URL - usando uma imagem mais adequada para produção/cursos
-  const imageUrl = course.image_url || "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80";
+  // Define fallback image URL sempre, mesmo se course.image_url for null/undefined
+  const defaultImage = "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80";
+  const imageUrl = course.image_url && course.image_url.trim() !== "" ? course.image_url : defaultImage;
   
   return (
     <div 
       className="rounded-2xl overflow-hidden mb-8 bg-[#1A1F2C] h-[350px] relative cursor-pointer"
       onClick={handleCourseClick}
     >
-      {/* Background image com fallback melhorado */}
+      {/* Background image com fallback garantido */}
       <div className="absolute inset-0 w-full h-full">
         <img 
           src={imageUrl}
