@@ -32,24 +32,29 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
     navigate(`/courses/${course.id}`);
   };
 
-  // Define fallback image URL
-  const imageUrl = course.image_url || "https://images.unsplash.com/photo-1617096199719-18e5acee65f8?auto=format&fit=crop&w=1200&q=80";
+  // Define fallback image URL - usando uma imagem mais adequada para produção/cursos
+  const imageUrl = course.image_url || "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80";
   
   return (
     <div 
       className="rounded-2xl overflow-hidden mb-8 bg-[#1A1F2C] h-[350px] relative cursor-pointer"
       onClick={handleCourseClick}
     >
-      {/* Background image */}
-      <div 
-        className="absolute inset-0 w-full h-full"
-        style={{
-          backgroundImage: `url(${imageUrl})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        }}
-      />
+      {/* Background image com fallback melhorado */}
+      <div className="absolute inset-0 w-full h-full">
+        <img 
+          src={imageUrl}
+          alt={course.title}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            // Se a imagem falhar, usa uma imagem de fallback diferente
+            if (target.src !== "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=1200&q=80") {
+              target.src = "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=1200&q=80";
+            }
+          }}
+        />
+      </div>
       
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-tr from-black/70 to-transparent" />
