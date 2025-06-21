@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { UserProfile } from "@/hooks/useUsers";
+import { UserProfile } from "@/types/user";
 import { JobRole } from "@/types/job-roles";
 import { TeamMemberCard } from '../TeamMemberCard';
 import { Users } from 'lucide-react';
