@@ -4,12 +4,11 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { CourseCarousel } from "@/components/courses/CourseCarousel";
 import { CourseCategories } from "@/components/courses/CourseCategories";
 import { useCoursesPage } from "@/hooks/useCoursesPage";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useCompanies } from "@/hooks/useCompanies";
 import { NewCourseDialog } from "@/components/admin/dialogs/NewCourseDialog";
 import { EmptyCoursesState } from "@/components/courses/EmptyCoursesState";
 import { CoursesGrid } from "@/components/courses/CoursesGrid";
-import { CoursesLoadingSkeleton } from "@/components/courses/CoursesLoadingSkeleton";
+import { CoursesPageSkeleton } from "@/components/courses/CoursesPageSkeleton";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 
@@ -68,23 +67,24 @@ const Courses = () => {
     );
   });
 
-  if (companyLoading || !selectedCompany) {
+  // Show skeleton while loading
+  if (companyLoading || !selectedCompany || loading) {
     return (
-      <DashboardLayout>
-        <div className="w-full max-w-screen-2xl mx-auto px-4 py-6 space-y-12">
-          <div className="w-full h-64">
-            <Skeleton className="w-full h-full rounded-xl" />
-          </div>
-          <div className="space-y-4">
-            <Skeleton className="h-8 w-40" />
-            <div className="flex gap-2">
-              {[1, 2, 3, 4].map(i => (
-                <Skeleton key={i} className="h-10 w-24 rounded-full" />
-              ))}
+      <DashboardLayout fullWidth>
+        {/* Header with Admin Actions - skeleton version */}
+        {isAdmin && (
+          <div className="w-full max-w-screen-xl mx-auto px-4 py-4">
+            <div className="flex justify-between items-center">
+              <div className="space-y-2">
+                <div className="h-8 w-20 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-4 w-64 bg-gray-100 rounded animate-pulse"></div>
+              </div>
+              <div className="h-10 w-32 bg-gray-200 rounded-xl animate-pulse"></div>
             </div>
           </div>
-          <CoursesLoadingSkeleton />
-        </div>
+        )}
+        
+        <CoursesPageSkeleton />
       </DashboardLayout>
     );
   }
@@ -115,13 +115,7 @@ const Courses = () => {
       )}
 
       {/* Full width featured courses section */}
-      {loading ? (
-        <div className="w-full px-4 py-6">
-          <div className="w-full h-64">
-            <Skeleton className="w-full h-full rounded-xl" />
-          </div>
-        </div>
-      ) : hasNoCourses ? (
+      {hasNoCourses ? (
         <div className="w-full max-w-screen-2xl mx-auto px-4">
           <EmptyCoursesState 
             companyName={selectedCompany.nome} 
@@ -131,12 +125,12 @@ const Courses = () => {
         </div>
       ) : (
         <div className="w-full px-0">
-          <CourseCarousel courses={featuredCourses} loading={loading} />
+          <CourseCarousel courses={featuredCourses} loading={false} />
         </div>
       )}
       
       {/* Centered content with smaller width */}
-      {!loading && !hasNoCourses && (
+      {!hasNoCourses && (
         <div className="w-full max-w-screen-xl mx-auto space-y-5 px-0 py-0">
           <div className="space-y-4 py-[30px]">
             <h2 className="text-xl font-semibold">Categorias</h2>
@@ -152,7 +146,13 @@ const Courses = () => {
               <h2 className="text-xl font-semibold">Todos os cursos</h2>
               
               {allCoursesLoading ? (
-                <CoursesLoadingSkeleton />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {Array(6).fill(0).map((_, index) => (
+                    <div key={index} className="aspect-[4/3] rounded-lg overflow-hidden">
+                      <div className="w-full h-full bg-gray-200 animate-pulse"></div>
+                    </div>
+                  ))}
+                </div>
               ) : (
                 <CoursesGrid courses={filteredCourses} />
               )}
