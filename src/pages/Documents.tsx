@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
@@ -31,10 +30,10 @@ const Documents = () => {
     documents: personalDocuments,
     isLoading: personalLoading,
     isUploading: personalUploading,
-    onUpload: uploadPersonalDocument,
-    onDownload: downloadPersonalDocument,
-    onPreview: previewPersonalDocument,
-    onDelete: deletePersonalDocument,
+    handleDocumentUpload: uploadPersonalDocument,
+    downloadDocument: downloadPersonalDocument,
+    handlePreview: previewPersonalDocument,
+    handleDelete: deletePersonalDocument,
     canDeleteDocument: canDeletePersonalDocument
   } = useDocumentManagerOptimized();
 
