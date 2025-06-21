@@ -9,6 +9,7 @@ import { UserNavigation } from "@/components/navigation/UserNavigation";
 import { AuthButtons } from "@/components/navigation/AuthButtons";
 import { CompanySelector } from "@/components/navigation/CompanySelector";
 import { ProfileUpdateBanner } from "@/components/navigation/ProfileUpdateBanner";
+import { MobileNavigationMenu } from "@/components/navigation/MobileNavigationMenu";
 import { memo } from "react";
 
 export const MainNavigationMenu = memo(() => {
@@ -23,8 +24,12 @@ export const MainNavigationMenu = memo(() => {
 
   return (
     <>
+      {/* Menu Mobile */}
+      <MobileNavigationMenu />
+      
+      {/* Menu Desktop */}
       <header 
-        className="sticky top-0 z-40 w-full border-b shadow-sm bg-[#F8F7F4] dark:bg-[#191919]"
+        className="sticky top-0 z-40 w-full border-b shadow-sm bg-[#F8F7F4] dark:bg-[#191919] hidden md:block"
       >
         <div className="w-full px-4 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-4 md:space-x-8">
