@@ -91,7 +91,7 @@ export const AccessCard = ({ item, onClick, companyColor, onEdit, onAccessUpdate
 
   const AccessCardContent = () => (
     <Card 
-      className="hover:shadow-md transition-all duration-200 cursor-pointer group dark:hover:shadow-gray-800 relative overflow-hidden p-4 md:p-5 space-y-3 md:space-y-4"
+      className="hover:shadow-md transition-all duration-200 cursor-pointer group dark:hover:shadow-gray-800 relative overflow-hidden p-5 space-y-4"
       onClick={onClick}
       style={{
         borderColor: companyColor ? `${companyColor}30` : undefined,
@@ -104,9 +104,9 @@ export const AccessCard = ({ item, onClick, companyColor, onEdit, onAccessUpdate
       />
       
       <CardHeader className="p-0 pb-2">
-        <CardTitle className="flex justify-between items-center text-base md:text-lg">
-          <span className="dark:text-white font-semibold truncate pr-2">{item.tool_name}</span>
-          <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+        <CardTitle className="flex justify-between items-center text-lg">
+          <span className="dark:text-white font-semibold">{item.tool_name}</span>
+          <div className="flex items-center gap-2">
             {item.url && (
               <a 
                 href={item.url.startsWith('http') ? item.url : `https://${item.url}`} 
@@ -115,14 +115,14 @@ export const AccessCard = ({ item, onClick, companyColor, onEdit, onAccessUpdate
                 className="text-blue-500 hover:text-blue-700 transition-colors"
                 onClick={(e) => e.stopPropagation()}
               >
-                <ExternalLink size={16} className="md:w-[18px] md:h-[18px]" />
+                <ExternalLink size={18} />
               </a>
             )}
             {canEdit && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 md:h-8 md:w-8">
-                    <MoreVertical size={14} className="md:w-4 md:h-4" />
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreVertical size={16} />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -135,30 +135,30 @@ export const AccessCard = ({ item, onClick, companyColor, onEdit, onAccessUpdate
       </CardHeader>
       
       <CardContent className="p-0">
-        <div className="flex items-center mb-3 md:mb-4">
-          <div className="bg-primary/10 p-1.5 md:p-2 rounded-full mr-2 md:mr-3 flex-shrink-0">
-            <Key size={16} className="md:w-5 md:h-5 text-primary" />
+        <div className="flex items-center mb-4">
+          <div className="bg-primary/10 p-2 rounded-full mr-3">
+            <Key size={20} className="text-primary" />
           </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1 md:gap-2">
-              <p className="font-medium dark:text-white text-sm md:text-base truncate">{item.username}</p>
+          <div>
+            <div className="flex items-center gap-2">
+              <p className="font-medium dark:text-white">{item.username}</p>
               <Button 
                 variant="ghost" 
                 size="icon"
-                className="h-5 w-5 md:h-6 md:w-6 hover:bg-primary/10 flex-shrink-0"
+                className="h-6 w-6 hover:bg-primary/10"
                 onClick={(e) => {
                   e.stopPropagation();
                   copyToClipboard(item.username, 'Usuário');
                 }}
               >
-                <Copy size={12} className="md:w-[14px] md:h-[14px]" />
+                <Copy size={14} />
               </Button>
             </div>
-            <p className="text-xs md:text-sm text-muted-foreground">Usuário</p>
+            <p className="text-sm text-muted-foreground">Usuário</p>
           </div>
         </div>
 
-        <div className="border-t border-border/30 pt-2 md:pt-3 mt-2 md:mt-3">
+        <div className="border-t border-border/30 pt-3 mt-3">
           <p className="text-xs text-muted-foreground">
             Clique para ver a senha e mais detalhes
           </p>
