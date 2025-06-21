@@ -61,7 +61,7 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
         companyColor={companyColor}
       />
 
-      {/* Only show upload form for personal documents */}
+      {/* Only show upload form for personal documents - company documents are handled by FAB */}
       {canUpload && type === 'personal' && (
         <DocumentUploadForm
           open={uploadOpen}
@@ -71,7 +71,7 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
         />
       )}
 
-      {/* Company document upload form - only for the empty state button */}
+      {/* Company document upload form */}
       {type === 'company' && canUpload && (
         <CompanyDocumentUploadForm
           open={uploadOpen}
