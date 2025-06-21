@@ -12,17 +12,7 @@ interface FeaturedCourseProps {
 export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
   const navigate = useNavigate();
   
-  console.log('🎯 FeaturedCourse COMPONENT RENDERED!', { 
-    courseExists: !!course,
-    courseId: course?.id,
-    courseTitle: course?.title,
-    timestamp: new Date().toISOString()
-  });
-  
-  if (!course) {
-    console.log('🎯 FeaturedCourse: No course provided, returning null');
-    return null;
-  }
+  if (!course) return null;
 
   const handleCourseClick = () => {
     console.log('🎯 FeaturedCourse: Navigating to course', { 
