@@ -43,6 +43,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
   };
 
   const handleCourseClick = (courseId: string) => {
+    console.log('🎯 CourseCarousel: Navigating to course:', courseId);
     navigate(`/courses/${courseId}`);
   };
 
@@ -188,13 +189,15 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
                 key={course.id} 
                 className="basis-full md:basis-[80%] lg:basis-[70%] pl-4 transition-opacity duration-300 py-[20px]"
               >
-                <div className="relative h-[600px] rounded-2xl overflow-hidden group">
+                <div 
+                  className="relative h-[600px] rounded-2xl overflow-hidden group cursor-pointer"
+                  onClick={() => handleCourseClick(course.id)}
+                >
                   <img 
                     src={imageSrc}
                     alt={course.title} 
-                    className="w-full h-full object-cover cursor-pointer" 
+                    className="w-full h-full object-cover" 
                     onError={handleImageError}
-                    onClick={() => handleCourseClick(course.id)}
                     onLoad={() => {
                       console.log('🖼️ CourseCarousel: Carousel course image loaded successfully for:', course.title);
                     }}
@@ -257,7 +260,10 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
                           </p>
                         </div>
                         <Button 
-                          onClick={() => navigate(`/courses/${course.id}`)} 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/courses/${course.id}`);
+                          }} 
                           className="bg-white text-black hover:bg-gray-100 rounded-2xl px-[20px] py-[22px]"
                         >
                           Assistir
