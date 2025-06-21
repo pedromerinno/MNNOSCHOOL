@@ -39,7 +39,7 @@ export const WelcomeSection = () => {
         </p>
         
         <p 
-          className="text-foreground text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-5"
+          className="text-foreground text-center text-[24px] md:text-[40px] font-normal max-w-[90%] md:max-w-[50%] leading-[1.1] mb-5"
         >
           {companyPhrase}
         </p>

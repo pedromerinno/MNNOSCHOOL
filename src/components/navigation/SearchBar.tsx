@@ -8,6 +8,8 @@ import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, Comma
 import { supabase } from "@/integrations/supabase/client";
 import { DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Course {
   id: string;
@@ -20,6 +22,7 @@ export const SearchBar = () => {
   const { selectedCompany } = useCompanies();
   const { userProfile } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -147,6 +150,88 @@ export const SearchBar = () => {
 
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
   
+  // Mobile: apenas ícone
+  if (isMobile) {
+    return (
+      <>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setOpen(true)}
+          className="h-10 w-10 rounded-full hover:bg-gray-100 dark:hover:bg-[#333333]"
+        >
+          <Search className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+        </Button>
+
+        <CommandDialog 
+          open={open} 
+          onOpenChange={setOpen}
+          className="search-dialog-position"
+        >
+          <div className="bg-white/95 dark:bg-[#222222] backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-lg">
+            <Command className="rounded-lg border-none bg-transparent">
+              <div className="flex flex-col">
+                <DialogTitle className="sr-only">Pesquisar cursos</DialogTitle>
+                <CommandInput 
+                  value={searchQuery}
+                  onValueChange={handleInputChange}
+                  placeholder="Digite para pesquisar cursos..."
+                  className="border-b border-gray-200 dark:border-[#333333]"
+                  autoFocus
+                />
+                <CommandList className="max-h-[300px] overflow-y-auto">
+                  {loading && !filteredCourses.length ? (
+                    <div className="py-6 text-center text-sm text-gray-500">
+                      Buscando cursos...
+                    </div>
+                  ) : searchQuery.trim() === "" ? (
+                    <div className="py-6 text-center text-sm text-gray-500">
+                      Digite para pesquisar cursos
+                    </div>
+                  ) : filteredCourses.length === 0 ? (
+                    <CommandEmpty>Nenhum curso encontrado.</CommandEmpty>
+                  ) : (
+                    <CommandGroup heading="Cursos disponíveis">
+                      {filteredCourses.map((course) => (
+                        <CommandItem
+                          key={course.id}
+                          onSelect={() => handleSelect(course.id)}
+                          className="flex items-center gap-3 cursor-pointer p-2 hover:bg-gray-100 dark:hover:bg-[#2C2C2C]"
+                        >
+                          <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                            {course.image_url ? (
+                              <img 
+                                src={course.image_url} 
+                                alt={course.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gray-200 dark:bg-gray-700" />
+                            )}
+                          </div>
+                          
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium truncate">{course.title}</div>
+                            {course.tags && (
+                              <div className="text-sm text-gray-500 truncate">
+                                {course.tags.join(' • ')}
+                              </div>
+                            )}
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  )}
+                </CommandList>
+              </div>
+            </Command>
+          </div>
+        </CommandDialog>
+      </>
+    );
+  }
+
+  // Desktop: campo completo
   return (
     <>
       <div className="relative w-64">
