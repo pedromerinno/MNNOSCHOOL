@@ -1,9 +1,8 @@
 
 import React, { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useCompanies } from "@/hooks/useCompanies";
-import { CompanyDocumentUploadForm } from "@/components/documents/CompanyDocumentUploadForm";
+import { CompanyDocumentDialog } from "@/components/documents/CompanyDocumentDialog";
 import { useJobRoles } from "@/hooks/job-roles/useJobRoles";
 import { CompanyDocumentType } from "@/types/company-document";
 
@@ -56,23 +55,18 @@ export const AddDocumentDialog: React.FC<AddDocumentDialogProps> = ({ open, onOp
 
   if (!selectedCompany) {
     return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Adicionar Documento</DialogTitle>
-          </DialogHeader>
-          <div className="p-4 text-center">
-            <p className="text-sm text-muted-foreground">
-              Selecione uma empresa primeiro para adicionar documentos.
-            </p>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <CompanyDocumentDialog
+        open={open}
+        onOpenChange={onOpenChange}
+        onUpload={handleUpload}
+        isUploading={isUploading}
+        availableRoles={[]}
+      />
     );
   }
 
   return (
-    <CompanyDocumentUploadForm
+    <CompanyDocumentDialog
       open={open}
       onOpenChange={onOpenChange}
       onUpload={handleUpload}
