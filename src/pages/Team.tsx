@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useCompanies } from "@/hooks/useCompanies";
-import { TeamMembersList } from "@/components/team/TeamMembersList";
 import { EmptyState } from "@/components/team/EmptyState";
 import { useTeamMembersOptimized } from "@/hooks/team/useTeamMembersOptimized";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,6 +13,7 @@ import { CompanyThemedBadge } from "@/components/ui/badge";
 import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 import { AdminFloatingActionButton } from "@/components/admin/AdminFloatingActionButton";
 import { PagePreloader } from "@/components/ui/PagePreloader";
+import { TeamMembersOrganized } from "@/components/team/TeamMembersOrganized";
 
 const Team = () => {
   const navigate = useNavigate();
@@ -154,7 +154,11 @@ const Team = () => {
                 companyId={selectedCompany?.id}
                 companyColor={selectedCompany?.cor_principal}
               />
-              <TeamMembersList members={members} />
+              <TeamMembersOrganized 
+                members={members}
+                companyId={selectedCompany?.id}
+                companyColor={selectedCompany?.cor_principal}
+              />
             </div>
           </div>
         </main>
