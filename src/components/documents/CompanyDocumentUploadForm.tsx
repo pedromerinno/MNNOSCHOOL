@@ -10,8 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { CompanyDocumentType, COMPANY_DOCUMENT_TYPE_LABELS } from "@/types/company-document";
 import { JobRole } from "@/types/job-roles";
 import { useCompanies } from "@/hooks/useCompanies";
-import { DocumentAttachmentForm } from './DocumentAttachmentForm';
-import { Plus, Building } from 'lucide-react';
+import { Plus, Building, Upload, Link } from 'lucide-react';
 
 interface CompanyDocumentUploadFormProps {
   open: boolean;
@@ -92,6 +91,16 @@ export const CompanyDocumentUploadForm: React.FC<CompanyDocumentUploadFormProps>
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      if (!name) {
+        setName(selectedFile.name);
+      }
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
@@ -152,21 +161,69 @@ export const CompanyDocumentUploadForm: React.FC<CompanyDocumentUploadFormProps>
             />
           </div>
 
-          <DocumentAttachmentForm
-            attachmentType={attachmentType}
-            onAttachmentTypeChange={setAttachmentType}
-            file={file}
-            onFileChange={setFile}
-            linkUrl={linkUrl}
-            onLinkUrlChange={setLinkUrl}
-          />
+          {/* Attachment Type Selection */}
+          <div className="space-y-3">
+            <Label>Tipo de Anexo</Label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="attachmentType"
+                  value="file"
+                  checked={attachmentType === 'file'}
+                  onChange={() => setAttachmentType('file')}
+                  className="text-blue-500"
+                />
+                <Upload className="h-4 w-4" />
+                <span>Arquivo</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="attachmentType"
+                  value="link"
+                  checked={attachmentType === 'link'}
+                  onChange={() => setAttachmentType('link')}
+                  className="text-blue-500"
+                />
+                <Link className="h-4 w-4" />
+                <span>Link</span>
+              </label>
+            </div>
+          </div>
+
+          {/* File Upload or Link Input */}
+          {attachmentType === 'file' ? (
+            <div className="space-y-2">
+              <Label htmlFor="file">Arquivo *</Label>
+              <Input
+                id="file"
+                type="file"
+                onChange={handleFileChange}
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                required
+              />
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="linkUrl">URL do Link *</Label>
+              <Input
+                id="linkUrl"
+                type="url"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                placeholder="https://exemplo.com/documento"
+                required
+              />
+            </div>
+          )}
 
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="isPublic"
                 checked={isPublic}
-                onCheckedChange={setIsPublic}
+                onCheckedChange={(checked) => setIsPublic(checked === true)}
               />
               <Label htmlFor="isPublic" className="text-sm">
                 Disponível para todos os colaboradores da empresa
@@ -182,7 +239,7 @@ export const CompanyDocumentUploadForm: React.FC<CompanyDocumentUploadFormProps>
                       <Checkbox
                         id={`role-${role.id}`}
                         checked={selectedRoles.includes(role.id)}
-                        onCheckedChange={(checked) => handleRoleToggle(role.id, checked as boolean)}
+                        onCheckedChange={(checked) => handleRoleToggle(role.id, checked === true)}
                       />
                       <Label htmlFor={`role-${role.id}`} className="text-sm">
                         {role.title}

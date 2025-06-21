@@ -20,7 +20,7 @@ export const useCompanyDocuments = () => {
 
     setIsLoading(true);
     try {
-      // Buscar documentos da empresa
+      // Buscar documentos da empresa com relacionamento de cargos
       const { data: companyDocs, error } = await supabase
         .from('company_documents')
         .select(`
@@ -45,12 +45,13 @@ export const useCompanyDocuments = () => {
       // Processar documentos e verificar permissões
       const processedDocs = await Promise.all(
         (companyDocs || []).map(async (doc) => {
-          const hasRoleRestrictions = doc.company_document_job_roles?.length > 0;
+          const roleLinks = doc.company_document_job_roles || [];
+          const hasRoleRestrictions = roleLinks.length > 0;
           let canAccess = true;
 
           if (hasRoleRestrictions && !userProfile?.is_admin && !userProfile?.super_admin) {
             // Verificar se usuário tem cargo necessário
-            const userHasRequiredRole = doc.company_document_job_roles?.some(
+            const userHasRequiredRole = roleLinks.some(
               (roleLink: any) => roleLink.job_role_id === userProfile?.cargo_id
             );
             canAccess = userHasRequiredRole;
@@ -58,9 +59,9 @@ export const useCompanyDocuments = () => {
 
           return {
             ...doc,
-            job_roles: doc.company_document_job_roles?.map((roleLink: any) => roleLink.job_roles?.title).filter(Boolean) || [],
+            job_roles: roleLinks.map((roleLink: any) => roleLink.job_roles?.title).filter(Boolean) || [],
             can_access: canAccess
-          };
+          } as CompanyDocument;
         })
       );
 
@@ -222,12 +223,12 @@ export const useCompanyDocuments = () => {
         }
 
         const url = URL.createObjectURL(data);
-        const a = document.createElement('a');
+        const a = window.document.createElement('a');
         a.href = url;
         a.download = document.name;
-        document.body.appendChild(a);
+        window.document.body.appendChild(a);
         a.click();
-        document.body.removeChild(a);
+        window.document.body.removeChild(a);
         URL.revokeObjectURL(url);
       }
     } catch (error) {

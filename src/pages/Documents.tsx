@@ -31,10 +31,10 @@ const Documents = () => {
     documents: personalDocuments,
     isLoading: personalLoading,
     isUploading: personalUploading,
-    uploadDocument: uploadPersonalDocument,
-    downloadDocument: downloadPersonalDocument,
-    previewDocument: previewPersonalDocument,
-    deleteDocument: deletePersonalDocument,
+    onUpload: uploadPersonalDocument,
+    onDownload: downloadPersonalDocument,
+    onPreview: previewPersonalDocument,
+    onDelete: deletePersonalDocument,
     canDeleteDocument: canDeletePersonalDocument
   } = useDocumentManagerOptimized();
 
