@@ -32,30 +32,35 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
     navigate(`/courses/${course.id}`);
   };
 
-  // Imagem padrão
+  // Forçar sempre a imagem padrão por enquanto para debugar
   const defaultImage = "https://5cae13a1-92c0-4c6b-93bc-bb999597eb98.lovableproject.com/placeholder.svg";
+  
+  console.log('🖼️ FeaturedCourse - Course data:', {
+    courseId: course.id,
+    courseTitle: course.title,
+    originalImageUrl: course.image_url,
+    usingDefaultImage: defaultImage
+  });
   
   return (
     <div 
       className="rounded-2xl overflow-hidden mb-8 bg-[#1A1F2C] h-[350px] relative cursor-pointer"
       onClick={handleCourseClick}
     >
-      {/* Background image - sempre mostrar imagem padrão primeiro */}
+      {/* Background image - SEMPRE usar imagem padrão por enquanto */}
       <div className="absolute inset-0 w-full h-full">
         <img 
-          src={course.image_url || defaultImage}
+          src={defaultImage}
           alt={course.title || "Curso"}
           className="w-full h-full object-cover"
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            // Se a imagem falhar, sempre usar a imagem padrão
-            if (target.src !== defaultImage) {
-              console.log('🖼️ Image failed, switching to default:', defaultImage);
-              target.src = defaultImage;
-            }
-          }}
           onLoad={() => {
-            console.log('🖼️ Image loaded successfully');
+            console.log('🖼️ Default image loaded successfully:', defaultImage);
+          }}
+          onError={(e) => {
+            console.error('🖼️ Even default image failed to load:', defaultImage);
+            const target = e.target as HTMLImageElement;
+            // Fallback para uma imagem de unsplash se até a padrão falhar
+            target.src = "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=1200&q=80";
           }}
         />
       </div>
