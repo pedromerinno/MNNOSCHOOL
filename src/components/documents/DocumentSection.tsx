@@ -9,6 +9,7 @@ import { UserDocument, DocumentType } from "@/types/document";
 import { CompanyDocument, CompanyDocumentType } from "@/types/company-document";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
+import { useJobRoles } from "@/hooks/job-roles/useJobRoles";
 
 interface DocumentSectionProps {
   type: 'personal' | 'company';
@@ -37,6 +38,7 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const { userProfile } = useAuth();
   const { selectedCompany } = useCompanies();
+  const { jobRoles } = useJobRoles();
 
   const filterDocuments = (docs: any[], category: string) => {
     if (category === 'all') return docs;
@@ -70,7 +72,7 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
               onOpenChange={setUploadOpen}
               onUpload={onUpload}
               isUploading={isUploading}
-              availableRoles={[]}
+              availableRoles={jobRoles.filter(role => role.company_id === selectedCompany?.id)}
             />
           )}
         </>

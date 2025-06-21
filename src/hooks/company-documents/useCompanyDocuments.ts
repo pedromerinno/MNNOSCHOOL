@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { CompanyDocument, CompanyDocumentType } from '@/types/company-document';
@@ -20,7 +19,7 @@ export const useCompanyDocuments = () => {
 
     setIsLoading(true);
     try {
-      // Buscar documentos da empresa com relacionamento de cargos
+      // Buscar documentos da empresa com relacionamentos de cargos e usuários
       const { data: companyDocs, error } = await supabase
         .from('company_documents')
         .select(`
@@ -30,6 +29,14 @@ export const useCompanyDocuments = () => {
             job_roles (
               id,
               title
+            )
+          ),
+          company_document_users (
+            user_id,
+            profiles (
+              id,
+              display_name,
+              email
             )
           )
         `)
@@ -46,20 +53,39 @@ export const useCompanyDocuments = () => {
       const processedDocs = await Promise.all(
         (companyDocs || []).map(async (doc) => {
           const roleLinks = Array.isArray(doc.company_document_job_roles) ? doc.company_document_job_roles : [];
+          const userLinks = Array.isArray(doc.company_document_users) ? doc.company_document_users : [];
+          
           const hasRoleRestrictions = roleLinks.length > 0;
+          const hasUserRestrictions = userLinks.length > 0;
           let canAccess = true;
 
-          if (hasRoleRestrictions && !userProfile?.is_admin && !userProfile?.super_admin) {
-            // Verificar se usuário tem cargo necessário
-            const userHasRequiredRole = roleLinks.some(
-              (roleLink: any) => roleLink.job_role_id === userProfile?.cargo_id
-            );
-            canAccess = userHasRequiredRole;
+          // Se não é admin e há restrições, verificar acesso
+          if (!userProfile?.is_admin && !userProfile?.super_admin && (hasRoleRestrictions || hasUserRestrictions)) {
+            let hasRoleAccess = !hasRoleRestrictions; // Se não há restrições de cargo, tem acesso
+            let hasUserAccess = !hasUserRestrictions; // Se não há restrições de usuário, tem acesso
+
+            // Verificar acesso por cargo
+            if (hasRoleRestrictions) {
+              hasRoleAccess = roleLinks.some(
+                (roleLink: any) => roleLink.job_role_id === userProfile?.cargo_id
+              );
+            }
+
+            // Verificar acesso por usuário específico
+            if (hasUserRestrictions) {
+              hasUserAccess = userLinks.some(
+                (userLink: any) => userLink.user_id === userProfile?.id
+              );
+            }
+
+            // Acesso liberado se tem acesso por cargo OU por usuário
+            canAccess = hasRoleAccess || hasUserAccess;
           }
 
           return {
             ...doc,
             job_roles: roleLinks.map((roleLink: any) => roleLink.job_roles?.title).filter(Boolean) || [],
+            allowed_users: userLinks.map((userLink: any) => userLink.profiles?.display_name).filter(Boolean) || [],
             can_access: canAccess
           } as CompanyDocument;
         })
@@ -85,7 +111,8 @@ export const useCompanyDocuments = () => {
     documentType: CompanyDocumentType,
     description: string,
     name: string,
-    selectedJobRoles: string[] = []
+    selectedJobRoles: string[] = [],
+    selectedUsers: string[] = []
   ): Promise<boolean> => {
     if (!selectedCompany?.id || !userProfile?.id) {
       toast.error('Empresa ou usuário não selecionado');
@@ -154,8 +181,24 @@ export const useCompanyDocuments = () => {
 
         if (roleError) {
           console.error('Error linking job roles:', roleError);
-          // Não falhar completamente, apenas avisar
-          toast.error('Documento criado, mas houve erro ao vincular cargos');
+          toast.error('Erro ao vincular cargos');
+        }
+      }
+
+      // Vincular aos usuários se especificado
+      if (selectedUsers.length > 0) {
+        const userLinks = selectedUsers.map(userId => ({
+          company_document_id: newDoc.id,
+          user_id: userId
+        }));
+
+        const { error: userError } = await supabase
+          .from('company_document_users')
+          .insert(userLinks);
+
+        if (userError) {
+          console.error('Error linking users:', userError);
+          toast.error('Erro ao vincular usuários');
         }
       }
 
@@ -174,6 +217,12 @@ export const useCompanyDocuments = () => {
       // Deletar vínculos com cargos primeiro
       await supabase
         .from('company_document_job_roles')
+        .delete()
+        .eq('company_document_id', documentToDelete.id);
+
+      // Deletar vínculos com usuários
+      await supabase
+        .from('company_document_users')
         .delete()
         .eq('company_document_id', documentToDelete.id);
 

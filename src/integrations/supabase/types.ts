@@ -125,6 +125,42 @@ export type Database = {
           },
         ]
       }
+      company_document_users: {
+        Row: {
+          company_document_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          company_document_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          company_document_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_company_document_users_document_id"
+            columns: ["company_document_id"]
+            isOneToOne: false
+            referencedRelation: "company_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_company_document_users_user_id"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_documents: {
         Row: {
           attachment_type: string

@@ -7,10 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CompanyDocumentType, COMPANY_DOCUMENT_TYPE_LABELS } from "@/types/company-document";
 import { JobRole } from "@/types/job-roles";
 import { useCompanies } from "@/hooks/useCompanies";
-import { Plus, Building, Upload, Link } from 'lucide-react';
+import { useCompanyUsers } from "@/hooks/company-documents/useCompanyUsers";
+import { UserSelector } from "./UserSelector";
+import { Plus, Building, Upload, Link, Users, UserCheck } from 'lucide-react';
 
 interface CompanyDocumentUploadFormProps {
   open: boolean;
@@ -21,7 +24,8 @@ interface CompanyDocumentUploadFormProps {
     documentType: CompanyDocumentType,
     description: string,
     name: string,
-    selectedJobRoles: string[]
+    selectedJobRoles: string[],
+    selectedUsers: string[]
   ) => Promise<boolean>;
   isUploading: boolean;
   availableRoles: JobRole[];
@@ -41,9 +45,11 @@ export const CompanyDocumentUploadForm: React.FC<CompanyDocumentUploadFormProps>
   const [file, setFile] = useState<File | null>(null);
   const [linkUrl, setLinkUrl] = useState('');
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
-  const [isPublic, setIsPublic] = useState(true);
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [accessType, setAccessType] = useState<'public' | 'roles' | 'users'>('public');
   
   const { selectedCompany } = useCompanies();
+  const { users, isLoading: usersLoading } = useCompanyUsers();
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
 
   const resetForm = () => {
@@ -54,28 +60,24 @@ export const CompanyDocumentUploadForm: React.FC<CompanyDocumentUploadFormProps>
     setFile(null);
     setLinkUrl('');
     setSelectedRoles([]);
-    setIsPublic(true);
+    setSelectedUsers([]);
+    setAccessType('public');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name.trim()) {
-      return;
-    }
-
-    if (attachmentType === 'file' && !file) {
-      return;
-    }
-
-    if (attachmentType === 'link' && !linkUrl.trim()) {
-      return;
-    }
+    if (!name.trim()) return;
+    if (attachmentType === 'file' && !file) return;
+    if (attachmentType === 'link' && !linkUrl.trim()) return;
+    if (accessType === 'roles' && selectedRoles.length === 0) return;
+    if (accessType === 'users' && selectedUsers.length === 0) return;
 
     const fileOrUrl = attachmentType === 'file' ? file! : linkUrl;
-    const rolesToSubmit = isPublic ? [] : selectedRoles;
+    const rolesToSubmit = accessType === 'roles' ? selectedRoles : [];
+    const usersToSubmit = accessType === 'users' ? selectedUsers : [];
     
-    const success = await onUpload(attachmentType, fileOrUrl, documentType, description, name, rolesToSubmit);
+    const success = await onUpload(attachmentType, fileOrUrl, documentType, description, name, rolesToSubmit, usersToSubmit);
     
     if (success) {
       resetForm();
@@ -91,6 +93,14 @@ export const CompanyDocumentUploadForm: React.FC<CompanyDocumentUploadFormProps>
     }
   };
 
+  const handleUserToggle = (userId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedUsers(prev => [...prev, userId]);
+    } else {
+      setSelectedUsers(prev => prev.filter(id => id !== userId));
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
@@ -99,6 +109,15 @@ export const CompanyDocumentUploadForm: React.FC<CompanyDocumentUploadFormProps>
         setName(selectedFile.name);
       }
     }
+  };
+
+  const isFormValid = () => {
+    if (!name.trim()) return false;
+    if (attachmentType === 'file' && !file) return false;
+    if (attachmentType === 'link' && !linkUrl.trim()) return false;
+    if (accessType === 'roles' && selectedRoles.length === 0) return false;
+    if (accessType === 'users' && selectedUsers.length === 0) return false;
+    return true;
   };
 
   return (
@@ -218,42 +237,84 @@ export const CompanyDocumentUploadForm: React.FC<CompanyDocumentUploadFormProps>
             </div>
           )}
 
+          {/* Access Control */}
           <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="isPublic"
-                checked={isPublic}
-                onCheckedChange={(checked) => setIsPublic(checked === true)}
-              />
-              <Label htmlFor="isPublic" className="text-sm">
-                Disponível para todos os colaboradores da empresa
-              </Label>
-            </div>
+            <Label className="text-base font-medium">Controle de Acesso</Label>
+            
+            <Tabs value={accessType} onValueChange={(value) => setAccessType(value as 'public' | 'roles' | 'users')}>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="public" className="flex items-center gap-2">
+                  <Building className="h-4 w-4" />
+                  Público
+                </TabsTrigger>
+                <TabsTrigger value="roles" className="flex items-center gap-2">
+                  <UserCheck className="h-4 w-4" />
+                  Por Cargos
+                </TabsTrigger>
+                <TabsTrigger value="users" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Por Usuários
+                </TabsTrigger>
+              </TabsList>
 
-            {!isPublic && availableRoles.length > 0 && (
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">Restringir acesso aos cargos:</Label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-32 overflow-y-auto">
-                  {availableRoles.map((role) => (
-                    <div key={role.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`role-${role.id}`}
-                        checked={selectedRoles.includes(role.id)}
-                        onCheckedChange={(checked) => handleRoleToggle(role.id, checked === true)}
-                      />
-                      <Label htmlFor={`role-${role.id}`} className="text-sm">
-                        {role.title}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-                {selectedRoles.length === 0 && (
-                  <p className="text-sm text-orange-600">
-                    Selecione pelo menos um cargo ou marque como público
+              <TabsContent value="public" className="mt-4">
+                <div className="p-4 bg-green-50 rounded-lg">
+                  <p className="text-sm text-green-700">
+                    Este documento será visível para todos os colaboradores da empresa.
                   </p>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="roles" className="mt-4">
+                {availableRoles.length > 0 ? (
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Restringir acesso aos cargos:</Label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-32 overflow-y-auto border rounded-md p-3">
+                      {availableRoles.map((role) => (
+                        <div key={role.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`role-${role.id}`}
+                            checked={selectedRoles.includes(role.id)}
+                            onCheckedChange={(checked) => handleRoleToggle(role.id, checked === true)}
+                          />
+                          <Label htmlFor={`role-${role.id}`} className="text-sm">
+                            {role.title}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                    {selectedRoles.length === 0 && (
+                      <p className="text-sm text-orange-600">
+                        Selecione pelo menos um cargo
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="p-4 bg-yellow-50 rounded-lg">
+                    <p className="text-sm text-yellow-700">
+                      Nenhum cargo disponível para esta empresa.
+                    </p>
+                  </div>
                 )}
-              </div>
-            )}
+              </TabsContent>
+
+              <TabsContent value="users" className="mt-4">
+                {usersLoading ? (
+                  <div className="p-4 text-center">
+                    <div className="animate-spin h-6 w-6 border-t-2 border-blue-500 border-r-2 rounded-full mx-auto mb-2"></div>
+                    <p className="text-sm text-gray-500">Carregando usuários...</p>
+                  </div>
+                ) : (
+                  <UserSelector
+                    users={users}
+                    selectedUsers={selectedUsers}
+                    onUserToggle={handleUserToggle}
+                    isPublic={false}
+                    companyColor={companyColor}
+                  />
+                )}
+              </TabsContent>
+            </Tabs>
           </div>
 
           <div className="flex justify-end gap-3">
@@ -267,10 +328,7 @@ export const CompanyDocumentUploadForm: React.FC<CompanyDocumentUploadFormProps>
             </Button>
             <Button
               type="submit"
-              disabled={isUploading || !name.trim() || 
-                (attachmentType === 'file' && !file) || 
-                (attachmentType === 'link' && !linkUrl.trim()) ||
-                (!isPublic && selectedRoles.length === 0)}
+              disabled={isUploading || !isFormValid()}
               style={{ backgroundColor: companyColor, borderColor: companyColor }}
             >
               {isUploading ? 'Criando...' : 'Criar Documento'}
