@@ -16,4 +16,6 @@ export interface UserProfile {
   data_inicio?: string | null; // Data de início na empresa
   manual_cultura_aceito?: boolean | null; // Se aceitou o manual de cultura
   nivel_colaborador?: 'Junior' | 'Pleno' | 'Senior' | null; // Nível do colaborador
+  // Propriedade para nome do cargo
+  roleName?: string | null;
 }
