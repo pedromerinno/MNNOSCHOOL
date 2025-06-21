@@ -2,7 +2,7 @@
 import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
-import { MessageSquare, UserRound, Mail, Calendar, Crown } from "lucide-react";
+import { MessageSquare, UserRound, Mail, Calendar, Crown, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserProfile } from "@/hooks/useUsers";
 import { format } from "date-fns";
@@ -85,8 +85,9 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
 
             {/* Role display */}
             {roleName && !member.is_admin && (
-              <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {roleName}
+              <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <Briefcase className="h-4 w-4" style={{ color: companyColor }} />
+                <span>{roleName}</span>
               </div>
             )}
             

@@ -41,7 +41,7 @@ export const useTeamMembersOptimized = ({
 
       console.log('[useTeamMembersOptimized] Buscando membros para empresa:', companyId);
 
-      // Query otimizada sem timeout para evitar delays
+      // Query otimizada incluindo informações do cargo
       const { data: teamData, error: teamError } = await supabase
         .from('user_empresa')
         .select(`
@@ -52,7 +52,12 @@ export const useTeamMembersOptimized = ({
             email, 
             is_admin, 
             avatar, 
-            created_at
+            created_at,
+            cargo_id,
+            job_roles(
+              id,
+              title
+            )
           )
         `)
         .eq('empresa_id', companyId)
@@ -68,7 +73,8 @@ export const useTeamMembersOptimized = ({
         email: item.profiles.email,
         is_admin: item.profiles.is_admin,
         avatar: item.profiles.avatar,
-        created_at: item.profiles.created_at
+        created_at: item.profiles.created_at,
+        cargo_id: item.profiles.cargo_id
       })) || [];
 
       setMembers(teamMembers);
