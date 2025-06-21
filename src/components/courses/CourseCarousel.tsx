@@ -22,9 +22,25 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
   const { selectedCompany } = useCompanies();
   const { user } = useAuth();
   const hasSingleCourse = courses.length === 1;
+  const [api, setApi] = React.useState<any>();
+  const [current, setCurrent] = React.useState(0);
+  const [count, setCount] = React.useState(0);
 
   // Default image to use when course image fails or is empty
   const defaultImage = "/placeholder.svg";
+
+  React.useEffect(() => {
+    if (!api) {
+      return;
+    }
+
+    setCount(api.scrollSnapList().length);
+    setCurrent(api.selectedScrollSnap() + 1);
+
+    api.on("select", () => {
+      setCurrent(api.selectedScrollSnap() + 1);
+    });
+  }, [api]);
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const target = e.target as HTMLImageElement;
@@ -50,18 +66,18 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
 
   // Loading state with Skeleton UI
   if (loading) {
-    return <div className="w-full h-[400px] md:h-[600px] rounded-2xl overflow-hidden relative">
+    return <div className="w-full h-[300px] md:h-[600px] rounded-2xl overflow-hidden relative">
         <Skeleton className="w-full h-full absolute inset-0" />
         <div className="absolute inset-0 p-4 md:p-8 flex flex-col justify-end">
           <Skeleton className="w-16 h-6 md:w-24 md:h-8 mb-2 md:mb-4" />
-          <Skeleton className="w-3/4 h-8 md:h-12 mb-2 md:mb-4" />
+          <Skeleton className="w-3/4 h-6 md:h-12 mb-2 md:mb-4" />
           <Skeleton className="w-1/2 h-3 md:h-4 mb-1 md:mb-2" />
           <Skeleton className="w-1/3 h-3 md:h-4 mb-4 md:mb-8" />
           <div className="flex justify-between items-end">
             <div className="space-y-2">
-              <Skeleton className="w-24 md:w-32 h-6 md:h-8" />
+              <Skeleton className="w-20 md:w-32 h-6 md:h-8" />
             </div>
-            <Skeleton className="w-24 md:w-32 h-8 md:h-10" />
+            <Skeleton className="w-20 md:w-32 h-8 md:h-10" />
           </div>
         </div>
       </div>;
@@ -69,7 +85,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
 
   // Empty state with better messaging and button
   if (!courses || courses.length === 0) {
-    return <div className="w-full h-[400px] md:h-[600px] rounded-2xl bg-gray-100 dark:bg-gray-800 flex flex-col items-center justify-center p-4 md:p-8 text-center">
+    return <div className="w-full h-[300px] md:h-[600px] rounded-2xl bg-gray-100 dark:bg-gray-800 flex flex-col items-center justify-center p-4 md:p-8 text-center">
         <h3 className="text-xl md:text-2xl font-semibold mb-2 md:mb-3 text-gray-900 dark:text-gray-100">
           Nenhum curso em destaque disponível
         </h3>
@@ -90,7 +106,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
     return (
       <div className="w-full relative overflow-hidden py-0 flex justify-center">
         <div className="w-full max-w-4xl mx-auto">
-          <div className="relative h-[400px] md:h-[600px] rounded-2xl overflow-hidden group">
+          <div className="relative h-[300px] md:h-[600px] rounded-2xl overflow-hidden group">
             <img 
               src={imageSrc}
               alt={course.title} 
@@ -105,7 +121,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
               {/* Company Logo */}
               {selectedCompany?.logo ? (
                 <div className="absolute top-4 left-4 md:top-8 md:left-8">
-                  <div className="w-8 h-8 md:w-12 md:h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center p-1">
+                  <div className="w-12 h-12 md:w-12 md:h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center p-1">
                     <img 
                       src={selectedCompany.logo} 
                       alt={selectedCompany.nome} 
@@ -119,8 +135,8 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
                 </div>
               ) : selectedCompany?.nome && (
                 <div className="absolute top-4 left-4 md:top-8 md:left-8">
-                  <div className="w-8 h-8 md:w-12 md:h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
-                    <span className="text-lg md:text-xl font-bold text-white">
+                  <div className="w-12 h-12 md:w-12 md:h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
+                    <span className="text-xl md:text-xl font-bold text-white">
                       {selectedCompany.nome.charAt(0).toUpperCase()}
                     </span>
                   </div>
@@ -129,10 +145,10 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
               
               <div className="absolute bottom-0 left-0 right-0 p-4 md:p-8 py-6 md:py-[40px] px-6 md:px-[40px]">
                 <div className="flex flex-col md:flex-row justify-between md:items-end">
-                  <div className="space-y-2 md:space-y-4 max-w-lg md:max-w-xl mb-4 md:mb-0">
+                  <div className="space-y-2 md:space-y-4 max-w-xs md:max-w-xl mb-4 md:mb-0">
                     <div>
                       <div className="flex gap-1 md:gap-2 mb-2 md:mb-4 flex-wrap">
-                        {course.tags?.slice(0, 2).map((tag: string, index: number) => (
+                        {course.tags?.slice(0, 1).map((tag: string, index: number) => (
                           <CompanyThemedBadge 
                             key={index} 
                             variant="outline" 
@@ -141,26 +157,26 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
                             {tag}
                           </CompanyThemedBadge>
                         ))}
-                        {course.tags && course.tags.length > 2 && (
+                        {course.tags && course.tags.length > 1 && (
                           <CompanyThemedBadge 
                             variant="outline" 
                             className="bg-transparent text-white border-white/40 px-2 py-1 md:px-4 md:py-1.5 text-xs md:text-sm"
                           >
-                            +{course.tags.length - 2}
+                            +{course.tags.length - 1}
                           </CompanyThemedBadge>
                         )}
                       </div>
-                      <h2 className="text-2xl md:text-4xl font-bold text-white mt-1 md:mt-2 leading-tight">
+                      <h2 className="text-lg md:text-4xl font-bold text-white mt-1 md:mt-2 leading-tight">
                         {course.title}
                       </h2>
                     </div>
-                    <p className="text-white/90 line-clamp-2 text-sm md:text-base leading-relaxed max-w-sm md:max-w-lg">
+                    <p className="text-white/90 line-clamp-2 text-xs md:text-base leading-relaxed max-w-xs md:max-w-lg">
                       {course.description}
                     </p>
                   </div>
                   <Button 
                     onClick={() => navigate(`/courses/${course.id}`)} 
-                    className="bg-white text-black hover:bg-gray-100 rounded-xl md:rounded-2xl px-4 py-2 md:px-[20px] md:py-[22px] text-sm md:text-base w-full md:w-auto"
+                    className="bg-white text-black hover:bg-gray-100 rounded-xl md:rounded-2xl px-3 py-2 md:px-[20px] md:py-[22px] text-xs md:text-base w-full md:w-auto"
                   >
                     Assistir
                     <Play className="w-3 h-3 md:w-4 md:h-4 ml-1 md:ml-2" />
@@ -177,10 +193,14 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
   // Normal carousel with multiple courses - modified to show peeks of adjacent slides
   return (
     <div className="w-full relative overflow-hidden py-0">
-      <Carousel opts={{
-        align: "center",
-        loop: true
-      }} className="mx-auto">
+      <Carousel 
+        opts={{
+          align: "center",
+          loop: true
+        }} 
+        className="mx-auto"
+        setApi={setApi}
+      >
         <CarouselContent className="flex -ml-4">
           {courses.map(course => {
             const imageSrc = getImageSrc(course.image_url);
@@ -191,7 +211,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
                 className="basis-full md:basis-[80%] lg:basis-[70%] pl-4 transition-opacity duration-300 py-[20px]"
               >
                 <div 
-                  className="relative h-[400px] md:h-[600px] rounded-2xl overflow-hidden group cursor-pointer"
+                  className="relative h-[300px] md:h-[600px] rounded-2xl overflow-hidden group cursor-pointer"
                   onClick={() => handleCourseClick(course.id)}
                 >
                   <img 
@@ -207,7 +227,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
                     {/* Company Logo */}
                     {selectedCompany?.logo ? (
                       <div className="absolute top-4 left-4 md:top-8 md:left-8">
-                        <div className="w-8 h-8 md:w-12 md:h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center p-1">
+                        <div className="w-12 h-12 md:w-12 md:h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center p-1">
                           <img 
                             src={selectedCompany.logo} 
                             alt={selectedCompany.nome} 
@@ -221,8 +241,8 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
                       </div>
                     ) : selectedCompany?.nome && (
                       <div className="absolute top-4 left-4 md:top-8 md:left-8">
-                        <div className="w-8 h-8 md:w-12 md:h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
-                          <span className="text-lg md:text-xl font-bold text-white">
+                        <div className="w-12 h-12 md:w-12 md:h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
+                          <span className="text-xl md:text-xl font-bold text-white">
                             {selectedCompany.nome.charAt(0).toUpperCase()}
                           </span>
                         </div>
@@ -231,10 +251,10 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
                     
                     <div className="absolute bottom-0 left-0 right-0 p-4 md:p-8 py-6 md:py-[40px] px-6 md:px-[40px]">
                       <div className="flex flex-col md:flex-row justify-between md:items-end">
-                        <div className="space-y-2 md:space-y-4 max-w-lg md:max-w-xl mb-4 md:mb-0">
+                        <div className="space-y-2 md:space-y-4 max-w-xs md:max-w-xl mb-4 md:mb-0">
                           <div>
                             <div className="flex gap-1 md:gap-2 mb-2 md:mb-4 flex-wrap">
-                              {course.tags?.slice(0, 2).map((tag: string, index: number) => (
+                              {course.tags?.slice(0, 1).map((tag: string, index: number) => (
                                 <CompanyThemedBadge 
                                   key={index} 
                                   variant="outline" 
@@ -243,20 +263,20 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
                                   {tag}
                                 </CompanyThemedBadge>
                               ))}
-                              {course.tags && course.tags.length > 2 && (
+                              {course.tags && course.tags.length > 1 && (
                                 <CompanyThemedBadge 
                                   variant="outline" 
                                   className="bg-transparent text-white border-white/40 px-2 py-1 md:px-4 md:py-1.5 text-xs md:text-sm"
                                 >
-                                  +{course.tags.length - 2}
+                                  +{course.tags.length - 1}
                                 </CompanyThemedBadge>
                               )}
                             </div>
-                            <h2 className="text-2xl md:text-4xl font-bold text-white mt-1 md:mt-2 leading-tight">
+                            <h2 className="text-lg md:text-4xl font-bold text-white mt-1 md:mt-2 leading-tight">
                               {course.title}
                             </h2>
                           </div>
-                          <p className="text-white/90 line-clamp-2 text-sm md:text-base leading-relaxed max-w-sm md:max-w-lg">
+                          <p className="text-white/90 line-clamp-2 text-xs md:text-base leading-relaxed max-w-xs md:max-w-lg">
                             {course.description}
                           </p>
                         </div>
@@ -265,7 +285,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
                             e.stopPropagation();
                             navigate(`/courses/${course.id}`);
                           }} 
-                          className="bg-white text-black hover:bg-gray-100 rounded-xl md:rounded-2xl px-4 py-2 md:px-[20px] md:py-[22px] text-sm md:text-base w-full md:w-auto"
+                          className="bg-white text-black hover:bg-gray-100 rounded-xl md:rounded-2xl px-3 py-2 md:px-[20px] md:py-[22px] text-xs md:text-base w-full md:w-auto"
                         >
                           Assistir
                           <Play className="w-3 h-3 md:w-4 md:h-4 ml-1 md:ml-2" />
@@ -279,13 +299,34 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
           })}
         </CarouselContent>
         
+        {/* Desktop arrows - only show on desktop */}
         {courses.length > 1 && (
           <>
-            <CarouselPrevious className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2" />
-            <CarouselNext className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2" />
+            <CarouselPrevious className="hidden md:flex absolute left-4 md:left-8 top-1/2 -translate-y-1/2" />
+            <CarouselNext className="hidden md:flex absolute right-4 md:right-8 top-1/2 -translate-y-1/2" />
           </>
         )}
       </Carousel>
+      
+      {/* Mobile pagination indicators - only show on mobile for multiple courses */}
+      {courses.length > 1 && (
+        <div className="flex md:hidden justify-center mt-4 space-x-2">
+          {Array.from({ length: count }, (_, index) => (
+            <button
+              key={index}
+              onClick={() => api?.scrollTo(index)}
+              className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                index === current - 1
+                  ? 'w-6'
+                  : 'opacity-50'
+              }`}
+              style={{
+                backgroundColor: selectedCompany?.cor_principal || '#1EAEDB'
+              }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
