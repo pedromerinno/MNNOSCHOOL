@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
@@ -9,8 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { CompanyThemedBadge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DocumentTabs } from "@/components/documents/DocumentTabs";
-import { CompanyDocumentTabs } from "@/components/documents/CompanyDocumentTabs";
+import { DocumentSection } from "@/components/documents/DocumentSection";
 import { useDocumentManagerOptimized } from "@/hooks/documents/useDocumentManagerOptimized";
 import { useCompanyDocuments } from "@/hooks/company-documents/useCompanyDocuments";
 
@@ -19,11 +19,7 @@ const Documents = () => {
   const { userProfile } = useAuth();
   const { selectedCompany, isLoading: companiesLoading } = useCompanies();
   
-  const [mainTab, setMainTab] = useState<'personal' | 'company'>('personal');
-  const [personalTab, setPersonalTab] = useState('all');
-  const [companyTab, setCompanyTab] = useState('all');
-  const [personalUploadOpen, setPersonalUploadOpen] = useState(false);
-  const [companyUploadOpen, setCompanyUploadOpen] = useState(false);
+  const [mainTab, setMainTab] = useState<'company' | 'personal'>('company');
 
   // Hooks para documentos pessoais
   const {
@@ -131,19 +127,8 @@ const Documents = () => {
           </div>
           
           <div className="bg-white dark:bg-card rounded-xl shadow-sm p-6">
-            <Tabs value={mainTab} onValueChange={(value) => setMainTab(value as 'personal' | 'company')} className="w-full">
+            <Tabs value={mainTab} onValueChange={(value) => setMainTab(value as 'company' | 'personal')} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-8 rounded-2xl p-1.5">
-                <TabsTrigger 
-                  value="personal" 
-                  className="flex items-center gap-2 rounded-xl py-4"
-                  style={{
-                    backgroundColor: mainTab === 'personal' ? `${companyColor}10` : undefined,
-                    color: mainTab === 'personal' ? companyColor : undefined
-                  }}
-                >
-                  <FileText className="h-4 w-4" />
-                  Meus Documentos
-                </TabsTrigger>
                 <TabsTrigger 
                   value="company" 
                   className="flex items-center gap-2 rounded-xl py-4"
@@ -155,23 +140,18 @@ const Documents = () => {
                   <Building className="h-4 w-4" />
                   Documentos da Empresa
                 </TabsTrigger>
+                <TabsTrigger 
+                  value="personal" 
+                  className="flex items-center gap-2 rounded-xl py-4"
+                  style={{
+                    backgroundColor: mainTab === 'personal' ? `${companyColor}10` : undefined,
+                    color: mainTab === 'personal' ? companyColor : undefined
+                  }}
+                >
+                  <FileText className="h-4 w-4" />
+                  Meus Documentos
+                </TabsTrigger>
               </TabsList>
-
-              <TabsContent value="personal">
-                <DocumentTabs
-                  activeTab={personalTab}
-                  setActiveTab={setPersonalTab}
-                  documents={personalDocuments}
-                  uploadOpen={personalUploadOpen}
-                  setUploadOpen={setPersonalUploadOpen}
-                  isUploading={personalUploading}
-                  onUpload={uploadPersonalDocument}
-                  onDownload={downloadPersonalDocument}
-                  onPreview={previewPersonalDocument}
-                  onDelete={handlePersonalDocumentDelete}
-                  canDeleteDocument={canDeletePersonalDocument}
-                />
-              </TabsContent>
 
               <TabsContent value="company">
                 {companyLoading ? (
@@ -180,20 +160,32 @@ const Documents = () => {
                     <p className="text-gray-500">Carregando documentos da empresa...</p>
                   </div>
                 ) : (
-                  <CompanyDocumentTabs
-                    activeTab={companyTab}
-                    setActiveTab={setCompanyTab}
+                  <DocumentSection
+                    type="company"
                     documents={companyDocuments}
-                    uploadOpen={companyUploadOpen}
-                    setUploadOpen={setCompanyUploadOpen}
                     isUploading={false}
                     onUpload={uploadCompanyDocument}
                     onDownload={downloadCompanyDocument}
                     onPreview={previewCompanyDocument}
                     onDelete={handleCompanyDocumentDelete}
                     canDeleteDocument={canDeleteCompanyDocument}
+                    companyColor={companyColor}
                   />
                 )}
+              </TabsContent>
+
+              <TabsContent value="personal">
+                <DocumentSection
+                  type="personal"
+                  documents={personalDocuments}
+                  isUploading={personalUploading}
+                  onUpload={uploadPersonalDocument}
+                  onDownload={downloadPersonalDocument}
+                  onPreview={previewPersonalDocument}
+                  onDelete={handlePersonalDocumentDelete}
+                  canDeleteDocument={canDeletePersonalDocument}
+                  companyColor={companyColor}
+                />
               </TabsContent>
             </Tabs>
           </div>
