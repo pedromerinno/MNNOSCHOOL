@@ -1,24 +1,22 @@
 
 import React, { useState } from 'react';
-import { DocumentUploadForm } from "./DocumentUploadForm";
-import { CompanyDocumentUploadForm } from "./CompanyDocumentUploadForm";
-import { DocumentList } from "./DocumentList";
-import { CompanyDocumentList } from "./CompanyDocumentList";
-import { DocumentFilter } from "./DocumentFilter";
-import { UserDocument, DocumentType } from "@/types/document";
-import { CompanyDocument, CompanyDocumentType } from "@/types/company-document";
-import { useAuth } from "@/contexts/AuthContext";
-import { useCompanies } from "@/hooks/useCompanies";
-import { useJobRoles } from "@/hooks/job-roles/useJobRoles";
+import { DocumentFilter } from './DocumentFilter';
+import { DocumentList } from './DocumentList';
+import { CompanyDocumentList } from './CompanyDocumentList';
+import { DocumentUploadForm } from './DocumentUploadForm';
+import { CompanyDocumentUploadForm } from './CompanyDocumentUploadForm';
+import { useJobRoles } from '@/hooks/job-roles/useJobRoles';
+import { useCompanies } from '@/hooks/useCompanies';
 
 interface DocumentSectionProps {
   type: 'personal' | 'company';
-  documents: UserDocument[] | CompanyDocument[];
+  documents: any[];
   isUploading: boolean;
   onUpload: any;
   onDownload: any;
   onPreview: any;
   onDelete: any;
+  onEdit?: any;
   canDeleteDocument: any;
   companyColor: string;
 }
@@ -31,29 +29,27 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
   onDownload,
   onPreview,
   onDelete,
+  onEdit,
   canDeleteDocument,
   companyColor
 }) => {
-  const [uploadOpen, setUploadOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const { userProfile } = useAuth();
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const { selectedCompany } = useCompanies();
   const { jobRoles } = useJobRoles(selectedCompany);
 
-  const filterDocuments = (docs: any[], category: string) => {
-    if (category === 'all') return docs;
-    return docs.filter(doc => doc.document_type === category);
-  };
-
-  const filteredDocuments = filterDocuments(documents as any[], selectedCategory);
-  const canUpload = type === 'personal' || userProfile?.is_admin || userProfile?.super_admin;
+  // Filter documents based on selected category
+  const filteredDocuments = documents.filter(doc => {
+    if (selectedCategory === 'all') return true;
+    return doc.document_type === selectedCategory;
+  });
 
   const handleAddDocument = () => {
-    setUploadOpen(true);
+    setIsUploadDialogOpen(true);
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <DocumentFilter
         selectedCategory={selectedCategory}
         onCategoryChange={setSelectedCategory}
@@ -61,47 +57,44 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
         companyColor={companyColor}
       />
 
-      {/* Only show upload form for personal documents - company documents are handled by FAB */}
-      {canUpload && type === 'personal' && (
-        <DocumentUploadForm
-          open={uploadOpen}
-          onOpenChange={setUploadOpen}
-          onUpload={onUpload}
-          isUploading={isUploading}
+      {type === 'company' ? (
+        <CompanyDocumentList
+          documents={filteredDocuments}
+          onDownload={onDownload}
+          onPreview={onPreview}
+          onDelete={onDelete}
+          onEdit={onEdit}
+          canDeleteDocument={canDeleteDocument}
+          onAddDocument={handleAddDocument}
+        />
+      ) : (
+        <DocumentList
+          documents={filteredDocuments}
+          onDownload={onDownload}
+          onPreview={onPreview}
+          onDelete={onDelete}
+          canDeleteDocument={canDeleteDocument}
+          onAddDocument={handleAddDocument}
+          companyColor={companyColor}
         />
       )}
 
-      {/* Company document upload form */}
-      {type === 'company' && canUpload && (
+      {type === 'company' ? (
         <CompanyDocumentUploadForm
-          open={uploadOpen}
-          onOpenChange={setUploadOpen}
+          open={isUploadDialogOpen}
+          onOpenChange={setIsUploadDialogOpen}
           onUpload={onUpload}
           isUploading={isUploading}
-          availableRoles={jobRoles.filter(role => role.company_id === selectedCompany?.id)}
+          availableRoles={jobRoles}
+        />
+      ) : (
+        <DocumentUploadForm
+          open={isUploadDialogOpen}
+          onOpenChange={setIsUploadDialogOpen}
+          onUpload={onUpload}
+          isUploading={isUploading}
         />
       )}
-
-      <div className="mt-6">
-        {type === 'personal' ? (
-          <DocumentList
-            documents={filteredDocuments as UserDocument[]}
-            onDownload={onDownload}
-            onPreview={onPreview}
-            onDelete={onDelete}
-            canDeleteDocument={canDeleteDocument}
-          />
-        ) : (
-          <CompanyDocumentList
-            documents={filteredDocuments as CompanyDocument[]}
-            onDownload={onDownload}
-            onPreview={onPreview}
-            onDelete={onDelete}
-            canDeleteDocument={canDeleteDocument}
-            onAddDocument={handleAddDocument}
-          />
-        )}
-      </div>
     </div>
   );
 };

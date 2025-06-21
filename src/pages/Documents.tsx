@@ -10,8 +10,11 @@ import { useCompanies } from "@/hooks/useCompanies";
 import { CompanyThemedBadge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DocumentSection } from "@/components/documents/DocumentSection";
+import { EditCompanyDocumentDialog } from "@/components/documents/EditCompanyDocumentDialog";
 import { useDocumentManagerOptimized } from "@/hooks/documents/useDocumentManagerOptimized";
 import { useCompanyDocuments } from "@/hooks/company-documents/useCompanyDocuments";
+import { CompanyDocument } from "@/types/company-document";
+
 const Documents = () => {
   const navigate = useNavigate();
   const {
@@ -22,6 +25,8 @@ const Documents = () => {
     isLoading: companiesLoading
   } = useCompanies();
   const [mainTab, setMainTab] = useState<'company' | 'personal'>('company');
+  const [editingDocument, setEditingDocument] = useState<CompanyDocument | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   // Hooks para documentos pessoais
   const {
@@ -40,6 +45,7 @@ const Documents = () => {
     documents: companyDocuments,
     isLoading: companyLoading,
     uploadDocument: uploadCompanyDocument,
+    updateDocument: updateCompanyDocument,
     downloadDocument: downloadCompanyDocument,
     previewDocument: previewCompanyDocument,
     deleteDocument: deleteCompanyDocument,
@@ -55,6 +61,31 @@ const Documents = () => {
   const handleCompanyDocumentDelete = async (document: any) => {
     await deleteCompanyDocument(document);
   };
+
+  // Handle company document editing
+  const handleEditDocument = (document: CompanyDocument) => {
+    setEditingDocument(document);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateDocument = async (
+    documentId: string,
+    name: string,
+    description: string,
+    documentType: any,
+    selectedJobRoles: string[],
+    selectedUsers: string[]
+  ): Promise<boolean> => {
+    return await updateCompanyDocument(
+      documentId,
+      name,
+      description,
+      documentType,
+      selectedJobRoles,
+      selectedUsers
+    );
+  };
+
   if (!userProfile) {
     return <Navigate to="/login" replace />;
   }
@@ -92,7 +123,8 @@ const Documents = () => {
       </>;
   }
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
-  return <>
+  return (
+    <>
       <MainNavigationMenu />
       <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
         <main className="container mx-auto px-6 py-12">
@@ -130,20 +162,55 @@ const Documents = () => {
               </TabsList>
 
               <TabsContent value="company">
-                {companyLoading ? <div className="text-center py-12">
+                {companyLoading ? (
+                  <div className="text-center py-12">
                     <div className="animate-spin h-8 w-8 border-t-2 border-blue-500 border-r-2 rounded-full mx-auto mb-4"></div>
                     <p className="text-gray-500">Carregando documentos da empresa...</p>
-                  </div> : <DocumentSection type="company" documents={companyDocuments} isUploading={false} onUpload={uploadCompanyDocument} onDownload={downloadCompanyDocument} onPreview={previewCompanyDocument} onDelete={handleCompanyDocumentDelete} canDeleteDocument={canDeleteCompanyDocument} companyColor={companyColor} />}
+                  </div>
+                ) : (
+                  <DocumentSection 
+                    type="company" 
+                    documents={companyDocuments} 
+                    isUploading={false} 
+                    onUpload={uploadCompanyDocument} 
+                    onDownload={downloadCompanyDocument} 
+                    onPreview={previewCompanyDocument} 
+                    onDelete={handleCompanyDocumentDelete} 
+                    onEdit={handleEditDocument}
+                    canDeleteDocument={canDeleteCompanyDocument} 
+                    companyColor={companyColor} 
+                  />
+                )}
               </TabsContent>
 
               <TabsContent value="personal">
-                <DocumentSection type="personal" documents={personalDocuments} isUploading={personalUploading} onUpload={uploadPersonalDocument} onDownload={downloadPersonalDocument} onPreview={previewPersonalDocument} onDelete={handlePersonalDocumentDelete} canDeleteDocument={canDeletePersonalDocument} companyColor={companyColor} />
+                <DocumentSection 
+                  type="personal" 
+                  documents={personalDocuments} 
+                  isUploading={personalUploading} 
+                  onUpload={uploadPersonalDocument} 
+                  onDownload={downloadPersonalDocument} 
+                  onPreview={previewPersonalDocument} 
+                  onDelete={handlePersonalDocumentDelete} 
+                  canDeleteDocument={canDeletePersonalDocument} 
+                  companyColor={companyColor} 
+                />
               </TabsContent>
             </Tabs>
           </div>
         </main>
         <AdminFloatingActionButton />
       </div>
-    </>;
+
+      <EditCompanyDocumentDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        document={editingDocument}
+        onUpdate={handleUpdateDocument}
+        isUpdating={false}
+      />
+    </>
+  );
 };
+
 export default Documents;

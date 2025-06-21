@@ -22,6 +22,7 @@ interface CompanyDocumentListProps {
   onDownload: (document: CompanyDocument) => Promise<void>;
   onPreview: (document: CompanyDocument) => Promise<void>;
   onDelete: (document: CompanyDocument) => Promise<void>;
+  onEdit?: (document: CompanyDocument) => void;
   canDeleteDocument: (document: CompanyDocument) => boolean;
   onAddDocument?: () => void;
 }
@@ -31,6 +32,7 @@ export const CompanyDocumentList: React.FC<CompanyDocumentListProps> = ({
   onDownload,
   onPreview,
   onDelete,
+  onEdit,
   canDeleteDocument,
   onAddDocument
 }) => {
@@ -38,6 +40,17 @@ export const CompanyDocumentList: React.FC<CompanyDocumentListProps> = ({
   const { userProfile } = useAuth();
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
   const canUpload = userProfile?.is_admin || userProfile?.super_admin;
+
+  const canEditDocument = (document: CompanyDocument): boolean => {
+    // Apenas admins e super admins podem editar
+    if (!userProfile?.is_admin && !userProfile?.super_admin) return false;
+    // Só pode editar documentos que ele mesmo criou
+    return document.created_by === userProfile.id;
+  };
+
+  const showActionMenu = (document: CompanyDocument): boolean => {
+    return canDeleteDocument(document) || canEditDocument(document);
+  };
 
   if (documents.length === 0) {
     return (
@@ -94,7 +107,7 @@ export const CompanyDocumentList: React.FC<CompanyDocumentListProps> = ({
                 </div>
               </div>
               
-              {canDeleteDocument(document) && (
+              {showActionMenu(document) && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -106,20 +119,26 @@ export const CompanyDocumentList: React.FC<CompanyDocumentListProps> = ({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem onClick={() => {}}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Editar
-                    </DropdownMenuItem>
+                    {canEditDocument(document) && onEdit && (
+                      <>
+                        <DropdownMenuItem onClick={() => onEdit(document)}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Editar
+                        </DropdownMenuItem>
+                        
+                        {canDeleteDocument(document) && <DropdownMenuSeparator />}
+                      </>
+                    )}
                     
-                    <DropdownMenuSeparator />
-                    
-                    <DropdownMenuItem 
-                      onClick={() => onDelete(document)}
-                      className="text-red-600 focus:text-red-600"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Excluir
-                    </DropdownMenuItem>
+                    {canDeleteDocument(document) && (
+                      <DropdownMenuItem 
+                        onClick={() => onDelete(document)}
+                        className="text-red-600 focus:text-red-600"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Excluir
+                      </DropdownMenuItem>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}

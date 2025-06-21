@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { CompanyDocument, CompanyDocumentType } from '@/types/company-document';
@@ -212,6 +213,86 @@ export const useCompanyDocuments = () => {
     }
   };
 
+  const updateDocument = async (
+    documentId: string,
+    name: string,
+    description: string,
+    documentType: CompanyDocumentType,
+    selectedJobRoles: string[] = [],
+    selectedUsers: string[] = []
+  ): Promise<boolean> => {
+    try {
+      // Atualizar documento
+      const { error: docError } = await supabase
+        .from('company_documents')
+        .update({
+          name,
+          description,
+          document_type: documentType
+        })
+        .eq('id', documentId);
+
+      if (docError) {
+        console.error('Error updating document:', docError);
+        toast.error('Erro ao atualizar documento');
+        return false;
+      }
+
+      // Remover vínculos existentes
+      await supabase
+        .from('company_document_job_roles')
+        .delete()
+        .eq('company_document_id', documentId);
+
+      await supabase
+        .from('company_document_users')
+        .delete()
+        .eq('company_document_id', documentId);
+
+      // Vincular aos novos cargos se especificado
+      if (selectedJobRoles.length > 0) {
+        const roleLinks = selectedJobRoles.map(roleId => ({
+          company_document_id: documentId,
+          job_role_id: roleId
+        }));
+
+        const { error: roleError } = await supabase
+          .from('company_document_job_roles')
+          .insert(roleLinks);
+
+        if (roleError) {
+          console.error('Error linking job roles:', roleError);
+          toast.error('Erro ao vincular cargos');
+        }
+      }
+
+      // Vincular aos novos usuários se especificado
+      if (selectedUsers.length > 0) {
+        const userLinks = selectedUsers.map(userId => ({
+          company_document_id: documentId,
+          user_id: userId
+        }));
+
+        const { error: userError } = await supabase
+          .from('company_document_users')
+          .insert(userLinks);
+
+        if (userError) {
+          console.error('Error linking users:', userError);
+          toast.error('Erro ao vincular usuários');
+        }
+      }
+
+      toast.success('Documento atualizado com sucesso');
+      await fetchDocuments();
+      return true;
+    } catch (error) {
+      console.error('Error updating document:', error);
+      toast.error('Erro ao atualizar documento');
+      return false;
+    }
+  };
+
   const deleteDocument = async (documentToDelete: CompanyDocument): Promise<void> => {
     try {
       // Deletar vínculos com cargos primeiro
@@ -326,6 +407,7 @@ export const useCompanyDocuments = () => {
     documents,
     isLoading,
     uploadDocument,
+    updateDocument,
     deleteDocument,
     downloadDocument,
     previewDocument,
