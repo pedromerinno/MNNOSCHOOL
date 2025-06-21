@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { FileText, Shield, ScrollText, Briefcase, Archive, Book, Clipboard, GraduationCap } from "lucide-react";
+import { FileText, Shield, ScrollText, Briefcase, Archive, Book, Clipboard, GraduationCap, Filter } from "lucide-react";
 
 interface DocumentFilterProps {
   selectedCategory: string;
@@ -38,9 +38,20 @@ export const DocumentFilter: React.FC<DocumentFilterProps> = ({
   const categories = documentType === 'personal' ? personalCategories : companyCategories;
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-medium">Filtrar por categoria</h3>
-      <div className="flex flex-wrap gap-2">
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <div 
+          className="p-2 rounded-lg"
+          style={{ backgroundColor: `${companyColor}20` }}
+        >
+          <Filter className="h-5 w-5" style={{ color: companyColor }} />
+        </div>
+        <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+          Filtrar por categoria
+        </h3>
+      </div>
+      
+      <div className="flex flex-wrap gap-3">
         {categories.map((category) => {
           const IconComponent = category.icon;
           const isActive = selectedCategory === category.value;
@@ -51,14 +62,15 @@ export const DocumentFilter: React.FC<DocumentFilterProps> = ({
               variant={isActive ? "default" : "outline"}
               size="sm"
               onClick={() => onCategoryChange(category.value)}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 px-4 py-2 h-10 transition-all duration-200 hover:shadow-sm"
               style={isActive ? {
                 backgroundColor: companyColor,
                 borderColor: companyColor,
                 color: 'white'
               } : {
                 borderColor: `${companyColor}40`,
-                color: companyColor
+                color: companyColor,
+                backgroundColor: 'transparent'
               }}
             >
               <IconComponent className="h-4 w-4" />
