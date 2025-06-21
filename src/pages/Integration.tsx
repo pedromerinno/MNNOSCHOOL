@@ -313,8 +313,8 @@ const Integration = () => {
       <>
         <MainNavigationMenu />
         <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
-          <main className="container mx-auto px-6 py-12">
-            <div className="flex items-center mb-12 gap-4">
+          <main className="container mx-auto px-4 lg:px-6 py-8 lg:py-12">
+            <div className="flex items-center mb-8 lg:mb-12 gap-4">
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -324,13 +324,13 @@ const Integration = () => {
                 <ArrowLeft className="h-5 w-5 text-gray-500" />
               </Button>
               <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold dark:text-white">
+                <h1 className="text-2xl lg:text-3xl font-bold dark:text-white">
                   Integração
                 </h1>
               </div>
             </div>
             
-            <div className="bg-white dark:bg-card rounded-xl shadow-sm p-6">
+            <div className="bg-white dark:bg-card rounded-xl shadow-sm p-4 lg:p-6">
               <div className="flex items-center justify-center h-64">
                 <p className="text-gray-500">Nenhuma empresa selecionada</p>
               </div>
@@ -347,18 +347,18 @@ const Integration = () => {
     <>
       <MainNavigationMenu />
       <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
-        <main className="container mx-auto px-6 py-12">
-          <div className="flex items-center mb-12 gap-4">
+        <main className="container mx-auto px-4 lg:px-6 py-8 lg:py-12">
+          <div className="flex items-center mb-8 lg:mb-12 gap-3 lg:gap-4">
             <Button 
               variant="ghost" 
               size="sm" 
               className="p-0 hover:bg-transparent" 
               onClick={() => navigate('/')}
             >
-              <ArrowLeft className="h-5 w-5 text-gray-500" />
+              <ArrowLeft className="h-4 w-5 lg:h-5 lg:w-5 text-gray-500" />
             </Button>
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold dark:text-white">
+            <div className="flex items-center gap-2 lg:gap-3">
+              <h1 className="text-xl lg:text-3xl font-bold dark:text-white">
                 Integração
               </h1>
               {companyData && (
@@ -369,7 +369,7 @@ const Integration = () => {
             </div>
           </div>
           
-          <div className="bg-white dark:bg-card rounded-xl shadow-sm p-6">
+          <div className="bg-white dark:bg-card rounded-xl shadow-sm p-4 lg:p-6">
             <CompanyHeader 
               company={companyData} 
               companyColor={companyData?.cor_principal}
