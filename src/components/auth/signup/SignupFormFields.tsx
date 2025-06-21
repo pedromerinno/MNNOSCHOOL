@@ -35,7 +35,7 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
         <div>
           <Input
             type="email"
@@ -107,7 +107,7 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
         </Button>
       </form>
 
-      <div className="mt-4 sm:mt-6">
+      <div className="mt-3 sm:mt-6">
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-300"></div>
@@ -117,7 +117,7 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
           </div>
         </div>
 
-        <div className="mt-4 sm:mt-6 space-y-3 sm:space-y-4">
+        <div className="mt-3 sm:mt-6 space-y-3">
           <Button 
             variant="outline"
             className="w-full h-11 sm:h-12 border border-gray-300 rounded-lg font-medium flex items-center justify-center gap-2 text-sm sm:text-base"
@@ -153,7 +153,7 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
           </Button>
         </div>
 
-        <div className="mt-3 sm:mt-4 text-xs text-center text-gray-500 px-2 sm:px-4">
+        <div className="mt-2 sm:mt-4 text-xs text-center text-gray-500 px-2">
           Ao clicar em "Cadastrar", "Entrar com Google" ou "Usar Single Sign-On (SSO)", 
           você concorda com nossos <Link to="/termos" className="underline hover:text-blue-600">Termos de Uso</Link> e 
           reconhece que leu e compreendeu nossa <Link to="/privacidade" className="underline hover:text-blue-600">Política de Privacidade</Link>.
