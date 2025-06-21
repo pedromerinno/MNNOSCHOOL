@@ -1,63 +1,58 @@
 
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Clock, Building2 } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { Company } from "@/types/company";
 
 export const WelcomeSection = () => {
-  const { userProfile } = useAuth();
+  const { user, userProfile } = useAuth();
   const { selectedCompany } = useCompanies();
-  
-  const currentTime = format(new Date(), "HH:mm", { locale: ptBR });
-  const currentDate = format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR });
-  
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Bom dia";
-    if (hour < 18) return "Boa tarde";
-    return "Boa noite";
+  const navigate = useNavigate();
+  const [displayCompany, setDisplayCompany] = useState<Company | null>(selectedCompany);
+
+  // Simplificar atualização da empresa
+  useEffect(() => {
+    if (selectedCompany && selectedCompany.id !== displayCompany?.id) {
+      setDisplayCompany(selectedCompany);
+    }
+  }, [selectedCompany?.id]);
+
+  const userName = userProfile?.display_name || user?.email?.split('@')[0] || 'Usuário';
+
+  const handleLearnMore = () => {
+    navigate('/integration');
   };
 
+  const defaultPhrase = "Construindo um futuro melhor para empresas e colaboradores";
+  const companyPhrase = displayCompany?.frase_institucional || defaultPhrase;
+
   return (
-    <Card className="mb-4 sm:mb-8 border-0 shadow-sm bg-white/80 dark:bg-card/80 backdrop-blur-sm">
-      <CardContent className="p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-          <div className="flex-1 min-w-0">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2 truncate">
-              {getGreeting()}, {userProfile?.display_name || "Usuário"}!
-            </h1>
-            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-3 sm:mb-0">
-              Pronto para mais um dia produtivo?
-            </p>
-          </div>
-          
-          <div className="flex flex-col sm:items-end gap-2 sm:gap-3">
-            <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-              <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span>{currentTime} • {currentDate}</span>
-            </div>
-            
-            {selectedCompany && (
-              <div className="flex items-center gap-2">
-                <Building2 className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500" />
-                <Badge 
-                  variant="outline" 
-                  className="text-xs sm:text-sm bg-white/80 dark:bg-card/80 border-gray-200 dark:border-gray-700 max-w-[200px] truncate"
-                  style={{ 
-                    borderColor: selectedCompany.cor_principal || "#1EAEDB",
-                    color: selectedCompany.cor_principal || "#1EAEDB"
-                  }}
-                >
-                  {selectedCompany.nome}
-                </Badge>
-              </div>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="mb-16 mt-10">
+      <div className="flex flex-col items-center">
+        <p 
+          className="text-gray-700 dark:text-gray-200 mb-6 text-center bg-[#FFF5E4] dark:bg-[#333333] py-1.5 px-6 rounded-full max-w-fit text-sm font-semibold"
+        >
+          Olá, {userName}
+        </p>
+        
+        <p 
+          className="text-foreground text-center text-[40px] font-normal max-w-[50%] leading-[1.1] mb-5"
+        >
+          {companyPhrase}
+        </p>
+        
+        <Button 
+          onClick={handleLearnMore} 
+          className="mt-1 flex items-center gap-2 text-white dark:text-black rounded-full text-sm transition-colors duration-300 bg-black dark:bg-white hover:bg-black/90 dark:hover:bg-white/90"
+          variant="default"
+        >
+          Saiba mais
+          <ArrowRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
   );
 };

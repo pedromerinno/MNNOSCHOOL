@@ -1,110 +1,77 @@
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Link, FileText, Users, School, Globe, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { 
-  BookOpen, 
-  Users, 
-  FileText, 
-  BarChart3,
-  Settings,
-  MessageSquare
-} from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 
 export const QuickLinks = () => {
   const navigate = useNavigate();
-  const { userProfile } = useAuth();
   const { selectedCompany } = useCompanies();
   
-  const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
-  
-  const quickLinks = [
-    {
-      title: "Cursos",
-      description: "Explore cursos disponíveis",
-      icon: BookOpen,
-      path: "/courses",
-      color: companyColor
+  const links = [
+    { 
+      icon: Link, 
+      label: "Integração", 
+      path: "/integration", 
+      description: "Processo de integração" 
     },
-    {
-      title: "Equipe",
-      description: "Veja sua equipe",
-      icon: Users,
-      path: "/team",
-      color: companyColor
+    { 
+      icon: Settings, 
+      label: "Senhas", 
+      path: "/access",
+      description: "Gerencie suas senhas" 
     },
-    {
-      title: "Documentos",
-      description: "Gerencie documentos",
-      icon: FileText,
+    { 
+      icon: FileText, 
+      label: "Documentos", 
       path: "/documents",
-      color: companyColor
+      description: "Seus documentos" 
     },
-    {
-      title: "Integração",
-      description: "Central de integração",
-      icon: BarChart3,
-      path: "/integration",
-      color: companyColor
+    { 
+      icon: School, 
+      label: "Escola", 
+      path: "/courses", 
+      hasDropdown: true,
+      description: "Acesso aos cursos"
     },
-    {
-      title: "Comunidade",
-      description: "Participe das discussões",
-      icon: MessageSquare,
-      path: "/community",
-      color: companyColor
+    { 
+      icon: Users, 
+      label: "Fórum", 
+      path: "/community", 
+      description: "Discussões e compartilhamento"
     }
   ];
 
-  // Adicionar link para admin se for admin ou super admin
-  if (userProfile?.is_admin || userProfile?.super_admin) {
-    quickLinks.push({
-      title: "Admin",
-      description: "Painel administrativo",
-      icon: Settings,
-      path: "/admin",
-      color: companyColor
-    });
-  }
+  const handleNavigate = (path: string) => {
+    navigate(path);
+  };
 
   return (
-    <Card className="mb-4 sm:mb-8 border-0 shadow-sm bg-white/80 dark:bg-card/80 backdrop-blur-sm">
-      <CardContent className="p-4 sm:p-6">
-        <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-gray-900 dark:text-white">
-          Acesso Rápido
-        </h2>
-        
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
-          {quickLinks.map((link) => (
-            <Button
-              key={link.path}
-              variant="ghost"
-              className="h-auto p-3 sm:p-4 flex flex-col items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200 group"
-              onClick={() => navigate(link.path)}
-            >
-              <div 
-                className="p-2 sm:p-3 rounded-xl transition-all duration-200 group-hover:scale-110"
-                style={{ backgroundColor: `${link.color}15` }}
-              >
-                <link.icon 
-                  className="h-4 w-4 sm:h-5 sm:w-5" 
-                  style={{ color: link.color }}
-                />
-              </div>
-              <div className="text-center">
-                <p className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate">
-                  {link.title}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">
-                  {link.description}
-                </p>
-              </div>
-            </Button>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-12">
+      {links.map((link, index) => (
+        <Card 
+          key={index} 
+          className="border-0 shadow-none bg-white dark:bg-[#222222] rounded-[30px] cursor-pointer hover:bg-gray-50 dark:hover:bg-[#2C2C2C] transition-colors"
+          onClick={() => handleNavigate(link.path)}
+        >
+          <CardContent className="p-6 flex flex-col">
+            <div className="flex items-center mb-2">
+              <span className="mr-3 bg-gray-100 dark:bg-[#1F1F1F] p-2 rounded-lg">
+                <link.icon className="h-5 w-5 text-gray-700 dark:text-gray-300 stroke-current" strokeWidth={1.5} />
+              </span>
+              <span className="font-medium dark:text-white">{link.label}</span>
+              {link.hasDropdown && (
+                <svg className="h-4 w-4 text-gray-400 dark:text-gray-500 ml-auto" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M7 10l5 5 5-5H7z" fill="currentColor" />
+                </svg>
+              )}
+            </div>
+            <p className="text-sm text-gray-500 dark:text-[#757576]">
+              {link.description}
+            </p>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 };
