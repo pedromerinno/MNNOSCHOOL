@@ -57,25 +57,14 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
         companyColor={companyColor}
       />
 
-      {canUpload && (
-        <>
-          {type === 'personal' ? (
-            <DocumentUploadForm
-              open={uploadOpen}
-              onOpenChange={setUploadOpen}
-              onUpload={onUpload}
-              isUploading={isUploading}
-            />
-          ) : (
-            <CompanyDocumentUploadForm
-              open={uploadOpen}
-              onOpenChange={setUploadOpen}
-              onUpload={onUpload}
-              isUploading={isUploading}
-              availableRoles={jobRoles.filter(role => role.company_id === selectedCompany?.id)}
-            />
-          )}
-        </>
+      {/* Only show upload form for personal documents - company documents are handled by FAB */}
+      {canUpload && type === 'personal' && (
+        <DocumentUploadForm
+          open={uploadOpen}
+          onOpenChange={setUploadOpen}
+          onUpload={onUpload}
+          isUploading={isUploading}
+        />
       )}
 
       <div className="mt-6">
