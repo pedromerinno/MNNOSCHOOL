@@ -4,7 +4,7 @@ import { CompanyDocument } from '@/types/company-document';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Download, Eye, Trash2, FileText, Link, Building, Users, Lock } from 'lucide-react';
+import { Download, Eye, Trash2, FileText, Link, Building, Users, Lock, Plus } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useCompanies } from "@/hooks/useCompanies";
@@ -16,6 +16,7 @@ interface CompanyDocumentListProps {
   onPreview: (document: CompanyDocument) => Promise<void>;
   onDelete: (document: CompanyDocument) => Promise<void>;
   canDeleteDocument: (document: CompanyDocument) => boolean;
+  onAddDocument?: () => void;
 }
 
 export const CompanyDocumentList: React.FC<CompanyDocumentListProps> = ({
@@ -23,21 +24,34 @@ export const CompanyDocumentList: React.FC<CompanyDocumentListProps> = ({
   onDownload,
   onPreview,
   onDelete,
-  canDeleteDocument
+  canDeleteDocument,
+  onAddDocument
 }) => {
   const { selectedCompany } = useCompanies();
   const { userProfile } = useAuth();
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
 
   if (documents.length === 0) {
+    const canUpload = userProfile?.is_admin || userProfile?.super_admin;
+    
     return (
       <Card>
         <CardContent className="p-12 text-center">
           <Building className="h-12 w-12 mx-auto text-gray-400 mb-4" />
           <h3 className="text-lg font-medium mb-2">Nenhum documento encontrado</h3>
-          <p className="text-gray-500 dark:text-gray-400">
+          <p className="text-gray-500 dark:text-gray-400 mb-6">
             Não há documentos da empresa nesta categoria.
           </p>
+          {canUpload && onAddDocument && (
+            <Button 
+              onClick={onAddDocument}
+              style={{ backgroundColor: companyColor, borderColor: companyColor }}
+              className="text-white hover:opacity-90"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar Documento da Empresa
+            </Button>
+          )}
         </CardContent>
       </Card>
     );

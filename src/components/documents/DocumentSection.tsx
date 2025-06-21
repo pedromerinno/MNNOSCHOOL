@@ -48,6 +48,10 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
   const filteredDocuments = filterDocuments(documents as any[], selectedCategory);
   const canUpload = type === 'personal' || userProfile?.is_admin || userProfile?.super_admin;
 
+  const handleAddDocument = () => {
+    setUploadOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <DocumentFilter
@@ -67,6 +71,17 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
         />
       )}
 
+      {/* Company document upload form */}
+      {type === 'company' && canUpload && (
+        <CompanyDocumentUploadForm
+          open={uploadOpen}
+          onOpenChange={setUploadOpen}
+          onUpload={onUpload}
+          isUploading={isUploading}
+          availableRoles={jobRoles.filter(role => role.company_id === selectedCompany?.id)}
+        />
+      )}
+
       <div className="mt-6">
         {type === 'personal' ? (
           <DocumentList
@@ -83,6 +98,7 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
             onPreview={onPreview}
             onDelete={onDelete}
             canDeleteDocument={canDeleteDocument}
+            onAddDocument={handleAddDocument}
           />
         )}
       </div>
