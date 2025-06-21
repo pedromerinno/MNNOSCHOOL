@@ -6,7 +6,7 @@ import { useJobRolesAPI } from './useJobRolesAPI';
 import { useJobRolesState } from './useJobRolesState';
 import { toast } from "sonner";
 
-export const useJobRoles = (company: Company) => {
+export const useJobRoles = (company: Company | null) => {
   const {
     jobRoles,
     isLoading,
@@ -29,22 +29,35 @@ export const useJobRoles = (company: Company) => {
   const loadingRef = useRef(false);
 
   useEffect(() => {
-    if (!company?.id) return;
+    if (!company?.id) {
+      console.log('[useJobRoles] No company provided, resetting state');
+      setJobRoles([]);
+      setIsLoading(false);
+      initialLoadDone.current = false;
+      return;
+    }
     
-    if (loadingRef.current) return;
+    if (loadingRef.current) {
+      console.log('[useJobRoles] Already loading, skipping');
+      return;
+    }
     
     const loadRoles = async () => {
-      if (!initialLoadDone.current) {
-        setIsLoading(true);
-        loadingRef.current = true;
-      }
-      
       try {
+        if (!initialLoadDone.current) {
+          console.log('[useJobRoles] Starting initial load for company:', company.id);
+          setIsLoading(true);
+          loadingRef.current = true;
+        }
+        
         const data = await fetchJobRoles(company.id);
+        console.log('[useJobRoles] Roles loaded successfully:', data?.length || 0);
         setJobRoles(data);
         initialLoadDone.current = true;
       } catch (error) {
-        console.error("Error loading roles:", error);
+        console.error("[useJobRoles] Error loading roles:", error);
+        setJobRoles([]);
+        toast.error("Erro ao carregar cargos da empresa");
       } finally {
         setIsLoading(false);
         loadingRef.current = false;
@@ -55,18 +68,22 @@ export const useJobRoles = (company: Company) => {
   }, [company?.id, fetchJobRoles, setJobRoles, setIsLoading]);
 
   const refreshJobRoles = useCallback(async (forceRefresh = true) => {
-    if (!company?.id || loadingRef.current) return;
+    if (!company?.id || loadingRef.current) {
+      console.log('[useJobRoles] Cannot refresh - no company or already loading');
+      return;
+    }
     
     setIsLoading(true);
     loadingRef.current = true;
     
     try {
-      console.log("Refreshing job roles for company:", company.id);
+      console.log("[useJobRoles] Refreshing job roles for company:", company.id);
       const data = await fetchJobRoles(company.id, forceRefresh);
-      console.log("Refreshed job roles data:", data);
+      console.log("[useJobRoles] Refreshed job roles data:", data?.length || 0);
       setJobRoles(data);
     } catch (error) {
-      console.error("Error refreshing job roles:", error);
+      console.error("[useJobRoles] Error refreshing job roles:", error);
+      toast.error("Erro ao atualizar lista de cargos");
     } finally {
       setIsLoading(false);
       loadingRef.current = false;
@@ -82,15 +99,15 @@ export const useJobRoles = (company: Company) => {
     setIsLoading(true);
 
     try {
-      console.log(`Attempting to ${isNew ? 'create' : 'update'} role:`, role);
+      console.log(`[useJobRoles] Attempting to ${isNew ? 'create' : 'update'} role:`, role);
       const savedRole = await saveRole(role, company.id, isNew);
       
       if (savedRole) {
         if (isNew) {
-          console.log("Role created successfully, updating local state");
+          console.log("[useJobRoles] Role created successfully");
           setNewRole(null);
         } else {
-          console.log("Role updated successfully, updating local state");
+          console.log("[useJobRoles] Role updated successfully");
           setEditingRole(null);
         }
         
@@ -99,18 +116,20 @@ export const useJobRoles = (company: Company) => {
         
         // Dispatch event for other components to refresh
         window.dispatchEvent(new Event('job-roles-updated'));
-      } else {
-        console.error("Failed to save role - no data returned");
       }
-    } catch (error) {
-      console.error("Error in handleSaveRole:", error);
+    } catch (error: any) {
+      console.error("[useJobRoles] Error in handleSaveRole:", error);
+      // Error is already handled in the API layer
     } finally {
       setIsLoading(false);
     }
-  }, [company?.id, saveRole, setEditingRole, setIsLoading, setJobRoles, setNewRole, refreshJobRoles]);
+  }, [company?.id, saveRole, setEditingRole, setIsLoading, setNewRole, refreshJobRoles]);
 
   const handleDeleteRole = useCallback(async (roleId: string) => {
-    if (!company?.id) return;
+    if (!company?.id) {
+      toast.error("Nenhuma empresa selecionada");
+      return;
+    }
     
     if (window.confirm("Tem certeza que deseja excluir este cargo?")) {
       setIsLoading(true);
@@ -124,7 +143,7 @@ export const useJobRoles = (company: Company) => {
           window.dispatchEvent(new Event('job-roles-updated'));
         }
       } catch (error) {
-        console.error("Error in handleDeleteRole:", error);
+        console.error("[useJobRoles] Error in handleDeleteRole:", error);
       } finally {
         setIsLoading(false);
       }
@@ -132,10 +151,16 @@ export const useJobRoles = (company: Company) => {
   }, [company?.id, deleteRole, setIsLoading, setJobRoles]);
 
   const handleMoveRole = useCallback(async (roleId: string, direction: 'up' | 'down') => {
-    if (!company?.id) return;
+    if (!company?.id) {
+      console.log('[useJobRoles] No company selected for move operation');
+      return;
+    }
     
     const currentIndex = jobRoles.findIndex(role => role.id === roleId);
-    if (currentIndex === -1) return;
+    if (currentIndex === -1) {
+      console.log('[useJobRoles] Role not found for move operation');
+      return;
+    }
     
     let newIndex;
     if (direction === 'up' && currentIndex > 0) {
@@ -143,7 +168,8 @@ export const useJobRoles = (company: Company) => {
     } else if (direction === 'down' && currentIndex < jobRoles.length - 1) {
       newIndex = currentIndex + 1;
     } else {
-      return; // Can't move further in that direction
+      console.log('[useJobRoles] Cannot move role further in that direction');
+      return;
     }
     
     const currentRole = jobRoles[currentIndex];
@@ -168,7 +194,7 @@ export const useJobRoles = (company: Company) => {
         window.dispatchEvent(new Event('job-roles-updated'));
       }
     } catch (error) {
-      console.error("Error in handleMoveRole:", error);
+      console.error("[useJobRoles] Error in handleMoveRole:", error);
     } finally {
       setIsLoading(false);
     }
