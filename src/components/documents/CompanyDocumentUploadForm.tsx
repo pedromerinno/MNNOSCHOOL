@@ -5,15 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { CompanyDocumentType, COMPANY_DOCUMENT_TYPE_LABELS } from "@/types/company-document";
 import { JobRole } from "@/types/job-roles";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useCompanyUsers } from "@/hooks/company-documents/useCompanyUsers";
 import { UserSelector } from "./UserSelector";
-import { Plus, Building, Upload, Link, Users, UserCheck } from 'lucide-react';
+import { Plus, Building, Upload, Link, Users, UserCheck, Tag } from 'lucide-react';
 
 interface CompanyDocumentUploadFormProps {
   open: boolean;
@@ -140,7 +140,7 @@ export const CompanyDocumentUploadForm: React.FC<CompanyDocumentUploadFormProps>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Nome do Documento *</Label>
               <Input
@@ -152,20 +152,32 @@ export const CompanyDocumentUploadForm: React.FC<CompanyDocumentUploadFormProps>
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="documentType">Tipo de Documento</Label>
-              <Select value={documentType} onValueChange={(value: CompanyDocumentType) => setDocumentType(value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(COMPANY_DOCUMENT_TYPE_LABELS).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {/* Document Type Tags */}
+            <div className="space-y-3">
+              <Label className="flex items-center gap-2">
+                <Tag className="h-4 w-4" />
+                Tipo de Documento
+              </Label>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(COMPANY_DOCUMENT_TYPE_LABELS).map(([key, label]) => (
+                  <Badge
+                    key={key}
+                    variant={documentType === key ? "default" : "outline"}
+                    className={`cursor-pointer transition-colors hover:opacity-80 ${
+                      documentType === key 
+                        ? 'text-white' 
+                        : 'hover:border-current'
+                    }`}
+                    style={documentType === key ? { 
+                      backgroundColor: companyColor, 
+                      borderColor: companyColor 
+                    } : {}}
+                    onClick={() => setDocumentType(key as CompanyDocumentType)}
+                  >
+                    {label}
+                  </Badge>
+                ))}
+              </div>
             </div>
           </div>
 
