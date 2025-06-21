@@ -1,8 +1,8 @@
+
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 import { AdminFloatingActionButton } from "@/components/admin/AdminFloatingActionButton";
-import { DocumentFloatingActionButton } from "@/components/documents/DocumentFloatingActionButton";
 import { PagePreloader } from "@/components/ui/PagePreloader";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, FileText, Building } from "lucide-react";
@@ -191,7 +191,6 @@ const Documents = () => {
           </div>
         </main>
         <AdminFloatingActionButton />
-        <DocumentFloatingActionButton />
       </div>
     </>
   );
