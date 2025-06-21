@@ -169,26 +169,26 @@ export const useCompanyDocuments = () => {
     }
   };
 
-  const deleteDocument = async (document: CompanyDocument): Promise<void> => {
+  const deleteDocument = async (documentToDelete: CompanyDocument): Promise<void> => {
     try {
       // Deletar vínculos com cargos primeiro
       await supabase
         .from('company_document_job_roles')
         .delete()
-        .eq('company_document_id', document.id);
+        .eq('company_document_id', documentToDelete.id);
 
       // Deletar arquivo do storage se existir
-      if (document.file_path) {
+      if (documentToDelete.file_path) {
         await supabase.storage
           .from('documents')
-          .remove([document.file_path]);
+          .remove([documentToDelete.file_path]);
       }
 
       // Deletar documento
       const { error } = await supabase
         .from('company_documents')
         .delete()
-        .eq('id', document.id);
+        .eq('id', documentToDelete.id);
 
       if (error) {
         console.error('Error deleting document:', error);
@@ -204,17 +204,17 @@ export const useCompanyDocuments = () => {
     }
   };
 
-  const downloadDocument = async (document: CompanyDocument): Promise<void> => {
+  const downloadDocument = async (documentToDownload: CompanyDocument): Promise<void> => {
     try {
-      if (document.attachment_type === 'link' && document.link_url) {
-        window.open(document.link_url, '_blank');
+      if (documentToDownload.attachment_type === 'link' && documentToDownload.link_url) {
+        window.open(documentToDownload.link_url, '_blank');
         return;
       }
 
-      if (document.file_path) {
+      if (documentToDownload.file_path) {
         const { data, error } = await supabase.storage
           .from('documents')
-          .download(document.file_path);
+          .download(documentToDownload.file_path);
 
         if (error) {
           console.error('Error downloading file:', error);
@@ -223,12 +223,12 @@ export const useCompanyDocuments = () => {
         }
 
         const url = URL.createObjectURL(data);
-        const a = document.createElement('a');
+        const a = window.document.createElement('a');
         a.href = url;
-        a.download = document.name;
-        document.body.appendChild(a);
+        a.download = documentToDownload.name;
+        window.document.body.appendChild(a);
         a.click();
-        document.body.removeChild(a);
+        window.document.body.removeChild(a);
         URL.revokeObjectURL(url);
       }
     } catch (error) {
@@ -237,17 +237,17 @@ export const useCompanyDocuments = () => {
     }
   };
 
-  const previewDocument = async (document: CompanyDocument): Promise<void> => {
+  const previewDocument = async (documentToPreview: CompanyDocument): Promise<void> => {
     try {
-      if (document.attachment_type === 'link' && document.link_url) {
-        window.open(document.link_url, '_blank');
+      if (documentToPreview.attachment_type === 'link' && documentToPreview.link_url) {
+        window.open(documentToPreview.link_url, '_blank');
         return;
       }
 
-      if (document.file_path) {
+      if (documentToPreview.file_path) {
         const { data, error } = await supabase.storage
           .from('documents')
-          .createSignedUrl(document.file_path, 3600);
+          .createSignedUrl(documentToPreview.file_path, 3600);
 
         if (error) {
           console.error('Error creating signed URL:', error);
@@ -263,9 +263,9 @@ export const useCompanyDocuments = () => {
     }
   };
 
-  const canDeleteDocument = (document: CompanyDocument): boolean => {
+  const canDeleteDocument = (documentToCheck: CompanyDocument): boolean => {
     if (userProfile?.super_admin) return true;
-    if (userProfile?.is_admin && userProfile.id === document.created_by) return true;
+    if (userProfile?.is_admin && userProfile.id === documentToCheck.created_by) return true;
     return false;
   };
 
