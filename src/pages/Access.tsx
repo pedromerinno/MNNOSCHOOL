@@ -30,8 +30,8 @@ const Access = () => {
       <>
         <MainNavigationMenu />
         <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
-          <main className="container mx-auto px-6 py-12">
-            <div className="flex items-center mb-12 gap-4">
+          <main className="container mx-auto px-4 md:px-6 py-6 md:py-12">
+            <div className="flex items-center mb-6 md:mb-12 gap-4">
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -41,13 +41,13 @@ const Access = () => {
                 <ArrowLeft className="h-5 w-5 text-gray-500" />
               </Button>
               <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold dark:text-white">
+                <h1 className="text-2xl md:text-3xl font-bold dark:text-white">
                   Senhas e Acessos
                 </h1>
               </div>
             </div>
             
-            <div className="bg-white dark:bg-card rounded-xl shadow-sm p-6">
+            <div className="bg-white dark:bg-card rounded-xl shadow-sm p-4 md:p-6">
               <EmptyState 
                 title="Selecione uma empresa"
                 description="Selecione uma empresa no menu superior para visualizar os acessos cadastrados."
@@ -65,8 +65,8 @@ const Access = () => {
       <>
         <MainNavigationMenu />
         <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
-          <main className="container mx-auto px-6 py-12">
-            <div className="flex items-center mb-12 gap-4">
+          <main className="container mx-auto px-4 md:px-6 py-6 md:py-12">
+            <div className="flex items-center mb-6 md:mb-12 gap-4">
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -75,8 +75,8 @@ const Access = () => {
               >
                 <ArrowLeft className="h-5 w-5 text-gray-500" />
               </Button>
-              <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold dark:text-white">
+              <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
+                <h1 className="text-2xl md:text-3xl font-bold dark:text-white">
                   Senhas e Acessos
                 </h1>
                 <CompanyThemedBadge variant="beta">
@@ -85,7 +85,7 @@ const Access = () => {
               </div>
             </div>
             
-            <div className="bg-white dark:bg-card rounded-xl shadow-sm p-6">
+            <div className="bg-white dark:bg-card rounded-xl shadow-sm p-4 md:p-6">
               <EmptyState 
                 title="Acesso não autorizado"
                 description={`Você não tem permissão para visualizar os acessos da empresa ${selectedCompany.nome}. Entre em contato com o administrador.`}
@@ -102,8 +102,8 @@ const Access = () => {
     <>
       <MainNavigationMenu />
       <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
-        <main className="container mx-auto px-6 py-12">
-          <div className="flex items-center mb-12 gap-4">
+        <main className="container mx-auto px-4 md:px-6 py-6 md:py-12">
+          <div className="flex items-center mb-6 md:mb-12 gap-4">
             <Button 
               variant="ghost" 
               size="sm" 
@@ -112,8 +112,8 @@ const Access = () => {
             >
               <ArrowLeft className="h-5 w-5 text-gray-500" />
             </Button>
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold dark:text-white">
+            <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
+              <h1 className="text-2xl md:text-3xl font-bold dark:text-white">
                 Senhas e Acessos
               </h1>
               <CompanyThemedBadge variant="beta">
@@ -122,7 +122,7 @@ const Access = () => {
             </div>
           </div>
           
-          <div className="bg-white dark:bg-card rounded-xl shadow-sm p-6">
+          <div className="bg-white dark:bg-card rounded-xl shadow-sm p-4 md:p-6">
             <AccessDescription companyName={selectedCompany.nome} />
             <AccessTabs 
               companyAccessItems={accessItems}

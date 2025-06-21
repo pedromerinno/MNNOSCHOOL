@@ -21,7 +21,7 @@ export const AccessTabs = ({ companyAccessItems, companyColor = "#1EAEDB", onAcc
         <TabsList className="grid grid-cols-2 w-full rounded-2xl p-1.5 gap-2 bg-gray-100/0">
           <TabsTrigger 
             value="shared" 
-            className="flex items-center gap-2 rounded-xl py-4 px-6 transition-colors" 
+            className="flex items-center gap-1 md:gap-2 rounded-xl py-3 md:py-4 px-3 md:px-6 transition-colors text-sm md:text-base" 
             style={{
               backgroundColor: activeTab === "shared" ? `${companyColor}10` : undefined,
               borderColor: activeTab === "shared" ? companyColor : undefined,
@@ -29,12 +29,13 @@ export const AccessTabs = ({ companyAccessItems, companyColor = "#1EAEDB", onAcc
             }}
           >
             <Share2 className="h-4 w-4" />
-            Senhas Compartilhadas
+            <span className="hidden sm:inline">Senhas Compartilhadas</span>
+            <span className="sm:hidden">Compartilhadas</span>
           </TabsTrigger>
           
           <TabsTrigger 
             value="personal" 
-            className="flex items-center gap-2 rounded-xl py-4 px-6 transition-colors" 
+            className="flex items-center gap-1 md:gap-2 rounded-xl py-3 md:py-4 px-3 md:px-6 transition-colors text-sm md:text-base" 
             style={{
               backgroundColor: activeTab === "personal" ? `${companyColor}10` : undefined,
               borderColor: activeTab === "personal" ? companyColor : undefined,
@@ -42,11 +43,12 @@ export const AccessTabs = ({ companyAccessItems, companyColor = "#1EAEDB", onAcc
             }}
           >
             <User className="h-4 w-4" />
-            Minhas Senhas
+            <span className="hidden sm:inline">Minhas Senhas</span>
+            <span className="sm:hidden">Minhas</span>
           </TabsTrigger>
         </TabsList>
 
-        <div className="mt-10 mb-16 space-y-8">
+        <div className="mt-6 md:mt-10 mb-16 space-y-8">
           <TabsContent value="shared" className="m-0">
             <AccessContent 
               items={companyAccessItems} 
