@@ -48,6 +48,16 @@ const Documents = () => {
     canDeleteDocument: canDeleteCompanyDocument
   } = useCompanyDocuments();
 
+  // Wrapper function to handle personal document deletion
+  const handlePersonalDocumentDelete = async (document: any) => {
+    await deletePersonalDocument(document.id);
+  };
+
+  // Wrapper function to handle company document deletion
+  const handleCompanyDocumentDelete = async (document: any) => {
+    await deleteCompanyDocument(document);
+  };
+
   if (!userProfile) {
     return <Navigate to="/login" replace />;
   }
@@ -158,7 +168,7 @@ const Documents = () => {
                   onUpload={uploadPersonalDocument}
                   onDownload={downloadPersonalDocument}
                   onPreview={previewPersonalDocument}
-                  onDelete={deletePersonalDocument}
+                  onDelete={handlePersonalDocumentDelete}
                   canDeleteDocument={canDeletePersonalDocument}
                 />
               </TabsContent>
@@ -180,7 +190,7 @@ const Documents = () => {
                     onUpload={uploadCompanyDocument}
                     onDownload={downloadCompanyDocument}
                     onPreview={previewCompanyDocument}
-                    onDelete={deleteCompanyDocument}
+                    onDelete={handleCompanyDocumentDelete}
                     canDeleteDocument={canDeleteCompanyDocument}
                   />
                 )}
