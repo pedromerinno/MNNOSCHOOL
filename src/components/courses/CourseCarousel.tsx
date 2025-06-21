@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Play } from "lucide-react";
@@ -43,6 +42,10 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
     return courseImageUrl;
   };
 
+  const handleCourseClick = (courseId: string) => {
+    navigate(`/courses/${courseId}`);
+  };
+
   // Loading state with Skeleton UI
   if (loading) {
     return <div className="w-full h-[600px] rounded-2xl overflow-hidden relative">
@@ -85,12 +88,13 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
     return (
       <div className="w-full relative overflow-hidden py-0 flex justify-center">
         <div className="w-full max-w-4xl mx-auto">
-          <div className="relative h-[600px] rounded-2xl overflow-hidden cursor-pointer group">
+          <div className="relative h-[600px] rounded-2xl overflow-hidden group">
             <img 
               src={imageSrc}
               alt={course.title} 
-              className="w-full h-full object-cover" 
+              className="w-full h-full object-cover cursor-pointer" 
               onError={handleImageError}
+              onClick={() => handleCourseClick(course.id)}
               onLoad={() => {
                 console.log('🖼️ CourseCarousel: Single course image loaded successfully');
               }}
@@ -184,12 +188,13 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
                 key={course.id} 
                 className="basis-full md:basis-[80%] lg:basis-[70%] pl-4 transition-opacity duration-300 py-[20px]"
               >
-                <div className="relative h-[600px] rounded-2xl overflow-hidden cursor-pointer group">
+                <div className="relative h-[600px] rounded-2xl overflow-hidden group">
                   <img 
                     src={imageSrc}
                     alt={course.title} 
-                    className="w-full h-full object-cover" 
+                    className="w-full h-full object-cover cursor-pointer" 
                     onError={handleImageError}
+                    onClick={() => handleCourseClick(course.id)}
                     onLoad={() => {
                       console.log('🖼️ CourseCarousel: Carousel course image loaded successfully for:', course.title);
                     }}
