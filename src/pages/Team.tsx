@@ -13,7 +13,7 @@ import { CompanyThemedBadge } from "@/components/ui/badge";
 import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 import { AdminFloatingActionButton } from "@/components/admin/AdminFloatingActionButton";
 import { PagePreloader } from "@/components/ui/PagePreloader";
-import { TeamMembersOrganized } from "@/components/team/TeamMembersOrganized";
+import { TeamMembersSimplified } from "@/components/team/TeamMembersSimplified";
 
 const Team = () => {
   const navigate = useNavigate();
@@ -154,7 +154,7 @@ const Team = () => {
                 companyId={selectedCompany?.id}
                 companyColor={selectedCompany?.cor_principal}
               />
-              <TeamMembersOrganized 
+              <TeamMembersSimplified 
                 members={members}
                 companyId={selectedCompany?.id}
                 companyColor={selectedCompany?.cor_principal}
