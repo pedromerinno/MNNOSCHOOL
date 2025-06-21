@@ -38,7 +38,7 @@ export const DocumentSection: React.FC<DocumentSectionProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const { userProfile } = useAuth();
   const { selectedCompany } = useCompanies();
-  const { jobRoles } = useJobRoles();
+  const { jobRoles } = useJobRoles(selectedCompany?.id);
 
   const filterDocuments = (docs: any[], category: string) => {
     if (category === 'all') return docs;
