@@ -282,7 +282,6 @@ export const CompanyDocumentDialog: React.FC<CompanyDocumentDialogProps> = ({
               <Tabs value={accessType} onValueChange={(value) => setAccessType(value as 'public' | 'roles' | 'users')}>
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="public" className="flex items-center gap-2">
-                    <Building className="h-4 w-4" />
                     Público
                   </TabsTrigger>
                   <TabsTrigger value="roles" className="flex items-center gap-2">
