@@ -3,17 +3,14 @@ import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Smartphone, Copy, ExternalLink } from "lucide-react";
+import { Smartphone, Copy, ExternalLink, Download } from "lucide-react";
 import { toast } from "sonner";
 
 export const QRCodeTester = () => {
   const [isOpen, setIsOpen] = useState(false);
   
-  // URL da aplicação Lovable (substitua pela URL real do seu projeto)
+  // URL da aplicação Lovable
   const appUrl = "https://5cae13a1-92c0-4c6b-93bc-bb999597eb98.lovableproject.com?forceHideBadge=true";
-  
-  // URL para Expo Go (funciona como PWA)
-  const expoUrl = `exp://exp.host/@expo/snack/${encodeURIComponent(appUrl)}`;
   
   const copyToClipboard = (url: string) => {
     navigator.clipboard.writeText(url)
@@ -60,7 +57,7 @@ export const QRCodeTester = () => {
           
           <div className="space-y-4">
             <div>
-              <h4 className="font-medium mb-2">📱 Opção 1: Safari (Recomendado)</h4>
+              <h4 className="font-medium mb-2">📱 Opção 1: Safari (PWA)</h4>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                 Escaneie o QR Code com a câmera do iPhone e abra no Safari. 
                 Adicione à tela inicial para uma experiência como app nativo.
@@ -86,7 +83,40 @@ export const QRCodeTester = () => {
             </div>
             
             <div className="border-t pt-4">
-              <h4 className="font-medium mb-2">🚀 Opção 2: Expo Go</h4>
+              <h4 className="font-medium mb-2 flex items-center gap-2">
+                <Download className="h-4 w-4" />
+                Opção 2: App Nativo (Capacitor)
+              </h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                Para ter um app nativo de verdade no iPhone:
+              </p>
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg space-y-2">
+                <p className="text-xs text-blue-700 dark:text-blue-300">
+                  <strong>1.</strong> Exporte o projeto para GitHub (botão no topo)
+                </p>
+                <p className="text-xs text-blue-700 dark:text-blue-300">
+                  <strong>2.</strong> Faça git pull do projeto
+                </p>
+                <p className="text-xs text-blue-700 dark:text-blue-300">
+                  <strong>3.</strong> Execute: <code className="bg-white/50 px-1 rounded">npm install</code>
+                </p>
+                <p className="text-xs text-blue-700 dark:text-blue-300">
+                  <strong>4.</strong> Execute: <code className="bg-white/50 px-1 rounded">npx cap init</code>
+                </p>
+                <p className="text-xs text-blue-700 dark:text-blue-300">
+                  <strong>5.</strong> Execute: <code className="bg-white/50 px-1 rounded">npx cap add ios</code>
+                </p>
+                <p className="text-xs text-blue-700 dark:text-blue-300">
+                  <strong>6.</strong> Execute: <code className="bg-white/50 px-1 rounded">npm run build && npx cap sync</code>
+                </p>
+                <p className="text-xs text-blue-700 dark:text-blue-300">
+                  <strong>7.</strong> Execute: <code className="bg-white/50 px-1 rounded">npx cap run ios</code>
+                </p>
+              </div>
+            </div>
+            
+            <div className="border-t pt-4">
+              <h4 className="font-medium mb-2">🚀 Opção 3: Expo Go</h4>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                 Baixe o app "Expo Go" na App Store, depois escaneie o QR Code acima.
               </p>
@@ -101,10 +131,10 @@ export const QRCodeTester = () => {
             </div>
           </div>
           
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
-            <p className="text-xs text-blue-700 dark:text-blue-300">
-              💡 <strong>Dica:</strong> No Safari, toque no botão "Compartilhar" e depois "Adicionar à Tela de Início" 
-              para criar um ícone do app na tela inicial do iPhone.
+          <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+            <p className="text-xs text-green-700 dark:text-green-300">
+              💡 <strong>Dica:</strong> O Capacitor já está configurado no projeto! 
+              Siga as instruções da Opção 2 para ter um app iOS nativo completo.
             </p>
           </div>
         </div>
