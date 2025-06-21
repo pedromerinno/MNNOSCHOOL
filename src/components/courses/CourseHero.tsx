@@ -28,11 +28,33 @@ export const CourseHero: React.FC<CourseHeroProps> = ({
 }) => {
   const navigate = useNavigate();
 
+  // Default image to use when course image is null or empty
+  const defaultImage = "/placeholder.svg";
+
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const target = e.target as HTMLImageElement;
+    console.log('🖼️ CourseHero: Image failed to load, using default:', target.src);
+    target.src = defaultImage;
+  };
+
+  const getImageSrc = (courseImageUrl: string | null): string => {
+    // If no image URL or empty, use default
+    if (!courseImageUrl || courseImageUrl.trim() === '') {
+      console.log('🖼️ CourseHero: No image URL provided, using default');
+      return defaultImage;
+    }
+    
+    console.log('🖼️ CourseHero: Using course image:', courseImageUrl);
+    return courseImageUrl;
+  };
+
   const handleStartLearning = () => {
     if (firstLessonId) {
       navigate(`/courses/${courseId}/lessons/${firstLessonId}`);
     }
   };
+
+  const imageSrc = getImageSrc(imageUrl);
 
   return (
     <div className="relative rounded-xl overflow-hidden h-[400px] bg-[#1A1F2C] text-white">
@@ -53,13 +75,15 @@ export const CourseHero: React.FC<CourseHeroProps> = ({
       )}
       
       <div className="absolute inset-0 w-full h-full">
-        {imageUrl && (
-          <img 
-            src={imageUrl} 
-            alt={title} 
-            className="w-full h-full object-cover" 
-          />
-        )}
+        <img 
+          src={imageSrc} 
+          alt={title} 
+          className="w-full h-full object-cover" 
+          onError={handleImageError}
+          onLoad={() => {
+            console.log('🖼️ CourseHero: Image loaded successfully');
+          }}
+        />
         <div className="absolute inset-0 bg-gradient-to-tr from-black/70 to-transparent"></div>
       </div>
       
