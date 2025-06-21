@@ -32,39 +32,35 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
     navigate(`/courses/${course.id}`);
   };
 
-  // Definir imagem padrão - sempre usar fallback se não houver imagem válida
+  // Sempre usar imagem padrão se não houver image_url válido
   const defaultImage = "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80";
   
-  // Simplificar a lógica - se course.image_url é falsy ou string vazia, usar default
-  const imageUrl = (course.image_url && course.image_url.trim()) ? course.image_url : defaultImage;
-  
-  console.log('🖼️ FeaturedCourse image debug:', {
-    courseImageUrl: course.image_url,
-    imageUrl,
-    hasImage: !!course.image_url
-  });
+  // Verificar se existe uma imagem válida, caso contrário usar a padrão
+  let imageUrl = defaultImage;
+  if (course.image_url && typeof course.image_url === 'string' && course.image_url.trim() !== '') {
+    imageUrl = course.image_url;
+  }
   
   return (
     <div 
       className="rounded-2xl overflow-hidden mb-8 bg-[#1A1F2C] h-[350px] relative cursor-pointer"
       onClick={handleCourseClick}
     >
-      {/* Background image - sempre exibir uma imagem */}
+      {/* Background image - sempre mostrar */}
       <div className="absolute inset-0 w-full h-full">
         <img 
           src={imageUrl}
-          alt={course.title}
+          alt={course.title || "Curso"}
           className="w-full h-full object-cover"
           onError={(e) => {
             const target = e.target as HTMLImageElement;
-            console.log('❌ Image failed to load, using fallback:', target.src);
-            // Se falhar ao carregar, usar uma segunda opção de fallback
-            if (target.src !== "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=1200&q=80") {
+            // Fallback para uma segunda imagem se a primeira falhar
+            if (target.src === imageUrl && imageUrl !== defaultImage) {
+              target.src = defaultImage;
+            } else if (target.src === defaultImage) {
+              // Se até a imagem padrão falhar, usar uma segunda opção
               target.src = "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=1200&q=80";
             }
-          }}
-          onLoad={() => {
-            console.log('✅ Image loaded successfully:', imageUrl);
           }}
         />
       </div>
