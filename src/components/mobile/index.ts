@@ -1,0 +1,2 @@
+
+export { QRCodeTester } from './QRCodeTester';

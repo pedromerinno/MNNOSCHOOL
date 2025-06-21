@@ -5,6 +5,7 @@ import { useCompanies } from "@/hooks/useCompanies";
 import { UserHome } from "@/components/home/UserHome";
 import { UserHomeSkeleton } from "@/components/home/UserHomeSkeleton";
 import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
+import { QRCodeTester } from "@/components/mobile/QRCodeTester";
 
 export const IndexContent = () => {
   const { user, userProfile, loading: authLoading } = useAuth();
@@ -43,6 +44,7 @@ export const IndexContent = () => {
       <>
         <MainNavigationMenu />
         <UserHomeSkeleton />
+        <QRCodeTester />
       </>
     );
   }
@@ -54,6 +56,7 @@ export const IndexContent = () => {
       <>
         <MainNavigationMenu />
         <UserHomeSkeleton />
+        <QRCodeTester />
       </>
     );
   }
@@ -66,6 +69,7 @@ export const IndexContent = () => {
       <div className="min-h-screen bg-background">
         <UserHome />
       </div>
+      <QRCodeTester />
     </>
   );
 };
