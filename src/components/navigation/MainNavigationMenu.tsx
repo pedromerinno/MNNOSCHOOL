@@ -24,12 +24,12 @@ export const MainNavigationMenu = memo(() => {
 
   return (
     <>
-      {/* Menu Mobile */}
+      {/* Menu Mobile e Tablet */}
       <MobileNavigationMenu />
       
       {/* Menu Desktop */}
       <header 
-        className="sticky top-0 z-40 w-full border-b shadow-sm bg-[#F8F7F4] dark:bg-[#191919] hidden md:block"
+        className="sticky top-0 z-40 w-full border-b shadow-sm bg-[#F8F7F4] dark:bg-[#191919] hidden lg:block"
       >
         <div className="w-full px-4 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-4 md:space-x-8">

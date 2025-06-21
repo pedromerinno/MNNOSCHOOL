@@ -7,7 +7,7 @@ import { CompanySelector } from "./CompanySelector";
 
 export const MobileNavigationMenu = () => {
   return (
-    <header className="sticky top-0 z-40 w-full border-b shadow-sm bg-[#F8F7F4] dark:bg-[#191919] md:hidden">
+    <header className="sticky top-0 z-40 w-full border-b shadow-sm bg-[#F8F7F4] dark:bg-[#191919] lg:hidden">
       <div className="w-full px-4 h-16 flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <MobileMenu />
