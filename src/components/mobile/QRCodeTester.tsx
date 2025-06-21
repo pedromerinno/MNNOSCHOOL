@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import QRCode from 'qrcode.react';
+import { QRCodeSVG } from 'qrcode.react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Smartphone, Copy, ExternalLink } from "lucide-react";
@@ -49,7 +49,7 @@ export const QRCodeTester = () => {
         <div className="space-y-6">
           <div className="text-center">
             <div className="bg-white p-4 rounded-lg inline-block shadow-sm">
-              <QRCode 
+              <QRCodeSVG 
                 value={appUrl}
                 size={200}
                 level="H"
