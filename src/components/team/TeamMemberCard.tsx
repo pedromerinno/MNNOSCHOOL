@@ -35,39 +35,39 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
   return (
     <Card className="group overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-xl">
       <div 
-        className="h-24" 
+        className="h-16" 
         style={{ 
           background: `linear-gradient(to right, ${companyColor}20, ${companyColor}10)`,
         }}
       ></div>
-      <CardContent className="pt-0">
+      <CardContent className="pt-0 pb-4">
         <div className="flex flex-col">
           {/* Profile section */}
-          <div className="flex items-start -mt-8">
-            <Avatar className="h-16 w-16 border-4 border-white dark:border-gray-900 rounded-full shadow-sm">
+          <div className="flex items-start -mt-6">
+            <Avatar className="h-12 w-12 border-4 border-white dark:border-gray-900 rounded-full shadow-sm">
               <AvatarImage src={member.avatar || undefined} alt={member.display_name || ''} />
               <AvatarFallback 
-                className="text-xl"
+                className="text-lg"
                 style={{ 
                   backgroundColor: `${companyColor}20`,
                   color: companyColor
                 }}
               >
-                {member.display_name?.substring(0, 2).toUpperCase() || <UserRound className="h-6 w-6" />}
+                {member.display_name?.substring(0, 2).toUpperCase() || <UserRound className="h-5 w-5" />}
               </AvatarFallback>
             </Avatar>
           </div>
           
           {/* User info */}
-          <div className="mt-3 space-y-1.5">
+          <div className="mt-2 space-y-1">
             <div className="flex justify-between items-start">
-              <h3 className="font-semibold text-xl">
+              <h3 className="font-semibold text-lg leading-tight">
                 {member.display_name || 'Usuário'}
               </h3>
               
               {(showAdminBadge || member.is_admin) && (
                 <span 
-                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium gap-1"
+                  className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium gap-1"
                   style={{ 
                     backgroundColor: `${companyColor}20`,
                     color: companyColor
@@ -79,33 +79,33 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
               )}
             </div>
             
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
               {member.email}
             </div>
 
             {/* Role display */}
             {roleName && !member.is_admin && (
-              <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                <Briefcase className="h-4 w-4" style={{ color: companyColor }} />
-                <span>{roleName}</span>
+              <div className="flex items-center gap-1.5 text-xs font-medium text-gray-700 dark:text-gray-300">
+                <Briefcase className="h-3 w-3" style={{ color: companyColor }} />
+                <span className="truncate">{roleName}</span>
               </div>
             )}
             
             {/* Meta info */}
-            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-2">
+            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mt-1">
               <Calendar className="h-3 w-3" />
-              <span>{formatJoinDate(member.created_at)}</span>
+              <span className="truncate">{formatJoinDate(member.created_at)}</span>
             </div>
             
             {/* Social actions */}
-            <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+            <div className="flex gap-1.5 mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
               <ReturnFeedbackDialog
                 toUser={member}
                 trigger={
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1 rounded-full gap-1.5 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-opacity-10"
+                    className="flex-1 rounded-full gap-1 text-xs text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-opacity-10"
                     style={{
                       backgroundColor: "transparent",
                       borderColor: `${companyColor}30`,
@@ -113,7 +113,7 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
                     }}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <MessageSquare className="h-4 w-4" />
+                    <MessageSquare className="h-3 w-3" />
                     Feedback
                   </Button>
                 }
@@ -122,7 +122,7 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 rounded-full gap-1.5 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-opacity-10"
+                className="flex-1 rounded-full gap-1 text-xs text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-opacity-10"
                 style={{
                   backgroundColor: "transparent",
                   borderColor: `${companyColor}30`,
@@ -133,7 +133,7 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
                   window.location.href = `mailto:${member.email}`;
                 }}
               >
-                <Mail className="h-4 w-4" />
+                <Mail className="h-3 w-3" />
                 Contato
               </Button>
             </div>

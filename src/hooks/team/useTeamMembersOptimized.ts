@@ -67,15 +67,20 @@ export const useTeamMembersOptimized = ({
 
       console.log('[useTeamMembersOptimized] Dados recebidos:', teamData?.length || 0, 'membros');
 
-      const teamMembers: UserProfile[] = teamData?.map((item: any) => ({
-        id: item.profiles.id,
-        display_name: item.profiles.display_name,
-        email: item.profiles.email,
-        is_admin: item.profiles.is_admin,
-        avatar: item.profiles.avatar,
-        created_at: item.profiles.created_at,
-        cargo_id: item.profiles.cargo_id
-      })) || [];
+      const teamMembers: UserProfile[] = teamData?.map((item: any) => {
+        const profile = item.profiles;
+        return {
+          id: profile.id,
+          display_name: profile.display_name,
+          email: profile.email,
+          is_admin: profile.is_admin,
+          avatar: profile.avatar,
+          created_at: profile.created_at,
+          cargo_id: profile.cargo_id,
+          // Incluir o nome do cargo se existir
+          roleName: profile.job_roles?.title || null
+        };
+      }) || [];
 
       setMembers(teamMembers);
       console.log('[useTeamMembersOptimized] Membros carregados com sucesso:', teamMembers.length);
