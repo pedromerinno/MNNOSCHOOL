@@ -66,7 +66,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
 
   // Loading state with Skeleton UI
   if (loading) {
-    return <div className="w-full h-[400px] md:h-[600px] rounded-2xl overflow-hidden relative">
+    return <div className="w-full h-[750px] md:h-[600px] rounded-2xl overflow-hidden relative">
         <Skeleton className="w-full h-full absolute inset-0" />
         <div className="absolute inset-0 p-4 md:p-8 flex flex-col justify-end">
           <Skeleton className="w-16 h-6 md:w-24 md:h-8 mb-2 md:mb-4" />
@@ -85,7 +85,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
 
   // Empty state with better messaging and button
   if (!courses || courses.length === 0) {
-    return <div className="w-full h-[400px] md:h-[600px] rounded-2xl bg-gray-100 dark:bg-gray-800 flex flex-col items-center justify-center p-4 md:p-8 text-center">
+    return <div className="w-full h-[750px] md:h-[600px] rounded-2xl bg-gray-100 dark:bg-gray-800 flex flex-col items-center justify-center p-4 md:p-8 text-center">
         <h3 className="text-xl md:text-2xl font-semibold mb-2 md:mb-3 text-gray-900 dark:text-gray-100">
           Nenhum curso em destaque disponível
         </h3>
@@ -106,7 +106,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
     return (
       <div className="w-full relative overflow-hidden py-0 flex justify-center">
         <div className="w-full max-w-4xl mx-auto">
-          <div className="relative h-[400px] md:h-[600px] rounded-2xl overflow-hidden group">
+          <div className="relative h-[750px] md:h-[600px] rounded-2xl overflow-hidden group">
             <img 
               src={imageSrc}
               alt={course.title} 
@@ -121,7 +121,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
               {/* Company Logo */}
               {selectedCompany?.logo ? (
                 <div className="absolute top-4 left-4 md:top-8 md:left-8">
-                  <div className="w-16 h-16 md:w-12 md:h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center p-1">
+                  <div className="w-20 h-20 md:w-12 md:h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center p-1">
                     <img 
                       src={selectedCompany.logo} 
                       alt={selectedCompany.nome} 
@@ -135,7 +135,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
                 </div>
               ) : selectedCompany?.nome && (
                 <div className="absolute top-4 left-4 md:top-8 md:left-8">
-                  <div className="w-16 h-16 md:w-12 md:h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
+                  <div className="w-20 h-20 md:w-12 md:h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
                     <span className="text-xl md:text-xl font-bold text-white">
                       {selectedCompany.nome.charAt(0).toUpperCase()}
                     </span>
@@ -211,7 +211,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
                 className="basis-full md:basis-[80%] lg:basis-[70%] pl-4 transition-opacity duration-300 py-[20px]"
               >
                 <div 
-                  className="relative h-[400px] md:h-[600px] rounded-2xl overflow-hidden group cursor-pointer"
+                  className="relative h-[750px] md:h-[600px] rounded-2xl overflow-hidden group cursor-pointer"
                   onClick={() => handleCourseClick(course.id)}
                 >
                   <img 
@@ -227,7 +227,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
                     {/* Company Logo */}
                     {selectedCompany?.logo ? (
                       <div className="absolute top-4 left-4 md:top-8 md:left-8">
-                        <div className="w-16 h-16 md:w-12 md:h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center p-1">
+                        <div className="w-20 h-20 md:w-12 md:h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center p-1">
                           <img 
                             src={selectedCompany.logo} 
                             alt={selectedCompany.nome} 
@@ -241,7 +241,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
                       </div>
                     ) : selectedCompany?.nome && (
                       <div className="absolute top-4 left-4 md:top-8 md:left-8">
-                        <div className="w-16 h-16 md:w-12 md:h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
+                        <div className="w-20 h-20 md:w-12 md:h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
                           <span className="text-xl md:text-xl font-bold text-white">
                             {selectedCompany.nome.charAt(0).toUpperCase()}
                           </span>
