@@ -14,7 +14,7 @@ import { useJobRoles } from "@/hooks/job-roles/useJobRoles";
 import { useCompanyUsers } from "@/hooks/company-documents/useCompanyUsers";
 import { UserSelector } from "./UserSelector";
 import { CompanySelector } from "@/components/admin/integration/CompanySelector";
-import { Building, Upload, Link, Users, UserCheck, Tag } from 'lucide-react';
+import { Upload, Link, Users, UserCheck, Tag } from 'lucide-react';
 
 interface CompanyDocumentDialogProps {
   open: boolean;
@@ -143,8 +143,7 @@ export const CompanyDocumentDialog: React.FC<CompanyDocumentDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Building className="h-5 w-5" style={{ color: companyColor }} />
+          <DialogTitle>
             Adicionar Documento da Empresa
           </DialogTitle>
         </DialogHeader>
