@@ -32,10 +32,17 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
     navigate(`/courses/${course.id}`);
   };
 
-  // Sempre usar uma imagem - se não tiver course.image_url, usar a padrão
+  // Definir imagem padrão - sempre usar fallback se não houver imagem válida
   const defaultImage = "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80";
-  const hasValidImage = course.image_url && typeof course.image_url === 'string' && course.image_url.trim() !== '';
-  const imageUrl = hasValidImage ? course.image_url : defaultImage;
+  
+  // Simplificar a lógica - se course.image_url é falsy ou string vazia, usar default
+  const imageUrl = (course.image_url && course.image_url.trim()) ? course.image_url : defaultImage;
+  
+  console.log('🖼️ FeaturedCourse image debug:', {
+    courseImageUrl: course.image_url,
+    imageUrl,
+    hasImage: !!course.image_url
+  });
   
   return (
     <div 
@@ -50,10 +57,14 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
           className="w-full h-full object-cover"
           onError={(e) => {
             const target = e.target as HTMLImageElement;
+            console.log('❌ Image failed to load, using fallback:', target.src);
             // Se falhar ao carregar, usar uma segunda opção de fallback
             if (target.src !== "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=1200&q=80") {
               target.src = "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=1200&q=80";
             }
+          }}
+          onLoad={() => {
+            console.log('✅ Image loaded successfully:', imageUrl);
           }}
         />
       </div>
