@@ -45,10 +45,10 @@ export const LoginFormContent = ({
   };
 
   return (
-    <div className="w-full max-w-sm mx-auto">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-semibold mb-2">Bem-vindo(a) de volta</h1>
-        <p className="text-gray-600">
+    <div className="w-full max-w-sm mx-auto px-4 sm:px-0">
+      <div className="text-center mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-semibold mb-2">Bem-vindo(a) de volta</h1>
+        <p className="text-gray-600 text-sm sm:text-base">
           Não tem uma conta?{" "}
           <Link to="/signup" className="text-blue-600 hover:text-blue-700 font-medium">
             Cadastre-se
@@ -56,7 +56,7 @@ export const LoginFormContent = ({
         </p>
       </div>
       
-      <form onSubmit={onSubmit} className="space-y-6">
+      <form onSubmit={onSubmit} className="space-y-4 sm:space-y-6">
         <div>
           <Input
             type="email"
@@ -64,7 +64,7 @@ export const LoginFormContent = ({
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Usuário ou E-mail"
             required
-            className="w-full h-12 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full h-11 sm:h-12 px-3 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           />
         </div>
         
@@ -75,7 +75,7 @@ export const LoginFormContent = ({
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Senha"
             required
-            className="w-full h-12 px-4 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full h-11 sm:h-12 px-3 sm:px-4 pr-11 sm:pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           />
           <button
             type="button"
@@ -83,9 +83,9 @@ export const LoginFormContent = ({
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
           >
             {showPassword ? (
-              <EyeOff className="h-5 w-5" />
+              <EyeOff className="h-4 w-4 sm:h-5 sm:w-5" />
             ) : (
-              <Eye className="h-5 w-5" />
+              <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
             )}
           </button>
         </div>
@@ -93,7 +93,7 @@ export const LoginFormContent = ({
         <Button
           type="submit"
           disabled={isLoggingIn}
-          className="w-full h-12 bg-black hover:bg-black/90 text-white rounded-lg font-medium"
+          className="w-full h-11 sm:h-12 bg-black hover:bg-black/90 text-white rounded-lg font-medium text-base"
         >
           {isLoggingIn ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -103,7 +103,7 @@ export const LoginFormContent = ({
         </Button>
       </form>
 
-      <div className="mt-6">
+      <div className="mt-4 sm:mt-6">
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-300"></div>
@@ -113,13 +113,13 @@ export const LoginFormContent = ({
           </div>
         </div>
 
-        <div className="mt-6 space-y-4">
+        <div className="mt-4 sm:mt-6 space-y-3 sm:space-y-4">
           <Button 
             variant="outline"
             onClick={handleGoogleLogin}
-            className="w-full h-12 border border-gray-300 rounded-lg font-medium flex items-center justify-center gap-2"
+            className="w-full h-11 sm:h-12 border border-gray-300 rounded-lg font-medium flex items-center justify-center gap-2 text-sm sm:text-base"
           >
-            <svg className="h-5 w-5" viewBox="0 0 24 24">
+            <svg className="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24">
               <path
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                 fill="#4285F4"
@@ -137,18 +137,20 @@ export const LoginFormContent = ({
                 fill="#EA4335"
               />
             </svg>
-            Entrar com Google
+            <span className="hidden sm:inline">Entrar com Google</span>
+            <span className="sm:hidden">Google</span>
           </Button>
           
           <Button 
             variant="outline"
-            className="w-full h-12 border border-gray-300 rounded-lg font-medium"
+            className="w-full h-11 sm:h-12 border border-gray-300 rounded-lg font-medium text-sm sm:text-base"
           >
-            Usar Single Sign-On (SSO)
+            <span className="hidden sm:inline">Usar Single Sign-On (SSO)</span>
+            <span className="sm:hidden">SSO</span>
           </Button>
         </div>
 
-        <div className="mt-6 text-center">
+        <div className="mt-4 sm:mt-6 text-center">
           <Link 
             to="/password-reset"
             className="text-sm text-gray-600 hover:text-gray-900"

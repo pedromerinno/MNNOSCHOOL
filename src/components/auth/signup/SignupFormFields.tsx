@@ -35,7 +35,7 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
         <div>
           <Input
             type="email"
@@ -43,7 +43,7 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
             onChange={(e) => setEmail(e.target.value)}
             placeholder="E-mail"
             required
-            className="w-full h-12 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full h-11 sm:h-12 px-3 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           />
         </div>
         
@@ -54,7 +54,7 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Senha"
             required
-            className="w-full h-12 px-4 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full h-11 sm:h-12 px-3 sm:px-4 pr-11 sm:pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           />
           <button
             type="button"
@@ -62,9 +62,9 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
           >
             {showPassword ? (
-              <EyeOff className="h-5 w-5" />
+              <EyeOff className="h-4 w-4 sm:h-5 sm:w-5" />
             ) : (
-              <Eye className="h-5 w-5" />
+              <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
             )}
           </button>
         </div>
@@ -76,7 +76,7 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
             onChange={(e) => setConfirmPassword(e.target.value)}
             placeholder="Confirme sua senha"
             required
-            className="w-full h-12 px-4 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full h-11 sm:h-12 px-3 sm:px-4 pr-11 sm:pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           />
           <button
             type="button"
@@ -84,9 +84,9 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
           >
             {showConfirmPassword ? (
-              <EyeOff className="h-5 w-5" />
+              <EyeOff className="h-4 w-4 sm:h-5 sm:w-5" />
             ) : (
-              <Eye className="h-5 w-5" />
+              <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
             )}
           </button>
           {passwordError && (
@@ -97,7 +97,7 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
         <Button
           type="submit"
           disabled={isRegistering || emailAlreadyRegistered}
-          className="w-full h-12 bg-black hover:bg-black/90 text-white rounded-lg font-medium"
+          className="w-full h-11 sm:h-12 bg-black hover:bg-black/90 text-white rounded-lg font-medium text-base"
         >
           {isRegistering ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -107,7 +107,7 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
         </Button>
       </form>
 
-      <div className="mt-6">
+      <div className="mt-4 sm:mt-6">
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-300"></div>
@@ -117,12 +117,12 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
           </div>
         </div>
 
-        <div className="mt-6 space-y-4">
+        <div className="mt-4 sm:mt-6 space-y-3 sm:space-y-4">
           <Button 
             variant="outline"
-            className="w-full h-12 border border-gray-300 rounded-lg font-medium flex items-center justify-center gap-2"
+            className="w-full h-11 sm:h-12 border border-gray-300 rounded-lg font-medium flex items-center justify-center gap-2 text-sm sm:text-base"
           >
-            <svg className="h-5 w-5" viewBox="0 0 24 24">
+            <svg className="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24">
               <path
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                 fill="#4285F4"
@@ -140,18 +140,20 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
                 fill="#EA4335"
               />
             </svg>
-            Entrar com Google
+            <span className="hidden sm:inline">Entrar com Google</span>
+            <span className="sm:hidden">Google</span>
           </Button>
           
           <Button 
             variant="outline"
-            className="w-full h-12 border border-gray-300 rounded-lg font-medium"
+            className="w-full h-11 sm:h-12 border border-gray-300 rounded-lg font-medium text-sm sm:text-base"
           >
-            Usar Single Sign-On (SSO)
+            <span className="hidden sm:inline">Usar Single Sign-On (SSO)</span>
+            <span className="sm:hidden">SSO</span>
           </Button>
         </div>
 
-        <div className="mt-4 text-xs text-center text-gray-500 px-4">
+        <div className="mt-3 sm:mt-4 text-xs text-center text-gray-500 px-2 sm:px-4">
           Ao clicar em "Cadastrar", "Entrar com Google" ou "Usar Single Sign-On (SSO)", 
           você concorda com nossos <Link to="/termos" className="underline hover:text-blue-600">Termos de Uso</Link> e 
           reconhece que leu e compreendeu nossa <Link to="/privacidade" className="underline hover:text-blue-600">Política de Privacidade</Link>.

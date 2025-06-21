@@ -152,10 +152,10 @@ export const SignupForm = () => {
   // Formulário principal de registro
   console.log("Mostrando formulário de cadastro");
   return (
-    <div className="w-full max-w-sm mx-auto">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-semibold mb-2">Criar conta</h1>
-        <p className="text-gray-600">
+    <div className="w-full max-w-sm mx-auto px-4 sm:px-0">
+      <div className="text-center mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-semibold mb-2">Criar conta</h1>
+        <p className="text-gray-600 text-sm sm:text-base">
           Já tem uma conta?{" "}
           <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
             Faça login
