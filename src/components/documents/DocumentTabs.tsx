@@ -113,6 +113,7 @@ export const DocumentTabs = ({
                   onPreview={onPreview}
                   onDelete={onDelete}
                   canDeleteDocument={canDeleteDocument}
+                  companyColor={companyColor}
                 />
               </div>
             </TabsContent>
