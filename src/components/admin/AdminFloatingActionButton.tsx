@@ -27,7 +27,7 @@ const FAB_OPTIONS = [{
   icon: <Link className="h-5 w-5 mr-2" />,
   action: "openAccess" as const
 }, {
-  label: "Adicionar Documento da Empresa",
+  label: "Novo Documento",
   icon: <FilePlus className="h-5 w-5 mr-2" />,
   action: "openDocument" as const
 }];
