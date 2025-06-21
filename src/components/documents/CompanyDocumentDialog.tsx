@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -309,7 +308,7 @@ export const CompanyDocumentDialog: React.FC<CompanyDocumentDialogProps> = ({
                   {availableRoles.length > 0 ? (
                     <div className="space-y-3">
                       <Label className="text-sm font-medium">Restringir acesso aos cargos:</Label>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-32 overflow-y-auto border rounded-md p-3">
+                      <div className="grid grid-cols-1 gap-2 max-h-32 overflow-y-auto border rounded-md p-3">
                         {availableRoles.map((role) => (
                           <div key={role.id} className="flex items-center space-x-2">
                             <Checkbox
