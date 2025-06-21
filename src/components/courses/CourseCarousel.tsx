@@ -121,7 +121,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
               {/* Company Logo */}
               {selectedCompany?.logo ? (
                 <div className="absolute top-4 left-4 md:top-8 md:left-8">
-                  <div className="w-20 h-20 md:w-12 md:h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center p-1">
+                  <div className="w-16 h-16 md:w-12 md:h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center p-1">
                     <img 
                       src={selectedCompany.logo} 
                       alt={selectedCompany.nome} 
@@ -135,7 +135,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
                 </div>
               ) : selectedCompany?.nome && (
                 <div className="absolute top-4 left-4 md:top-8 md:left-8">
-                  <div className="w-20 h-20 md:w-12 md:h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
+                  <div className="w-16 h-16 md:w-12 md:h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
                     <span className="text-xl md:text-xl font-bold text-white">
                       {selectedCompany.nome.charAt(0).toUpperCase()}
                     </span>
@@ -227,7 +227,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
                     {/* Company Logo */}
                     {selectedCompany?.logo ? (
                       <div className="absolute top-4 left-4 md:top-8 md:left-8">
-                        <div className="w-20 h-20 md:w-12 md:h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center p-1">
+                        <div className="w-16 h-16 md:w-12 md:h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center p-1">
                           <img 
                             src={selectedCompany.logo} 
                             alt={selectedCompany.nome} 
@@ -241,7 +241,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
                       </div>
                     ) : selectedCompany?.nome && (
                       <div className="absolute top-4 left-4 md:top-8 md:left-8">
-                        <div className="w-20 h-20 md:w-12 md:h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
+                        <div className="w-16 h-16 md:w-12 md:h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
                           <span className="text-xl md:text-xl font-bold text-white">
                             {selectedCompany.nome.charAt(0).toUpperCase()}
                           </span>
