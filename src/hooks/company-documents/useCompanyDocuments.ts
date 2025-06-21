@@ -45,7 +45,7 @@ export const useCompanyDocuments = () => {
       // Processar documentos e verificar permissões
       const processedDocs = await Promise.all(
         (companyDocs || []).map(async (doc) => {
-          const roleLinks = doc.company_document_job_roles || [];
+          const roleLinks = Array.isArray(doc.company_document_job_roles) ? doc.company_document_job_roles : [];
           const hasRoleRestrictions = roleLinks.length > 0;
           let canAccess = true;
 
@@ -223,12 +223,12 @@ export const useCompanyDocuments = () => {
         }
 
         const url = URL.createObjectURL(data);
-        const a = window.document.createElement('a');
+        const a = document.createElement('a');
         a.href = url;
         a.download = document.name;
-        window.document.body.appendChild(a);
+        document.body.appendChild(a);
         a.click();
-        window.document.body.removeChild(a);
+        document.body.removeChild(a);
         URL.revokeObjectURL(url);
       }
     } catch (error) {
