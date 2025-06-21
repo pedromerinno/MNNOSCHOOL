@@ -4,7 +4,11 @@ import { Plus, FilePlus, Link, BookPlus, MessageSquarePlus, BellPlus } from "luc
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAuth } from "@/contexts/AuthContext";
-import { NewCourseDialog, NewNoticeDialog, NewDiscussionDialog, NewAccessDialog, AddDocumentDialog } from "./dialogs";
+import { NewCourseDialog, NewNoticeDialog, NewDiscussionDialog, NewAccessDialog } from "./dialogs";
+import { CompanyDocumentUploadForm } from "@/components/documents/CompanyDocumentUploadForm";
+import { useCompanyDocuments } from "@/hooks/company-documents/useCompanyDocuments";
+import { useJobRoles } from "@/hooks/job-roles/useJobRoles";
+import { useCompanies } from "@/hooks/useCompanies";
 
 const FAB_OPTIONS = [{
   label: "Novo Curso",
@@ -38,6 +42,10 @@ export const AdminFloatingActionButton = () => {
   const [discussionDialogOpen, setDiscussionDialogOpen] = useState(false);
   const [accessDialogOpen, setAccessDialogOpen] = useState(false);
   const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
+
+  const { selectedCompany } = useCompanies();
+  const { jobRoles } = useJobRoles(selectedCompany);
+  const { uploadDocument } = useCompanyDocuments();
   
   // Only render for admin or super_admin users
   if (!userProfile?.is_admin && !userProfile?.super_admin) return null;
@@ -83,6 +91,12 @@ export const AdminFloatingActionButton = () => {
       <NewNoticeDialog open={noticeDialogOpen} onOpenChange={setNoticeDialogOpen} />
       <NewDiscussionDialog open={discussionDialogOpen} onOpenChange={setDiscussionDialogOpen} />
       <NewAccessDialog open={accessDialogOpen} onOpenChange={setAccessDialogOpen} />
-      <AddDocumentDialog open={documentDialogOpen} onOpenChange={setDocumentDialogOpen} />
+      <CompanyDocumentUploadForm
+        open={documentDialogOpen}
+        onOpenChange={setDocumentDialogOpen}
+        onUpload={uploadDocument}
+        isUploading={false}
+        availableRoles={jobRoles.filter(role => role.company_id === selectedCompany?.id)}
+      />
     </>;
 };
