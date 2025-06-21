@@ -26,3 +26,18 @@ export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   employment_contract: 'Contrato de Trabalho',
   other: 'Outro'
 };
+
+// Tipos expandidos para incluir novos tipos da empresa
+export type ExtendedDocumentType = DocumentType | 
+  | 'company_manual'
+  | 'procedures' 
+  | 'forms'
+  | 'training_materials';
+
+export const EXTENDED_DOCUMENT_TYPE_LABELS: Record<ExtendedDocumentType, string> = {
+  ...DOCUMENT_TYPE_LABELS,
+  company_manual: 'Manual da Empresa',
+  procedures: 'Procedimentos',
+  forms: 'Formulários',
+  training_materials: 'Material de Treinamento'
+};

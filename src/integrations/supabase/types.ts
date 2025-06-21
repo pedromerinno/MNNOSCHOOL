@@ -89,6 +89,72 @@ export type Database = {
           },
         ]
       }
+      company_document_job_roles: {
+        Row: {
+          company_document_id: string
+          created_at: string
+          id: string
+          job_role_id: string
+        }
+        Insert: {
+          company_document_id: string
+          created_at?: string
+          id?: string
+          job_role_id: string
+        }
+        Update: {
+          company_document_id?: string
+          created_at?: string
+          id?: string
+          job_role_id?: string
+        }
+        Relationships: []
+      }
+      company_documents: {
+        Row: {
+          attachment_type: string
+          company_id: string
+          created_at: string
+          created_by: string
+          description: string | null
+          document_type: string
+          file_path: string | null
+          file_type: string | null
+          id: string
+          link_url: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          attachment_type?: string
+          company_id: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          document_type: string
+          file_path?: string | null
+          file_type?: string | null
+          id?: string
+          link_url?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          attachment_type?: string
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          document_type?: string
+          file_path?: string | null
+          file_type?: string | null
+          id?: string
+          link_url?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       company_notices: {
         Row: {
           company_id: string
@@ -1201,6 +1267,10 @@ export type Database = {
       }
       user_belongs_to_company_of_profile: {
         Args: { profile_id: string }
+        Returns: boolean
+      }
+      user_can_access_company_document: {
+        Args: { document_id: string }
         Returns: boolean
       }
       user_can_access_course: {
