@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Download, Eye, Trash2, Link as LinkIcon, ExternalLink } from "lucide-react";
+import { FileText, Download, Eye, Trash2, Link as LinkIcon, ExternalLink, Plus } from "lucide-react";
 import { UserDocument, DOCUMENT_TYPE_LABELS } from "@/types/document";
 import { format } from "date-fns";
 
@@ -11,6 +11,8 @@ interface DocumentListProps {
   onPreview: (document: UserDocument) => Promise<void>;
   onDelete: (document: UserDocument) => Promise<void>;
   canDeleteDocument: (document: UserDocument) => boolean;
+  onAddDocument?: () => void;
+  companyColor: string;
 }
 
 export const DocumentList = ({
@@ -18,7 +20,9 @@ export const DocumentList = ({
   onDownload,
   onPreview,
   onDelete,
-  canDeleteDocument
+  canDeleteDocument,
+  onAddDocument,
+  companyColor
 }: DocumentListProps) => {
   const truncateFileName = (name: string, maxLength = 30) => {
     if (name.length <= maxLength) return name;
@@ -34,6 +38,31 @@ export const DocumentList = ({
       window.open(document.link_url, '_blank');
     }
   };
+
+  if (documents.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-12 text-center">
+          <FileText className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+          <h3 className="text-lg font-medium mb-2">Nenhum documento encontrado</h3>
+          <p className="text-gray-500 dark:text-gray-400 mb-6">
+            Não há documentos pessoais nesta categoria.
+          </p>
+          
+          {onAddDocument && (
+            <Button
+              onClick={onAddDocument}
+              className="text-white"
+              style={{ backgroundColor: companyColor, borderColor: companyColor }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar Documento
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
 
   const documentsByType = documents.reduce((acc, doc) => {
     if (!acc[doc.document_type]) {
