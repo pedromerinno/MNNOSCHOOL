@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,8 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { CompanyDocumentType, COMPANY_DOCUMENT_TYPE_LABELS } from "@/types/company-document";
 import { JobRole } from "@/types/job-roles";
 import { useCompanies } from "@/hooks/useCompanies";
+import { useJobRoles } from "@/hooks/job-roles/useJobRoles";
 import { useCompanyUsers } from "@/hooks/company-documents/useCompanyUsers";
 import { UserSelector } from "./UserSelector";
+import { CompanySelector } from "@/components/admin/integration/CompanySelector";
 import { Building, Upload, Link, Users, UserCheck, Tag } from 'lucide-react';
 
 interface CompanyDocumentDialogProps {
@@ -36,7 +38,7 @@ export const CompanyDocumentDialog: React.FC<CompanyDocumentDialogProps> = ({
   onOpenChange,
   onUpload,
   isUploading,
-  availableRoles
+  availableRoles: propAvailableRoles
 }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -47,10 +49,28 @@ export const CompanyDocumentDialog: React.FC<CompanyDocumentDialogProps> = ({
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [accessType, setAccessType] = useState<'public' | 'roles' | 'users'>('public');
+  const [selectedCompanyForDialog, setSelectedCompanyForDialog] = useState<string>('');
   
-  const { selectedCompany } = useCompanies();
+  const { userCompanies, selectedCompany } = useCompanies();
   const { users, isLoading: usersLoading } = useCompanyUsers();
-  const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
+
+  // Get the company object from the selected ID
+  const dialogCompany = userCompanies.find(c => c.id === selectedCompanyForDialog) || selectedCompany;
+  
+  // Use job roles from the selected company in dialog
+  const { jobRoles: dialogJobRoles } = useJobRoles(dialogCompany);
+  
+  // Use dialog job roles if we have a selected company, otherwise use prop roles
+  const availableRoles = selectedCompanyForDialog ? dialogJobRoles : propAvailableRoles;
+  
+  const companyColor = dialogCompany?.cor_principal || "#1EAEDB";
+
+  // Initialize with selected company if available
+  useEffect(() => {
+    if (open && selectedCompany && !selectedCompanyForDialog) {
+      setSelectedCompanyForDialog(selectedCompany.id);
+    }
+  }, [open, selectedCompany, selectedCompanyForDialog]);
 
   const resetForm = () => {
     setName('');
@@ -131,6 +151,22 @@ export const CompanyDocumentDialog: React.FC<CompanyDocumentDialogProps> = ({
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Company Selector */}
+          <div className="space-y-2">
+            <Label>Empresa</Label>
+            <CompanySelector
+              companies={userCompanies}
+              selectedCompany={dialogCompany}
+              onCompanyChange={setSelectedCompanyForDialog}
+              disabled={isUploading}
+            />
+            {!selectedCompanyForDialog && (
+              <p className="text-sm text-orange-600">
+                Selecione uma empresa primeiro
+              </p>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Nome do Documento *</Label>
@@ -240,85 +276,87 @@ export const CompanyDocumentDialog: React.FC<CompanyDocumentDialogProps> = ({
             </div>
           )}
 
-          {/* Access Control */}
-          <div className="space-y-4">
-            <Label className="text-base font-medium">Controle de Acesso</Label>
-            
-            <Tabs value={accessType} onValueChange={(value) => setAccessType(value as 'public' | 'roles' | 'users')}>
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="public" className="flex items-center gap-2">
-                  <Building className="h-4 w-4" />
-                  Público
-                </TabsTrigger>
-                <TabsTrigger value="roles" className="flex items-center gap-2">
-                  <UserCheck className="h-4 w-4" />
-                  Por Cargos
-                </TabsTrigger>
-                <TabsTrigger value="users" className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Por Usuários
-                </TabsTrigger>
-              </TabsList>
+          {/* Access Control - Only show if company is selected */}
+          {selectedCompanyForDialog && (
+            <div className="space-y-4">
+              <Label className="text-base font-medium">Controle de Acesso</Label>
+              
+              <Tabs value={accessType} onValueChange={(value) => setAccessType(value as 'public' | 'roles' | 'users')}>
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="public" className="flex items-center gap-2">
+                    <Building className="h-4 w-4" />
+                    Público
+                  </TabsTrigger>
+                  <TabsTrigger value="roles" className="flex items-center gap-2">
+                    <UserCheck className="h-4 w-4" />
+                    Por Cargos
+                  </TabsTrigger>
+                  <TabsTrigger value="users" className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    Por Usuários
+                  </TabsTrigger>
+                </TabsList>
 
-              <TabsContent value="public" className="mt-4">
-                <div className="p-4 bg-green-50 rounded-lg">
-                  <p className="text-sm text-green-700">
-                    Este documento será visível para todos os colaboradores da empresa.
-                  </p>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="roles" className="mt-4">
-                {availableRoles.length > 0 ? (
-                  <div className="space-y-3">
-                    <Label className="text-sm font-medium">Restringir acesso aos cargos:</Label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-32 overflow-y-auto border rounded-md p-3">
-                      {availableRoles.map((role) => (
-                        <div key={role.id} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`role-${role.id}`}
-                            checked={selectedRoles.includes(role.id)}
-                            onCheckedChange={(checked) => handleRoleToggle(role.id, checked === true)}
-                          />
-                          <Label htmlFor={`role-${role.id}`} className="text-sm">
-                            {role.title}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                    {selectedRoles.length === 0 && (
-                      <p className="text-sm text-orange-600">
-                        Selecione pelo menos um cargo
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <div className="p-4 bg-yellow-50 rounded-lg">
-                    <p className="text-sm text-yellow-700">
-                      Nenhum cargo disponível para esta empresa.
+                <TabsContent value="public" className="mt-4">
+                  <div className="p-4 bg-green-50 rounded-lg">
+                    <p className="text-sm text-green-700">
+                      Este documento será visível para todos os colaboradores da empresa.
                     </p>
                   </div>
-                )}
-              </TabsContent>
+                </TabsContent>
 
-              <TabsContent value="users" className="mt-4">
-                {usersLoading ? (
-                  <div className="p-4 text-center">
-                    <div className="animate-spin h-6 w-6 border-t-2 border-blue-500 border-r-2 rounded-full mx-auto mb-2"></div>
-                    <p className="text-sm text-gray-500">Carregando usuários...</p>
-                  </div>
-                ) : (
-                  <UserSelector
-                    users={users}
-                    selectedUsers={selectedUsers}
-                    onUserToggle={handleUserToggle}
-                    isPublic={false}
-                    companyColor={companyColor}
-                  />
-                )}
-              </TabsContent>
-            </Tabs>
-          </div>
+                <TabsContent value="roles" className="mt-4">
+                  {availableRoles.length > 0 ? (
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium">Restringir acesso aos cargos:</Label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-32 overflow-y-auto border rounded-md p-3">
+                        {availableRoles.map((role) => (
+                          <div key={role.id} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`role-${role.id}`}
+                              checked={selectedRoles.includes(role.id)}
+                              onCheckedChange={(checked) => handleRoleToggle(role.id, checked === true)}
+                            />
+                            <Label htmlFor={`role-${role.id}`} className="text-sm">
+                              {role.title}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                      {selectedRoles.length === 0 && (
+                        <p className="text-sm text-orange-600">
+                          Selecione pelo menos um cargo
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-yellow-50 rounded-lg">
+                      <p className="text-sm text-yellow-700">
+                        Nenhum cargo disponível para esta empresa.
+                      </p>
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="users" className="mt-4">
+                  {usersLoading ? (
+                    <div className="p-4 text-center">
+                      <div className="animate-spin h-6 w-6 border-t-2 border-blue-500 border-r-2 rounded-full mx-auto mb-2"></div>
+                      <p className="text-sm text-gray-500">Carregando usuários...</p>
+                    </div>
+                  ) : (
+                    <UserSelector
+                      users={users}
+                      selectedUsers={selectedUsers}
+                      onUserToggle={handleUserToggle}
+                      isPublic={false}
+                      companyColor={companyColor}
+                    />
+                  )}
+                </TabsContent>
+              </Tabs>
+            </div>
+          )}
 
           <div className="flex justify-end gap-3">
             <Button
@@ -331,7 +369,7 @@ export const CompanyDocumentDialog: React.FC<CompanyDocumentDialogProps> = ({
             </Button>
             <Button
               type="submit"
-              disabled={isUploading || !isFormValid()}
+              disabled={isUploading || !isFormValid() || !selectedCompanyForDialog}
               style={{ backgroundColor: companyColor, borderColor: companyColor }}
             >
               {isUploading ? 'Criando...' : 'Criar Documento'}
