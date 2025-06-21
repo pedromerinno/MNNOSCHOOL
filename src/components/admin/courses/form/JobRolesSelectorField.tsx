@@ -4,6 +4,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { UseFormReturn } from "react-hook-form";
@@ -162,25 +163,27 @@ export const JobRolesSelectorField: React.FC<JobRolesSelectorFieldProps> = ({
                       </div>
                     )}
 
-                    <div className="grid grid-cols-2 gap-3">
-                      {jobRoles.map(role => (
-                        <div key={role.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800">
-                          <Checkbox
-                            id={`role-${role.id}`}
-                            checked={selectedRoles.includes(role.id)}
-                            onCheckedChange={(checked) => 
-                              handleRoleToggle(role.id, checked as boolean)
-                            }
-                          />
-                          <label
-                            htmlFor={`role-${role.id}`}
-                            className="text-sm font-medium cursor-pointer flex-1"
-                          >
-                            {role.title}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
+                    <ScrollArea className="h-48">
+                      <div className="grid grid-cols-1 gap-3 pr-4">
+                        {jobRoles.map(role => (
+                          <div key={role.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800">
+                            <Checkbox
+                              id={`role-${role.id}`}
+                              checked={selectedRoles.includes(role.id)}
+                              onCheckedChange={(checked) => 
+                                handleRoleToggle(role.id, checked as boolean)
+                              }
+                            />
+                            <label
+                              htmlFor={`role-${role.id}`}
+                              className="text-sm font-medium cursor-pointer flex-1"
+                            >
+                              {role.title}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
                   </>
                 )}
               </CardContent>
