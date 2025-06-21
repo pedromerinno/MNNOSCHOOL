@@ -162,9 +162,9 @@ export const JobRolesSelectorField: React.FC<JobRolesSelectorFieldProps> = ({
                       </div>
                     )}
 
-                    <div className="grid grid-cols-1 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
                       {jobRoles.map(role => (
-                        <div key={role.id} className="flex items-start space-x-3">
+                        <div key={role.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800">
                           <Checkbox
                             id={`role-${role.id}`}
                             checked={selectedRoles.includes(role.id)}
@@ -172,19 +172,12 @@ export const JobRolesSelectorField: React.FC<JobRolesSelectorFieldProps> = ({
                               handleRoleToggle(role.id, checked as boolean)
                             }
                           />
-                          <div className="flex-1 min-w-0">
-                            <label
-                              htmlFor={`role-${role.id}`}
-                              className="text-sm font-medium cursor-pointer"
-                            >
-                              {role.title}
-                            </label>
-                            {role.description && (
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {role.description}
-                              </p>
-                            )}
-                          </div>
+                          <label
+                            htmlFor={`role-${role.id}`}
+                            className="text-sm font-medium cursor-pointer flex-1"
+                          >
+                            {role.title}
+                          </label>
                         </div>
                       ))}
                     </div>
