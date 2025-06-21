@@ -26,9 +26,18 @@ export const useJobRoles = (company: Company | null) => {
 
   const { fetchJobRoles, saveRole, deleteRole, updateRoleOrder, clearCache } = useJobRolesAPI();
   const initialLoadDone = useRef(false);
-  const loadingRef = useRef(false);
+  const lastCompanyId = useRef<string | null>(null);
 
   useEffect(() => {
+    // Reset state when company changes
+    if (company?.id !== lastCompanyId.current) {
+      console.log('[useJobRoles] Company changed, resetting state');
+      setJobRoles([]);
+      setIsLoading(true);
+      initialLoadDone.current = false;
+      lastCompanyId.current = company?.id || null;
+    }
+
     if (!company?.id) {
       console.log('[useJobRoles] No company provided, resetting state');
       setJobRoles([]);
@@ -37,18 +46,10 @@ export const useJobRoles = (company: Company | null) => {
       return;
     }
     
-    if (loadingRef.current) {
-      console.log('[useJobRoles] Already loading, skipping');
-      return;
-    }
-    
     const loadRoles = async () => {
       try {
-        if (!initialLoadDone.current) {
-          console.log('[useJobRoles] Starting initial load for company:', company.id);
-          setIsLoading(true);
-          loadingRef.current = true;
-        }
+        console.log('[useJobRoles] Starting load for company:', company.id);
+        setIsLoading(true);
         
         const data = await fetchJobRoles(company.id);
         console.log('[useJobRoles] Roles loaded successfully:', data?.length || 0);
@@ -60,21 +61,22 @@ export const useJobRoles = (company: Company | null) => {
         toast.error("Erro ao carregar cargos da empresa");
       } finally {
         setIsLoading(false);
-        loadingRef.current = false;
       }
     };
     
-    loadRoles();
+    // Only load if we haven't loaded for this company yet
+    if (!initialLoadDone.current || company.id !== lastCompanyId.current) {
+      loadRoles();
+    }
   }, [company?.id, fetchJobRoles, setJobRoles, setIsLoading]);
 
   const refreshJobRoles = useCallback(async (forceRefresh = true) => {
-    if (!company?.id || loadingRef.current) {
-      console.log('[useJobRoles] Cannot refresh - no company or already loading');
+    if (!company?.id) {
+      console.log('[useJobRoles] Cannot refresh - no company');
       return;
     }
     
     setIsLoading(true);
-    loadingRef.current = true;
     
     try {
       console.log("[useJobRoles] Refreshing job roles for company:", company.id);
@@ -86,7 +88,6 @@ export const useJobRoles = (company: Company | null) => {
       toast.error("Erro ao atualizar lista de cargos");
     } finally {
       setIsLoading(false);
-      loadingRef.current = false;
     }
   }, [company?.id, fetchJobRoles, setJobRoles, setIsLoading]);
 
@@ -201,13 +202,13 @@ export const useJobRoles = (company: Company | null) => {
   }, [company?.id, jobRoles, setIsLoading, setJobRoles, updateRoleOrder]);
 
   useEffect(() => {
-    // Clear cache when component unmounts
+    // Clear cache when component unmounts or company changes
     return () => {
-      if (company?.id) {
-        clearCache(company.id);
+      if (lastCompanyId.current) {
+        clearCache(lastCompanyId.current);
       }
     };
-  }, [company?.id, clearCache]);
+  }, [clearCache]);
 
   return {
     jobRoles,

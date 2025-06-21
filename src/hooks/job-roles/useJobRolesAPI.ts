@@ -7,14 +7,23 @@ import { toast } from "sonner";
 const jobRolesCache: Record<string, { data: JobRole[], timestamp: number }> = {};
 const CACHE_TTL = 60000; // 1 minute cache lifetime
 
+// Track ongoing requests to prevent duplicates
+const ongoingRequests: Record<string, Promise<JobRole[]>> = {};
+
 export const useJobRolesAPI = () => {
-  const fetchJobRoles = async (companyId: string, forceRefresh = false) => {
+  const fetchJobRoles = async (companyId: string, forceRefresh = false): Promise<JobRole[]> => {
     try {
       console.log('[JobRolesAPI] Starting to fetch job roles for company:', companyId);
       
       if (!companyId) {
         console.warn('[JobRolesAPI] No company ID provided');
         return [];
+      }
+
+      // Check if there's an ongoing request for this company
+      if (ongoingRequests[companyId]) {
+        console.log('[JobRolesAPI] Using ongoing request for company:', companyId);
+        return await ongoingRequests[companyId];
       }
 
       // Check cache first if we're not forcing a refresh
@@ -28,27 +37,42 @@ export const useJobRolesAPI = () => {
       
       console.log("[JobRolesAPI] Fetching fresh job roles from database for company:", companyId);
       
-      const { data, error } = await supabase
-        .from('job_roles')
-        .select('*')
-        .eq('company_id', companyId)
-        .order('order_index');
+      // Create and store the request promise
+      const requestPromise = (async () => {
+        const { data, error } = await supabase
+          .from('job_roles')
+          .select('*')
+          .eq('company_id', companyId)
+          .order('order_index');
+          
+        if (error) {
+          console.error("[JobRolesAPI] Database error fetching job roles:", error);
+          throw new Error(`Erro de banco de dados: ${error.message}`);
+        }
         
-      if (error) {
-        console.error("[JobRolesAPI] Database error fetching job roles:", error);
-        throw new Error(`Erro de banco de dados: ${error.message}`);
+        const jobRoles = data || [];
+        console.log(`[JobRolesAPI] Successfully fetched ${jobRoles.length} job roles for company ${companyId}`);
+        
+        // Update cache
+        jobRolesCache[companyId] = {
+          data: jobRoles,
+          timestamp: now
+        };
+        
+        return jobRoles;
+      })();
+
+      // Store the ongoing request
+      ongoingRequests[companyId] = requestPromise;
+      
+      try {
+        const result = await requestPromise;
+        return result;
+      } finally {
+        // Clean up the ongoing request
+        delete ongoingRequests[companyId];
       }
       
-      const jobRoles = data || [];
-      console.log(`[JobRolesAPI] Successfully fetched ${jobRoles.length} job roles for company ${companyId}`);
-      
-      // Update cache
-      jobRolesCache[companyId] = {
-        data: jobRoles,
-        timestamp: now
-      };
-      
-      return jobRoles;
     } catch (error: any) {
       console.error("[JobRolesAPI] Error in fetchJobRoles:", error);
       
@@ -56,6 +80,9 @@ export const useJobRolesAPI = () => {
       if (jobRolesCache[companyId]) {
         delete jobRolesCache[companyId];
       }
+      
+      // Clean up ongoing request
+      delete ongoingRequests[companyId];
       
       const errorMessage = error.message || 'Erro desconhecido ao carregar cargos';
       toast.error(`Erro ao carregar cargos: ${errorMessage}`);
@@ -101,8 +128,9 @@ export const useJobRolesAPI = () => {
           throw new Error(`Erro ao criar cargo: ${error.message}`);
         }
         
-        // Invalidate cache
+        // Invalidate cache and ongoing requests
         delete jobRolesCache[companyId];
+        delete ongoingRequests[companyId];
         
         console.log("[JobRolesAPI] New role created successfully:", data?.[0]);
         toast.success("Cargo criado com sucesso!");
@@ -133,8 +161,9 @@ export const useJobRolesAPI = () => {
           throw new Error(`Erro ao atualizar cargo: ${error.message}`);
         }
         
-        // Invalidate cache
+        // Invalidate cache and ongoing requests
         delete jobRolesCache[companyId];
+        delete ongoingRequests[companyId];
         
         console.log("[JobRolesAPI] Role updated successfully:", data?.[0]);
         toast.success("Cargo atualizado com sucesso!");
@@ -186,8 +215,9 @@ export const useJobRolesAPI = () => {
         throw new Error(`Erro ao excluir cargo: ${deleteError.message}`);
       }
       
-      // Invalidate cache
+      // Invalidate cache and ongoing requests
       delete jobRolesCache[companyId];
+      delete ongoingRequests[companyId];
       toast.success("Cargo excluído com sucesso!");
       
       return true;
@@ -219,8 +249,9 @@ export const useJobRolesAPI = () => {
         throw new Error(`Erro ao reordenar cargo: ${error.message}`);
       }
       
-      // Invalidate cache
+      // Invalidate cache and ongoing requests
       delete jobRolesCache[companyId];
+      delete ongoingRequests[companyId];
       
       return true;
     } catch (error: any) {
@@ -238,10 +269,12 @@ export const useJobRolesAPI = () => {
     try {
       if (companyId) {
         delete jobRolesCache[companyId];
+        delete ongoingRequests[companyId];
         console.log("[JobRolesAPI] Cache cleared for company:", companyId);
       } else {
-        // Clear all cache
+        // Clear all cache and ongoing requests
         Object.keys(jobRolesCache).forEach(key => delete jobRolesCache[key]);
+        Object.keys(ongoingRequests).forEach(key => delete ongoingRequests[key]);
         console.log("[JobRolesAPI] All cache cleared");
       }
     } catch (error) {
