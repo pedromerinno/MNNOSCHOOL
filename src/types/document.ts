@@ -28,7 +28,7 @@ export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
 };
 
 // Tipos expandidos para incluir novos tipos da empresa
-export type ExtendedDocumentType = DocumentType | 
+export type ExtendedDocumentType = DocumentType 
   | 'company_manual'
   | 'procedures' 
   | 'forms'
