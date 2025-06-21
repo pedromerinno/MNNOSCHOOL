@@ -114,7 +114,7 @@ const Courses = () => {
         </div>
       )}
 
-      {/* Full width featured courses section */}
+      {/* Full width featured courses section with mobile padding */}
       {hasNoCourses ? (
         <div className="w-full max-w-screen-2xl mx-auto px-4">
           <EmptyCoursesState 
@@ -124,14 +124,14 @@ const Courses = () => {
           />
         </div>
       ) : (
-        <div className="w-full px-0">
+        <div className="w-full px-4 md:px-0">
           <CourseCarousel courses={featuredCourses} loading={false} />
         </div>
       )}
       
-      {/* Centered content with smaller width */}
+      {/* Centered content with smaller width and mobile padding */}
       {!hasNoCourses && (
-        <div className="w-full max-w-screen-xl mx-auto space-y-5 px-0 py-0">
+        <div className="w-full max-w-screen-xl mx-auto space-y-5 px-4 md:px-0 py-0">
           <div className="space-y-4 py-[30px]">
             <h2 className="text-xl font-semibold">Categorias</h2>
             <CourseCategories 
