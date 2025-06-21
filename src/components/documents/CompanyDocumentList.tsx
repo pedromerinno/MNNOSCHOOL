@@ -4,7 +4,14 @@ import { CompanyDocument } from '@/types/company-document';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Download, Eye, Trash2, FileText, Link, Building, Users, Lock, Plus } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Download, Eye, Trash2, FileText, Link, Building, Users, Lock, Plus, MoreHorizontal, Edit } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useCompanies } from "@/hooks/useCompanies";
@@ -88,14 +95,33 @@ export const CompanyDocumentList: React.FC<CompanyDocumentListProps> = ({
               </div>
               
               {canDeleteDocument(document) && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="p-1 h-6 w-6 text-red-500 hover:text-red-700 flex-shrink-0"
-                  onClick={() => onDelete(document)}
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="p-1 h-6 w-6 flex-shrink-0"
+                    >
+                      <MoreHorizontal className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={() => {}}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Editar
+                    </DropdownMenuItem>
+                    
+                    <DropdownMenuSeparator />
+                    
+                    <DropdownMenuItem 
+                      onClick={() => onDelete(document)}
+                      className="text-red-600 focus:text-red-600"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Excluir
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
             </div>
 
