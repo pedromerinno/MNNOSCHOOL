@@ -33,7 +33,7 @@ export const FeaturedCourse: React.FC<FeaturedCourseProps> = ({ course }) => {
   };
 
   // Sempre usar imagem padrão se não houver image_url válido
-  const defaultImage = "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80";
+  const defaultImage = "https://5cae13a1-92c0-4c6b-93bc-bb999597eb98.lovableproject.com/placeholder.svg";
   
   // Verificar se existe uma imagem válida, caso contrário usar a padrão
   let imageUrl = defaultImage;
