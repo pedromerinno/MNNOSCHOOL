@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -110,14 +111,14 @@ export const CultureManual: React.FC<CultureManualProps> = ({
   };
 
   return (
-    <div className="space-y-12">
-      <div className="grid gap-8 md:grid-cols-2 mt-8">
+    <div className="space-y-8 lg:space-y-12">
+      <div className="grid gap-6 lg:gap-8 md:grid-cols-2 mt-6 lg:mt-8">
         <Card className="transition-all duration-200 shadow-none rounded-xl md:col-span-2 bg-gray-50 dark:bg-gray-900">
           <CardHeader>
             <CardTitle className="text-lg text-zinc-400 font-normal">Missão</CardTitle>
           </CardHeader>
-          <CardContent className="px-[20px] py-[30px]">
-            <p className="leading-tight text-zinc-950 text-center px-4 md:px-[240px] text-3xl font-medium py-[14px]">
+          <CardContent className="px-4 lg:px-[20px] py-6 lg:py-[30px]">
+            <p className="leading-tight text-zinc-950 text-center px-2 lg:px-4 md:px-[240px] text-xl lg:text-3xl font-medium py-2 lg:py-[14px]">
               {companyMission || "Transformar criatividade em estratégia. Marcas em movimento. Ideias em legado."}
             </p>
           </CardContent>
@@ -129,16 +130,16 @@ export const CultureManual: React.FC<CultureManualProps> = ({
               Nossos Valores
             </CardTitle>
           </CardHeader>
-          <CardContent className="py-[30px] px-[20px]">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+          <CardContent className="py-6 lg:py-[30px] px-4 lg:px-[20px]">
+            <div className="grid gap-4 lg:gap-6 md:grid-cols-2 lg:grid-cols-5">
               {values.length > 0 ? values.map((value: {
                 title: string;
                 description: string;
               }, index: number) => (
-                <div key={index} className="p-8 rounded-xl border bg-card text-card-foreground transition-colors hover:border-primary/20">
+                <div key={index} className="p-6 lg:p-8 rounded-xl border bg-card text-card-foreground transition-colors hover:border-primary/20">
                   <div className="mb-4" style={{ color: companyColor }}>
                     <span 
-                      className="inline-flex items-center justify-center w-10 h-10 text-sm font-semibold rounded-full" 
+                      className="inline-flex items-center justify-center w-8 h-8 lg:w-10 lg:h-10 text-sm font-semibold rounded-full" 
                       style={{
                         backgroundColor: `${companyColor}20`,
                         color: companyColor
@@ -176,19 +177,19 @@ export const CultureManual: React.FC<CultureManualProps> = ({
           <Card className="md:col-span-2 transition-all duration-200 shadow-none rounded-xl bg-gray-50 dark:bg-gray-900 overflow-hidden">
             <CardContent className="p-0">
               <div 
-                className="py-20 px-8"
+                className="py-12 lg:py-20 px-4 lg:px-8"
                 style={{
                   background: `linear-gradient(135deg, ${companyColor}06 0%, ${companyColor}02 50%, white 100%)`
                 }}
               >
                 {/* Header centralizado com foto do usuário e logo da empresa */}
-                <div className="text-center mb-16 max-w-4xl mx-auto">
+                <div className="text-center mb-10 lg:mb-16 max-w-4xl mx-auto">
                   {userProfile && (
-                    <div className="flex justify-center items-center mb-10 relative">
-                      <Avatar className="w-20 h-20">
+                    <div className="flex justify-center items-center mb-6 lg:mb-10 relative">
+                      <Avatar className="w-12 h-12 lg:w-20 lg:h-20">
                         <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.display_name || ""} />
                         <AvatarFallback 
-                          className="text-white font-semibold text-lg"
+                          className="text-white font-semibold text-sm lg:text-lg"
                           style={{ backgroundColor: companyColor }}
                         >
                           {getInitials(userProfile.display_name)}
@@ -196,7 +197,7 @@ export const CultureManual: React.FC<CultureManualProps> = ({
                       </Avatar>
                       
                       <div 
-                        className="w-20 h-20 rounded-full flex items-center justify-center overflow-hidden bg-white ml-[-12px]"
+                        className="w-12 h-12 lg:w-20 lg:h-20 rounded-full flex items-center justify-center overflow-hidden bg-white ml-[-8px] lg:ml-[-12px]"
                       >
                         <img 
                           src={companyLogo || "/placeholder.svg"} 
@@ -211,45 +212,45 @@ export const CultureManual: React.FC<CultureManualProps> = ({
                     </div>
                   )}
                   
-                  <h2 className="text-3xl font-semibold text-gray-900 mb-4 tracking-tight">
+                  <h2 className="text-xl lg:text-3xl font-semibold text-gray-900 mb-3 lg:mb-4 tracking-tight">
                     Declaração de Cultura
                   </h2>
-                  <div className="w-12 h-1 mx-auto mb-12 rounded-full" style={{ backgroundColor: companyColor }} />
+                  <div className="w-8 h-0.5 lg:w-12 lg:h-1 mx-auto mb-8 lg:mb-12 rounded-full" style={{ backgroundColor: companyColor }} />
                 </div>
                 
                 {/* Conteúdo da carta centralizado */}
-                <div className="max-w-4xl mx-auto text-center mb-16">
+                <div className="max-w-4xl mx-auto text-center mb-10 lg:mb-16">
                   <div className="prose prose-lg mx-auto">
-                    <p className="text-gray-800 leading-relaxed text-lg font-normal whitespace-pre-line">
+                    <p className="text-gray-800 leading-relaxed text-base lg:text-lg font-normal whitespace-pre-line">
                       {companyHistory}
                     </p>
                   </div>
                 </div>
                 
                 {/* Assinatura centralizada */}
-                <div className="text-center max-w-3xl mx-auto mb-20">
-                  <div className="w-16 h-0.5 mx-auto mb-6 rounded-full" style={{ backgroundColor: companyColor }} />
-                  <p className="text-gray-500 text-base mb-2 font-normal">
+                <div className="text-center max-w-3xl mx-auto mb-12 lg:mb-20">
+                  <div className="w-12 h-0.5 lg:w-16 lg:h-0.5 mx-auto mb-4 lg:mb-6 rounded-full" style={{ backgroundColor: companyColor }} />
+                  <p className="text-gray-500 text-sm lg:text-base mb-2 font-normal">
                     Com os melhores cumprimentos,
                   </p>
-                  <p className="text-gray-800 font-medium text-lg">
+                  <p className="text-gray-800 font-medium text-base lg:text-lg">
                     Equipe de Gestão
                   </p>
                 </div>
 
                 {/* Seção de aceite integrada */}
-                <div className="max-w-2xl mx-auto">
-                  <div className="bg-white/80 backdrop-blur-md rounded-3xl p-10 text-center border border-gray-100/50 shadow-sm">
-                    <div className="flex items-center justify-center mb-6">
+                <div className="max-w-xl lg:max-w-2xl mx-auto">
+                  <div className="bg-white/80 backdrop-blur-md rounded-2xl lg:rounded-3xl p-6 lg:p-10 text-center border border-gray-100/50 shadow-sm">
+                    <div className="flex flex-col lg:flex-row items-center justify-center mb-4 lg:mb-6">
                       <div 
-                        className="w-12 h-12 rounded-2xl flex items-center justify-center mr-4"
+                        className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl flex items-center justify-center mb-3 lg:mb-0 lg:mr-4"
                         style={{ backgroundColor: `${companyColor}15` }}
                       >
-                        <Sparkles className="h-6 w-6" style={{ color: companyColor }} />
+                        <Sparkles className="h-5 w-5 lg:h-6 lg:w-6" style={{ color: companyColor }} />
                       </div>
-                      <h3 className="text-xl font-semibold tracking-tight">Aceite do Manual de Cultura</h3>
+                      <h3 className="text-lg lg:text-xl font-semibold tracking-tight">Aceite do Manual de Cultura</h3>
                     </div>
-                    <p className="text-gray-600 mb-8 text-base leading-relaxed max-w-lg mx-auto">
+                    <p className="text-gray-600 mb-6 lg:mb-8 text-sm lg:text-base leading-relaxed max-w-lg mx-auto">
                       {isManualAccepted 
                         ? "Você já aceitou este manual de cultura. Obrigado por fazer parte da nossa cultura organizacional."
                         : "Ao aceitar este manual, você confirma que leu e compreendeu nossa cultura, valores e missão, comprometendo-se a vivenciá-los no dia a dia."
@@ -264,7 +265,7 @@ export const CultureManual: React.FC<CultureManualProps> = ({
                       }}
                       variant={isManualAccepted ? "default" : "outline"}
                       size="lg"
-                      className="px-10 py-3 rounded-2xl font-medium"
+                      className="px-6 lg:px-10 py-2.5 lg:py-3 rounded-xl lg:rounded-2xl font-medium text-sm lg:text-base w-full lg:w-auto"
                     >
                       {isUpdating 
                         ? "Processando..." 

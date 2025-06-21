@@ -35,10 +35,10 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
   return (
     <div className="w-full">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-2 lg:grid-cols-4 w-full rounded-2xl p-1.5 gap-1 lg:gap-2 bg-gray-100/0">
+        <TabsList className="grid grid-cols-2 lg:grid-cols-4 w-full rounded-2xl p-1 lg:p-1.5 gap-1 lg:gap-2 bg-gray-100/0">
           <TabsTrigger 
             value="culture" 
-            className="flex items-center gap-1 lg:gap-2 rounded-xl py-3 lg:py-4 px-3 lg:px-6 transition-colors text-xs lg:text-sm" 
+            className="flex items-center gap-1 lg:gap-2 rounded-xl py-2.5 lg:py-4 px-2 lg:px-6 transition-colors text-xs lg:text-sm" 
             style={{
               backgroundColor: activeTab === "culture" ? `${companyColor}10` : undefined,
               borderColor: activeTab === "culture" ? companyColor : undefined,
@@ -52,7 +52,7 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
           
           <TabsTrigger 
             value="videos" 
-            className="flex items-center gap-1 lg:gap-2 rounded-xl py-3 lg:py-4 px-3 lg:px-6 transition-colors text-xs lg:text-sm" 
+            className="flex items-center gap-1 lg:gap-2 rounded-xl py-2.5 lg:py-4 px-2 lg:px-6 transition-colors text-xs lg:text-sm" 
             style={{
               backgroundColor: activeTab === "videos" ? `${companyColor}10` : undefined,
               borderColor: activeTab === "videos" ? companyColor : undefined,
@@ -66,7 +66,7 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
           
           <TabsTrigger 
             value="role" 
-            className="flex items-center gap-1 lg:gap-2 rounded-xl py-3 lg:py-4 px-3 lg:px-6 transition-colors text-xs lg:text-sm" 
+            className="flex items-center gap-1 lg:gap-2 rounded-xl py-2.5 lg:py-4 px-2 lg:px-6 transition-colors text-xs lg:text-sm" 
             style={{
               backgroundColor: activeTab === "role" ? `${companyColor}10` : undefined,
               borderColor: activeTab === "role" ? companyColor : undefined,
@@ -74,13 +74,12 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
             }}
           >
             <BriefcaseBusiness className="h-3 w-3 lg:h-4 lg:w-4" />
-            <span className="hidden sm:inline">Meu Cargo</span>
-            <span className="sm:hidden">Cargo</span>
+            <span>Cargo</span>
           </TabsTrigger>
           
           <TabsTrigger 
             value="suggested-courses" 
-            className="flex items-center gap-1 lg:gap-2 rounded-xl py-3 lg:py-4 px-3 lg:px-6 transition-colors text-xs lg:text-sm" 
+            className="flex items-center gap-1 lg:gap-2 rounded-xl py-2.5 lg:py-4 px-2 lg:px-6 transition-colors text-xs lg:text-sm" 
             style={{
               backgroundColor: activeTab === "suggested-courses" ? `${companyColor}10` : undefined,
               borderColor: activeTab === "suggested-courses" ? companyColor : undefined,
@@ -88,12 +87,11 @@ export const IntegrationTabs: React.FC<IntegrationTabsProps> = ({
             }}
           >
             <GraduationCap className="h-3 w-3 lg:h-4 lg:w-4" />
-            <span className="hidden sm:inline">Cursos Sugeridos</span>
-            <span className="sm:hidden">Cursos</span>
+            <span>Cursos</span>
           </TabsTrigger>
         </TabsList>
 
-        <div className="mt-6 lg:mt-10 mb-12 lg:mb-16 space-y-8">
+        <div className="mt-4 lg:mt-10 mb-8 lg:mb-16 space-y-6 lg:space-y-8">
           <TabsContent value="culture" className="m-0">
             <CultureManual 
               companyValues={company?.valores || ""} 
