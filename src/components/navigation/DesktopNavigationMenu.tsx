@@ -10,9 +10,11 @@ import { NotificationButton } from "./NotificationButton";
 import { NavMenuLinks } from "./NavMenuLinks";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { useCompanies } from "@/hooks/useCompanies";
 
 export const DesktopNavigationMenu = () => {
   const { user } = useAuth();
+  const { selectedCompany } = useCompanies();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -34,11 +36,23 @@ export const DesktopNavigationMenu = () => {
           )}
           
           <Link to="/" className="flex items-center space-x-3">
-            <img 
-              src="/lovable-uploads/200a55db-c024-40f3-b628-d48307d84e93.png" 
-              alt="MNNO School" 
-              className="h-8 w-8"
-            />
+            {selectedCompany?.logo ? (
+              <img 
+                src={selectedCompany.logo} 
+                alt={selectedCompany.nome} 
+                className="h-8 w-8 object-contain rounded-lg"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "/lovable-uploads/200a55db-c024-40f3-b628-d48307d84e93.png";
+                }}
+              />
+            ) : (
+              <img 
+                src="/lovable-uploads/200a55db-c024-40f3-b628-d48307d84e93.png" 
+                alt="MNNO School" 
+                className="h-8 w-8"
+              />
+            )}
           </Link>
           
           <div className="flex items-center">
