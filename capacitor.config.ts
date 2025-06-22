@@ -2,11 +2,11 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.5cae13a192c04c6b93bcbb999597eb98',
+  appId: 'com.merinno.school',
   appName: 'MNNO School',
   webDir: 'dist',
   server: {
-    url: 'https://5cae13a1-92c0-4c6b-93bc-bb999597eb98.lovableproject.com?forceHideBadge=true',
+    url: 'https://school.merinno.com/',
     cleartext: true
   },
   plugins: {

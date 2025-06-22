@@ -63,7 +63,7 @@ export const IndexContent = () => {
   return (
     <>
       <MainNavigationMenu />
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background pt-16 lg:pt-0">
         <UserHome />
       </div>
     </>

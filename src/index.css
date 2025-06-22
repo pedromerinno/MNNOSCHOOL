@@ -147,3 +147,10 @@ body {
     padding-right: 0;
   }
 }
+
+/* Ajustes específicos para mobile app */
+@media (max-width: 1024px) {
+  .mobile-content {
+    padding-top: calc(env(safe-area-inset-top) + 4rem) !important;
+  }
+}
