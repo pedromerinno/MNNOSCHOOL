@@ -39,7 +39,6 @@ export const DesktopNavigationMenu = () => {
               alt="MNNO School" 
               className="h-8 w-8"
             />
-            <span className="font-bold text-xl">MNNO School</span>
           </Link>
           
           <div className="flex items-center">
