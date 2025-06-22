@@ -1,4 +1,3 @@
-
 import { useEffect, memo, useCallback, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -76,44 +75,12 @@ export const CompanySelector = memo(() => {
     // Se há uma empresa selecionada ou empresas no cache, mostrar o nome
     if (selectedCompany?.nome) {
       return (
-        <div className="flex items-center space-x-2">
-          {selectedCompany?.logo && (
-            <img
-              src={selectedCompany.logo}
-              alt={selectedCompany.nome}
-              className={`object-contain rounded-lg ${
-                isMobile ? "h-5 w-5" : "h-6 w-6"
-              }`}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = "/placeholder.svg";
-                target.onerror = null;
-              }}
-            />
-          )}
-          <span className="text-lg font-bold text-foreground">{selectedCompany.nome}</span>
-        </div>
+        <span className="text-lg font-bold text-foreground">{selectedCompany.nome}</span>
       );
     }
     if (userCompanies.length > 0) {
       return (
-        <div className="flex items-center space-x-2">
-          {userCompanies[0]?.logo && (
-            <img
-              src={userCompanies[0].logo}
-              alt={userCompanies[0].nome}
-              className={`object-contain rounded-lg ${
-                isMobile ? "h-5 w-5" : "h-6 w-6"
-              }`}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = "/placeholder.svg";
-                target.onerror = null;
-              }}
-            />
-          )}
-          <span className="text-lg font-bold text-foreground">{userCompanies[0].nome}</span>
-        </div>
+        <span className="text-lg font-bold text-foreground">{userCompanies[0].nome}</span>
       );
     }
     // Durante loading inicial, não mostrar nada para evitar o flash de BUSINESS
@@ -126,23 +93,7 @@ export const CompanySelector = memo(() => {
 
   if (userCompanies.length === 1) {
     return (
-      <div className="flex items-center space-x-2">
-        {userCompanies[0]?.logo && (
-          <img
-            src={userCompanies[0].logo}
-            alt={userCompanies[0].nome}
-            className={`object-contain rounded-lg ${
-              isMobile ? "h-5 w-5" : "h-6 w-6"
-            }`}
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = "/placeholder.svg";
-              target.onerror = null;
-            }}
-          />
-        )}
-        <span className="text-lg font-bold text-foreground">{displayName}</span>
-      </div>
+      <span className="text-lg font-bold text-foreground">{displayName}</span>
     );
   }
 
@@ -155,20 +106,6 @@ export const CompanySelector = memo(() => {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center space-x-2 text-lg font-bold text-foreground focus:outline-none">
-          {selectedCompany?.logo && (
-            <img
-              src={selectedCompany.logo}
-              alt={selectedCompany.nome}
-              className={`object-contain rounded-lg ${
-                isMobile ? "h-5 w-5" : "h-6 w-6"
-              }`}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = "/placeholder.svg";
-                target.onerror = null;
-              }}
-            />
-          )}
           <span>{displayName}</span>
           <ChevronDown className="ml-1 h-4 w-4" />
         </button>

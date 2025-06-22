@@ -1,5 +1,5 @@
 
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { CompanySelector } from "./CompanySelector";
 import { UserNavigation } from "./UserNavigation";
@@ -8,33 +8,17 @@ import { SearchBar } from "./SearchBar";
 import { ThemeToggle } from "./ThemeToggle";
 import { NotificationButton } from "./NotificationButton";
 import { NavMenuLinks } from "./NavMenuLinks";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
 import { useCompanies } from "@/hooks/useCompanies";
 
 export const DesktopNavigationMenu = () => {
   const { user } = useAuth();
   const { selectedCompany } = useCompanies();
   const location = useLocation();
-  const navigate = useNavigate();
-
-  const showBackButton = location.pathname !== '/';
 
   return (
     <header className="sticky top-0 z-40 w-full border-b shadow-sm bg-[#F8F7F4] dark:bg-[#191919] hidden lg:block">
       <div className="w-full px-4 h-16 flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          {showBackButton && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="p-0 hover:bg-transparent" 
-              onClick={() => navigate('/')}
-            >
-              <ArrowLeft className="h-5 w-5 text-gray-500" />
-            </Button>
-          )}
-          
           <Link to="/" className="flex items-center space-x-2">
             {selectedCompany?.logo ? (
               <img 
@@ -58,9 +42,9 @@ export const DesktopNavigationMenu = () => {
           <div className="flex items-center">
             <CompanySelector />
           </div>
+          
+          <NavMenuLinks />
         </div>
-        
-        <NavMenuLinks />
         
         <div className="flex items-center space-x-4">
           <SearchBar />
