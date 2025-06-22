@@ -1,3 +1,4 @@
+
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 @import url('https://fonts.googleapis.com/css2?family=Geist+Sans:wght@400;500;600;700&display=swap');
 @tailwind base;
@@ -151,5 +152,12 @@ body {
 @media (max-width: 1024px) {
   .mobile-content {
     padding-top: calc(env(safe-area-inset-top) + 4rem) !important;
+  }
+}
+
+/* Custom override for lg:text-center to use left alignment */
+@media (min-width: 1024px) {
+  .lg\:text-center {
+    text-align: left;
   }
 }
