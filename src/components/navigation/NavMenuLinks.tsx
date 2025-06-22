@@ -54,7 +54,7 @@ export const NavMenuLinks = ({ adminLabel = "Admin" }) => {
                     <BookOpen size={24} />
                   </div>
                   <div className="text-left">
-                    <h3 className="text-sm font-medium mb-1 group-hover:text-gray-900 dark:group-hover:text-white text-left">
+                    <h3 className="text-sm font-medium mb-1 group-hover:text-gray-900 dark:group-hover:text-white text-left" style={{ color: companyColor }}>
                       Todos os Cursos
                     </h3>
                     <p className="text-xs text-gray-500 dark:text-gray-400 text-left">
@@ -70,7 +70,7 @@ export const NavMenuLinks = ({ adminLabel = "Admin" }) => {
                     <LayoutDashboard size={24} />
                   </div>
                   <div className="text-left">
-                    <h3 className="text-sm font-medium mb-1 group-hover:text-gray-900 dark:group-hover:text-white text-left">
+                    <h3 className="text-sm font-medium mb-1 group-hover:text-gray-900 dark:group-hover:text-white text-left" style={{ color: companyColor }}>
                       Painel
                     </h3>
                     <p className="text-xs text-gray-500 dark:text-gray-400 text-left">
