@@ -47,14 +47,14 @@ export const QuickLinks = () => {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-12 text-left">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-12 text-left lg:text-center">
       {links.map((link, index) => (
         <Card 
           key={index} 
           className="border-0 shadow-none bg-white dark:bg-[#222222] rounded-[30px] cursor-pointer hover:bg-gray-50 dark:hover:bg-[#2C2C2C] transition-colors"
           onClick={() => handleNavigate(link.path)}
         >
-          <CardContent className="p-6 flex flex-col text-left">
+          <CardContent className="p-6 flex flex-col text-left lg:text-center">
             <div className="flex items-center mb-2">
               <span className="mr-3 bg-gray-100 dark:bg-[#1F1F1F] p-2 rounded-lg">
                 <link.icon className="h-5 w-5 text-gray-700 dark:text-gray-300 stroke-current" strokeWidth={1.5} />
@@ -66,7 +66,7 @@ export const QuickLinks = () => {
                 </svg>
               )}
             </div>
-            <p className="text-sm text-gray-500 dark:text-[#757576] text-left">
+            <p className="text-sm text-gray-500 dark:text-[#757576] text-left lg:text-center">
               {link.description}
             </p>
           </CardContent>

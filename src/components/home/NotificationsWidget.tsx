@@ -87,7 +87,7 @@ export const NotificationsWidget = () => {
         <CardContent className="p-0 flex flex-col h-full">
           <div className="p-8 flex justify-between items-center">
             <div className="flex items-center gap-2">
-              <h3 className="text-xl font-medium dark:text-white text-left">Avisos da Empresa</h3>
+              <h3 className="text-xl font-medium dark:text-white">Avisos da Empresa</h3>
             </div>
             {unreadCount > 0 && (
               <Badge variant="destructive" className="text-xs px-2 py-1">
@@ -97,7 +97,7 @@ export const NotificationsWidget = () => {
           </div>
           {selectedCompany && (
             <div className="px-8 pb-4">
-              <p className="text-sm text-muted-foreground text-left">
+              <p className="text-sm text-muted-foreground">
                 {selectedCompany.nome}
               </p>
             </div>
@@ -131,11 +131,11 @@ export const NotificationsWidget = () => {
                     onClick={() => handleNoticeClick(notice)}
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0 text-left">
-                        <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-blue-700 dark:group-hover:text-blue-300 text-left">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-blue-700 dark:group-hover:text-blue-300">
                           {notice.title}
                         </h4>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2 text-left">
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
                           {notice.content}
                         </p>
                         <div className="flex items-center gap-2 mt-2">

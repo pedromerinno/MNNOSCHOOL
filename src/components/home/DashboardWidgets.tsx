@@ -27,7 +27,7 @@ const WidgetSkeleton = () => (
 
 export const DashboardWidgets = () => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8 text-left">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8 text-left lg:text-center">
       <Suspense fallback={<WidgetSkeleton />}>
         <CalendarWidget />
       </Suspense>

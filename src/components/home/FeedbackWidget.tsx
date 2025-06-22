@@ -64,7 +64,7 @@ export const FeedbackWidget = memo(() => {
     <Card className="border-0 shadow-none overflow-hidden rounded-[30px] bg-[#FAFFF7] dark:bg-[#222222]">
       <CardContent className="p-0 flex flex-col h-full">
         <div className="p-8 flex justify-between items-center">
-          <h3 className="text-xl font-medium dark:text-white text-left">Feedbacks</h3>
+          <h3 className="text-xl font-medium dark:text-white">Feedbacks</h3>
           <div className="flex space-x-2">
             <Button 
               size="icon" 
@@ -94,7 +94,7 @@ export const FeedbackWidget = memo(() => {
             </div>
           ) : feedbacks.length > 0 && currentFeedback ? (
             <div className="bg-green-50 dark:bg-[#2C2C2C] rounded-lg p-6">
-              <p className="text-base mb-6 dark:text-gray-200 text-left">
+              <p className="text-base mb-6 dark:text-gray-200">
                 {currentFeedback.content}
               </p>
               <div className="flex flex-col">
@@ -110,7 +110,7 @@ export const FeedbackWidget = memo(() => {
                       {(currentFeedback.from_profile?.display_name || 'U').charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex flex-col text-left">
+                  <div className="flex flex-col">
                     <span className="text-base font-medium text-black dark:text-white">
                       {currentFeedback.from_profile?.display_name || 'Usuário'}
                     </span>
