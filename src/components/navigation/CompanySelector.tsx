@@ -1,6 +1,5 @@
 
 import { useEffect, memo, useCallback, useState } from "react";
-import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import {
@@ -100,7 +99,6 @@ export const CompanySelector = memo(() => {
       <DropdownMenuTrigger asChild>
         <button className="flex items-center text-lg font-bold text-foreground focus:outline-none">
           {displayName}
-          <ChevronDown className="ml-1 h-4 w-4" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="bg-white dark:bg-gray-800 z-50">

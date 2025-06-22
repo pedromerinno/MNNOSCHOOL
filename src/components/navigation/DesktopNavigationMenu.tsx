@@ -40,7 +40,7 @@ export const DesktopNavigationMenu = () => {
               <img 
                 src={selectedCompany.logo} 
                 alt={selectedCompany.nome} 
-                className="h-8 w-8 object-contain rounded-lg"
+                className="h-6 w-6 object-contain rounded-lg"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = "/lovable-uploads/200a55db-c024-40f3-b628-d48307d84e93.png";
@@ -50,7 +50,7 @@ export const DesktopNavigationMenu = () => {
               <img 
                 src="/lovable-uploads/200a55db-c024-40f3-b628-d48307d84e93.png" 
                 alt="MNNO School" 
-                className="h-8 w-8"
+                className="h-6 w-6"
               />
             )}
           </Link>
