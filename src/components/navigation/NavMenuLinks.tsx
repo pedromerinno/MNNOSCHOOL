@@ -28,7 +28,7 @@ export const NavMenuLinks = ({ adminLabel = "Admin" }) => {
   };
 
   // Usar a cor primária da empresa ou fallback para azul
-  const companyColor = selectedCompany?.cor_primaria || '#3B82F6';
+  const companyColor = selectedCompany?.cor_principal || '#3B82F6';
   
   return (
     <NavigationMenu>
