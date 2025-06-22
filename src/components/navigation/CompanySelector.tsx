@@ -3,7 +3,6 @@ import { useEffect, memo, useCallback, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
-import { useIsMobile } from "@/hooks/use-mobile";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +18,6 @@ export const CompanySelector = memo(() => {
     selectCompany, 
     isLoading 
   } = useCompanies();
-  const isMobile = useIsMobile();
   
   const [displayName, setDisplayName] = useState<string>("");
 
@@ -75,46 +73,10 @@ export const CompanySelector = memo(() => {
   if (isLoading) {
     // Se há uma empresa selecionada ou empresas no cache, mostrar o nome
     if (selectedCompany?.nome) {
-      return (
-        <div className="flex items-center space-x-2">
-          {selectedCompany?.logo && (
-            <img
-              src={selectedCompany.logo}
-              alt={selectedCompany.nome}
-              className={`object-contain rounded-lg ${
-                isMobile ? "h-5 w-5" : "h-6 w-6"
-              }`}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = "/placeholder.svg";
-                target.onerror = null;
-              }}
-            />
-          )}
-          <span className="text-lg font-bold text-foreground">{selectedCompany.nome}</span>
-        </div>
-      );
+      return <span className="text-lg font-bold text-foreground">{selectedCompany.nome}</span>;
     }
     if (userCompanies.length > 0) {
-      return (
-        <div className="flex items-center space-x-2">
-          {userCompanies[0]?.logo && (
-            <img
-              src={userCompanies[0].logo}
-              alt={userCompanies[0].nome}
-              className={`object-contain rounded-lg ${
-                isMobile ? "h-5 w-5" : "h-6 w-6"
-              }`}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = "/placeholder.svg";
-                target.onerror = null;
-              }}
-            />
-          )}
-          <span className="text-lg font-bold text-foreground">{userCompanies[0].nome}</span>
-        </div>
-      );
+      return <span className="text-lg font-bold text-foreground">{userCompanies[0].nome}</span>;
     }
     // Durante loading inicial, não mostrar nada para evitar o flash de BUSINESS
     return <span className="text-lg font-bold text-foreground"></span>;
@@ -125,25 +87,7 @@ export const CompanySelector = memo(() => {
   }
 
   if (userCompanies.length === 1) {
-    return (
-      <div className="flex items-center space-x-2">
-        {userCompanies[0]?.logo && (
-          <img
-            src={userCompanies[0].logo}
-            alt={userCompanies[0].nome}
-            className={`object-contain rounded-lg ${
-              isMobile ? "h-5 w-5" : "h-6 w-6"
-            }`}
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = "/placeholder.svg";
-              target.onerror = null;
-            }}
-          />
-        )}
-        <span className="text-lg font-bold text-foreground">{displayName}</span>
-      </div>
-    );
+    return <span className="text-lg font-bold text-foreground">{displayName}</span>;
   }
 
   // Não renderizar o dropdown se displayName está vazio (evita flash)
@@ -154,22 +98,8 @@ export const CompanySelector = memo(() => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center space-x-2 text-lg font-bold text-foreground focus:outline-none">
-          {selectedCompany?.logo && (
-            <img
-              src={selectedCompany.logo}
-              alt={selectedCompany.nome}
-              className={`object-contain rounded-lg ${
-                isMobile ? "h-5 w-5" : "h-6 w-6"
-              }`}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = "/placeholder.svg";
-                target.onerror = null;
-              }}
-            />
-          )}
-          <span>{displayName}</span>
+        <button className="flex items-center text-lg font-bold text-foreground focus:outline-none">
+          {displayName}
           <ChevronDown className="ml-1 h-4 w-4" />
         </button>
       </DropdownMenuTrigger>
