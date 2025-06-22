@@ -66,7 +66,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
 
   // Loading state with Skeleton UI
   if (loading) {
-    return <div className="w-full h-[500px] md:h-[600px] rounded-2xl overflow-hidden relative">
+    return <div className="w-full h-[500px] md:h-[600px] rounded-2xl overflow-hidden relative mt-4 lg:mt-0">
         <Skeleton className="w-full h-full absolute inset-0" />
         <div className="absolute inset-0 p-4 md:p-8 flex flex-col justify-end">
           <Skeleton className="w-16 h-6 md:w-24 md:h-8 mb-2 md:mb-4" />
@@ -85,7 +85,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
 
   // Empty state with better messaging and button
   if (!courses || courses.length === 0) {
-    return <div className="w-full h-[500px] md:h-[600px] rounded-2xl bg-gray-100 dark:bg-gray-800 flex flex-col items-center justify-center p-4 md:p-8 text-center">
+    return <div className="w-full h-[500px] md:h-[600px] rounded-2xl bg-gray-100 dark:bg-gray-800 flex flex-col items-center justify-center p-4 md:p-8 text-center mt-4 lg:mt-0">
         <h3 className="text-xl md:text-2xl font-semibold mb-2 md:mb-3 text-gray-900 dark:text-gray-100">
           Nenhum curso em destaque disponível
         </h3>
@@ -104,7 +104,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
     const imageSrc = getImageSrc(course.image_url);
     
     return (
-      <div className="w-full relative overflow-hidden py-0 flex justify-center relative z-10">
+      <div className="w-full relative overflow-hidden py-0 flex justify-center relative z-10 mt-4 lg:mt-0">
         <div className="w-full max-w-4xl mx-auto">
           <div className="relative h-[500px] md:h-[600px] rounded-2xl overflow-hidden group">
             <img 
@@ -192,7 +192,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
 
   // Normal carousel with multiple courses - modified to show peeks of adjacent slides
   return (
-    <div className="w-full relative overflow-hidden py-0 relative z-10">
+    <div className="w-full relative overflow-hidden py-0 relative z-10 mt-4 lg:mt-0">
       <Carousel 
         opts={{
           align: "center",
