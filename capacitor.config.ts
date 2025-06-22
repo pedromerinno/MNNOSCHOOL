@@ -14,7 +14,14 @@ const config: CapacitorConfig = {
       launchShowDuration: 2000,
       backgroundColor: '#1EAEDB',
       showSpinner: false
+    },
+    StatusBar: {
+      style: 'default',
+      backgroundColor: '#F8F7F4'
     }
+  },
+  ios: {
+    contentInset: 'automatic'
   }
 };
 
