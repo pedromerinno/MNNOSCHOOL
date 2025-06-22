@@ -27,7 +27,7 @@ const School = () => {
     <DashboardLayout>
       <div className="bg-[#F8F7F4] py-6">
         <div className="container mx-auto px-4 lg:px-8 flex">
-          <div className="flex-1 pr-6">
+          <div className="flex-1 pr-6 text-left lg:text-center">
             <FeaturedCourseHero course={featuredCourse} />
             <CourseCategories 
               activeTab={activeTab} 
