@@ -129,11 +129,11 @@ const Courses = () => {
         </div>
       )}
       
-      {/* Centered content with smaller width and mobile padding */}
+      {/* Centered content with smaller width and mobile padding - aligned left on mobile */}
       {!hasNoCourses && (
-        <div className="w-full max-w-screen-xl mx-auto space-y-5 px-4 md:px-0 py-0">
+        <div className="w-full max-w-screen-xl mx-auto space-y-5 px-4 md:px-0 py-0 text-left lg:text-center">
           <div className="space-y-4 py-[30px]">
-            <h2 className="text-xl font-semibold">Categorias</h2>
+            <h2 className="text-xl font-semibold text-left lg:text-center">Categorias</h2>
             <CourseCategories 
               activeCategory={activeCategory} 
               onCategoryChange={setActiveCategory} 
@@ -143,7 +143,7 @@ const Courses = () => {
           
           <div className="space-y-8">
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold">Todos os cursos</h2>
+              <h2 className="text-xl font-semibold text-left lg:text-center">Todos os cursos</h2>
               
               {allCoursesLoading ? (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

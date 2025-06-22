@@ -104,7 +104,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
     const imageSrc = getImageSrc(course.image_url);
     
     return (
-      <div className="w-full relative overflow-hidden py-0 flex justify-center">
+      <div className="w-full relative overflow-hidden py-0 flex justify-center relative z-10">
         <div className="w-full max-w-4xl mx-auto">
           <div className="relative h-[500px] md:h-[600px] rounded-2xl overflow-hidden group">
             <img 
@@ -144,7 +144,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
               )}
               
               <div className="absolute bottom-0 left-0 right-0 p-4 md:p-8 py-6 md:py-[40px] px-6 md:px-[40px]">
-                <div className="flex flex-col md:flex-row justify-between md:items-end">
+                <div className="flex flex-col md:flex-row justify-between md:items-end text-left lg:text-left">
                   <div className="space-y-2 md:space-y-4 max-w-xs md:max-w-xl mb-4 md:mb-0">
                     <div>
                       <div className="flex gap-1 md:gap-2 mb-2 md:mb-4 flex-wrap">
@@ -170,7 +170,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
                         {course.title}
                       </h2>
                     </div>
-                    <p className="text-white/90 line-clamp-3 md:line-clamp-2 text-sm md:text-base leading-relaxed max-w-xs md:max-w-lg">
+                    <p className="text-white/90 line-clamp-2 md:line-clamp-2 text-sm md:text-base leading-relaxed max-w-xs md:max-w-lg">
                       {course.description}
                     </p>
                   </div>
@@ -192,7 +192,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
 
   // Normal carousel with multiple courses - modified to show peeks of adjacent slides
   return (
-    <div className="w-full relative overflow-hidden py-0">
+    <div className="w-full relative overflow-hidden py-0 relative z-10">
       <Carousel 
         opts={{
           align: "center",
@@ -250,7 +250,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
                     )}
                     
                     <div className="absolute bottom-0 left-0 right-0 p-4 md:p-8 py-6 md:py-[40px] px-6 md:px-[40px]">
-                      <div className="flex flex-col md:flex-row justify-between md:items-end">
+                      <div className="flex flex-col md:flex-row justify-between md:items-end text-left lg:text-left">
                         <div className="space-y-2 md:space-y-4 max-w-xs md:max-w-xl mb-4 md:mb-0">
                           <div>
                             <div className="flex gap-1 md:gap-2 mb-2 md:mb-4 flex-wrap">
@@ -276,7 +276,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
                               {course.title}
                             </h2>
                           </div>
-                          <p className="text-white/90 line-clamp-3 md:line-clamp-2 text-sm md:text-base leading-relaxed max-w-xs md:max-w-lg">
+                          <p className="text-white/90 line-clamp-2 md:line-clamp-2 text-sm md:text-base leading-relaxed max-w-xs md:max-w-lg">
                             {course.description}
                           </p>
                         </div>
