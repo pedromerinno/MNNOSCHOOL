@@ -9,9 +9,12 @@ import {
   NavigationMenuLink
 } from "@/components/ui/navigation-menu";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCompanies } from "@/hooks/useCompanies";
+import { BookOpen, LayoutDashboard } from "lucide-react";
 
 export const NavMenuLinks = ({ adminLabel = "Admin" }) => {
   const { userProfile } = useAuth();
+  const { selectedCompany } = useCompanies();
   const location = useLocation();
   
   const isCurrentPath = (path: string) => {
@@ -23,6 +26,9 @@ export const NavMenuLinks = ({ adminLabel = "Admin" }) => {
       isCurrentPath(path) ? 'font-bold' : 'font-medium'
     }`;
   };
+
+  // Usar a cor primária da empresa ou fallback para azul
+  const companyColor = selectedCompany?.cor_primaria || '#3B82F6';
   
   return (
     <NavigationMenu>
@@ -44,10 +50,8 @@ export const NavMenuLinks = ({ adminLabel = "Admin" }) => {
             <div className="grid grid-cols-2 gap-4">
               <Link to="/courses" className="group p-4 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-lg">
                 <div className="flex items-start gap-4">
-                  <div className="mt-1">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="2"/>
-                    </svg>
+                  <div className="mt-1" style={{ color: companyColor }}>
+                    <BookOpen size={24} />
                   </div>
                   <div className="text-left">
                     <h3 className="text-sm font-medium mb-1 group-hover:text-gray-900 dark:group-hover:text-white text-left">
@@ -62,11 +66,8 @@ export const NavMenuLinks = ({ adminLabel = "Admin" }) => {
               
               <Link to="/my-courses" className="group p-4 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-lg">
                 <div className="flex items-start gap-4">
-                  <div className="mt-1">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M4 19V5a2 2 0 012-2h13.4a.6.6 0 01.6.6v13.114" stroke="currentColor" strokeWidth="2"/>
-                      <path d="M6 17h14M6 13h14M6 9h14" stroke="currentColor" strokeWidth="2"/>
-                    </svg>
+                  <div className="mt-1" style={{ color: companyColor }}>
+                    <LayoutDashboard size={24} />
                   </div>
                   <div className="text-left">
                     <h3 className="text-sm font-medium mb-1 group-hover:text-gray-900 dark:group-hover:text-white text-left">
