@@ -54,26 +54,24 @@ export const MobileNavigationMenu = () => {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 w-full border-b shadow-sm bg-[#F8F7F4] dark:bg-[#191919] lg:hidden pt-safe-top">
       <div className="w-full px-4 h-16 flex items-center justify-between">
-        <div className="flex items-center space-x-3 flex-1 overflow-x-auto">
+        <div className="flex items-center space-x-2 flex-1 overflow-x-auto">
           <MobileMenu />
-          <div className="flex items-center space-x-1">
-            <CompanySelector />
-          </div>
+          <CompanySelector />
           
-          {/* Menu items horizontally */}
-          <nav className="flex items-center space-x-4 ml-4">
+          {/* Menu items horizontally next to company name */}
+          <nav className="flex items-center space-x-3 ml-2">
             {visibleItems.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center space-x-1 px-2 py-1 rounded-lg transition-all duration-200 whitespace-nowrap ${
+                className={`flex items-center space-x-1 px-2 py-1 rounded-lg transition-all duration-200 whitespace-nowrap text-sm ${
                   isCurrentPath(item.path)
                     ? "bg-primary text-primary-foreground font-medium"
                     : "text-gray-700 dark:text-gray-300 hover:bg-white/60 dark:hover:bg-gray-800/60"
                 }`}
               >
                 <item.icon className="h-4 w-4 flex-shrink-0" />
-                <span className="text-sm font-medium">{item.label}</span>
+                <span className="font-medium">{item.label}</span>
               </Link>
             ))}
           </nav>
