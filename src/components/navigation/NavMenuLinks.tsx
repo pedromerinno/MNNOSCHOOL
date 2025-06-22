@@ -49,11 +49,11 @@ export const NavMenuLinks = ({ adminLabel = "Admin" }) => {
                       <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="2"/>
                     </svg>
                   </div>
-                  <div>
-                    <h3 className="text-sm font-medium mb-1 group-hover:text-gray-900 dark:group-hover:text-white">
+                  <div className="text-left">
+                    <h3 className="text-sm font-medium mb-1 group-hover:text-gray-900 dark:group-hover:text-white text-left">
                       Todos os Cursos
                     </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 text-left">
                       Visualize todos os cursos disponíveis na sua empresa
                     </p>
                   </div>
@@ -68,11 +68,11 @@ export const NavMenuLinks = ({ adminLabel = "Admin" }) => {
                       <path d="M6 17h14M6 13h14M6 9h14" stroke="currentColor" strokeWidth="2"/>
                     </svg>
                   </div>
-                  <div>
-                    <h3 className="text-sm font-medium mb-1 group-hover:text-gray-900 dark:group-hover:text-white">
+                  <div className="text-left">
+                    <h3 className="text-sm font-medium mb-1 group-hover:text-gray-900 dark:group-hover:text-white text-left">
                       Painel
                     </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 text-left">
                       Cursos favoritos e em andamento
                     </p>
                   </div>
