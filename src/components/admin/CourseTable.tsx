@@ -126,12 +126,12 @@ export const CourseTable: React.FC<CourseTableProps> = ({
                       onClick={() => handleCourseClick(course.id)}
                     />
                   ) : (
-                    <div 
-                      className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 rounded-md flex items-center justify-center cursor-pointer hover:from-blue-200 hover:to-blue-300 dark:hover:from-blue-800 dark:hover:to-blue-700 transition-all duration-200 border border-gray-200 dark:border-gray-700"
+                    <img 
+                      src="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=300&h=300&fit=crop&crop=center" 
+                      alt="Capa padrão do curso" 
+                      className="w-12 h-12 object-cover rounded-md border border-gray-200 dark:border-gray-700 cursor-pointer hover:opacity-80 transition-opacity"
                       onClick={() => handleCourseClick(course.id)}
-                    >
-                      <Image className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                    </div>
+                    />
                   )}
                 </TableCell>
                 <TableCell className="font-medium text-gray-900 dark:text-gray-100 py-3">
