@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Course } from './types';
@@ -132,7 +131,7 @@ export const CourseList: React.FC<CourseListProps> = ({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-16">Capa</TableHead>
+              <TableHead className="w-24">Capa</TableHead>
               <TableHead>Título</TableHead>
               <TableHead>Instrutor</TableHead>
               <TableHead>Descrição</TableHead>
@@ -147,19 +146,19 @@ export const CourseList: React.FC<CourseListProps> = ({
                     <img 
                       src={course.image_url} 
                       alt={course.title} 
-                      className="h-12 w-16 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity" 
+                      className="h-12 w-20 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity" 
                       onClick={() => handleCourseClick(course.id)}
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=300&h=300&fit=crop&crop=center";
+                        target.src = "https://5cae13a1-92c0-4c6b-93bc-bb999597eb98.lovableproject.com/placeholder.svg";
                         target.onerror = null;
                       }}
                     />
                   ) : (
                     <img 
-                      src="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=300&h=300&fit=crop&crop=center" 
+                      src="https://5cae13a1-92c0-4c6b-93bc-bb999597eb98.lovableproject.com/placeholder.svg" 
                       alt="Capa padrão do curso" 
-                      className="h-12 w-16 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                      className="h-12 w-20 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
                       onClick={() => handleCourseClick(course.id)}
                     />
                   )}
