@@ -127,10 +127,10 @@ export const CourseTable: React.FC<CourseTableProps> = ({
                     />
                   ) : (
                     <div 
-                      className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-md flex items-center justify-center cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                      className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 rounded-md flex items-center justify-center cursor-pointer hover:from-blue-200 hover:to-blue-300 dark:hover:from-blue-800 dark:hover:to-blue-700 transition-all duration-200 border border-gray-200 dark:border-gray-700"
                       onClick={() => handleCourseClick(course.id)}
                     >
-                      <Image className="w-6 h-6 text-gray-400" />
+                      <Image className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                     </div>
                   )}
                 </TableCell>
