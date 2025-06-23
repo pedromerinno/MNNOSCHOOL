@@ -6,6 +6,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { getInitials } from "@/utils/stringUtils";
 
 interface CompanySelectorProps {
   companies: Company[];
@@ -96,7 +97,7 @@ export const CompanySelector: React.FC<CompanySelectorProps> = memo(({
                     />
                   ) : null}
                   <AvatarFallback className="text-xs">
-                    {selectedCompany.nome.charAt(0).toUpperCase()}
+                    {getInitials(selectedCompany.nome)}
                   </AvatarFallback>
                 </Avatar>
                 {selectedCompany.nome}
@@ -120,7 +121,7 @@ export const CompanySelector: React.FC<CompanySelectorProps> = memo(({
                     />
                   ) : null}
                   <AvatarFallback className="text-xs">
-                    {company.nome.charAt(0).toUpperCase()}
+                    {getInitials(company.nome)}
                   </AvatarFallback>
                 </Avatar>
                 {company.nome}

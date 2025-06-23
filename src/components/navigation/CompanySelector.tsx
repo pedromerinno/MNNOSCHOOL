@@ -1,8 +1,10 @@
+
 import { useEffect, memo, useCallback, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { getInitials } from "@/utils/stringUtils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -125,13 +127,20 @@ export const CompanySelector = memo(() => {
                   className="h-4 w-4 mr-2 object-contain rounded-lg"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
-                    target.src = "/placeholder.svg";
-                    target.onerror = null;
+                    target.style.display = 'none';
+                    // Show initials fallback
+                    const parent = target.parentElement;
+                    if (parent) {
+                      const initialsDiv = document.createElement('div');
+                      initialsDiv.className = "h-4 w-4 mr-2 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary font-medium";
+                      initialsDiv.textContent = getInitials(company.nome);
+                      parent.insertBefore(initialsDiv, target);
+                    }
                   }}
                 />
               ) : (
                 <div className="h-4 w-4 mr-2 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary font-medium">
-                  {company.nome.charAt(0).toUpperCase()}
+                  {getInitials(company.nome)}
                 </div>
               )}
               <span>{company.nome}</span>

@@ -1,13 +1,14 @@
 
 import { useCompanies } from "@/hooks/useCompanies";
 import { useCompanyNameSync } from "@/hooks/company/useCompanyNameSync";
+import { getInitials } from "@/utils/stringUtils";
 
 export const Footer = () => {
   const { selectedCompany } = useCompanies();
   
   const { displayName } = useCompanyNameSync({ 
     selectedCompany,
-    fallbackName: "merinno" 
+    fallbackName: getInitials("BUSINESS")
   });
 
   return (

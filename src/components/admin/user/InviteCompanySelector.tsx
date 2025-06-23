@@ -7,6 +7,7 @@ import { AlertCircle } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useCompanies } from "@/hooks/useCompanies";
+import { getInitials } from "@/utils/stringUtils";
 
 interface InviteCompanySelectorProps {
   selectedCompany: Company | null;
@@ -74,7 +75,7 @@ export const InviteCompanySelector: React.FC<InviteCompanySelectorProps> = ({
                   />
                 ) : null}
                 <AvatarFallback className="text-xs">
-                  {selectedCompany.nome ? selectedCompany.nome.charAt(0).toUpperCase() : 'E'}
+                  {getInitials(selectedCompany.nome)}
                 </AvatarFallback>
               </Avatar>
               {selectedCompany.nome}
@@ -98,7 +99,7 @@ export const InviteCompanySelector: React.FC<InviteCompanySelectorProps> = ({
                   />
                 ) : null}
                 <AvatarFallback className="text-xs">
-                  {company.nome ? company.nome.charAt(0).toUpperCase() : 'E'}
+                  {getInitials(company.nome || 'Empresa')}
                 </AvatarFallback>
               </Avatar>
               {company.nome || 'Empresa sem nome'}

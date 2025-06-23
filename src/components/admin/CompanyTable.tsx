@@ -6,6 +6,7 @@ import { MoreHorizontal, Pencil, Trash2, Users } from "lucide-react";
 import { Company } from "@/types/company";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { getInitials } from "@/utils/stringUtils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -91,15 +92,20 @@ export const CompanyTable: React.FC<CompanyTableProps> = ({
                         className="h-full w-full object-cover" 
                         onError={e => {
                           const target = e.target as HTMLImageElement;
-                          target.src = "/placeholder.svg";
-                          target.onerror = null;
+                          target.style.display = 'none';
+                          // Show initials fallback
+                          const parent = target.parentElement;
+                          if (parent) {
+                            parent.innerHTML = `<span class="text-xl font-semibold text-primary">${getInitials(company.nome)}</span>`;
+                            parent.className = "h-12 w-12 rounded-md border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-primary/10";
+                          }
                         }} 
                       />
                     </div>
                   ) : (
                     <div className="h-12 w-12 rounded-md border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-primary/10">
                       <span className="text-xl font-semibold text-primary">
-                        {company.nome.charAt(0).toUpperCase()}
+                        {getInitials(company.nome)}
                       </span>
                     </div>
                   )}
