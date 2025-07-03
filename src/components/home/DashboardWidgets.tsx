@@ -28,11 +28,11 @@ const WidgetSkeleton = () => (
 export const DashboardWidgets = () => {
   const [isVisible, setIsVisible] = useState(false);
 
-  // Trigger animation on mount
+  // Trigger animation on mount - mais rápido
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(true);
-    }, 1500);
+    }, 600);
     return () => clearTimeout(timer);
   }, []);
 
@@ -47,9 +47,12 @@ export const DashboardWidgets = () => {
       {widgets.map((widget, index) => (
         <div
           key={index}
-          className={`transition-all duration-700 ease-out ${
+          className={`transition-all duration-400 ease-out ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
           }`}
+          style={{
+            transitionDelay: `${index * 100}ms`
+          }}
         >
           <Suspense fallback={<WidgetSkeleton />}>
             <widget.component />

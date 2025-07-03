@@ -21,11 +21,11 @@ export const WelcomeSection = () => {
     }
   }, [selectedCompany?.id]);
 
-  // Trigger animation on mount
+  // Trigger animation on mount - mais rápido
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(true);
-    }, 200);
+    }, 100);
     return () => clearTimeout(timer);
   }, []);
 
@@ -39,12 +39,12 @@ export const WelcomeSection = () => {
   const companyPhrase = displayCompany?.frase_institucional || defaultPhrase;
 
   return (
-    <div className={`mb-16 mt-10 transition-all duration-1000 ease-out ${
+    <div className={`mb-16 mt-10 transition-all duration-500 ease-out ${
       isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
     }`}>
       <div className="flex flex-col items-center">
         <p 
-          className={`text-gray-700 dark:text-gray-200 mb-6 text-center bg-[#FFF5E4] dark:bg-[#333333] py-1.5 px-6 rounded-full max-w-fit text-sm font-semibold transition-all duration-1000 ease-out ${
+          className={`text-gray-700 dark:text-gray-200 mb-6 text-center bg-[#FFF5E4] dark:bg-[#333333] py-1.5 px-6 rounded-full max-w-fit text-sm font-semibold transition-all duration-500 ease-out delay-75 ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
           }`}
         >
@@ -52,7 +52,7 @@ export const WelcomeSection = () => {
         </p>
         
         <p 
-          className={`text-foreground text-center text-[24px] md:text-[40px] font-normal max-w-[90%] md:max-w-[50%] leading-[1.1] mb-5 transition-all duration-1000 ease-out ${
+          className={`text-foreground text-center text-[24px] md:text-[40px] font-normal max-w-[90%] md:max-w-[50%] leading-[1.1] mb-5 transition-all duration-500 ease-out delay-150 ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
           }`}
         >
@@ -61,7 +61,7 @@ export const WelcomeSection = () => {
         
         <Button 
           onClick={handleLearnMore} 
-          className={`mt-1 flex items-center gap-2 text-white dark:text-black rounded-full text-sm transition-all duration-1000 ease-out bg-black dark:bg-white hover:bg-black/90 dark:hover:bg-white/90 ${
+          className={`mt-1 flex items-center gap-2 text-white dark:text-black rounded-full text-sm transition-all duration-500 ease-out delay-225 bg-black dark:bg-white hover:bg-black/90 dark:hover:bg-white/90 ${
             isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95'
           }`}
           variant="default"
