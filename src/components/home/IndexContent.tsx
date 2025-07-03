@@ -40,14 +40,11 @@ export const IndexContent = () => {
   if (showPreloader || (authLoading && !user)) {
     console.log("[IndexContent] Showing preloader - initial loading or auth loading");
     return (
-      <>
-        <MainNavigationMenu />
-        <Preloader>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Carregando...
-          </p>
-        </Preloader>
-      </>
+      <Preloader>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Carregando...
+        </p>
+      </Preloader>
     );
   }
 
@@ -55,14 +52,11 @@ export const IndexContent = () => {
   if (!user) {
     console.log("[IndexContent] No user - redirecting should be handled by ProtectedRoute");
     return (
-      <>
-        <MainNavigationMenu />
-        <Preloader>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Redirecionando...
-          </p>
-        </Preloader>
-      </>
+      <Preloader>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Redirecionando...
+        </p>
+      </Preloader>
     );
   }
 
