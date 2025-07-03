@@ -28,11 +28,12 @@ const WidgetSkeleton = () => (
 export const DashboardWidgets = () => {
   const [isVisible, setIsVisible] = useState(false);
 
-  // Trigger animation on mount - coordenado após QuickLinks
+  // Trigger animation on mount - timing aleatório
   useEffect(() => {
+    const randomDelay = Math.random() * 800 + 600; // 600ms a 1400ms
     const timer = setTimeout(() => {
       setIsVisible(true);
-    }, 1000);
+    }, randomDelay);
     return () => clearTimeout(timer);
   }, []);
 
@@ -44,21 +45,26 @@ export const DashboardWidgets = () => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8 text-left">
-      {widgets.map((widget, index) => (
-        <div
-          key={index}
-          className={`transition-all duration-500 ease-out ${
-            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-          }`}
-          style={{
-            transitionDelay: `${index * 120}ms`
-          }}
-        >
-          <Suspense fallback={<WidgetSkeleton />}>
-            <widget.component />
-          </Suspense>
-        </div>
-      ))}
+      {widgets.map((widget, index) => {
+        // Delay aleatório para cada widget
+        const randomDelay = Math.random() * 800;
+        
+        return (
+          <div
+            key={index}
+            className={`transition-all duration-500 ease-out ${
+              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+            }`}
+            style={{
+              transitionDelay: `${randomDelay}ms`
+            }}
+          >
+            <Suspense fallback={<WidgetSkeleton />}>
+              <widget.component />
+            </Suspense>
+          </div>
+        );
+      })}
     </div>
   );
 };
