@@ -3,21 +3,21 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { UserHome } from "@/components/home/UserHome";
-import { UserHomeSkeleton } from "@/components/home/UserHomeSkeleton";
 import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
+import { Preloader } from "@/components/ui/Preloader";
 
 export const IndexContent = () => {
   const { user, userProfile, loading: authLoading } = useAuth();
   const { selectedCompany, isLoading } = useCompanies();
-  const [showInitialSkeleton, setShowInitialSkeleton] = useState(true);
+  const [showPreloader, setShowPreloader] = useState(true);
 
-  // Controlar quando parar de mostrar o skeleton inicial
+  // Controlar quando parar de mostrar o preloader
   useEffect(() => {
     if (!authLoading && user && userProfile) {
       // Dar um breve momento para carregar os dados iniciais
       const timer = setTimeout(() => {
-        setShowInitialSkeleton(false);
-      }, 1000);
+        setShowPreloader(false);
+      }, 1500);
       
       return () => clearTimeout(timer);
     }
@@ -32,17 +32,21 @@ export const IndexContent = () => {
       selectedCompany: selectedCompany?.nome,
       isLoading,
       authLoading,
-      showInitialSkeleton
+      showPreloader
     });
-  }, [user, userProfile, selectedCompany, isLoading, authLoading, showInitialSkeleton]);
+  }, [user, userProfile, selectedCompany, isLoading, authLoading, showPreloader]);
 
-  // Mostrar skeleton durante carregamento inicial ou auth loading
-  if (showInitialSkeleton || (authLoading && !user)) {
-    console.log("[IndexContent] Showing skeleton - initial loading or auth loading");
+  // Mostrar preloader durante carregamento inicial ou auth loading
+  if (showPreloader || (authLoading && !user)) {
+    console.log("[IndexContent] Showing preloader - initial loading or auth loading");
     return (
       <>
         <MainNavigationMenu />
-        <UserHomeSkeleton />
+        <Preloader>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Carregando...
+          </p>
+        </Preloader>
       </>
     );
   }
@@ -53,7 +57,11 @@ export const IndexContent = () => {
     return (
       <>
         <MainNavigationMenu />
-        <UserHomeSkeleton />
+        <Preloader>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Redirecionando...
+          </p>
+        </Preloader>
       </>
     );
   }

@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link, FileText, Users, School, Globe, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -7,6 +8,7 @@ import { useCompanies } from "@/hooks/useCompanies";
 export const QuickLinks = () => {
   const navigate = useNavigate();
   const { selectedCompany } = useCompanies();
+  const [isVisible, setIsVisible] = useState(false);
   
   const links = [
     { 
@@ -42,6 +44,14 @@ export const QuickLinks = () => {
     }
   ];
 
+  // Trigger animation on mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, []);
+
   const handleNavigate = (path: string) => {
     navigate(path);
   };
@@ -51,7 +61,12 @@ export const QuickLinks = () => {
       {links.map((link, index) => (
         <Card 
           key={index} 
-          className="border-0 shadow-none bg-white dark:bg-[#222222] rounded-[30px] cursor-pointer hover:bg-gray-50 dark:hover:bg-[#2C2C2C] transition-colors"
+          className={`border-0 shadow-none bg-white dark:bg-[#222222] rounded-[30px] cursor-pointer hover:bg-gray-50 dark:hover:bg-[#2C2C2C] transition-all duration-500 ease-out hover:scale-105 ${
+            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+          }`}
+          style={{
+            transitionDelay: `${index * 100 + 1000}ms`
+          }}
           onClick={() => handleNavigate(link.path)}
         >
           <CardContent className="p-6 flex flex-col text-left">

@@ -1,5 +1,5 @@
 
-import { Suspense, lazy } from "react";
+import { useState, useEffect, Suspense, lazy } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -26,17 +26,39 @@ const WidgetSkeleton = () => (
 );
 
 export const DashboardWidgets = () => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  // Trigger animation on mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const widgets = [
+    { component: CalendarWidget, delay: 0 },
+    { component: NotificationsWidget, delay: 200 },
+    { component: FeedbackWidget, delay: 400 }
+  ];
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8 text-left">
-      <Suspense fallback={<WidgetSkeleton />}>
-        <CalendarWidget />
-      </Suspense>
-      <Suspense fallback={<WidgetSkeleton />}>
-        <NotificationsWidget />
-      </Suspense>
-      <Suspense fallback={<WidgetSkeleton />}>
-        <FeedbackWidget />
-      </Suspense>
+      {widgets.map((widget, index) => (
+        <div
+          key={index}
+          className={`transition-all duration-700 ease-out ${
+            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}
+          style={{
+            transitionDelay: `${widget.delay + 1800}ms`
+          }}
+        >
+          <Suspense fallback={<WidgetSkeleton />}>
+            <widget.component />
+          </Suspense>
+        </div>
+      ))}
     </div>
   );
 };
