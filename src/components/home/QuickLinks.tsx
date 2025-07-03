@@ -61,12 +61,9 @@ export const QuickLinks = () => {
       {links.map((link, index) => (
         <Card 
           key={index} 
-          className={`border-0 shadow-none bg-white dark:bg-[#222222] rounded-[30px] cursor-pointer hover:bg-gray-50 dark:hover:bg-[#2C2C2C] transition-all duration-500 ease-out hover:scale-105 ${
+          className={`border-0 shadow-none bg-white dark:bg-[#222222] rounded-[30px] cursor-pointer hover:bg-gray-50 dark:hover:bg-[#2C2C2C] transition-all duration-700 ease-out hover:scale-105 ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
           }`}
-          style={{
-            transitionDelay: `${index * 100 + 1000}ms`
-          }}
           onClick={() => handleNavigate(link.path)}
         >
           <CardContent className="p-6 flex flex-col text-left">

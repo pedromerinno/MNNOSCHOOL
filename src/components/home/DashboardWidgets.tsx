@@ -37,9 +37,9 @@ export const DashboardWidgets = () => {
   }, []);
 
   const widgets = [
-    { component: CalendarWidget, delay: 0 },
-    { component: NotificationsWidget, delay: 200 },
-    { component: FeedbackWidget, delay: 400 }
+    { component: CalendarWidget },
+    { component: NotificationsWidget },
+    { component: FeedbackWidget }
   ];
 
   return (
@@ -50,9 +50,6 @@ export const DashboardWidgets = () => {
           className={`transition-all duration-700 ease-out ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
           }`}
-          style={{
-            transitionDelay: `${widget.delay + 1800}ms`
-          }}
         >
           <Suspense fallback={<WidgetSkeleton />}>
             <widget.component />
