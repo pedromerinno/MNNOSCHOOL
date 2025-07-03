@@ -28,12 +28,11 @@ const WidgetSkeleton = () => (
 export const DashboardWidgets = () => {
   const [isVisible, setIsVisible] = useState(false);
 
-  // Trigger animation on mount - timing aleatório
+  // Trigger animation on mount - timing suave
   useEffect(() => {
-    const randomDelay = Math.random() * 800 + 600; // 600ms a 1400ms
     const timer = setTimeout(() => {
       setIsVisible(true);
-    }, randomDelay);
+    }, 400); // Delay para aparecer após os links
     return () => clearTimeout(timer);
   }, []);
 
@@ -46,17 +45,14 @@ export const DashboardWidgets = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8 text-left">
       {widgets.map((widget, index) => {
-        // Delay aleatório para cada widget
-        const randomDelay = Math.random() * 800;
-        
         return (
           <div
             key={index}
-            className={`transition-all duration-500 ease-out ${
+            className={`transition-all duration-700 ease-out ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}
             style={{
-              transitionDelay: `${randomDelay}ms`
+              transitionDelay: `${index * 150 + 500}ms` // Delay sequencial após os links
             }}
           >
             <Suspense fallback={<WidgetSkeleton />}>

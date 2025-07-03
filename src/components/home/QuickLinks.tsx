@@ -44,12 +44,11 @@ export const QuickLinks = () => {
     }
   ];
 
-  // Trigger animation on mount - timing aleatório
+  // Trigger animation on mount - timing suave
   useEffect(() => {
-    const randomDelay = Math.random() * 800 + 400; // 400ms a 1200ms
     const timer = setTimeout(() => {
       setIsVisible(true);
-    }, randomDelay);
+    }, 200);
     return () => clearTimeout(timer);
   }, []);
 
@@ -60,17 +59,14 @@ export const QuickLinks = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-12 text-left">
       {links.map((link, index) => {
-        // Delay aleatório para cada card
-        const randomDelay = Math.random() * 600;
-        
         return (
           <Card 
             key={index} 
-            className={`border-0 shadow-none bg-white dark:bg-[#222222] rounded-[30px] cursor-pointer hover:bg-gray-50 dark:hover:bg-[#2C2C2C] transition-all duration-500 ease-out hover:scale-105 ${
+            className={`border-0 shadow-none bg-white dark:bg-[#222222] rounded-[30px] cursor-pointer hover:bg-gray-50 dark:hover:bg-[#2C2C2C] transition-all duration-700 ease-out hover:scale-105 ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
             }`}
             style={{
-              transitionDelay: `${randomDelay}ms`
+              transitionDelay: `${index * 100 + 300}ms` // Delay sequencial suave
             }}
             onClick={() => handleNavigate(link.path)}
           >
