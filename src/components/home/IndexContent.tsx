@@ -39,25 +39,13 @@ export const IndexContent = () => {
   // Mostrar preloader durante carregamento inicial ou auth loading
   if (showPreloader || (authLoading && !user)) {
     console.log("[IndexContent] Showing preloader - initial loading or auth loading");
-    return (
-      <Preloader>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Carregando...
-        </p>
-      </Preloader>
-    );
+    return <Preloader />;
   }
 
   // Se não tem usuário, redirecionar para login seria feito pelo ProtectedRoute
   if (!user) {
     console.log("[IndexContent] No user - redirecting should be handled by ProtectedRoute");
-    return (
-      <Preloader>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Redirecionando...
-        </p>
-      </Preloader>
-    );
+    return <Preloader />;
   }
 
   // Se tem usuário, sempre mostrar a home com header
