@@ -1,50 +1,47 @@
 
+import React from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 
-export const TeamMembersSkeletonList = () => {
-  // Create an array to determine how many skeleton cards to display
+export const TeamMembersSkeletonList = React.memo(() => {
   const skeletonArray = Array.from({ length: 6 }, (_, index) => index);
 
   return (
-    <div className="space-y-6">
-      {/* Skeleton for the metrics dashboard */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+    <div className="space-y-6 animate-fade-in">
+      {/* Metrics Dashboard */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in" style={{ animationDelay: '0.1s' }}>
         {[1, 2, 3].map((item) => (
-          <Card key={item} className="border border-gray-100 dark:border-gray-800 shadow-sm">
-            <CardContent className="flex items-center p-6">
-              <Skeleton className="rounded-full h-12 w-12 mr-4" />
-              <div className="space-y-2 w-full">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-8 w-16" />
+          <Card key={item} className="border-0 shadow-sm bg-card">
+            <CardContent className="flex items-center p-4">
+              <Skeleton className="rounded-full h-10 w-10 mr-3" />
+              <div className="space-y-2 flex-1">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-6 w-14" />
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
       
-      {/* Skeleton for team members list */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {skeletonArray.map((item) => (
-          <Card key={item} className="overflow-hidden border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-xl">
-            <Skeleton className="h-24 w-full" />
-            <CardContent className="pt-0">
+      {/* Team Members Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+        {skeletonArray.map((item, index) => (
+          <Card key={item} className="overflow-hidden border-0 shadow-sm bg-card rounded-xl">
+            <Skeleton className="h-20 w-full" />
+            <CardContent className="pt-0 p-4">
               <div className="flex flex-col">
-                {/* Profile avatar skeleton */}
-                <div className="flex items-start -mt-8">
-                  <Skeleton className="h-16 w-16 rounded-full" />
+                <div className="flex items-start -mt-6">
+                  <Skeleton className="h-12 w-12 rounded-full border-4 border-background" />
                 </div>
                 
-                {/* User info skeleton */}
-                <div className="mt-3 space-y-3">
-                  <Skeleton className="h-6 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
-                  <Skeleton className="h-3 w-1/3 mt-2" />
+                <div className="mt-2 space-y-2">
+                  <Skeleton className="h-5 w-2/3" />
+                  <Skeleton className="h-3 w-1/2" />
+                  <Skeleton className="h-3 w-1/3" />
                   
-                  {/* Actions skeleton */}
-                  <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
-                    <Skeleton className="h-9 w-full rounded-full" />
-                    <Skeleton className="h-9 w-full rounded-full" />
+                  <div className="flex gap-2 mt-3 pt-3 border-t border-border">
+                    <Skeleton className="h-8 flex-1 rounded-lg" />
+                    <Skeleton className="h-8 flex-1 rounded-lg" />
                   </div>
                 </div>
               </div>
@@ -54,4 +51,4 @@ export const TeamMembersSkeletonList = () => {
       </div>
     </div>
   );
-};
+});
