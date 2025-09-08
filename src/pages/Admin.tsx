@@ -110,7 +110,7 @@ const AdminPage = () => {
     // Marcar como inicializado para NÃO executar novamente
     setIsInitialized(true);
     console.log("Admin page - Initialization complete with tab:", initialTab);
-  }, [authLoading, userProfile, hasAdminAccess]); // Removido location.search da dependência
+  }, [authLoading, userProfile, hasAdminAccess, isInitialized, location.search])
 
   // Manipulador de mudança de aba - NÃO deve interferir com a inicialização
   const handleTabChange = useCallback((tab: string) => {
