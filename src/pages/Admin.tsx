@@ -17,10 +17,12 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { AdminPageSkeleton } from '@/components/admin/AdminPageSkeleton';
 import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
+import { Preloader } from "@/components/ui/Preloader";
 import { toast } from 'sonner';
 
 const AdminPage = () => {
   const {
+    user,
     userProfile,
     loading: authLoading
   } = useAuth();
@@ -29,18 +31,45 @@ const AdminPage = () => {
   
   const [activeTab, setActiveTab] = useState("");
   const [isInitialized, setIsInitialized] = useState(false);
+  const [showPreloader, setShowPreloader] = useState(true);
+
+  // Controlar quando parar de mostrar o preloader - igual à IndexContent
+  useEffect(() => {
+    if (!authLoading && user && userProfile) {
+      // Dar um breve momento para carregar os dados iniciais
+      const timer = setTimeout(() => {
+        setShowPreloader(false);
+      }, 1500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [authLoading, user, userProfile]);
 
   console.log('[Admin] Current state:', {
     activeTab,
+    user: user?.email,
     userProfile: userProfile?.email || 'none',
     isAdmin: userProfile?.is_admin,
     isSuperAdmin: userProfile?.super_admin,
     authLoading,
-    isInitialized
+    isInitialized,
+    showPreloader
   });
 
   // Verificação melhorada de permissões de admin
   const hasAdminAccess = Boolean(userProfile?.is_admin || userProfile?.super_admin);
+
+  // Mostrar preloader durante carregamento inicial ou auth loading - igual à IndexContent
+  if (showPreloader || (authLoading && !user)) {
+    console.log("[Admin] Showing preloader - initial loading or auth loading");
+    return <Preloader />;
+  }
+
+  // Se não tem usuário, redirecionar para login seria feito pelo ProtectedRoute
+  if (!user) {
+    console.log("[Admin] No user - redirecting should be handled by ProtectedRoute");
+    return <Preloader />;
+  }
 
   // Inicialização ÚNICA das abas - só executa uma vez quando o componente monta
   useEffect(() => {
