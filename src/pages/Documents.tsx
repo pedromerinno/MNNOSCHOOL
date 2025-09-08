@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 import { AdminFloatingActionButton } from "@/components/admin/AdminFloatingActionButton";
-import { PagePreloader } from "@/components/ui/PagePreloader";
+import { Preloader } from "@/components/ui/Preloader";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, FileText, Building } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,16 +17,24 @@ import { CompanyDocument } from "@/types/company-document";
 
 const Documents = () => {
   const navigate = useNavigate();
-  const {
-    userProfile
-  } = useAuth();
-  const {
-    selectedCompany,
-    isLoading: companiesLoading
-  } = useCompanies();
+  const { user, userProfile, loading: authLoading } = useAuth();
+  const { selectedCompany, isLoading: companiesLoading } = useCompanies();
   const [mainTab, setMainTab] = useState<'company' | 'personal'>('company');
   const [editingDocument, setEditingDocument] = useState<CompanyDocument | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [showPreloader, setShowPreloader] = useState(true);
+
+  // Controlar quando parar de mostrar o preloader - igual à IndexContent
+  useEffect(() => {
+    if (!authLoading && user && userProfile) {
+      // Dar um breve momento para carregar os dados iniciais
+      const timer = setTimeout(() => {
+        setShowPreloader(false);
+      }, 1500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [authLoading, user, userProfile]);
 
   // Hooks para documentos pessoais
   const {
@@ -86,11 +94,16 @@ const Documents = () => {
     );
   };
 
+  if (showPreloader || (authLoading && !user) || companiesLoading) {
+    return <Preloader />;
+  }
+
+  if (!user) {
+    return <Preloader />;
+  }
+
   if (!userProfile) {
     return <Navigate to="/login" replace />;
-  }
-  if (companiesLoading || personalLoading) {
-    return <PagePreloader />;
   }
   if (!selectedCompany) {
     return <>

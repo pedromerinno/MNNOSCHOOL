@@ -12,13 +12,26 @@ import { ArrowLeft } from "lucide-react";
 import { CompanyThemedBadge } from "@/components/ui/badge";
 import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 import { AdminFloatingActionButton } from "@/components/admin/AdminFloatingActionButton";
-import { PagePreloader } from "@/components/ui/PagePreloader";
+import { Preloader } from "@/components/ui/Preloader";
 import { TeamMembersSimplified } from "@/components/team/TeamMembersSimplified";
 
 const Team = () => {
   const navigate = useNavigate();
   const { selectedCompany, isLoading: companiesLoading } = useCompanies();
-  const { userProfile } = useAuth();
+  const { user, userProfile, loading: authLoading } = useAuth();
+  const [showPreloader, setShowPreloader] = useState(true);
+
+  // Controlar quando parar de mostrar o preloader - igual à IndexContent
+  useEffect(() => {
+    if (!authLoading && user && userProfile) {
+      // Dar um breve momento para carregar os dados iniciais
+      const timer = setTimeout(() => {
+        setShowPreloader(false);
+      }, 1500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [authLoading, user, userProfile]);
 
   // Use only the optimized hook
   const { 
@@ -38,6 +51,15 @@ const Team = () => {
     hasError: !!membersError
   });
 
+  // Mostrar preloader durante carregamento inicial
+  if (showPreloader || (authLoading && !user)) {
+    return <Preloader />;
+  }
+
+  if (!user) {
+    return <Preloader />;
+  }
+
   // Redirect if user is not an admin
   if (!userProfile?.is_admin && !userProfile?.super_admin) {
     return <Navigate to="/" replace />;
@@ -45,7 +67,7 @@ const Team = () => {
 
   // Loading companies or members
   if (companiesLoading || membersLoading) {
-    return <PagePreloader />;
+    return <Preloader />;
   }
 
   // No company selected

@@ -20,7 +20,7 @@ export const Preloader = ({ duration = 2000, children }: PreloaderProps) => {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#F8F7F4] dark:bg-[#191919] animate-fade-in">
       <div className="flex flex-col items-center space-y-3 animate-scale-in">
         <div className="relative">
           <div className="w-5 h-5 border border-muted-foreground/20 rounded-full animate-spin border-t-primary transition-all duration-300"></div>
