@@ -19,9 +19,11 @@ export type Database = {
           company_id: string
           created_at: string
           created_by: string | null
+          encryption_key: string | null
           id: string
           notes: string | null
           password: string
+          password_encrypted: string | null
           tool_name: string
           url: string | null
           username: string
@@ -30,9 +32,11 @@ export type Database = {
           company_id: string
           created_at?: string
           created_by?: string | null
+          encryption_key?: string | null
           id?: string
           notes?: string | null
           password: string
+          password_encrypted?: string | null
           tool_name: string
           url?: string | null
           username: string
@@ -41,9 +45,11 @@ export type Database = {
           company_id?: string
           created_at?: string
           created_by?: string | null
+          encryption_key?: string | null
           id?: string
           notes?: string | null
           password?: string
+          password_encrypted?: string | null
           tool_name?: string
           url?: string | null
           username?: string
@@ -779,9 +785,11 @@ export type Database = {
       user_access: {
         Row: {
           created_at: string
+          encryption_key: string | null
           id: string
           notes: string | null
           password: string
+          password_encrypted: string | null
           tool_name: string
           updated_at: string
           url: string | null
@@ -790,9 +798,11 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          encryption_key?: string | null
           id?: string
           notes?: string | null
           password: string
+          password_encrypted?: string | null
           tool_name: string
           updated_at?: string
           url?: string | null
@@ -801,9 +811,11 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          encryption_key?: string | null
           id?: string
           notes?: string | null
           password?: string
+          password_encrypted?: string | null
           tool_name?: string
           updated_at?: string
           url?: string | null
@@ -1205,9 +1217,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      decrypt_password: {
+        Args: { encrypted_password: string; encryption_key: string }
+        Returns: string
+      }
       delete_user_safely: {
         Args: { target_user_id: string }
         Returns: boolean
+      }
+      encrypt_existing_company_passwords: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      encrypt_existing_user_passwords: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      encrypt_password: {
+        Args: { password_text: string }
+        Returns: string
       }
       get_all_companies_for_admin: {
         Args: Record<PropertyKey, never>
@@ -1247,6 +1275,10 @@ export type Database = {
           tipo_contrato: string | null
           updated_at: string
         }[]
+      }
+      get_encryption_key: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       get_is_admin_secure: {
         Args: { user_id: string }
