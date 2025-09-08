@@ -1,5 +1,7 @@
 
+import { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useAccessItems } from "@/hooks/useAccessItems";
 import { LoadingState } from "@/components/access/LoadingState";
@@ -11,18 +13,54 @@ import { ArrowLeft } from "lucide-react";
 import { CompanyThemedBadge } from "@/components/ui/badge";
 import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 import { AdminFloatingActionButton } from "@/components/admin/AdminFloatingActionButton";
-import { PagePreloader } from "@/components/ui/PagePreloader";
+import { Preloader } from "@/components/ui/Preloader";
 
 const Access = () => {
   const navigate = useNavigate();
-  const { selectedCompany, user, isLoading } = useCompanies();
+  const { user, userProfile, loading: authLoading } = useAuth();
+  const { selectedCompany, isLoading } = useCompanies();
   const { accessItems, isLoading: isLoadingAccess, hasPermission, refetch } = useAccessItems({
     companyId: selectedCompany?.id,
     userId: user?.id
   });
+  const [showPreloader, setShowPreloader] = useState(true);
 
-  if (isLoading || isLoadingAccess) {
-    return <PagePreloader />;
+  // Controlar quando parar de mostrar o preloader - igual à IndexContent
+  useEffect(() => {
+    if (!authLoading && user && userProfile) {
+      // Dar um breve momento para carregar os dados iniciais
+      const timer = setTimeout(() => {
+        setShowPreloader(false);
+      }, 1500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [authLoading, user, userProfile]);
+
+  // Debug log para verificar o estado
+  useEffect(() => {
+    console.log("[Access] Debug state:", {
+      user: user?.email,
+      userProfile: userProfile?.display_name,
+      selectedCompany: selectedCompany?.nome,
+      isLoading,
+      authLoading,
+      showPreloader,
+      isLoadingAccess,
+      hasPermission
+    });
+  }, [user, userProfile, selectedCompany, isLoading, authLoading, showPreloader, isLoadingAccess, hasPermission]);
+
+  // Mostrar preloader durante carregamento inicial ou auth loading - igual à IndexContent
+  if (showPreloader || (authLoading && !user) || isLoading || isLoadingAccess) {
+    console.log("[Access] Showing preloader - initial loading or auth loading or data loading");
+    return <Preloader />;
+  }
+
+  // Se não tem usuário, redirecionar para login seria feito pelo ProtectedRoute
+  if (!user) {
+    console.log("[Access] No user - redirecting should be handled by ProtectedRoute");
+    return <Preloader />;
   }
 
   if (!selectedCompany) {
