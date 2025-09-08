@@ -54,18 +54,28 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({
     
     setIsLoading(true);
     try {
+      // Use the new encrypted function to get decrypted passwords (admin only)
       const { data, error } = await supabase
-        .from('company_access')
-        .select('*')
-        .eq('company_id', companyId)
-        .order('tool_name');
+        .rpc('get_company_access_decrypted', { p_company_id: companyId });
       
       if (error) {
         console.error('Error fetching access items:', error);
         toast.error('Erro ao carregar itens de acesso');
         setAccessItems([]);
       } else {
-        setAccessItems(data as AccessItem[] || []);
+        // Transform the data to match the expected AccessItem format
+        const transformedData = data?.map(item => ({
+          id: item.id,
+          company_id: item.company_id,
+          tool_name: item.tool_name,
+          username: item.username,
+          password: item.password_decrypted, // Use decrypted password
+          url: item.url,
+          notes: item.notes,
+          created_at: item.created_at
+        })) || [];
+        
+        setAccessItems(transformedData as AccessItem[] || []);
       }
     } catch (error: any) {
       console.error('Error fetching access items:', error);
@@ -94,29 +104,29 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({
       }
 
       if (currentAccess) {
-        const { error } = await supabase
-          .from('company_access')
-          .update({
-            tool_name: formData.tool_name,
-            username: formData.username,
-            password: formData.password,
-            url: formData.url || null,
-            notes: formData.notes || null
-          })
-          .eq('id', currentAccess.id);
+        // Use encrypted update function
+        const { data: updated, error } = await supabase
+          .rpc('update_company_access', {
+            p_id: currentAccess.id,
+            p_tool_name: formData.tool_name,
+            p_username: formData.username,
+            p_password: formData.password,
+            p_url: formData.url || null,
+            p_notes: formData.notes || null
+          });
         
         if (error) throw error;
         toast.success('Acesso atualizado com sucesso');
       } else {
-        const { error } = await supabase
-          .from('company_access')
-          .insert({
-            company_id: companyId,
-            tool_name: formData.tool_name,
-            username: formData.username,
-            password: formData.password,
-            url: formData.url || null,
-            notes: formData.notes || null
+        // Use encrypted create function
+        const { data: newId, error } = await supabase
+          .rpc('create_company_access', {
+            p_company_id: companyId,
+            p_tool_name: formData.tool_name,
+            p_username: formData.username,
+            p_password: formData.password,
+            p_url: formData.url || null,
+            p_notes: formData.notes || null
           });
         
         if (error) throw error;

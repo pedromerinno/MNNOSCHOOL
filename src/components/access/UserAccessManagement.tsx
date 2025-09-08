@@ -54,14 +54,26 @@ export const UserAccessManagement: React.FC<UserAccessManagementProps> = ({
     
     setIsLoading(true);
     try {
+      // Use the new encrypted function to get decrypted passwords for current user
       const { data, error } = await supabase
-        .from('user_access')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('tool_name');
+        .rpc('get_user_access_decrypted');
       
       if (error) throw error;
-      setAccessItems(data as UserAccessItem[] || []);
+      
+      // Transform the data to match the expected UserAccessItem format
+      const transformedData = data?.map(item => ({
+        id: item.id,
+        user_id: item.user_id,
+        tool_name: item.tool_name,
+        username: item.username,
+        password: item.password_decrypted, // Use decrypted password
+        url: item.url,
+        notes: item.notes,
+        created_at: item.created_at,
+        updated_at: item.updated_at
+      })) || [];
+      
+      setAccessItems(transformedData as UserAccessItem[] || []);
     } catch (error: any) {
       console.error('Error fetching user access items:', error);
       toast.error('Erro ao carregar suas senhas pessoais');
@@ -89,6 +101,7 @@ export const UserAccessManagement: React.FC<UserAccessManagementProps> = ({
       }
 
       if (currentAccess) {
+        // Use encrypted update - need to create user update function
         const { error } = await supabase
           .from('user_access')
           .update({
@@ -104,15 +117,14 @@ export const UserAccessManagement: React.FC<UserAccessManagementProps> = ({
         if (error) throw error;
         toast.success('Senha pessoal atualizada com sucesso');
       } else {
-        const { error } = await supabase
-          .from('user_access')
-          .insert({
-            user_id: user.id,
-            tool_name: formData.tool_name,
-            username: formData.username,
-            password: formData.password,
-            url: formData.url || null,
-            notes: formData.notes || null
+        // Use encrypted create function
+        const { data: newId, error } = await supabase
+          .rpc('create_user_access', {
+            p_tool_name: formData.tool_name,
+            p_username: formData.username,
+            p_password: formData.password,
+            p_url: formData.url || null,
+            p_notes: formData.notes || null
           });
         
         if (error) throw error;

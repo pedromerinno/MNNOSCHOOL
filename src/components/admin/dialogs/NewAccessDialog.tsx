@@ -75,16 +75,15 @@ export const NewAccessDialog: React.FC<NewAccessDialogProps> = ({ open, onOpenCh
 
       setLoading(true);
 
-      const { error } = await supabase
-        .from('company_access')
-        .insert({
-          company_id: selectedCompany.id,
-          tool_name: tool_name,
-          username: username,
-          password: password,
-          url: url || null,
-          notes: notes || null,
-          created_by: user.id
+      // Use new encrypted function instead of direct table access
+      const { data: newId, error } = await supabase
+        .rpc('create_company_access', {
+          p_company_id: selectedCompany.id,
+          p_tool_name: tool_name,
+          p_username: username,
+          p_password: password,
+          p_url: url || null,
+          p_notes: notes || null
         });
 
       if (error) throw error;

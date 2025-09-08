@@ -1217,6 +1217,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_company_access: {
+        Args: {
+          p_company_id: string
+          p_notes?: string
+          p_password: string
+          p_tool_name: string
+          p_url?: string
+          p_username: string
+        }
+        Returns: string
+      }
+      create_user_access: {
+        Args: {
+          p_notes?: string
+          p_password: string
+          p_tool_name: string
+          p_url?: string
+          p_username: string
+        }
+        Returns: string
+      }
       decrypt_password: {
         Args: { encrypted_password: string; encryption_key: string }
         Returns: string
@@ -1276,6 +1297,20 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_company_access_decrypted: {
+        Args: { p_company_id: string }
+        Returns: {
+          company_id: string
+          created_at: string
+          created_by: string
+          id: string
+          notes: string
+          password_decrypted: string
+          tool_name: string
+          url: string
+          username: string
+        }[]
+      }
       get_encryption_key: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -1287,6 +1322,20 @@ export type Database = {
       get_is_super_admin_secure: {
         Args: { user_id: string }
         Returns: boolean
+      }
+      get_user_access_decrypted: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string
+          id: string
+          notes: string
+          password_decrypted: string
+          tool_name: string
+          updated_at: string
+          url: string
+          user_id: string
+          username: string
+        }[]
       }
       get_user_companies: {
         Args: { user_id: string }
@@ -1363,6 +1412,17 @@ export type Database = {
       sync_all_profile_emails: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      update_company_access: {
+        Args: {
+          p_id: string
+          p_notes?: string
+          p_password?: string
+          p_tool_name?: string
+          p_url?: string
+          p_username?: string
+        }
+        Returns: boolean
       }
       user_belongs_to_any_company: {
         Args: Record<PropertyKey, never>

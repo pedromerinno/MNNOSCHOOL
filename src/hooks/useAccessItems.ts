@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AccessItem } from "@/components/access/types";
@@ -43,16 +42,14 @@ export const useAccessItems = ({ companyId, userId }: UseAccessItemsProps) => {
     try {
       console.log('Fetching access items for company:', companyId, 'User ID:', userId);
       
+      // Use the new encrypted function to get decrypted passwords (admin only)
       const { data, error } = await supabase
-        .from('company_access')
-        .select('*')
-        .eq('company_id', companyId)
-        .order('tool_name');
+        .rpc('get_company_access_decrypted', { p_company_id: companyId });
       
       if (error) {
         console.error('Error fetching access items:', error);
-        if (error.code === '42501' || error.message.includes('policy')) {
-          console.log('Access denied by RLS policy:', error.message);
+        if (error.code === '42501' || error.message.includes('policy') || error.message.includes('Unauthorized')) {
+          console.log('Access denied by RLS policy or insufficient permissions:', error.message);
           setHasPermission(false);
           setAccessItems([]);
         } else {
@@ -62,7 +59,21 @@ export const useAccessItems = ({ companyId, userId }: UseAccessItemsProps) => {
         }
       } else {
         console.log('Access items found:', data?.length, 'items');
-        setAccessItems(data as AccessItem[] || []);
+        
+        // Transform the data to match the expected AccessItem format
+        const transformedData = data?.map(item => ({
+          id: item.id,
+          company_id: item.company_id,
+          tool_name: item.tool_name,
+          username: item.username,
+          password: item.password_decrypted, // Use decrypted password
+          url: item.url,
+          notes: item.notes,
+          created_at: item.created_at,
+          created_by: item.created_by
+        })) || [];
+        
+        setAccessItems(transformedData as AccessItem[] || []);
         lastSelectedCompanyIdRef.current = companyId;
         setHasPermission(true);
       }
