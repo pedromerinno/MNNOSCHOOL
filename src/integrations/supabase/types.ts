@@ -1332,6 +1332,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      user_belongs_to_any_company: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       user_belongs_to_company: {
         Args: { company_id: string } | { company_id: string; user_id: string }
         Returns: boolean
@@ -1346,6 +1350,10 @@ export type Database = {
       }
       user_can_access_course: {
         Args: { course_id: string }
+        Returns: boolean
+      }
+      user_is_company_admin: {
+        Args: { company_id: string }
         Returns: boolean
       }
     }
