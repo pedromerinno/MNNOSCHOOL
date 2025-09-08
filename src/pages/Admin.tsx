@@ -33,6 +33,9 @@ const AdminPage = () => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [showPreloader, setShowPreloader] = useState(true);
 
+  // Verificação melhorada de permissões de admin
+  const hasAdminAccess = Boolean(userProfile?.is_admin || userProfile?.super_admin);
+
   // Controlar quando parar de mostrar o preloader - igual à IndexContent
   useEffect(() => {
     if (!authLoading && user && userProfile) {
@@ -44,32 +47,6 @@ const AdminPage = () => {
       return () => clearTimeout(timer);
     }
   }, [authLoading, user, userProfile]);
-
-  console.log('[Admin] Current state:', {
-    activeTab,
-    user: user?.email,
-    userProfile: userProfile?.email || 'none',
-    isAdmin: userProfile?.is_admin,
-    isSuperAdmin: userProfile?.super_admin,
-    authLoading,
-    isInitialized,
-    showPreloader
-  });
-
-  // Verificação melhorada de permissões de admin
-  const hasAdminAccess = Boolean(userProfile?.is_admin || userProfile?.super_admin);
-
-  // Mostrar preloader durante carregamento inicial ou auth loading - igual à IndexContent
-  if (showPreloader || (authLoading && !user)) {
-    console.log("[Admin] Showing preloader - initial loading or auth loading");
-    return <Preloader />;
-  }
-
-  // Se não tem usuário, redirecionar para login seria feito pelo ProtectedRoute
-  if (!user) {
-    console.log("[Admin] No user - redirecting should be handled by ProtectedRoute");
-    return <Preloader />;
-  }
 
   // Inicialização ÚNICA das abas - só executa uma vez quando o componente monta
   useEffect(() => {
@@ -110,7 +87,7 @@ const AdminPage = () => {
     // Marcar como inicializado para NÃO executar novamente
     setIsInitialized(true);
     console.log("Admin page - Initialization complete with tab:", initialTab);
-  }, [authLoading, userProfile, hasAdminAccess, isInitialized, location.search])
+  }, [authLoading, userProfile, hasAdminAccess, isInitialized, location.search]);
 
   // Manipulador de mudança de aba - NÃO deve interferir com a inicialização
   const handleTabChange = useCallback((tab: string) => {
@@ -137,6 +114,29 @@ const AdminPage = () => {
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, [activeTab]);
+
+  console.log('[Admin] Current state:', {
+    activeTab,
+    user: user?.email,
+    userProfile: userProfile?.email || 'none',
+    isAdmin: userProfile?.is_admin,
+    isSuperAdmin: userProfile?.super_admin,
+    authLoading,
+    isInitialized,
+    showPreloader
+  });
+
+  // Mostrar preloader durante carregamento inicial ou auth loading - igual à IndexContent
+  if (showPreloader || (authLoading && !user)) {
+    console.log("[Admin] Showing preloader - initial loading or auth loading");
+    return <Preloader />;
+  }
+
+  // Se não tem usuário, redirecionar para login seria feito pelo ProtectedRoute
+  if (!user) {
+    console.log("[Admin] No user - redirecting should be handled by ProtectedRoute");
+    return <Preloader />;
+  }
 
   // Mostrar skeleton enquanto carrega ou não está inicializado
   if (authLoading || !userProfile || !isInitialized) {
