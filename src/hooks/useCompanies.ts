@@ -9,6 +9,7 @@ import { useCompanyDelete } from "./company/useCompanyDelete";
 import { useCompanyUserManagement } from "./company/useCompanyUserManagement";
 import { useCompanyEvents } from "./company/useCompanyEvents";
 import { useCompanyGlobalState } from "./company/useCompanyGlobalState";
+import { useCompanyGlobalCache } from "./company/useCompanyGlobalCache";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -26,7 +27,6 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
   const { user } = useAuth();
   const initialDataLoaded = useRef(false);
   const hasRegistered = useRef(false);
-  const lastFetchTime = useRef(0);
   
   // Register hook with global state
   useEffect(() => {
@@ -111,26 +111,21 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     removeUserFromCompany 
   } = useCompanyUserManagement();
   
+  // Get global cache
+  const { getCachedCompanies, getImmediateCache, invalidateCache } = useCompanyGlobalCache();
+
   // Listen for company selection events
   useCompanyEvents(setSelectedCompany);
   
-  // Optimized data loading with throttling
+  // Optimized data loading with global cache
   const loadInitialData = useCallback(async () => {
     if (skipLoadingInOnboarding || !user?.id || initialDataLoaded.current) {
-      return;
-    }
-    
-    // Throttle requests - only allow one fetch per 2 seconds
-    const now = Date.now();
-    if (now - lastFetchTime.current < 2000) {
-      console.log('[useCompanies] Throttling request, too soon since last fetch');
       return;
     }
     
     try {
       console.log('[useCompanies] Loading initial company data for user:', user.id);
       initialDataLoaded.current = true;
-      lastFetchTime.current = now;
       
       // Try to get stored company first for immediate UI update
       const storedCompany = getStoredCompany();
@@ -164,30 +159,64 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
         }
       }
       
-      if (isSuperAdmin) {
-        // For super admin, get all companies directly
-        const { data: allCompanies, error: companiesError } = await supabase
-          .from('empresas')
-          .select('*')
-          .order('nome')
-          .limit(20);
-        
-        if (companiesError) {
-          throw companiesError;
-        }
-        
-        setUserCompanies(allCompanies || []);
-        console.log('[useCompanies] Super admin companies loaded:', allCompanies?.length || 0);
-      } else {
-        const companies = await getUserCompanies(user.id);
-        console.log('[useCompanies] Regular user companies loaded:', companies.length);
+      // Use cache key based on user type
+      const cacheKey = isSuperAdmin ? 'super_admin_companies' : `user_companies_${user.id}`;
+      
+      // Check for immediate cache first
+      const cachedData = getImmediateCache(cacheKey);
+      if (cachedData && cachedData.length > 0) {
+        console.log('[useCompanies] Using cached data:', cachedData.length);
+        setUserCompanies(cachedData);
+        return;
       }
+      
+      setIsLoading(true);
+      
+      // Define fetcher based on user type
+      const fetcher = async () => {
+        if (isSuperAdmin) {
+          const { data: allCompanies, error: companiesError } = await supabase
+            .from('empresas')
+            .select('*')
+            .order('nome')
+            .limit(20);
+          
+          if (companiesError) {
+            throw companiesError;
+          }
+          
+          console.log('[useCompanies] Super admin companies fetched:', allCompanies?.length || 0);
+          return allCompanies || [];
+        } else {
+          const companies = await getUserCompanies(user.id);
+          console.log('[useCompanies] Regular user companies fetched:', companies.length);
+          return companies;
+        }
+      };
+      
+      // Use cached fetcher
+      const companies = await getCachedCompanies(cacheKey, fetcher);
+      setUserCompanies(companies);
       
     } catch (error) {
       console.error(`[useCompanies-${hookId}] Error loading initial company data:`, error);
       setError(error instanceof Error ? error : new Error('Failed to load companies'));
+    } finally {
+      setIsLoading(false);
     }
-  }, [user?.id, getUserCompanies, skipLoadingInOnboarding, setUserCompanies, hookId, setError, getStoredCompany, setSelectedCompany]);
+  }, [
+    user?.id, 
+    getUserCompanies, 
+    skipLoadingInOnboarding, 
+    setUserCompanies, 
+    hookId, 
+    setError, 
+    getStoredCompany, 
+    setSelectedCompany,
+    getCachedCompanies,
+    getImmediateCache,
+    setIsLoading
+  ]);
   
   // Load initial data when user is available
   useEffect(() => {
@@ -206,26 +235,32 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     }
   }, [userCompanies.length, selectedCompany, skipLoadingInOnboarding, setSelectedCompany, getStoredCompany]);
   
-  // Simplified event listeners
+  // Simplified event listeners with cache integration
   useEffect(() => {
     if (skipLoadingInOnboarding) {
       return;
     }
     
-    const handleCompanyRelationChange = () => {
-      if (user?.id && Date.now() - lastFetchTime.current > 2000) {
-        console.log('[useCompanies] Company relation changed, reloading...');
-        forceGetUserCompanies(user.id);
-        lastFetchTime.current = Date.now();
+    const handleCompanyRelationChange = async () => {
+      if (user?.id) {
+        console.log('[useCompanies] Company relation changed, invalidating cache...');
+        const cacheKey = `user_companies_${user.id}`;
+        invalidateCache(cacheKey);
+        invalidateCache('super_admin_companies'); // Also invalidate super admin cache
+        
+        // Reload data
+        initialDataLoaded.current = false;
+        await loadInitialData();
       }
     };
 
-    const handleForceReload = () => {
-      if (user?.id && Date.now() - lastFetchTime.current > 2000) {
-        console.log('[useCompanies] Force reload requested');
-        forceGetUserCompanies(user.id);
-        lastFetchTime.current = Date.now();
-      } else if (!user?.id) {
+    const handleForceReload = async () => {
+      if (user?.id) {
+        console.log('[useCompanies] Force reload requested, invalidating cache');
+        invalidateCache(); // Clear all cache
+        initialDataLoaded.current = false;
+        await loadInitialData();
+      } else {
         fetchCompanies();
       }
     };
@@ -237,7 +272,14 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
       window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
       window.removeEventListener('force-reload-companies', handleForceReload);
     };
-  }, [user?.id, forceGetUserCompanies, fetchCompanies, skipLoadingInOnboarding]);
+  }, [user?.id, loadInitialData, fetchCompanies, skipLoadingInOnboarding, invalidateCache]);
+
+  // Enhanced forceGetUserCompanies with cache invalidation
+  const enhancedForceGetUserCompanies = useCallback(async (userId: string) => {
+    const cacheKey = `user_companies_${userId}`;
+    invalidateCache(cacheKey);
+    return forceGetUserCompanies(userId);
+  }, [forceGetUserCompanies, invalidateCache]);
   
   return {
     isLoading,
@@ -248,7 +290,7 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
     fetchCount,
     fetchCompanies,
     getUserCompanies,
-    forceGetUserCompanies,
+    forceGetUserCompanies: enhancedForceGetUserCompanies,
     getCompanyById,
     selectCompany,
     createCompany,
