@@ -77,6 +77,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     clearCache({ key: USER_PROFILE_CACHE_KEY });
     clearProfile();
+    
+    // Clear company-related localStorage items for security
+    try {
+      localStorage.removeItem('selectedCompanyId');
+      localStorage.removeItem('selectedCompany');
+      // Clear user profile cache
+      if (user?.id) {
+        localStorage.removeItem(`profile_${user.id}`);
+      }
+    } catch (error) {
+      console.warn('Error clearing localStorage on logout:', error);
+    }
+    
     await handleSignOut();
   };
 
