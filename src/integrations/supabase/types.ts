@@ -1424,6 +1424,17 @@ export type Database = {
         }
         Returns: boolean
       }
+      update_user_access: {
+        Args: {
+          p_id: string
+          p_notes?: string
+          p_password?: string
+          p_tool_name?: string
+          p_url?: string
+          p_username?: string
+        }
+        Returns: boolean
+      }
       user_belongs_to_any_company: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -1441,7 +1452,7 @@ export type Database = {
         Returns: boolean
       }
       user_can_access_course: {
-        Args: { course_id: string }
+        Args: { _course_id: string }
         Returns: boolean
       }
       user_is_company_admin: {
