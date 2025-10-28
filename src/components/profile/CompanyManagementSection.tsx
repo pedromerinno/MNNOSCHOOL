@@ -48,6 +48,9 @@ export const CompanyManagementSection = ({
         await forceGetUserCompanies(user.id);
       }
       
+      // Dispatch event to refresh all company-related data
+      window.dispatchEvent(new CustomEvent('company-relation-changed'));
+      
       toast.success('Empresa desvinculada com sucesso!');
       setCompanyToRemove(null);
     } catch (error) {
