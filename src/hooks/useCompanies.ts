@@ -94,7 +94,8 @@ export const useCompanies = (options: UseCompaniesOptions = {}) => {
   
   const { updateCompany } = useCompanyUpdate({ 
     setIsLoading, 
-    setCompanies, 
+    setCompanies,
+    setUserCompanies, 
     selectedCompany, 
     setSelectedCompany 
   });

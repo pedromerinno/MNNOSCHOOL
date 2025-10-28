@@ -8,13 +8,15 @@ import { useCompanySync } from './useCompanySync';
 interface UseCompanyUpdateProps {
   setIsLoading: (loading: boolean) => void;
   setCompanies: (companies: Company[] | ((prevCompanies: Company[]) => Company[])) => void;
+  setUserCompanies?: (companies: Company[] | ((prevCompanies: Company[]) => Company[])) => void;
   selectedCompany: Company | null;
   setSelectedCompany: (company: Company | null) => void;
 }
 
 export const useCompanyUpdate = ({ 
   setIsLoading, 
-  setCompanies, 
+  setCompanies,
+  setUserCompanies, 
   selectedCompany, 
   setSelectedCompany 
 }: UseCompanyUpdateProps) => {
@@ -39,6 +41,13 @@ export const useCompanyUpdate = ({
           company.id === companyId ? { ...company, ...updatedCompany } : company
         ));
         
+        // Also update userCompanies list if available
+        if (setUserCompanies) {
+          setUserCompanies(prevCompanies => prevCompanies.map(company => 
+            company.id === companyId ? { ...company, ...updatedCompany } : company
+          ));
+        }
+        
         // Update selected company if it's the one being updated
         if (selectedCompany?.id === companyId) {
           const newSelectedCompany = { ...selectedCompany, ...updatedCompany };
@@ -59,7 +68,7 @@ export const useCompanyUpdate = ({
     } finally {
       setIsLoading(false);
     }
-  }, [setIsLoading, setCompanies, selectedCompany, setSelectedCompany, syncCompanyData]);
+  }, [setIsLoading, setCompanies, setUserCompanies, selectedCompany, setSelectedCompany, syncCompanyData]);
   
   return { updateCompany };
 };
