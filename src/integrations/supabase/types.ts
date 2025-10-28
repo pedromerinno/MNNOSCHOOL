@@ -1242,24 +1242,12 @@ export type Database = {
         Args: { encrypted_password: string; encryption_key: string }
         Returns: string
       }
-      delete_user_safely: {
-        Args: { target_user_id: string }
-        Returns: boolean
-      }
-      encrypt_existing_company_passwords: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      encrypt_existing_user_passwords: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      encrypt_password: {
-        Args: { password_text: string }
-        Returns: string
-      }
+      delete_user_safely: { Args: { target_user_id: string }; Returns: boolean }
+      encrypt_existing_company_passwords: { Args: never; Returns: number }
+      encrypt_existing_user_passwords: { Args: never; Returns: number }
+      encrypt_password: { Args: { password_text: string }; Returns: string }
       get_all_companies_for_admin: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           cor_principal: string | null
           created_at: string
@@ -1275,9 +1263,15 @@ export type Database = {
           valores: string | null
           video_institucional: string | null
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "empresas"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       get_all_users_secure: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           aniversario: string | null
           avatar: string | null
@@ -1296,6 +1290,12 @@ export type Database = {
           tipo_contrato: string | null
           updated_at: string
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       get_company_access_decrypted: {
         Args: { p_company_id: string }
@@ -1311,20 +1311,11 @@ export type Database = {
           username: string
         }[]
       }
-      get_encryption_key: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      get_is_admin_secure: {
-        Args: { user_id: string }
-        Returns: boolean
-      }
-      get_is_super_admin_secure: {
-        Args: { user_id: string }
-        Returns: boolean
-      }
+      get_encryption_key: { Args: never; Returns: string }
+      get_is_admin_secure: { Args: { user_id: string }; Returns: boolean }
+      get_is_super_admin_secure: { Args: { user_id: string }; Returns: boolean }
       get_user_access_decrypted: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           created_at: string
           id: string
@@ -1354,6 +1345,12 @@ export type Database = {
           valores: string | null
           video_institucional: string | null
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "empresas"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       get_user_companies_for_admin: {
         Args: { current_user_id: string }
@@ -1372,47 +1369,25 @@ export type Database = {
           valores: string | null
           video_institucional: string | null
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "empresas"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
-      is_admin: {
-        Args: Record<PropertyKey, never> | { user_id: string }
-        Returns: boolean
-      }
-      is_admin_secure: {
-        Args: { user_id: string }
-        Returns: boolean
-      }
-      is_current_user_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_current_user_super_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_super_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_user_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_user_admin_for_invites: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_user_admin_or_super_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_user_super_admin: {
-        Args: { user_id: string }
-        Returns: boolean
-      }
-      sync_all_profile_emails: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      is_admin:
+        | { Args: { user_id: string }; Returns: boolean }
+        | { Args: never; Returns: boolean }
+      is_admin_secure: { Args: { user_id: string }; Returns: boolean }
+      is_current_user_admin: { Args: never; Returns: boolean }
+      is_current_user_super_admin: { Args: never; Returns: boolean }
+      is_super_admin: { Args: never; Returns: boolean }
+      is_user_admin: { Args: never; Returns: boolean }
+      is_user_admin_for_invites: { Args: never; Returns: boolean }
+      is_user_admin_or_super_admin: { Args: never; Returns: boolean }
+      is_user_super_admin: { Args: { user_id: string }; Returns: boolean }
+      sync_all_profile_emails: { Args: never; Returns: undefined }
       update_company_access: {
         Args: {
           p_id: string
@@ -1435,14 +1410,10 @@ export type Database = {
         }
         Returns: boolean
       }
-      user_belongs_to_any_company: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      user_belongs_to_company: {
-        Args: { company_id: string } | { company_id: string; user_id: string }
-        Returns: boolean
-      }
+      user_belongs_to_any_company: { Args: never; Returns: boolean }
+      user_belongs_to_company:
+        | { Args: { company_id: string; user_id: string }; Returns: boolean }
+        | { Args: { company_id: string }; Returns: boolean }
       user_belongs_to_company_of_profile: {
         Args: { profile_id: string }
         Returns: boolean
@@ -1451,14 +1422,8 @@ export type Database = {
         Args: { document_id: string }
         Returns: boolean
       }
-      user_can_access_course: {
-        Args: { _course_id: string }
-        Returns: boolean
-      }
-      user_is_company_admin: {
-        Args: { company_id: string }
-        Returns: boolean
-      }
+      user_can_access_course: { Args: { _course_id: string }; Returns: boolean }
+      user_is_company_admin: { Args: { company_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
