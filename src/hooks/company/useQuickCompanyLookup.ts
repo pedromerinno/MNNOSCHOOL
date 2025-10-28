@@ -8,22 +8,35 @@ export function useQuickCompanyLookup() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchCompany = async (companyId: string) => {
+  const fetchCompany = async (searchTerm: string) => {
     setLoading(true);
     setError(null);
     setCompanyInfo(null);
 
-    if (!companyId || companyId.length < 10) {
+    if (!searchTerm || searchTerm.trim().length < 3) {
       setLoading(false);
       setCompanyInfo(null);
       return;
     }
+
     try {
-      const { data, error } = await supabase
+      // Tenta buscar por ID primeiro (UUID tem 36 caracteres com hifens)
+      const isUUID = searchTerm.length === 36 && searchTerm.includes('-');
+      
+      let query = supabase
         .from("empresas")
-        .select("id, nome, logo")
-        .eq("id", companyId)
-        .maybeSingle();
+        .select("id, nome, logo");
+
+      if (isUUID) {
+        // Busca exata por ID
+        query = query.eq("id", searchTerm);
+      } else {
+        // Busca por nome (case-insensitive)
+        query = query.ilike("nome", `%${searchTerm}%`).limit(1);
+      }
+
+      const { data, error } = await query.maybeSingle();
+      
       if (error) throw error;
       if (data) setCompanyInfo(data as Company);
       else setCompanyInfo(null);

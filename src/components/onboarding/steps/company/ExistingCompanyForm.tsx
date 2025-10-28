@@ -63,10 +63,10 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
       clearTimeout(lookupDebounceTimer);
     }
     
-    // Configurar novo timer para buscar a empresa
-    if (newValue.length >= 10) {
+    // Configurar novo timer para buscar a empresa (mínimo 3 caracteres)
+    if (newValue.trim().length >= 3) {
       const timer = setTimeout(() => {
-        console.log("Buscando empresa com ID:", newValue);
+        console.log("Buscando empresa:", newValue);
         fetchCompany(newValue);
         setIdValidated(true);
       }, 500);
@@ -160,10 +160,10 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
         console.error("Error during completion:", error);
         toast.error(`Erro ao concluir: ${error.message}`);
       }
-    } else if (inputValue && inputValue.length >= 10 && !companyInfo) {
-      toast.error("Empresa não encontrada. Verifique o ID informado.");
+    } else if (inputValue && inputValue.trim().length >= 3 && !companyInfo) {
+      toast.error("Empresa não encontrada. Verifique o nome ou ID informado.");
     } else {
-      toast.error("Digite um ID de empresa válido.");
+      toast.error("Digite o nome ou ID da empresa para continuar.");
     }
   };
 
@@ -206,8 +206,8 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
         />
       )}
 
-      {/* Estado de empresa não encontrada - mostrar apenas após validação e quando o ID tiver comprimento válido */}
-      {!loading && idValidated && inputValue && inputValue.length >= 10 && !companyInfo && (
+      {/* Estado de empresa não encontrada - mostrar apenas após validação e quando tiver pelo menos 3 caracteres */}
+      {!loading && idValidated && inputValue && inputValue.trim().length >= 3 && !companyInfo && (
         <CompanyNotFoundMessage />
       )}
 

@@ -20,14 +20,14 @@ const ExistingCompanyIDField: React.FC<ExistingCompanyIDFieldProps> = ({
   return (
     <div className="space-y-2">
       <Label htmlFor="companyId" className="block text-sm font-medium text-gray-700">
-        ID da Empresa
+        ID ou Nome da Empresa
       </Label>
       <div className="relative">
         <Input
           id="companyId"
           value={inputValue}
           onChange={(e) => onInputChange(e.target.value)}
-          placeholder="Digite o ID da empresa"
+          placeholder="Digite o ID ou nome da empresa"
           className={`pr-10 ${
             isValidated && (isCompanyFound ? 'border-green-500 focus:border-green-500 focus:ring-green-500' 
                                         : 'border-red-500 focus:border-red-500 focus:ring-red-500')
@@ -44,7 +44,7 @@ const ExistingCompanyIDField: React.FC<ExistingCompanyIDFieldProps> = ({
         )}
       </div>
       <p className="text-sm text-gray-500">
-        Digite o ID da empresa para vincular-se a ela
+        Digite o ID (UUID) ou o nome da empresa para vincular-se a ela
       </p>
     </div>
   );
