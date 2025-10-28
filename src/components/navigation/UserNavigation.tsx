@@ -33,11 +33,16 @@ export const UserNavigation = ({ avatarUrl = "/lovable-uploads/54cf67d5-105d-4bf
     selectedCompany, 
     selectCompany,
     isLoading,
+    forceGetUserCompanies,
   } = useCompanies();
   
   useEffect(() => {
     const handleCompanyRelationChange = async () => {
       console.log('UserNavigation: Detected company relation change');
+      // Recarregar as empresas do usuário quando houver mudanças nas vinculações
+      if (user?.id) {
+        await forceGetUserCompanies(user.id);
+      }
     };
     
     // Listener para abrir o diálogo de perfil via evento personalizado
@@ -52,7 +57,7 @@ export const UserNavigation = ({ avatarUrl = "/lovable-uploads/54cf67d5-105d-4bf
       window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
       window.removeEventListener('open-profile-dialog', handleOpenProfileDialog);
     };
-  }, []);
+  }, [user?.id, forceGetUserCompanies]);
 
   useEffect(() => {
     setDisplayName(userProfile?.display_name || user?.email?.split('@')[0] || "Usuário");
