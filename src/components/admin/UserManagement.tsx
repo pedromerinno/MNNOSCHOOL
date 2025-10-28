@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserTableOptimized } from './UserTableOptimized';
 import { useUsers } from '@/hooks/useUsers';
 import { AdminSetup } from './user/AdminSetup';
@@ -83,6 +83,20 @@ export const UserManagement = () => {
   const handleDeleteUser = async (userId: string) => {
     await deleteUser(userId);
   };
+
+  // Listen for company relation changes to refresh user list
+  useEffect(() => {
+    const handleCompanyRelationChange = () => {
+      console.log('[UserManagement] Company relation changed, refreshing users');
+      fetchUsers();
+    };
+
+    window.addEventListener('company-relation-changed', handleCompanyRelationChange);
+    
+    return () => {
+      window.removeEventListener('company-relation-changed', handleCompanyRelationChange);
+    };
+  }, [fetchUsers]);
 
   // Se não há usuários e não está carregando, mostrar estado vazio específico
   if (!loading && users.length === 0 && !permissionError) {
