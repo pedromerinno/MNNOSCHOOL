@@ -137,6 +137,10 @@ export const CompanyManagement: React.FC = () => {
   };
 
   const handleFormSubmit = async (data: Omit<Company, 'id' | 'created_at' | 'updated_at'>) => {
+    console.log('[CompanyManagement] handleFormSubmit called with data:', data);
+    console.log('[CompanyManagement] selectedCompany:', selectedCompany);
+    console.log('[CompanyManagement] userProfile:', userProfile);
+    
     if (!userProfile?.is_admin && !userProfile?.super_admin) {
       toast.error("Você não tem permissão para realizar esta ação");
       return;
@@ -144,18 +148,23 @@ export const CompanyManagement: React.FC = () => {
     setIsSubmitting(true);
     try {
       if (selectedCompany) {
+        console.log('[CompanyManagement] Calling updateCompany with id:', selectedCompany.id);
         await updateCompany(selectedCompany.id, data);
+        console.log('[CompanyManagement] updateCompany completed successfully');
       } else {
+        console.log('[CompanyManagement] Calling createCompany');
         // Include the current user as the creator of the company
         const companyData = {
           ...data,
           created_by: userProfile.id
         };
         await createCompany(companyData);
+        console.log('[CompanyManagement] createCompany completed successfully');
       }
       setIsFormOpen(false);
     } catch (error) {
-      console.error('Error submitting form:', error);
+      console.error('[CompanyManagement] Error submitting form:', error);
+      toast.error('Erro ao salvar empresa');
     } finally {
       setIsSubmitting(false);
     }
