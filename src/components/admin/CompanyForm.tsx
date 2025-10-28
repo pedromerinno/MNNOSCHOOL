@@ -88,11 +88,13 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
   });
 
   const handleFormSubmit = async (data: CompanyFormValues) => {
+    console.log('[CompanyForm] Form submitted with data:', data);
     // Convert valores array to JSON string for storage
     const processedData = {
       ...data,
       valores: data.valores && data.valores.length > 0 ? JSON.stringify(data.valores) : null
     };
+    console.log('[CompanyForm] Processed data:', processedData);
     await onSubmit(processedData);
   };
 
@@ -105,7 +107,15 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
+      <form 
+        onSubmit={(e) => {
+          console.log('[CompanyForm] Form submit event triggered');
+          console.log('[CompanyForm] Form errors:', form.formState.errors);
+          console.log('[CompanyForm] Form values:', form.getValues());
+          form.handleSubmit(handleFormSubmit)(e);
+        }} 
+        className="space-y-4"
+      >
         <FormField
           control={form.control}
           name="nome"
