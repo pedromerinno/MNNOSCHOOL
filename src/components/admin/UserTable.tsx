@@ -1,10 +1,11 @@
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle, Image } from "lucide-react";
+import { CheckCircle, XCircle } from "lucide-react";
 import { UserAdminToggle } from "./UserAdminToggle";
 import { UserProfile } from "@/hooks/useUsers";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getInitials } from "@/utils/stringUtils";
 
 // Novo type: Supondo companies?: { logo: string | null, nome: string }[] em UserProfile
 type ExtendedUserProfile = UserProfile & {
@@ -31,9 +32,29 @@ const CompanyLogosCell: React.FC<{
   const showCompanies = companies.slice(0, maxToShow);
   const extra = companies.length - maxToShow;
   return <div className="flex items-center gap-1.5">
-      {showCompanies.map((company, idx) => company.logo ? <img key={company.nome + idx} src={company.logo} alt={company.nome} className="w-8 h-8 rounded-md object-contain border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-0.5" /> : <span key={company.nome + idx} className="rounded-md bg-gray-100 dark:bg-gray-800 text-gray-400 flex items-center justify-center w-8 h-8 border border-gray-200 dark:border-gray-700">
-            <Image className="w-4 h-4" />
-          </span>)}
+      {showCompanies.map((company, idx) => company.logo ? (
+        <img 
+          key={company.nome + idx} 
+          src={company.logo} 
+          alt={company.nome} 
+          className="w-8 h-8 rounded-md object-contain border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-0.5"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.style.display = 'none';
+            const parent = target.parentElement;
+            if (parent) {
+              const initialsDiv = document.createElement('div');
+              initialsDiv.className = "w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-xs text-primary font-medium border border-gray-200 dark:border-gray-700";
+              initialsDiv.textContent = getInitials(company.nome);
+              parent.insertBefore(initialsDiv, target);
+            }
+          }}
+        />
+      ) : (
+        <div key={company.nome + idx} className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-xs text-primary font-medium border border-gray-200 dark:border-gray-700">
+          {getInitials(company.nome)}
+        </div>
+      ))}
       {extra > 0 && <span className="ml-1.5 text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700">+{extra}</span>}
     </div>;
 };

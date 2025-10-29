@@ -2,6 +2,7 @@
 import React from 'react';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Company } from '@/types/company';
+import { getInitials } from '@/utils/stringUtils';
 
 interface CompanyListProps {
   companies: Company[];
@@ -42,13 +43,19 @@ export const CompanyList: React.FC<CompanyListProps> = ({
                 className="h-5 w-5 rounded object-contain"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = "/placeholder.svg";
-                  target.onerror = null;
+                  target.style.display = 'none';
+                  const parent = target.parentElement;
+                  if (parent) {
+                    const initialsDiv = document.createElement('div');
+                    initialsDiv.className = "h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary font-medium";
+                    initialsDiv.textContent = getInitials(company.nome);
+                    parent.insertBefore(initialsDiv, target);
+                  }
                 }}
               />
             ) : (
               <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary font-medium">
-                {company.nome.charAt(0).toUpperCase()}
+                {getInitials(company.nome)}
               </div>
             )}
             <label 
