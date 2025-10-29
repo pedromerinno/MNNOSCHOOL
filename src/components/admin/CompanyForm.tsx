@@ -95,7 +95,9 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
       valores: data.valores && data.valores.length > 0 ? JSON.stringify(data.valores) : null
     };
     console.log('[CompanyForm] Processed data:', processedData);
+    console.log('[CompanyForm] Calling onSubmit prop');
     await onSubmit(processedData);
+    console.log('[CompanyForm] onSubmit completed');
   };
 
   // Ensure watched valores conform to CompanyValue interface
@@ -112,7 +114,8 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
           console.log('[CompanyForm] Form submit event triggered');
           console.log('[CompanyForm] Form errors:', form.formState.errors);
           console.log('[CompanyForm] Form values:', form.getValues());
-          form.handleSubmit(handleFormSubmit)(e);
+          e.preventDefault();
+          form.handleSubmit(handleFormSubmit)();
         }} 
         className="space-y-4"
       >
