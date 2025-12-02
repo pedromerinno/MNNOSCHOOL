@@ -21,12 +21,12 @@ export const WelcomeSection = () => {
     }
   }, [selectedCompany?.id]);
 
-  // Trigger animation on mount - timing mais rápido e suave
+  // Trigger animation on mount - sem delay para melhor percepção de velocidade
   useEffect(() => {
-    const timer = setTimeout(() => {
+    // Usar requestAnimationFrame para animação imediata no próximo frame
+    requestAnimationFrame(() => {
       setIsVisible(true);
-    }, 100); // Delay bem pequeno
-    return () => clearTimeout(timer);
+    });
   }, []);
 
   const userName = userProfile?.display_name || user?.email?.split('@')[0] || 'Usuário';
@@ -48,7 +48,7 @@ export const WelcomeSection = () => {
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
           }`}
           style={{
-            transitionDelay: '150ms'
+            transitionDelay: '50ms'
           }}
         >
           Olá, {userName}
@@ -59,7 +59,7 @@ export const WelcomeSection = () => {
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
           }`}
           style={{
-            transitionDelay: '250ms'
+            transitionDelay: '100ms'
           }}
         >
           {companyPhrase}
@@ -71,7 +71,7 @@ export const WelcomeSection = () => {
             isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95'
           }`}
           style={{
-            transitionDelay: '350ms'
+            transitionDelay: '150ms'
           }}
           variant="default"
         >

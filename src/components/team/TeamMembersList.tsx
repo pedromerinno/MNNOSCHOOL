@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { MessageSquare, UserRound, Mail, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { UserProfile } from "@/hooks/useUsers";
+import { TeamMember } from "@/hooks/team/useTeamMembersOptimized";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -11,7 +11,7 @@ import { useState, useEffect } from "react";
 import { ReturnFeedbackDialog } from "@/components/feedback/ReturnFeedbackDialog";
 
 interface TeamMembersListProps {
-  members: UserProfile[];
+  members: TeamMember[];
 }
 
 export const TeamMembersList = ({ members }: TeamMembersListProps) => {

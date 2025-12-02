@@ -121,6 +121,20 @@ export const SearchBar = () => {
     fetchAccessibleCourses();
   }, [fetchAccessibleCourses]);
 
+  // Atalho de teclado Cmd+K / Ctrl+K
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Detecta Cmd+K (Mac) ou Ctrl+K (Windows/Linux)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setOpen(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const filteredCourses = useMemo(() => {
     if (!searchQuery.trim()) return [];
     
@@ -149,6 +163,9 @@ export const SearchBar = () => {
   };
 
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
+  
+  // Detecta o sistema operacional para mostrar o atalho correto
+  const isMac = typeof window !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
   
   // Mobile: apenas ícone
   if (isMobile) {
@@ -249,7 +266,17 @@ export const SearchBar = () => {
             onChange={(e) => handleInputChange(e.target.value)}
             placeholder="Pesquisar..."
             className="w-full bg-transparent border-0 p-0 h-8 text-sm focus:outline-none"
+            readOnly
           />
+          <kbd className="pointer-events-none hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+            {isMac ? (
+              <>
+                <span className="text-xs">⌘</span>K
+              </>
+            ) : (
+              <>Ctrl+K</>
+            )}
+          </kbd>
         </div>
       </div>
 

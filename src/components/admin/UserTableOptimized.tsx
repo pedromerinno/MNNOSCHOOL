@@ -12,6 +12,8 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAuth } from '@/contexts/AuthContext';
 import { getInitials } from '@/utils/stringUtils';
+import { AdminSearchBar } from './AdminSearchBar';
+import { Users as UsersIcon } from 'lucide-react';
 
 interface UserTableOptimizedProps {
   users: UserProfile[];
@@ -19,6 +21,8 @@ interface UserTableOptimizedProps {
   onToggle: (userId: string, currentStatus: boolean | null, isSuperAdmin?: boolean) => void;
   onRefresh?: () => void;
   onDeleteUser?: (userId: string) => void;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
 }
 
 export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
@@ -26,11 +30,14 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
   loading,
   onToggle,
   onRefresh,
-  onDeleteUser
+  onDeleteUser,
+  searchQuery = '',
+  onSearchChange
 }) => {
   const { userProfile } = useAuth();
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [permissionFilter, setPermissionFilter] = useState<string>('all');
 
   // Debug: Log users data to check if avatars are present
   useEffect(() => {
@@ -69,15 +76,39 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
     }
   };
 
-  const sortedUsers = useMemo(() => {
-    return [...users].sort((a, b) => {
+  const filteredAndSortedUsers = useMemo(() => {
+    let filtered = [...users];
+
+    // Filter by search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(user => 
+        (user.display_name?.toLowerCase().includes(query)) ||
+        (user.email?.toLowerCase().includes(query)) ||
+        (user.cidade?.toLowerCase().includes(query)) ||
+        (user.nivel_colaborador?.toLowerCase().includes(query))
+      );
+    }
+
+    // Filter by permission
+    if (permissionFilter !== 'all') {
+      filtered = filtered.filter(user => {
+        if (permissionFilter === 'super_admin') return user.super_admin;
+        if (permissionFilter === 'admin') return user.is_admin && !user.super_admin;
+        if (permissionFilter === 'user') return !user.is_admin && !user.super_admin;
+        return true;
+      });
+    }
+
+    // Sort
+    return filtered.sort((a, b) => {
       if (a.super_admin && !b.super_admin) return -1;
       if (!a.super_admin && b.super_admin) return 1;
       if (a.is_admin && !b.is_admin) return -1;
       if (!a.is_admin && b.is_admin) return 1;
       return (a.display_name || a.email || '').localeCompare(b.display_name || b.email || '');
     });
-  }, [users]);
+  }, [users, searchQuery, permissionFilter]);
 
   const getUserInitials = (user: UserProfile): string => {
     if (user.display_name) {
@@ -212,7 +243,15 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
     return (
       <Card>
         <CardContent className="p-6 text-center">
-          <p className="text-muted-foreground">Nenhum usuário encontrado.</p>
+          <div className="flex flex-col items-center justify-center py-8">
+            <UsersIcon className="h-12 w-12 text-muted-foreground mb-4 opacity-50" />
+            <p className="text-muted-foreground font-medium mb-1">Nenhum usuário encontrado</p>
+            <p className="text-sm text-muted-foreground">
+              {searchQuery || permissionFilter !== 'all' 
+                ? 'Tente ajustar os filtros de busca'
+                : 'Comece adicionando um novo usuário'}
+            </p>
+          </div>
         </CardContent>
       </Card>
     );
@@ -220,6 +259,37 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
 
   return (
     <>
+      <Card>
+        <CardContent className="p-4 space-y-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            {onSearchChange && (
+              <div className="flex-1">
+                <AdminSearchBar
+                  value={searchQuery}
+                  onChange={onSearchChange}
+                  placeholder="Buscar por nome, email, cidade..."
+                />
+              </div>
+            )}
+            <Select value={permissionFilter} onValueChange={setPermissionFilter}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Filtrar por permissão" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas permissões</SelectItem>
+                <SelectItem value="super_admin">Super Admin</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="user">Usuário</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {filteredAndSortedUsers.length === 0 && (searchQuery || permissionFilter !== 'all') && (
+            <div className="text-center py-4 text-muted-foreground">
+              Nenhum usuário encontrado com os filtros aplicados.
+            </div>
+          )}
+        </CardContent>
+      </Card>
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -240,7 +310,7 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedUsers.map((user) => {
+                {filteredAndSortedUsers.map((user) => {
                   // Log for debugging avatar rendering
                   console.log('[UserTableOptimized] Rendering user:', {
                     id: user.id,

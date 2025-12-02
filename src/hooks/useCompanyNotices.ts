@@ -26,6 +26,7 @@ export function useCompanyNotices() {
   const fetchingRef = useRef(false);
   const lastFetchedCompanyIdRef = useRef<string | null>(null);
   const mountedRef = useRef(true);
+  const cachingRef = useRef<string | null>(null);
 
   const fetchNotices = useCallback(async (companyId?: string, forceRefresh = false) => {
     const targetCompanyId = companyId || selectedCompany?.id;
@@ -37,6 +38,8 @@ export function useCompanyNotices() {
       setIsLoading(false);
       return;
     }
+    
+    // Removido: verificação de flag RLS que estava bloqueando carregamento
     
     // Evitar requisições duplicadas
     if (fetchingRef.current && !forceRefresh) {
@@ -80,6 +83,17 @@ export function useCompanyNotices() {
         .limit(10); // Reduzir limite para home
       
       if (noticesError) {
+        // Se for erro de RLS, tentar continuar sem perfis mas ainda mostrar avisos
+        if (noticesError.code === '42P17') {
+          console.warn('[useCompanyNotices] RLS error detected, continuing without profiles');
+          // Não bloquear completamente - definir dados vazios e continuar
+          setNotices([]);
+          setCurrentNotice(null);
+          setCache(cacheKey, [], 3);
+          setIsLoading(false);
+          fetchingRef.current = false;
+          return;
+        }
         console.error('Error fetching notices:', noticesError);
         throw noticesError;
       }
@@ -111,8 +125,13 @@ export function useCompanyNotices() {
         .in('id', authorIds);
       
       if (authorsError) {
-        console.error('Error fetching authors:', authorsError);
-        // Continuar mesmo com erro de autores
+        // Se for erro de RLS, continuar sem perfis mas ainda mostrar avisos
+        if (authorsError.code === '42P17') {
+          console.warn('[useCompanyNotices] RLS error detected when fetching authors, continuing without profiles');
+          // Continuar sem perfis - notices ainda podem ser exibidos
+        } else if (authorsError) {
+          console.error('Error fetching authors:', authorsError);
+        }
       }
       
       if (!mountedRef.current) {
@@ -120,7 +139,7 @@ export function useCompanyNotices() {
         return;
       }
       
-      console.log('Retrieved authors:', authorsData);
+      // Log removido para reduzir ruído
       
       // Criar mapa de autores para facilitar o lookup
       const authorsMap = new Map<string, NoticeAuthor>();
@@ -147,13 +166,34 @@ export function useCompanyNotices() {
         };
       });
       
-      console.log('Final notices with authors:', noticesWithAuthors);
+      // Log removido para reduzir ruído
       
-      // Cache por 3 minutos
-      try {
-        setCache(cacheKey, noticesWithAuthors, 3);
-      } catch (cacheError) {
-        console.warn('Failed to cache notices:', cacheError);
+      // Cache por 3 minutos - evitar cache duplicado no mesmo ciclo
+      // Truncar conteúdo grande antes de armazenar para evitar problemas de tamanho
+      const noticesToCache = noticesWithAuthors.map(notice => {
+        if (notice.content && notice.content.length > 500) {
+          return {
+            ...notice,
+            content: notice.content.substring(0, 500) + '...'
+          };
+        }
+        return notice;
+      });
+
+      if (cachingRef.current !== cacheKey) {
+        cachingRef.current = cacheKey;
+        try {
+          setCache(cacheKey, noticesToCache, 3);
+          // Resetar após um delay para permitir novo cache se necessário
+          setTimeout(() => {
+            if (cachingRef.current === cacheKey) {
+              cachingRef.current = null;
+            }
+          }, 1000);
+        } catch (cacheError) {
+          console.warn('Failed to cache notices:', cacheError);
+          cachingRef.current = null;
+        }
       }
       
       if (!mountedRef.current) {

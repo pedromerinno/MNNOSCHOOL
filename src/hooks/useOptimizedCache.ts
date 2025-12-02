@@ -8,36 +8,160 @@ interface CacheItem<T> {
 }
 
 export const useOptimizedCache = () => {
-  const setCache = useCallback(<T>(key: string, data: T, expirationMinutes: number = 15) => {
+  const clearExpiredCacheRef = useCallback(() => {
     try {
+      const now = Date.now();
+      const keys = Object.keys(localStorage);
+      let cleared = 0;
+      
+      keys.forEach(key => {
+        if (key.startsWith('cache_')) {
+          try {
+            const cached = localStorage.getItem(key);
+            if (cached) {
+              const item = JSON.parse(cached);
+              const expirationTime = item.timestamp + (item.expirationMinutes * 60 * 1000);
+              
+              if (now > expirationTime) {
+                localStorage.removeItem(key);
+                cleared++;
+              }
+            }
+          } catch {
+            localStorage.removeItem(key);
+            cleared++;
+          }
+        }
+      });
+      
+      if (cleared > 0) {
+        console.log(`[Cache] Limpou ${cleared} itens expirados`);
+      }
+    } catch (error) {
+      console.warn('[Cache] Erro ao limpar cache expirado:', error);
+    }
+  }, []);
+
+  const setCache = useCallback(<T>(key: string, data: T, expirationMinutes: number = 15) => {
+    const MAX_SIZE = 200 * 1024; // 200KB para dar margem de segurança
+    
+    try {
+      let processedData: T = data;
+      
+      // Função auxiliar para reduzir tamanho do conteúdo em objetos
+      const reduceContentSize = (obj: any, maxLength: number = 500): any => {
+        if (typeof obj !== 'object' || obj === null) {
+          return obj;
+        }
+
+        if (Array.isArray(obj)) {
+          return obj.map(item => reduceContentSize(item, maxLength));
+        }
+
+        const reduced: any = {};
+        for (const [key, value] of Object.entries(obj)) {
+          if (key === 'content' && typeof value === 'string' && value.length > maxLength) {
+            // Truncar conteúdo muito grande
+            reduced[key] = value.substring(0, maxLength) + '...';
+          } else if (key === 'title' && typeof value === 'string' && value.length > 200) {
+            // Truncar títulos muito longos
+            reduced[key] = value.substring(0, 200) + '...';
+          } else if (Array.isArray(value)) {
+            // Limitar arrays grandes
+            reduced[key] = value.slice(0, 10).map((item: any) => 
+              typeof item === 'object' && item !== null 
+                ? reduceContentSize(item, maxLength) 
+                : item
+            );
+          } else {
+            reduced[key] = typeof value === 'object' && value !== null
+              ? reduceContentSize(value, maxLength)
+              : value;
+          }
+        }
+        return reduced;
+      };
+
       const item: CacheItem<T> = {
-        data,
+        data: processedData,
         timestamp: Date.now(),
         expirationMinutes
       };
       
-      const serialized = JSON.stringify(item);
+      let serialized = JSON.stringify(item);
       
-      // Verificar tamanho antes de armazenar (limite de 256KB por item)
-      if (serialized.length > 256 * 1024) {
-        console.warn(`[Cache] Item ${key} é muito grande (${serialized.length} bytes), reduzindo dados...`);
+      // Se já está dentro do limite, armazenar diretamente
+      if (serialized.length <= MAX_SIZE) {
+        try {
+          localStorage.setItem(`cache_${key}`, serialized);
+          return;
+        } catch (error: any) {
+          if (error.name === 'QuotaExceededError') {
+            clearExpiredCacheRef();
+          }
+          throw error;
+        }
+      }
+      
+      let attempts = 0;
+      const maxAttempts = 5;
+
+      // Reduzir progressivamente até caber no limite
+      while (serialized.length > MAX_SIZE && attempts < maxAttempts) {
+        attempts++;
+        const sizeBefore = serialized.length;
         
-        // Se for um array, reduzir o número de itens
-        if (Array.isArray(data)) {
-          const reducedData = data.slice(0, Math.min(10, data.length));
-          const reducedItem: CacheItem<T> = {
-            data: reducedData as T,
-            timestamp: Date.now(),
-            expirationMinutes
-          };
-          localStorage.setItem(`cache_${key}`, JSON.stringify(reducedItem));
-          console.log(`[Cache] Armazenou versão reduzida de ${key} com ${reducedData.length} itens`);
+        if (Array.isArray(processedData)) {
+          // Reduzir número de itens
+          const currentLength = (processedData as any[]).length;
+          const targetLength = Math.max(1, Math.floor(currentLength * 0.7));
+          processedData = (processedData as any[]).slice(0, targetLength) as T;
+        }
+        
+        // Reduzir tamanho do conteúdo dentro dos itens
+        const maxContentLength = Math.max(200, 500 - (attempts * 100));
+        processedData = reduceContentSize(processedData, maxContentLength) as T;
+        
+        const newItem: CacheItem<T> = {
+          data: processedData,
+          timestamp: Date.now(),
+          expirationMinutes
+        };
+        
+        serialized = JSON.stringify(newItem);
+        const sizeAfter = serialized.length;
+        
+        // Se não reduziu significativamente, parar tentativas
+        if (sizeAfter >= sizeBefore * 0.9) {
+          console.warn(`[Cache] Não foi possível reduzir ${key} suficientemente após ${attempts} tentativas`);
+          break;
+        }
+      }
+
+      // Se ainda for muito grande, não armazenar (apenas uma vez por key)
+      if (serialized.length > MAX_SIZE) {
+        // Verificar se já removemos este item antes para evitar logs repetidos
+        const existingItem = localStorage.getItem(`cache_${key}`);
+        if (existingItem) {
+          localStorage.removeItem(`cache_${key}`);
+        }
+        // Log apenas se for realmente um problema (não repetir)
+        if (!localStorage.getItem(`cache_warned_${key}`)) {
+          console.warn(`[Cache] Item ${key} muito grande (${Math.round(serialized.length / 1024)}KB), não armazenando no cache`);
+          // Marcar como avisado por 1 minuto
+          localStorage.setItem(`cache_warned_${key}`, Date.now().toString());
+          setTimeout(() => {
+            localStorage.removeItem(`cache_warned_${key}`);
+          }, 60000);
         }
         return;
       }
-      
+
+      if (attempts > 0) {
+        console.warn(`[Cache] Item ${key} reduzido após ${attempts} tentativas (${serialized.length} bytes)`);
+      }
+
       localStorage.setItem(`cache_${key}`, serialized);
-      console.log(`[Cache] Armazenou ${key} com sucesso (${serialized.length} bytes)`);
     } catch (error: any) {
       console.warn(`[Cache] Falha ao armazenar ${key}:`, error.message);
       
@@ -45,28 +169,50 @@ export const useOptimizedCache = () => {
       if (error.name === 'QuotaExceededError') {
         console.log('[Cache] Quota excedida, limpando cache antigo...');
         try {
-          // Limpar itens expirados
-          clearExpiredCache();
+          clearExpiredCacheRef();
           
-          // Tentar novamente com dados reduzidos
-          if (Array.isArray(data) && data.length > 5) {
-            const reducedData = data.slice(0, 5);
-            const reducedItem: CacheItem<T> = {
-              data: reducedData as T,
-              timestamp: Date.now(),
-              expirationMinutes
-            };
-            localStorage.setItem(`cache_${key}`, JSON.stringify(reducedItem));
-            console.log(`[Cache] Armazenou versão muito reduzida de ${key}`);
+          // Tentar novamente com dados muito reduzidos
+          if (Array.isArray(data)) {
+            const reducedData = data.slice(0, 1).map(item => {
+              if (typeof item === 'object' && item !== null) {
+                const reduced: any = {};
+                for (const [key, value] of Object.entries(item)) {
+                  if (key === 'content' && typeof value === 'string') {
+                    reduced[key] = value.substring(0, 100) + '...';
+                  } else {
+                    reduced[key] = value;
+                  }
+                }
+                return reduced;
+              }
+              return item;
+            });
+            
+            try {
+              const reducedItem: CacheItem<T> = {
+                data: reducedData as T,
+                timestamp: Date.now(),
+                expirationMinutes
+              };
+              const serialized = JSON.stringify(reducedItem);
+              if (serialized.length <= MAX_SIZE) {
+                localStorage.setItem(`cache_${key}`, serialized);
+                console.log(`[Cache] Armazenou versão mínima de ${key}`);
+              } else {
+                console.warn(`[Cache] Não foi possível armazenar ${key} mesmo após redução máxima`);
+                localStorage.removeItem(`cache_${key}`);
+              }
+            } catch {
+              localStorage.removeItem(`cache_${key}`);
+            }
           }
         } catch (retryError) {
           console.warn(`[Cache] Falha na segunda tentativa:`, retryError);
-          // Como último recurso, limpar este item específico
           localStorage.removeItem(`cache_${key}`);
         }
       }
     }
-  }, []);
+  }, [clearExpiredCacheRef]);
 
   const getCache = useCallback(<T>(key: string): T | null => {
     try {
@@ -83,7 +229,7 @@ export const useOptimizedCache = () => {
         return null;
       }
 
-      console.log(`[Cache] Recuperou ${key} do cache`);
+      // Log removido para reduzir ruído no console
       return item.data;
     } catch (error) {
       console.warn(`[Cache] Falha ao recuperar ${key}:`, error);
@@ -98,7 +244,7 @@ export const useOptimizedCache = () => {
   const clearCache = useCallback((key: string) => {
     try {
       localStorage.removeItem(`cache_${key}`);
-      console.log(`[Cache] Limpou ${key}`);
+      // Log removido para reduzir ruído no console
     } catch (error) {
       console.warn(`[Cache] Falha ao limpar ${key}:`, error);
     }

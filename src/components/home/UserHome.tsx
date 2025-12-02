@@ -14,41 +14,19 @@ export const UserHome = () => {
   const { userCompanies, isLoading, forceGetUserCompanies } = useCompanies();
   const [showCompanyDialog, setShowCompanyDialog] = useState(false);
 
-  // Verificar se deve mostrar o diálogo de empresa
+  // Calcular se deve mostrar o diálogo de empresa
+  const shouldShowDialog = !isLoading && 
+                          user && 
+                          userProfile && 
+                          !userProfile.super_admin && 
+                          userCompanies.length === 0;
+
+  // Sincronizar estado do diálogo com o cálculo
   useEffect(() => {
-    console.log("[UserHome] Checking company dialog conditions:", {
-      user: !!user,
-      userProfile: !!userProfile,
-      userCompaniesLength: userCompanies.length,
-      isLoading,
-      isSuperAdmin: userProfile?.super_admin
-    });
-
-    // Não verificar se ainda está carregando ou se não tem usuário/perfil
-    if (isLoading || !user || !userProfile) {
-      console.log("[UserHome] Still loading or no user/profile data");
-      return;
-    }
-
-    // Se é super admin, nunca mostrar o diálogo
-    if (userProfile.super_admin) {
-      console.log("[UserHome] User is super admin, no company dialog needed");
-      setShowCompanyDialog(false);
-      return;
-    }
-
-    // Se não tem empresas, mostrar diálogo
-    if (userCompanies.length === 0) {
-      console.log("[UserHome] User has no companies, showing dialog");
-      setShowCompanyDialog(true);
-    } else {
-      console.log("[UserHome] User has companies, hiding dialog");
-      setShowCompanyDialog(false);
-    }
-  }, [user, userProfile, userCompanies.length, isLoading]);
+    setShowCompanyDialog(shouldShowDialog);
+  }, [shouldShowDialog]);
 
   const handleCompanyCreated = () => {
-    console.log("[UserHome] Company created, closing dialog");
     setShowCompanyDialog(false);
     if (user?.id) {
       forceGetUserCompanies(user.id);
@@ -56,17 +34,8 @@ export const UserHome = () => {
   };
 
   const handleCompanyTypeSelect = (isExisting: boolean) => {
-    console.log("[UserHome] Company type selected:", isExisting ? "existing" : "new");
+    // Handler para seleção de tipo de empresa
   };
-
-  // Só mostrar dialog se não é super admin, não tem empresas e não está carregando
-  const shouldShowDialog = !userProfile?.super_admin && userCompanies.length === 0 && !isLoading;
-  
-  console.log("[UserHome] Should show dialog:", shouldShowDialog, {
-    isSuperAdmin: userProfile?.super_admin,
-    companiesLength: userCompanies.length,
-    isLoading
-  });
   
   return (
     <>

@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
 
 export const usePeriodicRefresh = (
@@ -8,15 +8,32 @@ export const usePeriodicRefresh = (
   setSession: (session: Session | null) => void,
   setUser: (user: any) => void
 ) => {
-  // Setup periodic token refresh
+  // Use refs to store latest functions to avoid recreating interval
+  const checkAndRefreshTokenRef = useRef(checkAndRefreshToken);
+  const setSessionRef = useRef(setSession);
+  const setUserRef = useRef(setUser);
+  const sessionRef = useRef(session);
+
+  // Update refs when values change
+  useEffect(() => {
+    checkAndRefreshTokenRef.current = checkAndRefreshToken;
+    setSessionRef.current = setSession;
+    setUserRef.current = setUser;
+    sessionRef.current = session;
+  }, [checkAndRefreshToken, setSession, setUser, session]);
+
+  // Setup periodic token refresh - only recreate when session changes
   useEffect(() => {
     if (session) {
       // Initial check when session is set
       const performRefresh = async () => {
-        const refreshedSession = await checkAndRefreshToken(session);
+        const currentSession = sessionRef.current;
+        if (!currentSession) return;
+        
+        const refreshedSession = await checkAndRefreshTokenRef.current(currentSession);
         if (refreshedSession) {
-          setSession(refreshedSession);
-          setUser(refreshedSession.user);
+          setSessionRef.current(refreshedSession);
+          setUserRef.current(refreshedSession.user);
         }
       };
       
@@ -29,5 +46,5 @@ export const usePeriodicRefresh = (
       
       return () => clearInterval(refreshInterval);
     }
-  }, [session, checkAndRefreshToken, setSession, setUser]);
+  }, [session?.access_token]); // Only depend on access_token, not the whole session object
 };

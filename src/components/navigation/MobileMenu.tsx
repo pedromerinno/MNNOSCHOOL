@@ -14,10 +14,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { CompanySelector } from "./CompanySelector";
 import { UserNavigation } from "./UserNavigation";
 import { AuthButtons } from "./AuthButtons";
+import { useIsAdmin } from "@/hooks/company/useIsAdmin";
 
 export const MobileMenu = () => {
   const [open, setOpen] = useState(false);
   const { user, userProfile } = useAuth();
+  const { isAdmin, isSuperAdmin } = useIsAdmin();
   const location = useLocation();
 
   const isCurrentPath = (path: string) => {
@@ -47,13 +49,13 @@ export const MobileMenu = () => {
       label: "Equipe",
       path: "/team",
       icon: Users,
-      show: userProfile?.is_admin || userProfile?.super_admin
+      show: isAdmin
     },
     {
-      label: userProfile?.super_admin ? "Super Admin" : "Admin",
+      label: isSuperAdmin ? "Super Admin" : "Admin",
       path: "/admin",
       icon: Settings,
-      show: userProfile?.is_admin || userProfile?.super_admin
+      show: isAdmin
     }
   ];
 

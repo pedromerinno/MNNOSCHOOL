@@ -5,6 +5,7 @@ import { CourseCarousel } from "@/components/courses/CourseCarousel";
 import { CourseCategories } from "@/components/courses/CourseCategories";
 import { useCoursesPage } from "@/hooks/useCoursesPage";
 import { useCompanies } from "@/hooks/useCompanies";
+import { useIsAdmin } from "@/hooks/company/useIsAdmin";
 import { NewCourseDialog } from "@/components/admin/dialogs/NewCourseDialog";
 import { EmptyCoursesState } from "@/components/courses/EmptyCoursesState";
 import { CoursesGrid } from "@/components/courses/CoursesGrid";
@@ -15,8 +16,7 @@ import { PlusCircle } from "lucide-react";
 const Courses = () => {
   const {
     selectedCompany,
-    isLoading: companyLoading,
-    user
+    isLoading: companyLoading
   } = useCompanies();
   const {
     featuredCourses,
@@ -27,10 +27,10 @@ const Courses = () => {
     isDataReady,
     refreshCourses
   } = useCoursesPage();
+  const { isAdmin } = useIsAdmin();
   const [activeCategory, setActiveCategory] = useState("all");
   const [showContent, setShowContent] = useState(false);
   const [isNewCourseDialogOpen, setIsNewCourseDialogOpen] = useState(false);
-  const isAdmin = user?.is_admin || user?.super_admin;
 
   useEffect(() => {
     if (!companyLoading && selectedCompany && isDataReady) {

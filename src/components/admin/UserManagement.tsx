@@ -23,6 +23,7 @@ export const UserManagement = () => {
   const [showInviteInfo, setShowInviteInfo] = useState(false);
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [selectedInviteCompany, setSelectedInviteCompany] = useState<Company | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
 
   // Use companies hook for invite functionality
@@ -155,6 +156,8 @@ export const UserManagement = () => {
           onToggle={toggleAdminStatus}
           onRefresh={handleRefresh}
           onDeleteUser={handleDeleteUser}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
         />
       )}
 

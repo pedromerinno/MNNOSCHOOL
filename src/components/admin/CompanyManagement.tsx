@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -11,6 +11,9 @@ import { UserCompanyManager } from './UserCompanyManager';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useUserCompanyAdmin } from '@/hooks/company/useUserCompanyAdmin';
+import { AdminSearchBar } from './AdminSearchBar';
+import { Card, CardContent } from '@/components/ui/card';
 
 export const CompanyManagement: React.FC = () => {
   const {
@@ -21,19 +24,24 @@ export const CompanyManagement: React.FC = () => {
     getUserCompanies,
     createCompany,
     updateCompany,
-    deleteCompany
+    deleteCompany,
+    selectedCompany
   } = useCompanies();
   const {
     user,
     userProfile
   } = useAuth();
+  const { isAdmin: isCompanyAdmin } = useUserCompanyAdmin();
   const isSuperAdmin = userProfile?.super_admin === true;
-  const isAdmin = userProfile?.is_admin === true;
+  // is_admin foi removido de profiles - agora está em user_empresa
+  // Usar isCompanyAdmin que verifica user_empresa.is_admin para a empresa selecionada
+  const isAdmin = isSuperAdmin || isCompanyAdmin;
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isUserManagerOpen, setIsUserManagerOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedCompany, setSelectedCompany] = useState<Company | undefined>(undefined);
+  const [editingCompany, setEditingCompany] = useState<Company | undefined>(undefined);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   console.log('[CompanyManagement] Current state:', {
     isSuperAdmin,
@@ -79,20 +87,20 @@ export const CompanyManagement: React.FC = () => {
   }, [fetchCompanies, getUserCompanies, isSuperAdmin, isAdmin, user?.id, userProfile, hasInitialized]);
 
   const handleCreateCompany = () => {
-    if (!userProfile?.is_admin && !userProfile?.super_admin) {
+    if (!isAdmin) {
       toast.error("Você não tem permissão para criar empresas");
       return;
     }
-    setSelectedCompany(undefined);
+    setEditingCompany(undefined);
     setIsFormOpen(true);
   };
 
   const handleEditCompany = (company: Company) => {
-    if (!userProfile?.is_admin && !userProfile?.super_admin) {
+    if (!isAdmin) {
       toast.error("Você não tem permissão para editar empresas");
       return;
     }
-    setSelectedCompany(company);
+    setEditingCompany(company);
     setIsFormOpen(true);
   };
 
@@ -132,13 +140,13 @@ export const CompanyManagement: React.FC = () => {
       toast.error("Você não tem permissão para gerenciar usuários da empresa");
       return;
     }
-    setSelectedCompany(company);
+    setEditingCompany(company);
     setIsUserManagerOpen(true);
   };
 
   const handleFormSubmit = async (data: Omit<Company, 'id' | 'created_at' | 'updated_at'>) => {
     console.log('[CompanyManagement] handleFormSubmit called with data:', data);
-    console.log('[CompanyManagement] selectedCompany:', selectedCompany);
+    console.log('[CompanyManagement] editingCompany:', editingCompany);
     console.log('[CompanyManagement] userProfile:', userProfile);
     
     if (!userProfile?.is_admin && !userProfile?.super_admin) {
@@ -147,9 +155,9 @@ export const CompanyManagement: React.FC = () => {
     }
     setIsSubmitting(true);
     try {
-      if (selectedCompany) {
-        console.log('[CompanyManagement] Calling updateCompany with id:', selectedCompany.id);
-        await updateCompany(selectedCompany.id, data);
+      if (editingCompany) {
+        console.log('[CompanyManagement] Calling updateCompany with id:', editingCompany.id);
+        await updateCompany(editingCompany.id, data);
         console.log('[CompanyManagement] updateCompany completed successfully');
       } else {
         console.log('[CompanyManagement] Calling createCompany');
@@ -171,9 +179,19 @@ export const CompanyManagement: React.FC = () => {
   };
 
   // Determinar quais empresas mostrar baseado no perfil do usuário
-  const displayCompanies = isSuperAdmin 
+  const allDisplayCompanies = isSuperAdmin 
     ? (Array.isArray(companies) ? companies : []) 
     : (Array.isArray(userCompanies) ? userCompanies : []);
+
+  // Filtrar empresas por busca
+  const displayCompanies = useMemo(() => {
+    if (!searchQuery) return allDisplayCompanies;
+    const query = searchQuery.toLowerCase();
+    return allDisplayCompanies.filter(company =>
+      company.nome?.toLowerCase().includes(query) ||
+      company.frase_institucional?.toLowerCase().includes(query)
+    );
+  }, [allDisplayCompanies, searchQuery]);
 
   console.log('[CompanyManagement] Display companies:', {
     displayCompaniesCount: displayCompanies.length,
@@ -192,6 +210,16 @@ export const CompanyManagement: React.FC = () => {
         </Button>
       </div>
       
+      <Card>
+        <CardContent className="p-4">
+          <AdminSearchBar
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Buscar por nome ou frase institucional..."
+          />
+        </CardContent>
+      </Card>
+      
       <CompanyTable 
         companies={displayCompanies} 
         loading={isLoading} 
@@ -205,15 +233,15 @@ export const CompanyManagement: React.FC = () => {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle>
-              {selectedCompany ? 'Editar Empresa' : 'Criar Nova Empresa'}
+              {editingCompany ? 'Editar Empresa' : 'Criar Nova Empresa'}
             </DialogTitle>
             <DialogDescription>
-              {selectedCompany ? 'Atualize os detalhes da empresa abaixo.' : 'Preencha o formulário para criar uma nova empresa.'}
+              {editingCompany ? 'Atualize os detalhes da empresa abaixo.' : 'Preencha o formulário para criar uma nova empresa.'}
             </DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto pr-2">
             <CompanyForm 
-              initialData={selectedCompany} 
+              initialData={editingCompany} 
               onSubmit={handleFormSubmit} 
               onCancel={() => setIsFormOpen(false)} 
               isSubmitting={isSubmitting} 
@@ -227,15 +255,15 @@ export const CompanyManagement: React.FC = () => {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              Gerenciar Usuários de {selectedCompany?.nome}
+              Gerenciar Usuários de {editingCompany?.nome}
             </DialogTitle>
             <DialogDescription>
               Adicione ou remova usuários desta empresa.
             </DialogDescription>
           </DialogHeader>
-          {selectedCompany && (
+          {editingCompany && (
             <UserCompanyManager 
-              company={selectedCompany} 
+              company={editingCompany} 
               onClose={() => setIsUserManagerOpen(false)} 
             />
           )}

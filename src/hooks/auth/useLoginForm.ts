@@ -45,29 +45,17 @@ export const useLoginForm = () => {
         if (companies?.length > 0) {
           console.log("Selecionando a primeira empresa disponível:", companies[0].nome);
           
-          try {
-            // Selecionar a primeira empresa disponível
-            await selectCompany(data.session.user.id, companies[0]);
-            console.log("Empresa selecionada com sucesso");
-            toast.success("Login realizado com sucesso!");
-            
-            // Usar setTimeout para evitar problemas de navegação durante transições de estado
-            setTimeout(() => {
-              navigate('/');
-            }, 100);
-          } catch (selectionError) {
-            console.error("Erro ao selecionar empresa:", selectionError);
-            toast.error("Erro ao selecionar empresa");
-          }
+          // Selecionar a primeira empresa disponível (função síncrona)
+          selectCompany(data.session.user.id, companies[0]);
+          console.log("Empresa selecionada com sucesso");
+          toast.success("Login realizado com sucesso!");
         } else {
           console.log("Nenhuma empresa disponível para este usuário, redirecionando para home");
           toast.success("Login realizado com sucesso!");
-          
-          // Redirecionar para home
-          setTimeout(() => {
-            navigate('/');
-          }, 100);
         }
+        
+        // Não navegar aqui - o signInWithPassword já navega para '/'
+        // A navegação é feita pelo useSignInWithPassword após buscar o perfil
       }
     } catch (error: any) {
       console.error("Erro no login:", error);

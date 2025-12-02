@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Pencil, Trash2, Users } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, Users, Building } from "lucide-react";
 import { Company } from "@/types/company";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -78,11 +78,19 @@ export const CompanyTable: React.FC<CompanyTableProps> = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {companies.length === 0 && !loading ? <TableRow>
-              <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                Nenhuma empresa encontrada
+          {companies.length === 0 && !loading ? (
+            <TableRow>
+              <TableCell colSpan={5} className="text-center py-12">
+                <div className="flex flex-col items-center justify-center">
+                  <Building className="h-12 w-12 text-muted-foreground mb-4 opacity-50" />
+                  <p className="text-muted-foreground font-medium mb-1">Nenhuma empresa encontrada</p>
+                  <p className="text-sm text-muted-foreground">
+                    Comece criando uma nova empresa
+                  </p>
+                </div>
               </TableCell>
-            </TableRow> : companies.map(company => <TableRow key={company.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+            </TableRow>
+          ) : companies.map(company => <TableRow key={company.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                 <TableCell className="p-3 px-[20px] py-[20px]">
                   {company.logo ? (
                     <div className="h-12 w-12 rounded-md border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-white dark:bg-gray-800 overflow-hidden">

@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface SignupFormFieldsProps {
   email: string;
@@ -16,6 +18,7 @@ interface SignupFormFieldsProps {
   handleSubmit: (e: React.FormEvent) => Promise<void>;
   isRegistering: boolean;
   emailAlreadyRegistered: boolean;
+  validatePasswords?: (checkConfirm?: boolean) => boolean;
 }
 
 export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
@@ -29,9 +32,26 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
   handleSubmit,
   isRegistering,
   emailAlreadyRegistered,
+  validatePasswords,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const handleGoogleSignup = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`
+        }
+      });
+      
+      if (error) throw error;
+    } catch (error: any) {
+      console.error("Erro no cadastro com Google:", error);
+      toast.error(error.message || "Falha ao fazer cadastro com Google");
+    }
+  };
 
   return (
     <>
@@ -120,6 +140,7 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
         <div className="mt-3 sm:mt-6 space-y-3">
           <Button 
             variant="outline"
+            onClick={handleGoogleSignup}
             className="w-full h-11 sm:h-12 border border-gray-300 rounded-lg font-medium flex items-center justify-center gap-2 text-sm sm:text-base"
           >
             <svg className="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24">
@@ -140,13 +161,15 @@ export const SignupFormFields: React.FC<SignupFormFieldsProps> = ({
                 fill="#EA4335"
               />
             </svg>
-            <span className="hidden sm:inline">Entrar com Google</span>
+            <span className="hidden sm:inline">Cadastrar com Google</span>
             <span className="sm:hidden">Google</span>
           </Button>
           
           <Button 
             variant="outline"
-            className="w-full h-11 sm:h-12 border border-gray-300 rounded-lg font-medium text-sm sm:text-base"
+            disabled
+            className="w-full h-11 sm:h-12 border border-gray-300 rounded-lg font-medium text-sm sm:text-base opacity-50 cursor-not-allowed"
+            title="SSO em breve"
           >
             <span className="hidden sm:inline">Usar Single Sign-On (SSO)</span>
             <span className="sm:hidden">SSO</span>

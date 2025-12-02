@@ -32,7 +32,7 @@ export const fetchCourses = async (companyId?: string, forceRefresh: boolean = f
       // Get user profile to check their job role
       const { data: userProfile } = await supabase
         .from('profiles')
-        .select('cargo_id, is_admin, super_admin')
+        .select('cargo_id, super_admin')
         .eq('id', user.id)
         .single();
       

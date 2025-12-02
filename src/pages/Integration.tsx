@@ -116,7 +116,7 @@ const Integration = () => {
     }
   };
   
-  // Função para buscar cargo específico do usuário logado
+  // Função para buscar cargo específico do usuário logado na empresa
   const fetchUserRole = async (companyId: string) => {
     if (!userProfile?.id || !companyId) {
       console.log('[Integration] Missing userProfile or companyId for role fetch');
@@ -127,27 +127,28 @@ const Integration = () => {
     console.log('[Integration] Fetching user role for user:', userProfile.id, 'company:', companyId);
     
     try {
-      // Primeiro, buscar perfil atualizado do usuário
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
+      // Buscar cargo do usuário nesta empresa específica (nova estrutura)
+      const { data: userCompany, error: userCompanyError } = await supabase
+        .from('user_empresa')
         .select('cargo_id')
-        .eq('id', userProfile.id)
+        .eq('user_id', userProfile.id)
+        .eq('empresa_id', companyId)
         .single();
         
-      if (profileError) {
-        console.error("[Integration] Error fetching user profile:", profileError);
+      if (userCompanyError && userCompanyError.code !== 'PGRST116') {
+        console.error("[Integration] Error fetching user company relation:", userCompanyError);
         setUserRole(null);
         return;
       }
       
-      console.log('[Integration] User profile cargo_id:', profile?.cargo_id);
+      console.log('[Integration] User company cargo_id:', userCompany?.cargo_id);
       
-      if (profile?.cargo_id) {
-        // Buscar detalhes do cargo especificamente para esta empresa
+      if (userCompany?.cargo_id) {
+        // Buscar detalhes do cargo
         const { data: roleData, error: roleError } = await supabase
           .from('job_roles')
           .select('*')
-          .eq('id', profile.cargo_id)
+          .eq('id', userCompany.cargo_id)
           .eq('company_id', companyId)
           .single();
           
@@ -161,7 +162,7 @@ const Integration = () => {
         console.log('[Integration] ✅ User role found:', roleData?.title);
         setUserRole(roleData);
       } else {
-        console.log('[Integration] User has no cargo_id assigned');
+        console.log('[Integration] User has no cargo_id assigned for this company');
         setUserRole(null);
       }
     } catch (error) {

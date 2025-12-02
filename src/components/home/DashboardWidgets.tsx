@@ -7,12 +7,14 @@ import { FeedbackWidget } from "./FeedbackWidget";
 export const DashboardWidgets = () => {
   const [isVisible, setIsVisible] = useState(false);
 
-  // Trigger animation on mount - timing suave
+  // Trigger animation on mount - delay reduzido
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsVisible(true);
-    }, 400); // Delay para aparecer após os links
-    return () => clearTimeout(timer);
+    // Pequeno delay para não competir com animações dos links
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        setIsVisible(true);
+      }, 50);
+    });
   }, []);
 
   const widgets = [
@@ -31,7 +33,7 @@ export const DashboardWidgets = () => {
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}
             style={{
-              transitionDelay: `${index * 150 + 500}ms` // Delay sequencial após os links
+              transitionDelay: `${index * 100 + 200}ms` // Delay sequencial otimizado
             }}
           >
             <widget.component />

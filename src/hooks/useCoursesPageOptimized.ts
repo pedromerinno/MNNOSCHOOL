@@ -28,26 +28,7 @@ export const useCoursesPageOptimized = () => {
 
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
 
-  // Carregamento imediato do cache
-  useEffect(() => {
-    if (!selectedCompany) return;
-    
-    const cached = companyCoursesCache.get(selectedCompany.id);
-    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-      console.log(`Loading courses from cache for company ${selectedCompany.id}`);
-      setFeaturedCourses(cached.featured);
-      setAllCompanyCourses(cached.all);
-      setLoading(false);
-      setAllCoursesLoading(false);
-      initialLoadDone.current = true;
-      return;
-    }
-    
-    // Se não tem cache válido, buscar dados
-    fetchCourseData();
-  }, [selectedCompany?.id]);
-
-  // Fetch otimizado
+  // Fetch otimizado - definido antes de ser usado
   const fetchCourseData = useCallback(async (force = false) => {
     if (hasActiveRequest.current && !force) {
       console.log("Request already in progress");
@@ -138,6 +119,25 @@ export const useCoursesPageOptimized = () => {
       hasActiveRequest.current = false;
     }
   }, [selectedCompany]);
+
+  // Carregamento imediato do cache
+  useEffect(() => {
+    if (!selectedCompany) return;
+    
+    const cached = companyCoursesCache.get(selectedCompany.id);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      console.log(`Loading courses from cache for company ${selectedCompany.id}`);
+      setFeaturedCourses(cached.featured);
+      setAllCompanyCourses(cached.all);
+      setLoading(false);
+      setAllCoursesLoading(false);
+      initialLoadDone.current = true;
+      return;
+    }
+    
+    // Se não tem cache válido, buscar dados
+    fetchCourseData();
+  }, [selectedCompany?.id, fetchCourseData]);
 
   // Cleanup
   useEffect(() => {

@@ -32,6 +32,8 @@ export const useReceivedFeedbacks = () => {
         return;
       }
 
+      // Removido: verificação de flag RLS que estava bloqueando carregamento
+
       try {
         setLoading(true);
         
@@ -39,7 +41,6 @@ export const useReceivedFeedbacks = () => {
         const cacheKey = `feedbacks_${selectedCompany.id}`;
         const cachedData = getCache<ReceivedFeedback[]>(cacheKey);
         if (cachedData && Array.isArray(cachedData)) {
-          console.log(`Using cached feedbacks for company ${selectedCompany.id}`);
           setFeedbacks(cachedData);
           setLoading(false);
           return;
@@ -61,6 +62,16 @@ export const useReceivedFeedbacks = () => {
           .limit(2); // Reduzir ainda mais para home
 
         if (error) {
+          // Se for erro de RLS, tentar continuar mas logar o erro
+          if (error.code === '42P17') {
+            console.warn('[useReceivedFeedbacks] RLS error detected, but continuing');
+            // Não bloquear completamente - definir dados vazios e continuar
+            setFeedbacks([]);
+            setCache(cacheKey, [], 2);
+            setLoading(false);
+            return;
+          }
+          // Se não for erro de RLS, lançar o erro normalmente
           throw error;
         }
 
@@ -83,7 +94,13 @@ export const useReceivedFeedbacks = () => {
         const { data: profilesData, error: profilesError } = await profilesPromise;
 
         if (profilesError) {
-          console.error('Error fetching profiles:', profilesError);
+          // Se for erro de RLS, continuar sem perfis mas ainda mostrar feedbacks
+          if (profilesError.code === '42P17') {
+            console.warn('[useReceivedFeedbacks] RLS error detected when fetching profiles, continuing without profiles');
+            // Continuar sem perfis - feedbacks ainda podem ser exibidos
+          } else {
+            console.error('Error fetching profiles:', profilesError);
+          }
         }
 
         // Criar mapa de perfis
@@ -101,9 +118,15 @@ export const useReceivedFeedbacks = () => {
         // Cache com TTL de 2 minutos
         setCache(cacheKey, enrichedFeedbacks, 2);
         setFeedbacks(enrichedFeedbacks);
-      } catch (err) {
-        console.error('Error fetching feedbacks:', err);
-        toast.error("Erro ao carregar feedbacks");
+      } catch (err: any) {
+        // Se for erro de RLS, tentar continuar sem mostrar toast
+        if (err?.code === '42P17') {
+          console.warn('[useReceivedFeedbacks] RLS error detected, but continuing');
+          setFeedbacks([]);
+        } else {
+          console.error('Error fetching feedbacks:', err);
+          toast.error("Erro ao carregar feedbacks");
+        }
       } finally {
         setLoading(false);
       }

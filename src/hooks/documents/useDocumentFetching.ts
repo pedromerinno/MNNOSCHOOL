@@ -16,14 +16,29 @@ export const useDocumentFetching = () => {
     }
 
     try {
-      // Verificar se o usuário é admin
+      // Verificar se o usuário é admin (is_admin foi removido de profiles)
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('is_admin, super_admin')
+        .select('super_admin')
         .eq('id', userId)
         .single();
       
-      const isAdmin = profileData?.is_admin || profileData?.super_admin;
+      const isSuperAdmin = profileData?.super_admin || false;
+      
+      // Verificar se é admin da empresa
+      let isCompanyAdmin = false;
+      if (!isSuperAdmin) {
+        const { data: userCompany } = await supabase
+          .from('user_empresa')
+          .select('is_admin')
+          .eq('user_id', userId)
+          .eq('empresa_id', companyId)
+          .single();
+        
+        isCompanyAdmin = userCompany?.is_admin || false;
+      }
+      
+      const isAdmin = isSuperAdmin || isCompanyAdmin;
 
       // Se for admin, buscar todos os documentos da empresa
       // Caso contrário, buscar apenas os documentos relacionados ao usuário

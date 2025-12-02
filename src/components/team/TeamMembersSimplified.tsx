@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { UserProfile } from "@/hooks/useUsers";
+import { TeamMember } from "@/hooks/team/useTeamMembersOptimized";
 import { AdminMembersSection } from './sections/AdminMembersSection';
 import { RegularMembersSection } from './sections/RegularMembersSection';
 import { TeamFilterBar } from './TeamFilterBar';
@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { JobRole } from "@/types/job-roles";
 
 interface TeamMembersSimplifiedProps {
-  members: UserProfile[];
+  members: TeamMember[];
   companyId?: string;
   companyColor?: string;
 }
@@ -56,7 +56,7 @@ export const TeamMembersSimplified: React.FC<TeamMembersSimplifiedProps> = ({
   }, [companyId]);
 
   // Filter members based on selected role
-  const filterMembersByRole = (membersList: UserProfile[]) => {
+  const filterMembersByRole = (membersList: TeamMember[]) => {
     if (selectedRoleFilter === 'all') {
       return membersList;
     }
@@ -67,7 +67,8 @@ export const TeamMembersSimplified: React.FC<TeamMembersSimplifiedProps> = ({
   };
 
   // Separate admins and regular members
-  const admins = members.filter(member => member.is_admin);
+  // is_admin agora vem de user_empresa (incluído no TeamMember)
+  const admins = members.filter(member => member.is_admin === true);
   const regularMembers = members.filter(member => !member.is_admin);
   
   // Apply role filter to regular members

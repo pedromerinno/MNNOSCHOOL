@@ -4,13 +4,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { MessageSquare, UserRound, Mail, Calendar, Crown, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { UserProfile } from "@/hooks/useUsers";
+import { TeamMember } from "@/hooks/team/useTeamMembersOptimized";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ReturnFeedbackDialog } from "@/components/feedback/ReturnFeedbackDialog";
 
 interface TeamMemberCardProps {
-  member: UserProfile;
+  member: TeamMember;
   companyColor: string;
   showAdminBadge?: boolean;
   roleName?: string;

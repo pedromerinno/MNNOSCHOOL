@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, User, ChevronDown, Building } from "lucide-react";
+import { LogOut, User, ChevronDown, Building, Crown, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsAdmin } from "@/hooks/company/useIsAdmin";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +18,8 @@ import {
 import { ProfileDialog } from "@/components/profile/ProfileDialog";
 import { useCompanies } from "@/hooks/useCompanies";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { getAvatarUrl } from "@/utils/avatarUtils";
 
 interface UserNavigationProps {
   avatarUrl?: string;
@@ -24,6 +27,7 @@ interface UserNavigationProps {
 
 export const UserNavigation = ({ avatarUrl = "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png" }: UserNavigationProps) => {
   const { user, signOut, userProfile } = useAuth();
+  const { isAdmin, isSuperAdmin } = useIsAdmin();
   const [displayName, setDisplayName] = useState<string>("");
   const [displayAvatar, setDisplayAvatar] = useState<string>(avatarUrl);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -61,7 +65,10 @@ export const UserNavigation = ({ avatarUrl = "/lovable-uploads/54cf67d5-105d-4bf
 
   useEffect(() => {
     setDisplayName(userProfile?.display_name || user?.email?.split('@')[0] || "Usuário");
-    setDisplayAvatar(userProfile?.avatar || avatarUrl);
+    
+    // Usar a função utilitária para obter URL do avatar com fallback
+    const validAvatar = getAvatarUrl(userProfile?.avatar, avatarUrl);
+    setDisplayAvatar(validAvatar);
   }, [userProfile, user, avatarUrl]);
 
   const handleProfileUpdate = (values: any) => {
@@ -99,15 +106,40 @@ export const UserNavigation = ({ avatarUrl = "/lovable-uploads/54cf67d5-105d-4bf
               src={displayAvatar} 
               alt="User avatar" 
               className="h-8 w-8 rounded-full object-cover"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                // Se falhar ao carregar, usar o avatar padrão
+                if (target.src !== avatarUrl) {
+                  target.src = avatarUrl;
+                }
+              }}
             />
             <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48 bg-white dark:bg-gray-800 z-50">
           <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
-            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-              {displayName}
-            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                {displayName}
+              </p>
+              {isAdmin && (
+                <Badge 
+                  variant={isSuperAdmin ? "default" : "secondary"} 
+                  className={`flex items-center gap-1 text-xs font-medium px-1.5 py-0 ${
+                    isSuperAdmin 
+                      ? "bg-sky-500 text-white" 
+                      : "bg-amber-500 text-white"
+                  }`}
+                >
+                  {isSuperAdmin ? (
+                    <Shield className="h-2.5 w-2.5" />
+                  ) : (
+                    <Crown className="h-2.5 w-2.5" />
+                  )}
+                </Badge>
+              )}
+            </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
           </div>
           

@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -18,8 +18,20 @@ export const useCourseData = (
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
+  // Use refs to avoid recreating callback when dependencies change
+  const selectedCompanyRef = useRef(selectedCompany);
+  const activeFilterRef = useRef(activeFilter);
+  const toastRef = useRef(toast);
+  
+  useEffect(() => {
+    selectedCompanyRef.current = selectedCompany;
+    activeFilterRef.current = activeFilter;
+    toastRef.current = toast;
+  }, [selectedCompany, activeFilter, toast]);
+
   const fetchCourseData = useCallback(async () => {
-    if (!selectedCompany?.id) {
+    const currentCompany = selectedCompanyRef.current;
+    if (!currentCompany?.id) {
       console.log("No selected company, resetting data");
       setStats({ favorites: 0, inProgress: 0, completed: 0, videosCompleted: 0 });
       setRecentCourses([]);
@@ -31,7 +43,7 @@ export const useCourseData = (
     }
     
     setLoading(true);
-    console.log("Fetching course data for company:", selectedCompany.nome);
+    console.log("Fetching course data for company:", currentCompany.nome);
     
     try {
       // Get user ID
@@ -44,7 +56,7 @@ export const useCourseData = (
       // Get user profile to check their job role
       const { data: userProfile } = await supabase
         .from('profiles')
-        .select('cargo_id, is_admin, super_admin')
+        .select('cargo_id, super_admin')
         .eq('id', user.id)
         .single();
       
@@ -54,7 +66,7 @@ export const useCourseData = (
       const { data: companyAccess, error: accessError } = await supabase
         .from('company_courses')
         .select('course_id')
-        .eq('empresa_id', selectedCompany.id);
+        .eq('empresa_id', currentCompany.id);
       
       if (accessError) {
         console.error('Error fetching company access:', accessError);
@@ -205,12 +217,12 @@ export const useCourseData = (
       setRecentCourses(inProgressCourses.slice(0, 3));
       
       // Initially set filtered courses based on active filter
-      filterCourses(coursesWithProgress, activeFilter);
+      filterCourses(coursesWithProgress, activeFilterRef.current);
       
       console.log(`Successfully loaded ${coursesWithProgress.length} accessible courses`);
     } catch (error: any) {
       console.error('Error fetching course stats:', error);
-      toast({
+      toastRef.current({
         title: "Erro ao carregar cursos",
         description: error.message || "Ocorreu um erro inesperado",
         variant: "destructive",
@@ -224,7 +236,7 @@ export const useCourseData = (
     } finally {
       setLoading(false);
     }
-  }, [selectedCompany?.id, selectedCompany?.nome, toast, setStats, setAllCourses, setFilteredCourses, setRecentCourses, setHoursWatched, filterCourses, activeFilter]);
+  }, []); // Empty dependencies - using refs for all dynamic values
 
   return {
     loading,

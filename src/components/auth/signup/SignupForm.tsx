@@ -24,20 +24,43 @@ export const SignupForm = () => {
   const [emailAlreadyRegistered, setEmailAlreadyRegistered] = useState(false);
   const { signUp, resendConfirmationEmail } = useAuth();
 
-  const validatePasswords = () => {
-    if (password !== confirmPassword) {
-      setPasswordError("As senhas não coincidem");
+  const validatePasswords = (checkConfirm: boolean = true) => {
+    // Validação de senha
+    if (password.length < 6) {
+      setPasswordError("A senha deve ter pelo menos 6 caracteres");
       return false;
     }
     
-    if (password.length < 6) {
-      setPasswordError("A senha deve ter pelo menos 6 caracteres");
+    // Validação de confirmação (só se checkConfirm for true)
+    if (checkConfirm && password !== confirmPassword && confirmPassword.length > 0) {
+      setPasswordError("As senhas não coincidem");
       return false;
     }
     
     setPasswordError("");
     return true;
   };
+
+  // Validação em tempo real quando a senha ou confirmação mudam
+  React.useEffect(() => {
+    if (password.length > 0 || confirmPassword.length > 0) {
+      // Validação de senha
+      if (password.length < 6 && password.length > 0) {
+        setPasswordError("A senha deve ter pelo menos 6 caracteres");
+        return;
+      }
+      
+      // Validação de confirmação
+      if (password !== confirmPassword && confirmPassword.length > 0) {
+        setPasswordError("As senhas não coincidem");
+        return;
+      }
+      
+      setPasswordError("");
+    } else {
+      setPasswordError("");
+    }
+  }, [password, confirmPassword]);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -179,6 +202,7 @@ export const SignupForm = () => {
         handleSubmit={handleSubmit}
         isRegistering={isRegistering}
         emailAlreadyRegistered={emailAlreadyRegistered}
+        validatePasswords={validatePasswords}
       />
     </div>
   );

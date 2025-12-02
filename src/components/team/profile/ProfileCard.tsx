@@ -1,5 +1,5 @@
 
-import { UserProfile } from "@/hooks/useUsers";
+import { TeamMember } from "@/hooks/team/useTeamMembersOptimized";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Mail, UserRound, Calendar, MessageSquare, Users } from "lucide-react";
@@ -11,7 +11,7 @@ import { useState, useEffect } from "react";
 import { ReturnFeedbackDialog } from "@/components/feedback/ReturnFeedbackDialog";
 
 interface ProfileCardProps {
-  member: UserProfile;
+  member: TeamMember;
 }
 
 export const ProfileCard = ({ member }: ProfileCardProps) => {

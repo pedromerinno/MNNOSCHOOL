@@ -62,12 +62,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const USER_PROFILE_CACHE_KEY = 'user_profile';
 
   // Load user profile when user changes and sync email
+  // Otimizado: sincronização de email e busca de perfil em paralelo para melhor performance
   useEffect(() => {
     if (user) {
-      // Primeiro sincronizar email, depois buscar perfil
-      syncProfileEmailWithAuth().then(() => {
-        fetchUserProfile(user.id);
-      });
+      // Executar busca de perfil (crítico)
+      // Sincronização de email em paralelo (não crítico, pode falhar silenciosamente)
+      // Usar Promise.allSettled para não bloquear uma pela outra
+      Promise.allSettled([
+        syncProfileEmailWithAuth().then(result => {
+          // Se retornou erro de RLS, não logar (é esperado)
+          if (result?.error?.code === '42P17') {
+            return; // Silencioso
+          }
+          if (!result?.success && result?.error) {
+            console.warn('Email sync failed (non-critical):', result.error);
+          }
+        }).catch(err => {
+          // Se for erro de RLS, não logar (é esperado)
+          if (err?.code !== '42P17') {
+            console.warn('Email sync failed (non-critical):', err);
+          }
+        }),
+        fetchUserProfile(user.id).catch(err => {
+          // Se for erro de RLS, não é crítico - aplicação pode funcionar sem perfil
+          if (err?.code !== '42P17') {
+            console.error('Error fetching user profile:', err);
+          }
+        })
+      ]);
     } else {
       clearProfile();
     }

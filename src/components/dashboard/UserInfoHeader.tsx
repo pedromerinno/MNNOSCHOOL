@@ -2,11 +2,13 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
+import { useUserCompanyRole } from "@/hooks/company/useUserCompanyRole";
+import { useIsAdmin } from "@/hooks/company/useIsAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getInitials } from "@/utils/stringUtils";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase } from "lucide-react";
+import { Briefcase, Crown, Shield } from "lucide-react";
 
 interface UserStatsType {
   completedCourses: number;
@@ -17,6 +19,8 @@ interface UserStatsType {
 export const UserInfoHeader = () => {
   const { userProfile, user, profileLoading } = useAuth();
   const { selectedCompany } = useCompanies();
+  const { jobRole, isLoading: roleLoading } = useUserCompanyRole();
+  const { isAdmin, isSuperAdmin, isCompanyAdmin } = useIsAdmin();
   const [stats, setStats] = useState<UserStatsType>({
     completedCourses: 0,
     inProgressCourses: 0,
@@ -137,7 +141,25 @@ export const UserInfoHeader = () => {
     getInitials(userProfile.display_name) : 
     user?.email ? getInitials(user.email) : "U";
 
-  const avatarUrl = userProfile?.avatar || "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png";
+  // Validar URL do avatar e usar fallback se necessário
+  const getValidAvatarUrl = (url: string | null | undefined): string => {
+    if (!url || url.trim() === '' || url === 'null' || url === 'undefined') {
+      return "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png";
+    }
+    
+    // Verificar se é uma URL válida
+    try {
+      if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) {
+        return url;
+      }
+    } catch {
+      // URL inválida
+    }
+    
+    return "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png";
+  };
+  
+  const avatarUrl = getValidAvatarUrl(userProfile?.avatar);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-8">
@@ -162,16 +184,40 @@ export const UserInfoHeader = () => {
               </>
             ) : (
               <>
-                <h2 className="text-xl font-semibold">
-                  {userProfile?.display_name || user?.email?.split('@')[0] || "Usuário"}
-                </h2>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-xl font-semibold">
+                    {userProfile?.display_name || user?.email?.split('@')[0] || "Usuário"}
+                  </h2>
+                  {isAdmin && (
+                    <Badge 
+                      variant={isSuperAdmin ? "default" : "secondary"} 
+                      className={`flex items-center gap-1 text-xs font-medium ${
+                        isSuperAdmin 
+                          ? "bg-sky-500 text-white" 
+                          : "bg-amber-500 text-white"
+                      }`}
+                    >
+                      {isSuperAdmin ? (
+                        <>
+                          <Shield className="h-3 w-3" />
+                          Super Admin
+                        </>
+                      ) : (
+                        <>
+                          <Crown className="h-3 w-3" />
+                          Admin
+                        </>
+                      )}
+                    </Badge>
+                  )}
+                </div>
                 <p className="text-gray-500 dark:text-gray-400">{user?.email}</p>
                 
-                {userProfile?.cargo_id && (
+                {!roleLoading && jobRole && (
                   <div className="flex items-center mt-1">
                     <Badge variant="outline" className="flex items-center gap-1 text-xs font-normal">
                       <Briefcase className="h-3 w-3" />
-                      {userProfile.cargo_id}
+                      {jobRole.title}
                     </Badge>
                   </div>
                 )}

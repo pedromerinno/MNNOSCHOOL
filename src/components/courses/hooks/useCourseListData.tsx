@@ -41,14 +41,27 @@ export const useCourseListData = (filter: 'all' | 'in-progress' | 'completed' | 
           throw new Error('User not authenticated');
         }
         
-        // Get user profile to check their job role
-        const { data: userProfile } = await supabase
+        // Verificar se é super admin
+        const { data: profile } = await supabase
           .from('profiles')
-          .select('cargo_id, is_admin, super_admin')
+          .select('super_admin')
           .eq('id', userId)
           .single();
         
-        console.log("User profile for course list:", userProfile);
+        const isSuperAdmin = profile?.super_admin === true;
+        
+        // Buscar cargo_id e is_admin de user_empresa (não mais de profiles)
+        const { data: userCompany } = await supabase
+          .from('user_empresa')
+          .select('cargo_id, is_admin')
+          .eq('user_id', userId)
+          .eq('empresa_id', selectedCompany.id)
+          .single();
+        
+        const isAdmin = isSuperAdmin || (userCompany?.is_admin === true);
+        const userJobRoleId = userCompany?.cargo_id || null;
+        
+        console.log("User company data for course list:", { isAdmin, isSuperAdmin, userJobRoleId });
         
         console.log("Fetching courses for company:", selectedCompany.id);
         
@@ -85,8 +98,7 @@ export const useCourseListData = (filter: 'all' | 'in-progress' | 'completed' | 
         let filteredCourseIds = courseIds;
         
         // If user is not admin and has job role restrictions, apply filtering
-        if (!userProfile?.is_admin && !userProfile?.super_admin) {
-          const userJobRoleId = userProfile?.cargo_id;
+        if (!isAdmin) {
           console.log('Filtering courses for user job role:', userJobRoleId);
           
           if (courseJobRoles && courseJobRoles.length > 0) {

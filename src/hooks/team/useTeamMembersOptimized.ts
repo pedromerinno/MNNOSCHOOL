@@ -3,6 +3,12 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfile } from "@/hooks/useUsers";
 
+// Tipo estendido para incluir informações de user_empresa
+export interface TeamMember extends UserProfile {
+  is_admin?: boolean; // Admin desta empresa específica
+  cargo_id?: string | null; // Cargo nesta empresa específica
+}
+
 interface UseTeamMembersOptimizedProps {
   selectedCompanyId?: string;
   skipLoading?: boolean;
@@ -12,7 +18,7 @@ export const useTeamMembersOptimized = ({
   selectedCompanyId, 
   skipLoading = false 
 }: UseTeamMembersOptimizedProps = {}) => {
-  const [members, setMembers] = useState<UserProfile[]>([]);
+  const [members, setMembers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(!skipLoading);
   const [error, setError] = useState<Error | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -41,23 +47,24 @@ export const useTeamMembersOptimized = ({
 
       console.log('[useTeamMembersOptimized] Buscando membros para empresa:', companyId);
 
-      // Query otimizada incluindo informações do cargo
+      // Query otimizada incluindo informações do cargo e admin de user_empresa
       const { data: teamData, error: teamError } = await supabase
         .from('user_empresa')
         .select(`
           user_id,
+          is_admin,
+          cargo_id,
           profiles!inner(
             id, 
             display_name, 
             email, 
-            is_admin, 
             avatar, 
             created_at,
-            cargo_id,
-            job_roles(
-              id,
-              title
-            )
+            super_admin
+          ),
+          job_roles(
+            id,
+            title
           )
         `)
         .eq('empresa_id', companyId)
@@ -67,18 +74,20 @@ export const useTeamMembersOptimized = ({
 
       console.log('[useTeamMembersOptimized] Dados recebidos:', teamData?.length || 0, 'membros');
 
-      const teamMembers: UserProfile[] = teamData?.map((item: any) => {
+      const teamMembers: TeamMember[] = teamData?.map((item: any) => {
         const profile = item.profiles;
         return {
           id: profile.id,
           display_name: profile.display_name,
           email: profile.email,
-          is_admin: profile.is_admin,
+          // is_admin e cargo_id agora vêm de user_empresa
+          is_admin: item.is_admin || false,
+          cargo_id: item.cargo_id || null,
           avatar: profile.avatar,
           created_at: profile.created_at,
-          cargo_id: profile.cargo_id,
-          // Incluir o nome do cargo se existir
-          roleName: profile.job_roles?.title || null
+          super_admin: profile.super_admin,
+          // roleName vem de job_roles
+          roleName: item.job_roles?.title || null
         };
       }) || [];
 

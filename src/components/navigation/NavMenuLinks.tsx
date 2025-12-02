@@ -10,25 +10,41 @@ import {
 } from "@/components/ui/navigation-menu";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
+import { useIsAdmin } from "@/hooks/company/useIsAdmin";
 import { BookOpen, LayoutDashboard } from "lucide-react";
 
 export const NavMenuLinks = ({ adminLabel = "Admin" }) => {
   const { userProfile } = useAuth();
   const { selectedCompany } = useCompanies();
+  const { isAdmin } = useIsAdmin();
   const location = useLocation();
   
   const isCurrentPath = (path: string) => {
     return location.pathname === path;
   };
   
+  // Usar a cor primária da empresa ou fallback para azul
+  const companyColor = selectedCompany?.cor_principal || '#3B82F6';
+  
   const menuLinkClass = (path: string) => {
-    return `text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm px-4 py-2 ${
-      isCurrentPath(path) ? 'font-bold' : 'font-medium'
+    const isActive = isCurrentPath(path);
+    
+    return `text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm px-4 py-2 rounded-md transition-colors ${
+      isActive ? 'font-semibold' : 'font-medium'
+    } ${
+      isActive ? '' : 'hover:bg-gray-100 dark:hover:bg-gray-800'
     }`;
   };
 
-  // Usar a cor primária da empresa ou fallback para azul
-  const companyColor = selectedCompany?.cor_principal || '#3B82F6';
+  const getLinkStyle = (path: string) => {
+    const isActive = isCurrentPath(path);
+    if (!isActive) return {};
+    
+    return {
+      backgroundColor: `${companyColor}15`,
+      color: companyColor,
+    };
+  };
   
   return (
     <NavigationMenu>
@@ -37,6 +53,7 @@ export const NavMenuLinks = ({ adminLabel = "Admin" }) => {
           <Link 
             to="/" 
             className={menuLinkClass('/')}
+            style={getLinkStyle('/')}
           >
             Início
           </Link>
@@ -84,22 +101,34 @@ export const NavMenuLinks = ({ adminLabel = "Admin" }) => {
         </NavigationMenuItem>
         
         <NavigationMenuItem>
-          <Link to="/community" className={menuLinkClass('/community')}>
+          <Link 
+            to="/community" 
+            className={menuLinkClass('/community')}
+            style={getLinkStyle('/community')}
+          >
             Fórum
           </Link>
         </NavigationMenuItem>
         
-        {(userProfile?.is_admin || userProfile?.super_admin) && (
+        {isAdmin && (
           <NavigationMenuItem>
-            <Link to="/team" className={menuLinkClass('/team')}>
+            <Link 
+              to="/team" 
+              className={menuLinkClass('/team')}
+              style={getLinkStyle('/team')}
+            >
               Equipe
             </Link>
           </NavigationMenuItem>
         )}
         
-        {(userProfile?.is_admin || userProfile?.super_admin) && (
+        {isAdmin && (
           <NavigationMenuItem>
-            <Link to="/admin" className={menuLinkClass('/admin')}>
+            <Link 
+              to="/admin" 
+              className={menuLinkClass('/admin')}
+              style={getLinkStyle('/admin')}
+            >
               {adminLabel}
             </Link>
           </NavigationMenuItem>

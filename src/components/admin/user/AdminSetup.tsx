@@ -4,6 +4,7 @@ import { AlertTriangle } from 'lucide-react';
 import { makeUserAdmin } from '@/utils/adminUtils';
 import { useToast } from "@/hooks/use-toast";
 import { UserProfile } from '@/hooks/useUsers';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AdminSetupProps {
   users: UserProfile[];
@@ -30,10 +31,11 @@ export const AdminSetup: React.FC<AdminSetupProps> = ({
         console.log("Attempting to set initial admin...");
         const targetEmail = 'pedro@merinno.com';
         
-        const existingAdmin = users.find(user => user.is_admin);
+        // Verificar se já existe um super admin (is_admin foi removido de profiles)
+        const existingSuperAdmin = users.find(user => user.super_admin);
         
-        if (existingAdmin) {
-          console.log("Initial admin is already set up");
+        if (existingSuperAdmin) {
+          console.log("Initial super admin is already set up");
           setInitialSetupDone(true);
           return;
         }

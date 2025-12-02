@@ -170,14 +170,29 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
         return false;
       }
       
-      // Check if user is admin
+      // Check if user is admin (is_admin foi removido de profiles)
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('is_admin, super_admin')
+        .select('super_admin')
         .eq('id', user.id)
         .single();
         
-      const isAdmin = profileData?.is_admin || profileData?.super_admin;
+      const isSuperAdmin = !!profileData?.super_admin;
+      
+      // Verificar se é admin de alguma empresa
+      let isCompanyAdmin = false;
+      if (!isSuperAdmin) {
+        const { data: userCompanies } = await supabase
+          .from('user_empresa')
+          .select('is_admin')
+          .eq('user_id', user.id)
+          .eq('is_admin', true)
+          .limit(1);
+        
+        isCompanyAdmin = (userCompanies?.length || 0) > 0;
+      }
+      
+      const isAdmin = isSuperAdmin || isCompanyAdmin;
       
       // Admin privilege check happens in the confirmDelete function now
 

@@ -48,11 +48,12 @@ export const useTeamMembers = () => {
     
     try {
       // Criar dados minimalistas para cache
+      // is_admin foi removido de profiles - não incluir no cache
       const minimalData = data.slice(0, 20).map(member => ({
         id: member.id,
         display_name: member.display_name,
         email: member.email,
-        is_admin: member.is_admin,
+        // is_admin não está mais em UserProfile (está em user_empresa)
         avatar: member.avatar,
         created_at: member.created_at
       }));
@@ -136,13 +137,14 @@ export const useTeamMembers = () => {
           .from('user_empresa')
           .select(`
             user_id,
+            is_admin,
             profiles!inner(
               id, 
               display_name, 
               email, 
-              is_admin, 
               avatar, 
-              created_at
+              created_at,
+              super_admin
             )
           `)
           .eq('empresa_id', selectedCompany.id)
@@ -160,14 +162,16 @@ export const useTeamMembers = () => {
 
         setLoadProgress(80);
 
-        // Processar dados
+        // Processar dados - is_admin agora vem de user_empresa
         const teamMembers: UserProfile[] = teamData?.map((item: any) => ({
           id: item.profiles.id,
           display_name: item.profiles.display_name,
           email: item.profiles.email,
-          is_admin: item.profiles.is_admin,
+          // is_admin foi removido de profiles - agora está em user_empresa
+          // Mas não incluímos no UserProfile já que é por empresa
           avatar: item.profiles.avatar,
-          created_at: item.profiles.created_at
+          created_at: item.profiles.created_at,
+          super_admin: item.profiles.super_admin
         })) || [];
 
         if (isMounted) {

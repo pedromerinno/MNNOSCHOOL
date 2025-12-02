@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { UserCog } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserCompanyAdmin } from '@/hooks/company/useUserCompanyAdmin';
 
 interface UserAdminToggleProps {
   userId: string;
@@ -19,8 +20,10 @@ export const UserAdminToggle: React.FC<UserAdminToggleProps> = ({
   onToggle 
 }) => {
   const { userProfile } = useAuth();
+  const { isAdmin: isCompanyAdmin } = useUserCompanyAdmin();
   const canToggleSuperAdmin = userProfile?.super_admin;
-  const canToggleAdmin = userProfile?.super_admin || userProfile?.is_admin;
+  // is_admin foi removido de profiles - verificar em user_empresa
+  const canToggleAdmin = userProfile?.super_admin || isCompanyAdmin;
 
   if (!canToggleAdmin) return null;
 

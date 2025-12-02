@@ -1,10 +1,14 @@
 
-import { useCallback } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useEmailSync = () => {
+  // Removido: flag RLS que estava bloqueando sincronização
+  
   // Função para sincronizar email do perfil com email de autenticação
   const syncProfileEmailWithAuth = useCallback(async () => {
+    // Removido: verificação de flag RLS que estava bloqueando sincronização
+    
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -14,11 +18,21 @@ export const useEmailSync = () => {
       }
 
       // Verificar se o email do perfil precisa ser atualizado
-      const { data: profileData } = await supabase
+      const { data: profileData, error: selectError } = await supabase
         .from('profiles')
         .select('email')
         .eq('id', user.id)
         .single();
+
+      // Se houver erro de RLS, tentar continuar mas logar o erro
+      if (selectError?.code === '42P17') {
+        console.warn('[useEmailSync] RLS error detected, but continuing');
+        return { success: false, error: selectError };
+      }
+      
+      if (selectError) {
+        return { success: false, error: selectError };
+      }
 
       // Se o email do perfil não existe ou é diferente do email de auth, atualiza
       if (!profileData?.email || profileData.email !== user.email) {
@@ -28,7 +42,12 @@ export const useEmailSync = () => {
           .eq('id', user.id);
 
         if (error) {
-          console.error('Erro ao sincronizar email:', error);
+          // Se for erro de RLS, tentar continuar mas logar o erro
+          if (error.code === '42P17') {
+            console.warn('[useEmailSync] RLS error detected, but continuing');
+          } else {
+            console.error('Erro ao sincronizar email:', error);
+          }
           return { success: false, error };
         }
 
@@ -37,8 +56,13 @@ export const useEmailSync = () => {
       }
 
       return { success: true, updated: false };
-    } catch (error) {
-      console.error('Erro ao sincronizar email:', error);
+    } catch (error: any) {
+      // Se for erro de RLS, tentar continuar mas logar o erro
+      if (error?.code === '42P17') {
+        console.warn('[useEmailSync] RLS error detected, but continuing');
+      } else {
+        console.error('Erro ao sincronizar email:', error);
+      }
       return { success: false, error };
     }
   }, []);

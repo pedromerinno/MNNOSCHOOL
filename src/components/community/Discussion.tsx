@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { MessageSquare, Users, Trash2, Check } from "lucide-react";
 import { Discussion as DiscussionType } from "@/types/discussions";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsAdmin } from "@/hooks/company/useIsAdmin";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -29,9 +30,9 @@ export const Discussion: React.FC<DiscussionProps> = ({
 }) => {
   const { userProfile } = useAuth();
   const { selectedCompany } = useCompanies();
+  const { isAdmin } = useIsAdmin();
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
   
-  const isAdmin = userProfile?.is_admin === true;
   const isAuthor = userProfile?.id && discussion.author_id === userProfile.id;
 
   const participantsCount = new Set(

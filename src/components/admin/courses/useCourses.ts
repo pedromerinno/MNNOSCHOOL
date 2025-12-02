@@ -106,37 +106,34 @@ export const useCourses = (companyId?: string) => {
           return;
         }
 
-        // Usar cache em LocalStorage para perfil de usuário
-        let currentUserProfile;
-        const cachedProfileKey = `user_profile_${currentUserId}`;
-        const profileCache = getCache<{is_admin?: boolean, super_admin?: boolean}>({
-          key: cachedProfileKey,
-          expirationMinutes: 5
-        });
+        // Verificar se é super admin
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('super_admin')
+          .eq('id', currentUserId)
+          .single();
         
-        if (profileCache && !forceRefresh) {
-          currentUserProfile = profileCache;
-          console.log('Usando perfil de usuário em cache');
-        } else {
-          // Se não tiver cache válido, buscar do servidor
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('is_admin, super_admin')
-            .eq('id', currentUserId)
-            .single();
-            
-          currentUserProfile = profile;
+        const isSuperAdmin = profile?.super_admin === true;
+        
+        // Verificar se é admin de alguma empresa (is_admin foi removido de profiles)
+        let isAdmin = false;
+        if (!isSuperAdmin) {
+          const { data: userCompanies } = await supabase
+            .from('user_empresa')
+            .select('is_admin')
+            .eq('user_id', currentUserId)
+            .eq('is_admin', true)
+            .limit(1);
           
-          // Salvar em cache
-          setCache({ key: cachedProfileKey }, profile);
+          isAdmin = (userCompanies?.length || 0) > 0;
         }
 
-        if (currentUserProfile?.super_admin) {
+        if (isSuperAdmin) {
           // Super admins veem todos os cursos se não houver companyId
           const fetchedCourses = await fetchCourses();
           setCourses(fetchedCourses);
           saveCoursesToCache(cacheKey, fetchedCourses);
-        } else if (currentUserProfile?.is_admin) {
+        } else if (isAdmin) {
           // Admins regulares veem cursos das suas empresas
           
           // Tentar usar cache para empresas do usuário

@@ -49,6 +49,12 @@ export const useMyCourses = () => {
   );
 
   // Load course data when component mounts or when company changes
+  // Use ref to store fetchCourseData to avoid recreating effect
+  const fetchCourseDataRef = useRef<(() => Promise<void>) | null>(null);
+  useEffect(() => {
+    fetchCourseDataRef.current = fetchCourseData;
+  }, [fetchCourseData]);
+
   useEffect(() => {
     const companyId = selectedCompany?.id;
     
@@ -60,18 +66,18 @@ export const useMyCourses = () => {
     });
     
     // Only fetch if company ID exists and has changed
-    if (companyId && (companyId !== lastCompanyIdRef.current || !hasLoadedRef.current)) {
+    if (companyId && (companyId !== lastCompanyIdRef.current || !hasLoadedRef.current) && fetchCourseDataRef.current) {
       console.log("Fetching course data for company change");
       lastCompanyIdRef.current = companyId;
       hasLoadedRef.current = true;
-      fetchCourseData();
+      fetchCourseDataRef.current();
     } else if (!companyId) {
       // Reset everything if no company selected
       console.log("No company selected, resetting data");
       hasLoadedRef.current = false;
       lastCompanyIdRef.current = null;
     }
-  }, [selectedCompany?.id, fetchCourseData]);
+  }, [selectedCompany?.id]); // Removed fetchCourseData from dependencies
 
   return {
     activeFilter,

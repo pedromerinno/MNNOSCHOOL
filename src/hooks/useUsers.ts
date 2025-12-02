@@ -10,18 +10,15 @@ export interface UserProfile {
   id: string; 
   email: string | null;
   display_name: string | null;
-  is_admin: boolean | null;
-  super_admin?: boolean | null;
+  // is_admin e cargo_id foram removidos - agora estão em user_empresa
+  super_admin?: boolean | null; // Global - acesso a tudo
   avatar?: string | null;
-  cargo_id?: string | null;
   created_at?: string | null;
-  // Novas colunas adicionadas
+  // Dados pessoais globais
   aniversario?: string | null;
-  tipo_contrato?: 'CLT' | 'PJ' | 'Fornecedor' | null;
   cidade?: string | null;
-  data_inicio?: string | null;
-  manual_cultura_aceito?: boolean | null;
-  nivel_colaborador?: 'Junior' | 'Pleno' | 'Senior' | null;
+  // Campos abaixo foram movidos para user_empresa (por empresa):
+  // - tipo_contrato, data_inicio, manual_cultura_aceito, nivel_colaborador, cargo_id, is_admin
 }
 
 export function useUsers() {
@@ -51,7 +48,7 @@ export function useUsers() {
         id: user.id,
         email: user.email,
         display_name: user.display_name,
-        is_admin: user.is_admin,
+        // is_admin foi removido de profiles - agora está em user_empresa
         super_admin: user.super_admin
       }));
       
@@ -122,7 +119,7 @@ export function useUsers() {
       // Buscar perfil do usuário atual primeiro
       const { data: currentUserProfile, error: profileError } = await supabase
         .from('profiles')
-        .select('is_admin, super_admin')
+        .select('super_admin')
         .eq('id', currentUserId)
         .single();
         
@@ -139,17 +136,12 @@ export function useUsers() {
           .select(`
             id, 
             display_name, 
-            is_admin, 
             super_admin, 
             email, 
             avatar,
             created_at,
             aniversario,
-            tipo_contrato,
-            cidade,
-            data_inicio,
-            manual_cultura_aceito,
-            nivel_colaborador
+            cidade
           `)
           .order('display_name', { ascending: true })
           .limit(50); // Limitar para evitar sobrecarga
@@ -168,81 +160,86 @@ export function useUsers() {
             hasAvatar: !!user.avatar
           })));
           
+          // tipo_contrato, data_inicio, manual_cultura_aceito e nivel_colaborador foram removidos de profiles
           // Converter dados do banco para tipos corretos
           const typedUsers: UserProfile[] = allUsers.map(user => ({
-            ...user,
-            tipo_contrato: user.tipo_contrato as 'CLT' | 'PJ' | 'Fornecedor' | null,
-            nivel_colaborador: user.nivel_colaborador as 'Junior' | 'Pleno' | 'Senior' | null
+            ...user
           }));
           
           setUsers(typedUsers);
           setCachedUsers(typedUsers);
         }
-      } else if (currentUserProfile?.is_admin) {
-        console.log('[useUsers] Fetching company users for admin');
-        // Admin vê apenas usuários das suas empresas - incluindo avatar
-        const companyIds = await getUserCompanyIds(currentUserId);
-        
-        if (companyIds.length === 0) {
-          console.log('[useUsers] No companies found for admin user');
-          setUsers([]);
-          return;
-        }
-        
-        const { data: companyUsers, error } = await supabase
-          .from('user_empresa')
-          .select(`
-            user_id,
-            profiles!inner(
-              id, 
-              display_name, 
-              is_admin, 
-              super_admin, 
-              email, 
-              avatar,
-              created_at,
-              aniversario,
-              tipo_contrato,
-              cidade,
-              data_inicio,
-              manual_cultura_aceito,
-              nivel_colaborador
-            )
-          `)
-          .in('empresa_id', companyIds)
-          .limit(100); // Limitar para performance
-          
-        if (error) {
-          console.error('[useUsers] Error fetching company users:', error);
-          throw error;
-        }
-        
-        // Extrair usuários únicos do resultado com tipos corretos
-        const uniqueUsers = companyUsers?.reduce((acc: UserProfile[], item: any) => {
-          const user = item.profiles;
-          if (user && !acc.find(u => u.id === user.id)) {
-            acc.push({
-              ...user,
-              tipo_contrato: user.tipo_contrato as 'CLT' | 'PJ' | 'Fornecedor' | null,
-              nivel_colaborador: user.nivel_colaborador as 'Junior' | 'Pleno' | 'Senior' | null
-            });
-          }
-          return acc;
-        }, []) || [];
-        
-        console.log('[useUsers] Fetched', uniqueUsers.length, 'company users for admin');
-        console.log('[useUsers] Sample company user data:', uniqueUsers.slice(0, 2).map(user => ({
-          id: user.id,
-          email: user.email,
-          avatar: user.avatar,
-          hasAvatar: !!user.avatar
-        })));
-        
-        setUsers(uniqueUsers);
-        setCachedUsers(uniqueUsers);
       } else {
-        console.log('[useUsers] Regular user - no access to user list');
-        setUsers([]);
+        // Verificar se é admin de alguma empresa (is_admin foi removido de profiles)
+        const { data: userCompanies } = await supabase
+          .from('user_empresa')
+          .select('empresa_id, is_admin')
+          .eq('user_id', currentUserId)
+          .eq('is_admin', true)
+          .limit(1);
+        
+        const isCompanyAdmin = (userCompanies?.length || 0) > 0;
+        
+        if (isCompanyAdmin) {
+          console.log('[useUsers] Fetching company users for admin');
+          // Admin vê apenas usuários das suas empresas - incluindo avatar
+          const companyIds = await getUserCompanyIds(currentUserId);
+          
+          if (companyIds.length === 0) {
+            console.log('[useUsers] No companies found for admin user');
+            setUsers([]);
+            return;
+          }
+          
+          const { data: companyUsers, error } = await supabase
+            .from('user_empresa')
+            .select(`
+              user_id,
+              profiles!inner(
+                id, 
+                display_name, 
+                super_admin, 
+                email, 
+                avatar,
+                created_at,
+                aniversario,
+                cidade
+              )
+            `)
+            .in('empresa_id', companyIds)
+            .limit(100); // Limitar para performance
+          
+          if (error) {
+            console.error('[useUsers] Error fetching company users:', error);
+            throw error;
+          }
+          
+          // tipo_contrato, data_inicio, manual_cultura_aceito e nivel_colaborador foram removidos de profiles
+          // Extrair usuários únicos do resultado com tipos corretos
+          const uniqueUsers = companyUsers?.reduce((acc: UserProfile[], item: any) => {
+            const user = item.profiles;
+            if (user && !acc.find(u => u.id === user.id)) {
+              acc.push({
+                ...user
+              });
+            }
+            return acc;
+          }, []) || [];
+          
+          console.log('[useUsers] Fetched', uniqueUsers.length, 'company users for admin');
+          console.log('[useUsers] Sample company user data:', uniqueUsers.slice(0, 2).map(user => ({
+            id: user.id,
+            email: user.email,
+            avatar: user.avatar,
+            hasAvatar: !!user.avatar
+          })));
+          
+          setUsers(uniqueUsers);
+          setCachedUsers(uniqueUsers);
+        } else {
+          console.log('[useUsers] Regular user - no access to user list');
+          setUsers([]);
+        }
       }
       
     } catch (error: any) {

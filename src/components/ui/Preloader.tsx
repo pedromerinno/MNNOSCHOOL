@@ -4,20 +4,24 @@ import { useState, useEffect } from "react";
 interface PreloaderProps {
   duration?: number;
   children?: React.ReactNode;
+  autoHide?: boolean; // Novo prop para controlar se deve esconder automaticamente
 }
 
-export const Preloader = ({ duration = 2000, children }: PreloaderProps) => {
+export const Preloader = ({ duration = 2000, children, autoHide = false }: PreloaderProps) => {
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsVisible(false);
-    }, duration);
+    // Só esconder automaticamente se autoHide for true
+    if (autoHide) {
+      const timer = setTimeout(() => {
+        setIsVisible(false);
+      }, duration);
 
-    return () => clearTimeout(timer);
-  }, [duration]);
+      return () => clearTimeout(timer);
+    }
+  }, [duration, autoHide]);
 
-  if (!isVisible) return null;
+  if (!isVisible && autoHide) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#F8F7F4] dark:bg-[#191919] animate-fade-in">

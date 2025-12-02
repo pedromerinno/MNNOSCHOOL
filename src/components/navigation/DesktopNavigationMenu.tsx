@@ -10,14 +10,23 @@ import { NotificationButton } from "./NotificationButton";
 import { NavMenuLinks } from "./NavMenuLinks";
 import { useCompanies } from "@/hooks/useCompanies";
 import { getInitials } from "@/utils/stringUtils";
+import { cn } from "@/lib/utils";
 
 export const DesktopNavigationMenu = () => {
   const { user } = useAuth();
   const { selectedCompany } = useCompanies();
   const location = useLocation();
+  const isAdminPage = location.pathname === '/admin';
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b shadow-sm bg-[#F8F7F4] dark:bg-[#191919] hidden lg:block">
+    <header 
+      className={cn(
+        "sticky top-0 z-40 w-full border-b shadow-sm hidden lg:block",
+        "bg-[#F8F7F4] dark:bg-[#191919]",
+        "backdrop-blur-sm supports-[backdrop-filter]:bg-[#F8F7F4]/95 supports-[backdrop-filter]:dark:bg-[#191919]/95",
+        isAdminPage && "border-sidebar-border"
+      )}
+    >
       <div className="w-full px-4 h-16 flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <Link to="/" className="flex items-center space-x-2">

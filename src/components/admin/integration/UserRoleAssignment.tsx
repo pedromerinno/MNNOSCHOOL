@@ -60,20 +60,21 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
         console.log('[UserRoleAssignment] Roles fetched:', roleData?.length || 0);
         setRoles(roleData as JobRole[] || []);
         
-        // Buscar perfil atualizado do usuário para pegar o cargo atual
-        const { data: userProfile, error: profileError } = await supabase
-          .from('profiles')
+        // Buscar cargo do usuário nesta empresa específica (nova estrutura)
+        const { data: userCompany, error: userCompanyError } = await supabase
+          .from('user_empresa')
           .select('cargo_id')
-          .eq('id', user.id)
+          .eq('user_id', user.id)
+          .eq('empresa_id', companyId)
           .single();
           
-        if (profileError && profileError.code !== 'PGRST116') {
-          console.error('[UserRoleAssignment] Error fetching user profile:', profileError);
-          throw profileError;
+        if (userCompanyError && userCompanyError.code !== 'PGRST116') {
+          console.error('[UserRoleAssignment] Error fetching user company relation:', userCompanyError);
+          // Não é erro fatal, usuário pode não ter relação com a empresa ainda
         }
         
-        const userCargoId = userProfile?.cargo_id || user.cargo_id;
-        console.log('[UserRoleAssignment] User cargo_id:', userCargoId);
+        const userCargoId = userCompany?.cargo_id || null;
+        console.log('[UserRoleAssignment] User cargo_id for company:', userCargoId);
         
         if (userCargoId) {
           setCurrentRoleId(userCargoId);
@@ -89,7 +90,7 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
             setCurrentRoleTitle('Cargo não encontrado');
           }
         } else {
-          console.log('[UserRoleAssignment] No cargo assigned to user');
+          console.log('[UserRoleAssignment] No cargo assigned to user for this company');
           setCurrentRoleId("");
           setSelectedRoleId("");
           setCurrentRoleTitle("");
@@ -122,22 +123,47 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
     setError(null);
     
     try {
-      const updates = {
-        cargo_id: selectedRoleId,
-        updated_at: new Date().toISOString()
-      };
+      // Verificar se a associação user_empresa existe
+      const { data: existingRelation, error: checkError } = await supabase
+        .from('user_empresa')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('empresa_id', companyId)
+        .single();
 
-      const { error } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('id', user.id);
-        
-      if (error) {
-        console.error('[UserRoleAssignment] Error updating profile:', error);
-        throw error;
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw checkError;
+      }
+
+      if (existingRelation) {
+        // Atualizar a associação existente
+        const { error } = await supabase
+          .from('user_empresa')
+          .update({ cargo_id: selectedRoleId })
+          .eq('id', existingRelation.id);
+          
+        if (error) {
+          console.error('[UserRoleAssignment] Error updating user_empresa:', error);
+          throw error;
+        }
+      } else {
+        // Criar nova associação se não existir
+        const { error } = await supabase
+          .from('user_empresa')
+          .insert({
+            user_id: user.id,
+            empresa_id: companyId,
+            cargo_id: selectedRoleId,
+            is_admin: false,
+          });
+          
+        if (error) {
+          console.error('[UserRoleAssignment] Error creating user_empresa relation:', error);
+          throw error;
+        }
       }
       
-      console.log('[UserRoleAssignment] Profile updated successfully');
+      console.log('[UserRoleAssignment] User company role updated successfully');
       
       // Atualizar estado local
       setCurrentRoleId(selectedRoleId);
@@ -198,17 +224,30 @@ export const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
     setError(null);
     
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          cargo_id: null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
-        
-      if (error) {
-        console.error('[UserRoleAssignment] Error removing role:', error);
-        throw error;
+      // Atualizar user_empresa para remover o cargo nesta empresa
+      const { data: existingRelation, error: checkError } = await supabase
+        .from('user_empresa')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('empresa_id', companyId)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw checkError;
+      }
+
+      if (existingRelation) {
+        const { error } = await supabase
+          .from('user_empresa')
+          .update({ cargo_id: null })
+          .eq('id', existingRelation.id);
+          
+        if (error) {
+          console.error('[UserRoleAssignment] Error removing role:', error);
+          throw error;
+        }
+      } else {
+        console.log('[UserRoleAssignment] No relation found, nothing to remove');
       }
       
       console.log('[UserRoleAssignment] Role removed successfully');

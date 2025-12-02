@@ -31,14 +31,11 @@ export const useCompanyUsers = () => {
         .from('user_empresa')
         .select(`
           user_id,
+          cargo_id,
           profiles!inner (
             id,
             display_name,
-            email,
-            cargo_id,
-            job_roles (
-              title
-            )
+            email
           )
         `)
         .eq('empresa_id', selectedCompany.id);
@@ -49,12 +46,29 @@ export const useCompanyUsers = () => {
         return;
       }
 
+      // Buscar cargos separadamente
+      const cargoIds = data?.filter(item => item.cargo_id).map(item => item.cargo_id) || [];
+      const jobRolesMap: Record<string, any> = {};
+      
+      if (cargoIds.length > 0) {
+        const { data: rolesData } = await supabase
+          .from('job_roles')
+          .select('id, title')
+          .in('id', cargoIds);
+        
+        if (rolesData) {
+          rolesData.forEach(role => {
+            jobRolesMap[role.id] = { title: role.title };
+          });
+        }
+      }
+
       const companyUsers = (data || []).map((item: any) => ({
         id: item.profiles.id,
         display_name: item.profiles.display_name || 'Usuário sem nome',
         email: item.profiles.email || '',
-        cargo_id: item.profiles.cargo_id,
-        job_role: item.profiles.job_roles
+        cargo_id: item.cargo_id || null, // Cargo por empresa (nova estrutura)
+        job_role: item.cargo_id ? jobRolesMap[item.cargo_id] : undefined
       }));
 
       setUsers(companyUsers);

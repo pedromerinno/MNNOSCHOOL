@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { UserProfile } from "@/hooks/useUsers";
+import { TeamMember } from "@/hooks/team/useTeamMembersOptimized";
 import { AdminMembersSection } from './sections/AdminMembersSection';
 import { RoleMembersSection } from './sections/RoleMembersSection';
 import { UnassignedMembersSection } from './sections/UnassignedMembersSection';
@@ -8,18 +8,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { JobRole } from "@/types/job-roles";
 
 interface TeamMembersOrganizedProps {
-  members: UserProfile[];
+  members: TeamMember[];
   companyId?: string;
   companyColor?: string;
 }
 
 interface OrganizedMembers {
-  admins: UserProfile[];
+  admins: TeamMember[];
   roleGroups: Array<{
     role: JobRole;
-    members: UserProfile[];
+    members: TeamMember[];
   }>;
-  unassigned: UserProfile[];
+  unassigned: TeamMember[];
 }
 
 export const TeamMembersOrganized: React.FC<TeamMembersOrganizedProps> = ({
@@ -66,11 +66,11 @@ export const TeamMembersOrganized: React.FC<TeamMembersOrganizedProps> = ({
           return;
         }
 
-        // Separar administradores
-        const admins = members.filter(member => member.is_admin);
+        // Separar administradores (is_admin agora vem de user_empresa)
+        const admins = members.filter(member => member.is_admin === true);
         
         // Organizar por cargos
-        const roleGroups: Array<{ role: JobRole; members: UserProfile[] }> = [];
+        const roleGroups: Array<{ role: JobRole; members: TeamMember[] }> = [];
         const assignedMemberIds = new Set<string>();
 
         if (roles && roles.length > 0) {

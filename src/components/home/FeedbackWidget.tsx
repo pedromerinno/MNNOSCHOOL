@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ReturnFeedbackDialog } from "../feedback/ReturnFeedbackDialog";
 import { UserProfile } from "@/hooks/useUsers";
-import { useState, memo } from "react";
+import { useState, useEffect, memo } from "react";
 import { AllFeedbackDialog } from "./AllFeedbackDialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -41,9 +41,8 @@ export const FeedbackWidget = memo(() => {
     id: profile.id,
     display_name: profile.display_name,
     email: null,
-    is_admin: false,
-    avatar: profile.avatar || null,
-    cargo_id: profile.cargo_id || null
+    // is_admin e cargo_id foram removidos de profiles - agora estão em user_empresa
+    avatar: profile.avatar || null
   });
 
   const prevFeedback = () => {
@@ -54,9 +53,12 @@ export const FeedbackWidget = memo(() => {
     setCurrentIndex((prev) => (prev < feedbacks.length - 1 ? prev + 1 : prev));
   };
 
-  if (currentIndex > feedbacks.length - 1 && feedbacks.length > 0) {
-    setCurrentIndex(feedbacks.length - 1);
-  }
+  // Corrigir índice se necessário
+  useEffect(() => {
+    if (currentIndex > feedbacks.length - 1 && feedbacks.length > 0) {
+      setCurrentIndex(feedbacks.length - 1);
+    }
+  }, [currentIndex, feedbacks.length]);
 
   const currentFeedback = feedbacks[currentIndex];
 

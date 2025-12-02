@@ -33,17 +33,31 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
       setCurrentUserId(data.user?.id || null);
       
       if (data.user?.id) {
-        // Also check if user is admin
+        // Also check if user is admin (is_admin foi removido de profiles)
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('is_admin, super_admin')
+          .select('super_admin')
           .eq('id', data.user.id)
           .single();
           
         if (profileError) {
           console.error("Error fetching profile:", profileError);
         } else {
-          setCurrentUserIsAdmin(!!profileData?.is_admin || !!profileData?.super_admin);
+          const isSuperAdmin = !!profileData?.super_admin;
+          // Verificar se é admin de alguma empresa
+          if (!isSuperAdmin) {
+            const { data: userCompanies } = await supabase
+              .from('user_empresa')
+              .select('is_admin')
+              .eq('user_id', data.user.id)
+              .eq('is_admin', true)
+              .limit(1);
+            
+            const isCompanyAdmin = (userCompanies?.length || 0) > 0;
+            setCurrentUserIsAdmin(isCompanyAdmin);
+          } else {
+            setCurrentUserIsAdmin(true);
+          }
         }
       }
     };
@@ -155,10 +169,10 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
     
     console.log("Usuário atual:", user.id);
     
-    // Check if the current user is allowed to delete this document
+    // Check if the current user is allowed to delete this document (is_admin foi removido de profiles)
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
-      .select('is_admin, super_admin')
+      .select('super_admin')
       .eq('id', user?.id)
       .single();
     
@@ -166,7 +180,22 @@ export const useUserDocumentsList = (onDelete: (documentId: string) => Promise<b
       console.error("Error fetching profile:", profileError);
     }
     
-    const isAdmin = profileData?.is_admin || profileData?.super_admin;
+    const isSuperAdmin = !!profileData?.super_admin;
+    
+    // Verificar se é admin de alguma empresa
+    let isCompanyAdmin = false;
+    if (!isSuperAdmin) {
+      const { data: userCompanies } = await supabase
+        .from('user_empresa')
+        .select('is_admin')
+        .eq('user_id', user?.id)
+        .eq('is_admin', true)
+        .limit(1);
+      
+      isCompanyAdmin = (userCompanies?.length || 0) > 0;
+    }
+    
+    const isAdmin = isSuperAdmin || isCompanyAdmin;
     console.log("Usuário é admin:", isAdmin);
     
     // Um usuário só pode excluir um documento se:

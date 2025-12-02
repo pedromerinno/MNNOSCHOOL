@@ -17,10 +17,12 @@ import {
   MessageSquare, 
   Settings, 
   LayoutDashboard,
-  BookOpenCheck
+  BookOpenCheck,
+  Globe
 } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompanies } from '@/hooks/useCompanies';
+import { cn } from '@/lib/utils';
 
 interface AdminSidebarProps {
   activeTab: string;
@@ -33,10 +35,15 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, onTabChan
   const isSuperAdmin = userProfile?.super_admin;
 
   const menuItems = [
+    {
+      title: "Dashboard",
+      icon: LayoutDashboard,
+      tab: "dashboard"
+    },
     ...(isSuperAdmin ? [
       {
         title: "Plataforma",
-        icon: LayoutDashboard,
+        icon: Globe,
         tab: "platform"
       }
     ] : []),
@@ -76,46 +83,54 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, onTabChan
   const companyColor = selectedCompany?.cor_principal || '#1EAEDB';
 
   return (
-    <Sidebar className="border-r min-h-full">
-      <SidebarContent className="flex flex-col h-full">
+    <Sidebar 
+      variant="inset" 
+      className="border-r border-sidebar-border bg-sidebar/95 backdrop-blur supports-[backdrop-filter]:bg-sidebar/60"
+    >
+      <SidebarContent className="flex flex-col">
         <SidebarGroup className="flex-1 py-4">
           <SidebarGroupLabel className="px-4 py-3 text-sm font-semibold text-sidebar-foreground/80 border-b mb-6">
             Administração
           </SidebarGroupLabel>
-          <SidebarGroupContent className="px-3">
-            <SidebarMenu className="space-y-2 mt-6">
-              {menuItems.map((item, index) => (
-                <SidebarMenuItem key={item.tab} className={index === 0 ? "mt-4" : ""}>
-                  <SidebarMenuButton 
-                    onClick={() => onTabChange(item.tab)}
-                    isActive={activeTab === item.tab}
-                    className={`
-                      w-full justify-start h-11 px-3 py-2 rounded-lg 
-                      transition-all duration-200 ease-in-out
-                      hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
-                      group
-                    `}
-                    style={activeTab === item.tab ? {
-                      backgroundColor: `${companyColor}15`,
-                      color: companyColor,
-                      borderColor: `${companyColor}30`,
-                      fontWeight: '500'
-                    } : {}}
-                  >
-                    <item.icon 
-                      className="w-4 h-4 mr-3 flex-shrink-0 transition-colors group-hover:text-sidebar-accent-foreground" 
-                      style={activeTab === item.tab ? { color: companyColor } : {}}
-                    />
-                    <span className="text-sm font-medium truncate">{item.title}</span>
-                    {activeTab === item.tab && (
-                      <div 
-                        className="ml-auto w-1.5 h-1.5 rounded-full" 
-                        style={{ backgroundColor: companyColor }}
+          <SidebarGroupContent className="px-2">
+            <SidebarMenu className="space-y-1">
+              {menuItems.map((item) => {
+                const isActive = activeTab === item.tab;
+                return (
+                  <SidebarMenuItem key={item.tab}>
+                    <SidebarMenuButton 
+                      onClick={() => onTabChange(item.tab)}
+                      isActive={isActive}
+                      className={cn(
+                        "w-full justify-start h-10 px-3 rounded-md",
+                        "transition-all duration-200 ease-in-out",
+                        "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                        "group relative",
+                        isActive && "bg-sidebar-accent font-medium"
+                      )}
+                      style={isActive ? {
+                        backgroundColor: `${companyColor}15`,
+                        color: companyColor,
+                      } : {}}
+                    >
+                      <item.icon 
+                        className={cn(
+                          "w-4 h-4 mr-3 flex-shrink-0 transition-colors",
+                          isActive ? "" : "text-sidebar-foreground/70 group-hover:text-sidebar-accent-foreground"
+                        )}
+                        style={isActive ? { color: companyColor } : {}}
                       />
-                    )}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+                      <span className="text-sm truncate">{item.title}</span>
+                      {isActive && (
+                        <div 
+                          className="ml-auto w-1.5 h-1.5 rounded-full" 
+                          style={{ backgroundColor: companyColor }}
+                        />
+                      )}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

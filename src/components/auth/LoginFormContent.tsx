@@ -3,9 +3,10 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Loader2, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface LoginFormContentProps {
   email: string;
@@ -15,6 +16,7 @@ interface LoginFormContentProps {
   isLoggingIn: boolean;
   onSubmit: (e: React.FormEvent) => Promise<void>;
   onForgotPassword: () => void;
+  loginError?: string | null;
 }
 
 export const LoginFormContent = ({
@@ -25,6 +27,7 @@ export const LoginFormContent = ({
   isLoggingIn,
   onSubmit,
   onForgotPassword,
+  loginError,
 }: LoginFormContentProps) => {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -55,6 +58,13 @@ export const LoginFormContent = ({
           </Link>
         </p>
       </div>
+
+      {loginError && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{loginError}</AlertDescription>
+        </Alert>
+      )}
       
       <form onSubmit={onSubmit} className="space-y-3 sm:space-y-4">
         <div>
@@ -62,7 +72,7 @@ export const LoginFormContent = ({
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Usuário ou E-mail"
+            placeholder="E-mail"
             required
             className="w-full h-11 sm:h-12 px-3 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           />
@@ -143,7 +153,9 @@ export const LoginFormContent = ({
           
           <Button 
             variant="outline"
-            className="w-full h-11 sm:h-12 border border-gray-300 rounded-lg font-medium text-sm sm:text-base"
+            disabled
+            className="w-full h-11 sm:h-12 border border-gray-300 rounded-lg font-medium text-sm sm:text-base opacity-50 cursor-not-allowed"
+            title="SSO em breve"
           >
             <span className="hidden sm:inline">Usar Single Sign-On (SSO)</span>
             <span className="sm:hidden">SSO</span>

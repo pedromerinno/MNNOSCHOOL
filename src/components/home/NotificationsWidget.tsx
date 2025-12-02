@@ -27,6 +27,12 @@ export const NotificationsWidget = () => {
     fetchNotices
   } = useCompanyNotices();
 
+  // Use ref to store fetchNotices to avoid recreating effect
+  const fetchNoticesRef = useRef(fetchNotices);
+  useEffect(() => {
+    fetchNoticesRef.current = fetchNotices;
+  }, [fetchNotices]);
+
   // Filtrar apenas avisos visíveis para o widget da home
   const visibleNotices = notices.filter(notice => (notice as any).visibilidade !== false);
   const recentNotices = visibleNotices.slice(0, 2); // Reduzir para 2 avisos
@@ -52,7 +58,7 @@ export const NotificationsWidget = () => {
     lastFetchedCompanyRef.current = companyId;
     
     try {
-      await fetchNotices(companyId, false); // usar cache quando possível
+      await fetchNoticesRef.current(companyId, false); // usar cache quando possível
     } finally {
       if (mountedRef.current) {
         fetchInProgressRef.current = false;
@@ -70,7 +76,7 @@ export const NotificationsWidget = () => {
       lastFetchedCompanyRef.current = null;
       fetchInProgressRef.current = false;
     }
-  }, [selectedCompany?.id]);
+  }, [selectedCompany?.id]); // Removed fetchNotices from dependencies
 
   // Cleanup otimizado
   useEffect(() => {

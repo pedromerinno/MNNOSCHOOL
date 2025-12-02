@@ -42,15 +42,31 @@ const TeamMemberProfile = () => {
       try {
         setIsLoading(true);
         
-        // Get the member profile - updated to remove 'cargo' which doesn't exist
+        // Get the member profile - buscar cargo e is_admin de user_empresa (nova estrutura)
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('id, display_name, email, cargo_id, avatar, is_admin')
+          .select('id, display_name, email, avatar, super_admin')
           .eq('id', memberId)
           .single();
 
         if (profileError) throw profileError;
-        setMember(profileData);
+        
+        // Buscar cargo e is_admin de user_empresa para esta empresa
+        const { data: userCompanyData, error: userCompanyError } = await supabase
+          .from('user_empresa')
+          .select('cargo_id')
+          .eq('user_id', memberId)
+          .eq('empresa_id', selectedCompany.id)
+          .single();
+
+        // Combinar dados do perfil com dados da empresa
+        const memberData = {
+          ...profileData,
+          cargo_id: userCompanyData?.cargo_id || null,
+          is_admin: userCompanyData?.is_admin || false,
+        };
+        
+        setMember(memberData);
 
         // Get the feedbacks for the member without the join
         const { data: feedbackData, error: feedbackError } = await supabase

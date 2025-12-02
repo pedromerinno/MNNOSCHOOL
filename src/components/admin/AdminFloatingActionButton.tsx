@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Plus, FilePlus, Link, BookPlus, MessageSquarePlus, BellPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useAuth } from "@/contexts/AuthContext";
+import { useIsAdmin } from "@/hooks/company/useIsAdmin";
 import { NewCourseDialog, NewNoticeDialog, NewDiscussionDialog, NewAccessDialog, AddDocumentDialog } from "./dialogs";
 
 const FAB_OPTIONS = [{
@@ -30,9 +30,7 @@ const FAB_OPTIONS = [{
 
 export const AdminFloatingActionButton = () => {
   const [open, setOpen] = useState(false);
-  const {
-    userProfile
-  } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const [courseDialogOpen, setCourseDialogOpen] = useState(false);
   const [noticeDialogOpen, setNoticeDialogOpen] = useState(false);
   const [discussionDialogOpen, setDiscussionDialogOpen] = useState(false);
@@ -40,7 +38,7 @@ export const AdminFloatingActionButton = () => {
   const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
   
   // Only render for admin or super_admin users
-  if (!userProfile?.is_admin && !userProfile?.super_admin) return null;
+  if (!isAdmin) return null;
   
   const handleOption = (option: (typeof FAB_OPTIONS)[number]) => {
     setOpen(false);

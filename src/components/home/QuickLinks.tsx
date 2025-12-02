@@ -44,12 +44,11 @@ export const QuickLinks = () => {
     }
   ];
 
-  // Trigger animation on mount - timing suave
+  // Trigger animation on mount - reduzir delay para melhor percepção
   useEffect(() => {
-    const timer = setTimeout(() => {
+    requestAnimationFrame(() => {
       setIsVisible(true);
-    }, 200);
-    return () => clearTimeout(timer);
+    });
   }, []);
 
   const handleNavigate = (path: string) => {
@@ -66,7 +65,7 @@ export const QuickLinks = () => {
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
             }`}
             style={{
-              transitionDelay: `${index * 100 + 300}ms` // Delay sequencial suave
+              transitionDelay: `${index * 50 + 100}ms` // Delay sequencial otimizado
             }}
             onClick={() => handleNavigate(link.path)}
           >

@@ -1,24 +1,19 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { Card, CardContent } from "@/components/ui/card";
 import { UserManagement } from '@/components/admin/UserManagement';
 import { CompanyManagement } from '@/components/admin/CompanyManagement';
 import { SettingsManagement } from '@/components/admin/integration/SettingsManagement';
 import { BackgroundManager } from '@/components/admin/BackgroundManager';
 import { SuggestedCoursesManagement } from '@/components/admin/integration/suggested-courses/SuggestedCoursesManagement';
 import { useAuth } from '@/contexts/AuthContext';
-import { ArrowLeft } from 'lucide-react';
 import { CourseManagement } from '@/components/admin/CourseManagement';
-import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
-import { Button } from '@/components/ui/button';
 import { CompanyNoticesAdminList } from '@/components/admin/CompanyNoticesAdminList';
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AdminSidebar } from '@/components/admin/AdminSidebar';
+import { AdminPageLayout } from '@/components/admin/AdminPageLayout';
 import { AdminPageSkeleton } from '@/components/admin/AdminPageSkeleton';
 import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 import { Preloader } from "@/components/ui/Preloader";
-import { toast } from 'sonner';
+import { AdminDashboard } from '@/components/admin/AdminDashboard';
 
 const AdminPage = () => {
   const {
@@ -72,8 +67,8 @@ const AdminPage = () => {
     if (tabParam) {
       initialTab = tabParam;
     } else {
-      // Definir aba padrão baseada no tipo de usuário APENAS se não há parâmetro na URL
-      initialTab = userProfile?.super_admin ? "platform" : "companies";
+      // Definir aba padrão como dashboard
+      initialTab = "dashboard";
     }
     
     // Atualizar URL e estado apenas na inicialização
@@ -156,6 +151,8 @@ const AdminPage = () => {
 
   const getActiveContent = () => {
     switch (activeTab) {
+      case "dashboard":
+        return <AdminDashboard />;
       case "platform":
         return <BackgroundManager />;
       case "companies":
@@ -171,30 +168,14 @@ const AdminPage = () => {
       case "settings":
         return <SettingsManagement />;
       default:
-        return null;
+        return <AdminDashboard />;
     }
   };
 
   return (
-    <>
-      <MainNavigationMenu />
-      <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
-        <div className="container mx-auto px-0 lg:px-4 py-6 max-w-[1500px]">
-          <SidebarProvider defaultOpen={true}>
-            <div className="flex w-full min-h-[calc(100vh-120px)]">
-              <AdminSidebar activeTab={activeTab} onTabChange={handleTabChange} />
-              <div className="flex-1 bg-transparent">
-                <div className="p-6 h-full">
-                  <ErrorBoundary>
-                    {getActiveContent()}
-                  </ErrorBoundary>
-                </div>
-              </div>
-            </div>
-          </SidebarProvider>
-        </div>
-      </div>
-    </>
+    <AdminPageLayout activeTab={activeTab} onTabChange={handleTabChange}>
+      {getActiveContent()}
+    </AdminPageLayout>
   );
 };
 

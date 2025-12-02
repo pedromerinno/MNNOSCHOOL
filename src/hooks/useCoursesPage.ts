@@ -22,6 +22,22 @@ export const useCoursesPage = () => {
 
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
 
+  // Debounce timer for realtime updates
+  const realtimeDebounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const fetchCourseDataRef = useRef<((retry?: boolean) => Promise<void>) | null>(null);
+
+  // Debounced fetch function for realtime updates
+  const debouncedFetch = useCallback(() => {
+    if (realtimeDebounceTimer.current) {
+      clearTimeout(realtimeDebounceTimer.current);
+    }
+    realtimeDebounceTimer.current = setTimeout(() => {
+      if (!hasActiveRequest.current && fetchCourseDataRef.current) {
+        fetchCourseDataRef.current();
+      }
+    }, 2000); // Wait 2 seconds before fetching after realtime event
+  }, []);
+
   // Setup and cleanup realtime subscription
   useEffect(() => {
     if (!selectedCompany?.id) return;
@@ -38,7 +54,7 @@ export const useCoursesPage = () => {
         filter: `empresa_id=eq.${companyId}`
       }, (payload) => {
         console.log('Company course change detected:', payload);
-        fetchCourseData();
+        debouncedFetch();
       })
       .on('postgres_changes', {
         event: '*',
@@ -46,7 +62,7 @@ export const useCoursesPage = () => {
         table: 'courses'
       }, (payload) => {
         console.log('Course change detected:', payload);
-        fetchCourseData();
+        debouncedFetch();
       })
       .subscribe();
     
@@ -54,11 +70,14 @@ export const useCoursesPage = () => {
     
     return () => {
       console.log('Cleaning up realtime subscription for company courses');
+      if (realtimeDebounceTimer.current) {
+        clearTimeout(realtimeDebounceTimer.current);
+      }
       if (realtimeChannel.current) {
         supabase.removeChannel(realtimeChannel.current);
       }
     };
-  }, [selectedCompany?.id]);
+  }, [selectedCompany?.id, debouncedFetch]);
 
   // Memoized fetch function to prevent unnecessary re-renders
   const fetchCourseData = useCallback(async (retry = false) => {
@@ -105,14 +124,26 @@ export const useCoursesPage = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
       
-      // Get user profile to check their job role
+      // Get user profile to check super_admin status
       const { data: userProfile } = await supabase
         .from('profiles')
-        .select('cargo_id, is_admin, super_admin')
+        .select('super_admin')
         .eq('id', user.id)
         .single();
       
-      console.log('User profile for courses page:', userProfile);
+      // Get user company role and admin status (cargo_id and is_admin moved to user_empresa)
+      const { data: userCompany } = await supabase
+        .from('user_empresa')
+        .select('cargo_id, is_admin')
+        .eq('user_id', user.id)
+        .eq('empresa_id', selectedCompany.id)
+        .single();
+      
+      const isSuperAdmin = userProfile?.super_admin === true;
+      const isAdmin = isSuperAdmin || (userCompany?.is_admin === true);
+      const userJobRoleId = userCompany?.cargo_id || null;
+      
+      console.log('User company data for courses page:', { isAdmin, isSuperAdmin, userJobRoleId });
       
       const { data: companyAccess, error: accessError } = await supabase
         .from('company_courses')
@@ -149,8 +180,7 @@ export const useCoursesPage = () => {
       let availableCourseIds = courseIds;
       
       // If user is not admin and has a job role, apply filtering
-      if (!userProfile?.is_admin && !userProfile?.super_admin) {
-        const userJobRoleId = userProfile?.cargo_id;
+      if (!isAdmin) {
         console.log('User job role ID:', userJobRoleId);
         
         if (courseJobRoles && courseJobRoles.length > 0) {
@@ -237,23 +267,28 @@ export const useCoursesPage = () => {
     }
   }, [selectedCompany, lastSelectedCompanyId]);
 
+  // Update ref when fetchCourseData changes
+  useEffect(() => {
+    fetchCourseDataRef.current = fetchCourseData;
+  }, [fetchCourseData]);
+
   // Run the fetch only when selectedCompany changes or on component mount
   useEffect(() => {
-    if (selectedCompany) {
-      fetchCourseData();
-    } else if (!initialLoadDone.current) {
+    if (selectedCompany && fetchCourseDataRef.current) {
+      fetchCourseDataRef.current();
+    } else if (!initialLoadDone.current && fetchCourseDataRef.current) {
       // If no company is selected yet, but it's our first load
       // Try to fetch with retries
-      fetchCourseData(true);
+      fetchCourseDataRef.current(true);
     }
-  }, [selectedCompany, fetchCourseData]);
+  }, [selectedCompany?.id]); // Only depend on company ID, not the whole object
 
   // Listen for company selection events to refresh data
   useEffect(() => {
     const handleCompanySelected = () => {
-      if (selectedCompany) {
+      if (selectedCompany && !hasActiveRequest.current && fetchCourseDataRef.current) {
         console.log("Company selection event detected in useCoursesPage, refreshing data");
-        fetchCourseData();
+        fetchCourseDataRef.current();
       }
     };
     
@@ -262,15 +297,15 @@ export const useCoursesPage = () => {
     return () => {
       window.removeEventListener('company-selected', handleCompanySelected);
     };
-  }, [selectedCompany, fetchCourseData]);
+  }, [selectedCompany?.id]); // Only depend on company ID
 
   // Expose refresh method
   const refreshCourses = useCallback(() => {
-    if (selectedCompany) {
+    if (selectedCompany && !hasActiveRequest.current && fetchCourseDataRef.current) {
       console.log("Manually refreshing courses data");
-      fetchCourseData(true);
+      fetchCourseDataRef.current(true);
     }
-  }, [fetchCourseData, selectedCompany]);
+  }, [selectedCompany?.id]); // Only depend on company ID
 
   const getTitle = () => {
     return selectedCompany 
