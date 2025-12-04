@@ -3,13 +3,14 @@ import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Eye, ChevronRight } from "lucide-react";
+import { Bell, Eye, ChevronRight, Building2 } from "lucide-react";
 import { useCompanyNotices } from "@/hooks/useCompanyNotices";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AllNoticesDialog } from "./AllNoticesDialog";
 import { NoticeDetailDialog } from "./NoticeDetailDialog";
 import { useCompanies } from "@/hooks/useCompanies";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export const NotificationsWidget = () => {
   const [showAllNotices, setShowAllNotices] = useState(false);
@@ -101,32 +102,28 @@ export const NotificationsWidget = () => {
               </Badge>
             )}
           </div>
-          {selectedCompany && (
-            <div className="px-8 pb-4">
-              <p className="text-sm text-muted-foreground text-left">
-                {selectedCompany.nome}
-              </p>
-            </div>
-          )}
           
-          <div className="px-8 pb-8 flex-1">
+          <div className="px-8 pb-8 flex-1 overflow-y-auto">
             {isLoading ? (
               <div className="space-y-4">
                 <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
                 <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-3/4"></div>
               </div>
             ) : !selectedCompany ? (
-              <div className="text-center py-8">
-                <Bell className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">
-                  Selecione uma empresa para ver os avisos
-                </p>
+              <div className="flex justify-center py-8">
+                <EmptyState
+                  title="Selecione uma empresa"
+                  icons={[Building2]}
+                  className="border-0 bg-transparent hover:bg-transparent p-8 max-w-none"
+                />
               </div>
             ) : recentNotices.length === 0 ? (
-              <div className="text-center py-8">
-                <Bell className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground mb-2">Nenhum aviso disponível</p>
-                <p className="text-xs text-gray-400">Os avisos aparecerão aqui quando publicados</p>
+              <div className="flex justify-center py-8">
+                <EmptyState
+                  title="Nenhum aviso disponível"
+                  icons={[Bell]}
+                  className="border-0 bg-transparent hover:bg-transparent p-8 max-w-none"
+                />
               </div>
             ) : (
               <div className="space-y-3">

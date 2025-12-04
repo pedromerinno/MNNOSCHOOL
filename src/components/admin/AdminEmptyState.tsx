@@ -1,7 +1,6 @@
 import React from 'react';
 import { LucideIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { EmptyState as EmptyStateComponent } from '@/components/ui/empty-state';
 import { cn } from '@/lib/utils';
 
 interface AdminEmptyStateProps {
@@ -16,30 +15,20 @@ interface AdminEmptyStateProps {
 }
 
 export const AdminEmptyState: React.FC<AdminEmptyStateProps> = ({
-  icon: Icon,
+  icon,
   title,
   description,
   action,
   className
 }) => {
   return (
-    <Card className={cn("border-dashed", className)}>
-      <CardContent className="flex flex-col items-center justify-center py-12 px-6 text-center">
-        <div className="rounded-full bg-muted p-4 mb-4">
-          <Icon className="h-8 w-8 text-muted-foreground" />
-        </div>
-        <h3 className="text-lg font-semibold mb-2">{title}</h3>
-        {description && (
-          <p className="text-sm text-muted-foreground mb-4 max-w-md">
-            {description}
-          </p>
-        )}
-        {action && (
-          <Button onClick={action.onClick} variant="default">
-            {action.label}
-          </Button>
-        )}
-      </CardContent>
-    </Card>
+    <div className={cn("flex justify-center", className)}>
+      <EmptyStateComponent
+        title={title}
+        description={description || ""}
+        icons={[icon]}
+        action={action}
+      />
+    </div>
   );
 };

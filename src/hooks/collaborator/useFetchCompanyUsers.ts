@@ -20,99 +20,143 @@ export const useFetchCompanyUsers = (
       return;
     }
 
+    setIsLoading(true);
+    setError(null);
+    
+    let lastError: any = null;
+    const maxRetries = 3;
+    const retryDelay = 1000; // 1 second
+
     try {
-      setIsLoading(true);
-      setError(null);
-      
       console.log(`[useFetchCompanyUsers] Starting fetch for company: ${company.id}`);
       const startTime = Date.now();
 
-      // Single optimized query - buscar cargo de user_empresa (nova estrutura)
-      const { data, error } = await supabase
-        .from('user_empresa')
-        .select(`
-          user_id,
-          is_admin,
-          cargo_id,
-          profiles!inner(
-            id, 
-            display_name, 
-            email, 
-            super_admin, 
-            avatar,
-            created_at
-          )
-        `)
-        .eq('empresa_id', company.id)
-        .limit(50);
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          console.log(`[useFetchCompanyUsers] Attempt ${attempt}/${maxRetries}`);
 
-      // Buscar cargos separadamente para evitar problemas de join
-      const cargoIds = data?.filter(item => item.cargo_id).map(item => item.cargo_id) || [];
-      const jobRolesMap: Record<string, any> = {};
-      
-      if (cargoIds.length > 0) {
-        const { data: rolesData } = await supabase
-          .from('job_roles')
-          .select('id, title')
-          .in('id', cargoIds);
-        
-        if (rolesData) {
-          rolesData.forEach(role => {
-            jobRolesMap[role.id] = role;
+          // Query otimizada usando função helper que usa view pré-processada
+          // Tudo vem em uma única query com dados já combinados
+          const { data: usersData, error: usersError } = await supabase
+            .rpc('get_company_users', { _empresa_id: company.id });
+
+          if (usersError) {
+            // Se for erro de rede, tentar novamente
+            if ((usersError.message?.includes('Failed to fetch') || 
+                 usersError.message?.includes('NetworkError') ||
+                 usersError.message?.includes('fetch')) &&
+                attempt < maxRetries) {
+              lastError = usersError;
+              console.log(`[useFetchCompanyUsers] Network error, retrying in ${retryDelay * attempt}ms...`);
+              await new Promise(resolve => setTimeout(resolve, retryDelay * attempt));
+              continue;
+            }
+            
+            throw usersError;
+          }
+
+          if (!usersData || usersData.length === 0) {
+            console.log("No users found for company");
+            setCompanyUsers([]);
+            setUserRoles({});
+            initialFetchDone.current = true;
+            return;
+          }
+
+          // Processar dados da view otimizada (já vem tudo combinado!)
+          const users: UserProfile[] = [];
+          const roles: Record<string, string> = {};
+
+          usersData.forEach((user: any) => {
+            users.push({
+              id: user.id,
+              display_name: user.display_name,
+              email: user.email,
+              is_admin: user.is_admin || false,
+              super_admin: user.super_admin || false,
+              avatar: user.avatar,
+              created_at: user.created_at,
+              cargo_id: user.cargo_id || null
+            });
+
+            // Cargo title já vem na view!
+            if (user.cargo_title) {
+              roles[user.id] = user.cargo_title;
+            }
           });
-        }
-      }
 
-      if (error) throw error;
+          const endTime = Date.now();
+          console.log(`[useFetchCompanyUsers] Completed in ${endTime - startTime}ms. Loaded ${users.length} profiles and ${Object.keys(roles).length} roles`);
 
-      if (!data || data.length === 0) {
-        console.log("No users found for company");
-        setCompanyUsers([]);
-        setUserRoles({});
-        initialFetchDone.current = true;
-        return;
-      }
+          setCompanyUsers(users);
+          setUserRoles(roles);
+          initialFetchDone.current = true;
+          return; // Sucesso, sair do loop
 
-      const users: UserProfile[] = [];
-      const roles: Record<string, string> = {};
-
-      data.forEach((item: any) => {
-        if (item.profiles) {
-          users.push({
-            id: item.profiles.id,
-            display_name: item.profiles.display_name,
-            email: item.profiles.email,
-            is_admin: item.is_admin || false, // Admin por empresa
-            super_admin: item.profiles.super_admin || false,
-            avatar: item.profiles.avatar,
-            created_at: item.profiles.created_at,
-            cargo_id: item.cargo_id || null // Cargo por empresa (nova estrutura)
-          });
+        } catch (error: any) {
+          lastError = error;
+          console.error(`[useFetchCompanyUsers] Error on attempt ${attempt}:`, error);
           
-          // Buscar título do cargo do map
-          if (item.cargo_id && jobRolesMap[item.cargo_id]) {
-            roles[item.profiles.id] = jobRolesMap[item.cargo_id].title;
+          if (error.name === 'AbortError') {
+            console.log("[useFetchCompanyUsers] Request was aborted - this is normal if user navigated away");
+            return; // Don't show error for aborted requests
+          }
+
+          // Se não for erro de rede ou já tentou todas as vezes, não tentar novamente
+          if ((!error.message?.includes('Failed to fetch') && 
+               !error.message?.includes('NetworkError') && 
+               !error.message?.includes('fetch')) ||
+              attempt >= maxRetries) {
+            
+            let errorMessage = "Erro ao carregar colaboradores";
+            
+            if (error.message?.includes('Failed to fetch') || 
+                error.message?.includes('NetworkError') ||
+                error.message?.includes('fetch')) {
+              errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+            } else if (error.message) {
+              errorMessage = error.message;
+            }
+            
+            setError(errorMessage);
+            toast.error(errorMessage);
+            return;
+          }
+
+          if (attempt < maxRetries) {
+            console.log(`[useFetchCompanyUsers] Retrying in ${retryDelay * attempt}ms...`);
+            await new Promise(resolve => setTimeout(resolve, retryDelay * attempt));
           }
         }
-      });
+      }
 
-      const endTime = Date.now();
-      console.log(`[useFetchCompanyUsers] Completed in ${endTime - startTime}ms. Loaded ${users.length} profiles and ${Object.keys(roles).length} roles`);
-
-      setCompanyUsers(users);
-      setUserRoles(roles);
-      initialFetchDone.current = true;
+      // Se chegou aqui, todas as tentativas falharam
+      if (lastError) {
+        let errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+        setError(errorMessage);
+        toast.error(errorMessage);
+      }
 
     } catch (error: any) {
-      console.error("[useFetchCompanyUsers] Error fetching company users:", error);
+      console.error("[useFetchCompanyUsers] Unexpected error:", error);
       
       if (error.name === 'AbortError') {
         console.log("[useFetchCompanyUsers] Request was aborted - this is normal if user navigated away");
         return; // Don't show error for aborted requests
       }
       
-      setError(error.message || "Erro ao carregar colaboradores");
-      toast.error("Erro ao carregar colaboradores");
+      let errorMessage = "Erro ao carregar colaboradores";
+      
+      if (error.message?.includes('Failed to fetch') || 
+          error.message?.includes('NetworkError') ||
+          error.message?.includes('fetch')) {
+        errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

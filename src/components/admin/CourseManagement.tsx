@@ -1,17 +1,25 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, BookOpen } from "lucide-react";
 import { CourseList } from './courses/CourseList';
 import { useCourses } from './courses/useCourses';
 import { Course } from './courses/types';
 import { NewCourseDialog } from './dialogs/NewCourseDialog';
+import { AdminPageTitle } from './AdminPageTitle';
+import { useCompanies } from '@/hooks/useCompanies';
+import { useAuth } from '@/contexts/AuthContext';
 
 export type { Course };
 
 export const CourseManagement: React.FC = () => {
   const [isNewCourseDialogOpen, setIsNewCourseDialogOpen] = useState(false);
+  const { selectedCompany } = useCompanies();
+  const { userProfile } = useAuth();
+  
+  // Sempre usar empresa selecionada, mesmo para super admin
+  const companyId = selectedCompany?.id;
+  const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
   
   const {
     courses,
@@ -24,40 +32,42 @@ export const CourseManagement: React.FC = () => {
     setIsCompanyManagerOpen,
     isSubmitting,
     handleFormSubmit
-  } = useCourses();
+  } = useCourses(companyId);
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <h2 className="text-xl font-semibold py-[10px]">Gerenciamento de Cursos</h2>
-        </div>
-        <Button
-          onClick={() => setIsNewCourseDialogOpen(true)}
-          className="bg-black hover:bg-gray-800 text-white rounded-xl"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Curso
-        </Button>
-      </div>
+    <div className="space-y-6">
+      <AdminPageTitle
+        title="Todos os Cursos"
+        description={selectedCompany 
+          ? `Gerenciar ${courses.length} ${courses.length === 1 ? 'curso' : 'cursos'} de ${selectedCompany.nome}` 
+          : `Gerenciar ${courses.length} ${courses.length === 1 ? 'curso' : 'cursos'}`}
+        size="xl"
+        actions={
+          <Button
+            onClick={() => setIsNewCourseDialogOpen(true)}
+            className="bg-black hover:bg-gray-800 text-white rounded-xl"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Novo Curso
+          </Button>
+        }
+      />
       
-      <Card>
-        <CardContent>
-          <CourseList 
-            courses={courses} 
-            isLoading={isLoading} 
-            selectedCourse={selectedCourse} 
-            setSelectedCourse={setSelectedCourse} 
-            isFormOpen={isFormOpen} 
-            setIsFormOpen={setIsFormOpen} 
-            isCompanyManagerOpen={isCompanyManagerOpen} 
-            setIsCompanyManagerOpen={setIsCompanyManagerOpen} 
-            isSubmitting={isSubmitting} 
-            showAllCourses={true} 
-            handleFormSubmit={handleFormSubmit} 
-          />
-        </CardContent>
-      </Card>
+      <CourseList 
+        courses={courses} 
+        isLoading={isLoading} 
+        selectedCourse={selectedCourse} 
+        setSelectedCourse={setSelectedCourse} 
+        isFormOpen={isFormOpen} 
+        setIsFormOpen={setIsFormOpen} 
+        isCompanyManagerOpen={isCompanyManagerOpen} 
+        setIsCompanyManagerOpen={setIsCompanyManagerOpen} 
+        isSubmitting={isSubmitting} 
+        showAllCourses={true} 
+        companyId={companyId}
+        handleFormSubmit={handleFormSubmit}
+        companyColor={companyColor}
+      />
 
       <NewCourseDialog 
         open={isNewCourseDialogOpen} 

@@ -1,6 +1,6 @@
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from 'date-fns';
 import { useReceivedFeedbacks } from "@/hooks/feedback/useReceivedFeedbacks";
@@ -11,7 +11,8 @@ import { UserProfile } from "@/hooks/useUsers";
 import { useState, useEffect, memo } from "react";
 import { AllFeedbackDialog } from "./AllFeedbackDialog";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, MessageSquare } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export const FeedbackWidget = memo(() => {
   const { feedbacks, loading } = useReceivedFeedbacks();
@@ -19,12 +20,6 @@ export const FeedbackWidget = memo(() => {
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const goToTeamProfile = async () => {
-    const { data } = await supabase.auth.getUser();
-    if (data.user) {
-      navigate(`/team/${data.user.id}`);
-    }
-  };
 
   const formatDate = (dateString: string) => {
     try {
@@ -63,7 +58,7 @@ export const FeedbackWidget = memo(() => {
   const currentFeedback = feedbacks[currentIndex];
 
   return (
-    <Card className="border-0 shadow-none overflow-hidden rounded-[30px] bg-[#FAFFF7] dark:bg-[#222222]">
+    <Card className="border-0 shadow-none overflow-hidden rounded-[30px] bg-[#FAFFF7] dark:bg-[#222222] h-full">
       <CardContent className="p-0 flex flex-col h-full">
         <div className="p-8 flex justify-between items-center">
           <h3 className="text-xl font-medium dark:text-white text-left">Feedbacks</h3>
@@ -89,10 +84,10 @@ export const FeedbackWidget = memo(() => {
           </div>
         </div>
         
-        <div className="px-8 pb-8 flex-1">
+        <div className="px-8 pb-8 flex-1 overflow-y-auto">
           {loading ? (
-            <div className="space-y-4">
-              <Skeleton className="h-32 w-full" />
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           ) : feedbacks.length > 0 && currentFeedback ? (
             <div className="bg-green-50 dark:bg-[#2C2C2C] rounded-lg p-6">
@@ -136,10 +131,12 @@ export const FeedbackWidget = memo(() => {
               </div>
             </div>
           ) : (
-            <div className="bg-green-50 dark:bg-[#1F1F1F] rounded-lg p-6 text-center">
-              <p className="text-gray-500 dark:text-[#757576]">
-                Nenhum feedback recebido ainda
-              </p>
+            <div className="flex justify-center py-8">
+              <EmptyState
+                title="Nenhum feedback recebido ainda"
+                icons={[MessageSquare]}
+                className="border-0 bg-transparent hover:bg-transparent p-8 max-w-none"
+              />
             </div>
           )}
         </div>

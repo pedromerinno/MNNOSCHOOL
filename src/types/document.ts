@@ -6,6 +6,7 @@ export interface UserDocument {
   name: string;
   file_path?: string;
   file_type?: string;
+  thumbnail_path?: string;
   uploaded_at: string;
   uploaded_by: string;
   document_type: DocumentType;

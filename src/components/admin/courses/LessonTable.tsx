@@ -16,7 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Loader2 } from "lucide-react";
 import { Lesson } from '@/components/courses/CourseLessonList';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 
@@ -56,10 +56,8 @@ export const LessonTable: React.FC<LessonTableProps> = ({
 
   if (isLoading) {
     return (
-      <div className="space-y-2">
-        {[...Array(3)].map((_, index) => (
-          <Skeleton key={index} className="h-12 w-full" />
-        ))}
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
     );
   }

@@ -6,6 +6,7 @@ import { DocumentType, UserDocument } from '@/types/document';
 import { useStorageOperations } from './useStorageOperations';
 import { MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from './constants';
 import { DOCUMENTS_BUCKET } from './constants';
+import { generateThumbnail } from '@/utils/thumbnailGenerator';
 
 export const useDocumentUploadOperations = (
   userId: string | null,
@@ -69,6 +70,39 @@ export const useDocumentUploadOperations = (
       if (!filePath) {
         throw new Error("Falha ao fazer upload do arquivo para o storage");
       }
+
+      // Gerar e fazer upload do thumbnail
+      let thumbnailPath = null;
+      try {
+        console.log('[Upload] Gerando thumbnail para:', file.name, file.type);
+        const thumbnailFile = await generateThumbnail(file);
+        console.log('[Upload] Thumbnail gerado:', thumbnailFile ? 'Sim' : 'Não');
+        
+        if (thumbnailFile) {
+          const userDir = `user-documents/${userId}`;
+          const thumbnailFileName = `thumb_${Date.now()}.jpg`;
+          thumbnailPath = `${userDir}/thumbnails/${thumbnailFileName}`;
+
+          console.log('[Upload] Fazendo upload do thumbnail para:', thumbnailPath);
+          const { error: thumbnailError } = await supabase.storage
+            .from('documents')
+            .upload(thumbnailPath, thumbnailFile);
+
+          if (thumbnailError) {
+            console.error('[Upload] Erro ao fazer upload do thumbnail:', thumbnailError);
+            // Não falhar o upload se o thumbnail falhar
+            thumbnailPath = null;
+          } else {
+            console.log('[Upload] Thumbnail salvo com sucesso:', thumbnailPath);
+          }
+        } else {
+          console.log('[Upload] Thumbnail não foi gerado (tipo de arquivo não suportado ou erro na geração)');
+        }
+      } catch (error) {
+        console.error('[Upload] Erro ao gerar thumbnail:', error);
+        // Não falhar o upload se o thumbnail falhar
+        thumbnailPath = null;
+      }
       
       // Inserir registro do documento
       const { data: newDocument, error: insertError } = await supabase
@@ -79,6 +113,7 @@ export const useDocumentUploadOperations = (
           name: file.name,
           file_path: filePath,
           file_type: file.type,
+          thumbnail_path: thumbnailPath,
           document_type: documentType,
           description: description || null,
           uploaded_by: userId,

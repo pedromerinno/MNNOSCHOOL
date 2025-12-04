@@ -7,7 +7,11 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Company } from "@/types/company";
 
-export const WelcomeSection = () => {
+interface WelcomeSectionProps {
+  hasNoCompanies?: boolean;
+}
+
+export const WelcomeSection = ({ hasNoCompanies = false }: WelcomeSectionProps) => {
   const { user, userProfile } = useAuth();
   const { selectedCompany } = useCompanies();
   const navigate = useNavigate();
@@ -32,7 +36,9 @@ export const WelcomeSection = () => {
   const userName = userProfile?.display_name || user?.email?.split('@')[0] || 'Usuário';
 
   const handleLearnMore = () => {
-    navigate('/integration');
+    if (!hasNoCompanies) {
+      navigate('/integration');
+    }
   };
 
   const defaultPhrase = "Construindo um futuro melhor para empresas e colaboradores";
@@ -67,8 +73,11 @@ export const WelcomeSection = () => {
         
         <Button 
           onClick={handleLearnMore} 
+          disabled={hasNoCompanies}
           className={`mt-1 flex items-center gap-2 text-white dark:text-black rounded-full text-sm transition-all duration-700 ease-out bg-black dark:bg-white hover:bg-black/90 dark:hover:bg-white/90 ${
             isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95'
+          } ${
+            hasNoCompanies ? 'opacity-50 cursor-not-allowed' : ''
           }`}
           style={{
             transitionDelay: '150ms'

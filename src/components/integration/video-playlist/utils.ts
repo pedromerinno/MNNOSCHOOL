@@ -61,8 +61,16 @@ export const getEmbedUrl = (url: string) => {
   
   // YouTube: converter URL curta para formato nocookie
   if (url.includes('youtu.be')) {
-    const videoId = url.split('/').pop();
-    return videoId ? `https://www.youtube-nocookie.com/embed/${videoId}` : '';
+    // Remover parâmetros de query e fragmentos
+    const cleanUrl = url.split('?')[0].split('#')[0];
+    const videoId = cleanUrl.split('/').pop();
+    // Validar que o ID tem 11 caracteres (formato padrão do YouTube)
+    if (videoId && videoId.length === 11) {
+      return `https://www.youtube-nocookie.com/embed/${videoId}`;
+    }
+    // Se não tiver 11 caracteres, tentar extrair com regex
+    const videoIdRegex = getYoutubeVideoId(url);
+    return videoIdRegex ? `https://www.youtube-nocookie.com/embed/${videoIdRegex}` : '';
   }
   
   // Se não for YouTube nem Loom, retornar a URL original

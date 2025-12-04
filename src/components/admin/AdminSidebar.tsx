@@ -5,79 +5,22 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { 
-  Building, 
-  Users, 
-  BookOpen, 
-  MessageSquare, 
-  Settings, 
-  LayoutDashboard,
-  BookOpenCheck,
-  Globe
-} from "lucide-react";
-import { useAuth } from '@/contexts/AuthContext';
 import { useCompanies } from '@/hooks/useCompanies';
-import { cn } from '@/lib/utils';
+import { cn, getSafeTextColor } from '@/lib/utils';
+import { AdminTabId, AdminTabConfig } from '@/types/admin';
 
 interface AdminSidebarProps {
-  activeTab: string;
-  onTabChange: (tab: string) => void;
+  activeTab: AdminTabId;
+  onTabChange: (tab: AdminTabId) => void;
+  menuItems: AdminTabConfig[];
 }
 
-export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, onTabChange }) => {
-  const { userProfile } = useAuth();
+export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, onTabChange, menuItems }) => {
   const { selectedCompany } = useCompanies();
-  const isSuperAdmin = userProfile?.super_admin;
-
-  const menuItems = [
-    {
-      title: "Dashboard",
-      icon: LayoutDashboard,
-      tab: "dashboard"
-    },
-    ...(isSuperAdmin ? [
-      {
-        title: "Plataforma",
-        icon: Globe,
-        tab: "platform"
-      }
-    ] : []),
-    {
-      title: "Empresas",
-      icon: Building,
-      tab: "companies"
-    },
-    {
-      title: "Usuários",
-      icon: Users,
-      tab: "users"
-    },
-    {
-      title: "Todos os Cursos",
-      icon: BookOpen,
-      tab: "allcourses"
-    },
-    {
-      title: "Sugestões de Cursos",
-      icon: BookOpenCheck,
-      tab: "suggested-courses"
-    },
-    {
-      title: "Avisos",
-      icon: MessageSquare,
-      tab: "notices"
-    },
-    {
-      title: "Configurações",
-      icon: Settings,
-      tab: "settings"
-    }
-  ];
 
   // Get company color for active item styling
   const companyColor = selectedCompany?.cor_principal || '#1EAEDB';
@@ -85,21 +28,19 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, onTabChan
   return (
     <Sidebar 
       variant="inset" 
-      className="border-r border-sidebar-border bg-sidebar/95 backdrop-blur supports-[backdrop-filter]:bg-sidebar/60"
+      className="border-r border-sidebar-border bg-sidebar"
     >
       <SidebarContent className="flex flex-col">
         <SidebarGroup className="flex-1 py-4">
-          <SidebarGroupLabel className="px-4 py-3 text-sm font-semibold text-sidebar-foreground/80 border-b mb-6">
-            Administração
-          </SidebarGroupLabel>
           <SidebarGroupContent className="px-2">
             <SidebarMenu className="space-y-1">
               {menuItems.map((item) => {
-                const isActive = activeTab === item.tab;
+                const isActive = activeTab === item.id;
+                const Icon = item.icon;
                 return (
-                  <SidebarMenuItem key={item.tab}>
+                  <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton 
-                      onClick={() => onTabChange(item.tab)}
+                      onClick={() => onTabChange(item.id)}
                       isActive={isActive}
                       className={cn(
                         "w-full justify-start h-10 px-3 rounded-md",
@@ -110,15 +51,15 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, onTabChan
                       )}
                       style={isActive ? {
                         backgroundColor: `${companyColor}15`,
-                        color: companyColor,
+                        color: getSafeTextColor(companyColor, false),
                       } : {}}
                     >
-                      <item.icon 
+                      <Icon 
                         className={cn(
-                          "w-4 h-4 mr-3 flex-shrink-0 transition-colors",
-                          isActive ? "" : "text-sidebar-foreground/70 group-hover:text-sidebar-accent-foreground"
+                          "w-5 h-5 mr-3 flex-shrink-0 transition-all duration-200",
+                          isActive ? "" : "text-sidebar-foreground/30 group-hover:text-sidebar-accent-foreground/70"
                         )}
-                        style={isActive ? { color: companyColor } : {}}
+                        style={isActive ? { color: getSafeTextColor(companyColor, false) } : {}}
                       />
                       <span className="text-sm truncate">{item.title}</span>
                       {isActive && (

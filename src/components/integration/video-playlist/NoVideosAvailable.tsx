@@ -1,20 +1,47 @@
-
-import React from 'react';
-import { Card, CardContent } from "@/components/ui/card";
+import React, { useState } from 'react';
+import { EmptyState } from "@/components/ui/empty-state";
 import { Video } from "lucide-react";
+import { AddVideoToPlaylistDialog } from "./AddVideoToPlaylistDialog";
 
-export const NoVideosAvailable: React.FC = () => {
+interface NoVideosAvailableProps {
+  companyId: string;
+  companyColor: string;
+  onVideoAdded?: () => void;
+}
+
+export const NoVideosAvailable: React.FC<NoVideosAvailableProps> = ({
+  companyId,
+  companyColor,
+  onVideoAdded
+}) => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const handleAddVideos = () => {
+    setIsDialogOpen(true);
+  };
+
+  const handleVideoAdded = () => {
+    onVideoAdded?.();
+  };
+
   return (
-    <div className="space-y-4">
-      <Card className="overflow-hidden">
-        <CardContent className="p-12 text-center">
-          <Video className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium mb-2">Sem vídeos disponíveis</h3>
-          <p className="text-gray-500">
-            Não há vídeos de integração disponíveis para esta empresa.
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+    <>
+      <EmptyState
+        title="Sem vídeos disponíveis"
+        description="Não há vídeos de integração disponíveis para esta empresa."
+        icons={[Video]}
+        action={{
+          label: "Adicionar vídeos",
+          onClick: handleAddVideos
+        }}
+      />
+      <AddVideoToPlaylistDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        companyId={companyId}
+        companyColor={companyColor}
+        onVideoAdded={handleVideoAdded}
+      />
+    </>
   );
 };

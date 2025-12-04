@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Control } from "react-hook-form";
-import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
@@ -98,6 +98,7 @@ export const ColorPickerField: React.FC<ColorPickerFieldProps> = ({
               </div>
             </FormControl>
           </div>
+          <FormMessage />
         </FormItem>
       )}
     />

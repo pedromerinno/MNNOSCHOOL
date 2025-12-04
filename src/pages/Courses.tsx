@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, memo } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { CourseCarousel } from "@/components/courses/CourseCarousel";
 import { CourseCategories } from "@/components/courses/CourseCategories";
@@ -9,11 +9,11 @@ import { useIsAdmin } from "@/hooks/company/useIsAdmin";
 import { NewCourseDialog } from "@/components/admin/dialogs/NewCourseDialog";
 import { EmptyCoursesState } from "@/components/courses/EmptyCoursesState";
 import { CoursesGrid } from "@/components/courses/CoursesGrid";
-import { CoursesPageSkeleton } from "@/components/courses/CoursesPageSkeleton";
+import { PagePreloader } from "@/components/ui/PagePreloader";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 
-const Courses = () => {
+const Courses = memo(() => {
   const {
     selectedCompany,
     isLoading: companyLoading
@@ -37,11 +37,6 @@ const Courses = () => {
       setShowContent(true);
     }
   }, [companyLoading, selectedCompany, isDataReady]);
-
-  // Auto-refresh data when component mounts
-  useEffect(() => {
-    refreshCourses();
-  }, [refreshCourses]);
 
   const availableCategories = React.useMemo(() => {
     if (!allCompanyCourses) return [];
@@ -67,26 +62,9 @@ const Courses = () => {
     );
   });
 
-  // Show skeleton while loading
+  // Show preloader while loading
   if (companyLoading || !selectedCompany || loading) {
-    return (
-      <DashboardLayout fullWidth>
-        {/* Header with Admin Actions - skeleton version */}
-        {isAdmin && (
-          <div className="w-full max-w-screen-xl mx-auto px-4 py-4">
-            <div className="flex justify-between items-center">
-              <div className="space-y-2">
-                <div className="h-8 w-20 bg-gray-200 rounded animate-pulse"></div>
-                <div className="h-4 w-64 bg-gray-100 rounded animate-pulse"></div>
-              </div>
-              <div className="h-10 w-32 bg-gray-200 rounded-xl animate-pulse"></div>
-            </div>
-          </div>
-        )}
-        
-        <CoursesPageSkeleton />
-      </DashboardLayout>
-    );
+    return <PagePreloader />;
   }
 
   const hasNoCourses = !allCompanyCourses || allCompanyCourses.length === 0;
@@ -167,6 +145,7 @@ const Courses = () => {
       />
     </DashboardLayout>
   );
-};
+});
+Courses.displayName = 'Courses';
 
 export default Courses;

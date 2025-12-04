@@ -24,12 +24,12 @@ export const DashboardWidgets = () => {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8 text-left">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8 text-left auto-rows-fr">
       {widgets.map((widget, index) => {
         return (
           <div
             key={index}
-            className={`transition-all duration-700 ease-out ${
+            className={`h-full transition-all duration-700 ease-out ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}
             style={{

@@ -14,6 +14,9 @@ interface UseTeamMembersOptimizedProps {
   skipLoading?: boolean;
 }
 
+const CACHE_KEY_PREFIX = 'team_members_';
+const CACHE_EXPIRATION = 5 * 60 * 1000; // 5 minutos
+
 export const useTeamMembersOptimized = ({ 
   selectedCompanyId, 
   skipLoading = false 
@@ -23,10 +26,93 @@ export const useTeamMembersOptimized = ({
   const [error, setError] = useState<Error | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const lastFetchedCompanyId = useRef<string | null>(null);
+  const isFetchingRef = useRef<boolean>(false);
+
+  // Funções de cache usando refs para evitar recriação
+  const getCachedMembersRef = useRef((companyId: string): TeamMember[] | null => {
+    try {
+      const cacheKey = `${CACHE_KEY_PREFIX}${companyId}`;
+      const cached = localStorage.getItem(cacheKey);
+      if (!cached) return null;
+
+      const { data, timestamp } = JSON.parse(cached);
+      const now = Date.now();
+      
+      if (now - timestamp < CACHE_EXPIRATION) {
+        console.log('[useTeamMembersOptimized] Usando cache para empresa:', companyId);
+        return data;
+      }
+      
+      // Cache expirado, remover
+      localStorage.removeItem(cacheKey);
+      return null;
+    } catch (e) {
+      console.warn('[useTeamMembersOptimized] Erro ao ler cache:', e);
+      return null;
+    }
+  });
+
+  const setCachedMembersRef = useRef((companyId: string, data: TeamMember[]) => {
+    try {
+      const cacheKey = `${CACHE_KEY_PREFIX}${companyId}`;
+      
+      // Reduzir tamanho dos dados: não salvar avatares base64 completos (muito grandes)
+      const lightweightData = data.map(member => ({
+        id: member.id,
+        display_name: member.display_name,
+        email: member.email,
+        // Não salvar avatar base64 completo - apenas flag se tem avatar
+        hasAvatar: !!member.avatar,
+        created_at: member.created_at,
+        super_admin: member.super_admin || false,
+        is_admin: member.is_admin || false,
+        cargo_id: member.cargo_id || null,
+        roleName: member.roleName || null
+      }));
+      
+      localStorage.setItem(cacheKey, JSON.stringify({
+        data: lightweightData,
+        timestamp: Date.now()
+      }));
+    } catch (e: any) {
+      // Se for erro de quota, limpar cache antigo e tentar novamente
+      if (e.name === 'QuotaExceededError' || e.code === 22) {
+        console.warn('[useTeamMembersOptimized] Cache cheio, limpando cache antigo');
+        try {
+          // Limpar todos os caches de team_members
+          Object.keys(localStorage).forEach(key => {
+            if (key.startsWith(CACHE_KEY_PREFIX)) {
+              localStorage.removeItem(key);
+            }
+          });
+          // Tentar salvar novamente sem avatares
+          const lightweightData = data.map(member => ({
+            id: member.id,
+            display_name: member.display_name,
+            email: member.email,
+            hasAvatar: !!member.avatar,
+            created_at: member.created_at,
+            super_admin: member.super_admin || false,
+            is_admin: member.is_admin || false,
+            cargo_id: member.cargo_id || null,
+            roleName: member.roleName || null
+          }));
+          localStorage.setItem(cacheKey, JSON.stringify({
+            data: lightweightData,
+            timestamp: Date.now()
+          }));
+        } catch (retryError) {
+          console.warn('[useTeamMembersOptimized] Erro ao salvar cache após limpeza:', retryError);
+        }
+      } else {
+        console.warn('[useTeamMembersOptimized] Erro ao salvar cache:', e);
+      }
+    }
+  });
 
   const fetchTeamMembers = useCallback(async (companyId: string) => {
     // Evitar fetch duplicado
-    if (lastFetchedCompanyId.current === companyId) {
+    if (lastFetchedCompanyId.current === companyId && isFetchingRef.current) {
       console.log('[useTeamMembersOptimized] Evitando fetch duplicado para empresa:', companyId);
       return;
     }
@@ -44,54 +130,45 @@ export const useTeamMembersOptimized = ({
       setIsLoading(true);
       setError(null);
       lastFetchedCompanyId.current = companyId;
+      isFetchingRef.current = true;
 
       console.log('[useTeamMembersOptimized] Buscando membros para empresa:', companyId);
 
-      // Query otimizada incluindo informações do cargo e admin de user_empresa
-      const { data: teamData, error: teamError } = await supabase
-        .from('user_empresa')
-        .select(`
-          user_id,
-          is_admin,
-          cargo_id,
-          profiles!inner(
-            id, 
-            display_name, 
-            email, 
-            avatar, 
-            created_at,
-            super_admin
-          ),
-          job_roles(
-            id,
-            title
-          )
-        `)
-        .eq('empresa_id', companyId)
+      // Usar função RPC otimizada get_company_users que faz tudo em uma única query
+      // Esta função já está otimizada com índices e faz JOIN interno no banco
+      // Muito mais rápido que fazer 2 queries separadas
+      const { data: usersData, error: usersError } = await supabase
+        .rpc('get_company_users', { _empresa_id: companyId })
         .abortSignal(signal);
 
-      if (teamError) throw teamError;
+      if (usersError) throw usersError;
 
-      console.log('[useTeamMembersOptimized] Dados recebidos:', teamData?.length || 0, 'membros');
+      if (!usersData || usersData.length === 0) {
+        console.log('[useTeamMembersOptimized] Nenhum membro encontrado na empresa');
+        setMembers([]);
+        setCachedMembersRef.current(companyId, []);
+        return;
+      }
 
-      const teamMembers: TeamMember[] = teamData?.map((item: any) => {
-        const profile = item.profiles;
-        return {
-          id: profile.id,
-          display_name: profile.display_name,
-          email: profile.email,
-          // is_admin e cargo_id agora vêm de user_empresa
-          is_admin: item.is_admin || false,
-          cargo_id: item.cargo_id || null,
-          avatar: profile.avatar,
-          created_at: profile.created_at,
-          super_admin: profile.super_admin,
-          // roleName vem de job_roles
-          roleName: item.job_roles?.title || null
-        };
-      }) || [];
+      console.log('[useTeamMembersOptimized] Dados recebidos:', usersData.length, 'membros');
+
+      // Transformar dados da RPC para formato TeamMember
+      // A RPC já retorna tudo combinado, então só precisamos mapear
+      const teamMembers: TeamMember[] = usersData.map((user: any) => ({
+        id: user.id,
+        display_name: user.display_name,
+        email: user.email,
+        avatar: user.avatar,
+        created_at: user.created_at,
+        super_admin: user.super_admin || false,
+        is_admin: user.is_admin || false,
+        cargo_id: user.cargo_id || null,
+        roleName: user.cargo_title || null
+      }));
 
       setMembers(teamMembers);
+      // Não salvar no cache para evitar problemas de quota (avatares base64 são muito grandes)
+      // setCachedMembersRef.current(companyId, teamMembers);
       console.log('[useTeamMembersOptimized] Membros carregados com sucesso:', teamMembers.length);
     } catch (err: any) {
       if (err.name === 'AbortError') {
@@ -103,6 +180,7 @@ export const useTeamMembersOptimized = ({
       setError(err as Error);
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
   }, []);
 

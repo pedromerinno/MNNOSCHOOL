@@ -1,5 +1,5 @@
 
-import { useCallback } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { Company } from '@/types/company';
 
 interface UseCompanySelectionProps {
@@ -7,41 +7,62 @@ interface UseCompanySelectionProps {
 }
 
 export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionProps) => {
-  // Buscar ID da empresa armazenado
+  // Cache para evitar múltiplas leituras do localStorage
+  const cachedCompanyIdRef = useRef<string | null | undefined>(undefined);
+  const cachedCompanyRef = useRef<Company | null | undefined>(undefined);
+  
+  // Buscar ID da empresa armazenado (com cache)
   const getStoredCompanyId = useCallback((): string | null => {
+    // Se já temos cache, retornar imediatamente
+    if (cachedCompanyIdRef.current !== undefined) {
+      return cachedCompanyIdRef.current;
+    }
+    
     try {
       const storedId = localStorage.getItem('selectedCompanyId');
-      console.log('[useCompanySelection] Getting stored company ID:', storedId);
+      cachedCompanyIdRef.current = storedId;
       return storedId;
     } catch (error) {
       console.error('Error getting stored company ID:', error);
+      cachedCompanyIdRef.current = null;
       return null;
     }
   }, []);
   
-  // Buscar empresa armazenada completa
+  // Buscar empresa armazenada completa (com cache)
   const getStoredCompany = useCallback((): Company | null => {
+    // Se já temos cache, retornar imediatamente
+    if (cachedCompanyRef.current !== undefined) {
+      return cachedCompanyRef.current;
+    }
+    
     try {
       const storedCompany = localStorage.getItem('selectedCompany');
-      console.log('[useCompanySelection] Getting stored company:', storedCompany ? 'found' : 'not found');
       if (storedCompany) {
         const company = JSON.parse(storedCompany);
-        console.log('[useCompanySelection] Parsed stored company:', company.nome);
+        cachedCompanyRef.current = company;
         return company;
       }
+      cachedCompanyRef.current = null;
       return null;
     } catch (error) {
       console.error('Error getting stored company:', error);
+      cachedCompanyRef.current = null;
       return null;
     }
+  }, []);
+  
+  // Função para limpar cache (útil quando empresa é alterada)
+  const clearCache = useCallback(() => {
+    cachedCompanyIdRef.current = undefined;
+    cachedCompanyRef.current = undefined;
   }, []);
   
   // Selecionar empresa com persistência global
   const selectCompany = useCallback((userId: string, company: Company) => {
-    console.log('[useCompanySelection] ================');
-    console.log('[useCompanySelection] SELECTING COMPANY:', company.nome);
-    console.log('[useCompanySelection] User ID:', userId);
-    console.log('[useCompanySelection] ================');
+    // Atualizar cache primeiro
+    cachedCompanyIdRef.current = company.id;
+    cachedCompanyRef.current = company;
     
     // Atualizar estado local PRIMEIRO
     setSelectedCompany(company);
@@ -50,10 +71,6 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
       // Persistir no localStorage
       localStorage.setItem('selectedCompanyId', company.id);
       localStorage.setItem('selectedCompany', JSON.stringify(company));
-      
-      console.log('[useCompanySelection] ✅ Company persisted to localStorage');
-      console.log('[useCompanySelection] Stored ID:', company.id);
-      console.log('[useCompanySelection] Stored Name:', company.nome);
       
       // Dispatch evento global para outros componentes
       const globalEvent = new CustomEvent('company-selected', { 
@@ -73,16 +90,17 @@ export const useCompanySelection = ({ setSelectedCompany }: UseCompanySelectionP
       });
       window.dispatchEvent(changeEvent);
       
-      console.log('[useCompanySelection] ✅ Events dispatched');
-      
     } catch (error) {
-      console.error('[useCompanySelection] ❌ Error saving selected company:', error);
+      console.error('[useCompanySelection] Error saving selected company:', error);
+      // Limpar cache em caso de erro
+      clearCache();
     }
-  }, [setSelectedCompany]);
+  }, [setSelectedCompany, clearCache]);
   
   return {
     selectCompany,
     getStoredCompanyId,
-    getStoredCompany
+    getStoredCompany,
+    clearCache
   };
 };

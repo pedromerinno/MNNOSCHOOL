@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Control } from "react-hook-form";
-import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
 export interface TextInputFieldProps {
@@ -30,6 +30,7 @@ export const TextInputField: React.FC<TextInputFieldProps> = ({
               placeholder={placeholder}
             />
           </FormControl>
+          <FormMessage />
         </FormItem>
       )}
     />

@@ -14,11 +14,10 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
     type: 'video'
   });
   
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const fetchBackgroundMedia = async () => {
-      setIsLoading(true);
       try {
         console.log("Fetching background media...");
         const { data, error } = await supabase
@@ -44,8 +43,10 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
         }
       } catch (error) {
         console.error('Unexpected error fetching background media:', error);
-      } finally {
-        setIsLoading(false);
+        setBackgroundMedia({
+          url: "",
+          type: 'image'
+        });
       }
     };
 

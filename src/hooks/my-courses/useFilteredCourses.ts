@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { FilterOption, Course } from "./types";
 
 export const useFilteredCourses = () => {
@@ -26,11 +26,16 @@ export const useFilteredCourses = () => {
     }
   }, []);
 
-  // Handle filter change
+  // Handle filter change - use ref to avoid dependency on allCourses
+  const allCoursesRef = useRef(allCourses);
+  useEffect(() => {
+    allCoursesRef.current = allCourses;
+  }, [allCourses]);
+
   const handleFilterChange = useCallback((newFilter: FilterOption) => {
     setActiveFilter(newFilter);
-    filterCourses(allCourses, newFilter);
-  }, [allCourses, filterCourses]);
+    filterCourses(allCoursesRef.current, newFilter);
+  }, [filterCourses]);
 
   return {
     filteredCourses,

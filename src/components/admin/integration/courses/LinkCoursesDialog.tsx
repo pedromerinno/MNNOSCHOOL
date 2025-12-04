@@ -62,66 +62,39 @@ export const LinkCoursesDialog: React.FC<LinkCoursesDialogProps> = ({
   const fetchAllCoursesAndLinks = async () => {
     setIsLoading(true);
     try {
-      let coursesData;
-      
-      // Filter courses based on user role and permissions
-      if (userProfile?.super_admin) {
-        // Super admins can see all courses
-        const { data, error } = await supabase
-          .from('courses')
-          .select('*')
-          .order('title');
-          
-        if (error) throw error;
-        coursesData = data;
-      } else if (userProfile?.is_admin) {
-        // Regular admins can only see courses for companies they have access to
-        const { data: userCompanies, error: companiesError } = await supabase
-          .from('user_empresa')
-          .select('empresa_id')
-          .eq('user_id', userProfile.id);
-          
-        if (companiesError) throw companiesError;
-        
-        if (!userCompanies || userCompanies.length === 0) {
-          setAllCourses([]);
-          setIsLoading(false);
-          return;
-        }
-        
-        const companyIds = userCompanies.map(uc => uc.empresa_id);
-        
-        // Get course IDs from company_courses for these companies
-        const { data: companyCourses, error: coursesError } = await supabase
-          .from('company_courses')
-          .select('course_id')
-          .in('empresa_id', companyIds);
-          
-        if (coursesError) throw coursesError;
-        
-        if (!companyCourses || companyCourses.length === 0) {
-          setAllCourses([]);
-          setIsLoading(false);
-          return;
-        }
-        
-        const courseIds = [...new Set(companyCourses.map(cc => cc.course_id))];
-        
-        // Get the actual course data
-        const { data, error } = await supabase
-          .from('courses')
-          .select('*')
-          .in('id', courseIds)
-          .order('title');
-          
-        if (error) throw error;
-        coursesData = data;
-      } else {
-        // Non-admin users shouldn't see any courses
+      if (!companyId) {
         setAllCourses([]);
         setIsLoading(false);
         return;
       }
+      
+      // Para o dialog de vinculação, mostrar apenas cursos já vinculados à empresa selecionada
+      // Isso segue a regra de filtrar tudo pela empresa selecionada, mesmo para super admin
+      const { data: companyCourses, error: coursesError } = await supabase
+        .from('company_courses')
+        .select('course_id')
+        .eq('empresa_id', companyId);
+        
+      if (coursesError) throw coursesError;
+      
+      if (!companyCourses || companyCourses.length === 0) {
+        setAllCourses([]);
+        setIsLoading(false);
+        return;
+      }
+      
+      const courseIds = [...new Set(companyCourses.map(cc => cc.course_id))];
+      
+      // Get the actual course data
+      const { data, error } = await supabase
+        .from('courses')
+        .select('*')
+        .in('id', courseIds)
+        .order('title');
+        
+      if (error) throw error;
+      
+      const coursesData = data;
 
       // Get existing course links for this company
       const { data: linksData, error: linksError } = await supabase

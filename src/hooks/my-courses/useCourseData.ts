@@ -3,7 +3,9 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCompanies } from "@/hooks/useCompanies";
+import { useAuth } from "@/contexts/AuthContext";
 import { Course, CourseStats } from "./types";
+import { durationToHours } from "@/utils/durationUtils";
 
 export const useCourseData = (
   setStats: (stats: CourseStats) => void,
@@ -15,6 +17,7 @@ export const useCourseData = (
   activeFilter: string
 ) => {
   const { selectedCompany } = useCompanies();
+  const { user, userProfile } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
@@ -22,12 +25,16 @@ export const useCourseData = (
   const selectedCompanyRef = useRef(selectedCompany);
   const activeFilterRef = useRef(activeFilter);
   const toastRef = useRef(toast);
+  const userRef = useRef(user);
+  const userProfileRef = useRef(userProfile);
   
   useEffect(() => {
     selectedCompanyRef.current = selectedCompany;
     activeFilterRef.current = activeFilter;
     toastRef.current = toast;
-  }, [selectedCompany, activeFilter, toast]);
+    userRef.current = user;
+    userProfileRef.current = userProfile;
+  }, [selectedCompany, activeFilter, toast, user, userProfile]);
 
   const fetchCourseData = useCallback(async () => {
     const currentCompany = selectedCompanyRef.current;
@@ -46,27 +53,41 @@ export const useCourseData = (
     console.log("Fetching course data for company:", currentCompany.nome);
     
     try {
-      // Get user ID
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      // Get user ID - use from context if available, otherwise fetch
+      const currentUser = userRef.current || (await supabase.auth.getUser()).data.user;
+      if (!currentUser) {
         console.error('User not authenticated');
         throw new Error('Usuário não autenticado');
       }
       
-      // Get user profile to check their job role
-      const { data: userProfile } = await supabase
-        .from('profiles')
-        .select('cargo_id, super_admin')
-        .eq('id', user.id)
-        .single();
+      // Use userProfile from context if available, otherwise fetch
+      // Also fetch user_empresa to check is_admin status
+      const [profileResult, companyAccessResult, userEmpresaResult] = await Promise.all([
+        // Only fetch profile if not in context
+        userProfileRef.current 
+          ? Promise.resolve({ data: userProfileRef.current, error: null })
+          : supabase
+              .from('profiles')
+              .select('cargo_id, super_admin')
+              .eq('id', currentUser.id)
+              .single(),
+        // Fetch company courses access
+        supabase
+          .from('company_courses')
+          .select('course_id')
+          .eq('empresa_id', currentCompany.id),
+        // Fetch user_empresa to check admin status
+        supabase
+          .from('user_empresa')
+          .select('cargo_id, is_admin')
+          .eq('user_id', currentUser.id)
+          .eq('empresa_id', currentCompany.id)
+          .maybeSingle()
+      ]);
       
-      console.log("My courses - User profile:", userProfile);
-      
-      // Fetch courses for company
-      const { data: companyAccess, error: accessError } = await supabase
-        .from('company_courses')
-        .select('course_id')
-        .eq('empresa_id', currentCompany.id);
+      const userProfile = profileResult.data;
+      const { data: companyAccess, error: accessError } = companyAccessResult;
+      const { data: userEmpresa } = userEmpresaResult;
       
       if (accessError) {
         console.error('Error fetching company access:', accessError);
@@ -87,21 +108,23 @@ export const useCourseData = (
       const courseIds = companyAccess.map(access => access.course_id);
       console.log(`Found ${courseIds.length} course IDs for company`);
       
-      // Get courses with job role restrictions
-      const { data: courseJobRoles } = await supabase
-        .from('course_job_roles')
-        .select('course_id, job_role_id')
-        .in('course_id', courseIds);
+      // Check if user is admin (from user_empresa or super_admin from profile)
+      const isAdmin = userEmpresa?.is_admin === true || userProfile?.super_admin === true;
+      const userJobRoleId = userEmpresa?.cargo_id || userProfile?.cargo_id;
       
-      console.log("My courses - Course job roles:", courseJobRoles);
+      console.log("My courses - User admin status:", { isAdmin, userJobRoleId });
       
-      // Filter courses based on user's job role and admin status
+      // Filter courses based on job role restrictions (only if not admin)
       let filteredCourseIds = courseIds;
       
-      // If user is not admin, apply job role filtering
-      if (!userProfile?.is_admin && !userProfile?.super_admin) {
-        const userJobRoleId = userProfile?.cargo_id;
-        console.log("My courses - Filtering for user job role:", userJobRoleId);
+      if (!isAdmin) {
+        // Get courses with job role restrictions in parallel with other queries
+        const { data: courseJobRoles } = await supabase
+          .from('course_job_roles')
+          .select('course_id, job_role_id')
+          .in('course_id', courseIds);
+        
+        console.log("My courses - Course job roles:", courseJobRoles);
         
         if (courseJobRoles && courseJobRoles.length > 0) {
           // Get all courses that have role restrictions
@@ -135,60 +158,35 @@ export const useCourseData = (
         return;
       }
       
-      // Get user progress for these courses
-      const { data: progressData, error: progressError } = await supabase
-        .from('user_course_progress')
-        .select('course_id, progress, completed, last_accessed, favorite')
-        .eq('user_id', user.id)
-        .in('course_id', filteredCourseIds);
+      // Paralelizar queries críticas: cursos e progresso do curso
+      // Essas são as mais importantes para mostrar conteúdo rapidamente
+      const [coursesResult, progressResult] = await Promise.all([
+        supabase
+          .from('courses')
+          .select('*')
+          .in('id', filteredCourseIds),
+        supabase
+          .from('user_course_progress')
+          .select('course_id, progress, completed, last_accessed, favorite')
+          .eq('user_id', currentUser.id)
+          .in('course_id', filteredCourseIds)
+      ]);
       
-      if (progressError) {
-        console.error('Error fetching progress:', progressError);
-        // Continue with empty progress data instead of throwing
-      }
-      
-      // Fetch all courses
-      const { data: coursesData, error: coursesError } = await supabase
-        .from('courses')
-        .select('*')
-        .in('id', filteredCourseIds);
+      const { data: coursesData, error: coursesError } = coursesResult;
+      const { data: progressData, error: progressError } = progressResult;
       
       if (coursesError) {
         console.error('Error fetching courses:', coursesError);
         throw coursesError;
       }
       
-      // Get completed lessons count for video stats
-      const { data: lessonProgressData, error: lessonProgressError } = await supabase
-        .from('user_lesson_progress')
-        .select('id, completed')
-        .eq('user_id', user.id)
-        .eq('completed', true);
-      
-      if (lessonProgressError) {
-        console.error('Error fetching lesson progress:', lessonProgressError);
+      if (progressError) {
+        console.error('Error fetching progress:', progressError);
+        // Continue with empty progress data instead of throwing
       }
       
-      const completedLessonsCount = lessonProgressData?.length || 0;
-      
-      // Calculate hours watched (estimate 15 minutes per completed lesson)
-      const estimatedHoursWatched = Math.round((completedLessonsCount * 15) / 60 * 10) / 10;
-      
+      // Process courses with progress info immediately to show content faster
       const progressMap = progressData || [];
-      const inProgress = progressMap.filter(p => p.progress > 0 && !p.completed).length;
-      const completed = progressMap.filter(p => p.completed).length;
-      const favorites = progressMap.filter(p => p.favorite).length || 0;
-      
-      setStats({
-        favorites,
-        inProgress,
-        completed,
-        videosCompleted: completedLessonsCount
-      });
-      
-      setHoursWatched(estimatedHoursWatched);
-      
-      // Process courses with progress info
       const coursesWithProgress = coursesData?.map(course => {
         const progress = progressMap.find(p => p.course_id === course.id);
         return {
@@ -200,6 +198,7 @@ export const useCourseData = (
         };
       }) || [];
       
+      // Set courses immediately so UI can render
       setAllCourses(coursesWithProgress);
       
       // Get courses in progress (not completed and with progress > 0)
@@ -219,6 +218,90 @@ export const useCourseData = (
       // Initially set filtered courses based on active filter
       filterCourses(coursesWithProgress, activeFilterRef.current);
       
+      // Calcular stats básicos dos cursos já carregados (rápido, sem query adicional)
+      const inProgress = progressMap.filter(p => p.progress > 0 && !p.completed).length;
+      const completed = progressMap.filter(p => p.completed).length;
+      const favorites = progressMap.filter(p => p.favorite).length || 0;
+      
+      // Set stats básicos imediatamente
+      setStats({
+        favorites,
+        inProgress,
+        completed,
+        videosCompleted: 0 // Será atualizado depois
+      });
+      
+      // Marcar loading como false AGORA para mostrar conteúdo rapidamente
+      setLoading(false);
+      
+      // Carregar stats detalhados e horas assistidas de forma assíncrona (não bloqueia UI)
+      // Isso permite que a UI mostre os cursos imediatamente
+      const loadDetailedStats = async () => {
+        try {
+          const lessonProgressResult = await supabase
+            .from('user_lesson_progress')
+            .select('id, lesson_id, completed')
+            .eq('user_id', currentUser.id)
+            .eq('completed', true);
+        
+          const { data: lessonProgressData, error: lessonProgressError } = lessonProgressResult;
+          
+          if (lessonProgressError) {
+            console.error('Error fetching lesson progress:', lessonProgressError);
+            return;
+          }
+          
+          const completedLessonsCount = lessonProgressData?.length || 0;
+          
+          // Calculate hours watched using real lesson durations
+          let totalHoursWatched = 0;
+          if (lessonProgressData && lessonProgressData.length > 0) {
+            // Get lesson IDs from completed lessons
+            const completedLessonIds = lessonProgressData.map(progress => progress.lesson_id);
+            
+            // Fetch lesson durations for completed lessons
+            const { data: completedLessons, error: lessonsError } = await supabase
+              .from('lessons')
+              .select('id, duration')
+              .in('id', completedLessonIds);
+            
+            if (!lessonsError && completedLessons) {
+              // Sum up all durations in hours
+              totalHoursWatched = completedLessons.reduce((total, lesson) => {
+                if (lesson.duration) {
+                  return total + durationToHours(lesson.duration);
+                }
+                return total;
+              }, 0);
+              
+              // Round to 1 decimal place
+              totalHoursWatched = Math.round(totalHoursWatched * 10) / 10;
+            }
+          }
+          
+          // Fallback to estimate if no duration data available
+          const hoursWatched = totalHoursWatched > 0 
+            ? totalHoursWatched 
+            : Math.round((completedLessonsCount * 15) / 60 * 10) / 10;
+          
+          // Atualizar stats com informações detalhadas
+          setStats({
+            favorites,
+            inProgress,
+            completed,
+            videosCompleted: completedLessonsCount
+          });
+          
+          setHoursWatched(hoursWatched);
+        } catch (error: any) {
+          console.error('Error loading detailed stats:', error);
+          // Não mostrar toast para erro em stats detalhados, pois não é crítico
+        }
+      };
+      
+      // Carregar stats detalhados em background (não bloqueia UI)
+      loadDetailedStats();
+      
       console.log(`Successfully loaded ${coursesWithProgress.length} accessible courses`);
     } catch (error: any) {
       console.error('Error fetching course stats:', error);
@@ -233,7 +316,6 @@ export const useCourseData = (
       setFilteredCourses([]);
       setAllCourses([]);
       setHoursWatched(0);
-    } finally {
       setLoading(false);
     }
   }, []); // Empty dependencies - using refs for all dynamic values

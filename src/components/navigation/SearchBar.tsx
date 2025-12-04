@@ -2,7 +2,7 @@
 import { Search } from "lucide-react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { cn } from "@/lib/utils";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +18,10 @@ interface Course {
   tags?: string[];
 }
 
+// Cache para cursos acessíveis por empresa
+const coursesCache = new Map<string, { courses: Course[]; timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+
 export const SearchBar = () => {
   const { selectedCompany } = useCompanies();
   const { userProfile } = useAuth();
@@ -27,21 +31,76 @@ export const SearchBar = () => {
   const [open, setOpen] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
+  const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isFetchingRef = useRef<boolean>(false);
   
+  // Usar refs para estabilizar dependências e evitar chamadas duplicadas
+  const selectedCompanyIdRef = useRef<string | undefined>(selectedCompany?.id);
+  const userProfileIdRef = useRef<string | undefined>(userProfile?.id);
+  const lastFetchedKeyRef = useRef<string>('');
+  
+  useEffect(() => {
+    selectedCompanyIdRef.current = selectedCompany?.id;
+    userProfileIdRef.current = userProfile?.id;
+  }, [selectedCompany?.id, userProfile?.id]);
+
   const fetchAccessibleCourses = useCallback(async () => {
-    if (!selectedCompany?.id || !userProfile?.id) return;
+    const companyId = selectedCompanyIdRef.current;
+    const profileId = userProfileIdRef.current;
     
+    if (!companyId || !profileId) {
+      setCourses([]);
+      return;
+    }
+
+    const cacheKey = `${companyId}-${profileId}`;
+    
+    // Evitar fetch duplicado para a mesma chave
+    if (lastFetchedKeyRef.current === cacheKey && isFetchingRef.current) {
+      return;
+    }
+
+    // Verificar cache primeiro
+    const cached = coursesCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      setCourses(cached.courses);
+      lastFetchedKeyRef.current = cacheKey;
+      return;
+    }
+
+    // Evitar múltiplas requisições simultâneas
+    if (isFetchingRef.current) {
+      return;
+    }
+    
+    lastFetchedKeyRef.current = cacheKey;
+
     try {
+      isFetchingRef.current = true;
       setLoading(true);
-      console.log("Fetching accessible courses for search, company:", selectedCompany.id);
       
       // Get courses available to the company
       const { data: companyAccess, error: accessError } = await supabase
         .from('company_courses')
         .select('course_id')
-        .eq('empresa_id', selectedCompany.id);
+        .eq('empresa_id', companyId);
       
-      if (accessError) throw accessError;
+      // Tratamento específico para erro de recursão RLS
+      if (accessError) {
+        if (accessError.code === '42P17') {
+          console.warn('[SearchBar] RLS recursion error detected, using fallback');
+          // Fallback: tentar buscar cursos diretamente sem filtrar por empresa
+          // ou usar cache se disponível
+          if (cached) {
+            setCourses(cached.courses);
+            return;
+          }
+          // Se não tem cache, retornar vazio
+          setCourses([]);
+          return;
+        }
+        throw accessError;
+      }
       
       if (!companyAccess || companyAccess.length === 0) {
         console.log("No courses found for this company");
@@ -63,9 +122,29 @@ export const SearchBar = () => {
       // Filter courses based on user's job role and admin status
       let accessibleCourseIds = courseIds;
       
+      // Fetch user's company role data (is_admin and cargo_id are in user_empresa, not profile)
+      // Also check super_admin status from profiles
+      const [userCompanyResult, profileResult] = await Promise.all([
+        supabase
+          .from('user_empresa')
+          .select('is_admin, cargo_id')
+          .eq('user_id', profileId)
+          .eq('empresa_id', companyId)
+          .single(),
+        supabase
+          .from('profiles')
+          .select('super_admin')
+          .eq('id', profileId)
+          .single()
+      ]);
+      
+      const userCompany = userCompanyResult.data;
+      const isSuperAdmin = profileResult.data?.super_admin === true;
+      const isAdmin = isSuperAdmin || (userCompany?.is_admin === true);
+      const userJobRoleId = userCompany?.cargo_id || null;
+      
       // If user is not admin and has job role restrictions, apply filtering
-      if (!userProfile?.is_admin && !userProfile?.super_admin) {
-        const userJobRoleId = userProfile?.cargo_id;
+      if (!isAdmin) {
         console.log('User job role ID for search:', userJobRoleId);
         
         if (courseJobRoles && courseJobRoles.length > 0) {
@@ -107,19 +186,59 @@ export const SearchBar = () => {
       
       if (coursesError) throw coursesError;
       
-      console.log(`Loaded ${allCourses?.length || 0} accessible courses for search`);
-      setCourses(allCourses || []);
-    } catch (error) {
+      const finalCourses = allCourses || [];
+      
+      // Atualizar cache
+      coursesCache.set(cacheKey, {
+        courses: finalCourses,
+        timestamp: Date.now()
+      });
+      
+      setCourses(finalCourses);
+    } catch (error: any) {
       console.error("Error fetching accessible courses for search:", error);
+      
+      // Se for erro de RLS, tentar usar cache se disponível
+      if (error?.code === '42P17' && cached) {
+        setCourses(cached.courses);
+        return;
+      }
+      
       setCourses([]);
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
-  }, [selectedCompany?.id, userProfile]);
+  }, []);
   
   useEffect(() => {
-    fetchAccessibleCourses();
-  }, [fetchAccessibleCourses]);
+    const companyId = selectedCompany?.id;
+    const profileId = userProfile?.id;
+    
+    // Não fazer fetch se não tiver company ou profile
+    if (!companyId || !profileId) {
+      setCourses([]);
+      return;
+    }
+    
+    // Limpar timeout anterior se existir
+    if (fetchTimeoutRef.current) {
+      clearTimeout(fetchTimeoutRef.current);
+      fetchTimeoutRef.current = null;
+    }
+
+    // Debounce: aguardar um pouco antes de buscar
+    fetchTimeoutRef.current = setTimeout(() => {
+      fetchAccessibleCourses();
+    }, 300);
+
+    return () => {
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+        fetchTimeoutRef.current = null;
+      }
+    };
+  }, [selectedCompany?.id, userProfile?.id, fetchAccessibleCourses]);
 
   // Atalho de teclado Cmd+K / Ctrl+K
   useEffect(() => {

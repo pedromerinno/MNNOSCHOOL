@@ -6,6 +6,7 @@ export interface AccessDetailsProps {
   isOpen: boolean;
   onClose: () => void;
   companyColor?: string;
+  onAccessUpdated?: () => void;
 }
 
 export interface AccessFieldProps {
@@ -15,4 +16,6 @@ export interface AccessFieldProps {
   copyMessage?: string;
   isPassword?: boolean;
   hasExternalLink?: boolean;
+  isPasswordVisible?: boolean;
+  onTogglePasswordVisibility?: () => void;
 }

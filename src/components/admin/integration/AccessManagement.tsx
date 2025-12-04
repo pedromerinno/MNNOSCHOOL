@@ -1,14 +1,24 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Trash2, Edit, Key, Eye, EyeOff, Copy } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Plus, Trash2, Edit, Key, Eye, EyeOff, Copy, MoreHorizontal, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { AdminTable, AdminTableColumn } from '@/components/admin/AdminTable';
+import { AdminFilterBar, FilterConfig } from '@/components/admin/AdminFilterBar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 
 type AccessItem = {
   id: string;
@@ -35,6 +45,7 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentAccess, setCurrentAccess] = useState<AccessItem | null>(null);
   const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(new Set());
+  const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
     tool_name: '',
     username: '',
@@ -54,7 +65,6 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({
     
     setIsLoading(true);
     try {
-      // Use the new encrypted function to get decrypted passwords (admin only)
       const { data, error } = await supabase
         .rpc('get_company_access_decrypted', { p_company_id: companyId });
       
@@ -63,13 +73,12 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({
         toast.error('Erro ao carregar itens de acesso');
         setAccessItems([]);
       } else {
-        // Transform the data to match the expected AccessItem format
         const transformedData = data?.map(item => ({
           id: item.id,
           company_id: item.company_id,
           tool_name: item.tool_name,
           username: item.username,
-          password: item.password_decrypted, // Use decrypted password
+          password: item.password_decrypted,
           url: item.url,
           notes: item.notes,
           created_at: item.created_at
@@ -85,6 +94,31 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({
       setIsLoading(false);
     }
   };
+
+  // Filter items based on search
+  const filteredItems = useMemo(() => {
+    if (!searchTerm.trim()) return accessItems;
+
+    const term = searchTerm.toLowerCase();
+    return accessItems.filter(item =>
+      item.tool_name?.toLowerCase().includes(term) ||
+      item.username?.toLowerCase().includes(term) ||
+      item.url?.toLowerCase().includes(term) ||
+      item.notes?.toLowerCase().includes(term)
+    );
+  }, [accessItems, searchTerm]);
+
+  const filterConfigs: FilterConfig[] = [
+    {
+      type: 'text',
+      id: 'search',
+      placeholder: 'Buscar por ferramenta, usuário, URL ou observações...',
+      value: searchTerm,
+      onChange: setSearchTerm
+    }
+  ];
+
+  const hasActiveFilters = searchTerm.trim().length > 0;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -104,7 +138,6 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({
       }
 
       if (currentAccess) {
-        // Use encrypted update function
         const { data: updated, error } = await supabase
           .rpc('update_company_access', {
             p_id: currentAccess.id,
@@ -118,7 +151,6 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({
         if (error) throw error;
         toast.success('Acesso atualizado com sucesso');
       } else {
-        // Use encrypted create function
         const { data: newId, error } = await supabase
           .rpc('create_company_access', {
             p_company_id: companyId,
@@ -131,8 +163,6 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({
         
         if (error) throw error;
         toast.success('Acesso adicionado com sucesso');
-        
-        // Dispatch event to notify other components
         window.dispatchEvent(new CustomEvent('access-created'));
       }
 
@@ -169,8 +199,6 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({
       if (error) throw error;
       toast.success('Acesso removido com sucesso');
       fetchAccessItems();
-      
-      // Dispatch event to notify other components
       window.dispatchEvent(new CustomEvent('access-created'));
     } catch (error: any) {
       console.error('Error deleting access:', error);
@@ -207,223 +235,360 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({
     });
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center p-6">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+  const columns: AdminTableColumn<AccessItem>[] = [
+    {
+      id: 'tool_name',
+      header: 'Ferramenta',
+      accessor: 'tool_name',
+      sortable: false,
+      cell: (item) => (
+        <div className="flex items-center gap-2">
+          <Key className="h-4 w-4 text-gray-400" />
+          <span className="font-medium">{item.tool_name}</span>
+        </div>
+      )
+    },
+    {
+      id: 'url',
+      header: 'URL',
+      accessor: 'url',
+      sortable: false,
+      cell: (item) => {
+        if (!item.url) return <span className="text-gray-400">-</span>;
+        
+        const url = item.url.startsWith('http') ? item.url : `https://${item.url}`;
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 flex items-center gap-1.5 hover:underline max-w-xs truncate"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <span className="truncate">{item.url}</span>
+                  <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
+                </a>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{url}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      },
+      responsive: {
+        hideBelow: 'lg'
+      }
+    },
+    {
+      id: 'username',
+      header: 'Usuário',
+      accessor: 'username',
+      sortable: false,
+      cell: (item) => (
+        <div className="flex items-center gap-2">
+          <span>{item.username}</span>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    copyToClipboard(item.username, 'Usuário copiado!');
+                  }}
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Copiar usuário</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      )
+    },
+    {
+      id: 'password',
+      header: 'Senha',
+      sortable: false,
+      cell: (item) => {
+        const isVisible = visiblePasswords.has(item.id);
+        return (
+          <div className="flex items-center gap-2">
+            <code className="text-sm font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+              {isVisible ? item.password : '••••••••'}
+            </code>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      togglePasswordVisibility(item.id);
+                    }}
+                  >
+                    {isVisible ? (
+                      <EyeOff className="h-3.5 w-3.5" />
+                    ) : (
+                      <Eye className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isVisible ? 'Ocultar senha' : 'Mostrar senha'}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      copyToClipboard(item.password, 'Senha copiada!');
+                    }}
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Copiar senha</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        );
+      }
+    },
+    {
+      id: 'notes',
+      header: 'Observações',
+      accessor: 'notes',
+      sortable: false,
+      cell: (item) => (
+        <span className="text-sm text-gray-600 dark:text-gray-400">
+          {item.notes || <span className="text-gray-400">-</span>}
+        </span>
+      ),
+      responsive: {
+        hideBelow: 'xl'
+      }
+    },
+    {
+      id: 'actions',
+      header: '',
+      sortable: false,
+      align: 'right',
+      className: 'w-12',
+      cell: (item) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MoreHorizontal className="h-4 w-4" />
+              <span className="sr-only">Abrir menu</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={(e) => {
+              e.stopPropagation();
+              handleEdit(item);
+            }}>
+              <Edit className="h-4 w-4 mr-2" />
+              Editar acesso
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete(item.id);
+              }}
+              className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir acesso
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )
+    }
+  ];
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-medium">Gestão de Acessos</h3>
-          <p className="text-sm text-muted-foreground">
-            Gerencie os acessos compartilhados da empresa
-          </p>
+    <div className="space-y-6">
+      {/* Barra de Filtros e Botão */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex-1 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <AdminFilterBar
+            filters={filterConfigs}
+            companyColor={companyColor}
+            showClearButton={true}
+            onClear={() => setSearchTerm('')}
+            hasActiveFilters={hasActiveFilters}
+            resultsCount={{
+              current: filteredItems.length,
+              total: accessItems.length,
+              label: 'acesso',
+              showTotalWhenFiltered: true
+            }}
+          />
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button 
-              onClick={() => {
-                resetForm();
-                setIsDialogOpen(true);
-              }} 
-              className="rounded-xl py-[25px] px-[20px]"
-              style={{ backgroundColor: companyColor }}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Acesso
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {currentAccess ? 'Editar Acesso' : 'Novo Acesso'}
-              </DialogTitle>
-              <DialogDescription>
-                {currentAccess ? 'Atualize as informações de acesso.' : 'Adicione um novo acesso compartilhado.'}
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit}>
-              <div className="grid gap-4 py-4">
+        <Button
+          onClick={() => {
+            resetForm();
+            setIsDialogOpen(true);
+          }}
+          className="bg-black hover:bg-gray-800 text-white rounded-xl whitespace-nowrap"
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Novo Acesso
+        </Button>
+      </div>
+
+      {/* Tabela */}
+      <AdminTable
+        data={filteredItems}
+        columns={columns}
+        loading={isLoading}
+        getRowKey={(item) => item.id}
+        emptyState={{
+          icon: Key,
+          title: hasActiveFilters ? 'Nenhum acesso encontrado' : 'Nenhum acesso cadastrado',
+          description: hasActiveFilters
+            ? 'Tente ajustar os filtros para encontrar acessos'
+            : 'Adicione seu primeiro acesso para começar a gerenciar as senhas da empresa.'
+        }}
+      />
+
+      {/* Dialog para criar/editar */}
+      <Dialog open={isDialogOpen} onOpenChange={(open) => {
+        setIsDialogOpen(open);
+        if (!open) {
+          resetForm();
+        }
+      }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {currentAccess ? 'Editar Acesso' : 'Novo Acesso'}
+            </DialogTitle>
+            <DialogDescription>
+              {currentAccess 
+                ? 'Atualize as informações de acesso compartilhado.' 
+                : 'Adicione um novo acesso compartilhado para a empresa.'}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="tool_name">
+                  Nome da Ferramenta <span className="text-red-500">*</span>
+                </Label>
+                <Input 
+                  id="tool_name" 
+                  name="tool_name" 
+                  value={formData.tool_name} 
+                  onChange={handleInputChange} 
+                  placeholder="Ex: GitHub, AWS, Slack..."
+                  required 
+                />
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="url">URL</Label>
+                <Input 
+                  id="url" 
+                  name="url" 
+                  value={formData.url} 
+                  onChange={handleInputChange} 
+                  placeholder="https://..." 
+                  type="url"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="tool_name">Nome da Ferramenta</Label>
-                  <Input 
-                    id="tool_name" 
-                    name="tool_name" 
-                    value={formData.tool_name} 
-                    onChange={handleInputChange} 
-                    required 
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="url">URL</Label>
-                  <Input 
-                    id="url" 
-                    name="url" 
-                    value={formData.url} 
-                    onChange={handleInputChange} 
-                    placeholder="https://..." 
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="username">Usuário</Label>
+                  <Label htmlFor="username">
+                    Usuário <span className="text-red-500">*</span>
+                  </Label>
                   <Input 
                     id="username" 
                     name="username" 
                     value={formData.username} 
                     onChange={handleInputChange} 
+                    placeholder="usuário@exemplo.com"
                     required 
                   />
                 </div>
+                
                 <div className="grid gap-2">
-                  <Label htmlFor="password">Senha</Label>
+                  <Label htmlFor="password">
+                    Senha <span className="text-red-500">*</span>
+                  </Label>
                   <Input 
                     id="password" 
                     name="password" 
                     type="password" 
                     value={formData.password} 
                     onChange={handleInputChange} 
+                    placeholder="••••••••"
                     required 
                   />
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="notes">Observações</Label>
-                  <Input 
-                    id="notes" 
-                    name="notes" 
-                    value={formData.notes} 
-                    onChange={handleInputChange} 
-                  />
-                </div>
               </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button type="submit" style={{ backgroundColor: companyColor }}>
-                  {currentAccess ? 'Atualizar' : 'Adicionar'}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {accessItems.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center p-6">
-            <Key className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-center text-muted-foreground">
-              Nenhum acesso foi cadastrado ainda.
-            </p>
-            <Button 
-              onClick={() => setIsDialogOpen(true)} 
-              variant="outline" 
-              className="mt-4"
-            >
-              Adicionar primeiro acesso
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Ferramenta</TableHead>
-                  <TableHead>URL</TableHead>
-                  <TableHead>Usuário</TableHead>
-                  <TableHead>Senha</TableHead>
-                  <TableHead>Observações</TableHead>
-                  <TableHead className="w-[100px]">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {accessItems.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>{item.tool_name}</TableCell>
-                    <TableCell>
-                      {item.url ? (
-                        <a
-                          href={item.url.startsWith('http') ? item.url : `https://${item.url}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline flex items-center"
-                        >
-                          {item.url}
-                        </a>
-                      ) : (
-                        '-'
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <span>{item.username}</span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => copyToClipboard(item.username, 'Usuário copiado!')}
-                        >
-                          <Copy className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <span>
-                          {visiblePasswords.has(item.id) ? item.password : '••••••••'}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => togglePasswordVisibility(item.id)}
-                        >
-                          {visiblePasswords.has(item.id) ? (
-                            <EyeOff className="h-3 w-3" />
-                          ) : (
-                            <Eye className="h-3 w-3" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => copyToClipboard(item.password, 'Senha copiada!')}
-                        >
-                          <Copy className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                    <TableCell>{item.notes || '-'}</TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(item)}
-                        >
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(item.id)}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
+              
+              <div className="grid gap-2">
+                <Label htmlFor="notes">Observações</Label>
+                <Textarea 
+                  id="notes" 
+                  name="notes" 
+                  value={formData.notes} 
+                  onChange={handleInputChange} 
+                  placeholder="Informações adicionais sobre este acesso..."
+                  rows={3}
+                />
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  setIsDialogOpen(false);
+                  resetForm();
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                type="submit" 
+                style={{ backgroundColor: companyColor }}
+                className="text-white hover:opacity-90"
+              >
+                {currentAccess ? 'Atualizar' : 'Adicionar'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

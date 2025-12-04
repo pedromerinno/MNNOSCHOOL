@@ -508,16 +508,21 @@ export function useCompanyNotices() {
   // Effect otimizado para buscar avisos quando empresa muda
   useEffect(() => {
     if (selectedCompany?.id) {
-      console.log(`Selected company changed to: ${selectedCompany.id}, fetching notices`);
-      // Carregamento imediato sem debounce
-      fetchNotices(selectedCompany.id);
+      // Só buscar se não for a mesma empresa que já foi buscada
+      if (lastFetchedCompanyIdRef.current !== selectedCompany.id) {
+        console.log(`Selected company changed to: ${selectedCompany.id}, fetching notices`);
+        fetchNotices(selectedCompany.id);
+      }
     } else {
       console.log('No selected company, clearing notices');
       setNotices([]);
       setCurrentNotice(null);
       setIsLoading(false);
+      lastFetchedCompanyIdRef.current = null;
     }
-  }, [selectedCompany?.id, fetchNotices]);
+    // Remover fetchNotices das dependências para evitar loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCompany?.id]);
 
   // Cleanup ao desmontar
   useEffect(() => {

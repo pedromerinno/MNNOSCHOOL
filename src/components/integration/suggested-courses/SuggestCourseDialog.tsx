@@ -1,21 +1,13 @@
-
-import React, { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import React, { useState, useEffect, useMemo } from 'react';
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { HorizontalSettingsDialog, SettingsSection } from "@/components/ui/horizontal-settings-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Loader2, Search } from "lucide-react";
+import { Search } from "lucide-react";
 
 interface Course {
   id: string;
@@ -58,6 +50,7 @@ export const SuggestCourseDialog: React.FC<SuggestCourseDialogProps> = ({
 
   const fetchCourses = async () => {
     try {
+      console.log('[SuggestCourseDialog] Fetching courses for company:', companyId);
       const { data, error } = await supabase
         .from('company_courses')
         .select(`
@@ -72,14 +65,23 @@ export const SuggestCourseDialog: React.FC<SuggestCourseDialogProps> = ({
         .eq('empresa_id', companyId);
 
       if (error) {
-        console.error('Error fetching courses:', error);
+        console.error('[SuggestCourseDialog] Error fetching courses:', error);
+        toast.error(`Erro ao carregar cursos: ${error.message}`);
         return;
       }
 
+      console.log('[SuggestCourseDialog] Courses data:', data);
       const coursesList = data?.map(item => item.course).filter(Boolean) || [];
+      console.log('[SuggestCourseDialog] Processed courses:', coursesList);
       setCourses(coursesList);
+      
+      if (coursesList.length === 0) {
+        console.warn('[SuggestCourseDialog] No courses found for company:', companyId);
+        toast.error('Nenhum curso encontrado para esta empresa');
+      }
     } catch (error) {
-      console.error('Error fetching courses:', error);
+      console.error('[SuggestCourseDialog] Error fetching courses:', error);
+      toast.error('Erro ao carregar cursos');
     }
   };
 
@@ -108,11 +110,25 @@ export const SuggestCourseDialog: React.FC<SuggestCourseDialogProps> = ({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
+    // Validações com feedback
+    if (!selectedCourse) {
+      toast.error('Por favor, selecione um curso');
+      return;
+    }
     
-    if (!selectedCourse || !selectedUser || !reason.trim()) {
-      toast.error('Por favor, preencha todos os campos');
+    if (!selectedUser) {
+      toast.error('Por favor, selecione um colaborador');
+      return;
+    }
+    
+    if (!reason.trim()) {
+      toast.error('Por favor, informe o motivo da sugestão');
+      return;
+    }
+
+    if (!userProfile?.id) {
+      toast.error('Erro de autenticação. Por favor, faça login novamente.');
       return;
     }
 
@@ -123,21 +139,27 @@ export const SuggestCourseDialog: React.FC<SuggestCourseDialogProps> = ({
         .insert({
           course_id: selectedCourse,
           user_id: selectedUser,
-          suggested_by: userProfile?.id,
+          suggested_by: userProfile.id,
           company_id: companyId,
           reason: reason.trim()
         });
 
       if (error) {
         console.error('Error suggesting course:', error);
-        toast.error('Erro ao sugerir curso');
+        if (error.code === '23505') {
+          toast.error('Este curso já foi sugerido para este colaborador nesta empresa');
+        } else if (error.code === '42501' || error.message?.includes('permission denied') || error.message?.includes('row-level security')) {
+          toast.error('Você não tem permissão para criar sugestões. Verifique se você é um administrador.');
+        } else {
+          toast.error(`Erro ao sugerir curso: ${error.message || 'Erro desconhecido'}`);
+        }
         return;
       }
 
       toast.success('Curso sugerido com sucesso!');
       onCourseSuggested();
-      onOpenChange(false);
       resetForm();
+      onOpenChange(false);
     } catch (error) {
       console.error('Error suggesting course:', error);
       toast.error('Erro ao sugerir curso');
@@ -163,6 +185,12 @@ export const SuggestCourseDialog: React.FC<SuggestCourseDialogProps> = ({
     user.email?.toLowerCase().includes(searchUser.toLowerCase())
   );
 
+  const isFormValid = () => {
+    return selectedCourse.trim() !== '' && 
+           selectedUser.trim() !== '' && 
+           reason.trim() !== '';
+  };
+
   useEffect(() => {
     if (open && companyId) {
       fetchCourses();
@@ -176,99 +204,121 @@ export const SuggestCourseDialog: React.FC<SuggestCourseDialogProps> = ({
     }
   }, [open]);
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Sugerir Curso</DialogTitle>
-          <DialogDescription>
-            Selecione um curso para sugerir a um colaborador
-          </DialogDescription>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="user">Colaborador</Label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Buscar colaborador..."
-                value={searchUser}
-                onChange={(e) => setSearchUser(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select value={selectedUser} onValueChange={setSelectedUser}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione um colaborador" />
-              </SelectTrigger>
-              <SelectContent>
-                {filteredUsers.map((user) => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {user.display_name || user.email}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="course">Curso</Label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Buscar curso..."
-                value={searchCourse}
-                onChange={(e) => setSearchCourse(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select value={selectedCourse} onValueChange={setSelectedCourse}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione um curso" />
-              </SelectTrigger>
-              <SelectContent>
-                {filteredCourses.map((course) => (
-                  <SelectItem key={course.id} value={course.id}>
-                    {course.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="reason">Motivo da sugestão</Label>
-            <Textarea
-              id="reason"
-              placeholder="Por que você está sugerindo este curso?"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              rows={3}
+  const sections: SettingsSection[] = useMemo(() => {
+    const generalSectionContent = (
+      <div className="space-y-8">
+        {/* Colaborador */}
+        <div className="space-y-2">
+          <Label htmlFor="user" className="text-sm font-semibold text-gray-900">
+            Colaborador
+          </Label>
+          <p className="text-xs text-gray-500 mt-1">
+            Selecione o colaborador que receberá a sugestão
+          </p>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Buscar colaborador..."
+              value={searchUser}
+              onChange={(e) => setSearchUser(e.target.value)}
+              className="pl-10 h-10"
             />
           </div>
+          <Select value={selectedUser} onValueChange={setSelectedUser}>
+            <SelectTrigger className="h-10 w-full">
+              <SelectValue placeholder="Selecione um colaborador" />
+            </SelectTrigger>
+            <SelectContent>
+              {filteredUsers.map((user) => (
+                <SelectItem key={user.id} value={user.id}>
+                  {user.display_name || user.email}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-          <div className="flex gap-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="flex-1"
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="flex-1"
-              style={{ backgroundColor: companyColor }}
-            >
-              {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Sugerir
-            </Button>
+        {/* Curso */}
+        <div className="space-y-2">
+          <Label htmlFor="course" className="text-sm font-semibold text-gray-900">
+            Curso
+          </Label>
+          <p className="text-xs text-gray-500 mt-1">
+            Selecione o curso que será sugerido
+          </p>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Buscar curso..."
+              value={searchCourse}
+              onChange={(e) => setSearchCourse(e.target.value)}
+              className="pl-10 h-10"
+            />
           </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+          <Select value={selectedCourse} onValueChange={setSelectedCourse}>
+            <SelectTrigger className="h-10 w-full">
+              <SelectValue placeholder="Selecione um curso" />
+            </SelectTrigger>
+            <SelectContent>
+              {filteredCourses.map((course) => (
+                <SelectItem key={course.id} value={course.id}>
+                  {course.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Motivo da sugestão */}
+        <div className="space-y-2">
+          <Label htmlFor="reason" className="text-sm font-semibold text-gray-900">
+            Motivo da Sugestão
+          </Label>
+          <p className="text-xs text-gray-500 mt-1">
+            Explique por que este curso seria útil para este colaborador
+          </p>
+          <Textarea
+            id="reason"
+            placeholder="Por que você está sugerindo este curso?"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            rows={4}
+            className="resize-none"
+            required
+          />
+        </div>
+      </div>
+    );
+
+    return [
+      {
+        id: 'general',
+        label: 'General',
+        content: generalSectionContent
+      }
+    ];
+  }, [selectedUser, selectedCourse, reason, searchUser, searchCourse, filteredUsers, filteredCourses]);
+
+  return (
+    <HorizontalSettingsDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Sugerir Curso"
+      sections={sections}
+      defaultSectionId="general"
+      onCancel={() => {
+        resetForm();
+        onOpenChange(false);
+      }}
+      onSave={handleSubmit}
+      saveLabel="Sugerir"
+      cancelLabel="Cancelar"
+      isSaving={isLoading}
+      isFormValid={isFormValid()}
+      saveButtonStyle={isFormValid() ? { 
+        backgroundColor: companyColor,
+        borderColor: companyColor
+      } : undefined}
+    />
   );
 };

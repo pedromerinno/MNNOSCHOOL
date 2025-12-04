@@ -171,13 +171,29 @@ export const useUserProfile = () => {
   const fetchUserProfile = useCallback(async (userId: string, forceRefresh: boolean = false) => {
     // Removido: verificação de flag RLS que estava bloqueando carregamento
     
-    // Evitar múltiplas requisições para o mesmo usuário
+    console.log('[useUserProfile] fetchUserProfile called:', {
+      userId,
+      forceRefresh,
+      fetchInProgress: fetchInProgress.current,
+      lastFetchedUserId: lastFetchedUserId.current,
+      hasFetchedOnce: hasFetchedOnce.current,
+      hasProfile: !!userProfile
+    });
+
+    // Evitar múltiplas requisições para o mesmo usuário (exceto se for refresh forçado)
     if (fetchInProgress.current && !forceRefresh) {
+      console.log('[useUserProfile] Fetch already in progress, skipping...');
       return;
     }
 
-    // Se já buscou para este usuário e não é refresh forçado, usar cache
+    // Se já buscou para este usuário e não é refresh forçado, verificar se temos perfil
     if (lastFetchedUserId.current === userId && hasFetchedOnce.current && !forceRefresh) {
+      if (userProfile && userProfile.id === userId) {
+        console.log('[useUserProfile] Profile already loaded for this user, skipping fetch');
+        return;
+      }
+      // Se não temos perfil mas já tentamos, não tentar novamente a menos que seja forçado
+      console.log('[useUserProfile] Already attempted fetch for this user, but no profile found. Use forceRefresh=true to retry.');
       return;
     }
 
@@ -185,9 +201,14 @@ export const useUserProfile = () => {
       fetchInProgress.current = true;
       setIsLoading(true);
       
-      console.log('[useUserProfile] Fetching user profile for:', userId, 'forceRefresh:', forceRefresh);
+      console.log('[useUserProfile] Starting profile fetch for:', userId, 'forceRefresh:', forceRefresh);
       
       const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user || user.id !== userId) {
+        console.error('[useUserProfile] User mismatch or not found:', { requestedUserId: userId, actualUserId: user?.id });
+        throw new Error('User mismatch or not authenticated');
+      }
       
       // Sincronizar email apenas uma vez
       if (user?.email && !hasEmailSynced.current) {
@@ -195,11 +216,20 @@ export const useUserProfile = () => {
       }
       
       let profileData;
+      
+      // Tentar buscar da tabela profiles
       const { data, error } = await supabase
         .from('profiles')
         .select('id, display_name, email, avatar, super_admin, primeiro_login, created_at, aniversario, cidade')
         .eq('id', userId)
-        .single();
+        .maybeSingle(); // Usar maybeSingle ao invés de single para não falhar se não existir
+
+      console.log('[useUserProfile] Profiles query result:', { 
+        hasData: !!data, 
+        error: error ? { code: error.code, message: error.message } : null, 
+        userId,
+        dataKeys: data ? Object.keys(data) : null
+      });
 
       if (error) {
         // Se for erro de RLS, tentar usar cache ou dados básicos do usuário
@@ -239,9 +269,11 @@ export const useUserProfile = () => {
           }
         }
         
-        if (error.code === 'PGRST116') {
-          console.log('No profile found for user, creating one...');
+        // Se não encontrou perfil (PGRST116) ou retornou null, criar um básico
+        if (error?.code === 'PGRST116' || (!data && !error)) {
+          console.log('[useUserProfile] No profile found for user, creating one...');
           
+          // Criar perfil básico com dados do usuário autenticado
           const newProfile = {
             id: userId,
             email: user?.email || null,
@@ -249,40 +281,105 @@ export const useUserProfile = () => {
             primeiro_login: true,
           };
           
+          console.log('[useUserProfile] Attempting to create profile:', newProfile);
+          
           const { error: createError } = await supabase
             .from('profiles')
             .insert(newProfile);
             
           if (createError) {
-            console.error('Erro ao criar perfil:', createError);
-            // Não retornar aqui - deixar o finally executar
-            return;
-          }
-          
-          // Verificar convites apenas uma vez após criar perfil
-          if (user?.email && !hasCheckedInvites.current) {
-            await checkAndApplyInvite(userId, user.email);
-          }
-          
-          const { data: newData, error: newError } = await supabase
-            .from('profiles')
-            .select('id, display_name, email, avatar, super_admin, primeiro_login, created_at, aniversario, cidade')
-            .eq('id', userId)
-            .single();
+            console.error('[useUserProfile] Erro ao criar perfil:', createError);
+            // Mesmo se falhar ao criar, usar dados básicos do usuário
+            profileData = {
+              id: userId,
+              email: user?.email || null,
+              display_name: user?.user_metadata?.display_name || user?.email?.split('@')[0] || null,
+              avatar: null,
+              super_admin: false,
+              primeiro_login: true,
+              created_at: new Date().toISOString(),
+              aniversario: null,
+              cidade: null
+            };
+          } else {
+            // Verificar convites apenas uma vez após criar perfil
+            if (user?.email && !hasCheckedInvites.current) {
+              await checkAndApplyInvite(userId, user.email);
+            }
             
-          if (newError || !newData) {
-            console.error('Erro ao buscar perfil recém-criado:', newError);
-            // Não retornar aqui - deixar o finally executar
-            return;
+            // Buscar perfil recém-criado
+            const { data: newData, error: newError } = await supabase
+              .from('profiles')
+              .select('id, display_name, email, avatar, super_admin, primeiro_login, created_at, aniversario, cidade')
+              .eq('id', userId)
+              .maybeSingle();
+              
+            if (newError) {
+              console.error('[useUserProfile] Erro ao buscar perfil recém-criado:', newError);
+              // Usar dados básicos mesmo se falhar
+              profileData = {
+                id: userId,
+                email: user?.email || null,
+                display_name: user?.user_metadata?.display_name || user?.email?.split('@')[0] || null,
+                avatar: null,
+                super_admin: false,
+                primeiro_login: true,
+                created_at: new Date().toISOString(),
+                aniversario: null,
+                cidade: null
+              };
+            } else {
+              profileData = newData || {
+                id: userId,
+                email: user?.email || null,
+                display_name: user?.user_metadata?.display_name || user?.email?.split('@')[0] || null,
+                avatar: null,
+                super_admin: false,
+                primeiro_login: true,
+                created_at: new Date().toISOString(),
+                aniversario: null,
+                cidade: null
+              };
+            }
           }
-          
-          profileData = newData;
         } else {
           // Erro ao buscar perfil
-          console.error('Erro ao buscar perfil:', error);
-          // Se for erro de RLS, tentar continuar mas logar o erro
+          console.error('[useUserProfile] Erro ao buscar perfil:', error);
+          // Se for erro de RLS, tentar usar cache ou dados básicos do usuário
           if (error.code === '42P17') {
-            console.warn('[useUserProfile] RLS error detected, but continuing');
+            console.warn('[useUserProfile] RLS error detected, trying to use cache or basic user data');
+            // Tentar usar cache primeiro
+            const cachedProfile = getCache<UserProfile>({ key: CACHE_KEY });
+            if (cachedProfile && cachedProfile.id === userId) {
+              console.log('[useUserProfile] Using cached profile due to RLS error');
+              setUserProfile(cachedProfile);
+              setIsLoading(false);
+              fetchInProgress.current = false;
+              lastFetchedUserId.current = userId;
+              hasFetchedOnce.current = true;
+              return;
+            }
+            // Se não tem cache, criar perfil básico com dados do usuário
+            if (user?.email) {
+              const basicProfile: UserProfile = {
+                id: userId,
+                email: user.email,
+                display_name: user.user_metadata?.display_name || user.email.split('@')[0] || null,
+                super_admin: false,
+                avatar: null,
+                primeiro_login: true,
+                created_at: new Date().toISOString(),
+                aniversario: null,
+                cidade: null
+              };
+              console.log('[useUserProfile] Using basic profile due to RLS error');
+              setUserProfile(basicProfile);
+              setIsLoading(false);
+              fetchInProgress.current = false;
+              lastFetchedUserId.current = userId;
+              hasFetchedOnce.current = true;
+              return;
+            }
           }
           // Marcar como tentado para evitar loops
           lastFetchedUserId.current = userId;
@@ -291,58 +388,140 @@ export const useUserProfile = () => {
           return;
         }
       } else {
+        // Dados carregados com sucesso!
         profileData = data;
         
+        console.log('[useUserProfile] ✅ Data loaded successfully! Raw data:', data);
+        console.log('[useUserProfile] Processing profile data:', {
+          hasProfileData: !!profileData,
+          display_name: profileData?.display_name,
+          email: profileData?.email,
+          primeiro_login: profileData?.primeiro_login,
+          super_admin: profileData?.super_admin
+        });
+        
         // Verificar convites apenas se é primeiro login E ainda não verificou
-        if (profileData.primeiro_login && user?.email && !hasCheckedInvites.current) {
+        if (profileData && profileData.primeiro_login && user?.email && !hasCheckedInvites.current) {
+          console.log('[useUserProfile] Checking invites for first login user...');
           await checkAndApplyInvite(userId, user.email);
           
           // Buscar perfil atualizado após aplicar convite
-          const { data: updatedData } = await supabase
+          const { data: updatedData, error: updateError } = await supabase
             .from('profiles')
             .select('id, display_name, email, avatar, super_admin, primeiro_login, created_at, aniversario, cidade')
             .eq('id', userId)
-            .single();
+            .maybeSingle();
             
-          if (updatedData) {
+          if (updateError) {
+            console.warn('[useUserProfile] Error fetching updated profile after invite:', updateError);
+            // Continuar com os dados originais se houver erro
+          } else if (updatedData) {
+            console.log('[useUserProfile] Using updated profile after invite');
             profileData = updatedData;
           }
         }
       }
 
+      // Se não encontrou profileData, criar um básico
+      if (!profileData && user?.email) {
+        console.warn('[useUserProfile] No profileData found, creating basic profile from auth user');
+        profileData = {
+          id: userId,
+          email: user.email,
+          display_name: user.user_metadata?.display_name || user.email.split('@')[0] || null,
+          avatar: null,
+          super_admin: false,
+          primeiro_login: true,
+          created_at: new Date().toISOString(),
+          aniversario: null,
+          cidade: null
+        };
+      }
+
+      // GARANTIR que sempre temos um perfil para definir no estado
       if (profileData) {
         const profile: UserProfile = {
           id: profileData.id,
           email: profileData.email || user?.email || null,
-          display_name: profileData.display_name,
+          display_name: profileData.display_name || user?.user_metadata?.display_name || user?.email?.split('@')[0] || null,
           super_admin: profileData.super_admin || false,
           avatar: profileData.avatar || null,
           primeiro_login: profileData.primeiro_login || false,
-          created_at: profileData.created_at || null,
+          created_at: profileData.created_at || new Date().toISOString(),
           aniversario: profileData.aniversario || null,
           cidade: profileData.cidade || null
         };
         
-        console.log('[useUserProfile] Profile loaded:', profile.display_name, 'with extra data:', {
+        console.log('[useUserProfile] ✅ Profile loaded successfully:', {
+          id: profile.id,
+          display_name: profile.display_name,
+          email: profile.email,
+          super_admin: profile.super_admin,
           cidade: profile.cidade,
-          aniversario: profile.aniversario,
-          tipo_contrato: profile.tipo_contrato,
-          nivel_colaborador: profile.nivel_colaborador
+          aniversario: profile.aniversario
         });
         
         setUserProfile(profile);
         setCache({ key: CACHE_KEY, expirationMinutes: 5 }, profile);
         
         lastFetchedUserId.current = userId;
-        if (!forceRefresh) {
+        hasFetchedOnce.current = true;
+      } else if (user?.email) {
+        // Último fallback - criar perfil mínimo do usuário autenticado
+        console.log('[useUserProfile] Using minimal fallback profile from auth user');
+        const fallbackProfile: UserProfile = {
+          id: userId,
+          email: user.email,
+          display_name: user.user_metadata?.display_name || user.email.split('@')[0] || null,
+          super_admin: false,
+          avatar: null,
+          primeiro_login: true,
+          created_at: new Date().toISOString(),
+          aniversario: null,
+          cidade: null
+        };
+        
+        console.log('[useUserProfile] ✅ Fallback profile set:', fallbackProfile);
+        setUserProfile(fallbackProfile);
+        lastFetchedUserId.current = userId;
+        hasFetchedOnce.current = true;
+      }
+    } catch (error: any) {
+      console.error('[useUserProfile] Error fetching profile:', error);
+      
+      // Em caso de erro, tentar pelo menos definir dados básicos do usuário
+      try {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser?.email) {
+          const errorFallbackProfile: UserProfile = {
+            id: userId,
+            email: authUser.email,
+            display_name: authUser.user_metadata?.display_name || authUser.email.split('@')[0] || null,
+            super_admin: false,
+            avatar: null,
+            primeiro_login: true,
+            created_at: new Date().toISOString(),
+            aniversario: null,
+            cidade: null
+          };
+          
+          console.log('[useUserProfile] ⚠️ Error fallback profile set:', errorFallbackProfile);
+          setUserProfile(errorFallbackProfile);
+          lastFetchedUserId.current = userId;
           hasFetchedOnce.current = true;
         }
+      } catch (fallbackError) {
+        console.error('[useUserProfile] Even fallback failed:', fallbackError);
       }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
     } finally {
       fetchInProgress.current = false;
       setIsLoading(false);
+      
+      console.log('[useUserProfile] Fetch completed. Final state:', {
+        userId,
+        hasProfile: !!userProfile,
+        isLoading: false
+      });
     }
   }, [setCache, syncEmailWithAuth, checkAndApplyInvite]);
 

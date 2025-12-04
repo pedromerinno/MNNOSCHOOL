@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Building } from "lucide-react";
 import { CompanyTable } from './CompanyTable';
 import { CompanyForm } from './CompanyForm';
 import { useCompanies } from '@/hooks/useCompanies';
@@ -14,6 +14,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useUserCompanyAdmin } from '@/hooks/company/useUserCompanyAdmin';
 import { AdminSearchBar } from './AdminSearchBar';
 import { Card, CardContent } from '@/components/ui/card';
+import { AdminPageTitle } from './AdminPageTitle';
+import { Loader2 } from 'lucide-react';
 
 export const CompanyManagement: React.FC = () => {
   const {
@@ -42,6 +44,11 @@ export const CompanyManagement: React.FC = () => {
   const [editingCompany, setEditingCompany] = useState<Company | undefined>(undefined);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [metrics, setMetrics] = useState({
+    totalUsers: 0,
+    companiesThisMonth: 0,
+    loading: true
+  });
 
   console.log('[CompanyManagement] Current state:', {
     isSuperAdmin,
@@ -85,6 +92,63 @@ export const CompanyManagement: React.FC = () => {
       loadCompanies();
     }
   }, [fetchCompanies, getUserCompanies, isSuperAdmin, isAdmin, user?.id, userProfile, hasInitialized]);
+
+  // Determinar quais empresas mostrar baseado no perfil do usuário
+  const allDisplayCompanies = useMemo(() => {
+    return isSuperAdmin 
+      ? (Array.isArray(companies) ? companies : []) 
+      : (Array.isArray(userCompanies) ? userCompanies : []);
+  }, [isSuperAdmin, companies, userCompanies]);
+
+  // Buscar métricas
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      if (!hasInitialized || isLoading) return;
+      
+      try {
+        setMetrics(prev => ({ ...prev, loading: true }));
+        const companyIds = allDisplayCompanies.map(c => c.id);
+        
+        if (companyIds.length === 0) {
+          setMetrics({
+            totalUsers: 0,
+            companiesThisMonth: 0,
+            loading: false
+          });
+          return;
+        }
+
+        // Buscar total de usuários
+        const { count: totalUsers, error: usersError } = await supabase
+          .from('user_empresa')
+          .select('*', { count: 'exact', head: true })
+          .in('empresa_id', companyIds);
+
+        if (usersError) throw usersError;
+
+        // Buscar empresas criadas este mês
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+        
+        const companiesThisMonth = allDisplayCompanies.filter(company => {
+          const createdDate = new Date(company.created_at);
+          return createdDate >= startOfMonth;
+        }).length;
+
+        setMetrics({
+          totalUsers: totalUsers || 0,
+          companiesThisMonth,
+          loading: false
+        });
+      } catch (error) {
+        console.error('[CompanyManagement] Error fetching metrics:', error);
+        setMetrics(prev => ({ ...prev, loading: false }));
+      }
+    };
+
+    fetchMetrics();
+  }, [allDisplayCompanies, hasInitialized, isLoading]);
 
   const handleCreateCompany = () => {
     if (!isAdmin) {
@@ -178,11 +242,6 @@ export const CompanyManagement: React.FC = () => {
     }
   };
 
-  // Determinar quais empresas mostrar baseado no perfil do usuário
-  const allDisplayCompanies = isSuperAdmin 
-    ? (Array.isArray(companies) ? companies : []) 
-    : (Array.isArray(userCompanies) ? userCompanies : []);
-
   // Filtrar empresas por busca
   const displayCompanies = useMemo(() => {
     if (!searchQuery) return allDisplayCompanies;
@@ -200,26 +259,90 @@ export const CompanyManagement: React.FC = () => {
     userCompaniesArray: Array.isArray(userCompanies)
   });
 
+  const totalCompanies = displayCompanies.length;
+  const filteredCount = searchQuery ? displayCompanies.length : null;
+
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center py-[5px]">
-        <h2 className="text-xl font-semibold py-0">Gerenciamento de Empresas</h2>
-        <Button onClick={handleCreateCompany} className="rounded-2xl">
-          <Plus className="h-4 w-4 mr-2" />
-          Nova Empresa
-        </Button>
+    <div className="space-y-6">
+      <AdminPageTitle
+        title="Empresas"
+        description="Gerencie todas as empresas e seus usuários"
+        size="xl"
+        actions={
+          <Button onClick={handleCreateCompany} className="rounded-2xl">
+            <Plus className="h-4 w-4 mr-2" />
+            Nova Empresa
+          </Button>
+        }
+      />
+
+      {/* Métricas */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="border border-gray-200 dark:border-gray-800 shadow-sm">
+          <CardContent className="p-4">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Total de Empresas</p>
+              {isLoading || metrics.loading ? (
+                <div className="flex items-center mt-1">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                </div>
+              ) : (
+                <p className="text-2xl font-bold">{totalCompanies}</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border border-gray-200 dark:border-gray-800 shadow-sm">
+          <CardContent className="p-4">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Total de Usuários</p>
+              {metrics.loading ? (
+                <div className="flex items-center mt-1">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                </div>
+              ) : (
+                <p className="text-2xl font-bold">{metrics.totalUsers}</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border border-gray-200 dark:border-gray-800 shadow-sm">
+          <CardContent className="p-4">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Empresas Criadas Este Mês</p>
+              {metrics.loading ? (
+                <div className="flex items-center mt-1">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                </div>
+              ) : (
+                <p className="text-2xl font-bold">{metrics.companiesThisMonth}</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
-      
-      <Card>
+
+      {/* Barra de busca e filtros */}
+      <Card className="border border-gray-200 dark:border-gray-800">
         <CardContent className="p-4">
-          <AdminSearchBar
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Buscar por nome ou frase institucional..."
-          />
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div className="flex-1 w-full sm:max-w-md">
+              <AdminSearchBar
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Buscar por nome ou frase institucional..."
+              />
+            </div>
+            {filteredCount !== null && searchQuery && (
+              <div className="text-sm text-muted-foreground">
+                {filteredCount} {filteredCount === 1 ? 'empresa encontrada' : 'empresas encontradas'}
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
       
+      {/* Tabela de empresas */}
       <CompanyTable 
         companies={displayCompanies} 
         loading={isLoading} 

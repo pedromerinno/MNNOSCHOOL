@@ -2,7 +2,7 @@
 import { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { IndexSkeleton } from "@/components/home/IndexSkeleton";
+import { PagePreloader } from "@/components/ui/PagePreloader";
 
 interface CompanyRequiredWrapperProps {
   children: ReactNode;
@@ -18,10 +18,17 @@ export const CompanyRequiredWrapper = ({ children }: CompanyRequiredWrapperProps
     pathname: location.pathname
   });
 
-  // Se está carregando auth, mostrar skeleton
-  if (loading) {
-    console.log("[CompanyRequiredWrapper] Loading auth - showing skeleton");
-    return <IndexSkeleton />;
+  // Se está carregando auth, mostrar preloader
+  // Exceto na rota "/" onde o IndexContent já cuida do loading
+  if (loading && location.pathname !== "/") {
+    console.log("[CompanyRequiredWrapper] Loading auth - showing preloader");
+    return <PagePreloader />;
+  }
+
+  // Na rota "/", não mostrar nada durante loading - IndexContent cuida disso
+  if (loading && location.pathname === "/") {
+    console.log("[CompanyRequiredWrapper] Loading auth on home - letting IndexContent handle it");
+    return <>{children}</>;
   }
 
   // Se não tem usuário, redirecionar para login

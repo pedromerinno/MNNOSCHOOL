@@ -3,7 +3,7 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, Play } from "lucide-react";
 
@@ -24,10 +24,8 @@ export const RecentCourses: React.FC<RecentCoursesProps> = ({
     return (
       <div className="space-y-6">
         <h2 className="text-xl font-semibold">Continue assistindo</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array(3).fill(0).map((_, i) => (
-            <Skeleton key={i} className="h-64 w-full rounded-2xl" />
-          ))}
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </div>
     );

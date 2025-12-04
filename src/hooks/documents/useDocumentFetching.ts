@@ -61,6 +61,18 @@ export const useDocumentFetching = () => {
         throw error;
       }
 
+      console.log(`[DocumentFetching] Encontrados ${data?.length || 0} documentos para usuário ${userId} na empresa ${companyId}`);
+      if (data && data.length > 0) {
+        console.log('[DocumentFetching] Documentos encontrados:', data.map(d => ({ 
+          id: d.id, 
+          name: d.name, 
+          user_id: d.user_id, 
+          company_id: d.company_id,
+          thumbnail_path: d.thumbnail_path,
+          file_path: d.file_path
+        })));
+      }
+
       return data as UserDocument[];
     } catch (error) {
       console.error("Erro ao buscar documentos:", error);

@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle } from "lucide-react";
 import { UserAdminToggle } from "./UserAdminToggle";
 import { UserProfile } from "@/hooks/useUsers";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Loader2 } from "lucide-react";
 import { getInitials } from "@/utils/stringUtils";
 
 // Novo type: Supondo companies?: { logo: string | null, nome: string }[] em UserProfile
@@ -99,19 +99,19 @@ export const UserTable: React.FC<UserTableProps> = ({
               </TableCell>
             </TableRow> : users.map(user => <TableRow key={user.id} className={`${loading ? "opacity-60" : ""} hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors`}>
                 <TableCell className="px-[30px] py-[20px]">
-                  {loading ? <Skeleton className="h-5 w-24" /> : user.display_name}
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : user.display_name}
                 </TableCell>
                 <TableCell className="text-gray-600 dark:text-gray-300">
-                  {loading ? <Skeleton className="h-5 w-36" /> : user.email}
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : user.email}
                 </TableCell>
                 <TableCell>
-                  {loading ? <Skeleton className="h-8 w-28" /> : <CompanyLogosCell companies={user.companies} />}
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : <CompanyLogosCell companies={user.companies} />}
                 </TableCell>
                 <TableCell>
-                  {loading ? <Skeleton className="h-6 w-16" /> : getBadgeContent(user)}
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : getBadgeContent(user)}
                 </TableCell>
                 <TableCell className="text-right">
-                  {loading ? <Skeleton className="h-8 w-20 ml-auto" /> : <UserAdminToggle userId={user.id} isAdmin={user.is_admin} isSuperAdmin={user.super_admin} onToggle={onToggle} />}
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin text-primary ml-auto" /> : <UserAdminToggle userId={user.id} isAdmin={user.is_admin} isSuperAdmin={user.super_admin} onToggle={onToggle} />}
                 </TableCell>
               </TableRow>)}
         </TableBody>

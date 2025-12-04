@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Home, School, MessageSquare, Users, Settings } from "lucide-react";
+import { Menu, X, Home, GraduationCap, MessageSquareMore, Users2, Settings2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -15,12 +15,17 @@ import { CompanySelector } from "./CompanySelector";
 import { UserNavigation } from "./UserNavigation";
 import { AuthButtons } from "./AuthButtons";
 import { useIsAdmin } from "@/hooks/company/useIsAdmin";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 export const MobileMenu = () => {
   const [open, setOpen] = useState(false);
-  const { user, userProfile } = useAuth();
-  const { isAdmin, isSuperAdmin } = useIsAdmin();
+  const { user, userProfile, profileLoading } = useAuth();
+  const { isAdmin, isSuperAdmin, isLoading } = useIsAdmin();
   const location = useLocation();
+  
+  // Garantir que o perfil está carregado antes de mostrar itens administrativos
+  const isReady = !profileLoading && !!userProfile && !isLoading;
 
   const isCurrentPath = (path: string) => {
     return location.pathname === path;
@@ -35,27 +40,33 @@ export const MobileMenu = () => {
     },
     {
       label: "Escola",
-      path: "/courses",
-      icon: School,
+      path: "/my-courses",
+      icon: GraduationCap,
       show: true
     },
     {
       label: "Fórum",
       path: "/community",
-      icon: MessageSquare,
+      icon: MessageSquareMore,
       show: true
     },
     {
       label: "Equipe",
       path: "/team",
-      icon: Users,
-      show: isAdmin
+      icon: Users2,
+      show: isReady && isAdmin
     },
     {
-      label: isSuperAdmin ? "Super Admin" : "Admin",
+      label: "Admin",
       path: "/admin",
-      icon: Settings,
-      show: isAdmin
+      icon: Settings2,
+      show: isReady && isAdmin
+    },
+    {
+      label: "Super Admin",
+      path: "/super-admin",
+      icon: ShieldCheck,
+      show: isReady && isSuperAdmin
     }
   ];
 
@@ -108,8 +119,16 @@ export const MobileMenu = () => {
                     : "text-gray-700 dark:text-gray-300 hover:bg-white/60 dark:hover:bg-gray-800/60 hover:shadow-sm"
                 }`}
               >
-                <item.icon className="h-5 w-5 flex-shrink-0" />
+                <item.icon 
+                  className={cn(
+                    "h-5 w-5 flex-shrink-0 transition-all duration-200",
+                    isCurrentPath(item.path) ? "" : "opacity-40"
+                  )} 
+                />
                 <span className="text-base font-medium">{item.label}</span>
+                {item.label === "Escola" && (
+                  <Badge variant="beta" className="text-xs ml-auto">Beta</Badge>
+                )}
               </Link>
             ))}
           </nav>

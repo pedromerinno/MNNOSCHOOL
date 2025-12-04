@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Control } from "react-hook-form";
-import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 
 interface TextareaFieldProps {
@@ -30,8 +30,10 @@ export const TextareaField: React.FC<TextareaFieldProps> = ({
               {...field} 
               value={field.value || ""}
               rows={4}
+              className="resize-none"
             />
           </FormControl>
+          <FormMessage />
         </FormItem>
       )}
     />

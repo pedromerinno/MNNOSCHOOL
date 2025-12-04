@@ -37,29 +37,70 @@ export const useJobRolesAPI = () => {
       
       console.log("[JobRolesAPI] Fetching fresh job roles from database for company:", companyId);
       
-      // Create and store the request promise
+      // Create and store the request promise with retry logic
       const requestPromise = (async () => {
-        const { data, error } = await supabase
-          .from('job_roles')
-          .select('*')
-          .eq('company_id', companyId)
-          .order('order_index');
-          
-        if (error) {
-          console.error("[JobRolesAPI] Database error fetching job roles:", error);
-          throw new Error(`Erro de banco de dados: ${error.message}`);
+        let lastError: any = null;
+        const maxRetries = 3;
+        const retryDelay = 1000; // 1 second
+        
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          try {
+            console.log(`[JobRolesAPI] Attempt ${attempt}/${maxRetries} to fetch job roles`);
+            
+            const { data, error } = await supabase
+              .from('job_roles')
+              .select('*')
+              .eq('company_id', companyId)
+              .order('order_index');
+              
+            if (error) {
+              console.error("[JobRolesAPI] Database error fetching job roles:", error);
+              
+              // Se for erro de rede, tentar novamente
+              if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError') || 
+                  error.message?.includes('fetch') || attempt < maxRetries) {
+                lastError = error;
+                
+                if (attempt < maxRetries) {
+                  console.log(`[JobRolesAPI] Retrying in ${retryDelay}ms...`);
+                  await new Promise(resolve => setTimeout(resolve, retryDelay * attempt));
+                  continue;
+                }
+              }
+              
+              throw new Error(`Erro de banco de dados: ${error.message}`);
+            }
+            
+            const jobRoles = data || [];
+            console.log(`[JobRolesAPI] Successfully fetched ${jobRoles.length} job roles for company ${companyId}`);
+            
+            // Update cache
+            jobRolesCache[companyId] = {
+              data: jobRoles,
+              timestamp: now
+            };
+            
+            return jobRoles;
+          } catch (error: any) {
+            lastError = error;
+            
+            // Se não for erro de rede ou já tentou todas as vezes, não tentar novamente
+            if (!error.message?.includes('Failed to fetch') && 
+                !error.message?.includes('NetworkError') && 
+                !error.message?.includes('fetch') ||
+                attempt >= maxRetries) {
+              throw error;
+            }
+            
+            if (attempt < maxRetries) {
+              console.log(`[JobRolesAPI] Retrying in ${retryDelay * attempt}ms...`);
+              await new Promise(resolve => setTimeout(resolve, retryDelay * attempt));
+            }
+          }
         }
         
-        const jobRoles = data || [];
-        console.log(`[JobRolesAPI] Successfully fetched ${jobRoles.length} job roles for company ${companyId}`);
-        
-        // Update cache
-        jobRolesCache[companyId] = {
-          data: jobRoles,
-          timestamp: now
-        };
-        
-        return jobRoles;
+        // Se chegou aqui, todas as tentativas falharam
+        throw lastError || new Error('Erro desconhecido ao buscar cargos');
       })();
 
       // Store the ongoing request
@@ -84,7 +125,18 @@ export const useJobRolesAPI = () => {
       // Clean up ongoing request
       delete ongoingRequests[companyId];
       
-      const errorMessage = error.message || 'Erro desconhecido ao carregar cargos';
+      // Detectar tipo de erro e mostrar mensagem apropriada
+      let errorMessage = 'Erro desconhecido ao carregar cargos';
+      
+      if (error.message?.includes('Failed to fetch') || 
+          error.message?.includes('NetworkError') ||
+          error.message?.includes('fetch')) {
+        errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      console.error(`[JobRolesAPI] Error message: ${errorMessage}`);
       toast.error(`Erro ao carregar cargos: ${errorMessage}`);
       
       // Return empty array instead of throwing to prevent app crashes

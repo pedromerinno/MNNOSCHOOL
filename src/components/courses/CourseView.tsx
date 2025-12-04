@@ -5,7 +5,7 @@ import { CourseHeader } from './CourseHeader';
 import { CourseHero } from './CourseHero';
 import { CourseNotFound } from './CourseNotFound';
 import { CourseLessonsSection } from './CourseLessonsSection';
-import { CourseViewSkeleton } from './CourseViewSkeleton';
+import { PagePreloader } from '@/components/ui/PagePreloader';
 import { useCompanies } from '@/hooks/useCompanies';
 import { CourseMainContent } from './view/CourseMainContent';
 import { CourseDialogs } from './view/CourseDialogs';
@@ -76,7 +76,7 @@ export const CourseView: React.FC = () => {
   console.log(`[CourseView] State - loading: ${loading}, course: ${course?.title || 'none'}, error: ${error?.message || 'none'}`);
 
   if (loading) {
-    return <CourseViewSkeleton />;
+    return <PagePreloader />;
   }
 
   if (error || !course) {

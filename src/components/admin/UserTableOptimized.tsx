@@ -1,6 +1,5 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,13 +12,13 @@ import { ptBR } from 'date-fns/locale';
 import { useAuth } from '@/contexts/AuthContext';
 import { getInitials } from '@/utils/stringUtils';
 import { AdminSearchBar } from './AdminSearchBar';
-import { Users as UsersIcon } from 'lucide-react';
+import { Users as UsersIcon, MapPin, Calendar, Briefcase, Shield, Mail } from 'lucide-react';
+import { AdminTable, AdminTableColumn } from './AdminTable';
 
 interface UserTableOptimizedProps {
   users: UserProfile[];
   loading: boolean;
   onToggle: (userId: string, currentStatus: boolean | null, isSuperAdmin?: boolean) => void;
-  onRefresh?: () => void;
   onDeleteUser?: (userId: string) => void;
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
@@ -29,7 +28,6 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
   users,
   loading,
   onToggle,
-  onRefresh,
   onDeleteUser,
   searchQuery = '',
   onSearchChange
@@ -57,7 +55,6 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
   const formatDate = (dateString?: string | null): string => {
     if (!dateString) return "-";
     try {
-      // Criar a data assumindo que é uma data local (sem conversão de timezone)
       const date = new Date(dateString + 'T00:00:00');
       return format(date, 'dd/MM/yyyy', { locale: ptBR });
     } catch (error) {
@@ -68,7 +65,6 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
   const formatBirthday = (dateString?: string | null): string => {
     if (!dateString) return "-";
     try {
-      // Criar a data assumindo que é uma data local (sem conversão de timezone)
       const date = new Date(dateString + 'T00:00:00');
       return format(date, 'dd/MM', { locale: ptBR });
     } catch (error) {
@@ -126,12 +122,6 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
   };
 
   const handleEditSuccess = () => {
-    // Forçar refresh imediato dos dados
-    if (onRefresh) {
-      onRefresh();
-    }
-    
-    // Fechar o dialog após o refresh
     setTimeout(() => {
       setEditDialogOpen(false);
       setEditingUser(null);
@@ -143,50 +133,31 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
     if (!currentUser) return;
 
     console.log('Changing permission for user:', userId, 'to:', permission);
-    console.log('Current user permissions:', { 
-      is_admin: currentUser.is_admin, 
-      super_admin: currentUser.super_admin 
-    });
 
     try {
       switch (permission) {
         case 'user':
-          // Remove both admin and super admin
           if (currentUser.super_admin) {
-            console.log('Removing super admin permission');
-            await onToggle(userId, true, true); // Remove super admin
+            await onToggle(userId, true, true);
           }
           if (currentUser.is_admin) {
-            console.log('Removing admin permission');
-            await onToggle(userId, true, false); // Remove admin
+            await onToggle(userId, true, false);
           }
           break;
         case 'admin':
-          // Set as admin, remove super admin if needed
           if (currentUser.super_admin) {
-            console.log('Removing super admin permission first');
-            await onToggle(userId, true, true); // Remove super admin first
+            await onToggle(userId, true, true);
           }
           if (!currentUser.is_admin) {
-            console.log('Adding admin permission');
-            await onToggle(userId, false, false); // Add admin
+            await onToggle(userId, false, false);
           }
           break;
         case 'super_admin':
-          // Set as super admin
           if (!currentUser.super_admin) {
-            console.log('Adding super admin permission');
-            await onToggle(userId, false, true); // Add super admin
+            await onToggle(userId, false, true);
           }
           break;
       }
-      
-      // Refresh the data after permission change
-      setTimeout(() => {
-        if (onRefresh) {
-          onRefresh();
-        }
-      }, 500);
       
     } catch (error) {
       console.error('Error changing user permissions:', error);
@@ -199,32 +170,220 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
     return 'user';
   };
 
-  // Verificar se o usuário atual pode alterar as permissões de outro usuário
   const canChangePermissions = (targetUser: UserProfile): boolean => {
-    // Super admins podem alterar qualquer um
     if (isSuperAdmin) return true;
-    
-    // Admins não podem alterar super admins
     if (targetUser.super_admin) return false;
-    
-    // Admins podem alterar usuários regulares
     return isAdmin || false;
   };
 
-  // Verificar se pode mostrar o botão de ações
   const canShowActions = (targetUser: UserProfile): boolean => {
-    // Super admins podem ver ações para qualquer usuário
     if (isSuperAdmin) return true;
-    
-    // Admins não podem ver ações para super admins
     if (targetUser.super_admin) return false;
-    
-    // Admins podem ver ações para usuários regulares e outros admins
     if (isAdmin) return true;
-    
-    // Usuários regulares não podem ver ações
     return false;
   };
+
+  // Render avatar with better styling - matching CompanyTable style
+  const renderAvatar = (user: UserProfile) => {
+    if (user.avatar) {
+      return (
+        <div className="h-12 w-12 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-white dark:bg-gray-800 overflow-hidden shadow-sm">
+          <img 
+            src={user.avatar} 
+            alt={user.display_name || user.email || 'Usuário'}
+            className="h-full w-full object-cover"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+              const parent = target.parentElement;
+              if (parent) {
+                parent.innerHTML = `<span class="text-base font-bold text-primary">${getUserInitials(user)}</span>`;
+                parent.className = "h-12 w-12 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-primary/10";
+              }
+            }}
+          />
+        </div>
+      );
+    }
+    
+    return (
+      <div className="h-12 w-12 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/10 shadow-sm">
+        <span className="text-base font-bold text-primary">
+          {getUserInitials(user)}
+        </span>
+      </div>
+    );
+  };
+
+  // Define columns with improved styling
+  const columns: AdminTableColumn<UserProfile>[] = [
+    {
+      id: 'avatar',
+      header: 'Foto',
+      cell: (user) => renderAvatar(user),
+      className: 'w-16',
+    },
+    {
+      id: 'display_name',
+      header: 'Usuário',
+      cell: (user) => (
+        <div className="flex flex-col">
+          <span className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
+            {user.display_name || 'Sem nome'}
+          </span>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Mail className="h-3 w-3" />
+            <span>{user.email || 'Sem email'}</span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'cidade',
+      header: 'Localização',
+      cell: (user) => (
+        user.cidade ? (
+          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+            <MapPin className="h-4 w-4 text-muted-foreground" />
+            <span>{user.cidade}</span>
+          </div>
+        ) : (
+          <span className="text-sm text-muted-foreground">-</span>
+        )
+      ),
+      responsive: { hideBelow: 'md' },
+    },
+    {
+      id: 'aniversario',
+      header: 'Aniversário',
+      cell: (user) => (
+        user.aniversario ? (
+          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <span>{formatBirthday(user.aniversario)}</span>
+          </div>
+        ) : (
+          <span className="text-sm text-muted-foreground">-</span>
+        )
+      ),
+      responsive: { hideBelow: 'lg' },
+    },
+    {
+      id: 'professional',
+      header: 'Profissional',
+      cell: (user) => (
+        <div className="flex flex-col gap-1">
+          {user.nivel_colaborador && (
+            <Badge variant="neutral" className="text-xs w-fit">
+              {user.nivel_colaborador}
+            </Badge>
+          )}
+          {user.tipo_contrato && (
+            <span className="text-xs text-muted-foreground">{user.tipo_contrato}</span>
+          )}
+          {!user.nivel_colaborador && !user.tipo_contrato && (
+            <span className="text-sm text-muted-foreground">-</span>
+          )}
+        </div>
+      ),
+      responsive: { hideBelow: 'lg' },
+    },
+    {
+      id: 'data_inicio',
+      header: 'Data Início',
+      cell: (user) => (
+        user.data_inicio ? (
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            {formatDate(user.data_inicio)}
+          </span>
+        ) : (
+          <span className="text-sm text-muted-foreground">-</span>
+        )
+      ),
+      responsive: { hideBelow: 'xl' },
+    },
+    {
+      id: 'manual_cultura_aceito',
+      header: 'Manual',
+      cell: (user) => (
+        <Badge 
+          variant={user.manual_cultura_aceito ? "success" : "warning"}
+          className="text-xs"
+        >
+          {user.manual_cultura_aceito ? "Aceito" : "Pendente"}
+        </Badge>
+      ),
+      responsive: { hideBelow: 'xl' },
+    },
+    {
+      id: 'permissions',
+      header: 'Permissões',
+      cell: (user) => (
+        canChangePermissions(user) ? (
+          <Select
+            value={getUserPermissionValue(user)}
+            onValueChange={(value) => handlePermissionChange(user.id, value)}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <SelectTrigger className="w-36 h-8 whitespace-nowrap">
+              <Shield className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
+              <SelectValue className="whitespace-nowrap" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="user">
+                <div className="flex items-center gap-2">
+                  <UsersIcon className="h-3.5 w-3.5" />
+                  <span>Usuário</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="admin">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-3.5 w-3.5" />
+                  <span>Admin</span>
+                </div>
+              </SelectItem>
+              {isSuperAdmin && (
+                <SelectItem value="super_admin">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-3.5 w-3.5" />
+                    <span>Super Admin</span>
+                  </div>
+                </SelectItem>
+              )}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Badge 
+            variant={user.super_admin ? "default" : user.is_admin ? "default" : "neutral"}
+            className="flex items-center gap-1.5 w-fit whitespace-nowrap"
+          >
+            <Shield className="h-3.5 w-3.5" />
+            <span>{user.super_admin ? 'Super Admin' : user.is_admin ? 'Admin' : 'Usuário'}</span>
+          </Badge>
+        )
+      ),
+    },
+    {
+      id: 'actions',
+      header: 'Ações',
+      cell: (user) => {
+        if (!canShowActions(user)) {
+          return <div className="w-8 h-8" />;
+        }
+        return (
+          <UserActionsDropdown
+            user={user}
+            onEditProfile={handleEditProfile}
+            onToggleAdmin={onToggle}
+            onDeleteUser={onDeleteUser}
+            canDelete={isSuperAdmin || (isAdmin && !user.super_admin)}
+          />
+        );
+      },
+      align: 'right',
+      className: 'w-20',
+    },
+  ];
 
   if (loading && users.length === 0) {
     return (
@@ -233,24 +392,6 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
           <div className="flex items-center justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
             <span className="ml-2">Carregando usuários...</span>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (users.length === 0) {
-    return (
-      <Card>
-        <CardContent className="p-6 text-center">
-          <div className="flex flex-col items-center justify-center py-8">
-            <UsersIcon className="h-12 w-12 text-muted-foreground mb-4 opacity-50" />
-            <p className="text-muted-foreground font-medium mb-1">Nenhum usuário encontrado</p>
-            <p className="text-sm text-muted-foreground">
-              {searchQuery || permissionFilter !== 'all' 
-                ? 'Tente ajustar os filtros de busca'
-                : 'Comece adicionando um novo usuário'}
-            </p>
           </div>
         </CardContent>
       </Card>
@@ -290,128 +431,20 @@ export const UserTableOptimized: React.FC<UserTableOptimizedProps> = ({
           )}
         </CardContent>
       </Card>
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Foto</TableHead>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Cidade</TableHead>
-                  <TableHead>Aniversário</TableHead>
-                  <TableHead>Nível</TableHead>
-                  <TableHead>Contrato</TableHead>
-                  <TableHead>Data Início</TableHead>
-                  <TableHead>Manual</TableHead>
-                  <TableHead>Permissões</TableHead>
-                  <TableHead className="w-[50px]">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAndSortedUsers.map((user) => {
-                  // Log for debugging avatar rendering
-                  console.log('[UserTableOptimized] Rendering user:', {
-                    id: user.id,
-                    email: user.email,
-                    avatar: user.avatar,
-                    hasAvatar: !!user.avatar
-                  });
-                  
-                  return (
-                    <TableRow key={user.id}>
-                      <TableCell>
-                        <Avatar className="h-10 w-10">
-                          {user.avatar && (
-                            <AvatarImage 
-                              src={user.avatar} 
-                              alt={user.display_name || user.email || 'Usuário'}
-                              onLoad={() => console.log('[UserTableOptimized] Avatar loaded successfully for:', user.email)}
-                              onError={(e) => {
-                                console.error('[UserTableOptimized] Avatar failed to load for:', user.email, 'URL:', user.avatar);
-                                console.error('[UserTableOptimized] Error details:', e);
-                              }}
-                            />
-                          )}
-                          <AvatarFallback className="bg-slate-100 text-slate-600 font-medium">
-                            {getUserInitials(user)}
-                          </AvatarFallback>
-                        </Avatar>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {user.display_name || 'Sem nome'}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {user.email || 'Sem email'}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {user.cidade || '-'}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {formatBirthday(user.aniversario)}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {user.nivel_colaborador || '-'}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {user.tipo_contrato || '-'}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {formatDate(user.data_inicio)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant={user.manual_cultura_aceito ? "default" : "secondary"}
-                          className="text-xs"
-                        >
-                          {user.manual_cultura_aceito ? "Aceito" : "Pendente"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {canChangePermissions(user) ? (
-                          <Select
-                            value={getUserPermissionValue(user)}
-                            onValueChange={(value) => handlePermissionChange(user.id, value)}
-                          >
-                            <SelectTrigger className="w-32">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="user">Usuário</SelectItem>
-                              <SelectItem value="admin">Admin</SelectItem>
-                              {isSuperAdmin && (
-                                <SelectItem value="super_admin">Super Admin</SelectItem>
-                              )}
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <Badge variant="outline" className="text-xs">
-                            {user.super_admin ? 'Super Admin' : user.is_admin ? 'Admin' : 'Usuário'}
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {canShowActions(user) ? (
-                          <UserActionsDropdown
-                            user={user}
-                            onEditProfile={handleEditProfile}
-                            onToggleAdmin={onToggle}
-                            onDeleteUser={onDeleteUser}
-                            canDelete={isSuperAdmin || (isAdmin && !user.super_admin)}
-                          />
-                        ) : (
-                          <div className="w-8 h-8" />
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+      
+      <AdminTable
+        data={filteredAndSortedUsers}
+        columns={columns}
+        loading={loading}
+        getRowKey={(user) => user.id}
+        emptyState={{
+          icon: UsersIcon,
+          title: 'Nenhum usuário encontrado',
+          description: searchQuery || permissionFilter !== 'all' 
+            ? 'Tente ajustar os filtros de busca'
+            : 'Comece adicionando um novo usuário',
+        }}
+      />
 
       <EditUserProfileDialog
         isOpen={editDialogOpen}

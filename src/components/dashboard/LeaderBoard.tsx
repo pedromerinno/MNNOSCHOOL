@@ -43,8 +43,8 @@ export const LeaderBoard = () => {
 
   return (
     <Card className="border border-gray-100 dark:border-gray-800 shadow-sm">
-      <CardHeader className="p-6 flex flex-row items-center justify-between">
-        <CardTitle className="text-xl">Leader Board</CardTitle>
+      <CardHeader className="p-4 flex flex-row items-center justify-between">
+        <CardTitle className="text-lg">Leader Board</CardTitle>
         <div className="flex items-center space-x-2">
           <span className="text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 px-2 py-1 rounded-full">
             • Live data

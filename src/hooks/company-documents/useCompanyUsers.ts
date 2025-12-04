@@ -26,55 +26,103 @@ export const useCompanyUsers = () => {
     }
 
     setIsLoading(true);
+    let lastError: any = null;
+    const maxRetries = 3;
+    const retryDelay = 1000; // 1 second
+
     try {
-      const { data, error } = await supabase
-        .from('user_empresa')
-        .select(`
-          user_id,
-          cargo_id,
-          profiles!inner (
-            id,
-            display_name,
-            email
-          )
-        `)
-        .eq('empresa_id', selectedCompany.id);
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          console.log(`[useCompanyUsers] Attempt ${attempt}/${maxRetries} to fetch company users`);
+          
+          // Query otimizada usando função helper que usa view pré-processada
+          // Tudo vem em uma única query com dados já combinados
+          const { data: usersData, error: usersError } = await supabase
+            .rpc('get_company_users', { _empresa_id: selectedCompany.id });
 
-      if (error) {
-        console.error('Error fetching company users:', error);
-        toast.error('Erro ao carregar usuários da empresa');
-        return;
-      }
+          if (usersError) {
+            console.error('Error fetching company users:', usersError);
+            
+            // Se for erro de rede, tentar novamente
+            if (usersError.message?.includes('Failed to fetch') || 
+                usersError.message?.includes('NetworkError') ||
+                usersError.message?.includes('fetch')) {
+              lastError = usersError;
+              
+              if (attempt < maxRetries) {
+                console.log(`[useCompanyUsers] Retrying in ${retryDelay * attempt}ms...`);
+                await new Promise(resolve => setTimeout(resolve, retryDelay * attempt));
+                continue;
+              }
+            }
+            
+            // Detectar tipo de erro e mostrar mensagem apropriada
+            let errorMessage = 'Erro ao carregar usuários da empresa';
+            
+            if (usersError.message?.includes('Failed to fetch') || 
+                usersError.message?.includes('NetworkError') ||
+                usersError.message?.includes('fetch')) {
+              errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+            } else if (usersError.message) {
+              errorMessage = `Erro ao carregar usuários: ${usersError.message}`;
+            }
+            
+            toast.error(errorMessage);
+            return;
+          }
 
-      // Buscar cargos separadamente
-      const cargoIds = data?.filter(item => item.cargo_id).map(item => item.cargo_id) || [];
-      const jobRolesMap: Record<string, any> = {};
-      
-      if (cargoIds.length > 0) {
-        const { data: rolesData } = await supabase
-          .from('job_roles')
-          .select('id, title')
-          .in('id', cargoIds);
-        
-        if (rolesData) {
-          rolesData.forEach(role => {
-            jobRolesMap[role.id] = { title: role.title };
-          });
+          if (!usersData || usersData.length === 0) {
+            setUsers([]);
+            return;
+          }
+
+          // Processar dados da view otimizada (já vem tudo combinado!)
+          const companyUsers: CompanyUser[] = usersData.map((user: any) => ({
+            id: user.id,
+            display_name: user.display_name || 'Usuário sem nome',
+            email: user.email || '',
+            cargo_id: user.cargo_id || undefined,
+            job_role: user.cargo_title ? { title: user.cargo_title } : undefined
+          }));
+
+          setUsers(companyUsers);
+          return; // Sucesso, sair do loop
+        } catch (error: any) {
+          lastError = error;
+          console.error(`[useCompanyUsers] Error on attempt ${attempt}:`, error);
+          
+          // Se não for erro de rede ou já tentou todas as vezes, não tentar novamente
+          if ((!error.message?.includes('Failed to fetch') && 
+               !error.message?.includes('NetworkError') && 
+               !error.message?.includes('fetch')) ||
+              attempt >= maxRetries) {
+            
+            let errorMessage = 'Erro ao carregar usuários da empresa';
+            
+            if (error.message?.includes('Failed to fetch') || 
+                error.message?.includes('NetworkError') ||
+                error.message?.includes('fetch')) {
+              errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+            } else if (error.message) {
+              errorMessage = `Erro ao carregar usuários: ${error.message}`;
+            }
+            
+            toast.error(errorMessage);
+            return;
+          }
+          
+          if (attempt < maxRetries) {
+            console.log(`[useCompanyUsers] Retrying in ${retryDelay * attempt}ms...`);
+            await new Promise(resolve => setTimeout(resolve, retryDelay * attempt));
+          }
         }
       }
-
-      const companyUsers = (data || []).map((item: any) => ({
-        id: item.profiles.id,
-        display_name: item.profiles.display_name || 'Usuário sem nome',
-        email: item.profiles.email || '',
-        cargo_id: item.cargo_id || null, // Cargo por empresa (nova estrutura)
-        job_role: item.cargo_id ? jobRolesMap[item.cargo_id] : undefined
-      }));
-
-      setUsers(companyUsers);
-    } catch (error) {
-      console.error('Error fetching company users:', error);
-      toast.error('Erro ao carregar usuários da empresa');
+      
+      // Se chegou aqui, todas as tentativas falharam
+      if (lastError) {
+        let errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+        toast.error(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }

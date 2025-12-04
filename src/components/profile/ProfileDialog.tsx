@@ -163,10 +163,13 @@ export const ProfileDialog = ({ isOpen, setIsOpen, email, onSave }: ProfileDialo
     }
   };
 
+  // Não renderizar se não estiver aberto
+  if (!isOpen) {
+    return null;
+  }
+
   const currentAvatarUrl = avatarPreview || userProfile?.avatar || "/lovable-uploads/54cf67d5-105d-4bf2-8396-70dcf1507021.png";
   const currentName = form.watch("name") || userProfile?.display_name || email?.split('@')[0] || "U";
-
-  console.log('[ProfileDialog] Renderizando com:', { currentAvatarUrl, currentName, isUploading });
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>

@@ -10,15 +10,20 @@ export interface UserProfile {
   id: string; 
   email: string | null;
   display_name: string | null;
-  // is_admin e cargo_id foram removidos - agora estão em user_empresa
   super_admin?: boolean | null; // Global - acesso a tudo
   avatar?: string | null;
   created_at?: string | null;
   // Dados pessoais globais
   aniversario?: string | null;
   cidade?: string | null;
-  // Campos abaixo foram movidos para user_empresa (por empresa):
-  // - tipo_contrato, data_inicio, manual_cultura_aceito, nivel_colaborador, cargo_id, is_admin
+  // Campos da empresa (vindos de user_empresa via get_company_users):
+  is_admin?: boolean | null; // Admin desta empresa específica
+  cargo_id?: string | null;
+  cargo_title?: string | null;
+  tipo_contrato?: string | null;
+  data_inicio?: string | null;
+  manual_cultura_aceito?: boolean | null;
+  nivel_colaborador?: string | null;
 }
 
 export function useUsers() {
@@ -26,9 +31,9 @@ export function useUsers() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { setCache, getCache, clearCache } = useOptimizedCache();
-  const { selectedCompany } = useCompanies();
+  const { selectedCompany, userCompanies, isLoading: companiesLoading } = useCompanies();
   
-  const USERS_CACHE_KEY = 'users';
+  const USERS_CACHE_KEY = `users_${selectedCompany?.id || 'all'}`;
   const USERS_CACHE_EXPIRATION = 5; // Reduzido para 5 minutos
   
   const getCachedUsers = useCallback((): UserProfile[] | null => {
@@ -61,13 +66,14 @@ export function useUsers() {
     }
   }, [setCache, clearCache]);
 
-  // Helper function otimizada para buscar IDs das empresas do usuário
+  // Helper function otimizada para buscar IDs das empresas onde o usuário é admin
   const getUserCompanyIds = useCallback(async (userId: string): Promise<string[]> => {
     try {
       const { data: userCompanies } = await supabase
         .from('user_empresa')
         .select('empresa_id')
         .eq('user_id', userId)
+        .eq('is_admin', true) // Apenas empresas onde é admin
         .limit(50); // Limitar para evitar queries muito grandes
         
       return userCompanies?.map(uc => uc.empresa_id) || [];
@@ -116,7 +122,7 @@ export function useUsers() {
       
       console.log('[useUsers] Fetching fresh user data for:', currentUserId);
       
-      // Buscar perfil do usuário atual primeiro
+      // Query otimizada: buscar perfil do usuário atual e verificar se é super_admin
       const { data: currentUserProfile, error: profileError } = await supabase
         .from('profiles')
         .select('super_admin')
@@ -127,119 +133,102 @@ export function useUsers() {
         console.error('[useUsers] Error fetching user profile:', profileError);
         throw profileError;
       }
-        
-      if (currentUserProfile?.super_admin) {
-        console.log('[useUsers] Fetching all users for super admin');
-        // Super admin vê todos os usuários - incluindo avatar nos campos selecionados
-        const { data: allUsers, error } = await supabase
-          .from('profiles')
-          .select(`
-            id, 
-            display_name, 
-            super_admin, 
-            email, 
-            avatar,
-            created_at,
-            aniversario,
-            cidade
-          `)
-          .order('display_name', { ascending: true })
-          .limit(50); // Limitar para evitar sobrecarga
-          
-        if (error) {
-          console.error('[useUsers] Error fetching all users:', error);
-          throw error;
+      
+      const isSuperAdmin = currentUserProfile?.super_admin === true;
+      
+      // Se não há empresa selecionada, aguardar um pouco para ver se será selecionada
+      if (!selectedCompany?.id) {
+        // Se ainda está carregando empresas, manter loading e aguardar
+        if (companiesLoading) {
+          console.log('[useUsers] Companies still loading, waiting...');
+          // Não definir loading como false aqui, manter true para mostrar loading
+          return;
         }
         
-        if (allUsers) {
-          console.log('[useUsers] Fetched', allUsers.length, 'users for super admin');
-          console.log('[useUsers] Sample user data:', allUsers.slice(0, 2).map(user => ({
-            id: user.id,
-            email: user.email,
-            avatar: user.avatar,
-            hasAvatar: !!user.avatar
-          })));
-          
-          // tipo_contrato, data_inicio, manual_cultura_aceito e nivel_colaborador foram removidos de profiles
-          // Converter dados do banco para tipos corretos
-          const typedUsers: UserProfile[] = allUsers.map(user => ({
-            ...user
-          }));
-          
-          setUsers(typedUsers);
-          setCachedUsers(typedUsers);
+        // Se há empresas disponíveis mas nenhuma selecionada, aguardar seleção automática
+        if (userCompanies && userCompanies.length > 0) {
+          console.log('[useUsers] No company selected but companies available, waiting for auto-selection...');
+          // A empresa será selecionada automaticamente pelo useCompanies, aguardar
+          // Manter loading para não mostrar empty state prematuramente
+          return;
         }
+        
+        // Se é super admin e não há empresa selecionada, aguardar seleção
+        if (isSuperAdmin) {
+          console.log('[useUsers] Super admin but no company selected yet, waiting for selection...');
+          // Manter loading
+          return;
+        }
+        
+        // Caso contrário, não há empresas e não há empresa selecionada
+        console.log('[useUsers] No company selected and no companies available, showing empty list');
+        setUsers([]);
+        setLoading(false);
+        return;
+      }
+      
+      // Query otimizada usando função helper que usa view pré-processada
+      // Muito mais rápida que múltiplas queries
+      console.log('[useUsers] Calling get_company_users RPC with company ID:', selectedCompany.id);
+      console.log('[useUsers] Current user ID:', currentUserId);
+      console.log('[useUsers] Is super admin:', isSuperAdmin);
+      
+      const { data: userProfiles, error: profilesError } = await supabase
+        .rpc('get_company_users', { _empresa_id: selectedCompany.id });
+      
+      if (profilesError) {
+        console.error('[useUsers] Error fetching user profiles:', profilesError);
+        console.error('[useUsers] Error details:', {
+          message: profilesError.message,
+          details: profilesError.details,
+          hint: profilesError.hint,
+          code: profilesError.code
+        });
+        throw profilesError;
+      }
+      
+      console.log('[useUsers] RPC response:', {
+        hasData: !!userProfiles,
+        dataLength: userProfiles?.length || 0,
+        companyId: selectedCompany.id,
+        companyName: selectedCompany.nome,
+        rawData: userProfiles
+      });
+      
+      if (userProfiles && userProfiles.length > 0) {
+        console.log('[useUsers] Fetched', userProfiles.length, 'users via optimized view');
+        // Mapear dados da view para UserProfile
+        const typedUsers: UserProfile[] = userProfiles.map((user: any) => ({
+          id: user.id,
+          display_name: user.display_name,
+          email: user.email,
+          avatar: user.avatar,
+          super_admin: user.super_admin,
+          created_at: user.created_at,
+          aniversario: user.aniversario,
+          cidade: user.cidade,
+          // Campos da empresa
+          is_admin: user.is_admin,
+          cargo_id: user.cargo_id,
+          cargo_title: user.cargo_title,
+          tipo_contrato: user.tipo_contrato,
+          data_inicio: user.data_inicio,
+          manual_cultura_aceito: user.manual_cultura_aceito,
+          nivel_colaborador: user.nivel_colaborador
+        }));
+        
+        console.log('[useUsers] Setting users:', typedUsers.length);
+        setUsers(typedUsers);
+        setCachedUsers(typedUsers);
       } else {
-        // Verificar se é admin de alguma empresa (is_admin foi removido de profiles)
-        const { data: userCompanies } = await supabase
-          .from('user_empresa')
-          .select('empresa_id, is_admin')
-          .eq('user_id', currentUserId)
-          .eq('is_admin', true)
-          .limit(1);
-        
-        const isCompanyAdmin = (userCompanies?.length || 0) > 0;
-        
-        if (isCompanyAdmin) {
-          console.log('[useUsers] Fetching company users for admin');
-          // Admin vê apenas usuários das suas empresas - incluindo avatar
-          const companyIds = await getUserCompanyIds(currentUserId);
-          
-          if (companyIds.length === 0) {
-            console.log('[useUsers] No companies found for admin user');
-            setUsers([]);
-            return;
-          }
-          
-          const { data: companyUsers, error } = await supabase
-            .from('user_empresa')
-            .select(`
-              user_id,
-              profiles!inner(
-                id, 
-                display_name, 
-                super_admin, 
-                email, 
-                avatar,
-                created_at,
-                aniversario,
-                cidade
-              )
-            `)
-            .in('empresa_id', companyIds)
-            .limit(100); // Limitar para performance
-          
-          if (error) {
-            console.error('[useUsers] Error fetching company users:', error);
-            throw error;
-          }
-          
-          // tipo_contrato, data_inicio, manual_cultura_aceito e nivel_colaborador foram removidos de profiles
-          // Extrair usuários únicos do resultado com tipos corretos
-          const uniqueUsers = companyUsers?.reduce((acc: UserProfile[], item: any) => {
-            const user = item.profiles;
-            if (user && !acc.find(u => u.id === user.id)) {
-              acc.push({
-                ...user
-              });
-            }
-            return acc;
-          }, []) || [];
-          
-          console.log('[useUsers] Fetched', uniqueUsers.length, 'company users for admin');
-          console.log('[useUsers] Sample company user data:', uniqueUsers.slice(0, 2).map(user => ({
-            id: user.id,
-            email: user.email,
-            avatar: user.avatar,
-            hasAvatar: !!user.avatar
-          })));
-          
-          setUsers(uniqueUsers);
-          setCachedUsers(uniqueUsers);
-        } else {
-          console.log('[useUsers] Regular user - no access to user list');
-          setUsers([]);
-        }
+        console.warn('[useUsers] No user profiles found for company:', {
+          companyId: selectedCompany.id,
+          companyName: selectedCompany.nome,
+          currentUserId,
+          isSuperAdmin,
+          note: 'This could mean: 1) No users are linked to this company, 2) Permission issue, or 3) RPC function returned empty'
+        });
+        setUsers([]);
       }
       
     } catch (error: any) {
@@ -248,7 +237,7 @@ export function useUsers() {
     } finally {
       setLoading(false);
     }
-  }, [getUserCompanyIds, setCachedUsers]);
+  }, [selectedCompany?.id, setCachedUsers, companiesLoading, userCompanies]);
 
   const handleFetchError = useCallback((error: any) => {
     // Tentar usar dados do cache em caso de erro
@@ -340,9 +329,45 @@ export function useUsers() {
   }, [users, toast, setCachedUsers]);
 
   useEffect(() => {
-    console.log('[useUsers] Component mounted, starting fetch...');
+    console.log('[useUsers] Component mounted or company changed, starting fetch...', {
+      selectedCompanyId: selectedCompany?.id,
+      selectedCompanyName: selectedCompany?.nome,
+      companiesLoading,
+      userCompaniesCount: userCompanies?.length,
+      userCompaniesNames: userCompanies?.map(c => c.nome)
+    });
+    
+    // Se empresas estão carregando, aguardar um pouco antes de tentar buscar
+    if (companiesLoading) {
+      console.log('[useUsers] Companies loading, will retry when loaded');
+      const timeout = setTimeout(() => {
+        console.log('[useUsers] Retrying after companies load timeout');
+        fetchUsers();
+      }, 1000);
+      return () => clearTimeout(timeout);
+    }
+    
+    // Se há empresas mas nenhuma selecionada, aguardar um pouco para seleção automática
+    if (!selectedCompany?.id && userCompanies && userCompanies.length > 0) {
+      console.log('[useUsers] Waiting for company auto-selection...', {
+        availableCompanies: userCompanies.map(c => ({ id: c.id, nome: c.nome }))
+      });
+      const timeout = setTimeout(() => {
+        console.log('[useUsers] Retrying after auto-selection timeout');
+        fetchUsers();
+      }, 2000);
+      return () => clearTimeout(timeout);
+    }
+    
+    // Se não há empresa selecionada e não há empresas, não há o que fazer
+    if (!selectedCompany?.id && (!userCompanies || userCompanies.length === 0)) {
+      console.log('[useUsers] No company selected and no companies available');
+      return;
+    }
+    
+    console.log('[useUsers] Calling fetchUsers with company:', selectedCompany?.id);
     fetchUsers();
-  }, [fetchUsers]);
+  }, [fetchUsers, selectedCompany?.id, companiesLoading, userCompanies?.length]);
 
   return { users, loading, fetchUsers, toggleAdminStatus, deleteUser };
 }

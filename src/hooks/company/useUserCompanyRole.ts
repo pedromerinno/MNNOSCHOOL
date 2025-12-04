@@ -35,39 +35,58 @@ export const useUserCompanyRole = (userId?: string) => {
         setIsLoading(true);
         setError(null);
 
-        // Buscar a associação do usuário com a empresa
-        const { data: userCompany, error: userCompanyError } = await supabase
-          .from('user_empresa')
-          .select('cargo_id, is_admin')
-          .eq('user_id', targetUserId)
-          .eq('empresa_id', selectedCompany.id)
-          .single();
+        console.log('[useUserCompanyRole] Fetching role for:', { targetUserId, empresaId: selectedCompany.id });
 
-        if (userCompanyError && userCompanyError.code !== 'PGRST116') {
-          throw userCompanyError;
+        // Usar a view otimizada que já traz tudo combinado (profile + user_empresa + job_roles)
+        // Muito mais eficiente que múltiplas queries
+        const { data: companyUsers, error: viewError } = await supabase
+          .rpc('get_company_users', { _empresa_id: selectedCompany.id });
+
+        console.log('[useUserCompanyRole] get_company_users RPC result:', { 
+          usersCount: companyUsers?.length || 0, 
+          error: viewError 
+        });
+
+        if (viewError) {
+          console.error('[useUserCompanyRole] Error fetching from view:', viewError);
+          throw viewError;
         }
 
-        if (userCompany) {
-          setCargoId(userCompany.cargo_id || null);
-          setIsAdmin(userCompany.is_admin || false);
+        // Encontrar o usuário específico na lista retornada pela view
+        const userData = companyUsers?.find((user: any) => user.id === targetUserId);
 
-          // Se tem cargo, buscar os detalhes
-          if (userCompany.cargo_id) {
-            const { data: roleData, error: roleError } = await supabase
-              .from('job_roles')
-              .select('*')
-              .eq('id', userCompany.cargo_id)
-              .single();
+        if (userData) {
+          console.log('[useUserCompanyRole] User found in view:', {
+            id: userData.id,
+            cargo_id: userData.cargo_id,
+            cargo_title: userData.cargo_title,
+            is_admin: userData.is_admin
+          });
 
-            if (roleError && roleError.code !== 'PGRST116') {
-              console.error('Error fetching job role:', roleError);
-            } else {
-              setJobRole(roleData || null);
-            }
+          setCargoId(userData.cargo_id || null);
+          setIsAdmin(userData.is_admin || false);
+
+          // Se tem cargo, criar objeto jobRole com os dados da view
+          if (userData.cargo_id && userData.cargo_title) {
+            // A view já traz o cargo_title, então criamos um objeto jobRole básico
+            // Se precisar de mais detalhes, podemos fazer query adicional apenas se necessário
+            const roleData = {
+              id: userData.cargo_id,
+              title: userData.cargo_title,
+              company_id: selectedCompany.id
+            };
+            
+            console.log('[useUserCompanyRole] Job role set from view:', roleData);
+            setJobRole(roleData);
+            
+            // Opcional: Buscar detalhes completos do cargo se necessário
+            // Por enquanto, usamos os dados da view que já são suficientes
           } else {
+            console.log('[useUserCompanyRole] No cargo_id or cargo_title found, setting jobRole to null');
             setJobRole(null);
           }
         } else {
+          console.log('[useUserCompanyRole] User not found in company users list');
           setCargoId(null);
           setJobRole(null);
           setIsAdmin(false);

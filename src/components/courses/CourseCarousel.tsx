@@ -1,10 +1,11 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Play } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Play, GraduationCap, BookOpen, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useCompanies } from "@/hooks/useCompanies";
 import { CompanyThemedBadge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Loader2 } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -63,38 +64,30 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
     navigate(`/courses/${courseId}`);
   };
 
-  // Loading state with Skeleton UI
+  // Loading state
   if (loading) {
-    return <div className="w-full h-[500px] md:h-[600px] rounded-2xl overflow-hidden relative mt-20 lg:mt-0">
-        <Skeleton className="w-full h-full absolute inset-0" />
-        <div className="absolute inset-0 p-4 md:p-8 flex flex-col justify-end">
-          <Skeleton className="w-16 h-6 md:w-24 md:h-8 mb-2 md:mb-4" />
-          <Skeleton className="w-3/4 h-6 md:h-12 mb-2 md:mb-4" />
-          <Skeleton className="w-1/2 h-3 md:h-4 mb-1 md:mb-2" />
-          <Skeleton className="w-1/3 h-3 md:h-4 mb-4 md:mb-8" />
-          <div className="flex justify-between items-end">
-            <div className="space-y-2">
-              <Skeleton className="w-20 md:w-32 h-6 md:h-8" />
-            </div>
-            <Skeleton className="w-20 md:w-32 h-8 md:h-10" />
-          </div>
-        </div>
-      </div>;
+    return (
+      <div className="w-full h-[500px] md:h-[600px] rounded-2xl overflow-hidden relative mt-20 lg:mt-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   // Empty state with better messaging and button
   if (!courses || courses.length === 0) {
-    return <div className="w-full h-[500px] md:h-[600px] rounded-2xl bg-gray-100 dark:bg-gray-800 flex flex-col items-center justify-center p-4 md:p-8 text-center mt-20 lg:mt-0">
-        <h3 className="text-xl md:text-2xl font-semibold mb-2 md:mb-3 text-gray-900 dark:text-gray-100">
-          Nenhum curso em destaque disponível
-        </h3>
-        <p className="text-gray-500 dark:text-gray-400 max-w-md mb-6 md:mb-8 text-sm md:text-base">
-          Esta empresa ainda não possui cursos em destaque ou você não tem acesso a eles.
-        </p>
-        {user?.is_admin && <Button onClick={() => navigate('/admin/courses')} className="bg-primary hover:bg-primary/90">
-            Cadastrar Novo Curso
-          </Button>}
-      </div>;
+    return (
+      <div className="w-full h-[500px] md:h-[600px] rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center p-4 md:p-8 mt-20 lg:mt-0">
+        <EmptyState
+          title="Nenhum curso em destaque disponível"
+          description="Esta empresa ainda não possui cursos em destaque ou você não tem acesso a eles."
+          icons={[GraduationCap, BookOpen, Star]}
+          action={user?.is_admin ? {
+            label: "Cadastrar Novo Curso",
+            onClick: () => navigate('/admin/courses')
+          } : undefined}
+        />
+      </div>
+    );
   }
 
   // Special case for a single course - centered layout

@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { Company } from "@/types/company";
 import { TextInputField } from "./form/TextInputField";
 import { TextareaField } from "./form/TextareaField";
@@ -35,7 +36,6 @@ export const CompanyIntegrationForm: React.FC<CompanyIntegrationFormProps> = ({
     }
   } catch (e) {
     console.error("Error parsing valores:", e);
-    // Default to empty array if parse fails
     parsedValores = [];
   }
 
@@ -59,25 +59,63 @@ export const CompanyIntegrationForm: React.FC<CompanyIntegrationFormProps> = ({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
-          <div className="space-y-6">
-            <TextInputField 
-              control={form.control} 
-              name="nome" 
-              label="Nome da Empresa" 
-              placeholder="Digite o nome da empresa" 
-            />
-            
-            <TextareaField 
-              control={form.control} 
-              name="frase_institucional" 
-              label="Frase Institucional" 
-              placeholder="Slogan ou frase de apresentação da empresa" 
-            />
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+        {/* Informações Básicas */}
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-base font-semibold text-foreground">Informações básicas</h3>
+            <p className="text-sm text-muted-foreground mt-1">Dados fundamentais da empresa</p>
           </div>
           
-          <div className="space-y-6">
+          <TextInputField 
+            control={form.control} 
+            name="nome" 
+            label="Nome da Empresa" 
+            placeholder="Digite o nome da empresa" 
+          />
+          
+          <TextareaField 
+            control={form.control} 
+            name="frase_institucional" 
+            label="Frase Institucional" 
+            placeholder="Slogan ou frase de apresentação da empresa" 
+          />
+        </div>
+
+        <Separator />
+
+        {/* Identidade Visual */}
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-base font-semibold text-foreground">Identidade visual</h3>
+            <p className="text-sm text-muted-foreground mt-1">Logo e cores que representam sua empresa</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <LogoUrlField 
+              control={form.control} 
+              name="logo" 
+              companyId={company.id} 
+            />
+            
+            <ColorPickerField 
+              control={form.control} 
+              name="cor_principal" 
+              label="Cor Principal" 
+            />
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Sobre a Empresa */}
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-base font-semibold text-foreground">Sobre a empresa</h3>
+            <p className="text-sm text-muted-foreground mt-1">Missão, valores e cultura organizacional</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <TextareaField 
               control={form.control} 
               name="missao" 
@@ -91,33 +129,29 @@ export const CompanyIntegrationForm: React.FC<CompanyIntegrationFormProps> = ({
               label="Declaração de Cultura" 
               placeholder="Conte a declaração de cultura da empresa" 
             />
-            
-            <ValuesField form={form} />
           </div>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <ColorPickerField 
-            control={form.control} 
-            name="cor_principal" 
-            label="Cor Principal" 
-          />
+
+        <Separator />
+
+        {/* Valores da Empresa */}
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-base font-semibold text-foreground">Valores da empresa</h3>
+            <p className="text-sm text-muted-foreground mt-1">Os valores que guiam sua organização</p>
+          </div>
+          
+          <ValuesField form={form} />
         </div>
-        
-        <LogoUrlField 
-          control={form.control} 
-          name="logo" 
-          label="URL do Logo" 
-          placeholder="https://exemplo.com/logo.png" 
-          companyId={company.id} 
-        />
-        
-        <div className="flex justify-end space-x-2">
+
+        {/* Botões de Ação */}
+        <div className="flex justify-end gap-3 pt-6 border-t">
           <Button 
             type="button" 
             variant="outline" 
             onClick={() => form.reset()} 
             disabled={isSaving}
+            className="min-w-[120px]"
           >
             Cancelar
           </Button>

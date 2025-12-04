@@ -4,6 +4,8 @@ import { useReceivedFeedbacks } from "@/hooks/feedback/useReceivedFeedbacks";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { pt } from "date-fns/locale";
+import { EmptyState } from "@/components/ui/empty-state";
+import { MessageSquare } from "lucide-react";
 
 interface AllFeedbackDialogProps {
   open: boolean;
@@ -34,7 +36,14 @@ export function AllFeedbackDialog({ open, onOpenChange }: AllFeedbackDialogProps
           {loading ? (
             <div className="flex items-center justify-center h-24">Carregando feedbacks...</div>
           ) : feedbacks.length === 0 ? (
-            <div className="flex items-center justify-center h-24">Nenhum feedback recebido ainda</div>
+            <div className="flex justify-center py-8">
+              <EmptyState
+                title="Nenhum feedback recebido ainda"
+                description="Os feedbacks aparecerão aqui quando recebidos de outros membros da equipe"
+                icons={[MessageSquare]}
+                className="border-0 bg-transparent hover:bg-transparent p-8 max-w-none"
+              />
+            </div>
           ) : (
             <div className="space-y-5">
               {feedbacks.map(feedback => (

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getSafeTextColor } from "@/lib/utils";
 import { Loader2, Building, Video, FileText, Key, Users } from "lucide-react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { Company } from "@/types/company";
@@ -153,40 +154,44 @@ export const IntegrationManagement: React.FC = () => {
                     value="info" 
                     className="flex items-center py-3 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500"
                     style={{
-                      borderColor: activeTab === "info" ? selectedCompany?.cor_principal || "#1EAEDB" : "transparent"
+                      borderColor: activeTab === "info" ? selectedCompany?.cor_principal || "#1EAEDB" : "transparent",
+                      color: activeTab === "info" ? getSafeTextColor(selectedCompany?.cor_principal || "#1EAEDB", false) : undefined
                     }}
                   >
-                    <Building className="h-4 w-4 mr-2" />
+                    <Building className="h-4 w-4 mr-2" style={{ color: activeTab === "info" ? getSafeTextColor(selectedCompany?.cor_principal || "#1EAEDB", false) : undefined }} />
                     Informações da Empresa
                   </TabsTrigger>
                   <TabsTrigger 
                     value="videos" 
                     className="flex items-center py-3 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500"
                     style={{
-                      borderColor: activeTab === "videos" ? selectedCompany?.cor_principal || "#1EAEDB" : "transparent"
+                      borderColor: activeTab === "videos" ? selectedCompany?.cor_principal || "#1EAEDB" : "transparent",
+                      color: activeTab === "videos" ? getSafeTextColor(selectedCompany?.cor_principal || "#1EAEDB", false) : undefined
                     }}
                   >
-                    <Video className="h-4 w-4 mr-2" />
+                    <Video className="h-4 w-4 mr-2" style={{ color: activeTab === "videos" ? getSafeTextColor(selectedCompany?.cor_principal || "#1EAEDB", false) : undefined }} />
                     Vídeos
                   </TabsTrigger>
                   <TabsTrigger 
                     value="cargo" 
                     className="flex items-center py-3 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500"
                     style={{
-                      borderColor: activeTab === "cargo" ? selectedCompany?.cor_principal || "#1EAEDB" : "transparent"
+                      borderColor: activeTab === "cargo" ? selectedCompany?.cor_principal || "#1EAEDB" : "transparent",
+                      color: activeTab === "cargo" ? getSafeTextColor(selectedCompany?.cor_principal || "#1EAEDB", false) : undefined
                     }}
                   >
-                    <FileText className="h-4 w-4 mr-2" />
+                    <FileText className="h-4 w-4 mr-2" style={{ color: activeTab === "cargo" ? getSafeTextColor(selectedCompany?.cor_principal || "#1EAEDB", false) : undefined }} />
                     Cargos
                   </TabsTrigger>
                   <TabsTrigger 
                     value="access" 
                     className="flex items-center py-3 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500"
                     style={{
-                      borderColor: activeTab === "access" ? selectedCompany?.cor_principal || "#1EAEDB" : "transparent"
+                      borderColor: activeTab === "access" ? selectedCompany?.cor_principal || "#1EAEDB" : "transparent",
+                      color: activeTab === "access" ? getSafeTextColor(selectedCompany?.cor_principal || "#1EAEDB", false) : undefined
                     }}
                   >
-                    <Key className="h-4 w-4 mr-2" />
+                    <Key className="h-4 w-4 mr-2" style={{ color: activeTab === "access" ? getSafeTextColor(selectedCompany?.cor_principal || "#1EAEDB", false) : undefined }} />
                     Acessos
                   </TabsTrigger>
                 </TabsList>

@@ -1,77 +1,80 @@
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState, memo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { UserHome } from "@/components/home/UserHome";
 import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 import { Preloader } from "@/components/ui/Preloader";
 
-export const IndexContent = () => {
+export const IndexContent = memo(() => {
   const { user, userProfile, loading: authLoading, profileLoading } = useAuth();
   const { selectedCompany, isLoading } = useCompanies();
-  const [profileLoadTimeout, setProfileLoadTimeout] = useState(false);
+  const [showPreloader, setShowPreloader] = useState(true);
+  const [hasMounted, setHasMounted] = useState(false);
 
-  // Timeout de segurança: se após 3 segundos o perfil não carregou, permitir mostrar conteúdo
+  // Marcar como montado após o primeiro render para evitar flash do PagePreloader
   useEffect(() => {
-    if (user && !userProfile && profileLoading) {
-      const timer = setTimeout(() => {
-        console.log("[IndexContent] Profile load timeout after 3s - allowing content to show");
-        setProfileLoadTimeout(true);
-      }, 3000);
-      
-      return () => clearTimeout(timer);
-    } else if (userProfile) {
-      // Reset timeout se perfil foi carregado
-      setProfileLoadTimeout(false);
-    }
-  }, [user, userProfile, profileLoading]);
+    setHasMounted(true);
+  }, []);
 
-  // Calcular se deve mostrar preloader diretamente (memoizado para evitar recálculos)
-  // Simplificado: só mostrar preloader se auth está carregando ou não tem usuário
-  // Perfil pode carregar em background, mas com timeout de segurança
-  const shouldShowPreloader = useMemo(() => {
-    // Não mostrar preloader se:
-    // - Tem usuário E
-    // - Auth não está carregando E
-    // - (Perfil não está carregando OU timeout ocorreu)
-    // Isso permite mostrar conteúdo mesmo se perfil falhar ao carregar
-    
-    if (!user) return true; // Sem usuário = mostrar preloader
-    if (authLoading) return true; // Auth carregando = mostrar preloader
-    
-    // Se perfil está carregando, só mostrar preloader se timeout não ocorreu
-    if (profileLoading && !profileLoadTimeout) {
-      return true;
-    }
-    
-    // Caso contrário, mostrar conteúdo (mesmo sem perfil, se necessário)
-    return false;
-  }, [user, authLoading, profileLoading, userProfile, profileLoadTimeout]);
-
-  // Debug log para verificar o estado (com throttling para evitar spam)
+  // Controlar quando parar de mostrar o preloader
+  // Removido delay artificial - mostra conteúdo assim que dados essenciais estiverem prontos
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      console.log("[IndexContent] Debug state:", {
-        user: user?.email,
-        userProfile: userProfile?.display_name,
-        isSuperAdmin: userProfile?.super_admin,
-        selectedCompany: selectedCompany?.nome,
-        isLoading,
-        authLoading,
-        profileLoading,
-        shouldShowPreloader
-      });
-    }, 500);
+    // Só esconder preloader quando:
+    // 1. Auth não está carregando
+    // 2. Perfil não está carregando
+    // 3. Tem usuário e perfil
+    // 4. Empresas não estão carregando (ou já tem empresa selecionada, ou não precisa de empresa)
+    const isReady = !authLoading && 
+                    !profileLoading && 
+                    user && 
+                    userProfile && 
+                    (!isLoading || selectedCompany);
     
-    return () => clearTimeout(timeoutId);
-  }, [user?.email, userProfile?.display_name, selectedCompany?.nome, isLoading, authLoading, profileLoading, shouldShowPreloader]);
+    if (isReady) {
+      setShowPreloader(false);
+    }
+  }, [authLoading, profileLoading, user, userProfile, isLoading, selectedCompany]);
 
-  // Se deve mostrar preloader, mostrar
-  if (shouldShowPreloader) {
+  // Debug log para verificar o estado
+  useEffect(() => {
+    console.log("[IndexContent] Debug state:", {
+      user: user?.email,
+      userProfile: userProfile?.display_name,
+      isSuperAdmin: userProfile?.super_admin,
+      selectedCompany: selectedCompany?.nome,
+      isLoading,
+      authLoading,
+      showPreloader
+    });
+  }, [user, userProfile, selectedCompany, isLoading, authLoading, showPreloader]);
+
+  // Mostrar preloader durante carregamento inicial ou auth loading
+  if (showPreloader || (authLoading && !user)) {
+    console.log("[IndexContent] Showing preloader - initial loading or auth loading");
     return <Preloader autoHide={false} />;
   }
 
-  // Se tem usuário e (perfil ou timeout), sempre mostrar a home com header
+  // Se não tem usuário, redirecionar para login seria feito pelo ProtectedRoute
+  if (!user) {
+    console.log("[IndexContent] No user - redirecting should be handled by ProtectedRoute");
+    return <Preloader autoHide={false} />;
+  }
+
+  // Se tem usuário mas ainda está carregando o perfil, mostrar preloader
+  if (!userProfile && profileLoading) {
+    console.log("[IndexContent] User exists but profile is loading - showing preloader");
+    return <Preloader autoHide={false} />;
+  }
+
+  // Se tem usuário mas não tem perfil e não está carregando, ainda mostrar preloader
+  // (pode estar criando o perfil ou há um problema)
+  if (!userProfile && !profileLoading) {
+    console.log("[IndexContent] User exists but no profile and not loading - showing preloader");
+    return <Preloader autoHide={false} />;
+  }
+
+  // Se tem usuário e perfil, sempre mostrar a home com header
   console.log("[IndexContent] User authenticated - showing UserHome with header");
   return (
     <>
@@ -81,4 +84,5 @@ export const IndexContent = () => {
       </div>
     </>
   );
-};
+});
+IndexContent.displayName = 'IndexContent';

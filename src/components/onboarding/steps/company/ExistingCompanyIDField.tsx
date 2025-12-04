@@ -19,7 +19,7 @@ const ExistingCompanyIDField: React.FC<ExistingCompanyIDFieldProps> = ({
 }) => {
   return (
     <div className="space-y-2">
-      <Label htmlFor="companyId" className="block text-sm font-medium text-gray-700">
+      <Label htmlFor="companyId" className="text-sm font-semibold text-gray-900">
         ID ou Nome da Empresa
       </Label>
       <div className="relative">
@@ -27,8 +27,8 @@ const ExistingCompanyIDField: React.FC<ExistingCompanyIDFieldProps> = ({
           id="companyId"
           value={inputValue}
           onChange={(e) => onInputChange(e.target.value)}
-          placeholder="Digite o ID ou nome da empresa"
-          className={`pr-10 ${
+          placeholder="Ex: Minha Empresa ou abc123-def456-..."
+          className={`h-10 pr-10 border border-gray-200 rounded-lg ${
             isValidated && (isCompanyFound ? 'border-green-500 focus:border-green-500 focus:ring-green-500' 
                                         : 'border-red-500 focus:border-red-500 focus:ring-red-500')
           }`}
@@ -43,7 +43,7 @@ const ExistingCompanyIDField: React.FC<ExistingCompanyIDFieldProps> = ({
           </div>
         )}
       </div>
-      <p className="text-sm text-gray-500">
+      <p className="text-xs text-gray-500 mt-1">
         Digite o ID (UUID) ou o nome da empresa para vincular-se a ela
       </p>
     </div>

@@ -8,6 +8,7 @@ import { JobRole } from "@/types/job-roles";
 import { FileText, Shield, ScrollText, Briefcase, Archive, Book, Clipboard, GraduationCap } from "lucide-react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsAdmin } from "@/hooks/company/useIsAdmin";
 import { supabase } from "@/integrations/supabase/client";
 
 interface CompanyDocumentTabsProps {
@@ -46,6 +47,7 @@ export const CompanyDocumentTabs: React.FC<CompanyDocumentTabsProps> = ({
 }) => {
   const { selectedCompany } = useCompanies();
   const { userProfile } = useAuth();
+  const { isAdmin, isLoading } = useIsAdmin();
   const [availableRoles, setAvailableRoles] = useState<JobRole[]>([]);
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
 
@@ -123,8 +125,6 @@ export const CompanyDocumentTabs: React.FC<CompanyDocumentTabsProps> = ({
     }
   ];
 
-  const canUploadDocuments = userProfile?.is_admin || userProfile?.super_admin;
-
   return (
     <div className="w-full">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -147,7 +147,7 @@ export const CompanyDocumentTabs: React.FC<CompanyDocumentTabsProps> = ({
         </TabsList>
 
         <div className="mt-6 mb-16 space-y-8">
-          {canUploadDocuments && (
+          {!isLoading && isAdmin && (
             <CompanyDocumentUploadForm
               open={uploadOpen}
               onOpenChange={setUploadOpen}

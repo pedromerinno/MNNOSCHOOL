@@ -10,6 +10,7 @@ import { useJobRoles } from "@/hooks/job-roles/useJobRoles";
 import { JobRolesList } from './job-roles/JobRolesList';
 import { JobRoleForm } from './job-roles/JobRoleForm';
 import RoleUsersDialog from './dialogs/RoleUsersDialog';
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface JobRolesManagerProps {
   company: Company;
@@ -71,19 +72,17 @@ export const JobRolesManager: React.FC<JobRolesManagerProps> = ({ company }) => 
 
   if (jobRoles.length === 0 && !newRole) {
     return (
-      <Card>
-        <CardContent className="p-6 text-center">
-          <Briefcase className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium mb-2">Nenhum cargo adicionado</h3>
-          <p className="text-gray-500 dark:text-gray-400 mb-4">
-            Adicione informações sobre os cargos disponíveis na empresa
-          </p>
-          <Button onClick={handleAddRole}>
-            <Plus className="h-4 w-4 mr-2" />
-            Adicionar Primeiro Cargo
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="flex justify-center">
+        <EmptyState
+          title="Nenhum cargo adicionado"
+          description="Adicione informações sobre os cargos disponíveis na empresa"
+          icons={[Briefcase]}
+          action={{
+            label: "Adicionar Primeiro Cargo",
+            onClick: handleAddRole
+          }}
+        />
+      </div>
     );
   }
 

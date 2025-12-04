@@ -22,6 +22,7 @@ interface ExistingCompanyFormProps {
   onCompanyLookup?: (company: CompanyInfo | null, lookupPending: boolean) => void;
   onBack?: () => void;
   onComplete?: () => void;
+  hideSubmitButton?: boolean;
 }
 
 const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
@@ -30,6 +31,7 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
   onCompanyLookup,
   onBack,
   onComplete,
+  hideSubmitButton = false,
 }) => {
   console.log("ExistingCompanyForm rendered with companyId:", companyId);
   
@@ -212,15 +214,22 @@ const ExistingCompanyForm: React.FC<ExistingCompanyFormProps> = ({
       )}
 
       {/* Botão Concluir */}
-      {onComplete && (
-        <div className="flex justify-end pt-4">
+      {!hideSubmitButton && onComplete && (
+        <div className="flex justify-end pt-4 border-t">
           <Button 
             type="button" 
-            className="bg-black hover:bg-black/90 text-white"
+            className="min-w-[120px] bg-black hover:bg-black/90 text-white font-medium"
             onClick={handleComplete}
             disabled={!companyInfo || isAssociating}
           >
-            {isAssociating ? "Processando..." : "Concluir"}
+            {isAssociating ? (
+              <span className="flex items-center gap-2">
+                <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+                Processando...
+              </span>
+            ) : (
+              "Concluir"
+            )}
           </Button>
         </div>
       )}

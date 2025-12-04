@@ -1,46 +1,121 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useCompanies } from "@/hooks/useCompanies";
-import { LoadingState } from '@/components/integration/video-playlist/LoadingState';
 import { CompanyHeader } from '@/components/integration/header/CompanyHeader';
-import { IntegrationTabs } from '@/components/integration/tabs/IntegrationTabs';
+import { ScrollSection } from '@/components/integration/ScrollSection';
+import { IntegrationNavigation } from '@/components/integration/IntegrationNavigation';
+import { InteractiveCard } from '@/components/integration/InteractiveCard';
+import { CultureManual } from '@/components/integration/CultureManual';
+import { VideoPlaylist } from '@/components/integration/video-playlist';
+import { UserRole } from '@/components/integration/UserRole';
+import { SuggestedCourses } from '@/components/integration/SuggestedCourses';
+import { SectionTitle } from '@/components/integration/SectionTitle';
 import { Company } from "@/types/company";
 import { supabase } from "@/integrations/supabase/client";
 import { JobRole } from "@/types/job-roles";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, BookOpen, PlayCircle, BriefcaseBusiness, GraduationCap, Users } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Dock, DockIcon, DockItem, DockLabel } from '@/components/ui/dock';
 import { CompanyThemedBadge } from "@/components/ui/badge";
 import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
 import { AdminFloatingActionButton } from "@/components/admin/AdminFloatingActionButton";
 import { Preloader } from "@/components/ui/Preloader";
 import { Footer } from "@/components/home/Footer";
+import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { TeamGallery } from '@/components/integration/TeamGallery';
+import { useTeamMembersOptimized } from '@/hooks/team/useTeamMembersOptimized';
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { IntegrationSidebar } from '@/components/integration/IntegrationSidebar';
 
 const Integration = () => {
   const navigate = useNavigate();
   const { selectedCompany, isLoading } = useCompanies();
-  const { user, userProfile, loading: authLoading } = useAuth();
+  const { user, userProfile, loading: authLoading, updateUserProfile } = useAuth();
   const [jobRoles, setJobRoles] = useState<JobRole[]>([]);
   const [userRole, setUserRole] = useState<JobRole | null>(null);
   const [isLoadingRoles, setIsLoadingRoles] = useState(false);
-  const [activeTab, setActiveTab] = useState("culture");
   const [refreshKey, setRefreshKey] = useState(0);
   const [currentCompanyData, setCurrentCompanyData] = useState<Company | null>(null);
-  const [showPreloader, setShowPreloader] = useState(true);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  // Controlar quando parar de mostrar o preloader - igual à IndexContent
-  useEffect(() => {
-    if (!authLoading && user && userProfile) {
-      // Dar um breve momento para carregar os dados iniciais
-      const timer = setTimeout(() => {
-        setShowPreloader(false);
-      }, 1500);
-      
-      return () => clearTimeout(timer);
+  // Seções da landing page (sem 'hero' pois é adicionado automaticamente no sidebar)
+  const sections = [
+    { id: 'cultura', label: 'Cultura', icon: BookOpen },
+    { id: 'videos', label: 'Vídeos', icon: PlayCircle },
+    { id: 'time', label: 'Colaboradores', icon: Users },
+    { id: 'cargo', label: 'Cargo', icon: BriefcaseBusiness },
+    { id: 'cursos', label: 'Cursos', icon: GraduationCap },
+  ];
+
+  // Função utilitária para fazer scroll até uma seção
+  const scrollToSection = useCallback((sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (!element) return;
+    
+    // Encontrar o container que tem scroll (SidebarInset)
+    let scrollContainer: HTMLElement | null = null;
+    let parent: HTMLElement | null = element;
+    
+    while (parent && parent !== document.body && parent !== document.documentElement) {
+      const style = window.getComputedStyle(parent);
+      if ((style.overflowY === 'auto' || style.overflowY === 'scroll') && parent.tagName === 'MAIN') {
+        scrollContainer = parent;
+        break;
+      }
+      parent = parent.parentElement;
     }
-  }, [authLoading, user, userProfile]);
+    
+    if (!scrollContainer) {
+      scrollContainer = document.querySelector('main.overflow-y-auto') as HTMLElement;
+    }
+    
+    const offset = 100;
+    
+    if (scrollContainer) {
+      // Usar scrollIntoView suave primeiro para garantir que o elemento esteja visível
+      element.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+      
+      // Depois ajustar o scroll do container com o offset de forma suave
+      // Usar um pequeno delay para que o scrollIntoView comece primeiro
+      setTimeout(() => {
+        const containerRect = scrollContainer!.getBoundingClientRect();
+        const elementRect = element.getBoundingClientRect();
+        const currentScrollTop = scrollContainer!.scrollTop;
+        const elementTopRelativeToContainer = elementRect.top - containerRect.top;
+        const elementAbsoluteTop = currentScrollTop + elementTopRelativeToContainer;
+        const targetScrollTop = elementAbsoluteTop - offset;
+        
+        // Só ajustar se ainda não estiver na posição correta
+        if (Math.abs(scrollContainer!.scrollTop - targetScrollTop) > 10) {
+          scrollContainer!.scrollTo({
+            top: Math.max(0, targetScrollTop),
+            behavior: 'smooth',
+          });
+        }
+      }, 50);
+    } else {
+      // Fallback
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setTimeout(() => {
+        window.scrollBy({ top: -offset, behavior: 'smooth' });
+      }, 100);
+    }
+  }, []);
   
   // Função para buscar dados atualizados da empresa
   const fetchCompanyData = async (companyId: string) => {
@@ -63,6 +138,74 @@ const Integration = () => {
     }
   };
   
+  // Função para buscar cargos
+  const fetchJobRoles = async (companyId: string) => {
+    if (!companyId) return [];
+    
+    try {
+      const { data, error } = await supabase
+        .from('job_roles')
+        .select('*')
+        .eq('company_id', companyId)
+        .order('order_index', { ascending: true });
+        
+      if (error) {
+        console.error("Error fetching job roles:", error);
+        return [];
+      }
+      
+      return data || [];
+    } catch (error) {
+      console.error("Error fetching job roles:", error);
+      return [];
+    }
+  };
+  
+  // Função para buscar cargo específico do usuário logado na empresa
+  const fetchUserRole = useCallback(async (companyId: string) => {
+    if (!userProfile?.id || !companyId) {
+      setUserRole(null);
+      return;
+    }
+    
+    try {
+      // Buscar cargo do usuário nesta empresa específica (nova estrutura)
+      const { data: userCompany, error: userCompanyError } = await supabase
+        .from('user_empresa')
+        .select('cargo_id')
+        .eq('user_id', userProfile.id)
+        .eq('empresa_id', companyId)
+        .single();
+        
+      if (userCompanyError && userCompanyError.code !== 'PGRST116') {
+        setUserRole(null);
+        return;
+      }
+      
+      if (userCompany?.cargo_id) {
+        // Buscar detalhes do cargo
+        const { data: roleData, error: roleError } = await supabase
+          .from('job_roles')
+          .select('*')
+          .eq('id', userCompany.cargo_id)
+          .eq('company_id', companyId)
+          .single();
+          
+        if (roleError) {
+          setUserRole(null);
+          return;
+        }
+        
+        setUserRole(roleData);
+      } else {
+        setUserRole(null);
+      }
+    } catch (error) {
+      console.error("[Integration] Error in fetchUserRole:", error);
+      setUserRole(null);
+    }
+  }, [userProfile?.id]);
+  
   // Memoizar dados da empresa com dados atualizados do banco
   const companyData = useMemo(() => {
     const company = currentCompanyData || selectedCompany;
@@ -81,214 +224,115 @@ const Integration = () => {
     };
   }, [currentCompanyData, selectedCompany, refreshKey]);
   
-  // Função para buscar cargos
-  const fetchJobRoles = async (companyId: string) => {
-    if (!companyId || isLoadingRoles) return;
+  // Hook para buscar membros do time - deve vir depois de companyData
+  const { members: teamMembers, isLoading: isLoadingTeam } = useTeamMembersOptimized({
+    selectedCompanyId: companyData?.id,
+    skipLoading: !companyData?.id,
+  });
+  
+  // Função otimizada para carregar todos os dados em paralelo
+  const loadAllData = useCallback(async (companyId: string) => {
+    if (!companyId) return;
     
+    setIsLoadingData(true);
     setIsLoadingRoles(true);
-    try {
-      console.log('[Integration] Fetching job roles for company:', companyId);
-      const { data, error } = await supabase
-        .from('job_roles')
-        .select('*')
-        .eq('company_id', companyId)
-        .order('order_index', { ascending: true });
-        
-      if (error) {
-        console.error("Error fetching job roles:", error);
-        toast.error("Erro ao carregar cargos");
-        setJobRoles([]);
-        return;
-      }
-      
-      if (data && data.length > 0) {
-        console.log(`[Integration] Fetched ${data.length} job roles for company ${companyId}`);
-        setJobRoles(data);
-      } else {
-        console.log(`[Integration] No job roles found for company ${companyId}`);
-        setJobRoles([]);
-      }
-    } catch (error) {
-      console.error("Error fetching job roles:", error);
-      setJobRoles([]);
-    } finally {
-      setIsLoadingRoles(false);
-    }
-  };
-  
-  // Função para buscar cargo específico do usuário logado na empresa
-  const fetchUserRole = async (companyId: string) => {
-    if (!userProfile?.id || !companyId) {
-      console.log('[Integration] Missing userProfile or companyId for role fetch');
-      setUserRole(null);
-      return;
-    }
-    
-    console.log('[Integration] Fetching user role for user:', userProfile.id, 'company:', companyId);
+    setUserRole(null);
     
     try {
-      // Buscar cargo do usuário nesta empresa específica (nova estrutura)
-      const { data: userCompany, error: userCompanyError } = await supabase
-        .from('user_empresa')
-        .select('cargo_id')
-        .eq('user_id', userProfile.id)
-        .eq('empresa_id', companyId)
-        .single();
-        
-      if (userCompanyError && userCompanyError.code !== 'PGRST116') {
-        console.error("[Integration] Error fetching user company relation:", userCompanyError);
-        setUserRole(null);
-        return;
-      }
+      // Paralelizar todas as chamadas ao banco
+      const [companyDataResult, jobRolesResult] = await Promise.all([
+        fetchCompanyData(companyId),
+        fetchJobRoles(companyId)
+      ]);
       
-      console.log('[Integration] User company cargo_id:', userCompany?.cargo_id);
-      
-      if (userCompany?.cargo_id) {
-        // Buscar detalhes do cargo
-        const { data: roleData, error: roleError } = await supabase
-          .from('job_roles')
-          .select('*')
-          .eq('id', userCompany.cargo_id)
-          .eq('company_id', companyId)
-          .single();
-          
-        if (roleError) {
-          console.error("[Integration] Error fetching user role:", roleError);
-          console.log('[Integration] Role not found for this company, user has no role here');
-          setUserRole(null);
-          return;
+      // Atualizar dados da empresa
+      if (companyDataResult) {
+        setCurrentCompanyData(companyDataResult);
+        // Armazenar logo da empresa no localStorage
+        if (companyDataResult.logo) {
+          localStorage.setItem('selectedCompanyLogo', companyDataResult.logo);
+        } else {
+          localStorage.setItem('selectedCompanyLogo', '/placeholder.svg');
         }
-        
-        console.log('[Integration] ✅ User role found:', roleData?.title);
-        setUserRole(roleData);
-      } else {
-        console.log('[Integration] User has no cargo_id assigned for this company');
-        setUserRole(null);
+      }
+      
+      // Atualizar cargos
+      setJobRoles(jobRolesResult);
+      setIsLoadingRoles(false);
+      
+      // Buscar cargo do usuário (pode ser feito em paralelo também se necessário)
+      if (userProfile?.id) {
+        await fetchUserRole(companyId);
       }
     } catch (error) {
-      console.error("[Integration] Error in fetchUserRole:", error);
-      setUserRole(null);
+      console.error("[Integration] Error loading data:", error);
+      setIsLoadingRoles(false);
+    } finally {
+      setIsLoadingData(false);
     }
-  };
-  
-  // Função para atualizar dados da empresa
-  const refreshCompanyData = async (companyId: string) => {
-    const updatedCompany = await fetchCompanyData(companyId);
-    if (updatedCompany) {
-      setCurrentCompanyData(updatedCompany);
-      console.log("[Integration] Company data refreshed:", updatedCompany.nome);
-    }
-  };
+  }, [userProfile?.id, fetchUserRole]);
   
   // Efeito principal para carregar dados quando a empresa muda
   useEffect(() => {
-    console.log('[Integration] Main effect triggered - selectedCompany:', selectedCompany?.nome, 'userProfile:', !!userProfile);
-    
-    if (selectedCompany?.id) {
-      console.log('[Integration] Loading data for company:', selectedCompany.nome);
-      
-      // Reset user role imediatamente ao trocar empresa
-      setUserRole(null);
-      
-      // Buscar dados atualizados da empresa
-      refreshCompanyData(selectedCompany.id);
-      
-      // Armazenar logo da empresa no localStorage
-      if (selectedCompany.logo) {
-        localStorage.setItem('selectedCompanyLogo', selectedCompany.logo);
-      } else {
-        localStorage.setItem('selectedCompanyLogo', '/placeholder.svg');
-      }
-      
-      // Buscar cargos da empresa
-      fetchJobRoles(selectedCompany.id);
-      
-      // Buscar cargo do usuário para esta empresa
-      if (userProfile?.id) {
-        // Aguardar um pouco para garantir que o perfil está atualizado
-        setTimeout(() => {
-          fetchUserRole(selectedCompany.id);
-        }, 500);
-      }
+    if (selectedCompany?.id && !authLoading && user && userProfile) {
+      loadAllData(selectedCompany.id);
     }
-  }, [selectedCompany?.id, userProfile?.id]);
+  }, [selectedCompany?.id, userProfile?.id, authLoading, user, loadAllData]);
   
   // Escutar mudanças de empresa e dados de integração
   useEffect(() => {
+    if (!userProfile?.id || !companyData?.id) return;
+    
     const handleCompanyChange = (event: CustomEvent<{company: Company}>) => {
       const newCompany = event.detail.company;
-      console.log("[Integration] Company change event received:", newCompany.nome);
-      
-      // Reset imediato do userRole
-      setUserRole(null);
       
       if (newCompany.id !== companyData?.id) {
-        refreshCompanyData(newCompany.id);
-        fetchJobRoles(newCompany.id);
-        if (userProfile?.id) {
-          // Aguardar um pouco para garantir sincronia
-          setTimeout(() => {
-            fetchUserRole(newCompany.id);
-          }, 500);
-        }
+        loadAllData(newCompany.id);
+        setRefreshKey(prev => prev + 1);
       }
-      
-      // Force refresh do componente
-      setRefreshKey(prev => prev + 1);
     };
     
     const handleCompanyUpdated = (event: CustomEvent<{company: Company}>) => {
       const updatedCompany = event.detail.company;
-      console.log("[Integration] Company updated event:", updatedCompany.nome);
       
       if (updatedCompany.id === companyData?.id) {
         setCurrentCompanyData(updatedCompany);
-        fetchJobRoles(updatedCompany.id);
-        if (userProfile?.id) {
-          setTimeout(() => {
-            fetchUserRole(updatedCompany.id);
-          }, 500);
-        }
+        // Recarregar apenas dados que podem ter mudado
+        Promise.all([
+          fetchJobRoles(updatedCompany.id).then(roles => setJobRoles(roles)),
+          fetchUserRole(updatedCompany.id)
+        ]).finally(() => {
+          setIsLoadingRoles(false);
+        });
         setRefreshKey(prev => prev + 1);
       }
     };
     
     const handleIntegrationDataUpdated = (event: CustomEvent<{company: Company}>) => {
       const updatedCompany = event.detail.company;
-      console.log("[Integration] Integration data updated:", updatedCompany.nome);
       
       if (updatedCompany.id === companyData?.id) {
-        refreshCompanyData(updatedCompany.id);
-        if (userProfile?.id) {
-          setTimeout(() => {
-            fetchUserRole(updatedCompany.id);
-          }, 500);
-        }
+        loadAllData(updatedCompany.id);
         setRefreshKey(prev => prev + 1);
       }
     };
     
     const handleRoleUpdated = () => {
-      console.log("[Integration] User role updated event detected");
       if (companyData?.id) {
-        fetchJobRoles(companyData.id);
-        if (userProfile?.id) {
-          setTimeout(() => {
-            fetchUserRole(companyData.id);
-          }, 500);
-        }
+        Promise.all([
+          fetchJobRoles(companyData.id).then(roles => setJobRoles(roles)),
+          fetchUserRole(companyData.id)
+        ]).finally(() => {
+          setIsLoadingRoles(false);
+        });
       }
     };
     
     const handleIntegrationRoleUpdated = (event: CustomEvent) => {
-      console.log("[Integration] Integration role updated event:", event.detail);
       const { userId, companyId } = event.detail;
       
       if (userId === userProfile?.id && companyId === companyData?.id) {
-        console.log("[Integration] Updating current user role");
-        setTimeout(() => {
-          fetchUserRole(companyId);
-        }, 500);
+        fetchUserRole(companyId);
         setRefreshKey(prev => prev + 1);
       }
     };
@@ -314,10 +358,12 @@ const Integration = () => {
       window.removeEventListener('user-role-updated', handleRoleUpdated as EventListener);
       window.removeEventListener('integration-role-updated', handleIntegrationRoleUpdated as EventListener);
     };
-  }, [companyData?.id, userProfile?.id]);
+  }, [companyData?.id, userProfile?.id, loadAllData, fetchUserRole]);
 
   // Mostrar preloader durante carregamento inicial
-  if (showPreloader || (authLoading && !user) || (isLoading && !currentCompanyData && !selectedCompany)) {
+  const showPreloader = authLoading || !user || !userProfile || isLoadingData || (!companyData && isLoading);
+  
+  if (showPreloader) {
     return <Preloader />;
   }
 
@@ -325,87 +371,454 @@ const Integration = () => {
     return <Preloader />;
   }
 
-  // Sem empresa selecionada
-  if (!companyData) {
-    return (
-      <>
-        <MainNavigationMenu />
-        <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
-          <main className="container mx-auto px-4 lg:px-6 py-8 lg:py-12">
-            <div className="flex items-center mb-8 lg:mb-12 gap-4">
+  const companyColor = companyData?.cor_principal || '#1EAEDB';
+  
+  // Verificar se o manual já foi aceito
+  const isManualAccepted = userProfile?.manual_cultura_aceito || false;
+
+  // Função para aceitar o manual de cultura
+  const handleAcceptManual = async () => {
+    if (!userProfile?.id || isManualAccepted) {
+      return false;
+    }
+
+    setIsUpdating(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ manual_cultura_aceito: true })
+        .eq('id', userProfile.id);
+
+      if (error) {
+        console.error('Erro ao atualizar manual de cultura:', error);
+        toast.error('Erro ao aceitar o manual de cultura');
+        setIsUpdating(false);
+        return false;
+      }
+
+      // Atualizar o perfil localmente
+      updateUserProfile({ manual_cultura_aceito: true });
+      toast.success('Manual de cultura aceito com sucesso!');
+      setIsUpdating(false);
+      return true;
+    } catch (error) {
+      console.error('Erro ao aceitar manual:', error);
+      toast.error('Erro ao aceitar o manual de cultura');
+      setIsUpdating(false);
+      return false;
+    }
+  };
+
+  return (
+    <>
+      <MainNavigationMenu />
+      <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919] flex flex-col">
+        <SidebarProvider 
+          defaultOpen={true}
+          className="has-[[data-variant=inset]]:!bg-transparent"
+        >
+          <div className="flex w-full h-full flex-1">
+            <IntegrationSidebar 
+              sections={sections}
+              companyColor={companyColor}
+            />
+            <SidebarInset className="flex-1 overflow-y-auto !bg-[#F8F7F4] dark:!bg-[#191919]">
+              <main className="w-full max-w-[1400px] mx-auto px-4 lg:px-6">
+          {/* Hero Section - Header */}
+          <ScrollSection
+            id="hero"
+            withPadding={true}
+            className="pt-8 lg:pt-16"
+          >
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="flex items-center mb-8 lg:mb-12 gap-3 lg:gap-4"
+            >
               <Button 
                 variant="ghost" 
                 size="sm" 
                 className="p-0 hover:bg-transparent" 
                 onClick={() => navigate('/')}
               >
-                <ArrowLeft className="h-5 w-5 text-gray-500" />
+                <ArrowLeft className="h-4 w-5 lg:h-5 lg:w-5 text-gray-500 dark:text-gray-400" />
               </Button>
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl lg:text-3xl font-bold dark:text-white">
+              <div className="flex items-center gap-2 lg:gap-3">
+                <h1 className="text-2xl md:text-3xl font-medium text-gray-900 dark:text-white tracking-tight">
                   Integração
                 </h1>
+                {companyData && (
+                  <CompanyThemedBadge variant="beta">
+                    {companyData.nome}
+                  </CompanyThemedBadge>
+                )}
               </div>
-            </div>
-            
-            <div className="bg-white dark:bg-card rounded-xl shadow-sm p-4 lg:p-6">
-              <div className="flex items-center justify-center h-64">
-                <p className="text-gray-500">Nenhuma empresa selecionada</p>
-              </div>
-            </div>
-          </main>
-          <Footer />
-          <AdminFloatingActionButton />
-        </div>
-      </>
-    );
-  }
+            </motion.div>
 
-  return (
-    <>
-      <MainNavigationMenu />
-      <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
-        <main className="container mx-auto px-4 lg:px-6 py-8 lg:py-12">
-          <div className="flex items-center mb-8 lg:mb-12 gap-3 lg:gap-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="p-0 hover:bg-transparent" 
-              onClick={() => navigate('/')}
+            {/* Company Header Card */}
+            <InteractiveCard 
+              companyColor={companyColor}
+              hoverEffect={false}
+              borderBeam={true}
+              className="p-6 lg:p-8"
             >
-              <ArrowLeft className="h-4 w-5 lg:h-5 lg:w-5 text-gray-500" />
-            </Button>
-            <div className="flex items-center gap-2 lg:gap-3">
-              <h1 className="text-xl lg:text-3xl font-bold dark:text-white">
-                Integração
-              </h1>
-              {companyData && (
-                <CompanyThemedBadge variant="beta">
-                  {companyData.nome}
-                </CompanyThemedBadge>
+              <CompanyHeader 
+                company={companyData} 
+                companyColor={companyColor}
+                userRole={userRole}
+              />
+            </InteractiveCard>
+          </ScrollSection>
+
+          {/* Cultura Section */}
+          <ScrollSection
+            id="cultura"
+            direction="up"
+            delay={0.05}
+            companyColor={companyColor}
+          >
+            <CultureManual 
+              key={refreshKey}
+              companyValues={companyData?.valores || ""} 
+              companyMission={companyData?.missao || ""} 
+              companyHistory={companyData?.historia || ""} 
+              companyColor={companyColor} 
+              companyLogo={companyData?.logo} 
+              companyName={companyData?.nome} 
+              videoUrl={companyData?.video_institucional} 
+              videoDescription={companyData?.descricao_video} 
+            />
+          </ScrollSection>
+
+          {/* Vídeos Section */}
+          <ScrollSection
+            id="videos"
+            direction="up"
+            delay={0.1}
+            companyColor={companyColor}
+          >
+            {companyData && (
+              <SectionTitle
+                title="Playlist de Integração"
+                companyColor={companyColor}
+              />
+            )}
+            <InteractiveCard 
+              companyColor={companyColor}
+              hoverEffect={false}
+              borderBeam={false}
+              delay={0.1}
+              className="p-6 lg:p-8"
+            >
+              <VideoPlaylist 
+                key={`videos-${companyData?.id || 'empty'}-${refreshKey}`} 
+                companyId={companyData?.id} 
+                mainVideo={companyData?.video_institucional || ""} 
+                mainVideoDescription={companyData?.descricao_video || ""} 
+              />
+            </InteractiveCard>
+          </ScrollSection>
+
+          {/* Time Section - Título dentro do container */}
+          <ScrollSection
+            id="time"
+            direction="up"
+            delay={0.125}
+            companyColor={companyColor}
+            withPadding={true}
+          >
+            {companyData && (
+              <div className="mb-6 lg:mb-8">
+                <div className="flex items-center gap-3">
+                  <h2 
+                    className="text-2xl lg:text-3xl xl:text-4xl font-medium text-gray-900 dark:text-white tracking-tight"
+                    style={{ color: companyColor }}
+                  >
+                    Conheça os nossos colaboradores
+                  </h2>
+                  {teamMembers.length > 0 && (
+                    <CompanyThemedBadge 
+                      variant="beta"
+                      style={{
+                        backgroundColor: `${companyColor}20`,
+                        color: companyColor,
+                        borderColor: `${companyColor}40`
+                      }}
+                    >
+                      {teamMembers.length} {teamMembers.length === 1 ? 'pessoa' : 'pessoas'}
+                    </CompanyThemedBadge>
+                  )}
+                </div>
+              </div>
+            )}
+          </ScrollSection>
+          
+          {/* Carrossel Full Width - fora do container limitado, com background branco */}
+          <div className="w-full -mx-4 lg:-mx-6 px-4 lg:px-6">
+            <div className="w-full bg-white dark:bg-gray-900 rounded-2xl p-6 lg:p-8">
+              {isLoadingTeam ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
+                </div>
+              ) : (
+                <TeamGallery 
+                  members={teamMembers}
+                  companyColor={companyColor}
+                />
               )}
             </div>
           </div>
-          
-          <div className="bg-white dark:bg-card rounded-xl shadow-sm p-4 lg:p-6">
-            <CompanyHeader 
-              company={companyData} 
-              companyColor={companyData?.cor_principal}
-            />
-            <IntegrationTabs
-              key={refreshKey}
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              company={companyData}
-              companyColor={companyData?.cor_principal}
-              jobRoles={jobRoles}
-              isLoadingRoles={isLoadingRoles}
-              userRole={userRole}
-            />
+
+          {/* Cargo Section */}
+          <ScrollSection
+            id="cargo"
+            direction="up"
+            delay={0.15}
+            companyColor={companyColor}
+          >
+            {companyData && (
+              <SectionTitle
+                title="Seu Cargo"
+                companyColor={companyColor}
+              />
+            )}
+            <InteractiveCard 
+              companyColor={companyColor}
+              hoverEffect={false}
+              borderBeam={false}
+              delay={0.15}
+              className="p-6 lg:p-8"
+            >
+              {isLoadingRoles && (
+                <Card className="border-0 shadow-none mb-4">
+                  <CardContent className="p-6 flex items-center justify-center">
+                    <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
+                  </CardContent>
+                </Card>
+              )}
+              <UserRole 
+                key={userRole?.id || 'empty-role'}
+                role={userRole || {
+                  title: "",
+                  description: null,
+                  responsibilities: null,
+                  requirements: null,
+                  expectations: null
+                }}
+                companyColor={companyColor} 
+                userProfile={userProfile} 
+              />
+            </InteractiveCard>
+          </ScrollSection>
+
+          {/* Botão Concluir Integração - Antes de Cursos Sugeridos */}
+          {companyData?.historia && (
+            <div className="mt-12 mb-12 flex justify-center">
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    style={{ 
+                      backgroundColor: companyColor,
+                      borderColor: companyColor 
+                    }}
+                    variant="default"
+                    size="lg"
+                    className="px-10 py-5 text-lg rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all min-h-[56px]"
+                  >
+                    <BookOpen className="h-5 w-5 mr-2" />
+                    Concluir Integração
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="text-2xl font-semibold text-gray-900 dark:text-white">
+                      Declaração de Cultura
+                    </DialogTitle>
+                    <DialogDescription className="text-base">
+                      Conheça nossa declaração de cultura organizacional
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  {/* Conteúdo da Declaração */}
+                  <div className="mt-6">
+                    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-6 border-l-4 mb-6" style={{ borderLeftColor: companyColor }}>
+                      <p className="text-base lg:text-lg text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-line">
+                        {companyData.historia}
+                      </p>
+                    </div>
+                    
+                    <div className="text-center mb-6">
+                      <div className="inline-block">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                          Com os melhores cumprimentos,
+                        </p>
+                        <p className="text-gray-900 dark:text-white font-semibold">
+                          Equipe de Gestão
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Aceite do Manual */}
+                    <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
+                      <div className="max-w-2xl mx-auto">
+                        <div className="text-center mb-4">
+                          <h3 className="text-base font-medium text-gray-900 dark:text-white mb-2">
+                            Aceite do Manual de Cultura
+                          </h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                            {isManualAccepted 
+                              ? "Você já aceitou este manual de cultura. Obrigado por fazer parte da nossa cultura organizacional."
+                              : "Ao aceitar este manual, você confirma que leu e compreendeu nossa cultura, valores e missão, comprometendo-se a vivenciá-los no dia a dia."
+                            }
+                          </p>
+                        </div>
+                        <div className="flex justify-center">
+                          <Button 
+                            onClick={async () => {
+                              const success = await handleAcceptManual();
+                              if (success) {
+                                setIsDialogOpen(false);
+                              }
+                            }}
+                            disabled={isManualAccepted || isUpdating}
+                            style={{ 
+                              backgroundColor: isManualAccepted ? companyColor : undefined,
+                              borderColor: companyColor 
+                            }}
+                            variant={isManualAccepted ? "default" : "outline"}
+                            size="lg"
+                            className="px-8 py-2.5 rounded-lg font-medium"
+                          >
+                            {isUpdating 
+                              ? "Processando..." 
+                              : isManualAccepted 
+                                ? "✓ Manual Aceito" 
+                                : "Aceitar Manual de Cultura"
+                            }
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+          )}
+
+          {/* Cursos Sugeridos Section */}
+          <ScrollSection
+            id="cursos"
+            direction="up"
+            delay={0.2}
+            companyColor={companyColor}
+          >
+            {companyData && (
+              <SectionTitle
+                title="Cursos Sugeridos"
+                companyColor={companyColor}
+              />
+            )}
+            <InteractiveCard 
+              companyColor={companyColor}
+              hoverEffect={false}
+              borderBeam={false}
+              delay={0.2}
+              className="p-6 lg:p-8"
+            >
+              <SuggestedCourses companyColor={companyColor} />
+            </InteractiveCard>
+          </ScrollSection>
+              </main>
+              
+              {/* Navegação flutuante - sempre passar as mesmas seções para manter hooks consistentes */}
+              <IntegrationNavigation
+                sections={sections.filter(s => s.id !== 'hero')}
+                companyColor={companyColor}
+              />
+              
+              <Footer />
+            </SidebarInset>
           </div>
-        </main>
-        <Footer />
+        </SidebarProvider>
         <AdminFloatingActionButton />
+      </div>
+
+      {/* Floating Dock Navigation */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+        <div 
+          className="rounded-2xl shadow-lg backdrop-blur-md border bg-white/95 dark:bg-neutral-900/95"
+          style={{
+            borderColor: `${companyColor}30`
+          }}
+        >
+          <Dock className="items-end pb-2 px-4">
+            <DockItem
+              onClick={() => scrollToSection('cultura')}
+              className="aspect-square rounded-full"
+              style={{
+                backgroundColor: `${companyColor}25`
+              }}
+            >
+              <DockLabel>Manual de Cultura</DockLabel>
+              <DockIcon>
+                <BookOpen className="h-full w-full" style={{ color: companyColor }} />
+              </DockIcon>
+            </DockItem>
+            
+            <DockItem
+              onClick={() => scrollToSection('videos')}
+              className="aspect-square rounded-full"
+              style={{
+                backgroundColor: `${companyColor}25`
+              }}
+            >
+              <DockLabel>Playlist de Integração</DockLabel>
+              <DockIcon>
+                <PlayCircle className="h-full w-full" style={{ color: companyColor }} />
+              </DockIcon>
+            </DockItem>
+            
+            <DockItem
+              onClick={() => scrollToSection('time')}
+              className="aspect-square rounded-full"
+              style={{
+                backgroundColor: `${companyColor}25`
+              }}
+            >
+              <DockLabel>Conheça os Colaboradores</DockLabel>
+              <DockIcon>
+                <Users className="h-full w-full" style={{ color: companyColor }} />
+              </DockIcon>
+            </DockItem>
+            
+            <DockItem
+              onClick={() => scrollToSection('cargo')}
+              className="aspect-square rounded-full"
+              style={{
+                backgroundColor: `${companyColor}25`
+              }}
+            >
+              <DockLabel>Seu Cargo</DockLabel>
+              <DockIcon>
+                <BriefcaseBusiness className="h-full w-full" style={{ color: companyColor }} />
+              </DockIcon>
+            </DockItem>
+            
+            <DockItem
+              onClick={() => scrollToSection('cursos')}
+              className="aspect-square rounded-full"
+              style={{
+                backgroundColor: `${companyColor}25`
+              }}
+            >
+              <DockLabel>Cursos Sugeridos</DockLabel>
+              <DockIcon>
+                <GraduationCap className="h-full w-full" style={{ color: companyColor }} />
+              </DockIcon>
+            </DockItem>
+          </Dock>
+        </div>
       </div>
     </>
   );

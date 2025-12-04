@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, ArrowLeft } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Plus, Search, ArrowLeft, MessageSquare, Users, MessageCircle } from "lucide-react";
 import { useDiscussions } from "@/hooks/useDiscussions";
 import { Discussion as DiscussionType } from "@/types/discussions";
 import { Discussion } from "@/components/community/Discussion";
@@ -10,8 +11,8 @@ import { DiscussionForm } from "@/components/community/DiscussionForm";
 import { DiscussionView } from "@/components/community/DiscussionView";
 import { useCompanies } from "@/hooks/useCompanies";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
-import { cn } from "@/lib/utils";
-import { DiscussionSkeleton } from "@/components/community/DiscussionSkeleton";
+import { cn, getSafeTextColor } from "@/lib/utils";
+import { PagePreloader } from "@/components/ui/PagePreloader";
 import { CompanyThemedBadge } from "@/components/ui/badge";
 
 type FilterStatus = 'all' | 'open' | 'closed';
@@ -161,21 +162,21 @@ const Community = () => {
                   <Button variant={statusFilter === 'all' ? "default" : "ghost"} className={cn("rounded-xl py-4 px-6 transition-colors", statusFilter === 'all' ? `bg-background` : '')} style={{
                     backgroundColor: statusFilter === 'all' ? getLighterCompanyColor(companyColor, 0.2) : undefined,
                     borderColor: statusFilter === 'all' ? companyColor : undefined,
-                    color: statusFilter === 'all' ? companyColor : undefined
+                    color: statusFilter === 'all' ? getSafeTextColor(companyColor, false) : undefined
                   }} onClick={() => setStatusFilter('all')}>
                     Todas
                   </Button>
                   <Button variant={statusFilter === 'open' ? "default" : "ghost"} className={cn("rounded-xl py-4 px-6 transition-colors", statusFilter === 'open' ? `bg-background` : '')} style={{
                     backgroundColor: statusFilter === 'open' ? getLighterCompanyColor(companyColor, 0.2) : undefined,
                     borderColor: statusFilter === 'open' ? companyColor : undefined,
-                    color: statusFilter === 'open' ? companyColor : undefined
+                    color: statusFilter === 'open' ? getSafeTextColor(companyColor, false) : undefined
                   }} onClick={() => setStatusFilter('open')}>
                     Abertas
                   </Button>
                   <Button variant={statusFilter === 'closed' ? "default" : "ghost"} className={cn("rounded-xl py-4 px-6 transition-colors", statusFilter === 'closed' ? `bg-background` : '')} style={{
                     backgroundColor: statusFilter === 'closed' ? getLighterCompanyColor(companyColor, 0.2) : undefined,
                     borderColor: statusFilter === 'closed' ? companyColor : undefined,
-                    color: statusFilter === 'closed' ? companyColor : undefined
+                    color: statusFilter === 'closed' ? getSafeTextColor(companyColor, false) : undefined
                   }} onClick={() => setStatusFilter('closed')}>
                     Resolvidas
                   </Button>
@@ -197,9 +198,7 @@ const Community = () => {
               </div>
             </div>
 
-            <div className="grid gap-4">
-              {[1, 2, 3].map(n => <DiscussionSkeleton key={n} />)}
-            </div>
+            <PagePreloader />
           </div>
         </div>
       </DashboardLayout>
@@ -240,21 +239,21 @@ const Community = () => {
                 <Button variant={statusFilter === 'all' ? "default" : "ghost"} className={cn("rounded-xl py-4 px-6 transition-colors", statusFilter === 'all' ? `bg-background` : '')} style={{
                 backgroundColor: statusFilter === 'all' ? getLighterCompanyColor(companyColor, 0.2) : undefined,
                 borderColor: statusFilter === 'all' ? companyColor : undefined,
-                color: statusFilter === 'all' ? companyColor : undefined
+                color: statusFilter === 'all' ? getSafeTextColor(companyColor, false) : undefined
               }} onClick={() => setStatusFilter('all')}>
                   Todas
                 </Button>
                 <Button variant={statusFilter === 'open' ? "default" : "ghost"} className={cn("rounded-xl py-4 px-6 transition-colors", statusFilter === 'open' ? `bg-background` : '')} style={{
                 backgroundColor: statusFilter === 'open' ? getLighterCompanyColor(companyColor, 0.2) : undefined,
                 borderColor: statusFilter === 'open' ? companyColor : undefined,
-                color: statusFilter === 'open' ? companyColor : undefined
+                color: statusFilter === 'open' ? getSafeTextColor(companyColor, false) : undefined
               }} onClick={() => setStatusFilter('open')}>
                   Abertas
                 </Button>
                 <Button variant={statusFilter === 'closed' ? "default" : "ghost"} className={cn("rounded-xl py-4 px-6 transition-colors", statusFilter === 'closed' ? `bg-background` : '')} style={{
                 backgroundColor: statusFilter === 'closed' ? getLighterCompanyColor(companyColor, 0.2) : undefined,
                 borderColor: statusFilter === 'closed' ? companyColor : undefined,
-                color: statusFilter === 'closed' ? companyColor : undefined
+                color: statusFilter === 'closed' ? getSafeTextColor(companyColor, false) : undefined
               }} onClick={() => setStatusFilter('closed')}>
                   Resolvidas
                 </Button>
@@ -277,15 +276,16 @@ const Community = () => {
           </div>
 
           {filteredDiscussions.length === 0 ? (
-            <div className="text-center py-[80px]">
-              <h3 className="text-lg font-medium mb-2 py-0">Nenhuma discussão encontrada</h3>
-              <p className="text-sm text-gray-500 mb-4 py-[5px]">
-                {searchQuery ? "Tente uma busca diferente ou crie uma nova discussão." : "Seja o primeiro a iniciar uma conversa no fórum!"}
-              </p>
-              <Button onClick={() => setIsDialogOpen(true)} className="py-[30px] px-[30px] rounded-2xl">
-                <Plus className="h-4 w-4 mr-2" />
-                Nova Discussão
-              </Button>
+            <div className="flex justify-center py-[80px]">
+              <EmptyState
+                title="Nenhuma discussão encontrada"
+                description={searchQuery ? "Tente uma busca diferente ou crie uma nova discussão." : "Seja o primeiro a iniciar uma conversa no fórum!"}
+                icons={searchQuery ? [Search, MessageSquare] : [MessageSquare, Users, MessageCircle]}
+                action={{
+                  label: "Nova Discussão",
+                  onClick: () => setIsDialogOpen(true)
+                }}
+              />
             </div>
           ) : (
             <div className="grid gap-4">

@@ -2,7 +2,7 @@
 import React from 'react';
 import { CourseCard } from './CourseCard';
 import { useCourseListData } from './hooks/useCourseListData';
-import { CourseListSkeleton } from './CourseListSkeleton';
+import { PagePreloader } from '@/components/ui/PagePreloader';
 import { CourseListEmptyState } from './CourseListEmptyState';
 import { CourseFilter } from './types/CourseTypes';
 
@@ -15,7 +15,7 @@ export const CourseList: React.FC<CourseListProps> = ({ title, filter = 'all' })
   const { courses, loading, hasNoCourses } = useCourseListData(filter);
 
   if (loading) {
-    return <CourseListSkeleton />;
+    return <PagePreloader />;
   }
 
   return (

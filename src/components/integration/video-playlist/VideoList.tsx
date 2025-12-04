@@ -1,10 +1,11 @@
 
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { List, Video } from "lucide-react";
+import { PlayCircle, Clock, Video } from "lucide-react";
 import { CompanyVideo } from './types';
 import { VideoListItem } from './VideoListItem';
 import { LoadingState } from './LoadingState';
+import { formatDuration } from '@/utils/durationUtils';
 
 interface VideoListProps {
   videos: CompanyVideo[];
@@ -29,32 +30,36 @@ export const VideoList: React.FC<VideoListProps> = ({
   companyColor,
   currentVideo
 }) => {
+  const totalVideos = videos.length;
+  
   return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex items-center mb-4">
-          <List className="h-5 w-5 mr-2" style={{ color: companyColor }} />
-          <h3 className="font-medium">Playlist de vídeos</h3>
+    <div className="bg-background rounded-lg p-6 h-fit">
+      {/* Header with company color accent */}
+      <div className="mb-6 pb-4 border-b border-border/40">
+        <div className="flex items-center gap-2 mb-3">
+          <PlayCircle 
+            className="w-5 h-5" 
+            style={{ color: companyColor }}
+          />
+          <h3 className="text-xl font-bold text-foreground">Playlist de Integração</h3>
         </div>
         
+        <div className="flex items-center gap-4 text-sm">
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <div 
+              className="w-2 h-2 rounded-full"
+              style={{ backgroundColor: companyColor }}
+            ></div>
+            <span className="font-medium">{totalVideos} vídeo{totalVideos !== 1 ? 's' : ''}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div className="max-h-[60vh] overflow-y-auto pr-2 space-y-3">
         {isLoading ? (
           <LoadingState />
         ) : (
-          <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
-            {/* Main video as first item if it exists */}
-            {mainVideo && (
-              <VideoListItem
-                isMainVideo={true}
-                title="Vídeo Institucional"
-                description={mainVideoDescription || "Vídeo de apresentação da empresa"}
-                isSelected={selectedVideoIndex === null && currentVideo === mainVideo}
-                onClick={onSelectMainVideo}
-                companyColor={companyColor}
-                thumbnailUrl={null}
-                duration={null}
-              />
-            )}
-            
+          <>
             {/* Company videos from database */}
             {videos.map((video, index) => (
               <VideoListItem
@@ -67,17 +72,19 @@ export const VideoList: React.FC<VideoListProps> = ({
                 isSelected={selectedVideoIndex === index}
                 onClick={() => onSelectVideo(video, index)}
                 companyColor={companyColor}
+                index={index}
               />
             ))}
             
-            {videos.length === 0 && !mainVideo && (
+            {videos.length === 0 && (
               <div className="py-6 text-center">
-                <p className="text-gray-500">Nenhum vídeo disponível.</p>
+                <Video className="h-12 w-12 text-muted-foreground/40 mx-auto mb-3" />
+                <p className="text-muted-foreground">Nenhum vídeo disponível.</p>
               </div>
             )}
-          </div>
+          </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

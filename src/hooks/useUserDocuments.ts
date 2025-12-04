@@ -101,6 +101,31 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
 
       if (uploadError) throw uploadError;
 
+      // Gerar e fazer upload do thumbnail
+      let thumbnailPath = null;
+      try {
+        const { generateThumbnail } = await import('@/utils/thumbnailGenerator');
+        const thumbnailFile = await generateThumbnail(file);
+        if (thumbnailFile) {
+          const thumbnailFileName = `thumb_${Date.now()}.jpg`;
+          thumbnailPath = `${userDir}/thumbnails/${thumbnailFileName}`;
+
+          const { error: thumbnailError } = await supabase.storage
+            .from('documents')
+            .upload(thumbnailPath, thumbnailFile);
+
+          if (thumbnailError) {
+            console.warn('Error uploading thumbnail:', thumbnailError);
+            // Não falhar o upload se o thumbnail falhar
+            thumbnailPath = null;
+          }
+        }
+      } catch (error) {
+        console.warn('Error generating thumbnail:', error);
+        // Não falhar o upload se o thumbnail falhar
+        thumbnailPath = null;
+      }
+
       // Get the current authenticated user
       const { data: { user: authUser } } = await supabase.auth.getUser();
       
@@ -117,6 +142,7 @@ export const useUserDocuments = (userId: string | null, companyId: string | null
           name: file.name,
           file_path: filePath,
           file_type: file.type,
+          thumbnail_path: thumbnailPath,
           document_type: documentType,
           description: description || null,
           uploaded_by: authUser.id // The admin who uploaded it

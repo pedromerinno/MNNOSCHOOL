@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { FeedbackItem } from "./FeedbackItem";
 import { Feedback } from "./types";
+import { EmptyState } from "@/components/ui/empty-state";
+import { MessageSquare } from "lucide-react";
 
 interface FeedbackListProps {
   feedbacks: Feedback[];
@@ -61,10 +63,13 @@ export const FeedbackList = ({ feedbacks: initialFeedbacks }: FeedbackListProps)
       </CardHeader>
       <CardContent>
         {feedbacks.length === 0 ? (
-          <div className="text-center py-6">
-            <p className="text-gray-500 dark:text-gray-400">
-              Nenhum feedback recebido ainda.
-            </p>
+          <div className="flex justify-center py-8">
+            <EmptyState
+              title="Nenhum feedback recebido ainda"
+              description="Os feedbacks aparecerão aqui quando recebidos de outros membros da equipe"
+              icons={[MessageSquare]}
+              className="border-0 bg-transparent hover:bg-transparent p-8 max-w-none"
+            />
           </div>
         ) : (
           <div className="space-y-6">

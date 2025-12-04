@@ -78,6 +78,7 @@ export const SuggestCourseToUserDialog: React.FC<SuggestCourseToUserDialogProps>
 
   const fetchCourses = async () => {
     try {
+      console.log('[SuggestCourseToUserDialog] Fetching courses for company:', selectedCompany!.id);
       const { data, error } = await supabase
         .from('company_courses')
         .select(`
@@ -87,14 +88,22 @@ export const SuggestCourseToUserDialog: React.FC<SuggestCourseToUserDialogProps>
         .eq('empresa_id', selectedCompany!.id);
 
       if (error) {
-        console.error('Error fetching courses:', error);
+        console.error('[SuggestCourseToUserDialog] Error fetching courses:', error);
+        toast.error(`Erro ao carregar cursos: ${error.message}`);
         return;
       }
 
+      console.log('[SuggestCourseToUserDialog] Courses data:', data);
       const courseList = data?.map(item => item.courses).filter(Boolean) || [];
+      console.log('[SuggestCourseToUserDialog] Processed courses:', courseList);
       setCourses(courseList);
+      
+      if (courseList.length === 0) {
+        console.warn('[SuggestCourseToUserDialog] No courses found for company:', selectedCompany!.id);
+      }
     } catch (error) {
-      console.error('Error fetching courses:', error);
+      console.error('[SuggestCourseToUserDialog] Error fetching courses:', error);
+      toast.error('Erro ao carregar cursos');
     }
   };
 
@@ -170,11 +179,13 @@ export const SuggestCourseToUserDialog: React.FC<SuggestCourseToUserDialogProps>
           });
 
         if (error) {
+          console.error('Error creating suggestion:', error);
           if (error.code === '23505') {
             toast.error('Este curso já foi sugerido para este usuário nesta empresa');
+          } else if (error.code === '42501' || error.message?.includes('permission denied') || error.message?.includes('row-level security')) {
+            toast.error('Você não tem permissão para criar sugestões. Verifique se você é um administrador.');
           } else {
-            console.error('Error creating suggestion:', error);
-            toast.error('Erro ao criar sugestão de curso');
+            toast.error(`Erro ao criar sugestão de curso: ${error.message || 'Erro desconhecido'}`);
           }
           return;
         }

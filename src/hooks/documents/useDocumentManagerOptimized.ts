@@ -22,14 +22,13 @@ export const useDocumentManagerOptimized = () => {
   const { fetchDocumentsForUser } = useDocumentFetching();
   const { downloadDocument } = useDocumentDownload();
   const { deleteDocument } = useDocumentDelete();
-  const { uploadDocument } = useDocumentUpload();
   const { previewUrl, previewOpen, setPreviewOpen, handlePreview } = useDocumentPreview();
   
   // Controle para evitar múltiplas chamadas
   const isFetchingRef = useRef(false);
   const lastFetchParamsRef = useRef<string>('');
-  
-  const fetchDocuments = useCallback(async () => {
+
+  const fetchDocuments = useCallback(async (force = false) => {
     if (!user?.id || !selectedCompany?.id) {
       setDocuments([]);
       setIsLoading(false);
@@ -38,8 +37,8 @@ export const useDocumentManagerOptimized = () => {
 
     const currentParams = `${user.id}-${selectedCompany.id}`;
     
-    // Evitar chamadas duplicadas
-    if (isFetchingRef.current || lastFetchParamsRef.current === currentParams) {
+    // Evitar chamadas duplicadas, a menos que force seja true
+    if (!force && (isFetchingRef.current || lastFetchParamsRef.current === currentParams)) {
       return;
     }
 
@@ -60,6 +59,23 @@ export const useDocumentManagerOptimized = () => {
       isFetchingRef.current = false;
     }
   }, [user?.id, selectedCompany?.id, fetchDocumentsForUser]);
+
+  // Função para forçar refresh após upload (definida depois de fetchDocuments)
+  const forceRefreshAfterUpload = useCallback(() => {
+    console.log('[DocumentManager] onUploadComplete chamado, forçando refresh...');
+    // Pequeno delay para garantir que o banco processou a inserção
+    setTimeout(() => {
+      lastFetchParamsRef.current = '';
+      fetchDocuments(true);
+    }, 500);
+  }, [fetchDocuments]);
+
+  // Recriar o hook quando user ou company mudarem para garantir que os IDs estão atualizados
+  const { uploadDocument } = useDocumentUpload({
+    userId: user?.id,
+    companyId: selectedCompany?.id,
+    onUploadComplete: forceRefreshAfterUpload
+  });
 
   // Fetch inicial apenas quando necessário
   useEffect(() => {
@@ -106,13 +122,17 @@ export const useDocumentManagerOptimized = () => {
 
       if (error) throw error;
       
+      // Forçar refresh após adicionar link
+      lastFetchParamsRef.current = '';
+      await fetchDocuments(true);
+      
       return true;
     } catch (error: any) {
       console.error('Erro ao adicionar link do documento:', error);
       toast.error('Erro ao adicionar link');
       return false;
     }
-  }, [user?.id, selectedCompany?.id]);
+  }, [user?.id, selectedCompany?.id, fetchDocuments]);
 
   const handleDocumentUpload = useCallback(async (
     attachmentType: 'file' | 'link',
@@ -140,9 +160,9 @@ export const useDocumentManagerOptimized = () => {
       }
 
       if (success) {
-        // Refresh documents after successful upload
-        await fetchDocuments();
-        toast.success(attachmentType === 'file' ? 'Documento enviado com sucesso!' : 'Link adicionado com sucesso!');
+        // O refresh será feito pelo callback onUploadComplete do hook useDocumentUpload
+        // Não mostrar toast aqui pois o hook useDocumentUpload já mostra
+        console.log('[DocumentManager] Upload successful, refresh será feito pelo callback');
       }
 
       return success;
@@ -177,6 +197,51 @@ export const useDocumentManagerOptimized = () => {
     return document.user_id === user?.id;
   }, [user?.id]);
 
+  const updateDocument = useCallback(async (
+    documentId: string,
+    name: string,
+    description: string,
+    documentType: DocumentType,
+    thumbnailPath?: string | null
+  ): Promise<boolean> => {
+    try {
+      const updateData: any = {
+        name,
+        description,
+        document_type: documentType
+      };
+
+      if (thumbnailPath !== undefined) {
+        updateData.thumbnail_path = thumbnailPath;
+      }
+
+      const { error } = await supabase
+        .from('user_documents')
+        .update(updateData)
+        .eq('id', documentId);
+
+      if (error) {
+        console.error('Error updating document:', error);
+        toast.error('Erro ao atualizar documento');
+        return false;
+      }
+
+      // Atualizar documento no estado local
+      setDocuments(prev => prev.map(doc => 
+        doc.id === documentId 
+          ? { ...doc, name, description, document_type: documentType, thumbnail_path: thumbnailPath || doc.thumbnail_path }
+          : doc
+      ));
+
+      toast.success('Documento atualizado com sucesso');
+      return true;
+    } catch (error: any) {
+      console.error('Error updating document:', error);
+      toast.error('Erro ao atualizar documento');
+      return false;
+    }
+  }, []);
+
   const refreshDocuments = useCallback(async () => {
     // Reset fetch control to allow fresh fetch
     lastFetchParamsRef.current = '';
@@ -196,6 +261,7 @@ export const useDocumentManagerOptimized = () => {
     handlePreview,
     handleDelete,
     handleDocumentUpload,
+    updateDocument,
     canDeleteDocument,
     refreshDocuments
   };

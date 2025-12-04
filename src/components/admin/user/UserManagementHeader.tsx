@@ -1,42 +1,48 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Plus, Users } from 'lucide-react';
+import { UserPlus, Mail } from 'lucide-react';
+import { AdminPageTitle } from '../AdminPageTitle';
+import { Badge } from "@/components/ui/badge";
 
 interface UserManagementHeaderProps {
-  onRefreshClick: () => void;
   loading: boolean;
-  isRefreshing: boolean;
   onInviteUser?: () => void;
   onCreateUser?: () => void;
+  stats?: {
+    total: number;
+    superAdmins: number;
+    admins: number;
+    regularUsers: number;
+  };
 }
 
 export const UserManagementHeader: React.FC<UserManagementHeaderProps> = ({
-  onRefreshClick,
   loading,
-  isRefreshing,
   onInviteUser,
-  onCreateUser
+  onCreateUser,
+  stats
 }) => {
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-start">
-        <div>
-          <h3 className="mb-2 px-0 py-[10px] text-xl font-semibold">Gerenciamento de Usuários</h3>
-          <p className="mb-0 text-gray-400 text-sm">
-            Gerencie os usuários do sistema e suas permissões
-          </p>
-        </div>
-        
-        <div className="flex items-center gap-2">
+    <AdminPageTitle
+      title="Gerenciamento de Usuários"
+      description="Gerencie usuários, permissões e acessos da empresa"
+      size="xl"
+      badge={stats && (
+        <Badge variant="secondary" className="ml-2">
+          {stats.total} {stats.total === 1 ? 'usuário' : 'usuários'}
+        </Badge>
+      )}
+      actions={
+        <div className="flex items-center gap-2 flex-wrap">
           {onCreateUser && (
             <Button 
               onClick={onCreateUser} 
               variant="default" 
               size="sm" 
-              className="flex items-center gap-2 rounded-xl px-[15px] py-[20px]"
+              className="flex items-center gap-2"
             >
-              <Users className="h-4 w-4" />
+              <UserPlus className="h-4 w-4" />
               Criar Usuário
             </Button>
           )}
@@ -45,24 +51,14 @@ export const UserManagementHeader: React.FC<UserManagementHeaderProps> = ({
               onClick={onInviteUser} 
               variant="outline" 
               size="sm" 
-              className="flex items-center gap-2 rounded-xl px-[15px] py-[20px]"
+              className="flex items-center gap-2"
             >
-              <Plus className="h-4 w-4" />
-              Convidar Usuário
+              <Mail className="h-4 w-4" />
+              Convidar
             </Button>
           )}
-          <Button 
-            onClick={onRefreshClick} 
-            disabled={loading || isRefreshing} 
-            variant="outline" 
-            size="sm" 
-            className="flex items-center gap-2 rounded-xl px-[15px] py-[20px]"
-          >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            {loading || isRefreshing ? "Atualizando..." : "Atualizar"}
-          </Button>
         </div>
-      </div>
-    </div>
+      }
+    />
   );
 };

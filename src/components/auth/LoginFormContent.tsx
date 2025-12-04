@@ -15,7 +15,6 @@ interface LoginFormContentProps {
   setPassword: (password: string) => void;
   isLoggingIn: boolean;
   onSubmit: (e: React.FormEvent) => Promise<void>;
-  onForgotPassword: () => void;
   loginError?: string | null;
 }
 
@@ -26,7 +25,6 @@ export const LoginFormContent = ({
   setPassword,
   isLoggingIn,
   onSubmit,
-  onForgotPassword,
   loginError,
 }: LoginFormContentProps) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -160,15 +158,6 @@ export const LoginFormContent = ({
             <span className="hidden sm:inline">Usar Single Sign-On (SSO)</span>
             <span className="sm:hidden">SSO</span>
           </Button>
-        </div>
-
-        <div className="mt-3 sm:mt-4 text-center">
-          <Link 
-            to="/password-reset"
-            className="text-sm text-gray-600 hover:text-gray-900"
-          >
-            Esqueceu sua senha?
-          </Link>
         </div>
       </div>
     </div>

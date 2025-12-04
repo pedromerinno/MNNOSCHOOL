@@ -17,26 +17,18 @@ export const useSettingsManagement = () => {
   
   const { syncCompanyData, forceCompanyUpdate } = useCompanySync();
   
-  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState("info");
+  const [activeTab, setActiveTab] = useState("type");
   const hasInitialized = useRef(false);
+
+  // Use the global selected company directly
+  const selectedCompany = globalSelectedCompany;
 
   console.log('[useSettingsManagement] Hook state:', {
     userCompaniesCount: userCompanies.length,
     selectedCompany: selectedCompany?.nome || 'none',
-    globalSelectedCompany: globalSelectedCompany?.nome || 'none',
     isLoadingCompanies,
     userId: user?.id || 'no user'
-  });
-
-  // Ordenar empresas para que a empresa selecionada globalmente apareça primeiro
-  const companies = userCompanies.slice().sort((a, b) => {
-    if (globalSelectedCompany) {
-      if (a.id === globalSelectedCompany.id) return -1;
-      if (b.id === globalSelectedCompany.id) return 1;
-    }
-    return a.nome.localeCompare(b.nome);
   });
 
   // Force load companies if we have a user but no companies
@@ -50,39 +42,12 @@ export const useSettingsManagement = () => {
     }
   }, [user?.id, isLoadingCompanies, userCompanies.length, forceGetUserCompanies]);
 
-  // Initialize selected company when companies are available
+  // Reset phase to type when company changes to ensure proper content loading
   useEffect(() => {
-    if (companies.length > 0 && !selectedCompany) {
-      console.log('[useSettingsManagement] Initializing selected company');
-      
-      // First priority: global selected company if it exists in user companies
-      if (globalSelectedCompany && companies.some(c => c.id === globalSelectedCompany.id)) {
-        console.log("[useSettingsManagement] Using global selected company:", globalSelectedCompany.nome);
-        setSelectedCompany(globalSelectedCompany);
-      }
-      // Second priority: first available company
-      else if (companies.length > 0) {
-        console.log("[useSettingsManagement] Using first available company:", companies[0].nome);
-        setSelectedCompany(companies[0]);
-      }
+    if (globalSelectedCompany) {
+      setActiveTab("type");
     }
-  }, [companies, globalSelectedCompany, selectedCompany]);
-
-  const handleCompanyChange = (companyId: string) => {
-    const company = companies.find(c => c.id === companyId);
-    if (company) {
-      console.log("Company changed to:", company.nome);
-      setSelectedCompany(company);
-      
-      // Reset tab to info when changing company to ensure proper content loading
-      setActiveTab("info");
-      
-      // Broadcast company change for other components to react
-      window.dispatchEvent(new CustomEvent('settings-company-changed', { 
-        detail: { company } 
-      }));
-    }
-  };
+  }, [globalSelectedCompany?.id]);
 
   const handleFormSubmit = async (formData: any) => {
     if (!selectedCompany) {
@@ -112,14 +77,11 @@ export const useSettingsManagement = () => {
         
       if (error) throw error;
       
-      // Update the selected company locally with new data
+      // Update the selected company with new data
       const updatedCompany = {
         ...selectedCompany,
         ...processedData
       };
-      
-      // CRITICAL: Update local state FIRST
-      setSelectedCompany(updatedCompany);
       
       toast.success("Informações de integração atualizadas com sucesso");
       
@@ -138,13 +100,11 @@ export const useSettingsManagement = () => {
   };
 
   return {
-    companies,
     isLoading: isLoadingCompanies,
     selectedCompany,
     isSaving,
     activeTab,
     setActiveTab,
-    handleCompanyChange,
     handleFormSubmit
   };
 };

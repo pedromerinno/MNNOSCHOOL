@@ -64,26 +64,25 @@ export const ValuesField: React.FC<ValuesFieldProps> = ({ form }) => {
       name="valores"
       render={() => (
         <FormItem className="space-y-3">
-          <FormLabel>Valores da Empresa</FormLabel>
           <FormControl>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {Array.isArray(fields) && fields.length > 0 ? (
                 fields.map((field, index) => (
                   <div 
                     key={field.id} 
-                    className="grid grid-cols-1 gap-4 p-4 border rounded-md relative"
+                    className="grid grid-cols-1 gap-3 p-3 border rounded-lg relative"
                   >
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
                       onClick={() => remove(index)}
-                      className="absolute top-2 right-2 h-6 w-6 text-gray-400 hover:text-red-500"
+                      className="absolute top-2 right-2 h-7 w-7 text-muted-foreground hover:text-destructive"
                     >
-                      <Trash className="h-4 w-4" />
+                      <Trash className="h-3.5 w-3.5" />
                     </Button>
                     
-                    <div className="space-y-2">
+                    <div className="space-y-1.5 pr-8">
                       <label className="text-sm font-medium">Título do Valor</label>
                       <Input 
                         {...form.register(`valores.${index}.title`)}
@@ -91,19 +90,20 @@ export const ValuesField: React.FC<ValuesFieldProps> = ({ form }) => {
                       />
                     </div>
                     
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <label className="text-sm font-medium">Descrição</label>
                       <Textarea 
                         {...form.register(`valores.${index}.description`)}
                         placeholder="Descreva este valor da empresa"
-                        rows={3}
+                        rows={2}
+                        className="resize-none"
                       />
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="text-center py-4 border rounded-md bg-gray-50 dark:bg-gray-900">
-                  <p className="text-gray-500">Nenhum valor definido. Adicione o primeiro valor da empresa.</p>
+                <div className="text-center py-3 border rounded-lg bg-muted/30">
+                  <p className="text-sm text-muted-foreground">Nenhum valor definido. Adicione o primeiro valor da empresa.</p>
                 </div>
               )}
               

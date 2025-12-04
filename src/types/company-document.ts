@@ -24,6 +24,7 @@ export interface CompanyDocument {
   name: string;
   file_path?: string;
   file_type?: string;
+  thumbnail_path?: string;
   document_type: CompanyDocumentType;
   description?: string;
   link_url?: string;
@@ -31,7 +32,9 @@ export interface CompanyDocument {
   created_by: string;
   created_at: string;
   updated_at: string;
-  job_roles?: string[];
-  allowed_users?: string[];
+  job_roles?: string[]; // Nomes dos cargos (para exibição)
+  job_role_ids?: string[]; // IDs dos cargos (para edição)
+  allowed_users?: string[]; // Nomes dos usuários (para exibição)
+  allowed_user_ids?: string[]; // IDs dos usuários (para edição)
   can_access?: boolean;
 }

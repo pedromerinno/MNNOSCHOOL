@@ -16,11 +16,13 @@ import { CompanyValue } from "@/types/company";
 interface NewCompanyFormProps {
   onBack?: () => void;
   onComplete?: () => void;
+  hideSubmitButton?: boolean;
 }
 
 const NewCompanyForm: React.FC<NewCompanyFormProps> = ({ 
   onBack,
-  onComplete
+  onComplete,
+  hideSubmitButton = false
 }) => {
   // Manage form value with refs instead of controlled inputs
   const companyNameRef = useRef<HTMLInputElement>(null);
@@ -135,13 +137,13 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
   };
   
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Back button */}
       {onBack && (
         <Button 
           type="button" 
           variant="ghost"
-          className="mb-4 flex items-center justify-center gap-2 text-gray-500"
+          className="mb-2 flex items-center gap-2 text-gray-600 hover:text-gray-900"
           onClick={onBack}
         >
           <ArrowLeft className="h-4 w-4" />
@@ -149,113 +151,160 @@ const NewCompanyForm: React.FC<NewCompanyFormProps> = ({
         </Button>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="companyName" className="text-sm text-gray-500 font-medium">
-              Nome da empresa*
-            </Label>
-            <Input
-              id="companyName"
-              ref={companyNameRef}
-              placeholder="Digite o nome da sua empresa"
-              className="border border-gray-200 rounded-lg px-4 py-2 w-full"
-              autoComplete="off"
-              autoFocus
-            />
-            <p className="text-xs text-gray-500">
-              Digite o nome da sua empresa para criar um perfil
-            </p>
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Seção: Informações Básicas */}
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-base font-semibold text-gray-900 mb-1">Informações Básicas</h3>
+            <p className="text-xs text-gray-500">Dados fundamentais da empresa</p>
           </div>
           
-          <OnboardingLogoUploadField 
-            value={logoUrl} 
-            onChange={setLogoUrl} 
-          />
-          
-          <OnboardingColorPickerField 
-            value={companyColor} 
-            onChange={setCompanyColor} 
-          />
-          
-          <div className="space-y-2">
-            <Label htmlFor="companyMotto" className="text-sm text-gray-500 font-medium">
-              Frase institucional
-            </Label>
-            <Input
-              id="companyMotto"
-              ref={companyMottoRef}
-              placeholder="Digite a frase institucional da empresa"
-              className="border border-gray-200 rounded-lg px-4 py-2 w-full"
+          <div className="space-y-5 pl-4 border-l-2 border-gray-100">
+            <div className="space-y-2">
+              <Label htmlFor="companyName" className="text-sm font-semibold text-gray-900">
+                Nome da empresa*
+              </Label>
+              <Input
+                id="companyName"
+                ref={companyNameRef}
+                placeholder="Ex: Minha Empresa Ltda"
+                className="h-10 border border-gray-200 rounded-lg"
+                autoComplete="off"
+                autoFocus
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Digite o nome da sua empresa para criar um perfil
+              </p>
+            </div>
+            
+            <OnboardingLogoUploadField 
+              value={logoUrl} 
+              onChange={setLogoUrl} 
             />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="companyMission" className="text-sm text-gray-500 font-medium">
-              Missão
-            </Label>
-            <Textarea
-              id="companyMission"
-              ref={companyMissionRef}
-              placeholder="Qual é a missão da sua empresa"
-              rows={3}
-              className="border border-gray-200 rounded-lg px-4 py-2 w-full"
-            />
-          </div>
-          
-          <NewCompanyValuesField 
-            values={companyValues} 
-            onChange={setCompanyValues} 
-          />
-          
-          <div className="space-y-2">
-            <Label htmlFor="companyHistory" className="text-sm text-gray-500 font-medium">
-              História
-            </Label>
-            <Textarea
-              id="companyHistory"
-              ref={companyHistoryRef}
-              placeholder="Conte a história da sua empresa"
-              rows={4}
-              className="border border-gray-200 rounded-lg px-4 py-2 w-full"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="companyVideo" className="text-sm text-gray-500 font-medium">
-              Vídeo institucional (URL)
-            </Label>
-            <Input
-              id="companyVideo"
-              ref={companyVideoRef}
-              placeholder="URL do vídeo institucional (YouTube, Vimeo, etc.)"
-              className="border border-gray-200 rounded-lg px-4 py-2 w-full"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="companyVideoDescription" className="text-sm text-gray-500 font-medium">
-              Descrição do vídeo
-            </Label>
-            <Textarea
-              id="companyVideoDescription"
-              ref={companyVideoDescRef}
-              placeholder="Descreva o conteúdo do vídeo institucional"
-              rows={2}
-              className="border border-gray-200 rounded-lg px-4 py-2 w-full"
+            
+            <OnboardingColorPickerField 
+              value={companyColor} 
+              onChange={setCompanyColor} 
             />
           </div>
         </div>
 
-        <div className="flex justify-end pt-4">
-          <Button 
-            type="submit" 
-            className="bg-black hover:bg-black/90 text-white"
-            disabled={isCreating}
-          >
-            {isCreating ? "Criando..." : "Criar empresa"}
-          </Button>
+        {/* Separador */}
+        <div className="border-t border-gray-200"></div>
+
+        {/* Seção: Identidade e Cultura */}
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-base font-semibold text-gray-900 mb-1">Identidade e Cultura</h3>
+            <p className="text-xs text-gray-500">Valores, missão e história da empresa</p>
+          </div>
+          
+          <div className="space-y-5 pl-4 border-l-2 border-gray-100">
+            <div className="space-y-2">
+              <Label htmlFor="companyMotto" className="text-sm font-semibold text-gray-900">
+                Frase institucional
+              </Label>
+              <Input
+                id="companyMotto"
+                ref={companyMottoRef}
+                placeholder="Ex: Construindo um futuro melhor"
+                className="h-10 border border-gray-200 rounded-lg"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="companyMission" className="text-sm font-semibold text-gray-900">
+                Missão
+              </Label>
+              <Textarea
+                id="companyMission"
+                ref={companyMissionRef}
+                placeholder="Descreva a missão da sua empresa..."
+                rows={4}
+                className="resize-none border border-gray-200 rounded-lg"
+              />
+            </div>
+            
+            <NewCompanyValuesField 
+              values={companyValues} 
+              onChange={setCompanyValues} 
+            />
+            
+            <div className="space-y-2">
+              <Label htmlFor="companyHistory" className="text-sm font-semibold text-gray-900">
+                História
+              </Label>
+              <Textarea
+                id="companyHistory"
+                ref={companyHistoryRef}
+                placeholder="Conte a história da sua empresa..."
+                rows={4}
+                className="resize-none border border-gray-200 rounded-lg"
+              />
+            </div>
+          </div>
         </div>
+
+        {/* Separador */}
+        <div className="border-t border-gray-200"></div>
+
+        {/* Seção: Vídeo Institucional */}
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-base font-semibold text-gray-900 mb-1">Vídeo Institucional</h3>
+            <p className="text-xs text-gray-500">Conteúdo em vídeo sobre a empresa</p>
+          </div>
+          
+          <div className="space-y-5 pl-4 border-l-2 border-gray-100">
+            <div className="space-y-2">
+              <Label htmlFor="companyVideo" className="text-sm font-semibold text-gray-900">
+                Vídeo institucional (URL)
+              </Label>
+              <Input
+                id="companyVideo"
+                ref={companyVideoRef}
+                placeholder="Ex: https://www.youtube.com/watch?v=..."
+                className="h-10 border border-gray-200 rounded-lg"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                URL do vídeo institucional (YouTube, Vimeo, etc.)
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="companyVideoDescription" className="text-sm font-semibold text-gray-900">
+                Descrição do vídeo
+              </Label>
+              <Textarea
+                id="companyVideoDescription"
+                ref={companyVideoDescRef}
+                placeholder="Descreva o conteúdo do vídeo institucional..."
+                rows={3}
+                className="resize-none border border-gray-200 rounded-lg"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Botão de submit */}
+        {!hideSubmitButton && (
+          <div className="flex justify-end pt-6 border-t border-gray-200">
+            <Button 
+              type="submit" 
+              className="min-w-[120px] bg-black hover:bg-black/90 text-white font-medium"
+              disabled={isCreating}
+            >
+              {isCreating ? (
+                <span className="flex items-center gap-2">
+                  <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+                  Criando...
+                </span>
+              ) : (
+                "Criar empresa"
+              )}
+            </Button>
+          </div>
+        )}
       </form>
     </div>
   );

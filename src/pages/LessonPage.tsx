@@ -122,7 +122,7 @@ const LessonPage = () => {
     );
   }
 
-  // Se não tem lesson mas está carregando, mostrar uma página básica sem skeleton
+  // Se não tem lesson mas está carregando, mostrar uma página básica sem preloader
   if (!lesson) {
     return (
       <>

@@ -1,11 +1,9 @@
 
-import React from 'react';
-import { Tabs, TabsList } from "@/components/ui/tabs";
-import { Book, Briefcase, Key, Users, Video, Building } from "lucide-react";
-import { SettingsTabTrigger } from './settings/SettingsTabTrigger';
-import { SettingsTabContent } from './settings/SettingsTabContent';
+import React, { useEffect } from 'react';
+import { PhaseNavigation } from './PhaseNavigation';
 import { SettingsTabsProps } from './settings/types';
-import { useAuth } from '@/contexts/AuthContext';
+import { InfoForm } from './form/InfoForm';
+import { TypeForm } from './form/TypeForm';
 
 export const SettingsTabs: React.FC<SettingsTabsProps> = ({
   company,
@@ -14,54 +12,61 @@ export const SettingsTabs: React.FC<SettingsTabsProps> = ({
   handleFormSubmit,
   isSaving
 }) => {
-  // Tab definitions seguindo a ordem e nomes passados, com ícones do padrão do painel admin
-  const tabs = [{
-    value: "info",
-    label: "Informações",
-    icon: Building
-  }, {
-    value: "videos",
-    label: "Vídeos",
-    icon: Video
-  }, {
-    value: "courses",
-    label: "Cursos",
-    icon: Book
-  }, {
-    value: "cargo",
-    label: "Cargos",
-    icon: Briefcase
-  }, {
-    value: "access",
-    label: "Senhas e Acessos",
-    icon: Key
-  }, {
-    value: "collaborators",
-    label: "Colaboradores",
-    icon: Users
-  }];
-  
-  // Implementação atualizada do manipulador de abas para evitar recarregamentos
-  const handleTabChange = (value: string) => {
-    // Evita o recarregamento da página definindo o estado localmente primeiro
+  // Garantir que a fase padrão seja "type" se não houver uma ativa
+  useEffect(() => {
+    if (!activeTab || !['type', 'info'].includes(activeTab)) {
+      setActiveTab('type');
+    }
+  }, [activeTab, setActiveTab]);
+
+  // Implementação atualizada do manipulador de fases
+  const handlePhaseChange = (value: string) => {
     setActiveTab(value);
     
-    // Apenas atualiza o estado da URL sem causar navegação
+    // Atualiza o estado da URL sem causar navegação
     if (typeof window !== 'undefined') {
       const currentUrl = new URL(window.location.href);
       currentUrl.searchParams.set('subtab', value);
       window.history.replaceState({}, '', currentUrl.toString());
     }
   };
-  
-  return <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-      <div className="border-b border-gray-100 dark:border-gray-800 py-2 px-2 bg-transparent">
-        <TabsList className="flex gap-2 rounded-2xl p-1.5 bg-transparent dark:bg-transparent w-full justify-start">
-          {tabs.map(tab => <SettingsTabTrigger key={tab.value} value={tab.value} icon={tab.icon} label={tab.label} activeTab={activeTab} companyColor={company?.cor_principal} />)}
-        </TabsList>
-      </div>
-      <div className="p-4 px-[30px] py-[30px]">
-        {tabs.map(tab => <SettingsTabContent key={tab.value} value={tab.value} company={company} onSubmit={handleFormSubmit} isSaving={isSaving} />)}
-      </div>
-    </Tabs>;
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case "type":
+        return (
+          <TypeForm
+            company={company}
+            onSubmit={handleFormSubmit}
+            isSaving={isSaving}
+          />
+        );
+      case "info":
+        return (
+          <InfoForm
+            company={company}
+            onSubmit={handleFormSubmit}
+            isSaving={isSaving}
+          />
+        );
+      default:
+        return (
+          <TypeForm
+            company={company}
+            onSubmit={handleFormSubmit}
+            isSaving={isSaving}
+          />
+        );
+    }
+  };
+
+  return (
+    <PhaseNavigation
+      company={company}
+      activePhase={activeTab || 'type'}
+      setActivePhase={handlePhaseChange}
+    >
+      {renderContent()}
+    </PhaseNavigation>
+  );
 };

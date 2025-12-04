@@ -18,7 +18,13 @@ export const fetchCourses = async (companyId?: string, forceRefresh: boolean = f
     
     if (!forceRefresh && cachedData && Date.now() - cachedData.timestamp < CACHE_DURATION) {
       console.log(`[fetchCourses] Usando ${cachedData.data.length} cursos em cache para ${cacheKey}`);
-      return cachedData.data;
+      // Se o cache está vazio mas há companyId, não usar cache (pode ser que cursos foram adicionados)
+      if (cachedData.data.length === 0 && companyId) {
+        console.log(`[fetchCourses] Cache vazio para empresa ${companyId}, buscando novamente...`);
+        coursesCache.delete(cacheKey);
+      } else {
+        return cachedData.data;
+      }
     }
     
     if (companyId) {
@@ -29,14 +35,36 @@ export const fetchCourses = async (companyId?: string, forceRefresh: boolean = f
         return [];
       }
       
-      // Get user profile to check their job role
+      // Get user profile to check super_admin status
       const { data: userProfile } = await supabase
         .from('profiles')
-        .select('cargo_id, super_admin')
+        .select('super_admin')
         .eq('id', user.id)
         .single();
       
-      console.log(`Fetching courses for company: ${companyId} with user profile:`, userProfile);
+      // Check if user is admin of the company (is_admin is in user_empresa, not profiles)
+      // Use maybeSingle() instead of single() to avoid errors when user is not in company
+      const { data: userCompany, error: userCompanyError } = await supabase
+        .from('user_empresa')
+        .select('is_admin, cargo_id')
+        .eq('user_id', user.id)
+        .eq('empresa_id', companyId)
+        .maybeSingle();
+      
+      if (userCompanyError) {
+        console.error('Error checking user company:', userCompanyError);
+        // Continue anyway, will treat as non-admin
+      }
+      
+      const isSuperAdmin = userProfile?.super_admin === true;
+      const isCompanyAdmin = isSuperAdmin || (userCompany?.is_admin === true);
+      
+      console.log(`Fetching courses for company: ${companyId}`, {
+        isSuperAdmin,
+        isCompanyAdmin,
+        userCompany,
+        userCompanyError: userCompanyError?.message
+      });
       
       // Get company courses
       const { data: companyCourses, error: companyCoursesError } = await supabase
@@ -44,15 +72,54 @@ export const fetchCourses = async (companyId?: string, forceRefresh: boolean = f
         .select('course_id')
         .eq('empresa_id', companyId);
       
-      if (companyCoursesError) throw companyCoursesError;
+      if (companyCoursesError) {
+        console.error('Error fetching company courses:', companyCoursesError);
+        throw companyCoursesError;
+      }
+      
+      console.log(`[fetchCourses] Found ${companyCourses?.length || 0} course relations for company ${companyId}`);
       
       if (!companyCourses || companyCourses.length === 0) {
         console.log("No courses found for this company");
+        // Clear cache to ensure fresh data next time
+        coursesCache.delete(cacheKey);
         return [];
       }
       
       const courseIds = companyCourses.map(cc => cc.course_id);
       console.log('All company course IDs:', courseIds);
+      
+      // If user is admin (super admin or company admin), return all courses without filtering by job role
+      if (isCompanyAdmin) {
+        console.log('User is admin, returning all company courses without job role filtering');
+        console.log(`[fetchCourses] Querying courses table with ${courseIds.length} course IDs`);
+        
+        const { data, error } = await supabase
+          .from('courses')
+          .select('*')
+          .in('id', courseIds)
+          .order('created_at', { ascending: false });
+          
+        if (error) {
+          console.error('Error fetching courses:', error);
+          throw error;
+        }
+        
+        console.log(`[fetchCourses] Loaded ${data?.length || 0} courses for company ${companyId} (admin view)`);
+        console.log(`[fetchCourses] Course IDs returned:`, data?.map(c => c.id) || []);
+        
+        // Armazenar no cache
+        coursesCache.set(cacheKey, {
+          data: data || [],
+          timestamp: Date.now()
+        });
+        
+        return data || [];
+      }
+      
+      // For non-admin users, apply job role filtering
+      const userJobRoleId = userCompany?.cargo_id;
+      console.log('User job role ID:', userJobRoleId);
       
       // Get course job role restrictions
       const { data: courseJobRoles } = await supabase
@@ -62,35 +129,29 @@ export const fetchCourses = async (companyId?: string, forceRefresh: boolean = f
       
       console.log('Course job roles restrictions:', courseJobRoles);
       
-      // Filter courses based on user's job role and admin status
+      // Filter courses based on user's job role
       let accessibleCourseIds = courseIds;
       
-      // If user is not admin and has job role restrictions, apply filtering
-      if (!userProfile?.is_admin && !userProfile?.super_admin) {
-        const userJobRoleId = userProfile?.cargo_id;
-        console.log('User job role ID:', userJobRoleId);
+      if (courseJobRoles && courseJobRoles.length > 0) {
+        // Get all courses that have role restrictions
+        const restrictedCourseIds = [...new Set(courseJobRoles.map(cjr => cjr.course_id))];
+        console.log('Courses with role restrictions:', restrictedCourseIds);
         
-        if (courseJobRoles && courseJobRoles.length > 0) {
-          // Get all courses that have role restrictions
-          const restrictedCourseIds = [...new Set(courseJobRoles.map(cjr => cjr.course_id))];
-          console.log('Courses with role restrictions:', restrictedCourseIds);
-          
-          // Get courses without any restrictions (available to all)
-          const unrestrictedCourseIds = courseIds.filter(id => !restrictedCourseIds.includes(id));
-          console.log('Unrestricted courses:', unrestrictedCourseIds);
-          
-          // Get courses that the user can access based on their job role
-          let accessibleRestrictedCourses: string[] = [];
-          if (userJobRoleId) {
-            accessibleRestrictedCourses = courseJobRoles
-              .filter(cjr => cjr.job_role_id === userJobRoleId)
-              .map(cjr => cjr.course_id);
-            console.log('Accessible restricted courses for user role:', accessibleRestrictedCourses);
-          }
-          
-          // Combine unrestricted courses and accessible restricted courses
-          accessibleCourseIds = [...unrestrictedCourseIds, ...accessibleRestrictedCourses];
+        // Get courses without any restrictions (available to all)
+        const unrestrictedCourseIds = courseIds.filter(id => !restrictedCourseIds.includes(id));
+        console.log('Unrestricted courses:', unrestrictedCourseIds);
+        
+        // Get courses that the user can access based on their job role
+        let accessibleRestrictedCourses: string[] = [];
+        if (userJobRoleId) {
+          accessibleRestrictedCourses = courseJobRoles
+            .filter(cjr => cjr.job_role_id === userJobRoleId)
+            .map(cjr => cjr.course_id);
+          console.log('Accessible restricted courses for user role:', accessibleRestrictedCourses);
         }
+        
+        // Combine unrestricted courses and accessible restricted courses
+        accessibleCourseIds = [...unrestrictedCourseIds, ...accessibleRestrictedCourses];
       }
       
       console.log('Final accessible course IDs:', accessibleCourseIds);

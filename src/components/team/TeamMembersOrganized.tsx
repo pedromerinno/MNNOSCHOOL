@@ -4,6 +4,8 @@ import { TeamMember } from "@/hooks/team/useTeamMembersOptimized";
 import { AdminMembersSection } from './sections/AdminMembersSection';
 import { RoleMembersSection } from './sections/RoleMembersSection';
 import { UnassignedMembersSection } from './sections/UnassignedMembersSection';
+import { EmptyState } from "@/components/ui/empty-state";
+import { Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { JobRole } from "@/types/job-roles";
 
@@ -165,10 +167,12 @@ export const TeamMembersOrganized: React.FC<TeamMembersOrganizedProps> = ({
 
       {/* Estado vazio */}
       {members.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-gray-500 dark:text-gray-400">
-            Nenhum membro encontrado nesta empresa.
-          </p>
+        <div className="flex justify-center py-12">
+          <EmptyState
+            title="Nenhum membro encontrado"
+            description="Nenhum membro encontrado nesta empresa."
+            icons={[Users]}
+          />
         </div>
       )}
     </div>

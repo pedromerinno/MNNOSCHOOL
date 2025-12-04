@@ -129,10 +129,16 @@ export const useCourses = (companyId?: string) => {
         }
 
         if (isSuperAdmin) {
-          // Super admins veem todos os cursos se não houver companyId
-          const fetchedCourses = await fetchCourses();
-          setCourses(fetchedCourses);
-          saveCoursesToCache(cacheKey, fetchedCourses);
+          // Super admins também devem filtrar pela empresa selecionada se houver
+          // Se não houver companyId, não mostrar cursos (esperar seleção de empresa)
+          if (companyId) {
+            const fetchedCourses = await fetchCourses(companyId);
+            setCourses(fetchedCourses);
+            saveCoursesToCache(cacheKey, fetchedCourses);
+          } else {
+            console.log('[useCourses] Super admin but no company selected, showing empty list');
+            setCourses([]);
+          }
         } else if (isAdmin) {
           // Admins regulares veem cursos das suas empresas
           
@@ -271,7 +277,17 @@ export const useCourses = (companyId?: string) => {
   }, []);
 
   useEffect(() => {
-    loadCourses();
+    // Force refresh when company changes
+    if (companyId) {
+      console.log(`[useCourses] Company changed to ${companyId}, loading courses...`);
+      // Clear cache when company changes
+      courseCache.current.clear();
+      loadCourses(true); // Force refresh
+    } else {
+      console.log('[useCourses] No company selected, clearing courses');
+      setCourses([]);
+      setIsLoading(false);
+    }
   }, [companyId]); 
 
   return {

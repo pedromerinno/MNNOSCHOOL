@@ -30,7 +30,7 @@ const FAB_OPTIONS = [{
 
 export const AdminFloatingActionButton = () => {
   const [open, setOpen] = useState(false);
-  const { isAdmin } = useIsAdmin();
+  const { isAdmin, isLoading } = useIsAdmin();
   const [courseDialogOpen, setCourseDialogOpen] = useState(false);
   const [noticeDialogOpen, setNoticeDialogOpen] = useState(false);
   const [discussionDialogOpen, setDiscussionDialogOpen] = useState(false);
@@ -38,7 +38,8 @@ export const AdminFloatingActionButton = () => {
   const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
   
   // Only render for admin or super_admin users
-  if (!isAdmin) return null;
+  // Don't render while loading to avoid flickering
+  if (isLoading || !isAdmin) return null;
   
   const handleOption = (option: (typeof FAB_OPTIONS)[number]) => {
     setOpen(false);

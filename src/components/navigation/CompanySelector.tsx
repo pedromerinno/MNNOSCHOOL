@@ -1,16 +1,22 @@
-
 import { useEffect, memo, useCallback, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { getInitials } from "@/utils/stringUtils";
+import { Company } from "@/types/company";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Workspaces,
+  WorkspaceTrigger,
+  WorkspaceContent,
+  type Workspace,
+} from "@/components/ui/workspaces";
+import { cn } from "@/lib/utils";
+
+// Adapter para converter Company em Workspace
+interface CompanyWorkspace extends Workspace {
+  nome: string;
+  logo?: string | null;
+  cor_principal?: string | null;
+}
 
 export const CompanySelector = memo(() => {
   const { user } = useAuth();
@@ -20,9 +26,17 @@ export const CompanySelector = memo(() => {
     selectCompany, 
     isLoading 
   } = useCompanies();
-  const isMobile = useIsMobile();
   
   const [displayName, setDisplayName] = useState<string>("");
+
+  // Converter companies para workspaces format
+  const workspaces: CompanyWorkspace[] = userCompanies.map((company) => ({
+    id: company.id,
+    name: company.nome,
+    nome: company.nome,
+    logo: company.logo,
+    cor_principal: company.cor_principal,
+  }));
 
   // Atualizar displayName sempre que selectedCompany mudar
   useEffect(() => {
@@ -39,18 +53,22 @@ export const CompanySelector = memo(() => {
   }, [selectedCompany, userCompanies, isLoading]);
 
   // Função para lidar com mudança de empresa
-  const handleCompanyChange = useCallback((company: any) => {
-    if (user?.id && company) {
-      selectCompany(user.id, company);
-      setDisplayName(company.nome);
-      
-      // Force immediate update of other components
-      const event = new CustomEvent('company-selector-changed', { 
-        detail: { company } 
-      });
-      window.dispatchEvent(event);
+  const handleCompanyChange = useCallback((workspace: CompanyWorkspace) => {
+    if (user?.id && workspace) {
+      // Encontrar a company original pelo ID
+      const company = userCompanies.find(c => c.id === workspace.id);
+      if (company) {
+        selectCompany(user.id, company);
+        setDisplayName(company.nome);
+        
+        // Force immediate update of other components
+        const event = new CustomEvent('company-selector-changed', { 
+          detail: { company } 
+        });
+        window.dispatchEvent(event);
+      }
     }
-  }, [user?.id, selectCompany]);
+  }, [user?.id, selectCompany, userCompanies]);
 
   // Escutar mudanças de empresa vindas de outras partes da aplicação
   useEffect(() => {
@@ -105,50 +123,34 @@ export const CompanySelector = memo(() => {
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button className="flex items-center space-x-2 text-lg font-bold text-foreground focus:outline-none">
-          <span>{displayName}</span>
-          <ChevronDown className="ml-1 h-4 w-4" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="bg-white dark:bg-gray-800 z-50">
-        {userCompanies.map((company) => (
-          <DropdownMenuItem 
-            key={company.id} 
-            onClick={() => handleCompanyChange(company)}
-            className={`cursor-pointer ${selectedCompany?.id === company.id ? 'bg-gray-100 dark:bg-gray-700' : ''}`}
-          >
-            <div className="flex items-center">
-              {company.logo ? (
-                <img
-                  src={company.logo}
-                  alt={company.nome}
-                  className="h-4 w-4 mr-2 object-contain rounded-lg"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    // Show initials fallback
-                    const parent = target.parentElement;
-                    if (parent) {
-                      const initialsDiv = document.createElement('div');
-                      initialsDiv.className = "h-4 w-4 mr-2 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary font-medium";
-                      initialsDiv.textContent = getInitials(company.nome);
-                      parent.insertBefore(initialsDiv, target);
-                    }
-                  }}
-                />
-              ) : (
-                <div className="h-4 w-4 mr-2 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary font-medium">
-                  {getInitials(company.nome)}
-                </div>
-              )}
-              <span>{company.nome}</span>
-            </div>
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Workspaces
+      workspaces={workspaces}
+      selectedWorkspaceId={selectedCompany?.id}
+      onWorkspaceChange={handleCompanyChange}
+      getWorkspaceId={(ws) => ws.id}
+      getWorkspaceName={(ws) => (ws as CompanyWorkspace).nome}
+    >
+      <WorkspaceTrigger
+        className={cn(
+          "flex items-center space-x-2 text-lg font-bold text-foreground focus:outline-none border-none bg-transparent shadow-none p-0 h-auto",
+          "hover:opacity-80 transition-opacity"
+        )}
+        renderTrigger={(workspace, isOpen) => (
+          <>
+            <span>{(workspace as CompanyWorkspace).nome}</span>
+            <ChevronDown className={cn(
+              "ml-1 h-4 w-4 transition-transform",
+              isOpen && "rotate-180"
+            )} />
+          </>
+        )}
+      />
+      <WorkspaceContent
+        align="start"
+        className="bg-white dark:bg-gray-800 z-50 w-auto min-w-[200px] max-w-[280px] !rounded-2xl"
+        title=""
+      />
+    </Workspaces>
   );
 });
 

@@ -18,7 +18,7 @@ const OnboardingLogoUploadField: React.FC<OnboardingLogoUploadFieldProps> = ({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="logo" className="text-sm text-gray-500 font-medium">
+      <Label htmlFor="logo" className="text-sm font-semibold text-gray-900">
         Logo da empresa
       </Label>
       

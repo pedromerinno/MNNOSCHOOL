@@ -1,7 +1,7 @@
 
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
+import { GraduationCap, BookOpen, PlusCircle } from "lucide-react";
 
 interface EmptyCoursesStateProps {
   companyName: string;
@@ -15,19 +15,16 @@ export const EmptyCoursesState: React.FC<EmptyCoursesStateProps> = ({
   onCreateCourse,
 }) => {
   return (
-    <div className="col-span-3 flex flex-col items-center justify-center py-12 text-center">
-      <div className="max-w-md">
-        <h3 className="text-xl font-semibold mb-2">Nenhum curso disponível</h3>
-        <p className="text-gray-500 dark:text-gray-400 text-lg mb-6">
-          Não há cursos disponíveis para {companyName}.
-        </p>
-        {isAdmin && (
-          <Button onClick={onCreateCourse} className="flex items-center gap-2">
-            <PlusCircle className="h-4 w-4" />
-            Criar um novo curso
-          </Button>
-        )}
-      </div>
+    <div className="col-span-3 flex justify-center py-12">
+      <EmptyState
+        title="Nenhum curso disponível"
+        description={`Não há cursos disponíveis para ${companyName}.`}
+        icons={[GraduationCap, BookOpen, PlusCircle]}
+        action={isAdmin ? {
+          label: "Criar um novo curso",
+          onClick: onCreateCourse
+        } : undefined}
+      />
     </div>
   );
 };

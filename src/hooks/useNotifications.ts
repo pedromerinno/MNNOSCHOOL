@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useCompanies } from "./useCompanies";
 import { toast } from "sonner";
 
@@ -40,7 +40,9 @@ export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
+  const lastFetchTimeRef = useRef<number>(0);
+  const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isFetchingRef = useRef<boolean>(false);
 
   const fetchNotifications = useCallback(async (companyId?: string, forceRefresh = false) => {
     const targetCompanyId = companyId || selectedCompany?.id;
@@ -50,19 +52,22 @@ export function useNotifications() {
       return;
     }
 
+    // Evitar múltiplas requisições simultâneas
+    if (isFetchingRef.current && !forceRefresh) {
+      return;
+    }
+
     const now = Date.now();
-    if (!forceRefresh && now - lastFetchTime < 1000) {
-      console.log("Evitando múltiplas requisições rápidas de notificações");
+    if (!forceRefresh && now - lastFetchTimeRef.current < 1000) {
       return;
     }
     
-    setLastFetchTime(now);
+    lastFetchTimeRef.current = now;
+    isFetchingRef.current = true;
 
     try {
       setIsLoading(true);
       setError(null);
-
-      console.log(`Fetching notifications for company ID: ${targetCompanyId}`);
       
       const { data, error } = await supabase
         .from('user_notifications')
@@ -72,15 +77,15 @@ export function useNotifications() {
 
       if (error) throw error;
 
-      console.log(`Retrieved ${data?.length || 0} notifications`);
       setNotifications(data || []);
     } catch (err: any) {
       console.error('Erro ao buscar notificações:', err);
       setError(err.message || 'Erro ao buscar notificações');
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
-  }, [selectedCompany?.id, lastFetchTime]);
+  }, [selectedCompany?.id]);
 
   const markAsRead = async (notificationId: string) => {
     try {
@@ -137,50 +142,104 @@ export function useNotifications() {
   }, [notifications]);
 
   useEffect(() => {
+    // Limpar timeout anterior se existir
+    if (fetchTimeoutRef.current) {
+      clearTimeout(fetchTimeoutRef.current);
+      fetchTimeoutRef.current = null;
+    }
+
     if (selectedCompany?.id) {
-      console.log(`Company changed, fetching notifications for: ${selectedCompany.id}`);
-      fetchNotifications(selectedCompany.id);
+      // Debounce: aguardar um pouco antes de buscar
+      fetchTimeoutRef.current = setTimeout(() => {
+        fetchNotifications(selectedCompany.id);
+      }, 300);
     } else {
       setNotifications([]);
       setIsLoading(false);
     }
+
+    return () => {
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+        fetchTimeoutRef.current = null;
+      }
+    };
   }, [selectedCompany?.id, fetchNotifications]);
 
   useEffect(() => {
     if (!selectedCompany?.id) return;
 
-    console.log('Setting up real-time notification subscription');
-    
-    // Inscrever-se em mudanças na tabela user_notifications
-    const channel = supabase
-      .channel('user-notifications')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'user_notifications',
-          filter: `company_id=eq.${selectedCompany.id}`
-        },
-        (payload) => {
-          console.log('New notification received via realtime:', payload);
-          const newNotification = payload.new as Notification;
-          
-          // Atualizar estado local com a nova notificação
-          setNotifications(prev => [newNotification, ...prev]);
-          
-          // Mostrar toast com a notificação
-          toast.info('Nova notificação', {
-            description: newNotification.title,
-            duration: 5000,
-          });
-        }
-      )
-      .subscribe();
+    let mounted = true;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    const channelName = `user-notifications-${selectedCompany.id}`;
+
+    const setupSubscription = async () => {
+      // Verificar se já existe uma subscription ativa para evitar duplicatas
+      const existingChannel = supabase.getChannels().find(ch => ch.topic === `realtime:${channelName}`);
+      if (existingChannel) {
+        return; // Já existe uma subscription ativa
+      }
+
+      // Obter o ID do usuário atual
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !mounted) return;
+      
+      // Inscrever-se em mudanças na tabela user_notifications
+      channel = supabase
+        .channel(channelName)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'user_notifications',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            if (!mounted) return;
+            
+            const newNotification = payload.new as Notification;
+            
+            // Verificar se a notificação é para o usuário atual e da empresa selecionada
+            if (newNotification.user_id !== user.id) {
+              return;
+            }
+            
+            // Verificar se a notificação é da empresa selecionada
+            if (newNotification.company_id !== selectedCompany.id) {
+              return;
+            }
+            
+            // Atualizar estado local com a nova notificação
+            setNotifications(prev => {
+              // Evitar duplicatas
+              if (prev.some(n => n.id === newNotification.id)) {
+                return prev;
+              }
+              return [newNotification, ...prev];
+            });
+            
+            // Mostrar toast com a notificação
+            toast.info('Nova notificação', {
+              description: newNotification.title,
+              duration: 5000,
+            });
+          }
+        )
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            // Subscription ativa
+          }
+        });
+    };
+
+    setupSubscription();
 
     return () => {
-      console.log('Cleaning up notification subscription');
-      supabase.removeChannel(channel);
+      mounted = false;
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [selectedCompany?.id]);
 

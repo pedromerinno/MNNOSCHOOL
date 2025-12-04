@@ -136,22 +136,22 @@ export const DashboardChallenges = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-hidden">
         {challenges.slice(visibleCards, visibleCards + cardsPerView).map((challenge) => (
           <Card key={challenge.id} className="overflow-hidden flex flex-col h-full">
-            <div className="aspect-[16/9] overflow-hidden">
+            <div className="aspect-[16/10] overflow-hidden">
               <img 
                 src={challenge.image} 
                 alt={challenge.title} 
                 className="h-full w-full object-cover"
               />
             </div>
-            <CardHeader className="p-4 pb-0">
-              <CardTitle className="text-lg">{challenge.title}</CardTitle>
+            <CardHeader className="p-3 pb-0">
+              <CardTitle className="text-base">{challenge.title}</CardTitle>
             </CardHeader>
-            <CardContent className="p-4 pt-2 flex-grow">
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            <CardContent className="p-3 pt-2 flex-grow">
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">
                 {challenge.description}
               </p>
-              <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-3">
-                <Clock className="h-4 w-4 mr-2" />
+              <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-2">
+                <Clock className="h-3 w-3 mr-1" />
                 <span>{challenge.date} | {challenge.time}</span>
               </div>
               <div className="flex items-center justify-between">
@@ -161,17 +161,17 @@ export const DashboardChallenges = () => {
                       key={attendee.id} 
                       src={attendee.avatar} 
                       alt="Attendee" 
-                      className="h-6 w-6 rounded-full border-2 border-white dark:border-gray-800"
+                      className="h-5 w-5 rounded-full border-2 border-white dark:border-gray-800"
                     />
                   ))}
-                  <span className="flex items-center justify-center h-6 w-6 rounded-full border-2 border-white dark:border-gray-800 bg-gray-200 dark:bg-gray-700 text-xs font-medium">
+                  <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-white dark:border-gray-800 bg-gray-200 dark:bg-gray-700 text-xs font-medium">
                     {challenge.spots}
                   </span>
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="p-4 pt-0">
-              <Button className="w-full bg-blue-600 hover:bg-blue-700">Join Now</Button>
+            <CardFooter className="p-3 pt-0">
+              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-sm py-1.5">Join Now</Button>
             </CardFooter>
           </Card>
         ))}

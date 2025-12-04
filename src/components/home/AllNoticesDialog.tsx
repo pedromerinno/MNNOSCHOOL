@@ -7,11 +7,12 @@ import { useCompanyNotices } from "@/hooks/useCompanyNotices";
 import { formatDistanceToNow } from "date-fns";
 import { pt } from "date-fns/locale";
 import { Avatar } from "@/components/ui/avatar";
-import { Pencil, Trash2, RefreshCw } from "lucide-react";
+import { Pencil, Trash2, RefreshCw, Bell } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import NewNoticeDialog from "@/components/admin/dialogs/NewNoticeDialog";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface AllNoticesDialogProps {
   open: boolean;
@@ -32,27 +33,10 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
 
   const canManage = userProfile?.is_admin || userProfile?.super_admin;
 
-  // Update notices when dialog is opened, with debounce to prevent multiple calls
+  // Não forçar fetch automático - o hook useCompanyNotices já busca automaticamente
+  // quando a empresa muda. Só buscar se realmente necessário (ex: refresh manual)
   useEffect(() => {
-    if (open && selectedCompany?.id && !hasInitialFetchRef.current) {
-      // Marcar que a busca inicial foi feita para evitar múltiplas chamadas
-      hasInitialFetchRef.current = true;
-      
-      if (refreshTimeoutRef.current) {
-        clearTimeout(refreshTimeoutRef.current);
-      }
-      
-      refreshTimeoutRef.current = window.setTimeout(() => {
-        try {
-          fetchNotices(selectedCompany.id, true).catch(err => {
-            console.error("Error fetching notices in dialog:", err);
-          });
-        } catch (err) {
-          console.error("Exception in fetchNotices dialog:", err);
-        }
-        refreshTimeoutRef.current = null;
-      }, 300);
-    } else if (!open) {
+    if (!open) {
       // Resetar o estado quando o diálogo fechar
       hasInitialFetchRef.current = false;
     }
@@ -63,7 +47,7 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
         refreshTimeoutRef.current = null;
       }
     };
-  }, [open, selectedCompany?.id, fetchNotices]);
+  }, [open]);
 
   const getInitial = (name: string | null | undefined) =>
     name ? name.charAt(0).toUpperCase() : "?";
@@ -201,17 +185,16 @@ export function AllNoticesDialog({ open, onOpenChange }: AllNoticesDialogProps) 
                 </Button>
               </div>
             ) : notices.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-24 gap-2">
-                <p className="text-gray-500 dark:text-gray-400">Nenhum aviso disponível</p>
-                {canManage && (
-                  <Button 
-                    onClick={() => setEditDialogOpen(true)}
-                    variant="outline"
-                    size="sm"
-                  >
-                    Criar novo aviso
-                  </Button>
-                )}
+              <div className="flex justify-center py-8">
+                <EmptyState
+                  title="Nenhum aviso disponível"
+                  description="Os avisos aparecerão aqui quando publicados pela sua empresa."
+                  icons={[Bell]}
+                  action={canManage ? {
+                    label: "Criar novo aviso",
+                    onClick: () => setEditDialogOpen(true)
+                  } : undefined}
+                />
               </div>
             ) : (
               <div className="space-y-6">

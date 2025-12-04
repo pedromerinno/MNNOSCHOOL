@@ -53,20 +53,30 @@ export const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-8 w-8 p-0">
+        <Button 
+          variant="ghost" 
+          className="h-8 w-8 p-0"
+          onClick={(e) => e.stopPropagation()}
+        >
           <span className="sr-only">Abrir menu</span>
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuItem onClick={handleEditClick}>
-          <Edit className="mr-2 h-4 w-4" />
-          Editar
+      <DropdownMenuContent align="end" className="w-48 bg-white dark:bg-gray-800">
+        <DropdownMenuItem 
+          onClick={handleEditClick}
+          className="cursor-pointer flex items-center gap-2 focus:bg-gray-100 dark:focus:bg-gray-700"
+        >
+          <Edit className="h-4 w-4" />
+          <span>Editar Usuário</span>
         </DropdownMenuItem>
         
-        <DropdownMenuItem onClick={handleManageCompanies}>
-          <Building className="mr-2 h-4 w-4" />
-          Gerenciar Empresas
+        <DropdownMenuItem 
+          onClick={handleManageCompanies}
+          className="cursor-pointer flex items-center gap-2 focus:bg-gray-100 dark:focus:bg-gray-700"
+        >
+          <Building className="h-4 w-4" />
+          <span>Gerenciar Empresas</span>
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
@@ -79,16 +89,19 @@ export const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem onClick={handleToggleAdmin}>
+        <DropdownMenuItem 
+          onClick={handleToggleAdmin}
+          className="cursor-pointer flex items-center gap-2 focus:bg-gray-100 dark:focus:bg-gray-700"
+        >
           {user.is_admin ? (
             <>
-              <ShieldOff className="mr-2 h-4 w-4" />
-              Remover Admin
+              <ShieldOff className="h-4 w-4" />
+              <span>Remover Admin</span>
             </>
           ) : (
             <>
-              <Shield className="mr-2 h-4 w-4" />
-              Tornar Admin
+              <Shield className="h-4 w-4" />
+              <span>Tornar Admin</span>
             </>
           )}
         </DropdownMenuItem>
@@ -98,10 +111,10 @@ export const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               onClick={handleDeleteClick}
-              className="text-red-600 focus:text-red-600"
+              className="cursor-pointer flex items-center gap-2 text-red-600 dark:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/20"
             >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Excluir
+              <Trash2 className="h-4 w-4" />
+              <span>Excluir Usuário</span>
             </DropdownMenuItem>
           </>
         )}

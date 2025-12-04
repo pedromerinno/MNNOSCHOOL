@@ -101,10 +101,10 @@ export const CalendarWidget = memo(() => {
   
   return (
     <Card 
-      className="border-0 rounded-[30px] overflow-hidden text-white"
+      className="border-0 rounded-[30px] overflow-hidden text-white h-full"
       style={{ backgroundColor: companyColor }}
     >
-      <CardContent className="p-0">
+      <CardContent className="p-0 h-full flex flex-col">
         <div className="p-8 flex justify-between items-center">
           <h3 className="text-xl font-medium capitalize">
             {getMonthName(currentDate)} {getYear(currentDate)}

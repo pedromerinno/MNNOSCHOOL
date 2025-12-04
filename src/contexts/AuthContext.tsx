@@ -60,45 +60,105 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { syncProfileEmailWithAuth, validateEmailSync } = useEmailSync();
   const { getCache, setCache, clearCache } = useCache();
   const USER_PROFILE_CACHE_KEY = 'user_profile';
+  const lastFetchedUserIdRef = React.useRef<string | null>(null);
+  const fetchTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const hasAttemptedFetchRef = React.useRef<boolean>(false);
 
   // Load user profile when user changes and sync email
   // Otimizado: sincronização de email e busca de perfil em paralelo para melhor performance
+  // Com debounce para evitar múltiplas buscas
   useEffect(() => {
-    if (user) {
-      // Executar busca de perfil (crítico)
-      // Sincronização de email em paralelo (não crítico, pode falhar silenciosamente)
-      // Usar Promise.allSettled para não bloquear uma pela outra
-      Promise.allSettled([
+    // Limpar timeout anterior se existir
+    if (fetchTimeoutRef.current) {
+      clearTimeout(fetchTimeoutRef.current);
+      fetchTimeoutRef.current = null;
+    }
+
+    if (!user?.id) {
+      console.log('[AuthContext] No user, clearing profile');
+      lastFetchedUserIdRef.current = null;
+      hasAttemptedFetchRef.current = false;
+      clearProfile();
+      return;
+    }
+
+    // Se já temos perfil para este usuário, não buscar novamente
+    if (lastFetchedUserIdRef.current === user.id && userProfile?.id === user.id) {
+      console.log('[AuthContext] Profile already loaded for this user, skipping...');
+      return;
+    }
+
+    // Se já tentamos buscar para este usuário e ainda está carregando, aguardar
+    if (lastFetchedUserIdRef.current === user.id && profileLoading) {
+      console.log('[AuthContext] Profile fetch already in progress, waiting...');
+      return;
+    }
+
+    // Se já tentamos buscar e não temos perfil, não tentar novamente automaticamente
+    // (evita loops infinitos - o perfil pode não existir ainda ou haver erro de RLS)
+    if (lastFetchedUserIdRef.current === user.id && hasAttemptedFetchRef.current && !userProfile) {
+      console.log('[AuthContext] Already attempted fetch for this user, not retrying automatically');
+      return;
+    }
+
+    // Debounce reduzido para carregamento mais rápido (50ms é suficiente para evitar múltiplas requisições)
+    console.log('[AuthContext] Scheduling profile fetch for user:', user.id);
+    fetchTimeoutRef.current = setTimeout(() => {
+      console.log('[AuthContext] Starting profile fetch for user:', user.id);
+      lastFetchedUserIdRef.current = user.id;
+      hasAttemptedFetchRef.current = true;
+
+      // Executar busca de perfil (crítico) - priorizar perfil sobre email sync
+      // Buscar perfil primeiro, email sync pode ser feito em background
+      fetchUserProfile(user.id, false).then(() => {
+        console.log('[AuthContext] Profile fetch completed for user:', user.id);
+        // Email sync em background após perfil carregado
         syncProfileEmailWithAuth().then(result => {
-          // Se retornou erro de RLS, não logar (é esperado)
           if (result?.error?.code === '42P17') {
             return; // Silencioso
           }
           if (!result?.success && result?.error) {
-            console.warn('Email sync failed (non-critical):', result.error);
+            console.warn('[AuthContext] Email sync failed (non-critical):', result.error);
+          } else if (result?.success) {
+            console.log('[AuthContext] Email sync successful');
           }
         }).catch(err => {
-          // Se for erro de RLS, não logar (é esperado)
           if (err?.code !== '42P17') {
-            console.warn('Email sync failed (non-critical):', err);
+            console.warn('[AuthContext] Email sync failed (non-critical):', err);
           }
-        }),
-        fetchUserProfile(user.id).catch(err => {
-          // Se for erro de RLS, não é crítico - aplicação pode funcionar sem perfil
-          if (err?.code !== '42P17') {
-            console.error('Error fetching user profile:', err);
-          }
-        })
-      ]);
-    } else {
-      clearProfile();
-    }
-  }, [user, fetchUserProfile, clearProfile, syncProfileEmailWithAuth]);
+        });
+      }).catch(err => {
+        // Se for erro de RLS, não é crítico - aplicação pode funcionar sem perfil
+        if (err?.code !== '42P17') {
+          console.error('[AuthContext] Error fetching user profile:', err);
+        } else {
+          console.warn('[AuthContext] RLS error when fetching profile (expected in some cases)');
+        }
+      });
+    }, 50); // Debounce reduzido para 50ms - carregamento mais rápido
+
+    // Cleanup: limpar timeout se o componente desmontar ou user mudar
+    return () => {
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+        fetchTimeoutRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   // Function to sign out and clear data
   const signOut = async () => {
+    // Limpar timeouts
+    if (fetchTimeoutRef.current) {
+      clearTimeout(fetchTimeoutRef.current);
+      fetchTimeoutRef.current = null;
+    }
+    
     clearCache({ key: USER_PROFILE_CACHE_KEY });
     clearProfile();
+    lastFetchedUserIdRef.current = null;
+    hasAttemptedFetchRef.current = false;
     
     // Clear company-related localStorage items for security
     try {

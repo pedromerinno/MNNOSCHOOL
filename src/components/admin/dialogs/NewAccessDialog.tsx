@@ -26,13 +26,6 @@ export const NewAccessDialog: React.FC<NewAccessDialogProps> = ({ open, onOpenCh
   // Use hook with forced refresh to ensure companies are loaded
   const { selectedCompany, userCompanies, selectCompany, user, isLoading, forceGetUserCompanies } = useCompanies();
 
-  console.log('[NewAccessDialog] Companies data:', {
-    userCompaniesCount: userCompanies.length,
-    selectedCompany: selectedCompany?.nome || 'none',
-    isLoading,
-    userId: user?.id || 'no user'
-  });
-
   // Force reload companies when dialog opens
   React.useEffect(() => {
     if (open && user?.id && userCompanies.length === 0 && !isLoading) {
@@ -40,6 +33,11 @@ export const NewAccessDialog: React.FC<NewAccessDialogProps> = ({ open, onOpenCh
       forceGetUserCompanies(user.id);
     }
   }, [open, user?.id, userCompanies.length, isLoading, forceGetUserCompanies]);
+
+  // Não renderizar se não estiver aberto
+  if (!open) {
+    return null;
+  }
 
   const handleCompanyChange = (companyId: string) => {
     const company = userCompanies.find(c => c.id === companyId);

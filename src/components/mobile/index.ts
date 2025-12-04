@@ -1,2 +1,0 @@
-
-export { QRCodeTester } from './QRCodeTester';

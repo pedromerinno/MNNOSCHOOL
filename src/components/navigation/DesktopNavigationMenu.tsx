@@ -16,7 +16,7 @@ export const DesktopNavigationMenu = () => {
   const { user } = useAuth();
   const { selectedCompany } = useCompanies();
   const location = useLocation();
-  const isAdminPage = location.pathname === '/admin';
+  const isAdminPage = location.pathname === '/admin' || location.pathname === '/super-admin';
 
   return (
     <header 
@@ -28,41 +28,45 @@ export const DesktopNavigationMenu = () => {
       )}
     >
       <div className="w-full px-4 h-16 flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Link to="/" className="flex items-center space-x-2">
-            {selectedCompany?.logo ? (
-              <img 
-                src={selectedCompany.logo} 
-                alt={selectedCompany.nome} 
-                className="h-6 w-6 object-contain rounded-lg"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                  const parent = target.parentElement;
-                  if (parent && selectedCompany?.nome) {
-                    const initialsDiv = document.createElement('div');
-                    initialsDiv.className = "h-6 w-6 rounded-lg bg-primary/10 flex items-center justify-center text-xs text-primary font-medium";
-                    initialsDiv.textContent = getInitials(selectedCompany.nome);
-                    parent.appendChild(initialsDiv);
-                  }
-                }}
-              />
-            ) : selectedCompany?.nome ? (
-              <div className="h-6 w-6 rounded-lg bg-primary/10 flex items-center justify-center text-xs text-primary font-medium">
-                {getInitials(selectedCompany.nome)}
-              </div>
-            ) : (
-              <img 
-                src="/lovable-uploads/200a55db-c024-40f3-b628-d48307d84e93.png" 
-                alt="MNNO School" 
-                className="h-6 w-6"
-              />
-            )}
-          </Link>
-          
-          <div className="flex items-center">
-            <CompanySelector />
+        <div className="flex items-center gap-8">
+          <div className="flex items-center space-x-4">
+            <Link to="/" className="flex items-center space-x-2">
+              {selectedCompany?.logo ? (
+                <img 
+                  src={selectedCompany.logo} 
+                  alt={selectedCompany.nome} 
+                  className="h-6 w-6 object-contain rounded-lg"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent && selectedCompany?.nome) {
+                      const initialsDiv = document.createElement('div');
+                      initialsDiv.className = "h-6 w-6 rounded-lg bg-primary/10 flex items-center justify-center text-xs text-primary font-medium";
+                      initialsDiv.textContent = getInitials(selectedCompany.nome);
+                      parent.appendChild(initialsDiv);
+                    }
+                  }}
+                />
+              ) : selectedCompany?.nome ? (
+                <div className="h-6 w-6 rounded-lg bg-primary/10 flex items-center justify-center text-xs text-primary font-medium">
+                  {getInitials(selectedCompany.nome)}
+                </div>
+              ) : (
+                <img 
+                  src="/lovable-uploads/200a55db-c024-40f3-b628-d48307d84e93.png" 
+                  alt="MNNO School" 
+                  className="h-6 w-6"
+                />
+              )}
+            </Link>
+            
+            <div className="flex items-center">
+              <CompanySelector />
+            </div>
           </div>
+          
+          <div className="h-6 w-px bg-gray-300 dark:bg-gray-700"></div>
           
           <NavMenuLinks />
         </div>

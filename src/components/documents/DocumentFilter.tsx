@@ -1,12 +1,14 @@
 import React from 'react';
-import { Button } from "@/components/ui/button";
-import { FileText, Shield, ScrollText, Briefcase, Archive, Book, Clipboard, GraduationCap, Filter } from "lucide-react";
+import { FileText, Shield, ScrollText, Briefcase, Archive, Book, Clipboard, GraduationCap } from "lucide-react";
+import { SmartCombobox } from "@/components/ui/smart-combo-box";
+
 interface DocumentFilterProps {
   selectedCategory: string;
   onCategoryChange: (category: string) => void;
   documentType: 'personal' | 'company';
   companyColor: string;
 }
+
 export const DocumentFilter: React.FC<DocumentFilterProps> = ({
   selectedCategory,
   onCategoryChange,
@@ -14,85 +16,79 @@ export const DocumentFilter: React.FC<DocumentFilterProps> = ({
   companyColor
 }) => {
   const personalCategories = [{
-    value: 'all',
+    id: 'all',
     label: 'Todos',
-    icon: FileText
+    icon: <FileText className="h-4 w-4" style={{ color: companyColor }} />
   }, {
-    value: 'confidentiality_agreement',
+    id: 'confidentiality_agreement',
     label: 'Confidencialidade',
-    icon: Shield
+    icon: <Shield className="h-4 w-4" style={{ color: companyColor }} />
   }, {
-    value: 'company_policy',
+    id: 'company_policy',
     label: 'Políticas',
-    icon: ScrollText
+    icon: <ScrollText className="h-4 w-4" style={{ color: companyColor }} />
   }, {
-    value: 'employment_contract',
+    id: 'employment_contract',
     label: 'Contratos',
-    icon: Briefcase
+    icon: <Briefcase className="h-4 w-4" style={{ color: companyColor }} />
   }, {
-    value: 'other',
+    id: 'other',
     label: 'Outros',
-    icon: Archive
+    icon: <Archive className="h-4 w-4" style={{ color: companyColor }} />
   }];
+  
   const companyCategories = [{
-    value: 'all',
+    id: 'all',
     label: 'Todos',
-    icon: FileText
+    icon: <FileText className="h-4 w-4" style={{ color: companyColor }} />
   }, {
-    value: 'confidentiality_agreement',
+    id: 'confidentiality_agreement',
     label: 'Confidencialidade',
-    icon: Shield
+    icon: <Shield className="h-4 w-4" style={{ color: companyColor }} />
   }, {
-    value: 'company_policy',
+    id: 'company_policy',
     label: 'Políticas',
-    icon: ScrollText
+    icon: <ScrollText className="h-4 w-4" style={{ color: companyColor }} />
   }, {
-    value: 'employment_contract',
+    id: 'employment_contract',
     label: 'Contratos',
-    icon: Briefcase
+    icon: <Briefcase className="h-4 w-4" style={{ color: companyColor }} />
   }, {
-    value: 'company_manual',
+    id: 'company_manual',
     label: 'Manuais',
-    icon: Book
+    icon: <Book className="h-4 w-4" style={{ color: companyColor }} />
   }, {
-    value: 'procedures',
+    id: 'procedures',
     label: 'Procedimentos',
-    icon: Clipboard
+    icon: <Clipboard className="h-4 w-4" style={{ color: companyColor }} />
   }, {
-    value: 'training_materials',
+    id: 'training_materials',
     label: 'Treinamentos',
-    icon: GraduationCap
+    icon: <GraduationCap className="h-4 w-4" style={{ color: companyColor }} />
   }, {
-    value: 'other',
+    id: 'other',
     label: 'Outros',
-    icon: Archive
+    icon: <Archive className="h-4 w-4" style={{ color: companyColor }} />
   }];
+  
   const categories = documentType === 'personal' ? personalCategories : companyCategories;
-  return <div className="space-y-6 my-[40px]">
-      <div className="flex items-center gap-3">
-        
-        <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-          Filtrar por categoria
-        </h3>
-      </div>
-      
-      <div className="flex flex-wrap gap-3">
-        {categories.map(category => {
-        const IconComponent = category.icon;
-        const isActive = selectedCategory === category.value;
-        return <Button key={category.value} variant={isActive ? "default" : "outline"} size="sm" onClick={() => onCategoryChange(category.value)} className="flex items-center gap-2 px-4 py-2 h-10 transition-all duration-200 hover:shadow-sm" style={isActive ? {
-          backgroundColor: companyColor,
-          borderColor: companyColor,
-          color: 'white'
-        } : {
-          borderColor: `${companyColor}40`,
-          color: companyColor,
-          backgroundColor: 'transparent'
-        }}>
-              <IconComponent className="h-4 w-4" />
-              {category.label}
-            </Button>;
-      })}
-      </div>
-    </div>;
+  
+  return (
+    <SmartCombobox
+      placeholder="Buscar categoria..."
+      options={categories}
+      value={selectedCategory}
+      onValueChange={(value) => {
+        if (typeof value === 'string') {
+          onCategoryChange(value);
+        } else if (value === null) {
+          onCategoryChange('all');
+        }
+      }}
+      clearable={true}
+      multiple={false}
+      emptyState="Nenhuma categoria encontrada"
+      className="w-full sm:w-[280px]"
+    />
+  );
 };

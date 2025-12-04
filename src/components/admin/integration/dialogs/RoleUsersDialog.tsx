@@ -36,21 +36,35 @@ const RoleUsersDialog: React.FC<RoleUsersDialogProps> = ({
   const fetchUsersWithRole = async () => {
     setLoading(true);
     try {
-      console.log(`Buscando usuários com cargo ID: ${roleId}`);
-      // Query to get users who have this role assigned
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, display_name, avatar, email')
+      console.log(`Buscando usuários com cargo ID: ${roleId} na empresa: ${companyId}`);
+      // Query to get users who have this role assigned in this company
+      const { data: userEmpresaData, error: userEmpresaError } = await supabase
+        .from('user_empresa')
+        .select(`
+          user_id,
+          profiles!inner (
+            id,
+            display_name,
+            avatar,
+            email
+          )
+        `)
+        .eq('empresa_id', companyId)
         .eq('cargo_id', roleId);
 
-      if (error) {
-        console.error("Erro ao buscar usuários com cargo:", error);
-        throw error;
+      if (userEmpresaError) {
+        console.error("Erro ao buscar usuários com cargo:", userEmpresaError);
+        throw userEmpresaError;
       }
 
-      console.log(`Encontrados ${data?.length || 0} usuários com este cargo`);
+      // Extract profiles from the nested structure
+      const profiles = (userEmpresaData || [])
+        .map((item: any) => item.profiles)
+        .filter((profile: any) => profile !== null);
+
+      console.log(`Encontrados ${profiles.length} usuários com este cargo`);
       // Set the users
-      setUsers(data || []);
+      setUsers(profiles);
     } catch (error: any) {
       console.error("Error fetching users with role:", error);
       toast.error(`Erro ao buscar usuários: ${error.message}`);

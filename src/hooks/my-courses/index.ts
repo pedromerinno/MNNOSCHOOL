@@ -1,11 +1,12 @@
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useFilteredCourses } from "./useFilteredCourses";
 import { useCourseStats } from "./useCourseStats";
 import { useRecentCourses } from "./useRecentCourses";
 import { useCourseData } from "./useCourseData";
 import { FilterOption } from "./types";
+import React from "react";
 
 export const useMyCourses = () => {
   const { selectedCompany } = useCompanies();
@@ -79,15 +80,22 @@ export const useMyCourses = () => {
     }
   }, [selectedCompany?.id]); // Removed fetchCourseData from dependencies
 
+  // Memoize companyColor to avoid creating new string on every render
+  const companyColor = React.useMemo(
+    () => selectedCompany?.cor_principal || "#1EAEDB",
+    [selectedCompany?.cor_principal]
+  );
+
   return {
     activeFilter,
     stats,
     recentCourses,
     filteredCourses,
+    allCourses,
     loading,
     hoursWatched,
     handleFilterChange,
-    companyColor: selectedCompany?.cor_principal || "#1EAEDB",
+    companyColor,
   };
 };
 

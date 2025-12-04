@@ -52,18 +52,18 @@ const metrics = [
 
 export const DashboardMetrics = () => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {metrics.map((metric, index) => (
         <Card key={index} className="border border-gray-100 dark:border-gray-800 shadow-sm">
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="space-y-1">
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">
                 {metric.title}
               </h3>
-              <div className="flex justify-between items-end">
-                <p className="text-3xl font-bold">{metric.value}</p>
+              <div className="flex justify-between items-center">
+                <p className="text-2xl font-bold">{metric.value}</p>
                 {metric.showChart && (
-                  <div className="h-12 w-24">
+                  <div className="h-8 w-16">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={data}>
                         <Line 
@@ -78,19 +78,21 @@ export const DashboardMetrics = () => {
                   </div>
                 )}
               </div>
-              <div>
-                {metric.change && (
-                  <span className={`inline-flex items-center ${metric.isPositive ? 'text-green-500' : 'text-red-500'}`}>
-                    {metric.isPositive ? <ArrowUp className="h-3 w-3 mr-1" /> : <ArrowDown className="h-3 w-3 mr-1" />}
-                    {metric.change}
-                  </span>
-                )}
-                {metric.label && (
-                  <span className={`ml-1 text-sm ${metric.isLink ? (metric.title.includes('Incomplete') ? 'text-green-500 hover:underline cursor-pointer' : 'text-green-500 hover:underline cursor-pointer') : 'text-gray-500 dark:text-gray-400'}`}>
-                    {metric.label}
-                  </span>
-                )}
-              </div>
+              {(metric.change || metric.label) && (
+                <div className="mt-0.5 flex items-center gap-1 flex-wrap">
+                  {metric.change && (
+                    <span className={`inline-flex items-center text-xs ${metric.isPositive ? 'text-green-500' : 'text-red-500'}`}>
+                      {metric.isPositive ? <ArrowUp className="h-3 w-3 mr-0.5" /> : <ArrowDown className="h-3 w-3 mr-0.5" />}
+                      {metric.change}
+                    </span>
+                  )}
+                  {metric.label && (
+                    <span className={`text-xs ${metric.isLink ? 'text-green-500 hover:underline cursor-pointer' : 'text-gray-500 dark:text-gray-400'}`}>
+                      {metric.label}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

@@ -1,6 +1,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useCompanies } from "@/hooks/useCompanies";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -8,6 +9,7 @@ type FilterOption = 'all' | 'newest' | 'popular';
 
 export const useCoursesPage = () => {
   const { selectedCompany } = useCompanies();
+  const { userProfile } = useAuth();
   const [activeFilter, setActiveFilter] = useState<FilterOption>('all');
   const [featuredCourses, setFeaturedCourses] = useState<any[]>([]);
   const [allCompanyCourses, setAllCompanyCourses] = useState<any[]>([]);
@@ -124,36 +126,35 @@ export const useCoursesPage = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
       
-      // Get user profile to check super_admin status
-      const { data: userProfile } = await supabase
-        .from('profiles')
-        .select('super_admin')
-        .eq('id', user.id)
-        .single();
+      // Usar userProfile do contexto se disponível, caso contrário buscar
+      // Paralelizar queries de empresa do usuário e company access
+      const [userCompanyResult, companyAccessResult] = await Promise.all([
+        supabase
+          .from('user_empresa')
+          .select('cargo_id, is_admin')
+          .eq('user_id', user.id)
+          .eq('empresa_id', selectedCompany.id)
+          .single(),
+        supabase
+          .from('company_courses')
+          .select('course_id')
+          .eq('empresa_id', selectedCompany.id)
+      ]);
       
-      // Get user company role and admin status (cargo_id and is_admin moved to user_empresa)
-      const { data: userCompany } = await supabase
-        .from('user_empresa')
-        .select('cargo_id, is_admin')
-        .eq('user_id', user.id)
-        .eq('empresa_id', selectedCompany.id)
-        .single();
-      
-      const isSuperAdmin = userProfile?.super_admin === true;
-      const isAdmin = isSuperAdmin || (userCompany?.is_admin === true);
-      const userJobRoleId = userCompany?.cargo_id || null;
-      
-      console.log('User company data for courses page:', { isAdmin, isSuperAdmin, userJobRoleId });
-      
-      const { data: companyAccess, error: accessError } = await supabase
-        .from('company_courses')
-        .select('course_id')
-        .eq('empresa_id', selectedCompany.id);
+      const { data: userCompany } = userCompanyResult;
+      const { data: companyAccess, error: accessError } = companyAccessResult;
       
       if (accessError) {
         console.error("Error fetching company access:", accessError);
         throw accessError;
       }
+      
+      // Usar userProfile do contexto (já carregado) em vez de fazer query separada
+      const isSuperAdmin = userProfile?.super_admin === true;
+      const isAdmin = isSuperAdmin || (userCompany?.is_admin === true);
+      const userJobRoleId = userCompany?.cargo_id || null;
+      
+      console.log('User company data for courses page:', { isAdmin, isSuperAdmin, userJobRoleId });
       
       if (!companyAccess || companyAccess.length === 0) {
         console.log(`No courses found for company ${selectedCompany.nome}`);
@@ -168,19 +169,17 @@ export const useCoursesPage = () => {
       const courseIds = companyAccess.map(access => access.course_id);
       console.log('All company course IDs:', courseIds);
       
-      // Get courses with job role restrictions
-      const { data: courseJobRoles } = await supabase
-        .from('course_job_roles')
-        .select('course_id, job_role_id')
-        .in('course_id', courseIds);
-      
-      console.log('Course job roles restrictions:', courseJobRoles);
-      
-      // Filter courses based on user's job role and admin status
+      // Buscar course_job_roles apenas se necessário (não é admin)
       let availableCourseIds = courseIds;
       
-      // If user is not admin and has a job role, apply filtering
       if (!isAdmin) {
+        // Get courses with job role restrictions
+        const { data: courseJobRoles } = await supabase
+          .from('course_job_roles')
+          .select('course_id, job_role_id')
+          .in('course_id', courseIds);
+        
+        console.log('Course job roles restrictions:', courseJobRoles);
         console.log('User job role ID:', userJobRoleId);
         
         if (courseJobRoles && courseJobRoles.length > 0) {
@@ -218,35 +217,41 @@ export const useCoursesPage = () => {
         return;
       }
       
-      // Featured courses (for carousel)
-      const { data: featuredCoursesData, error: featuredError } = await supabase
-        .from('courses')
-        .select('*')
-        .in('id', availableCourseIds)
-        .limit(5);
+      // Paralelizar busca de featured courses e all courses
+      const [featuredResult, allCoursesResult] = await Promise.all([
+        supabase
+          .from('courses')
+          .select('*')
+          .in('id', availableCourseIds)
+          .limit(5),
+        supabase
+          .from('courses')
+          .select('*')
+          .in('id', availableCourseIds)
+          .order('created_at', { ascending: false })
+      ]);
+      
+      const { data: featuredCoursesData, error: featuredError } = featuredResult;
+      const { data: allCoursesData, error: allCoursesError } = allCoursesResult;
       
       if (featuredError) {
         console.error("Error fetching featured courses:", featuredError);
         throw featuredError;
       }
       
-      if (featuredCoursesData && featuredCoursesData.length > 0) {
-        console.log(`Fetched ${featuredCoursesData.length} featured courses`);
-        setFeaturedCourses(featuredCoursesData);
-      } else {
-        setFeaturedCourses([]);
-      }
-      
-      // All company courses
-      const { data: allCoursesData, error: allCoursesError } = await supabase
-        .from('courses')
-        .select('*')
-        .in('id', availableCourseIds)
-        .order('created_at', { ascending: false });
-      
       if (allCoursesError) {
         console.error("Error fetching all courses:", allCoursesError);
         throw allCoursesError;
+      }
+      
+      // Atualizar featured courses primeiro para mostrar carousel mais rápido
+      if (featuredCoursesData && featuredCoursesData.length > 0) {
+        console.log(`Fetched ${featuredCoursesData.length} featured courses`);
+        setFeaturedCourses(featuredCoursesData);
+        setLoading(false); // Marcar loading como false quando featured courses estiverem prontos
+      } else {
+        setFeaturedCourses([]);
+        setLoading(false);
       }
       
       if (allCoursesData && allCoursesData.length > 0) {
@@ -260,7 +265,6 @@ export const useCoursesPage = () => {
       setFeaturedCourses([]);
       setAllCompanyCourses([]);
     } finally {
-      setLoading(false);
       setAllCoursesLoading(false);
       initialLoadDone.current = true;
       hasActiveRequest.current = false;

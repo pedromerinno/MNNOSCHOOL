@@ -4,12 +4,14 @@ import { AlertTriangle } from 'lucide-react';
 
 const CompanyNotFoundMessage: React.FC = () => {
   return (
-    <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-start">
-      <AlertTriangle className="h-5 w-5 text-amber-500 mr-3 mt-0.5 flex-shrink-0" />
-      <div>
-        <h3 className="text-sm font-medium text-amber-800">Empresa não encontrada</h3>
-        <p className="mt-1 text-sm text-amber-700">
-          Não encontramos nenhuma empresa com este ID. Verifique se o código está correto ou crie uma nova empresa.
+    <div className="mt-6 p-5 bg-amber-50 border-2 border-amber-200 rounded-xl flex items-start gap-4">
+      <div className="flex-shrink-0 mt-0.5">
+        <AlertTriangle className="h-6 w-6 text-amber-600" strokeWidth={2} />
+      </div>
+      <div className="flex-1">
+        <h3 className="text-base font-semibold text-amber-900 mb-2">Empresa não encontrada</h3>
+        <p className="text-sm text-amber-800 leading-relaxed">
+          Não encontramos nenhuma empresa com este ID ou nome. Verifique se o código está correto ou crie uma nova empresa.
         </p>
       </div>
     </div>

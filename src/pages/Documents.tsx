@@ -1,28 +1,31 @@
 import { useState, useEffect } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
-import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
-import { AdminFloatingActionButton } from "@/components/admin/AdminFloatingActionButton";
-import { Preloader } from "@/components/ui/Preloader";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, FileText, Building } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
-import { CompanyThemedBadge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DocumentSection } from "@/components/documents/DocumentSection";
 import { EditCompanyDocumentDialog } from "@/components/documents/EditCompanyDocumentDialog";
+import { DocumentsDescription } from "@/components/documents/DocumentsDescription";
+import { DocumentStatsCards } from "@/components/documents/DocumentStatsCards";
+import { IntegrationStylePage, IntegrationSection } from "@/components/integration/layout/IntegrationStylePage";
+import { InteractiveCard } from "@/components/integration/InteractiveCard";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Preloader } from "@/components/ui/Preloader";
 import { useDocumentManagerOptimized } from "@/hooks/documents/useDocumentManagerOptimized";
 import { useCompanyDocuments } from "@/hooks/company-documents/useCompanyDocuments";
 import { CompanyDocument } from "@/types/company-document";
+import { FileText, Building, LayoutGrid, Table as TableIcon, ArrowLeft } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { CompanyThemedBadge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const Documents = () => {
   const navigate = useNavigate();
   const { user, userProfile, loading: authLoading } = useAuth();
   const { selectedCompany, isLoading: companiesLoading } = useCompanies();
-  const [mainTab, setMainTab] = useState<'company' | 'personal'>('company');
   const [editingDocument, setEditingDocument] = useState<CompanyDocument | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [showPreloader, setShowPreloader] = useState(true);
+  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
 
   // Controlar quando parar de mostrar o preloader - igual à IndexContent
   useEffect(() => {
@@ -45,6 +48,7 @@ const Documents = () => {
     downloadDocument: downloadPersonalDocument,
     handlePreview: previewPersonalDocument,
     handleDelete: deletePersonalDocument,
+    updateDocument: updatePersonalDocument,
     canDeleteDocument: canDeletePersonalDocument
   } = useDocumentManagerOptimized();
 
@@ -82,7 +86,8 @@ const Documents = () => {
     description: string,
     documentType: any,
     selectedJobRoles: string[],
-    selectedUsers: string[]
+    selectedUsers: string[],
+    thumbnailPath?: string | null
   ): Promise<boolean> => {
     return await updateCompanyDocument(
       documentId,
@@ -90,9 +95,16 @@ const Documents = () => {
       description,
       documentType,
       selectedJobRoles,
-      selectedUsers
+      selectedUsers,
+      thumbnailPath
     );
   };
+
+  // Seções para a sidebar
+  const sections = [
+    { id: 'company', label: 'Documentos da Empresa', icon: Building },
+    { id: 'personal', label: 'Meus Documentos', icon: FileText },
+  ];
 
   if (showPreloader || (authLoading && !user) || companiesLoading) {
     return <Preloader />;
@@ -102,118 +114,170 @@ const Documents = () => {
     return <Preloader />;
   }
 
-  if (!userProfile) {
-    return <Navigate to="/login" replace />;
-  }
-  if (!selectedCompany) {
-    return <>
-        <MainNavigationMenu />
-        <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
-          <main className="container mx-auto px-6 py-12">
-            <div className="flex items-center mb-12 gap-4">
-              <Button variant="ghost" size="sm" className="p-0 hover:bg-transparent" onClick={() => navigate('/')}>
-                <ArrowLeft className="h-5 w-5 text-gray-500" />
-              </Button>
-              <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold dark:text-white">
-                  Documentos
-                </h1>
-              </div>
-            </div>
-            
-            <div className="bg-white dark:bg-card rounded-xl shadow-sm p-6">
-              <div className="text-center py-12">
-                <FileText className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium mb-2">Selecione uma empresa</h3>
-                <p className="text-gray-500 dark:text-gray-400">
-                  Selecione uma empresa no menu superior para visualizar os documentos.
-                </p>
-              </div>
-            </div>
-          </main>
-          <AdminFloatingActionButton />
-        </div>
-      </>;
-  }
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
+
+  // Caso: Sem empresa selecionada
+  if (!selectedCompany) {
+    return (
+      <IntegrationStylePage
+        title="Documentos"
+        sections={[]}
+        showSidebar={false}
+        backPath="/"
+      >
+        <IntegrationSection
+          id="empty"
+          withCard={true}
+          delay={0.1}
+        >
+          <EmptyState 
+            title="Selecione uma empresa"
+            description="Selecione uma empresa no menu superior para visualizar os documentos cadastrados."
+            icons={[FileText]}
+          />
+        </IntegrationSection>
+      </IntegrationStylePage>
+    );
+  }
+
+  // Hero section com descrição e estatísticas
+  const heroSection = (
+    <>
+      <InteractiveCard 
+        companyColor={companyColor}
+        hoverEffect={false}
+        borderBeam={false}
+        className="p-6 lg:p-8 mb-6"
+      >
+        <DocumentsDescription companyName={selectedCompany.nome} />
+      </InteractiveCard>
+      <DocumentStatsCards
+        companyCount={companyDocuments.length}
+        personalCount={personalDocuments.length}
+        companyColor={companyColor}
+        isLoadingCompany={companyLoading}
+        isLoadingPersonal={personalLoading}
+      />
+    </>
+  );
+
+  // Caso: Com empresa - Página completa
   return (
     <>
-      <MainNavigationMenu />
-      <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
-        <main className="container mx-auto px-6 py-12">
-          <div className="flex items-center mb-12 gap-4">
-            <Button variant="ghost" size="sm" className="p-0 hover:bg-transparent" onClick={() => navigate('/')}>
-              <ArrowLeft className="h-5 w-5 text-gray-500" />
-            </Button>
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold dark:text-white">
-                Documentos
-              </h1>
-              <CompanyThemedBadge variant="beta">
-                {selectedCompany.nome}
-              </CompanyThemedBadge>
-            </div>
-          </div>
-          
-          <div className="bg-white dark:bg-card rounded-xl shadow-sm p-6">
-            <Tabs value={mainTab} onValueChange={value => setMainTab(value as 'company' | 'personal')} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-8 rounded-2xl p-1.5 bg-white/[0.04]">
-                <TabsTrigger value="company" className="flex items-center gap-2 rounded-xl py-4" style={{
-                backgroundColor: mainTab === 'company' ? `${companyColor}10` : undefined,
-                color: mainTab === 'company' ? companyColor : undefined
-              }}>
-                  <Building className="h-4 w-4" />
-                  Documentos da Empresa
-                </TabsTrigger>
-                <TabsTrigger value="personal" className="flex items-center gap-2 rounded-xl py-4" style={{
-                backgroundColor: mainTab === 'personal' ? `${companyColor}10` : undefined,
-                color: mainTab === 'personal' ? companyColor : undefined
-              }}>
-                  <FileText className="h-4 w-4" />
-                  Meus Documentos
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="company">
-                {companyLoading ? (
-                  <div className="text-center py-12">
-                    <div className="animate-spin h-8 w-8 border-t-2 border-blue-500 border-r-2 rounded-full mx-auto mb-4"></div>
-                    <p className="text-gray-500">Carregando documentos da empresa...</p>
-                  </div>
-                ) : (
-                  <DocumentSection 
-                    type="company" 
-                    documents={companyDocuments} 
-                    isUploading={false} 
-                    onUpload={uploadCompanyDocument} 
-                    onDownload={downloadCompanyDocument} 
-                    onPreview={previewCompanyDocument} 
-                    onDelete={handleCompanyDocumentDelete} 
-                    onEdit={handleEditDocument}
-                    canDeleteDocument={canDeleteCompanyDocument} 
-                    companyColor={companyColor} 
-                  />
+      <IntegrationStylePage
+        title="Documentos"
+        sections={sections}
+        backPath="/"
+        showSidebar={true}
+        showCompanyBadge={true}
+        customHeader={
+          <>
+            <div className="flex items-center justify-between w-full mb-8 lg:mb-12">
+              <div className="flex items-center gap-3 lg:gap-4">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="p-0 hover:bg-transparent" 
+                  onClick={() => navigate('/')}
+                >
+                  <ArrowLeft className="h-4 w-5 lg:h-5 lg:w-5 text-gray-500 dark:text-gray-400" />
+                </Button>
+                <h1 className="text-2xl md:text-3xl font-medium text-gray-900 dark:text-white tracking-tight">
+                  Documentos
+                </h1>
+                {selectedCompany && (
+                  <CompanyThemedBadge variant="beta">
+                    {selectedCompany.nome}
+                  </CompanyThemedBadge>
                 )}
-              </TabsContent>
+              </div>
+              <ToggleGroup 
+                type="single" 
+                value={viewMode} 
+                onValueChange={(value) => value && setViewMode(value as 'card' | 'table')}
+                className="border border-gray-200 dark:border-gray-800 rounded-lg p-1"
+              >
+                <ToggleGroupItem 
+                  value="card" 
+                  aria-label="Visualização em cards"
+                  className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                >
+                  <LayoutGrid className="h-4 w-4 mr-2" />
+                  Cards
+                </ToggleGroupItem>
+                <ToggleGroupItem 
+                  value="table" 
+                  aria-label="Visualização em tabela"
+                  className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                >
+                  <TableIcon className="h-4 w-4 mr-2" />
+                  Tabela
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+            {heroSection}
+          </>
+        }
+        heroSection={heroSection}
+      >
+        {/* Seção: Documentos da Empresa */}
+        <IntegrationSection
+          id="company"
+          companyColor={companyColor}
+          direction="up"
+          delay={0.1}
+          withCard={true}
+          cardBorderBeam={false}
+        >
+          {companyLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
+            </div>
+          ) : (
+            <DocumentSection 
+              type="company" 
+              documents={companyDocuments} 
+              isUploading={false} 
+              onUpload={uploadCompanyDocument}
+              onUploadCompany={uploadCompanyDocument}
+              onUploadPersonal={uploadPersonalDocument}
+              onDownload={downloadCompanyDocument} 
+              onPreview={previewCompanyDocument} 
+              onDelete={handleCompanyDocumentDelete} 
+              onEdit={handleEditDocument}
+              canDeleteDocument={canDeleteCompanyDocument} 
+              companyColor={companyColor}
+              viewMode={viewMode}
+            />
+          )}
+        </IntegrationSection>
 
-              <TabsContent value="personal">
-                <DocumentSection 
-                  type="personal" 
-                  documents={personalDocuments} 
-                  isUploading={personalUploading} 
-                  onUpload={uploadPersonalDocument} 
-                  onDownload={downloadPersonalDocument} 
-                  onPreview={previewPersonalDocument} 
-                  onDelete={handlePersonalDocumentDelete} 
-                  canDeleteDocument={canDeletePersonalDocument} 
-                  companyColor={companyColor} 
-                />
-              </TabsContent>
-            </Tabs>
-          </div>
-        </main>
-        <AdminFloatingActionButton />
-      </div>
+        {/* Seção: Meus Documentos */}
+        <IntegrationSection
+          id="personal"
+          companyColor={companyColor}
+          direction="up"
+          delay={0.15}
+          withCard={true}
+          cardBorderBeam={false}
+        >
+          <DocumentSection 
+            type="personal" 
+            documents={personalDocuments} 
+            isUploading={personalUploading} 
+            onUpload={uploadPersonalDocument}
+            onUploadCompany={uploadCompanyDocument}
+            onUploadPersonal={uploadPersonalDocument}
+            onDownload={downloadPersonalDocument} 
+            onPreview={previewPersonalDocument} 
+            onDelete={handlePersonalDocumentDelete}
+            onUpdate={updatePersonalDocument}
+            canDeleteDocument={canDeletePersonalDocument} 
+            companyColor={companyColor}
+            viewMode={viewMode}
+          />
+        </IntegrationSection>
+      </IntegrationStylePage>
 
       <EditCompanyDocumentDialog
         open={isEditDialogOpen}

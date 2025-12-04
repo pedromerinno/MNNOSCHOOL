@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Play, CheckCircle, Clock, PlayCircle, BookOpen, Video, FileText, HelpCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Skeleton } from "@/components/ui/skeleton";
 import { calculateTotalDuration, formatDuration } from "@/utils/durationUtils";
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -125,26 +124,10 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
     }
   };
 
-  // Loading skeleton component
-  const PlaylistSkeleton = () => (
-    <div className="space-y-3">
-      {[1, 2, 3].map((i) => (
-        <Card key={i} className="border-border/60">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Skeleton className="w-10 h-10 rounded-full" />
-              <div className="flex-1">
-                <Skeleton className="h-4 w-3/4 mb-2" />
-                <div className="flex items-center gap-2">
-                  <Skeleton className="h-6 w-16 rounded-full" />
-                  <Skeleton className="h-3 w-12" />
-                </div>
-              </div>
-              <Skeleton className="w-8 h-8 rounded-full" />
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+  // Loading component
+  const PlaylistLoading = () => (
+    <div className="flex items-center justify-center py-8">
+      <Loader2 className="h-6 w-6 animate-spin text-primary" />
     </div>
   );
 
@@ -178,7 +161,7 @@ export const LessonPlaylist: React.FC<LessonPlaylistProps> = ({
       
       <div className="max-h-[60vh] overflow-y-auto pr-2 space-y-3">
         {loading ? (
-          <PlaylistSkeleton />
+          <PlaylistLoading />
         ) : (
           <>
             {localLessons.map((lesson, index) => {

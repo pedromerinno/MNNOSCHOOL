@@ -2,10 +2,8 @@
 import { LoginFormContent } from "./LoginFormContent";
 import { useLoginForm } from "@/hooks/auth/useLoginForm";
 import { useLoginFormState } from "@/hooks/auth/useLoginFormState";
-import { useNavigate } from "react-router-dom";
 
 export const LoginFormContainer = () => {
-  const navigate = useNavigate();
   const {
     email,
     setEmail,
@@ -20,10 +18,6 @@ export const LoginFormContainer = () => {
     await handleLogin(email, password);
   };
 
-  const handleForgotPassword = () => {
-    navigate("/password-reset");
-  };
-
   return (
     <LoginFormContent
       email={email}
@@ -32,7 +26,6 @@ export const LoginFormContainer = () => {
       setPassword={setPassword}
       isLoggingIn={isLoggingIn}
       onSubmit={handleSubmit}
-      onForgotPassword={handleForgotPassword}
     />
   );
 };
