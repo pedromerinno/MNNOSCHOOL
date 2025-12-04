@@ -72,6 +72,7 @@ export default defineConfig(({ mode }) => {
             
             // Also keep ALL source files in main bundle to avoid chunk loading order issues
             // This ensures Supabase is always available when components try to use it
+            // AND prevents circular dependency issues between UI components
             if (id.includes('src/')) {
               return undefined;
             }
@@ -91,7 +92,8 @@ export default defineConfig(({ mode }) => {
               ) {
                 return 'react-vendor';
               }
-              // Radix UI components
+              // Radix UI components - Keep in vendor but ensure proper loading order
+              // Note: UI components from src/ are already in main bundle above
               if (id.includes('@radix-ui')) {
                 return 'ui-vendor';
               }
@@ -131,8 +133,8 @@ export default defineConfig(({ mode }) => {
     },
     // Optimize chunk size
     chunkSizeWarningLimit: 1000,
-    // Enable source maps only in development
-    sourcemap: mode === 'development',
+    // Enable source maps for debugging production builds
+    sourcemap: true,
     // Minify for production
     minify: mode === 'production' ? 'esbuild' : false,
     // Target modern browsers for smaller bundles
