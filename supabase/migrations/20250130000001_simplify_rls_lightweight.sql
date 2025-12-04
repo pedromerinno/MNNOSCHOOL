@@ -330,3 +330,4 @@ COMMENT ON POLICY "user_empresa_delete_lightweight" ON public.user_empresa IS
 
 
 
+

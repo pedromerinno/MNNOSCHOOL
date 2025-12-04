@@ -56,3 +56,4 @@ WHERE cls.relname = 'company_documents'
   AND pol.polname = 'company_documents_insert';
 
 
+

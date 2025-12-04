@@ -48,3 +48,4 @@ git push -u origin main
 ## Sobre MCP (Model Context Protocol)
 
 **Não é necessário acesso MCP** para este projeto. O projeto não possui configurações MCP e funciona normalmente sem ele.
+

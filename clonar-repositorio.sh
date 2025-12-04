@@ -37,3 +37,4 @@ echo "1. Certifique-se de que o repositório '$REPO_NAME' foi criado no GitHub"
 echo "2. Execute: git push -u origin main"
 echo ""
 echo "⚠️  IMPORTANTE: Crie o repositório no GitHub antes de fazer o push!"
+

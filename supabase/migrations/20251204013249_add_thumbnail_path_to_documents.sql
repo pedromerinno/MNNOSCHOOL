@@ -11,3 +11,4 @@ COMMENT ON COLUMN public.user_documents.thumbnail_path IS 'Caminho do arquivo th
 COMMENT ON COLUMN public.company_documents.thumbnail_path IS 'Caminho do arquivo thumbnail gerado automaticamente no upload';
 
 
+
