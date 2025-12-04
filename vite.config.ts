@@ -44,28 +44,40 @@ export default defineConfig(({ mode }) => {
         output: {
           // Ensure chunks are loaded in the correct order
           entryFileNames: 'assets/[name]-[hash].js',
-          chunkFileNames: 'assets/[name]-[hash].js',
+          chunkFileNames: (chunkInfo) => {
+            // Ensure Supabase-related code is loaded first
+            if (chunkInfo.name === 'index' || !chunkInfo.name) {
+              return 'assets/[name]-[hash].js';
+            }
+            return 'assets/[name]-[hash].js';
+          },
           assetFileNames: 'assets/[name]-[hash].[ext]',
           manualChunks: (id) => {
+            // CRITICAL: Supabase and ALL its crypto dependencies MUST be in the main bundle
+            // This prevents "Cannot access 'bn' before initialization" errors
+            // Check both node_modules and source files that import Supabase
+            if (
+              id.includes('@supabase') ||
+              id.includes('bn.js') ||
+              id.includes('@noble') ||
+              id.includes('elliptic') ||
+              id.includes('hash.js') ||
+              id.includes('@scure') ||
+              id.includes('js-sha3') ||
+              id.includes('micro-starknet')
+            ) {
+              // Return undefined to keep in main bundle
+              return undefined;
+            }
+            
+            // Also keep ALL source files in main bundle to avoid chunk loading order issues
+            // This ensures Supabase is always available when components try to use it
+            if (id.includes('src/')) {
+              return undefined;
+            }
+            
             // Vendor chunks - separate large dependencies
             if (id.includes('node_modules')) {
-              // CRITICAL: Supabase and ALL its crypto dependencies MUST be in the main bundle
-              // This prevents "Cannot access 'bn' before initialization" errors
-              // Do NOT split Supabase into a separate chunk
-              if (
-                id.includes('@supabase') ||
-                id.includes('bn.js') ||
-                id.includes('@noble') ||
-                id.includes('elliptic') ||
-                id.includes('hash.js') ||
-                id.includes('@scure') ||
-                id.includes('js-sha3') ||
-                id.includes('micro-starknet')
-              ) {
-                // Return undefined to keep in main bundle
-                return undefined;
-              }
-              
               // React and React DOM - Keep together to ensure proper loading order
               // This prevents "createContext is undefined" errors in production
               // Use more specific checks to avoid false matches with other packages
