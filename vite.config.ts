@@ -3,22 +3,10 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
 // https://vitejs.dev/config/
-export default defineConfig(async ({ mode }) => {
-  const plugins: any[] = [react()];
-  
-  // Only load lovable-tagger in development to avoid build issues
-  // Check both mode and NODE_ENV to ensure it's never loaded in production builds
-  const isDevelopment = mode === 'development' && process.env.NODE_ENV !== 'production';
-  
-  if (isDevelopment) {
-    try {
-      const { componentTagger } = await import('lovable-tagger');
-      plugins.push(componentTagger());
-    } catch (error) {
-      // Silently ignore if lovable-tagger is not available
-      // This is expected in production builds or CI environments
-    }
-  }
+export default defineConfig(({ mode }) => {
+  // Only include react plugin - lovable-tagger is development-only
+  // and should not be loaded in production builds
+  const plugins = [react()];
 
   return {
     server: {
@@ -33,6 +21,8 @@ export default defineConfig(async ({ mode }) => {
     },
     optimizeDeps: {
       include: ['pdfjs-dist'],
+      // Exclude lovable-tagger from optimization in production
+      exclude: mode === 'production' ? ['lovable-tagger'] : [],
     },
     build: {
       // Enable code splitting for better performance
@@ -41,6 +31,10 @@ export default defineConfig(async ({ mode }) => {
           manualChunks: (id) => {
             // Vendor chunks - separate large dependencies
             if (id.includes('node_modules')) {
+              // Exclude lovable-tagger from production builds
+              if (id.includes('lovable-tagger')) {
+                return null;
+              }
               // React and React DOM
               if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
                 return 'react-vendor';
