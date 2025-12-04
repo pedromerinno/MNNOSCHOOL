@@ -31,6 +31,16 @@
 
   <body>
     <div id="root"></div>
+    <script>
+      // Diagnostic script to catch errors before React loads
+      window.addEventListener('error', function(e) {
+        console.error('[Pre-React Error]', e.error);
+        const root = document.getElementById('root');
+        if (root && !root.querySelector('.error-display')) {
+          root.innerHTML = '<div class="error-display" style="padding: 20px; font-family: sans-serif; max-width: 600px; margin: 50px auto;"><h1 style="color: #dc2626;">Erro ao carregar</h1><p>' + (e.error?.message || 'Erro desconhecido') + '</p><button onclick="window.location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 5px; cursor: pointer;">Recarregar</button></div>';
+        }
+      });
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
