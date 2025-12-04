@@ -126,3 +126,4 @@ Se o problema persistir após aplicar as correções:
 2. Execute o script de diagnóstico SQL
 3. Verifique se o usuário tem `is_admin = true` na tabela `user_empresa` para a empresa selecionada
 
+

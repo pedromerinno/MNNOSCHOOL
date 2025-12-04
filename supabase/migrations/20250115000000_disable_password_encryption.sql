@@ -279,3 +279,4 @@ COMMENT ON FUNCTION public.get_company_access_for_user IS 'Retorna os itens de a
 COMMENT ON FUNCTION public.create_user_access IS 'Cria um novo acesso pessoal do usuário com senha em texto plano (sem criptografia)';
 COMMENT ON FUNCTION public.get_user_access_decrypted IS 'Retorna os itens de acesso pessoal do usuário com senhas em texto plano.';
 
+

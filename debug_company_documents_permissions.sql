@@ -55,3 +55,4 @@ FROM pg_policies
 WHERE tablename = 'company_documents'
 ORDER BY cmd, policyname;
 
+

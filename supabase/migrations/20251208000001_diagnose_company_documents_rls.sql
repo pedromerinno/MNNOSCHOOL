@@ -55,3 +55,4 @@ JOIN pg_class cls ON pol.polrelid = cls.oid
 WHERE cls.relname = 'company_documents'
   AND pol.polname = 'company_documents_insert';
 
+

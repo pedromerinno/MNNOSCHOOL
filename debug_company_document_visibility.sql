@@ -90,3 +90,4 @@ LEFT JOIN user_empresa ue ON p.id = ue.user_id
 LEFT JOIN empresas e ON ue.empresa_id = e.id
 WHERE p.id = auth.uid();
 
+

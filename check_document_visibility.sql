@@ -113,3 +113,4 @@ GROUP BY cd.id, cd.name, cd.company_id, e.nome;
 -- CROSS JOIN profiles p
 -- WHERE cd.id = 'DOCUMENT_ID' AND p.display_name ILIKE '%carol%';
 
+

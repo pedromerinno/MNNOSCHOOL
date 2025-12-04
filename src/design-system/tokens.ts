@@ -245,3 +245,4 @@ export const getGridClasses = (cols: { mobile: number; tablet: number; desktop: 
   `grid grid-cols-${cols.mobile} md:grid-cols-${cols.tablet} lg:grid-cols-${cols.desktop} gap-6`;
 
 
+

@@ -339,3 +339,4 @@ USING (public.user_can_access_course(course_id));
 
 
 
+

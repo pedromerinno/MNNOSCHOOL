@@ -113,3 +113,4 @@ $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 COMMENT ON FUNCTION public.get_company_access_for_user IS 'Retorna os itens de acesso da empresa que o usuário pode ver baseado em permissões: acessos públicos, relacionados ao cargo do usuário, ou com permissão específica. Descriptografa as senhas automaticamente.';
 
+

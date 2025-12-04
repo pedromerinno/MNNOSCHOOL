@@ -56,3 +56,4 @@ $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 COMMENT ON FUNCTION public.create_company_access IS 'Cria um novo acesso da empresa com senha em texto plano (sem criptografia). Valida que todos os campos obrigatórios não sejam null ou vazios.';
 
+
