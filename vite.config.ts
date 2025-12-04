@@ -111,12 +111,6 @@ export default defineConfig(({ mode }) => {
         transformMixedEsModules: true,
         // Ensure proper handling of circular dependencies
         requireReturnsDefault: 'auto',
-        // Preserve dynamic requires for crypto libraries
-        dynamicRequireTargets: [
-          /node_modules\/bn\.js/,
-          /node_modules\/@noble/,
-          /node_modules\/elliptic/,
-        ],
       },
       // Prevent issues with dynamic imports and circular dependencies
       modulePreload: {
