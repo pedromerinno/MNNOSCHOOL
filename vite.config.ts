@@ -24,8 +24,18 @@ export default defineConfig(({ mode }) => {
       dedupe: ['react', 'react-dom'],
     },
     optimizeDeps: {
-      include: ['pdfjs-dist', 'react', 'react-dom'],
+      include: [
+        'pdfjs-dist', 
+        'react', 
+        'react-dom',
+        '@supabase/supabase-js',
+        '@supabase/auth-helpers-react',
+      ],
       exclude: [],
+      esbuildOptions: {
+        // Ensure proper handling of CommonJS modules
+        target: 'es2020',
+      },
     },
     build: {
       // Enable code splitting for better performance
@@ -59,8 +69,15 @@ export default defineConfig(({ mode }) => {
               if (id.includes('@tanstack/react-query')) {
                 return 'query-vendor';
               }
-              // Supabase
-              if (id.includes('@supabase')) {
+              // Supabase and its crypto dependencies - keep together
+              // This prevents "Cannot access 'bn' before initialization" errors
+              if (
+                id.includes('@supabase') ||
+                id.includes('bn.js') ||
+                id.includes('@noble') ||
+                id.includes('elliptic') ||
+                id.includes('hash.js')
+              ) {
                 return 'supabase-vendor';
               }
               // Utility libraries
@@ -85,6 +102,12 @@ export default defineConfig(({ mode }) => {
       commonjsOptions: {
         include: [/node_modules/],
         transformMixedEsModules: true,
+        // Ensure proper handling of circular dependencies
+        requireReturnsDefault: 'auto',
+      },
+      // Prevent issues with dynamic imports and circular dependencies
+      modulePreload: {
+        polyfill: true,
       },
     },
     // Optimize chunk size
