@@ -47,10 +47,9 @@ export default defineConfig(({ mode }) => {
           chunkFileNames: 'assets/[name]-[hash].js',
           assetFileNames: 'assets/[name]-[hash].[ext]',
           // Ensure proper chunk loading order
-          manualChunks: undefined, // Will be overridden by our manualChunks function
           manualChunks: (id) => {
-            // CRITICAL: React MUST be in main bundle to ensure it loads first
-            // This prevents "Cannot access 'bn' before initialization" errors
+            // CRITICAL: React and React DOM MUST be in main bundle
+            // This prevents "Cannot read properties of undefined (reading '__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED')" errors
             // React is used by all other chunks, so it must be available immediately
             if (
               id.includes('/react/') || 
@@ -90,14 +89,17 @@ export default defineConfig(({ mode }) => {
             
             // Vendor chunks - separate large dependencies
             if (id.includes('node_modules')) {
-              // Radix UI components - Keep in vendor but ensure proper loading order
-              // Note: UI components from src/ are already in main bundle above
+              // CRITICAL: Radix UI MUST be in main bundle with React
+              // This prevents "Cannot read properties of undefined (reading '__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED')" errors
+              // Radix UI components depend on React being available immediately
               if (id.includes('@radix-ui')) {
-                return 'ui-vendor';
+                // Return undefined to keep Radix UI in main bundle with React
+                return undefined;
               }
-              // TanStack Query
+              // CRITICAL: TanStack Query MUST be in main bundle with React
+              // React Query depends on React being available immediately
               if (id.includes('@tanstack/react-query')) {
-                return 'query-vendor';
+                return undefined;
               }
               // Utility libraries
               if (id.includes('date-fns') || id.includes('lodash') || id.includes('zod')) {
@@ -107,9 +109,15 @@ export default defineConfig(({ mode }) => {
               if (id.includes('pdfjs-dist')) {
                 return 'pdf-vendor';
               }
-              // Other large vendor libraries
+              // CRITICAL: Libraries that depend on React MUST be in main bundle
+              // Framer Motion and Recharts depend on React being available immediately
               if (id.includes('framer-motion') || id.includes('recharts')) {
-                return 'charts-vendor';
+                return undefined;
+              }
+              
+              // Keep React Hook Form in main bundle (depends on React)
+              if (id.includes('react-hook-form')) {
+                return undefined;
               }
               // Default vendor chunk for other node_modules
               return 'vendor';
