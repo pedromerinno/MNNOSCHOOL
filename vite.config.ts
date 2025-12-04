@@ -4,7 +4,12 @@ import path from "path";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  const plugins = [react()];
+  const plugins = [
+    react({
+      // Ensure React is properly transformed
+      jsxRuntime: 'automatic',
+    })
+  ];
 
   return {
     server: {
@@ -16,19 +21,34 @@ export default defineConfig(({ mode }) => {
       alias: {
         "@": path.resolve(__dirname, "./src"),
       },
+      dedupe: ['react', 'react-dom'],
     },
     optimizeDeps: {
-      include: ['pdfjs-dist'],
+      include: ['pdfjs-dist', 'react', 'react-dom'],
+      exclude: [],
     },
     build: {
       // Enable code splitting for better performance
       rollupOptions: {
         output: {
+          // Ensure chunks are loaded in the correct order
+          entryFileNames: 'assets/[name]-[hash].js',
+          chunkFileNames: 'assets/[name]-[hash].js',
+          assetFileNames: 'assets/[name]-[hash].[ext]',
           manualChunks: (id) => {
             // Vendor chunks - separate large dependencies
             if (id.includes('node_modules')) {
-              // React and React DOM
-              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              // React and React DOM - Keep together to ensure proper loading order
+              // This prevents "createContext is undefined" errors in production
+              // Use more specific checks to avoid false matches with other packages
+              if (
+                id.includes('/react/') || 
+                id.includes('/react-dom/') || 
+                id.includes('/react-router') ||
+                id.includes('\\react\\') ||
+                id.includes('\\react-dom\\') ||
+                id.includes('\\react-router')
+              ) {
                 return 'react-vendor';
               }
               // Radix UI components
@@ -60,6 +80,11 @@ export default defineConfig(({ mode }) => {
             }
           },
         },
+      },
+      // Ensure proper module resolution
+      commonjsOptions: {
+        include: [/node_modules/],
+        transformMixedEsModules: true,
       },
     },
     // Optimize chunk size
