@@ -4,8 +4,6 @@ import path from "path";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  // Only include react plugin - lovable-tagger is development-only
-  // and should not be loaded in production builds
   const plugins = [react()];
 
   return {
@@ -21,8 +19,6 @@ export default defineConfig(({ mode }) => {
     },
     optimizeDeps: {
       include: ['pdfjs-dist'],
-      // Exclude lovable-tagger from optimization in production
-      exclude: mode === 'production' ? ['lovable-tagger'] : [],
     },
     build: {
       // Enable code splitting for better performance
@@ -31,10 +27,6 @@ export default defineConfig(({ mode }) => {
           manualChunks: (id) => {
             // Vendor chunks - separate large dependencies
             if (id.includes('node_modules')) {
-              // Exclude lovable-tagger from production builds
-              if (id.includes('lovable-tagger')) {
-                return null;
-              }
               // React and React DOM
               if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
                 return 'react-vendor';

@@ -279,7 +279,7 @@ export const CourseList: React.FC<CourseListProps> = ({
           }}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
-            target.src = "https://5cae13a1-92c0-4c6b-93bc-bb999597eb98.lovableproject.com/placeholder.svg";
+            target.src = "/placeholder.svg";
             target.onerror = null;
           }}
         />
