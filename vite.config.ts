@@ -44,15 +44,26 @@ export default defineConfig(({ mode }) => {
         output: {
           // Ensure chunks are loaded in the correct order
           entryFileNames: 'assets/[name]-[hash].js',
-          chunkFileNames: (chunkInfo) => {
-            // Ensure Supabase-related code is loaded first
-            if (chunkInfo.name === 'index' || !chunkInfo.name) {
-              return 'assets/[name]-[hash].js';
-            }
-            return 'assets/[name]-[hash].js';
-          },
+          chunkFileNames: 'assets/[name]-[hash].js',
           assetFileNames: 'assets/[name]-[hash].[ext]',
+          // Ensure proper chunk loading order
+          manualChunks: undefined, // Will be overridden by our manualChunks function
           manualChunks: (id) => {
+            // CRITICAL: React MUST be in main bundle to ensure it loads first
+            // This prevents "Cannot access 'bn' before initialization" errors
+            // React is used by all other chunks, so it must be available immediately
+            if (
+              id.includes('/react/') || 
+              id.includes('/react-dom/') || 
+              id.includes('/react-router') ||
+              id.includes('\\react\\') ||
+              id.includes('\\react-dom\\') ||
+              id.includes('\\react-router')
+            ) {
+              // Return undefined to keep React in main bundle
+              return undefined;
+            }
+            
             // CRITICAL: Supabase and ALL its crypto dependencies MUST be in the main bundle
             // This prevents "Cannot access 'bn' before initialization" errors
             // Check both node_modules and source files that import Supabase
@@ -79,19 +90,6 @@ export default defineConfig(({ mode }) => {
             
             // Vendor chunks - separate large dependencies
             if (id.includes('node_modules')) {
-              // React and React DOM - Keep together to ensure proper loading order
-              // This prevents "createContext is undefined" errors in production
-              // Use more specific checks to avoid false matches with other packages
-              if (
-                id.includes('/react/') || 
-                id.includes('/react-dom/') || 
-                id.includes('/react-router') ||
-                id.includes('\\react\\') ||
-                id.includes('\\react-dom\\') ||
-                id.includes('\\react-router')
-              ) {
-                return 'react-vendor';
-              }
               // Radix UI components - Keep in vendor but ensure proper loading order
               // Note: UI components from src/ are already in main bundle above
               if (id.includes('@radix-ui')) {
