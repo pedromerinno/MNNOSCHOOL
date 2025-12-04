@@ -29,12 +29,13 @@ export default defineConfig(({ mode }) => {
         'react', 
         'react-dom',
         '@supabase/supabase-js',
-        '@supabase/auth-helpers-react',
       ],
       exclude: [],
       esbuildOptions: {
         // Ensure proper handling of CommonJS modules
         target: 'es2020',
+        // Preserve class names and structure for crypto libraries
+        keepNames: true,
       },
     },
     build: {
@@ -48,6 +49,23 @@ export default defineConfig(({ mode }) => {
           manualChunks: (id) => {
             // Vendor chunks - separate large dependencies
             if (id.includes('node_modules')) {
+              // CRITICAL: Supabase and ALL its crypto dependencies MUST be in the main bundle
+              // This prevents "Cannot access 'bn' before initialization" errors
+              // Do NOT split Supabase into a separate chunk
+              if (
+                id.includes('@supabase') ||
+                id.includes('bn.js') ||
+                id.includes('@noble') ||
+                id.includes('elliptic') ||
+                id.includes('hash.js') ||
+                id.includes('@scure') ||
+                id.includes('js-sha3') ||
+                id.includes('micro-starknet')
+              ) {
+                // Return undefined to keep in main bundle
+                return undefined;
+              }
+              
               // React and React DOM - Keep together to ensure proper loading order
               // This prevents "createContext is undefined" errors in production
               // Use more specific checks to avoid false matches with other packages
@@ -68,17 +86,6 @@ export default defineConfig(({ mode }) => {
               // TanStack Query
               if (id.includes('@tanstack/react-query')) {
                 return 'query-vendor';
-              }
-              // Supabase and its crypto dependencies - keep together
-              // This prevents "Cannot access 'bn' before initialization" errors
-              if (
-                id.includes('@supabase') ||
-                id.includes('bn.js') ||
-                id.includes('@noble') ||
-                id.includes('elliptic') ||
-                id.includes('hash.js')
-              ) {
-                return 'supabase-vendor';
               }
               // Utility libraries
               if (id.includes('date-fns') || id.includes('lodash') || id.includes('zod')) {
@@ -104,6 +111,12 @@ export default defineConfig(({ mode }) => {
         transformMixedEsModules: true,
         // Ensure proper handling of circular dependencies
         requireReturnsDefault: 'auto',
+        // Preserve dynamic requires for crypto libraries
+        dynamicRequireTargets: [
+          /node_modules\/bn\.js/,
+          /node_modules\/@noble/,
+          /node_modules\/elliptic/,
+        ],
       },
       // Prevent issues with dynamic imports and circular dependencies
       modulePreload: {
