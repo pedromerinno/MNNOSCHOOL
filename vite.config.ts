@@ -1,65 +1,78 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
-  server: {
-    host: "::",
-    port: 8080,
-  },
-  plugins: [
-    react(),
-    mode === 'development' &&
-    componentTagger(),
-  ].filter(Boolean),
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
+export default defineConfig(async ({ mode }) => {
+  const plugins: any[] = [react()];
+  
+  // Only load lovable-tagger in development to avoid build issues
+  // Check both mode and NODE_ENV to ensure it's never loaded in production builds
+  const isDevelopment = mode === 'development' && process.env.NODE_ENV !== 'production';
+  
+  if (isDevelopment) {
+    try {
+      const { componentTagger } = await import('lovable-tagger');
+      plugins.push(componentTagger());
+    } catch (error) {
+      // Silently ignore if lovable-tagger is not available
+      // This is expected in production builds or CI environments
+    }
+  }
+
+  return {
+    server: {
+      host: "::",
+      port: 8080,
     },
-  },
-  optimizeDeps: {
-    include: ['pdfjs-dist'],
-  },
-  build: {
-    // Enable code splitting for better performance
-    rollupOptions: {
-      output: {
-        manualChunks: (id) => {
-          // Vendor chunks - separate large dependencies
-          if (id.includes('node_modules')) {
-            // React and React DOM
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
-              return 'react-vendor';
+    plugins,
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "./src"),
+      },
+    },
+    optimizeDeps: {
+      include: ['pdfjs-dist'],
+    },
+    build: {
+      // Enable code splitting for better performance
+      rollupOptions: {
+        output: {
+          manualChunks: (id) => {
+            // Vendor chunks - separate large dependencies
+            if (id.includes('node_modules')) {
+              // React and React DOM
+              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+                return 'react-vendor';
+              }
+              // Radix UI components
+              if (id.includes('@radix-ui')) {
+                return 'ui-vendor';
+              }
+              // TanStack Query
+              if (id.includes('@tanstack/react-query')) {
+                return 'query-vendor';
+              }
+              // Supabase
+              if (id.includes('@supabase')) {
+                return 'supabase-vendor';
+              }
+              // Utility libraries
+              if (id.includes('date-fns') || id.includes('lodash') || id.includes('zod')) {
+                return 'utils-vendor';
+              }
+              // PDF.js
+              if (id.includes('pdfjs-dist')) {
+                return 'pdf-vendor';
+              }
+              // Other large vendor libraries
+              if (id.includes('framer-motion') || id.includes('recharts')) {
+                return 'charts-vendor';
+              }
+              // Default vendor chunk for other node_modules
+              return 'vendor';
             }
-            // Radix UI components
-            if (id.includes('@radix-ui')) {
-              return 'ui-vendor';
-            }
-            // TanStack Query
-            if (id.includes('@tanstack/react-query')) {
-              return 'query-vendor';
-            }
-            // Supabase
-            if (id.includes('@supabase')) {
-              return 'supabase-vendor';
-            }
-            // Utility libraries
-            if (id.includes('date-fns') || id.includes('lodash') || id.includes('zod')) {
-              return 'utils-vendor';
-            }
-            // PDF.js
-            if (id.includes('pdfjs-dist')) {
-              return 'pdf-vendor';
-            }
-            // Other large vendor libraries
-            if (id.includes('framer-motion') || id.includes('recharts')) {
-              return 'charts-vendor';
-            }
-            // Default vendor chunk for other node_modules
-            return 'vendor';
-          }
+          },
         },
       },
     },
@@ -71,5 +84,5 @@ export default defineConfig(({ mode }) => ({
     minify: mode === 'production' ? 'esbuild' : false,
     // Target modern browsers for smaller bundles
     target: 'esnext',
-  },
-}));
+  };
+});
