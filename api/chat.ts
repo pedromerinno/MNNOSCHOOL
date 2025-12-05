@@ -236,6 +236,9 @@ function buildSystemPrompt(company: ChatRequest['company']): string {
 
   prompt += `IMPORTANTE: Você é um mentor sênior da empresa "${company.nome}". Todas as suas respostas devem refletir isso: sempre paciente, educado, empático e focado em ajudar o colaborador da melhor forma possível.`;
 
+  return prompt;
+}
+
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
