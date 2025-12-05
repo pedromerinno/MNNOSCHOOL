@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { CalendarWidget } from "./CalendarWidget";
-import { NotificationsWidget } from "./NotificationsWidget";
+import { RecentCoursesWidget } from "./RecentCoursesWidget";
 import { FeedbackWidget } from "./FeedbackWidget";
 
 export const DashboardWidgets = () => {
@@ -19,7 +19,7 @@ export const DashboardWidgets = () => {
 
   const widgets = [
     { component: CalendarWidget },
-    { component: NotificationsWidget },
+    { component: RecentCoursesWidget },
     { component: FeedbackWidget }
   ];
 

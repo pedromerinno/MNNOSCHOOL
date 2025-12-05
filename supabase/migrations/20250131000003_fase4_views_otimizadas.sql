@@ -312,3 +312,4 @@ COMMENT ON FUNCTION public.refresh_all_materialized_views IS 'Atualiza todas as 
 
 
 
+

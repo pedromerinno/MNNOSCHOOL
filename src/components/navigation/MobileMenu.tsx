@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Home, GraduationCap, MessageSquareMore, Users2, Settings2, ShieldCheck } from "lucide-react";
+import { Menu, X, Home, GraduationCap, MessageSquareMore, Users2, Settings2, ShieldCheck, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -42,6 +42,12 @@ export const MobileMenu = () => {
       label: "Escola",
       path: "/my-courses",
       icon: GraduationCap,
+      show: true
+    },
+    {
+      label: "IA",
+      path: "/ai-chat",
+      icon: Bot,
       show: true
     },
     {

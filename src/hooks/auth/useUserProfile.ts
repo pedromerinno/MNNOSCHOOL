@@ -183,18 +183,18 @@ export const useUserProfile = () => {
     // Evitar múltiplas requisições para o mesmo usuário (exceto se for refresh forçado)
     if (fetchInProgress.current && !forceRefresh) {
       console.log('[useUserProfile] Fetch already in progress, skipping...');
-      return;
+      return Promise.resolve();
     }
 
     // Se já buscou para este usuário e não é refresh forçado, verificar se temos perfil
     if (lastFetchedUserId.current === userId && hasFetchedOnce.current && !forceRefresh) {
       if (userProfile && userProfile.id === userId) {
         console.log('[useUserProfile] Profile already loaded for this user, skipping fetch');
-        return;
+        return Promise.resolve();
       }
       // Se não temos perfil mas já tentamos, não tentar novamente a menos que seja forçado
       console.log('[useUserProfile] Already attempted fetch for this user, but no profile found. Use forceRefresh=true to retry.');
-      return;
+      return Promise.resolve();
     }
 
     try {
@@ -244,7 +244,7 @@ export const useUserProfile = () => {
             fetchInProgress.current = false;
             lastFetchedUserId.current = userId;
             hasFetchedOnce.current = true;
-            return;
+            return Promise.resolve();
           }
           // Se não tem cache, criar perfil básico com dados do usuário
           if (user?.email) {
@@ -265,7 +265,7 @@ export const useUserProfile = () => {
             fetchInProgress.current = false;
             lastFetchedUserId.current = userId;
             hasFetchedOnce.current = true;
-            return;
+            return Promise.resolve();
           }
         }
         
@@ -357,7 +357,7 @@ export const useUserProfile = () => {
               fetchInProgress.current = false;
               lastFetchedUserId.current = userId;
               hasFetchedOnce.current = true;
-              return;
+              return Promise.resolve();
             }
             // Se não tem cache, criar perfil básico com dados do usuário
             if (user?.email) {
@@ -378,14 +378,14 @@ export const useUserProfile = () => {
               fetchInProgress.current = false;
               lastFetchedUserId.current = userId;
               hasFetchedOnce.current = true;
-              return;
+              return Promise.resolve();
             }
           }
           // Marcar como tentado para evitar loops
           lastFetchedUserId.current = userId;
           hasFetchedOnce.current = true;
           // Não retornar aqui - deixar o finally executar para definir isLoading como false
-          return;
+          return Promise.resolve();
         }
       } else {
         // Dados carregados com sucesso!

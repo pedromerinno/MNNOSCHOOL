@@ -1,7 +1,7 @@
 
 import { useLocation } from "react-router-dom";
 import { SearchBar } from "./SearchBar";
-import { ThemeToggle } from "./ThemeToggle";
+import { FocusTimer } from "./FocusTimer";
 import { NotificationButton } from "./NotificationButton";
 import { MobileMenu } from "./MobileMenu";
 import { CompanySelector } from "./CompanySelector";
@@ -21,7 +21,7 @@ export const MobileNavigationMenu = () => {
         
         <div className="flex items-center space-x-2 flex-shrink-0">
           <SearchBar />
-          <ThemeToggle />
+          <FocusTimer />
           <NotificationButton />
         </div>
       </div>

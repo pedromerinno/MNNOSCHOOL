@@ -706,10 +706,25 @@ export const useCompanyDocuments = () => {
         const a = window.document.createElement('a');
         a.href = url;
         a.download = documentToDownload.name;
+        a.style.display = 'none';
         window.document.body.appendChild(a);
         a.click();
-        window.document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        // Usar requestAnimationFrame para garantir que o click foi processado
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            // Verificar se o elemento ainda existe e é filho antes de remover
+            if (a.parentNode === window.document.body) {
+              try {
+                window.document.body.removeChild(a);
+              } catch (error) {
+                // Ignorar erro se o elemento já foi removido - isso é seguro
+                // O navegador pode ter removido automaticamente
+              }
+            }
+            // Sempre revogar a URL após tentar remover o elemento
+            URL.revokeObjectURL(url);
+          });
+        });
       }
     } catch (error) {
       console.error('Error downloading document:', error);

@@ -58,3 +58,4 @@ COMMENT ON FUNCTION public.create_company_access IS 'Cria um novo acesso da empr
 
 
 
+

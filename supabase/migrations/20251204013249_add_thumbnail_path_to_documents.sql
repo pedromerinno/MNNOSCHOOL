@@ -12,3 +12,4 @@ COMMENT ON COLUMN public.company_documents.thumbnail_path IS 'Caminho do arquivo
 
 
 
+

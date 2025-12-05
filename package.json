@@ -55,6 +55,7 @@
     "input-otp": "^1.2.4",
     "lodash": "^4.17.21",
     "lucide-react": "^0.487.0",
+    "motion": "^12.23.25",
     "next-themes": "^0.3.0",
     "pdfjs-dist": "^5.4.449",
     "react": "^18.3.1",

@@ -5,7 +5,7 @@ import { CompanySelector } from "./CompanySelector";
 import { UserNavigation } from "./UserNavigation";
 import { AuthButtons } from "./AuthButtons";
 import { SearchBar } from "./SearchBar";
-import { ThemeToggle } from "./ThemeToggle";
+import { FocusTimer } from "./FocusTimer";
 import { NotificationButton } from "./NotificationButton";
 import { NavMenuLinks } from "./NavMenuLinks";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -73,7 +73,7 @@ export const DesktopNavigationMenu = () => {
         
         <div className="flex items-center space-x-4">
           <SearchBar />
-          <ThemeToggle />
+          <FocusTimer />
           <NotificationButton />
           {user ? <UserNavigation /> : <AuthButtons />}
         </div>

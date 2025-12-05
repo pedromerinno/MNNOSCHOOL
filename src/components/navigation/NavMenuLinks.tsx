@@ -15,7 +15,8 @@ import {
   Puzzle,
   LockKeyhole, 
   FolderOpen, 
-  MessageCircle 
+  MessageCircle,
+  Bot
 } from "lucide-react";
 import { getSafeTextColor, cn } from "@/lib/utils";
 import * as React from "react";
@@ -82,6 +83,16 @@ export const NavMenuLinks = ({ adminLabel = "Admin" }) => {
           >
             Escola
             <Badge variant="beta" className="text-xs">Beta</Badge>
+          </Link>
+        </NavigationMenuItem>
+        
+        <NavigationMenuItem>
+          <Link 
+            to="/ai-chat" 
+            className={menuLinkClass('/ai-chat')}
+            style={getLinkStyle('/ai-chat')}
+          >
+            IA
           </Link>
         </NavigationMenuItem>
         

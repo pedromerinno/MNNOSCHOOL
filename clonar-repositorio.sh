@@ -38,3 +38,4 @@ echo "2. Execute: git push -u origin main"
 echo ""
 echo "⚠️  IMPORTANTE: Crie o repositório no GitHub antes de fazer o push!"
 
+

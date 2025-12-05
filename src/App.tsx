@@ -29,6 +29,9 @@ const Signup = lazy(() => import("./pages/Signup"));
 const LessonPage = lazy(() => import("./pages/LessonPage"));
 const Integration = lazy(() => import("./pages/Integration"));
 const Access = lazy(() => import("./pages/Access"));
+const AIChat = lazy(() => import("./pages/AIChat"));
+const ComponentPlaygroundDemo = lazy(() => import("./pages/ComponentPlaygroundDemo"));
+const SpotifyCallback = lazy(() => import("./pages/SpotifyCallback"));
 
 // Optimized QueryClient configuration for better performance
 const queryClient = new QueryClient({
@@ -95,6 +98,14 @@ function App() {
                       </Suspense>
                     } 
                   />
+                  <Route 
+                    path="/spotify/callback" 
+                    element={
+                      <Suspense fallback={<PageLoadingFallback />}>
+                        <SpotifyCallback />
+                      </Suspense>
+                    } 
+                  />
                   
                   {/* Rotas protegidas - com verificação de empresa */}
                   <Route path="/*" element={
@@ -121,6 +132,8 @@ function App() {
                           <Route path="/team" element={<Team />} />
                           <Route path="/integration" element={<Integration />} />
                           <Route path="/access" element={<Access />} />
+                          <Route path="/ai-chat" element={<AIChat />} />
+                          <Route path="/component-playground" element={<ComponentPlaygroundDemo />} />
                         </Routes>
                       </Suspense>
                     </CompanyRequiredWrapper>

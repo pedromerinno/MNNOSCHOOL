@@ -16,50 +16,86 @@ const Dialog = ({
 
   // Função para limpar completamente os estilos de pointer-events
   const cleanupPointerEvents = React.useCallback(() => {
-    // Remova a propriedade específica
-    document.body.style.removeProperty('pointer-events');
+    // Verificar se o body ainda existe
+    if (!document.body) return;
     
-    // Garanta que pointer-events não está definido como 'none'
-    if (document.body.style.pointerEvents === 'none') {
-      document.body.style.pointerEvents = '';
+    try {
+      // Remova a propriedade específica
+      document.body.style.removeProperty('pointer-events');
+      
+      // Garanta que pointer-events não está definido como 'none'
+      if (document.body.style.pointerEvents === 'none') {
+        document.body.style.pointerEvents = '';
+      }
+      
+      // Adicione uma classe temporária para forçar pointer-events: auto
+      document.body.classList.add('pointer-events-auto');
+      setTimeout(() => {
+        if (document.body) {
+          document.body.classList.remove('pointer-events-auto');
+        }
+      }, 100);
+    } catch (error) {
+      // Ignorar erros durante cleanup
+      console.warn('Erro durante cleanup de pointer-events:', error);
     }
-    
-    // Adicione uma classe temporária para forçar pointer-events: auto
-    document.body.classList.add('pointer-events-auto');
-    setTimeout(() => {
-      document.body.classList.remove('pointer-events-auto');
-    }, 100);
   }, []);
 
   // Configura o observador ao montar
   React.useEffect(() => {
+    // Verifica se o body ainda existe antes de criar o observer
+    if (!document.body) return;
+
     // Cria um MutationObserver para observar mudanças no atributo style
     observerRef.current = new MutationObserver((mutations) => {
       // Apenas corrija pointer-events quando o diálogo não estiver mais aberto
-      if (!dialogStateRef.current) {
+      if (!dialogStateRef.current && document.body) {
         mutations.forEach(mutation => {
           if (mutation.type === 'attributes' && 
               mutation.attributeName === 'style' &&
+              document.body &&
               document.body.style.pointerEvents === 'none') {
-            cleanupPointerEvents();
+            try {
+              cleanupPointerEvents();
+            } catch (error) {
+              // Ignorar erros durante cleanup
+              console.warn('Erro durante cleanup de pointer-events:', error);
+            }
           }
         });
       }
     });
 
     // Inicia a observação das mudanças no atributo style do body
-    observerRef.current.observe(document.body, { 
-      attributes: true, 
-      attributeFilter: ['style'] 
-    });
+    try {
+      if (document.body && observerRef.current) {
+        observerRef.current.observe(document.body, { 
+          attributes: true, 
+          attributeFilter: ['style'] 
+        });
+      }
+    } catch (error) {
+      console.warn('Erro ao configurar MutationObserver:', error);
+    }
 
     return () => {
       // Limpa o observador ao desmontar
       if (observerRef.current) {
-        observerRef.current.disconnect();
+        try {
+          observerRef.current.disconnect();
+        } catch (error) {
+          // Ignorar erros ao desconectar observer
+        }
+        observerRef.current = null;
       }
       // Garante que pointer-events está limpo quando o componente é desmontado
-      cleanupPointerEvents();
+      if (document.body) {
+        try {
+          cleanupPointerEvents();
+        } catch (error) {
+          // Ignorar erros durante cleanup final
+        }
+      }
     };
   }, [cleanupPointerEvents]);
 
@@ -67,13 +103,22 @@ const Dialog = ({
     // Atualiza a ref de estado
     dialogStateRef.current = open;
 
-    if (open) {
-      // Quando abrimos, permitimos que o overflow seja hidden
-      document.body.style.overflow = 'hidden';
-    } else {
-      // Quando fechamos, limpamos todos os estilos
-      document.body.style.overflow = '';
-      cleanupPointerEvents();
+    if (!document.body) {
+      props.onOpenChange?.(open);
+      return;
+    }
+
+    try {
+      if (open) {
+        // Quando abrimos, permitimos que o overflow seja hidden
+        document.body.style.overflow = 'hidden';
+      } else {
+        // Quando fechamos, limpamos todos os estilos
+        document.body.style.overflow = '';
+        cleanupPointerEvents();
+      }
+    } catch (error) {
+      console.warn('Erro ao manipular estilos do body:', error);
     }
     
     // Chama o handler original

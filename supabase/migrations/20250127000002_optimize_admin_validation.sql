@@ -67,3 +67,4 @@ COMMENT ON FUNCTION public.is_admin_for_company IS 'Verifica se o usuário atual
 
 
 
+

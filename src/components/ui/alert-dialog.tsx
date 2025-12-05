@@ -12,27 +12,38 @@ const AlertDialog = ({
   const originalBodyStyleRef = React.useRef<CSSStyleDeclaration | null>(null);
   
   const handleOpenChange = (open: boolean) => {
-    if (open) {
-      // Armazena os estilos atuais antes de modificar
-      originalBodyStyleRef.current = window.getComputedStyle(document.body);
-      document.body.style.overflow = 'hidden';
-    } else {
-      // Restaura o overflow
-      document.body.style.overflow = '';
-      
-      // Força a remoção do pointer-events: none
-      if (document.body.style.pointerEvents === 'none') {
-        document.body.style.pointerEvents = '';
+    if (!document.body) {
+      props.onOpenChange?.(open);
+      return;
+    }
+
+    try {
+      if (open) {
+        // Armazena os estilos atuais antes de modificar
+        originalBodyStyleRef.current = window.getComputedStyle(document.body);
+        document.body.style.overflow = 'hidden';
+      } else {
+        // Restaura o overflow
+        document.body.style.overflow = '';
+        
+        // Força a remoção do pointer-events: none
+        if (document.body.style.pointerEvents === 'none') {
+          document.body.style.pointerEvents = '';
+        }
+        
+        // Remove qualquer inline style do pointer-events
+        document.body.style.removeProperty('pointer-events');
+        
+        // Adiciona temporariamente uma classe que força pointer-events auto
+        document.body.classList.add('pointer-events-auto');
+        setTimeout(() => {
+          if (document.body) {
+            document.body.classList.remove('pointer-events-auto');
+          }
+        }, 100);
       }
-      
-      // Remove qualquer inline style do pointer-events
-      document.body.style.removeProperty('pointer-events');
-      
-      // Adiciona temporariamente uma classe que força pointer-events auto
-      document.body.classList.add('pointer-events-auto');
-      setTimeout(() => {
-        document.body.classList.remove('pointer-events-auto');
-      }, 100);
+    } catch (error) {
+      console.warn('Erro ao manipular estilos do body no AlertDialog:', error);
     }
     
     // Chama o handler original, se existir
@@ -80,8 +91,14 @@ const AlertDialogContent = React.forwardRef<
       {...props}
       onCloseAutoFocus={(e) => {
         // Forçar limpeza no fechamento
-        document.body.style.removeProperty('pointer-events');
-        document.body.style.pointerEvents = '';
+        if (document.body) {
+          try {
+            document.body.style.removeProperty('pointer-events');
+            document.body.style.pointerEvents = '';
+          } catch (error) {
+            console.warn('Erro ao limpar pointer-events:', error);
+          }
+        }
         
         // Chama handler original, se existir
         if (props.onCloseAutoFocus) {
