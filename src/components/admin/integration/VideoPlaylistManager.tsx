@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, Plus, Trash2, Edit, GripVertical, Image, Link, Upload, MoreHorizontal } from "lucide-react";
+import { AlertCircle, Plus, Trash2, Edit, GripVertical, Image, Link, Upload, MoreHorizontal, FileText, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Company } from "@/types/company";
@@ -16,6 +16,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import DragDropImageUpload from "@/components/ui/DragDropImageUpload";
 import { getYoutubeVideoId, getLoomVideoId, getEmbedUrl } from "@/components/integration/video-playlist/utils";
+import { transcriptionService, TranscriptionStatus } from "@/services/video/transcriptionService";
+import { VideoTranscriptionStatus } from "@/components/video/VideoTranscriptionStatus";
+import { VideoTranscriptionViewer } from "@/components/video/VideoTranscriptionViewer";
 
 interface CompanyVideo {
   id: string;
@@ -25,6 +28,10 @@ interface CompanyVideo {
   thumbnail_url?: string;
   duration?: string;
   order_index: number;
+  transcription_text?: string | null;
+  transcription_status?: TranscriptionStatus;
+  transcription_error?: string | null;
+  transcribed_at?: string | null;
 }
 
 interface VideoPlaylistManagerProps {
@@ -37,6 +44,9 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingVideo, setEditingVideo] = useState<CompanyVideo | null>(null);
   const [isAddingVideo, setIsAddingVideo] = useState(false);
+  const [selectedVideoForTranscription, setSelectedVideoForTranscription] = useState<CompanyVideo | null>(null);
+  const [isViewingTranscription, setIsViewingTranscription] = useState(false);
+  const [transcribingVideoId, setTranscribingVideoId] = useState<string | null>(null);
 
   // Form states
   const [formData, setFormData] = useState({
@@ -182,12 +192,26 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
         if (error) throw error;
         toast.success('Vídeo atualizado com sucesso');
       } else {
-        const { error } = await supabase
+        const { data: newVideo, error } = await supabase
           .from('company_videos')
-          .insert(videoData);
+          .insert(videoData)
+          .select()
+          .single();
 
         if (error) throw error;
         toast.success('Vídeo adicionado com sucesso');
+
+        // Iniciar transcrição automaticamente para novos vídeos
+        if (newVideo) {
+          try {
+            await transcriptionService.transcribeVideo(newVideo.id, newVideo.video_url);
+            toast.info('Transcrição iniciada. O processo pode levar alguns minutos.');
+          } catch (transcriptionError: any) {
+            console.error('Erro ao iniciar transcrição:', transcriptionError);
+            // Não falhar o upload se a transcrição falhar
+            toast.warning('Vídeo salvo, mas houve um erro ao iniciar a transcrição. Você pode tentar novamente depois.');
+          }
+        }
       }
 
       await fetchVideos();
@@ -227,6 +251,35 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
     if (getYoutubeVideoId(url)) return 'youtube';
     if (getLoomVideoId(url)) return 'loom';
     return 'unknown';
+  };
+
+  const handleViewTranscription = (video: CompanyVideo) => {
+    if (video.transcription_status === 'completed' && video.transcription_text) {
+      setSelectedVideoForTranscription(video);
+      setIsViewingTranscription(true);
+    } else {
+      toast.error('Este vídeo ainda não possui transcrição disponível');
+    }
+  };
+
+  const handleRetryTranscription = async (video: CompanyVideo) => {
+    if (transcribingVideoId === video.id) return;
+
+    setTranscribingVideoId(video.id);
+    try {
+      await transcriptionService.transcribeVideo(video.id, video.video_url);
+      toast.info('Transcrição iniciada. O processo pode levar alguns minutos.');
+      
+      // Atualizar status após um delay
+      setTimeout(async () => {
+        await fetchVideos();
+        setTranscribingVideoId(null);
+      }, 2000);
+    } catch (error: any) {
+      console.error('Erro ao iniciar transcrição:', error);
+      toast.error(error.message || 'Erro ao iniciar transcrição');
+      setTranscribingVideoId(null);
+    }
   };
 
   if (isLoading) {
@@ -290,6 +343,14 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
                             Tipo: {getVideoType(video.video_url)}
                           </span>
                         </div>
+                        <div className="mt-2">
+                          <VideoTranscriptionStatus
+                            status={video.transcription_status || 'pending'}
+                            error={video.transcription_error}
+                            onRetry={() => handleRetryTranscription(video)}
+                            onView={() => handleViewTranscription(video)}
+                          />
+                        </div>
                       </div>
                       
                       <DropdownMenu>
@@ -299,10 +360,26 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuContent align="end" className="w-56">
                           <DropdownMenuItem onClick={() => openEditDialog(video)}>
                             <Edit className="mr-2 h-4 w-4" />
                             Editar
+                          </DropdownMenuItem>
+                          
+                          <DropdownMenuItem 
+                            onClick={() => handleViewTranscription(video)}
+                            disabled={video.transcription_status !== 'completed' || !video.transcription_text}
+                          >
+                            <FileText className="mr-2 h-4 w-4" />
+                            Ver Transcrição
+                          </DropdownMenuItem>
+                          
+                          <DropdownMenuItem 
+                            onClick={() => handleRetryTranscription(video)}
+                            disabled={transcribingVideoId === video.id}
+                          >
+                            <RefreshCw className={`mr-2 h-4 w-4 ${transcribingVideoId === video.id ? 'animate-spin' : ''}`} />
+                            {transcribingVideoId === video.id ? 'Transcrevendo...' : 'Re-transcrever'}
                           </DropdownMenuItem>
                           
                           <DropdownMenuSeparator />
@@ -466,6 +543,16 @@ export const VideoPlaylistManager: React.FC<VideoPlaylistManagerProps> = ({ comp
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog para visualizar transcrição */}
+      {selectedVideoForTranscription && (
+        <VideoTranscriptionViewer
+          isOpen={isViewingTranscription}
+          onOpenChange={setIsViewingTranscription}
+          videoTitle={selectedVideoForTranscription.title}
+          transcription={selectedVideoForTranscription.transcription_text || ''}
+        />
+      )}
     </div>
   );
 };

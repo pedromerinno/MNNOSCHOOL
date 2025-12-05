@@ -288,6 +288,11 @@ export type Database = {
           title: string
           updated_at: string
           video_url: string
+          transcription_text: string | null
+          transcription_status: string | null
+          transcription_error: string | null
+          transcribed_at: string | null
+          transcription_metadata: Record<string, any> | null
         }
         Insert: {
           company_id: string
@@ -300,6 +305,11 @@ export type Database = {
           title: string
           updated_at?: string
           video_url: string
+          transcription_text?: string | null
+          transcription_status?: string | null
+          transcription_error?: string | null
+          transcribed_at?: string | null
+          transcription_metadata?: Record<string, any> | null
         }
         Update: {
           company_id?: string
@@ -312,6 +322,11 @@ export type Database = {
           title?: string
           updated_at?: string
           video_url?: string
+          transcription_text?: string | null
+          transcription_status?: string | null
+          transcription_error?: string | null
+          transcribed_at?: string | null
+          transcription_metadata?: Record<string, any> | null
         }
         Relationships: [
           {
@@ -319,6 +334,41 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_embeddings: {
+        Row: {
+          id: string
+          video_id: string
+          chunk_text: string
+          chunk_index: number
+          embedding: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          video_id: string
+          chunk_text: string
+          chunk_index: number
+          embedding?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          video_id?: string
+          chunk_text?: string
+          chunk_index?: number
+          embedding?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_embeddings_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "company_videos"
             referencedColumns: ["id"]
           },
         ]

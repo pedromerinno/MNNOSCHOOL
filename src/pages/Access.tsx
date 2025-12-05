@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useAccessItems } from "@/hooks/useAccessItems";
@@ -27,44 +27,11 @@ const Access = () => {
     userId: user?.id
   });
   const { count: personalAccessCount, isLoading: isLoadingPersonalCount } = usePersonalAccessCount();
-  const [showPreloader, setShowPreloader] = useState(true);
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
 
-  // Controlar quando parar de mostrar o preloader - igual à IndexContent
-  useEffect(() => {
-    if (!authLoading && user && userProfile) {
-      // Dar um breve momento para carregar os dados iniciais
-      const timer = setTimeout(() => {
-        setShowPreloader(false);
-      }, 1500);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [authLoading, user, userProfile]);
-
-  // Debug log para verificar o estado
-  useEffect(() => {
-    console.log("[Access] Debug state:", {
-      user: user?.email,
-      userProfile: userProfile?.display_name,
-      selectedCompany: selectedCompany?.nome,
-      isLoading,
-      authLoading,
-      showPreloader,
-      isLoadingAccess,
-      hasPermission
-    });
-  }, [user, userProfile, selectedCompany, isLoading, authLoading, showPreloader, isLoadingAccess, hasPermission]);
-
-  // Mostrar preloader durante carregamento inicial ou auth loading - igual à IndexContent
-  if (showPreloader || (authLoading && !user) || isLoading || isLoadingAccess) {
-    console.log("[Access] Showing preloader - initial loading or auth loading or data loading");
-    return <Preloader />;
-  }
-
-  // Se não tem usuário, redirecionar para login seria feito pelo ProtectedRoute
-  if (!user) {
-    console.log("[Access] No user - redirecting should be handled by ProtectedRoute");
+  // Mostrar preloader apenas durante carregamento crítico (auth e empresa)
+  // Não bloquear por queries de dados que podem ser carregados progressivamente
+  if (authLoading || !user || !userProfile || isLoading) {
     return <Preloader />;
   }
 

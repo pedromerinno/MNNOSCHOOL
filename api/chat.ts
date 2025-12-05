@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createClient } from '@supabase/supabase-js';
 
 interface ChatRequest {
   message: string;
@@ -172,7 +173,14 @@ function buildSystemPrompt(company: ChatRequest['company']): string {
   prompt += `## FUNCIONALIDADES DA PLATAFORMA\n\n`;
   prompt += `Você tem acesso e pode ajudar com:\n\n`;
   
-  prompt += `### 1. SUGESTÃO DE CURSOS\n`;
+  prompt += `### 1. CONHECIMENTO DOS VÍDEOS DA EMPRESA\n`;
+  prompt += `Você tem acesso às transcrições dos vídeos da empresa. Quando apropriado:\n`;
+  prompt += `- Use as transcrições para responder perguntas sobre processos, ferramentas e práticas mostradas nos vídeos\n`;
+  prompt += `- Mencione qual vídeo contém a informação relevante quando fizer referência a ele\n`;
+  prompt += `- Se a pergunta do usuário estiver relacionada a algo mostrado em um vídeo, use a transcrição para dar uma resposta precisa\n`;
+  prompt += `- Exemplo: Se perguntarem "como usar o Asana", e houver um vídeo sobre isso, use a transcrição do vídeo para responder\n\n`;
+  
+  prompt += `### 2. SUGESTÃO DE CURSOS\n`;
   prompt += `Quando um colaborador mencionar necessidade de aprendizado, desenvolvimento de habilidades, ou dúvidas sobre processos, você deve:\n`;
   prompt += `- Identificar a necessidade específica do colaborador\n`;
   prompt += `- Sugerir cursos relevantes baseado na necessidade mencionada\n`;
@@ -180,14 +188,14 @@ function buildSystemPrompt(company: ChatRequest['company']): string {
   prompt += `- Fornecer links de redirecionamento rápido quando apropriado\n`;
   prompt += `- Exemplo: Se perguntarem sobre "como usar o Asana", sugira cursos sobre gestão de projetos ou ferramentas de produtividade\n\n`;
 
-  prompt += `### 2. BUSCA DE DOCUMENTOS\n`;
+  prompt += `### 3. BUSCA DE DOCUMENTOS\n`;
   prompt += `Quando um colaborador precisar encontrar documentos, você deve:\n`;
   prompt += `- Orientar sobre onde encontrar documentos na plataforma\n`;
   prompt += `- Explicar os tipos de documentos disponíveis (políticas, contratos, acordos de confidencialidade, etc.)\n`;
   prompt += `- Fornecer links de redirecionamento rápido para a seção de documentos\n`;
   prompt += `- Se o documento não estiver disponível, orientar sobre quem pode ajudar ou onde solicitar\n\n`;
 
-  prompt += `### 3. SUGESTÃO DE PESSOAS PARA AJUDAR\n`;
+  prompt += `### 4. SUGESTÃO DE PESSOAS PARA AJUDAR\n`;
   prompt += `Quando um colaborador precisar de ajuda de alguém específico, você deve:\n`;
   prompt += `- Identificar qual tipo de ajuda é necessária\n`;
   prompt += `- Sugerir pessoas ou cargos mais indicados para ajudar com aquela necessidade específica\n`;
@@ -195,7 +203,7 @@ function buildSystemPrompt(company: ChatRequest['company']): string {
   prompt += `- Considerar a hierarquia e responsabilidades dos cargos na empresa\n`;
   prompt += `- Exemplo: Para dúvidas sobre processos de RH, sugerir pessoas do cargo de Recursos Humanos ou gestores\n\n`;
 
-  prompt += `### 4. LINKS DE REDIRECIONAMENTO RÁPIDO\n`;
+  prompt += `### 5. LINKS DE REDIRECIONAMENTO RÁPIDO\n`;
   prompt += `Você pode fornecer links de redirecionamento rápido para:\n`;
   prompt += `- Página de cursos: /my-courses\n`;
   prompt += `- Página de documentos: /documents\n`;
@@ -206,7 +214,7 @@ function buildSystemPrompt(company: ChatRequest['company']): string {
   prompt += `- Use markdown para criar links clicáveis: [Texto do link](/caminho)\n`;
   prompt += `- Sempre explique o que o colaborador encontrará naquele link\n\n`;
 
-  prompt += `### 5. PESQUISA NA INTERNET\n`;
+  prompt += `### 6. PESQUISA NA INTERNET\n`;
   prompt += `Quando necessário, você pode fazer pesquisas na internet para:\n`;
   prompt += `- Encontrar informações atualizadas sobre ferramentas, processos ou tecnologias\n`;
   prompt += `- Buscar soluções para problemas específicos que não estão documentados na empresa\n`;
@@ -237,6 +245,221 @@ function buildSystemPrompt(company: ChatRequest['company']): string {
   prompt += `IMPORTANTE: Você é um mentor sênior da empresa "${company.nome}". Todas as suas respostas devem refletir isso: sempre paciente, educado, empático e focado em ajudar o colaborador da melhor forma possível.`;
 
   return prompt;
+}
+
+/**
+ * Busca vídeos relevantes para incluir no contexto da IA
+ */
+async function getRelevantVideoContext(
+  companyId: string,
+  query: string
+): Promise<string> {
+  try {
+    // Inicializar Supabase
+    const supabaseUrl = process.env.SUPABASE_URL || 'https://gswvicwtswokyfbgoxps.supabase.co';
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+    
+    if (!supabaseKey) {
+      console.warn('[Chat API] Supabase não configurado para busca de vídeos');
+      return '';
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Gerar embedding da query
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      return '';
+    }
+
+    const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'text-embedding-3-small',
+        input: query,
+      }),
+    });
+
+    if (!embeddingResponse.ok) {
+      console.warn('[Chat API] Erro ao gerar embedding da query');
+      return '';
+    }
+
+    const embeddingData = await embeddingResponse.json();
+    const queryEmbedding = embeddingData.data[0].embedding;
+    const embeddingString = `[${queryEmbedding.join(',')}]`;
+
+    // Buscar chunks relevantes usando a função RPC
+    const { data: chunks, error } = await supabase.rpc('search_video_embeddings', {
+      query_embedding: embeddingString,
+      company_id_param: companyId,
+      match_threshold: 0.7,
+      match_count: 15, // Buscar mais chunks para ter opções
+    });
+
+    if (error) {
+      console.warn('[Chat API] Erro ao buscar embeddings, usando busca alternativa:', error);
+      // Fallback para busca por palavras-chave
+      return await getRelevantVideoContextFallback(supabase, companyId, query);
+    }
+
+    if (!chunks || chunks.length === 0) {
+      return '';
+    }
+
+    // Agrupar chunks por vídeo
+    const videosMap = new Map<string, {
+      title: string;
+      description: string | null;
+      chunks: Array<{ text: string; similarity: number }>;
+      maxSimilarity: number;
+    }>();
+
+    for (const chunk of chunks) {
+      if (!videosMap.has(chunk.video_id)) {
+        const { data: video } = await supabase
+          .from('company_videos')
+          .select('title, description')
+          .eq('id', chunk.video_id)
+          .single();
+
+        if (video) {
+          videosMap.set(chunk.video_id, {
+            title: video.title,
+            description: video.description,
+            chunks: [],
+            maxSimilarity: chunk.similarity || 0,
+          });
+        }
+      }
+
+      const video = videosMap.get(chunk.video_id);
+      if (video) {
+        video.chunks.push({
+          text: chunk.chunk_text,
+          similarity: chunk.similarity || 0,
+        });
+        if (chunk.similarity && chunk.similarity > video.maxSimilarity) {
+          video.maxSimilarity = chunk.similarity;
+        }
+      }
+    }
+
+    // Ordenar por similaridade e pegar os top 5 vídeos
+    const topVideos = Array.from(videosMap.values())
+      .sort((a, b) => b.maxSimilarity - a.maxSimilarity)
+      .slice(0, 5);
+
+    if (topVideos.length === 0) {
+      return '';
+    }
+
+    // Formatar contexto
+    let context = '\n## CONHECIMENTO DOS VÍDEOS DA EMPRESA\n\n';
+    context += 'Baseado na pergunta do usuário, aqui estão transcrições relevantes de vídeos da empresa:\n\n';
+
+    for (const video of topVideos) {
+      context += `### [Vídeo: ${video.title}]\n\n`;
+      
+      if (video.description) {
+        context += `Descrição: ${video.description}\n\n`;
+      }
+
+      context += 'Transcrição relevante:\n';
+      
+      // Pegar os 2-3 chunks mais relevantes de cada vídeo
+      const topChunks = video.chunks
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, 3);
+
+      for (const chunk of topChunks) {
+        context += `- ${chunk.text}\n`;
+      }
+
+      context += '\n';
+    }
+
+    context += 'Use essas informações para responder de forma precisa e contextualizada. ';
+    context += 'Quando apropriado, mencione qual vídeo contém a informação relevante.\n\n';
+
+    return context;
+  } catch (error) {
+    console.error('[Chat API] Erro ao buscar contexto de vídeos:', error);
+    return '';
+  }
+}
+
+/**
+ * Busca alternativa usando palavras-chave quando embeddings não estão disponíveis
+ */
+async function getRelevantVideoContextFallback(
+  supabase: any,
+  companyId: string,
+  query: string
+): Promise<string> {
+  try {
+    const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+    
+    if (queryWords.length === 0) {
+      return '';
+    }
+
+    const searchPattern = `%${queryWords.join('%')}%`;
+
+    const { data: videos } = await supabase
+      .from('company_videos')
+      .select('id, title, description, transcription_text')
+      .eq('company_id', companyId)
+      .eq('transcription_status', 'completed')
+      .not('transcription_text', 'is', null)
+      .ilike('transcription_text', searchPattern)
+      .limit(5);
+
+    if (!videos || videos.length === 0) {
+      return '';
+    }
+
+    let context = '\n## CONHECIMENTO DOS VÍDEOS DA EMPRESA\n\n';
+    context += 'Baseado na pergunta do usuário, aqui estão transcrições relevantes de vídeos da empresa:\n\n';
+
+    for (const video of videos) {
+      if (!video.transcription_text) continue;
+
+      context += `### [Vídeo: ${video.title}]\n\n`;
+      
+      if (video.description) {
+        context += `Descrição: ${video.description}\n\n`;
+      }
+
+      // Encontrar trechos relevantes
+      const sentences = video.transcription_text.split(/[.!?]\s+/);
+      const relevantSentences = sentences
+        .filter(s => {
+          const lowerS = s.toLowerCase();
+          return queryWords.some(word => lowerS.includes(word));
+        })
+        .slice(0, 3);
+
+      if (relevantSentences.length > 0) {
+        context += 'Transcrição relevante:\n';
+        for (const sentence of relevantSentences) {
+          context += `- ${sentence}\n`;
+        }
+        context += '\n';
+      }
+    }
+
+    context += 'Use essas informações para responder de forma precisa e contextualizada.\n\n';
+
+    return context;
+  } catch (error) {
+    console.error('[Chat API] Erro na busca alternativa:', error);
+    return '';
+  }
 }
 
 export default async function handler(
@@ -289,11 +512,24 @@ export default async function handler(
       return res.status(400).json({ error: 'Mensagem é obrigatória' });
     }
 
+    // Buscar contexto de vídeos relevantes
+    let videoContext = '';
+    if (company?.id) {
+      try {
+        videoContext = await getRelevantVideoContext(company.id, message);
+      } catch (error) {
+        console.error('[Chat API] Erro ao buscar contexto de vídeos:', error);
+        // Continuar sem contexto de vídeos se houver erro
+      }
+    }
+
     // Construir histórico de mensagens no formato da API
+    const systemPrompt = buildSystemPrompt(company) + videoContext;
+    
     const messages: Array<{ role: string; content: string }> = [
       {
         role: 'system',
-        content: buildSystemPrompt(company),
+        content: systemPrompt,
       },
     ];
 

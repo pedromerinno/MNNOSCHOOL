@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
 import { DocumentSection } from "@/components/documents/DocumentSection";
@@ -24,20 +24,7 @@ const Documents = () => {
   const { selectedCompany, isLoading: companiesLoading } = useCompanies();
   const [editingDocument, setEditingDocument] = useState<CompanyDocument | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [showPreloader, setShowPreloader] = useState(true);
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
-
-  // Controlar quando parar de mostrar o preloader - igual à IndexContent
-  useEffect(() => {
-    if (!authLoading && user && userProfile) {
-      // Dar um breve momento para carregar os dados iniciais
-      const timer = setTimeout(() => {
-        setShowPreloader(false);
-      }, 1500);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [authLoading, user, userProfile]);
 
   // Hooks para documentos pessoais
   const {
@@ -106,7 +93,9 @@ const Documents = () => {
     { id: 'personal', label: 'Meus Documentos', icon: FileText },
   ];
 
-  if (showPreloader || (authLoading && !user) || companiesLoading) {
+  // Mostrar preloader apenas durante carregamento crítico (auth e empresa)
+  // Não bloquear por queries de documentos que podem ser carregados progressivamente
+  if (authLoading || !user || !userProfile || companiesLoading) {
     return <Preloader />;
   }
 

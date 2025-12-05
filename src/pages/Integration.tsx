@@ -360,15 +360,25 @@ const Integration = () => {
     };
   }, [companyData?.id, userProfile?.id, loadAllData, fetchUserRole]);
 
-  // Mostrar preloader durante carregamento inicial
-  const showPreloader = authLoading || !user || !userProfile || isLoadingData || (!companyData && isLoading);
-  
-  if (showPreloader) {
+  // Mostrar preloader apenas durante carregamento crítico (auth e empresa básica)
+  // Não bloquear por dados secundários que podem ser carregados progressivamente
+  if (authLoading || !user || !userProfile || isLoading) {
     return <Preloader />;
   }
 
-  if (!user) {
-    return <Preloader />;
+  // Se não tem empresa selecionada, mostrar página vazia em vez de preloader
+  if (!selectedCompany) {
+    return (
+      <>
+        <MainNavigationMenu />
+        <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919] flex flex-col items-center justify-center">
+          <EmptyState 
+            title="Selecione uma empresa"
+            description="Selecione uma empresa no menu superior para visualizar a página de integração."
+          />
+        </div>
+      </>
+    );
   }
 
   const companyColor = companyData?.cor_principal || '#1EAEDB';
