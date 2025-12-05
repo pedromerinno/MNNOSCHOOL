@@ -343,23 +343,6 @@ const AIChatContent = () => {
     initializeChat();
   }, [clearChat, initialMessage, sendMessage, user?.id, selectedCompany?.id]);
 
-  // Rastrear mensagens do usuário para animação
-  const [animatedMessageIds, setAnimatedMessageIds] = useState<Set<string>>(new Set());
-  
-  useEffect(() => {
-    const userMessages = messages.filter(m => m.role === "user");
-    const newUserMessageIds = userMessages
-      .map(m => m.id)
-      .filter(id => !animatedMessageIds.has(id));
-    
-    if (newUserMessageIds.length > 0) {
-      setAnimatedMessageIds(prev => {
-        const updated = new Set(prev);
-        newUserMessageIds.forEach(id => updated.add(id));
-        return updated;
-      });
-    }
-  }, [messages, animatedMessageIds]);
 
   // Rolar quando mensagens mudam
   useEffect(() => {
@@ -555,18 +538,15 @@ const AIChatContent = () => {
                   if (isUserMessage) {
                     return (
                       <motion.div
-                        key={`user-message-${message.id}-${index}`}
+                        key={`user-message-${message.id}`}
                         initial={{ opacity: 0, y: 40 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ 
                           duration: 0.4, 
-                          ease: [0.16, 1, 0.3, 1],
-                          type: "spring",
-                          stiffness: 300,
-                          damping: 30
+                          ease: [0.16, 1, 0.3, 1]
                         }}
                         className={cn(
-                          "flex gap-3",
+                          "flex gap-3 animate-slide-up",
                           "justify-end",
                           isDifferentRole && "mt-6"
                         )}

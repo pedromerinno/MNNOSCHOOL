@@ -92,6 +92,16 @@ export default {
             transform: "translateY(0)"
           }
         },
+        "slide-up": {
+          "0%": {
+            opacity: "0",
+            transform: "translateY(40px)"
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateY(0)"
+          }
+        },
         "scale-in": {
           "0%": {
             transform: "scale(0.95)",
@@ -117,6 +127,7 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         "shimmer": "shimmer 1.5s infinite",
         "fade-in": "fade-in 0.3s ease-out",
+        "slide-up": "slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
         "scale-in": "scale-in 0.2s ease-out",
         "border-beam": "border-beam calc(var(--duration)*1s) infinite linear",
         "move": "move 5s linear infinite",
