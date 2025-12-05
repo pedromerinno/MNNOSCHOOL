@@ -257,6 +257,7 @@ const AIChatContent = () => {
   const isMountedRef = useRef(true);
   const timeoutRefsRef = useRef<Set<NodeJS.Timeout>>(new Set());
   const previousMessagesLengthRef = useRef(0);
+  const previousCompanyIdRef = useRef<string | null>(null);
 
   // Função para rolar até o final da última mensagem
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
@@ -317,6 +318,20 @@ const AIChatContent = () => {
       timeoutRefsRef.current.clear();
     };
   }, []);
+
+  // Detectar mudanças na empresa selecionada e limpar o chat
+  useEffect(() => {
+    const currentCompanyId = selectedCompany?.id || null;
+    
+    // Se a empresa mudou (e não é a primeira vez)
+    if (previousCompanyIdRef.current !== null && previousCompanyIdRef.current !== currentCompanyId) {
+      clearChat();
+      hasInitializedRef.current = false;
+    }
+    
+    // Atualizar a referência
+    previousCompanyIdRef.current = currentCompanyId;
+  }, [selectedCompany?.id, clearChat]);
 
   useEffect(() => {
     if (!user?.id || !selectedCompany?.id) {
@@ -438,46 +453,10 @@ const AIChatContent = () => {
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Voltar</span>
         </button>
       </div>
-
-      {/* Header Info */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
-            <MessageSquare className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-          </div>
-          <div className="min-w-0">
-            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
-              Chat IA
-            </h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Assistente virtual
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Company Info */}
-      {selectedCompany && (
-        <div className="space-y-2">
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-            Empresa
-          </p>
-          <div className="flex items-center gap-2">
-            {selectedCompany.logo && (
-              <img
-                src={selectedCompany.logo}
-                alt={selectedCompany.nome}
-                className="w-6 h-6 rounded object-cover"
-              />
-            )}
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">
-              {selectedCompany.nome}
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   );
+
+  const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
 
   return (
     <AIChatLayout
@@ -488,6 +467,7 @@ const AIChatContent = () => {
       sidebarContent={sidebarContent}
       companyName={selectedCompany?.nome}
       companyLogo={selectedCompany?.logo}
+      companyColor={companyColor}
       chatContent={
         <div className="flex flex-col h-full min-w-0 relative overflow-hidden bg-white dark:bg-[#1a1a1a]">
           {/* Container para área de mensagens com blurs */}

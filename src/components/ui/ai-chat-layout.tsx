@@ -4,7 +4,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbS
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Search, Maximize2, RotateCcw, MessageSquare, Sparkles, BookOpen, Lightbulb } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getSafeTextColor } from "@/lib/utils";
 
 export interface AIChatLayoutProps {
   // Breadcrumbs
@@ -22,6 +22,7 @@ export interface AIChatLayoutProps {
   // Company info for sidebar
   companyName?: string;
   companyLogo?: string;
+  companyColor?: string;
 }
 
 export function AIChatLayout({
@@ -31,6 +32,7 @@ export function AIChatLayout({
   headerActions,
   companyName,
   companyLogo,
+  companyColor,
 }: AIChatLayoutProps) {
   const defaultSidebarContent = (
     <div className="space-y-6">
@@ -152,18 +154,31 @@ export function AIChatLayout({
           {/* Breadcrumbs */}
           <Breadcrumb>
             <BreadcrumbList>
-              {breadcrumbs.map((crumb, index) => (
-                <React.Fragment key={index}>
-                  <BreadcrumbItem>
-                    {crumb.href ? (
-                      <BreadcrumbLink href={crumb.href}>{crumb.label}</BreadcrumbLink>
-                    ) : (
-                      <span className="text-gray-500 dark:text-gray-400">{crumb.label}</span>
-                    )}
-                  </BreadcrumbItem>
-                  {index < breadcrumbs.length - 1 && <BreadcrumbSeparator />}
-                </React.Fragment>
-              ))}
+              {breadcrumbs.map((crumb, index) => {
+                const isHomeLink = crumb.href === "/" && crumb.label === "Home";
+                const linkColor = isHomeLink && companyColor 
+                  ? getSafeTextColor(companyColor, false)
+                  : undefined;
+                
+                return (
+                  <React.Fragment key={index}>
+                    <BreadcrumbItem>
+                      {crumb.href ? (
+                        <BreadcrumbLink 
+                          href={crumb.href}
+                          style={linkColor ? { color: linkColor } : undefined}
+                          className={linkColor ? "hover:opacity-80" : undefined}
+                        >
+                          {crumb.label}
+                        </BreadcrumbLink>
+                      ) : (
+                        <span className="text-gray-500 dark:text-gray-400">{crumb.label}</span>
+                      )}
+                    </BreadcrumbItem>
+                    {index < breadcrumbs.length - 1 && <BreadcrumbSeparator />}
+                  </React.Fragment>
+                );
+              })}
             </BreadcrumbList>
           </Breadcrumb>
 
