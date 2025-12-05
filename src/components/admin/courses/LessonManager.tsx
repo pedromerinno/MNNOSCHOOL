@@ -9,6 +9,7 @@ import { DeleteLessonDialog } from './DeleteLessonDialog';
 import { Lesson } from '@/components/courses/CourseLessonList';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useIsAdmin } from '@/hooks/company/useIsAdmin';
 
 interface LessonManagerProps {
   courseId: string;
@@ -23,6 +24,7 @@ export const LessonManager: React.FC<LessonManagerProps> = ({
   onClose,
   open
 }) => {
+  const { isAdmin } = useIsAdmin();
   const { 
     lessons, 
     isLoading, 
@@ -169,10 +171,12 @@ export const LessonManager: React.FC<LessonManagerProps> = ({
             <div className="flex-1 overflow-y-auto p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium">Lista de Aulas</h3>
-                <Button onClick={handleAddLesson}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nova Aula
-                </Button>
+                {isAdmin && (
+                  <Button onClick={handleAddLesson}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nova Aula
+                  </Button>
+                )}
               </div>
 
               <LessonTable 
@@ -182,6 +186,7 @@ export const LessonManager: React.FC<LessonManagerProps> = ({
                 onDeleteLesson={confirmDeleteLesson}
                 onAddLesson={handleAddLesson}
                 onReorderLessons={handleReorderLessons}
+                isAdmin={isAdmin}
               />
             </div>
             

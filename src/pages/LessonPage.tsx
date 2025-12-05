@@ -13,17 +13,16 @@ import { LessonPlaylist } from '@/components/lessons/LessonPlaylist';
 import { LessonManager } from '@/components/admin/courses/LessonManager';
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Settings, BookOpen } from "lucide-react";
-import { useAuth } from '@/contexts/AuthContext';
 import { useLessons } from '@/hooks/useLessons';
 import { useCompanies } from '@/hooks/useCompanies';
+import { useIsAdmin } from '@/hooks/company/useIsAdmin';
 
 const LessonPage = () => {
   const { courseId, lessonId } = useParams<{ courseId: string, lessonId: string }>();
   const [showLessonManager, setShowLessonManager] = useState(false);
-  const { userProfile } = useAuth();
   const { selectedCompany } = useCompanies();
   const navigate = useNavigate();
-  const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
+  const { isAdmin } = useIsAdmin();
   const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
   
   console.log('📍 LessonPage: Renderizando com lessonId:', lessonId, ', courseId:', courseId);

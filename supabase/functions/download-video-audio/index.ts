@@ -101,44 +101,82 @@ async function downloadLoomAudio(videoId: string): Promise<Uint8Array | null> {
   try {
     const apiKey = Deno.env.get('LOOM_API_KEY');
     if (!apiKey) {
-      throw new Error('LOOM_API_KEY não configurada');
+      console.error('[Loom] LOOM_API_KEY não configurada na Edge Function');
+      throw new Error('LOOM_API_KEY não configurada na Edge Function. Configure a variável de ambiente no Supabase Dashboard.');
     }
 
+    console.log(`[Loom] Buscando informações do vídeo: ${videoId}`);
+    const apiUrl = `https://api.loom.com/v1/videos/${videoId}`;
+    console.log(`[Loom] URL da API: ${apiUrl}`);
+
     // Buscar informações do vídeo
-    const videoResponse = await fetch(`https://api.loom.com/v1/videos/${videoId}`, {
+    const videoResponse = await fetch(apiUrl, {
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
     });
 
+    console.log(`[Loom] Resposta da API Loom:`, { 
+      status: videoResponse.status, 
+      statusText: videoResponse.statusText,
+      ok: videoResponse.ok 
+    });
+
     if (!videoResponse.ok) {
-      throw new Error(`Loom API error: ${videoResponse.statusText}`);
+      const errorText = await videoResponse.text().catch(() => '');
+      console.error(`[Loom] Erro na API Loom:`, errorText);
+      throw new Error(`Loom API error: ${videoResponse.status} ${videoResponse.statusText}`);
     }
 
     const videoData = await videoResponse.json();
+    console.log(`[Loom] Dados do vídeo recebidos:`, { 
+      hasDownloadUrl: !!videoData.download_url,
+      hasVideoUrl: !!videoData.video_url,
+      hasStreamUrl: !!videoData.stream_url,
+      hasEmbedUrl: !!videoData.embed_url,
+      title: videoData.name || videoData.title,
+      keys: Object.keys(videoData)
+    });
     
-    // Verificar se há URL de download
-    // A API do Loom pode fornecer uma URL de download de vídeo
-    const downloadUrl = videoData.download_url || videoData.video_url;
+    // A API do Loom pode retornar diferentes campos para URL do vídeo
+    // Tentar múltiplas opções
+    const downloadUrl = videoData.download_url || 
+                        videoData.video_url || 
+                        videoData.stream_url ||
+                        videoData.embed_url?.replace('/embed/', '/share/') ||
+                        (videoData.assets && videoData.assets.video_url) ||
+                        (videoData.media && videoData.media.video_url);
     
     if (!downloadUrl) {
       console.warn('[Loom] Vídeo não possui URL de download disponível');
-      return null;
+      console.warn('[Loom] Dados completos recebidos:', JSON.stringify(videoData, null, 2));
+      throw new Error('Vídeo do Loom não possui URL de download disponível na resposta da API. A API do Loom pode não fornecer download direto. Verifique a documentação da API do Loom.');
     }
 
+    console.log(`[Loom] Baixando vídeo de: ${downloadUrl}`);
     // Baixar o vídeo/áudio
     const audioResponse = await fetch(downloadUrl);
     
+    console.log(`[Loom] Resposta do download:`, { 
+      status: audioResponse.status, 
+      statusText: audioResponse.statusText,
+      ok: audioResponse.ok,
+      contentType: audioResponse.headers.get('content-type')
+    });
+    
     if (!audioResponse.ok) {
-      throw new Error(`Erro ao baixar arquivo do Loom: ${audioResponse.statusText}`);
+      throw new Error(`Erro ao baixar arquivo do Loom: ${audioResponse.status} ${audioResponse.statusText}`);
     }
 
     const arrayBuffer = await audioResponse.arrayBuffer();
+    console.log(`[Loom] Áudio baixado com sucesso: ${arrayBuffer.byteLength} bytes`);
     return new Uint8Array(arrayBuffer);
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Loom] Erro ao baixar áudio:', error);
-    return null;
+    console.error('[Loom] Tipo do erro:', error?.constructor?.name);
+    console.error('[Loom] Mensagem:', error?.message);
+    throw error; // Re-throw para que o erro seja propagado
   }
 }
 
@@ -178,8 +216,13 @@ serve(async (req) => {
       videoType = 'youtube';
     } else if (loomId) {
       console.log(`[Download Audio] Vídeo do Loom detectado: ${loomId}`);
-      audioData = await downloadLoomAudio(loomId);
-      videoType = 'loom';
+      try {
+        audioData = await downloadLoomAudio(loomId);
+        videoType = 'loom';
+      } catch (loomError: any) {
+        console.error(`[Download Audio] Erro ao baixar áudio do Loom:`, loomError);
+        throw new Error(`Erro ao baixar áudio do Loom: ${loomError.message || 'Erro desconhecido'}`);
+      }
     } else {
       throw new Error('URL de vídeo não suportada. Apenas YouTube e Loom são suportados.');
     }

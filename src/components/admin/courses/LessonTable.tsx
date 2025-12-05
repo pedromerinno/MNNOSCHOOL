@@ -43,6 +43,7 @@ interface LessonTableProps {
   onDeleteLesson: (lesson: Lesson) => void;
   onAddLesson: () => void;
   onReorderLessons: (lessons: Lesson[]) => void;
+  isAdmin?: boolean;
 }
 
 interface SortableLessonRowProps {
@@ -50,6 +51,7 @@ interface SortableLessonRowProps {
   index: number;
   onEditLesson: (lesson: Lesson) => void;
   onDeleteLesson: (lesson: Lesson) => void;
+  isAdmin?: boolean;
 }
 
 const SortableLessonRow: React.FC<SortableLessonRowProps> = ({
@@ -57,6 +59,7 @@ const SortableLessonRow: React.FC<SortableLessonRowProps> = ({
   index,
   onEditLesson,
   onDeleteLesson,
+  isAdmin = false,
 }) => {
   const {
     attributes,
@@ -78,15 +81,19 @@ const SortableLessonRow: React.FC<SortableLessonRowProps> = ({
       style={style}
       className={`h-16 ${isDragging ? 'bg-accent/50 shadow-lg border-primary' : ''} transition-all duration-200`}
     >
-      <TableCell>
-        <div
-          {...attributes}
-          {...listeners}
-          className="cursor-grab active:cursor-grabbing p-1 hover:bg-accent rounded transition-colors"
-        >
-          <GripVertical className="h-4 w-4 text-muted-foreground" />
-        </div>
-      </TableCell>
+      {isAdmin ? (
+        <TableCell>
+          <div
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing p-1 hover:bg-accent rounded transition-colors"
+          >
+            <GripVertical className="h-4 w-4 text-muted-foreground" />
+          </div>
+        </TableCell>
+      ) : (
+        <TableCell></TableCell>
+      )}
       <TableCell className="font-medium">{lesson.order_index || index + 1}</TableCell>
       <TableCell>
         <div>
@@ -106,28 +113,31 @@ const SortableLessonRow: React.FC<SortableLessonRowProps> = ({
         {lesson.type === 'quiz' && 'Quiz'}
       </TableCell>
       <TableCell className="hidden md:table-cell">{lesson.duration || '-'}</TableCell>
-      <TableCell className="text-right">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem onClick={() => onEditLesson(lesson)}>
-              <Pencil className="h-4 w-4 mr-2" />
-              Editar
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => onDeleteLesson(lesson)}
-              className="text-destructive focus:text-destructive"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Excluir
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </TableCell>
+      {isAdmin && (
+        <TableCell className="text-right">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem onClick={() => onEditLesson(lesson)}>
+                <Pencil className="h-4 w-4 mr-2" />
+                Editar
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => onDeleteLesson(lesson)}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Excluir
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </TableCell>
+      )}
+      {!isAdmin && <TableCell className="text-right"></TableCell>}
     </TableRow>
   );
 };
@@ -138,7 +148,8 @@ export const LessonTable: React.FC<LessonTableProps> = ({
   onEditLesson,
   onDeleteLesson,
   onAddLesson,
-  onReorderLessons
+  onReorderLessons,
+  isAdmin = false
 }) => {
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -148,6 +159,8 @@ export const LessonTable: React.FC<LessonTableProps> = ({
   );
 
   const handleDragEnd = (event: DragEndEvent) => {
+    if (!isAdmin) return;
+    
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
@@ -183,9 +196,11 @@ export const LessonTable: React.FC<LessonTableProps> = ({
         <p className="text-sm text-muted-foreground mb-4">
           Comece adicionando a primeira aula para este curso.
         </p>
-        <Button onClick={onAddLesson}>
-          Adicionar Aula
-        </Button>
+        {isAdmin && (
+          <Button onClick={onAddLesson}>
+            Adicionar Aula
+          </Button>
+        )}
       </div>
     );
   }
@@ -201,12 +216,12 @@ export const LessonTable: React.FC<LessonTableProps> = ({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[40px]"></TableHead>
+                {isAdmin && <TableHead className="w-[40px]"></TableHead>}
                 <TableHead className="w-[60px]">Ordem</TableHead>
                 <TableHead>Título</TableHead>
                 <TableHead className="hidden md:table-cell">Tipo</TableHead>
                 <TableHead className="hidden md:table-cell">Duração</TableHead>
-                <TableHead className="text-right w-[60px]">Ações</TableHead>
+                {isAdmin && <TableHead className="text-right w-[60px]">Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <SortableContext
@@ -221,6 +236,7 @@ export const LessonTable: React.FC<LessonTableProps> = ({
                     index={index}
                     onEditLesson={onEditLesson}
                     onDeleteLesson={onDeleteLesson}
+                    isAdmin={isAdmin}
                   />
                 ))}
               </TableBody>

@@ -20,6 +20,11 @@ export interface Lesson {
   course_description?: string | null;
   likes?: number;
   user_liked?: boolean;
+  transcription_text?: string | null;
+  transcription_status?: string | null;
+  transcription_error?: string | null;
+  transcribed_at?: string | null;
+  transcription_metadata?: Record<string, any> | null;
   course_lessons?: Array<{
     id: string;
     title: string;

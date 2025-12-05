@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from '@/hooks/use-toast';
 import { ExtendedLesson } from '@/hooks/useLessons';
+import { lessonTranscriptionService } from '@/services/lesson/lessonTranscriptionService';
 
 export const useLessonMutations = (courseId: string, onSuccess: () => Promise<void>) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,6 +32,27 @@ export const useLessonMutations = (courseId: string, onSuccess: () => Promise<vo
 
       console.log("Lesson created successfully:", data);
 
+      // Iniciar transcrição automaticamente se for uma aula de vídeo
+      if (data.type === 'video' && data.content) {
+        const videoUrl = data.content;
+        // Verificar se é uma URL válida de vídeo (YouTube ou Loom)
+        const isVideoUrl = videoUrl.includes('youtube.com') || 
+                          videoUrl.includes('youtu.be') || 
+                          videoUrl.includes('loom.com');
+        
+        if (isVideoUrl) {
+          // Iniciar transcrição em background (não bloquear a UI)
+          lessonTranscriptionService.transcribeLesson(data.id, videoUrl)
+            .then(() => {
+              console.log('[useLessonMutations] Transcrição iniciada para aula:', data.id);
+            })
+            .catch((error) => {
+              console.error('[useLessonMutations] Erro ao iniciar transcrição:', error);
+              // Não mostrar erro ao usuário, apenas logar
+            });
+        }
+      }
+
       toast({
         title: 'Aula criada',
         description: 'A aula foi criada com sucesso',
@@ -55,6 +77,13 @@ export const useLessonMutations = (courseId: string, onSuccess: () => Promise<vo
   const handleUpdateLesson = async (lessonId: string, lessonData: Partial<ExtendedLesson>) => {
     setIsSubmitting(true);
     try {
+      // Buscar a aula atual antes de atualizar para comparar
+      const { data: currentLesson } = await supabase
+        .from('lessons')
+        .select('type, content, transcription_status')
+        .eq('id', lessonId)
+        .single();
+
       const updateData: any = {};
       if (lessonData.title !== undefined) updateData.title = lessonData.title;
       if (lessonData.description !== undefined) updateData.description = lessonData.description;
@@ -71,6 +100,48 @@ export const useLessonMutations = (courseId: string, onSuccess: () => Promise<vo
         .eq('id', lessonId);
 
       if (error) throw error;
+
+      // Iniciar transcrição se:
+      // 1. A aula foi atualizada para tipo 'video', OU
+      // 2. O conteúdo (URL) foi atualizado e a aula é do tipo 'video'
+      const typeChangedToVideo = updateData.type === 'video';
+      const contentChanged = updateData.content && updateData.content !== currentLesson?.content;
+      const isVideoType = updateData.type === 'video' || (!updateData.type && currentLesson?.type === 'video');
+      
+      if ((typeChangedToVideo || contentChanged) && isVideoType) {
+        // Buscar a aula atualizada para verificar o tipo e conteúdo
+        const { data: updatedLesson } = await supabase
+          .from('lessons')
+          .select('type, content, transcription_status')
+          .eq('id', lessonId)
+          .single();
+
+        if (updatedLesson?.type === 'video' && updatedLesson.content) {
+          const videoUrl = updatedLesson.content;
+          const isVideoUrl = videoUrl.includes('youtube.com') || 
+                            videoUrl.includes('youtu.be') || 
+                            videoUrl.includes('loom.com');
+          
+          // Só iniciar transcrição se:
+          // 1. É uma URL válida de vídeo
+          // 2. A transcrição ainda não foi concluída ou falhou (permitir retry)
+          // 3. O conteúdo foi alterado (nova URL) ou ainda não tem transcrição
+          const needsTranscription = !updatedLesson.transcription_status || 
+                                   updatedLesson.transcription_status === 'pending' || 
+                                   updatedLesson.transcription_status === 'failed';
+          
+          if (isVideoUrl && (contentChanged || needsTranscription)) {
+            // Iniciar transcrição em background
+            lessonTranscriptionService.transcribeLesson(lessonId, videoUrl)
+              .then(() => {
+                console.log('[useLessonMutations] Transcrição iniciada para aula atualizada:', lessonId);
+              })
+              .catch((error) => {
+                console.error('[useLessonMutations] Erro ao iniciar transcrição:', error);
+              });
+          }
+        }
+      }
 
       await onSuccess();
 

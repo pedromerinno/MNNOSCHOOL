@@ -667,6 +667,11 @@ export type Database = {
           title: string
           type: string
           updated_at: string
+          transcription_text: string | null
+          transcription_status: string | null
+          transcription_error: string | null
+          transcribed_at: string | null
+          transcription_metadata: Record<string, any> | null
         }
         Insert: {
           completed?: boolean | null
@@ -680,6 +685,11 @@ export type Database = {
           title: string
           type: string
           updated_at?: string
+          transcription_text?: string | null
+          transcription_status?: string | null
+          transcription_error?: string | null
+          transcribed_at?: string | null
+          transcription_metadata?: Record<string, any> | null
         }
         Update: {
           completed?: boolean | null
@@ -693,6 +703,11 @@ export type Database = {
           title?: string
           type?: string
           updated_at?: string
+          transcription_text?: string | null
+          transcription_status?: string | null
+          transcription_error?: string | null
+          transcribed_at?: string | null
+          transcription_metadata?: Record<string, any> | null
         }
         Relationships: [
           {
