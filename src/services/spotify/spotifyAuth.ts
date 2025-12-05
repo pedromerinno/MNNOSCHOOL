@@ -9,7 +9,10 @@
  * 5. Armazena tokens de forma segura
  */
 
-const SPOTIFY_CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
+// Limpar espaços em branco do client_id se existirem
+// Se trim() resultar em string vazia, usar undefined
+const rawClientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
+const SPOTIFY_CLIENT_ID = rawClientId?.trim() || undefined;
 const SPOTIFY_REDIRECT_URI = `${window.location.origin}/spotify/callback`;
 const SPOTIFY_AUTH_URL = 'https://accounts.spotify.com/authorize';
 const SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token';
@@ -133,9 +136,24 @@ export const redirectToSpotifyAuth = async (): Promise<void> => {
  */
 export const exchangeCodeForTokens = async (code: string): Promise<SpotifyTokens> => {
   if (!SPOTIFY_CLIENT_ID) {
+    console.error('SPOTIFY_CLIENT_ID não encontrado:', {
+      env: import.meta.env.VITE_SPOTIFY_CLIENT_ID,
+      defined: typeof SPOTIFY_CLIENT_ID !== 'undefined',
+      value: SPOTIFY_CLIENT_ID,
+    });
     throw new Error(
       'Spotify Client ID não configurado. Por favor, adicione VITE_SPOTIFY_CLIENT_ID no arquivo .env e reinicie o servidor.'
     );
+  }
+
+  // Validar formato do client_id (deve ser uma string não vazia)
+  if (typeof SPOTIFY_CLIENT_ID !== 'string' || SPOTIFY_CLIENT_ID.length === 0) {
+    console.error('SPOTIFY_CLIENT_ID inválido:', {
+      type: typeof SPOTIFY_CLIENT_ID,
+      length: SPOTIFY_CLIENT_ID?.length,
+      value: SPOTIFY_CLIENT_ID,
+    });
+    throw new Error('Client ID do Spotify está vazio ou em formato inválido. Verifique o arquivo .env');
   }
 
   // Recuperar code_verifier do sessionStorage
@@ -147,19 +165,28 @@ export const exchangeCodeForTokens = async (code: string): Promise<SpotifyTokens
   // Remover verifier após uso
   sessionStorage.removeItem('spotify_code_verifier');
 
-  // Usar PKCE - não precisa de client_secret
+  // Para PKCE, o client_id deve ser enviado no body (não como Basic Auth)
+  // Não usamos client_secret no fluxo PKCE
+  const bodyParams = new URLSearchParams({
+    grant_type: 'authorization_code',
+    code,
+    redirect_uri: SPOTIFY_REDIRECT_URI,
+    client_id: SPOTIFY_CLIENT_ID,
+    code_verifier: codeVerifier,
+  });
+
+  console.log('Trocando código por tokens:', {
+    client_id: `${SPOTIFY_CLIENT_ID.substring(0, 8)}...`,
+    redirect_uri: SPOTIFY_REDIRECT_URI,
+    has_code_verifier: !!codeVerifier,
+  });
+
   const response = await fetch(SPOTIFY_TOKEN_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body: new URLSearchParams({
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: SPOTIFY_REDIRECT_URI,
-      client_id: SPOTIFY_CLIENT_ID,
-      code_verifier: codeVerifier,
-    }),
+    body: bodyParams,
   });
 
   if (!response.ok) {
@@ -197,30 +224,73 @@ export const exchangeCodeForTokens = async (code: string): Promise<SpotifyTokens
 
 /**
  * Atualiza access token usando refresh token
- * Para refresh token, não precisamos de PKCE, mas ainda não precisamos de client_secret
+ * Para refresh token com PKCE, enviamos client_id no body
  */
 export const refreshAccessToken = async (refreshToken: string): Promise<SpotifyTokens> => {
   if (!SPOTIFY_CLIENT_ID) {
+    console.error('SPOTIFY_CLIENT_ID não encontrado no refresh:', {
+      env: import.meta.env.VITE_SPOTIFY_CLIENT_ID,
+      defined: typeof SPOTIFY_CLIENT_ID !== 'undefined',
+      value: SPOTIFY_CLIENT_ID,
+    });
     throw new Error(
       'Spotify Client ID não configurado. Por favor, adicione VITE_SPOTIFY_CLIENT_ID no arquivo .env'
     );
   }
+
+  // Validar formato do client_id
+  if (typeof SPOTIFY_CLIENT_ID !== 'string' || SPOTIFY_CLIENT_ID.length === 0) {
+    console.error('SPOTIFY_CLIENT_ID inválido no refresh:', {
+      type: typeof SPOTIFY_CLIENT_ID,
+      length: SPOTIFY_CLIENT_ID?.length,
+      value: SPOTIFY_CLIENT_ID,
+    });
+    throw new Error('Client ID do Spotify está vazio ou em formato inválido. Verifique o arquivo .env');
+  }
+
+  // Para PKCE, o client_id deve ser enviado no body (não como Basic Auth)
+  const bodyParams = new URLSearchParams({
+    grant_type: 'refresh_token',
+    refresh_token: refreshToken,
+    client_id: SPOTIFY_CLIENT_ID,
+  });
+
+  console.log('Atualizando token do Spotify:', {
+    client_id: `${SPOTIFY_CLIENT_ID.substring(0, 8)}...`,
+    has_refresh_token: !!refreshToken,
+  });
 
   const response = await fetch(SPOTIFY_TOKEN_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body: new URLSearchParams({
-      grant_type: 'refresh_token',
-      refresh_token: refreshToken,
-      client_id: SPOTIFY_CLIENT_ID,
-    }),
+    body: bodyParams,
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error_description || 'Erro ao atualizar token do Spotify');
+    const error = await response.json().catch(() => ({ 
+      error: 'Unknown error', 
+      error_description: 'Erro desconhecido ao atualizar token' 
+    }));
+    
+    console.error('Erro ao atualizar token do Spotify:', {
+      status: response.status,
+      statusText: response.statusText,
+      error,
+      client_id: SPOTIFY_CLIENT_ID ? `${SPOTIFY_CLIENT_ID.substring(0, 8)}...` : 'não configurado',
+    });
+
+    if (error.error === 'invalid_client') {
+      throw new Error(
+        'Client ID inválido ao atualizar token. Verifique se:\n' +
+        '1. O Client ID está correto no arquivo .env\n' +
+        '2. O servidor foi reiniciado após adicionar a variável\n' +
+        '3. A app existe no Spotify Developer Dashboard'
+      );
+    }
+    
+    throw new Error(error.error_description || error.error || 'Erro ao atualizar token do Spotify');
   }
 
   const data = await response.json();

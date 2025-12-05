@@ -78,21 +78,21 @@ export const NavMenuLinks = ({ adminLabel = "Admin" }) => {
         <NavigationMenuItem>
           <Link 
             to="/my-courses" 
-            className={cn(menuLinkClass('/my-courses'), "flex items-center gap-2")}
+            className={menuLinkClass('/my-courses')}
             style={getLinkStyle('/my-courses')}
           >
             Escola
-            <Badge variant="beta" className="text-xs">Beta</Badge>
           </Link>
         </NavigationMenuItem>
         
         <NavigationMenuItem>
           <Link 
             to="/ai-chat" 
-            className={menuLinkClass('/ai-chat')}
+            className={cn(menuLinkClass('/ai-chat'), "flex items-center gap-2")}
             style={getLinkStyle('/ai-chat')}
           >
-            IA
+            <span>IA</span>
+            <Badge variant="beta" className="text-xs flex-shrink-0">Beta</Badge>
           </Link>
         </NavigationMenuItem>
         

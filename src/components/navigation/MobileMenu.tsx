@@ -132,7 +132,7 @@ export const MobileMenu = () => {
                   )} 
                 />
                 <span className="text-base font-medium">{item.label}</span>
-                {item.label === "Escola" && (
+                {item.label === "IA" && (
                   <Badge variant="beta" className="text-xs ml-auto">Beta</Badge>
                 )}
               </Link>
