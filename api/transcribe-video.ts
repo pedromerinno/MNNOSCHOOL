@@ -296,6 +296,18 @@ export default async function handler(
       });
     }
 
+    // Verificar se LOOM_API_KEY está configurada (se for vídeo do Loom)
+    const loomId = getLoomVideoId(video_url);
+    if (loomId) {
+      const loomApiKey = process.env.LOOM_API_KEY;
+      if (!loomApiKey) {
+        console.error('[Transcribe] LOOM_API_KEY não configurada para vídeo do Loom');
+        return res.status(500).json({ 
+          error: 'LOOM_API_KEY não configurada. Configure a variável de ambiente LOOM_API_KEY no arquivo .env local ou nas variáveis de ambiente do Vercel.' 
+        });
+      }
+    }
+
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Atualizar status para processing

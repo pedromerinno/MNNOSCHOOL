@@ -31,17 +31,26 @@ export class LessonTranscriptionService {
       // Chamar API de transcrição (assíncrono)
       console.log('[LessonTranscriptionService] Iniciando transcrição:', { lessonId, videoUrl });
       
-      const response = await fetch('/api/transcribe-video', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          video_id: lessonId,
-          video_url: videoUrl,
-          table_type: 'lessons',
-        }),
-      });
+      let response: Response;
+      try {
+        response = await fetch('/api/transcribe-video', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            video_id: lessonId,
+            video_url: videoUrl,
+            table_type: 'lessons',
+          }),
+        });
+      } catch (fetchError: any) {
+        // Erro de rede (fetch failed, DNS, etc)
+        console.error('[LessonTranscriptionService] Erro de rede ao chamar API:', fetchError);
+        throw new Error(
+          `Erro de conexão ao iniciar transcrição. Verifique se o servidor de desenvolvimento está rodando e se a API route está configurada corretamente. Erro: ${fetchError.message || 'fetch failed'}`
+        );
+      }
 
       console.log('[LessonTranscriptionService] Resposta da API:', { 
         status: response.status, 
@@ -53,7 +62,7 @@ export class LessonTranscriptionService {
         let errorMessage = 'Erro ao iniciar transcrição';
         try {
           const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
+          errorMessage = errorData.error || errorData.message || errorMessage;
           console.error('[LessonTranscriptionService] Erro da API:', errorData);
         } catch (e) {
           const errorText = await response.text().catch(() => '');
