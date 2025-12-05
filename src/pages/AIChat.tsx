@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Send, Loader2, Bot, Plus, Mic, ArrowLeft, MessageSquare } from "lucide-react";
+import { motion } from "framer-motion";
 import { useAIChat } from "@/hooks/useAIChat";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,6 +14,8 @@ import { getAvatarUrl } from "@/utils/avatarUtils";
 import { ProgressiveBlur } from "@/components/ui/progressive-blur";
 import { Preloader } from "@/components/ui/Preloader";
 import { AIChatLayout } from "@/components/ui/ai-chat-layout";
+import { useAnimatedText } from "@/components/ui/animated-text";
+import { Typewriter } from "@/components/ui/typewriter-text";
 
 // Componente de ondas sonoras para o botão de voz
 const VoiceWaves = () => (
@@ -46,9 +49,6 @@ const TypingDots = () => (
     />
   </div>
 );
-
-// Set global para rastrear mensagens já animadas
-const animatedMessages = new Set<string>();
 
 // Função para processar markdown básico e converter para JSX
 const parseMarkdown = (text: string): React.ReactNode[] => {
@@ -199,201 +199,45 @@ const parseMarkdown = (text: string): React.ReactNode[] => {
   return parts.length > 0 ? parts : [text];
 };
 
-// Componente de typewriter para animar o texto
-const TypewriterText = ({ 
+// Componente para animar mensagens da IA usando useAnimatedText
+const AnimatedMessageText = ({ 
   text, 
-  speed = 20, 
   messageId,
   onTextUpdate 
 }: { 
   text: string; 
-  speed?: number; 
   messageId: string;
   onTextUpdate?: () => void;
 }) => {
-  const [displayedText, setDisplayedText] = useState("");
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const currentMessageIdRef = useRef<string | null>(null);
-  const isMountedRef = useRef(true);
+  const animatedText = useAnimatedText(text, "");
+  const prevTextRef = useRef(text);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const onTextUpdateRef = useRef(onTextUpdate);
-  const cancelledRef = useRef(false);
 
-  // Atualizar ref do callback para evitar dependências desnecessárias
+  // Rolar durante a animação
   useEffect(() => {
-    onTextUpdateRef.current = onTextUpdate;
-  }, [onTextUpdate]);
-
-  useEffect(() => {
-    isMountedRef.current = true;
-    
-    return () => {
-      isMountedRef.current = false;
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-        scrollTimeoutRef.current = null;
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    // Resetar flag de cancelamento
-    cancelledRef.current = false;
-
-    // Limpar interval anterior se existir
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+    if (text !== prevTextRef.current) {
+      prevTextRef.current = text;
     }
 
-    // Limpar timeout anterior se existir
+    // Rolar a cada atualização do texto animado
     if (scrollTimeoutRef.current) {
       clearTimeout(scrollTimeoutRef.current);
-      scrollTimeoutRef.current = null;
     }
 
-    // Resetar se a mensagem mudou
-    if (currentMessageIdRef.current !== messageId) {
-      currentMessageIdRef.current = messageId;
-      cancelledRef.current = true; // Cancelar animação anterior
-      if (isMountedRef.current) {
-        setDisplayedText("");
+    scrollTimeoutRef.current = setTimeout(() => {
+      if (onTextUpdate) {
+        onTextUpdate();
       }
-    }
-
-    // Se já foi animada, mostrar texto completo
-    if (animatedMessages.has(messageId)) {
-      if (isMountedRef.current && !cancelledRef.current) {
-        setDisplayedText(text);
-      }
-      return;
-    }
-
-    // Se não há texto, limpar
-    if (!text || text.length === 0) {
-      if (isMountedRef.current && !cancelledRef.current) {
-        setDisplayedText("");
-      }
-      return;
-    }
-
-    // Iniciar animação
-    let currentIndex = 0;
-    if (isMountedRef.current && !cancelledRef.current) {
-      setDisplayedText("");
-    }
-
-    // Usar uma função para criar o interval de forma mais segura
-    const startAnimation = () => {
-      if (!isMountedRef.current || cancelledRef.current) return;
-
-      intervalRef.current = setInterval(() => {
-        // Verificar montagem e cancelamento antes de cada iteração
-        if (!isMountedRef.current || cancelledRef.current) {
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-            intervalRef.current = null;
-          }
-          return;
-        }
-
-        if (currentIndex < text.length) {
-          // Atualizar texto apenas se ainda estiver montado
-          if (isMountedRef.current && !cancelledRef.current) {
-            try {
-              setDisplayedText(text.slice(0, currentIndex + 1));
-            } catch (error) {
-              // Ignorar erros de atualização de estado
-              if (intervalRef.current) {
-                clearInterval(intervalRef.current);
-                intervalRef.current = null;
-              }
-              return;
-            }
-          }
-          currentIndex += 1;
-          
-          // Rolar a cada 5 caracteres durante a animação
-          if (currentIndex % 5 === 0 && onTextUpdateRef.current && isMountedRef.current && !cancelledRef.current) {
-            // Limpar timeout anterior
-            if (scrollTimeoutRef.current) {
-              clearTimeout(scrollTimeoutRef.current);
-            }
-            
-            scrollTimeoutRef.current = setTimeout(() => {
-              if (isMountedRef.current && !cancelledRef.current && onTextUpdateRef.current) {
-                try {
-                  onTextUpdateRef.current();
-                } catch (error) {
-                  // Ignorar erros silenciosamente
-                }
-              }
-            }, 10);
-          }
-        } else {
-          // Animação completa
-          if (!cancelledRef.current) {
-            animatedMessages.add(messageId);
-          }
-          
-          // Limpar interval
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-            intervalRef.current = null;
-          }
-          
-          // Rolar quando a animação termina
-          if (onTextUpdateRef.current && isMountedRef.current && !cancelledRef.current) {
-            if (scrollTimeoutRef.current) {
-              clearTimeout(scrollTimeoutRef.current);
-            }
-            
-            scrollTimeoutRef.current = setTimeout(() => {
-              if (isMountedRef.current && !cancelledRef.current && onTextUpdateRef.current) {
-                try {
-                  onTextUpdateRef.current();
-                } catch (error) {
-                  // Ignorar erros silenciosamente
-                }
-              }
-            }, 50);
-          }
-        }
-      }, speed);
-    };
-
-    // Pequeno delay para garantir que o DOM está pronto
-    const initTimeout = setTimeout(() => {
-      if (isMountedRef.current && !cancelledRef.current) {
-        startAnimation();
-      }
-    }, 0);
+    }, 50);
 
     return () => {
-      cancelledRef.current = true;
-      clearTimeout(initTimeout);
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
-        scrollTimeoutRef.current = null;
       }
     };
-  }, [text, speed, messageId]);
+  }, [animatedText, onTextUpdate, text]);
 
-  // Se já foi animada, mostrar texto completo. Caso contrário, só mostrar displayedText (pode estar vazio no início)
-  if (animatedMessages.has(messageId)) {
-    return <span>{parseMarkdown(text)}</span>;
-  }
-
-  // Durante a animação, mostrar apenas o que já foi digitado
-  return <span>{parseMarkdown(displayedText)}</span>;
+  return <span>{parseMarkdown(animatedText)}</span>;
 };
 
 const AIChatContent = () => {
@@ -403,7 +247,6 @@ const AIChatContent = () => {
   const { user, userProfile, loading: authLoading } = useAuth();
   const [inputValue, setInputValue] = useState("");
   const [isInputActive, setIsInputActive] = useState(false);
-  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
   const initialMessage = (location.state as { message?: string })?.message;
 
   const { messages, isLoading, sendMessage, clearChat } = useAIChat(selectedCompany);
@@ -413,9 +256,7 @@ const AIChatContent = () => {
   const hasInitializedRef = useRef(false);
   const isMountedRef = useRef(true);
   const timeoutRefsRef = useRef<Set<NodeJS.Timeout>>(new Set());
-
-  // Memorizar o array de texto para evitar recriação a cada render
-  const placeholderText = useMemo(() => ["Por onde começamos?"], []);
+  const previousMessagesLengthRef = useRef(0);
 
   // Função para rolar até o final da última mensagem
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
@@ -488,7 +329,6 @@ const AIChatContent = () => {
     const initializeChat = async () => {
       if (!isMountedRef.current) return;
       
-      animatedMessages.clear();
       clearChat();
       
       if (initialMessage && initialMessage.trim()) {
@@ -502,6 +342,24 @@ const AIChatContent = () => {
 
     initializeChat();
   }, [clearChat, initialMessage, sendMessage, user?.id, selectedCompany?.id]);
+
+  // Rastrear mensagens do usuário para animação
+  const [animatedMessageIds, setAnimatedMessageIds] = useState<Set<string>>(new Set());
+  
+  useEffect(() => {
+    const userMessages = messages.filter(m => m.role === "user");
+    const newUserMessageIds = userMessages
+      .map(m => m.id)
+      .filter(id => !animatedMessageIds.has(id));
+    
+    if (newUserMessageIds.length > 0) {
+      setAnimatedMessageIds(prev => {
+        const updated = new Set(prev);
+        newUserMessageIds.forEach(id => updated.add(id));
+        return updated;
+      });
+    }
+  }, [messages, animatedMessageIds]);
 
   // Rolar quando mensagens mudam
   useEffect(() => {
@@ -556,52 +414,6 @@ const AIChatContent = () => {
     }
   }, [isLoading, messages.length, scrollToBottom]);
 
-  // Rolar quando uma nova mensagem termina de ser animada (typewriter)
-  useEffect(() => {
-    if (messages.length === 0) {
-      setStreamingMessageId(null);
-      return;
-    }
-    
-    const lastMessage = messages[messages.length - 1];
-    
-    if (lastMessage && lastMessage.role === "assistant" && lastMessage.content && lastMessage.content.trim()) {
-      if (!animatedMessages.has(lastMessage.id)) {
-        const timeoutId = setTimeout(() => {
-          setStreamingMessageId(lastMessage.id);
-        }, 0);
-        return () => clearTimeout(timeoutId);
-      } else {
-        setStreamingMessageId(null);
-      }
-    } else {
-      setStreamingMessageId(null);
-    }
-  }, [messages, isLoading]);
-
-  useEffect(() => {
-    if (messages.length === 0) {
-      setStreamingMessageId(null);
-      return;
-    }
-    
-    const lastMessage = messages[messages.length - 1];
-    
-    // Se é uma mensagem do assistente com conteúdo e ainda não foi animada, iniciar animação
-    if (lastMessage && lastMessage.role === "assistant" && lastMessage.content && lastMessage.content.trim()) {
-      if (!animatedMessages.has(lastMessage.id)) {
-        // Usar setTimeout para garantir que o estado seja atualizado após o render
-        const timeoutId = setTimeout(() => {
-          setStreamingMessageId(lastMessage.id);
-        }, 0);
-        return () => clearTimeout(timeoutId);
-      } else {
-        setStreamingMessageId(null);
-      }
-    } else {
-      setStreamingMessageId(null);
-    }
-  }, [messages, isLoading]);
 
   const handleSend = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -720,54 +532,56 @@ const AIChatContent = () => {
             className="absolute inset-0 overflow-y-auto px-4 scroll-smooth overscroll-contain z-10"
             style={{ 
               paddingTop: '80px',
-              paddingBottom: '330px'
+              paddingBottom: '250px'
             }}
           >
             {messages.length === 0 ? (
               <div className="flex items-center justify-center h-full max-w-5xl mx-auto">
-                <div className="text-3xl text-gray-900 dark:text-gray-100 font-medium">
-                  {placeholderText[0]}
-                </div>
+                <Typewriter
+                  text="Por onde começamos?"
+                  speed={100}
+                  loop={true}
+                  delay={2000}
+                  className="text-3xl md:text-4xl text-gray-900 dark:text-gray-100 font-medium"
+                />
               </div>
             ) : (
               <div className="max-w-5xl mx-auto py-6 space-y-4" key="messages-container">
                 {messages.map((message, index) => {
                   const previousMessage = index > 0 ? messages[index - 1] : null;
                   const isDifferentRole = previousMessage && previousMessage.role !== message.role;
+                  const isUserMessage = message.role === "user";
                   
-                  return (
-                    <div
-                      key={`message-${message.id}-${index}`}
-                      className={cn(
-                        "flex gap-3",
-                        message.role === "user" ? "justify-end" : "justify-start",
-                        isDifferentRole && "mt-6"
-                      )}
-                    >
-                        {message.role === "assistant" && selectedCompany && (
-                          <Avatar key={`avatar-assistant-${message.id}`} className="flex-shrink-0 w-8 h-8">
-                            <AvatarImage 
-                              src={selectedCompany.logo || undefined} 
-                              alt={selectedCompany.nome || "IA"} 
-                            />
-                            <AvatarFallback className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs">
-                              {selectedCompany.nome ? getInitials(selectedCompany.nome) : <Bot size={16} />}
-                            </AvatarFallback>
-                          </Avatar>
+                  if (isUserMessage) {
+                    return (
+                      <motion.div
+                        key={`user-message-${message.id}-${index}`}
+                        initial={{ opacity: 0, y: 40 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ 
+                          duration: 0.4, 
+                          ease: [0.16, 1, 0.3, 1],
+                          type: "spring",
+                          stiffness: 300,
+                          damping: 30
+                        }}
+                        className={cn(
+                          "flex gap-3",
+                          "justify-end",
+                          isDifferentRole && "mt-6"
                         )}
+                      >
                         <div
                           className={cn(
                             "rounded-2xl px-4 py-3",
-                            message.role === "user"
-                              ? "bg-black dark:bg-white text-white dark:text-black max-w-[70%]"
-                              : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 max-w-[600px]"
+                            "bg-black dark:bg-white text-white dark:text-black max-w-[70%]"
                           )}
                         >
                           <p className="text-base whitespace-pre-wrap break-words">
                             {parseMarkdown(message.content)}
                           </p>
                         </div>
-                        {message.role === "user" && user && (
+                        {user && (
                           <Avatar key={`avatar-user-${message.id}`} className="flex-shrink-0 w-8 h-8">
                             <AvatarImage 
                               src={getAvatarUrl(userProfile?.avatar) || undefined} 
@@ -788,9 +602,47 @@ const AIChatContent = () => {
                             </AvatarFallback>
                           </Avatar>
                         )}
-                      </div>
+                      </motion.div>
                     );
-                  })}
+                  }
+                  
+                  return (
+                    <div
+                      key={message.id}
+                      className={cn(
+                        "flex gap-3",
+                        "justify-start",
+                        isDifferentRole && "mt-6"
+                      )}
+                    >
+                      {selectedCompany && (
+                        <Avatar key={`avatar-assistant-${message.id}`} className="flex-shrink-0 w-8 h-8">
+                          <AvatarImage 
+                            src={selectedCompany.logo || undefined} 
+                            alt={selectedCompany.nome || "IA"} 
+                          />
+                          <AvatarFallback className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs">
+                            {selectedCompany.nome ? getInitials(selectedCompany.nome) : <Bot size={16} />}
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                      <div
+                        className={cn(
+                          "rounded-2xl px-4 py-3",
+                          "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 max-w-[600px]"
+                        )}
+                      >
+                        <p className="text-base whitespace-pre-wrap break-words">
+                          <AnimatedMessageText
+                            text={message.content}
+                            messageId={message.id}
+                            onTextUpdate={scrollToBottom}
+                          />
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
 
                 {isLoading && (
                   <div className="flex gap-3 justify-start">
@@ -818,21 +670,21 @@ const AIChatContent = () => {
           <ProgressiveBlur 
             position="bottom" 
             backgroundColor="rgb(255, 255, 255)"
-            height="250px"
+            height="200px"
             blurAmount="20px"
             className="dark:hidden"
           />
           <ProgressiveBlur 
             position="bottom" 
             backgroundColor="rgb(26, 26, 26)"
-            height="250px"
+            height="200px"
             blurAmount="20px"
             className="hidden dark:block"
           />
           </div>
 
           {/* Input Bar - Flutuante no bottom */}
-          <div className="absolute z-50 flex items-center justify-center px-6 pointer-events-none" style={{ left: '0', right: '0', bottom: '80px' }}>
+          <div className="absolute z-50 flex items-center justify-center px-6 pointer-events-none" style={{ left: '0', right: '0', bottom: '120px' }}>
             <div className="w-full max-w-2xl pointer-events-auto">
               <div className="flex items-center gap-2 px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-full bg-white dark:bg-[#1a1a1a] shadow-lg hover:shadow-xl transition-shadow backdrop-blur-sm bg-white/95 dark:bg-[#1a1a1a]/95">
                 <button

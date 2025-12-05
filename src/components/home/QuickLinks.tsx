@@ -110,9 +110,6 @@ export const QuickLinks = ({ hasNoCompanies = false }: QuickLinksProps) => {
                 {(link.isLocked || hasNoCompanies) && (
                   <Lock className="h-4 w-4 text-gray-400 dark:text-gray-500 ml-auto" />
                 )}
-                {link.label === "Escola" && (
-                  <Badge variant="beta" className="text-xs ml-auto">Beta</Badge>
-                )}
               </div>
               <p className="text-sm text-gray-500 dark:text-[#757576] text-left">
                 {link.description}

@@ -203,11 +203,24 @@ export default async function handler(
   }
 
   try {
+    // Tentar ler a variável de ambiente
     const apiKey = process.env.OPENAI_API_KEY;
     
+    // Debug: log para verificar se a variável está sendo lida (sem expor o valor completo)
+    console.log('[Chat API] Environment check:', {
+      hasApiKey: !!apiKey,
+      keyLength: apiKey?.length || 0,
+      keyPrefix: apiKey?.substring(0, 3) || 'N/A',
+      nodeEnv: process.env.NODE_ENV,
+      allEnvKeys: Object.keys(process.env).filter(k => k.includes('OPENAI')).join(', ') || 'none',
+    });
+    
     if (!apiKey) {
+      console.error('[Chat API] OPENAI_API_KEY não encontrada nas variáveis de ambiente');
+      console.error('[Chat API] Variáveis de ambiente disponíveis:', Object.keys(process.env).filter(k => k.includes('API') || k.includes('KEY')).join(', ') || 'none');
       return res.status(500).json({
-        error: 'API key não configurada. Por favor, configure OPENAI_API_KEY nas variáveis de ambiente do servidor.',
+        error: 'API key não configurada. Por favor, configure OPENAI_API_KEY nas variáveis de ambiente do servidor e faça um novo deploy.',
+        hint: 'Após adicionar a variável na Vercel, é necessário fazer um novo deploy para que ela seja aplicada.',
       });
     }
 

@@ -24,11 +24,19 @@ if (typeof window !== 'undefined') {
 }
 
 // Validação inicial do Client ID
-if (typeof window !== 'undefined' && !SPOTIFY_CLIENT_ID) {
-  console.warn(
-    '⚠️ VITE_SPOTIFY_CLIENT_ID não configurado. ' +
-    'Adicione a variável no arquivo .env para habilitar a integração com Spotify.'
-  );
+if (typeof window !== 'undefined') {
+  if (!SPOTIFY_CLIENT_ID) {
+    console.warn(
+      '⚠️ VITE_SPOTIFY_CLIENT_ID não configurado. ' +
+      'Adicione a variável no arquivo .env para habilitar a integração com Spotify.'
+    );
+  } else {
+    console.log('✅ Spotify Client ID carregado:', {
+      client_id: SPOTIFY_CLIENT_ID,
+      client_id_length: SPOTIFY_CLIENT_ID.length,
+      client_id_first_8: SPOTIFY_CLIENT_ID.substring(0, 8),
+    });
+  }
 }
 
 /**
@@ -165,6 +173,7 @@ export const exchangeCodeForTokens = async (code: string): Promise<SpotifyTokens
   // Remover verifier após uso
   sessionStorage.removeItem('spotify_code_verifier');
 
+
   // Para PKCE, o client_id deve ser enviado no body (não como Basic Auth)
   // Não usamos client_secret no fluxo PKCE
   const bodyParams = new URLSearchParams({
@@ -175,10 +184,16 @@ export const exchangeCodeForTokens = async (code: string): Promise<SpotifyTokens
     code_verifier: codeVerifier,
   });
 
-  console.log('Trocando código por tokens:', {
-    client_id: `${SPOTIFY_CLIENT_ID.substring(0, 8)}...`,
+  // Log detalhado para debug
+  console.log('🔍 Trocando código por tokens - Detalhes:', {
+    client_id: SPOTIFY_CLIENT_ID,
+    client_id_length: SPOTIFY_CLIENT_ID.length,
+    client_id_first_8: SPOTIFY_CLIENT_ID.substring(0, 8),
     redirect_uri: SPOTIFY_REDIRECT_URI,
+    redirect_uri_expected: 'https://school.merinno.com/spotify/callback',
+    redirect_uri_match: SPOTIFY_REDIRECT_URI === 'https://school.merinno.com/spotify/callback',
     has_code_verifier: !!codeVerifier,
+    code_verifier_length: codeVerifier.length,
   });
 
   const response = await fetch(SPOTIFY_TOKEN_URL, {
@@ -191,22 +206,37 @@ export const exchangeCodeForTokens = async (code: string): Promise<SpotifyTokens
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Unknown error', error_description: 'Erro desconhecido' }));
-    console.error('Erro ao obter tokens do Spotify:', {
+    const responseText = await response.text().catch(() => '');
+    
+    console.error('❌ Erro ao obter tokens do Spotify:', {
       status: response.status,
       statusText: response.statusText,
       error,
-      client_id: SPOTIFY_CLIENT_ID ? `${SPOTIFY_CLIENT_ID.substring(0, 8)}...` : 'não configurado',
+      response_text: responseText,
+      client_id: SPOTIFY_CLIENT_ID,
+      client_id_length: SPOTIFY_CLIENT_ID?.length,
       redirect_uri: SPOTIFY_REDIRECT_URI,
+      redirect_uri_expected: 'https://school.merinno.com/spotify/callback',
+      redirect_uri_match: SPOTIFY_REDIRECT_URI === 'https://school.merinno.com/spotify/callback',
+      request_body: Object.fromEntries(bodyParams),
     });
     
     if (error.error === 'invalid_client') {
-      throw new Error(
-        'Client ID inválido. Verifique se:\n' +
-        '1. O Client ID está correto no arquivo .env\n' +
-        '2. O servidor foi reiniciado após adicionar a variável\n' +
-        '3. A app existe no Spotify Developer Dashboard\n' +
-        '4. A Redirect URI está configurada corretamente no Spotify'
-      );
+      const errorMessage = [
+        'Client ID inválido. Detalhes do erro:',
+        `- Status: ${response.status}`,
+        `- Client ID usado: ${SPOTIFY_CLIENT_ID}`,
+        `- Redirect URI usada: ${SPOTIFY_REDIRECT_URI}`,
+        `- Redirect URI esperada: https://school.merinno.com/spotify/callback`,
+        '',
+        'Verifique se:',
+        '1. O Client ID está correto no arquivo .env (sem espaços)',
+        '2. O servidor foi reiniciado após adicionar a variável',
+        '3. A Redirect URI no Spotify Dashboard corresponde EXATAMENTE à URL usada',
+        '4. Se estiver em localhost, adicione http://localhost:8080/spotify/callback no Dashboard',
+      ].join('\n');
+      
+      throw new Error(errorMessage);
     }
     
     throw new Error(error.error_description || error.error || 'Erro ao obter tokens do Spotify');
@@ -255,9 +285,12 @@ export const refreshAccessToken = async (refreshToken: string): Promise<SpotifyT
     client_id: SPOTIFY_CLIENT_ID,
   });
 
-  console.log('Atualizando token do Spotify:', {
-    client_id: `${SPOTIFY_CLIENT_ID.substring(0, 8)}...`,
+  console.log('🔄 Atualizando token do Spotify:', {
+    client_id: SPOTIFY_CLIENT_ID,
+    client_id_length: SPOTIFY_CLIENT_ID.length,
+    client_id_first_8: SPOTIFY_CLIENT_ID.substring(0, 8),
     has_refresh_token: !!refreshToken,
+    refresh_token_length: refreshToken?.length,
   });
 
   const response = await fetch(SPOTIFY_TOKEN_URL, {
@@ -273,21 +306,31 @@ export const refreshAccessToken = async (refreshToken: string): Promise<SpotifyT
       error: 'Unknown error', 
       error_description: 'Erro desconhecido ao atualizar token' 
     }));
+    const responseText = await response.text().catch(() => '');
     
-    console.error('Erro ao atualizar token do Spotify:', {
+    console.error('❌ Erro ao atualizar token do Spotify:', {
       status: response.status,
       statusText: response.statusText,
       error,
-      client_id: SPOTIFY_CLIENT_ID ? `${SPOTIFY_CLIENT_ID.substring(0, 8)}...` : 'não configurado',
+      response_text: responseText,
+      client_id: SPOTIFY_CLIENT_ID,
+      client_id_length: SPOTIFY_CLIENT_ID?.length,
+      request_body: Object.fromEntries(bodyParams),
     });
 
     if (error.error === 'invalid_client') {
-      throw new Error(
-        'Client ID inválido ao atualizar token. Verifique se:\n' +
-        '1. O Client ID está correto no arquivo .env\n' +
-        '2. O servidor foi reiniciado após adicionar a variável\n' +
-        '3. A app existe no Spotify Developer Dashboard'
-      );
+      const errorMessage = [
+        'Client ID inválido ao atualizar token. Detalhes:',
+        `- Status: ${response.status}`,
+        `- Client ID usado: ${SPOTIFY_CLIENT_ID}`,
+        '',
+        'Verifique se:',
+        '1. O Client ID está correto no arquivo .env (sem espaços)',
+        '2. O servidor foi reiniciado após adicionar a variável',
+        '3. A app existe no Spotify Developer Dashboard',
+      ].join('\n');
+      
+      throw new Error(errorMessage);
     }
     
     throw new Error(error.error_description || error.error || 'Erro ao atualizar token do Spotify');
