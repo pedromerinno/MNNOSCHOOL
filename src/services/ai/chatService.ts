@@ -14,21 +14,18 @@ export interface ChatResponse {
 
 /**
  * Serviço para comunicação com a API do OpenAI ChatGPT
+ * Agora usa uma API route segura no backend para proteger a chave da OpenAI
  */
 export class ChatService {
-  private apiKey: string;
-  private baseUrl = "https://api.openai.com/v1/chat/completions";
+  private apiUrl = "/api/chat";
 
   constructor() {
-    this.apiKey = import.meta.env.VITE_OPENAI_API_KEY || "";
-    
-    if (!this.apiKey) {
-      console.warn("VITE_OPENAI_API_KEY não configurada. O chat não funcionará.");
-    }
+    // Não precisa mais de API key no front-end
   }
 
   /**
    * Analisa os valores da empresa para determinar o tom de comunicação
+   * @deprecated Esta função agora é executada no backend. Mantida apenas para compatibilidade.
    */
   private analyzeCommunicationTone(company: Company): {
     formality: 'formal' | 'casual' | 'balanced';
@@ -79,6 +76,7 @@ export class ChatService {
 
   /**
    * Gera um prompt contextualizado com informações da empresa
+   * @deprecated Esta função agora é executada no backend. Mantida apenas para compatibilidade.
    */
   private buildSystemPrompt(company: Company | null): string {
     if (!company) {
@@ -188,74 +186,62 @@ export class ChatService {
   }
 
   /**
-   * Envia uma mensagem para o ChatGPT e retorna a resposta
+   * Envia uma mensagem para o ChatGPT através da API route segura
+   * A chave da OpenAI fica protegida no servidor
    */
   async sendMessage(
     message: string,
     company: Company | null,
     conversationHistory: ChatMessage[] = []
   ): Promise<ChatResponse> {
-    if (!this.apiKey) {
-      return {
-        message: "",
-        error: "API key não configurada. Por favor, configure VITE_OPENAI_API_KEY nas variáveis de ambiente.",
-      };
-    }
-
     try {
-      // Construir histórico de mensagens no formato da API
-      const messages: Array<{ role: string; content: string }> = [
-        {
-          role: "system",
-          content: this.buildSystemPrompt(company),
-        },
-      ];
+      // Preparar dados da empresa para enviar ao backend
+      const companyData = company ? {
+        id: company.id,
+        nome: company.nome,
+        missao: company.missao,
+        historia: company.historia,
+        frase_institucional: company.frase_institucional,
+        valores: company.valores,
+      } : null;
 
-      // Adicionar histórico da conversa (últimas 10 mensagens para não exceder tokens)
-      const recentHistory = conversationHistory.slice(-10);
-      recentHistory.forEach((msg) => {
-        messages.push({
-          role: msg.role,
-          content: msg.content,
-        });
-      });
+      // Preparar histórico no formato esperado
+      const history = conversationHistory.map(msg => ({
+        role: msg.role,
+        content: msg.content,
+      }));
 
-      // Adicionar a mensagem atual
-      messages.push({
-        role: "user",
-        content: message,
-      });
-
-      const response = await fetch(this.baseUrl, {
+      const response = await fetch(this.apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
-          model: "gpt-4o-mini", // Modelo mais econômico e rápido
-          messages: messages,
-          temperature: 0.7,
-          max_tokens: 1000,
+          message,
+          company: companyData,
+          conversationHistory: history,
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.error?.message || `Erro na API: ${response.statusText}`
+          errorData.error || `Erro na API: ${response.statusText}`
         );
       }
 
       const data = await response.json();
-      const assistantMessage = data.choices[0]?.message?.content || "";
 
-      if (!assistantMessage) {
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      if (!data.message) {
         throw new Error("Resposta vazia da API");
       }
 
       return {
-        message: assistantMessage,
+        message: data.message,
       };
     } catch (error) {
       console.error("Erro ao enviar mensagem para ChatGPT:", error);
