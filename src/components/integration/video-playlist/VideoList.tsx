@@ -33,29 +33,20 @@ export const VideoList: React.FC<VideoListProps> = ({
   const totalVideos = videos.length;
   
   return (
-    <div className="bg-background rounded-lg p-6 h-fit">
+    <div className="h-full flex flex-col">
       {/* Header with company color accent */}
-      <div className="mb-6 pb-4 border-b border-border/40">
-        <div className="flex items-center gap-2 mb-3">
-          <PlayCircle 
-            className="w-5 h-5" 
-            style={{ color: companyColor }}
-          />
-          <h3 className="text-xl font-bold text-foreground">Playlist de Integração</h3>
-        </div>
-        
-        <div className="flex items-center gap-4 text-sm">
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <div 
-              className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: companyColor }}
-            ></div>
-            <span className="font-medium">{totalVideos} vídeo{totalVideos !== 1 ? 's' : ''}</span>
-          </div>
+      <div className="px-6 pt-6 pb-4">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Integração</h3>
+          {totalVideos > 0 && (
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-full">
+              {totalVideos}
+            </span>
+          )}
         </div>
       </div>
       
-      <div className="max-h-[60vh] overflow-y-auto pr-2 space-y-3">
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2.5 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
         {isLoading ? (
           <LoadingState />
         ) : (
@@ -77,9 +68,12 @@ export const VideoList: React.FC<VideoListProps> = ({
             ))}
             
             {videos.length === 0 && (
-              <div className="py-6 text-center">
-                <Video className="h-12 w-12 text-muted-foreground/40 mx-auto mb-3" />
-                <p className="text-muted-foreground">Nenhum vídeo disponível.</p>
+              <div className="py-12 text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                  <Video className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+                </div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Nenhum vídeo</p>
+                <p className="text-xs text-gray-500 dark:text-gray-500">Adicione vídeos à playlist</p>
               </div>
             )}
           </>

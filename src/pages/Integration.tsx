@@ -39,11 +39,13 @@ import { TeamGallery } from '@/components/integration/TeamGallery';
 import { useTeamMembersOptimized } from '@/hooks/team/useTeamMembersOptimized';
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { IntegrationSidebar } from '@/components/integration/IntegrationSidebar';
+import { useUserCompanyAdmin } from '@/hooks/company/useUserCompanyAdmin';
 
 const Integration = () => {
   const navigate = useNavigate();
   const { selectedCompany, isLoading } = useCompanies();
   const { user, userProfile, loading: authLoading, updateUserProfile } = useAuth();
+  const { isAdmin: isCompanyAdmin } = useUserCompanyAdmin();
   const [jobRoles, setJobRoles] = useState<JobRole[]>([]);
   const [userRole, setUserRole] = useState<JobRole | null>(null);
   const [isLoadingRoles, setIsLoadingRoles] = useState(false);
@@ -52,6 +54,11 @@ const Integration = () => {
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  
+  // Verificar se é admin (super admin ou admin da empresa)
+  const isAdmin = useMemo(() => {
+    return userProfile?.super_admin || isCompanyAdmin;
+  }, [userProfile?.super_admin, isCompanyAdmin]);
 
   // Seções da landing page (sem 'hero' pois é adicionado automaticamente no sidebar)
   const sections = [
@@ -131,12 +138,21 @@ const Integration = () => {
         return null;
       }
       
+      setCurrentCompanyData(data);
       return data;
     } catch (error) {
       console.error("Error fetching company data:", error);
       return null;
     }
   };
+  
+  // Função para atualizar dados após edição
+  const handleDataUpdated = useCallback(() => {
+    if (selectedCompany?.id) {
+      fetchCompanyData(selectedCompany.id);
+      setRefreshKey(prev => prev + 1);
+    }
+  }, [selectedCompany?.id]);
   
   // Função para buscar cargos
   const fetchJobRoles = async (companyId: string) => {
@@ -487,6 +503,10 @@ const Integration = () => {
             direction="up"
             delay={0.05}
             companyColor={companyColor}
+            isAdmin={isAdmin}
+            adminTab="info"
+            company={companyData}
+            onDataUpdated={handleDataUpdated}
           >
             <CultureManual 
               key={refreshKey}
@@ -497,7 +517,9 @@ const Integration = () => {
               companyLogo={companyData?.logo} 
               companyName={companyData?.nome} 
               videoUrl={companyData?.video_institucional} 
-              videoDescription={companyData?.descricao_video} 
+              videoDescription={companyData?.descricao_video}
+              company={companyData}
+              onDataUpdated={handleDataUpdated}
             />
           </ScrollSection>
 
@@ -507,27 +529,17 @@ const Integration = () => {
             direction="up"
             delay={0.1}
             companyColor={companyColor}
+            isAdmin={isAdmin}
+            adminTab="videos"
+            company={companyData}
+            onDataUpdated={handleDataUpdated}
           >
-            {companyData && (
-              <SectionTitle
-                title="Playlist de Integração"
-                companyColor={companyColor}
-              />
-            )}
-            <InteractiveCard 
-              companyColor={companyColor}
-              hoverEffect={false}
-              borderBeam={false}
-              delay={0.1}
-              className="p-6 lg:p-8"
-            >
-              <VideoPlaylist 
-                key={`videos-${companyData?.id || 'empty'}-${refreshKey}`} 
-                companyId={companyData?.id} 
-                mainVideo={companyData?.video_institucional || ""} 
-                mainVideoDescription={companyData?.descricao_video || ""} 
-              />
-            </InteractiveCard>
+            <VideoPlaylist 
+              key={`videos-${companyData?.id || 'empty'}-${refreshKey}`} 
+              companyId={companyData?.id} 
+              mainVideo={companyData?.video_institucional || ""} 
+              mainVideoDescription={companyData?.descricao_video || ""} 
+            />
           </ScrollSection>
 
           {/* Time Section - Título dentro do container */}
@@ -536,37 +548,31 @@ const Integration = () => {
             direction="up"
             delay={0.125}
             companyColor={companyColor}
-            withPadding={true}
+            isAdmin={isAdmin}
+            adminTab="collaborators"
           >
-            {companyData && (
-              <div className="mb-6 lg:mb-8">
-                <div className="flex items-center gap-3">
-                  <h2 
-                    className="text-2xl lg:text-3xl xl:text-4xl font-medium text-gray-900 dark:text-white tracking-tight"
-                    style={{ color: companyColor }}
-                  >
-                    Conheça os nossos colaboradores
-                  </h2>
-                  {teamMembers.length > 0 && (
-                    <CompanyThemedBadge 
-                      variant="beta"
-                      style={{
-                        backgroundColor: `${companyColor}20`,
-                        color: companyColor,
-                        borderColor: `${companyColor}40`
-                      }}
-                    >
-                      {teamMembers.length} {teamMembers.length === 1 ? 'pessoa' : 'pessoas'}
-                    </CompanyThemedBadge>
-                  )}
+            <div className="w-full bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/50 dark:border-gray-800/50 p-6 lg:p-8">
+              {companyData && (
+                <div className="mb-6">
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                      Conheça os nossos colaboradores
+                    </h2>
+                    {teamMembers.length > 0 && (
+                      <CompanyThemedBadge 
+                        variant="beta"
+                        style={{
+                          backgroundColor: `${companyColor}20`,
+                          color: companyColor,
+                          borderColor: `${companyColor}40`
+                        }}
+                      >
+                        {teamMembers.length} {teamMembers.length === 1 ? 'pessoa' : 'pessoas'}
+                      </CompanyThemedBadge>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
-          </ScrollSection>
-          
-          {/* Carrossel Full Width - fora do container limitado, com background branco */}
-          <div className="w-full -mx-4 lg:-mx-6 px-4 lg:px-6">
-            <div className="w-full bg-white dark:bg-gray-900 rounded-2xl p-6 lg:p-8">
+              )}
               {isLoadingTeam ? (
                 <div className="flex items-center justify-center py-12">
                   <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
@@ -578,7 +584,7 @@ const Integration = () => {
                 />
               )}
             </div>
-          </div>
+          </ScrollSection>
 
           {/* Cargo Section */}
           <ScrollSection
@@ -586,13 +592,9 @@ const Integration = () => {
             direction="up"
             delay={0.15}
             companyColor={companyColor}
+            isAdmin={isAdmin}
+            adminTab="cargo"
           >
-            {companyData && (
-              <SectionTitle
-                title="Seu Cargo"
-                companyColor={companyColor}
-              />
-            )}
             <InteractiveCard 
               companyColor={companyColor}
               hoverEffect={false}
@@ -600,6 +602,11 @@ const Integration = () => {
               delay={0.15}
               className="p-6 lg:p-8"
             >
+              {companyData && (
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                  Seu Cargo
+                </h2>
+              )}
               {isLoadingRoles && (
                 <Card className="border-0 shadow-none mb-4">
                   <CardContent className="p-6 flex items-center justify-center">
@@ -722,13 +729,9 @@ const Integration = () => {
             direction="up"
             delay={0.2}
             companyColor={companyColor}
+            isAdmin={isAdmin}
+            adminTab="suggested-courses"
           >
-            {companyData && (
-              <SectionTitle
-                title="Cursos Sugeridos"
-                companyColor={companyColor}
-              />
-            )}
             <InteractiveCard 
               companyColor={companyColor}
               hoverEffect={false}
@@ -736,6 +739,11 @@ const Integration = () => {
               delay={0.2}
               className="p-6 lg:p-8"
             >
+              {companyData && (
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                  Cursos Sugeridos
+                </h2>
+              )}
               <SuggestedCourses companyColor={companyColor} />
             </InteractiveCard>
           </ScrollSection>

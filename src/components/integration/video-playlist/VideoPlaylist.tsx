@@ -119,54 +119,48 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-        {/* Video Player Section */}
-        <div className="lg:col-span-2 space-y-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Container 1: Vídeo e Descrição - 2/3 */}
+      <div className="lg:col-span-2 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/50 dark:border-gray-800/50 overflow-hidden flex flex-col">
+        <div className="space-y-6 p-6 lg:p-8 flex-1">
           {/* Video Container */}
-          <Card className="overflow-hidden shadow-sm border-border/50 p-0">
+          <div className="overflow-hidden rounded-xl">
             <VideoPlayer 
               key={currentVideo}
               videoUrl={currentVideo} 
             />
-          </Card>
+          </div>
           
-          {/* Description Section - Separada */}
+          {/* Description Section */}
           {currentDescription && (
-            <Card key={`desc-${currentVideo}`} className="shadow-sm border-border/50">
-              <div className="p-6 lg:p-8">
-                <div className="space-y-4">
-                  <div className="space-y-3">
-                    <h3 className="text-lg font-semibold text-foreground">
-                      Sobre este vídeo
-                    </h3>
-                    <div className="text-muted-foreground leading-relaxed">
-                      <HtmlContent 
-                        content={currentDescription} 
-                        className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-a:text-primary prose-a:no-underline hover:prose-a:underline" 
-                      />
-                    </div>
-                  </div>
-                </div>
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Sobre este vídeo
+              </h3>
+              <div className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                <HtmlContent 
+                  content={currentDescription} 
+                  className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-gray-900 dark:prose-headings:text-white prose-p:text-gray-600 dark:prose-p:text-gray-400 prose-a:text-primary prose-a:no-underline hover:prose-a:underline" 
+                />
               </div>
-            </Card>
+            </div>
           )}
         </div>
-        
-        {/* Playlist Section */}
-        <div className="lg:col-span-1">
-          <VideoList 
-            videos={videos}
-            mainVideo={mainVideo}
-            mainVideoDescription={mainVideoDescription}
-            isLoading={isLoading}
-            selectedVideoIndex={selectedVideoIndex}
-            onSelectVideo={handleSelectVideo}
-            onSelectMainVideo={handleSelectMainVideo}
-            companyColor={companyColor}
-            currentVideo={currentVideo}
-          />
-        </div>
+      </div>
+      
+      {/* Container 2: Lista da Playlist - 1/3 */}
+      <div className="lg:col-span-1 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/50 dark:border-gray-800/50 overflow-hidden flex flex-col">
+        <VideoList 
+          videos={videos}
+          mainVideo={mainVideo}
+          mainVideoDescription={mainVideoDescription}
+          isLoading={isLoading}
+          selectedVideoIndex={selectedVideoIndex}
+          onSelectVideo={handleSelectVideo}
+          onSelectMainVideo={handleSelectMainVideo}
+          companyColor={companyColor}
+          currentVideo={currentVideo}
+        />
       </div>
     </div>
   );

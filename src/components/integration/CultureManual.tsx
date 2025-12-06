@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Heart, Target, Lightbulb, Users, Shield, Zap, Star, Award, AlertCircle, Video, ExternalLink } from "lucide-react";
+import { Heart, Target, Lightbulb, Users, Shield, Zap, Star, Award, AlertCircle, Video, ExternalLink, Pencil } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -10,6 +10,9 @@ import { getEmbedUrl } from './video-playlist/utils';
 import VideoPlayerStyled from "@/components/ui/video-player";
 import { EmptyState } from "@/components/ui/empty-state";
 import { AddCompanyValueDialog } from "@/components/admin/dialogs/AddCompanyValueDialog";
+import { motion } from 'framer-motion';
+import { EditSectionDialog } from './EditSectionDialog';
+import { Company } from '@/types/company';
 
 interface CultureManualProps {
   companyValues: any;
@@ -20,6 +23,8 @@ interface CultureManualProps {
   companyName?: string;
   videoUrl?: string;
   videoDescription?: string;
+  company?: Company | null;
+  onDataUpdated?: () => void;
 }
 
 export const CultureManual: React.FC<CultureManualProps> = ({
@@ -30,16 +35,28 @@ export const CultureManual: React.FC<CultureManualProps> = ({
   companyLogo,
   companyName,
   videoUrl,
-  videoDescription
+  videoDescription,
+  company,
+  onDataUpdated,
 }) => {
   const { userProfile } = useAuth();
   const [isAddValueDialogOpen, setIsAddValueDialogOpen] = useState(false);
+  const [isHoveredMission, setIsHoveredMission] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
   // Verificar se o manual já foi aceito
   const isManualAccepted = userProfile?.manual_cultura_aceito || false;
   
   // Verificar se o usuário é admin
   const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
+  
+  const handleEditMissionClick = () => {
+    setIsEditDialogOpen(true);
+  };
+  
+  const handleEditSuccess = () => {
+    onDataUpdated?.();
+  };
 
   // Memoizar os valores para evitar re-processamento
   const values = useMemo(() => {
@@ -177,8 +194,8 @@ export const CultureManual: React.FC<CultureManualProps> = ({
     <div className="space-y-8">
       {/* Seção 1: Vídeo Institucional */}
       {videoUrl && (
-        <div className="w-full -mx-4 lg:-mx-6 px-4 lg:px-6">
-          <div className="rounded-xl overflow-hidden aspect-video bg-gray-100 dark:bg-gray-800 relative w-full min-h-[500px]">
+        <div className="w-full">
+          <div className="rounded-2xl overflow-hidden aspect-video bg-gray-100 dark:bg-gray-800 relative w-full min-h-[500px] border border-gray-200/50 dark:border-gray-800/50">
           {shouldUseDirectVideo ? (
             <>
               <div className="absolute inset-0 w-full h-full rounded-xl overflow-hidden">
@@ -245,7 +262,7 @@ export const CultureManual: React.FC<CultureManualProps> = ({
                 <iframe 
                   key={embedUrl || videoUrl}
                   src={embedUrl || videoUrl} 
-                  className="w-full h-full border-0 rounded-xl" 
+                  className="w-full h-full border-0 rounded-2xl" 
                   style={{
                     display: videoError ? 'none' : 'block'
                   }}
@@ -264,10 +281,44 @@ export const CultureManual: React.FC<CultureManualProps> = ({
       )}
 
       {/* Seção 2: Missão e Valores */}
-      <section className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800 shadow-sm">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-          Missão e Valores
-        </h2>
+      <section 
+        className="relative bg-white dark:bg-gray-900 rounded-2xl p-6 lg:p-8 border border-gray-200/50 dark:border-gray-800/50"
+        onMouseEnter={() => setIsHoveredMission(true)}
+        onMouseLeave={() => setIsHoveredMission(false)}
+      >
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            Missão e Valores
+          </h2>
+          {/* Botão de editar - aparece no hover quando admin */}
+          {isAdmin && isHoveredMission && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.2 }}
+              className="relative z-[100]"
+            >
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEditMissionClick();
+                }}
+                className="rounded-full transition-all"
+                style={{
+                  backgroundColor: 'white',
+                  borderColor: companyColor ? `${companyColor}40` : 'rgba(30, 174, 219, 0.4)',
+                  color: companyColor || '#1EAEDB',
+                }}
+              >
+                <Pencil className="h-3.5 w-3.5 mr-1.5" />
+                Editar
+              </Button>
+            </motion.div>
+          )}
+        </div>
         
         {/* Missão */}
         {companyMission && (
@@ -320,6 +371,16 @@ export const CultureManual: React.FC<CultureManualProps> = ({
           // Disparar evento para atualizar valores no componente pai
           window.dispatchEvent(new CustomEvent('company-values-updated'));
         }}
+      />
+      
+      {/* Dialog de edição */}
+      <EditSectionDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        sectionId="cultura"
+        company={company}
+        companyColor={companyColor}
+        onSuccess={handleEditSuccess}
       />
     </div>
   );

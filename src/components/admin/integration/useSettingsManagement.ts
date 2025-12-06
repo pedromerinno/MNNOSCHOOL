@@ -1,5 +1,6 @@
 
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Company } from "@/types/company";
@@ -7,6 +8,7 @@ import { useCompanies } from "@/hooks/useCompanies";
 import { useCompanySync } from "@/hooks/company/useCompanySync";
 
 export const useSettingsManagement = () => {
+  const [searchParams] = useSearchParams();
   const { 
     userCompanies, 
     isLoading: isLoadingCompanies, 
@@ -20,6 +22,26 @@ export const useSettingsManagement = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("type");
   const hasInitialized = useRef(false);
+  
+  // Ler parâmetro section da URL e mapear para tab apropriada
+  useEffect(() => {
+    const sectionParam = searchParams.get('section');
+    if (sectionParam) {
+      // Mapear seções para tabs do SettingsManagement
+      // Por enquanto, SettingsManagement só tem "type" e "info"
+      // Se a seção for "info", "videos", "cargo", etc., usar "info"
+      const sectionToTabMap: Record<string, string> = {
+        'info': 'info',
+        'videos': 'info', // Por enquanto, redirecionar para info
+        'cargo': 'info',
+        'collaborators': 'info',
+        'suggested-courses': 'info',
+      };
+      
+      const mappedTab = sectionToTabMap[sectionParam] || 'type';
+      setActiveTab(mappedTab);
+    }
+  }, [searchParams]);
 
   // Use the global selected company directly
   const selectedCompany = globalSelectedCompany;

@@ -1,7 +1,11 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from '@/hooks/useInView';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Pencil } from 'lucide-react';
+import { Company } from '@/types/company';
+import { EditSectionDialog } from './EditSectionDialog';
 
 // Variantes de animação para stagger effect
 const containerVariants = {
@@ -74,6 +78,26 @@ interface ScrollSectionProps {
    * Cor da empresa para estilização
    */
   companyColor?: string;
+  
+  /**
+   * Se o usuário é admin (mostra botão de editar no hover)
+   */
+  isAdmin?: boolean;
+  
+  /**
+   * Tab do admin para navegar ao editar (ex: 'info', 'videos', 'cargo')
+   */
+  adminTab?: string;
+  
+  /**
+   * Dados da empresa para edição
+   */
+  company?: Company | null;
+  
+  /**
+   * Callback quando os dados são atualizados
+   */
+  onDataUpdated?: () => void;
 }
 
 /**
@@ -101,11 +125,40 @@ export const ScrollSection: React.FC<ScrollSectionProps> = ({
   title,
   subtitle,
   companyColor,
+  isAdmin = false,
+  adminTab,
+  company,
+  onDataUpdated,
 }) => {
   const { ref, inView } = useInView({ 
     threshold: 0.1,
     triggerOnce: true 
   });
+  const [isHovered, setIsHovered] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  
+  // Mapear IDs de seção para tabs do admin
+  const getAdminTabForSection = (sectionId?: string): string => {
+    if (adminTab) return adminTab;
+    
+    const sectionToTabMap: Record<string, string> = {
+      'cultura': 'info',
+      'videos': 'videos',
+      'cargo': 'cargo',
+      'time': 'collaborators',
+      'cursos': 'suggested-courses',
+    };
+    
+    return sectionId ? (sectionToTabMap[sectionId] || 'info') : 'info';
+  };
+  
+  const handleEditClick = () => {
+    setIsEditDialogOpen(true);
+  };
+  
+  const handleEditSuccess = () => {
+    onDataUpdated?.();
+  };
 
   // Configurar animação baseada na direção
   const getAnimationVariants = () => {
@@ -148,11 +201,52 @@ export const ScrollSection: React.FC<ScrollSectionProps> = ({
       ref={ref as React.RefObject<HTMLElement>}
       id={id}
       className={cn(
-        'relative',
+        'relative group',
         withPadding && 'py-4 lg:py-6',
         className
       )}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
+      {/* Botão de editar - aparece no hover quando admin (posicionado absolutamente) */}
+      {isAdmin && isHovered && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          transition={{ duration: 0.2 }}
+          className="absolute top-4 right-4 z-[100] pointer-events-auto"
+        >
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEditClick();
+            }}
+            className="rounded-full transition-all shadow-sm"
+            style={{
+              backgroundColor: 'white',
+              borderColor: companyColor ? `${companyColor}40` : 'rgba(30, 174, 219, 0.4)',
+              color: companyColor || '#1EAEDB',
+            }}
+          >
+            <Pencil className="h-3.5 w-3.5 mr-1.5" />
+            Editar
+          </Button>
+        </motion.div>
+      )}
+      
+      {/* Dialog de edição */}
+      <EditSectionDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        sectionId={id || getAdminTabForSection(id)}
+        company={company}
+        companyColor={companyColor}
+        onSuccess={handleEditSuccess}
+      />
+      
       {(title || subtitle) && (
         <div className="mb-6 lg:mb-8">
           {title && (
