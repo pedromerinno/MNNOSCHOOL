@@ -190,3 +190,4 @@ COMMENT ON FUNCTION public.get_company_discussions_count(uuid) IS
 
 
 
+

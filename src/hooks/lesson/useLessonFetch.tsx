@@ -23,13 +23,14 @@ export const useLessonFetch = (lessonId: string | undefined) => {
       // Fetch the current user
       const userId = (await supabase.auth.getUser()).data.user?.id;
       
-      // Buscar os dados da aula incluindo a descrição do curso
+      // Buscar os dados da aula incluindo a descrição e título do curso
       const { data: lessonData, error: lessonError } = await supabase
         .from('lessons')
         .select(`
           *,
           courses (
-            description
+            description,
+            title
           )
         `)
         .eq('id', lessonId)
@@ -89,6 +90,7 @@ export const useLessonFetch = (lessonId: string | undefined) => {
       const lessonWithCourseDescription = {
         ...lessonData,
         course_description: lessonData.courses?.description || null,
+        course_title: lessonData.courses?.title || null,
         completed: progressData?.completed || false,
         course_lessons: lessonsWithProgress,
         likes: likesCount,

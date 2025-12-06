@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, FileText, GripVertical, MoreHorizontal } from "lucide-react";
+import { Pencil, Trash2, FileText, GripVertical, MoreHorizontal, Plus } from "lucide-react";
 import { 
   Table,
   TableBody,
@@ -79,45 +79,51 @@ const SortableLessonRow: React.FC<SortableLessonRowProps> = ({
     <TableRow
       ref={setNodeRef}
       style={style}
-      className={`h-16 ${isDragging ? 'bg-accent/50 shadow-lg border-primary' : ''} transition-all duration-200`}
+      className={`h-14 border-b border-gray-100 ${isDragging ? 'bg-blue-50/50 shadow-sm z-10' : 'hover:bg-gray-50/50'} transition-all duration-200`}
     >
       {isAdmin ? (
-        <TableCell>
+        <TableCell className="px-4">
           <div
             {...attributes}
             {...listeners}
-            className="cursor-grab active:cursor-grabbing p-1 hover:bg-accent rounded transition-colors"
+            className="cursor-grab active:cursor-grabbing p-1.5 hover:bg-gray-100 rounded transition-colors inline-flex"
           >
-            <GripVertical className="h-4 w-4 text-muted-foreground" />
+            <GripVertical className="h-4 w-4 text-gray-400" />
           </div>
         </TableCell>
       ) : (
-        <TableCell></TableCell>
+        <TableCell className="px-4"></TableCell>
       )}
-      <TableCell className="font-medium">{lesson.order_index || index + 1}</TableCell>
-      <TableCell>
-        <div>
-          <div className="font-medium">{lesson.title}</div>
-          <div className="text-xs text-muted-foreground hidden md:block">
-            {lesson.description
-              ? lesson.description.length > 50
-                ? `${lesson.description.substring(0, 50)}...`
-                : lesson.description
-              : '-'}
-          </div>
+      <TableCell className="px-4">
+        <span className="font-medium text-sm text-gray-500">{lesson.order_index || index + 1}</span>
+      </TableCell>
+      <TableCell className="px-4">
+        <div className="min-w-0">
+          <div className="font-medium text-sm text-gray-900">{lesson.title}</div>
+          {lesson.description && (
+            <div className="text-xs text-gray-500 mt-1 line-clamp-1">
+              {lesson.description.length > 70
+                ? `${lesson.description.substring(0, 70)}...`
+                : lesson.description}
+            </div>
+          )}
         </div>
       </TableCell>
-      <TableCell className="hidden md:table-cell">
-        {lesson.type === 'video' && 'Vídeo'}
-        {lesson.type === 'text' && 'Texto'}
-        {lesson.type === 'quiz' && 'Quiz'}
+      <TableCell className="hidden md:table-cell px-4">
+        <span className="inline-flex items-center px-2.5 py-1 rounded text-xs font-normal bg-gray-100 text-gray-700">
+          {lesson.type === 'video' && 'Vídeo'}
+          {lesson.type === 'text' && 'Texto'}
+          {lesson.type === 'quiz' && 'Quiz'}
+        </span>
       </TableCell>
-      <TableCell className="hidden md:table-cell">{lesson.duration || '-'}</TableCell>
+      <TableCell className="hidden md:table-cell px-4">
+        <span className="text-xs text-gray-500">{lesson.duration || '-'}</span>
+      </TableCell>
       {isAdmin && (
-        <TableCell className="text-right">
+        <TableCell className="text-right px-4">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-gray-100 text-gray-600">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -137,7 +143,7 @@ const SortableLessonRow: React.FC<SortableLessonRowProps> = ({
           </DropdownMenu>
         </TableCell>
       )}
-      {!isAdmin && <TableCell className="text-right"></TableCell>}
+      {!isAdmin && <TableCell className="text-right px-4"></TableCell>}
     </TableRow>
   );
 };
@@ -190,14 +196,20 @@ export const LessonTable: React.FC<LessonTableProps> = ({
 
   if (lessons.length === 0) {
     return (
-      <div className="text-center py-8 border rounded-md bg-muted/30">
-        <FileText className="mx-auto h-10 w-10 text-muted-foreground mb-2" />
-        <h3 className="text-lg font-medium">Nenhuma aula cadastrada</h3>
-        <p className="text-sm text-muted-foreground mb-4">
+      <div className="text-center py-16 border border-gray-200 rounded-lg bg-white">
+        <FileText className="mx-auto h-10 w-10 text-gray-300 mb-4" />
+        <h3 className="text-sm font-medium text-gray-700 mb-2">Nenhuma aula cadastrada</h3>
+        <p className="text-xs text-gray-500 mb-6">
           Comece adicionando a primeira aula para este curso.
         </p>
         {isAdmin && (
-          <Button onClick={onAddLesson}>
+          <Button 
+            onClick={onAddLesson} 
+            variant="outline"
+            size="sm" 
+            className="gap-2 border-gray-300 hover:bg-gray-50 text-gray-700 font-normal"
+          >
+            <Plus className="h-4 w-4" />
             Adicionar Aula
           </Button>
         )}
@@ -206,7 +218,7 @@ export const LessonTable: React.FC<LessonTableProps> = ({
   }
 
   return (
-    <div className="border rounded-md overflow-hidden">
+    <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
       <div className="overflow-x-auto">
         <DndContext
           sensors={sensors}
@@ -215,13 +227,13 @@ export const LessonTable: React.FC<LessonTableProps> = ({
         >
           <Table>
             <TableHeader>
-              <TableRow>
-                {isAdmin && <TableHead className="w-[40px]"></TableHead>}
-                <TableHead className="w-[60px]">Ordem</TableHead>
-                <TableHead>Título</TableHead>
-                <TableHead className="hidden md:table-cell">Tipo</TableHead>
-                <TableHead className="hidden md:table-cell">Duração</TableHead>
-                {isAdmin && <TableHead className="text-right w-[60px]">Ações</TableHead>}
+              <TableRow className="bg-white border-b border-gray-200">
+                {isAdmin && <TableHead className="w-[50px] h-12 px-4"></TableHead>}
+                <TableHead className="w-[50px] h-12 px-4 text-xs font-medium text-gray-600">#</TableHead>
+                <TableHead className="h-12 px-4 text-xs font-medium text-gray-600">Título</TableHead>
+                <TableHead className="hidden md:table-cell w-[100px] h-12 px-4 text-xs font-medium text-gray-600">Tipo</TableHead>
+                <TableHead className="hidden md:table-cell w-[90px] h-12 px-4 text-xs font-medium text-gray-600">Duração</TableHead>
+                {isAdmin && <TableHead className="text-right w-[70px] h-12 px-4 text-xs font-medium text-gray-600">Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <SortableContext

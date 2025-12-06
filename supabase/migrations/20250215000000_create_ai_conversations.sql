@@ -143,3 +143,4 @@ CREATE TRIGGER update_conversation_on_message_insert
   AFTER INSERT ON public.ai_messages
   FOR EACH ROW
   EXECUTE FUNCTION update_ai_conversation_updated_at();
+

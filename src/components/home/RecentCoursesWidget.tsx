@@ -129,3 +129,4 @@ export const RecentCoursesWidget = () => {
     </Card>
   );
 };
+

@@ -147,3 +147,4 @@ curl -X POST \
 - Edge Function: `supabase/functions/download-video-audio/README.md`
 - Deploy: `supabase/functions/download-video-audio/DEPLOY.md`
 - Exemplo yt-dlp: `examples/yt-dlp-service/README.md`
+

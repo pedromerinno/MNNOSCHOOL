@@ -32,6 +32,9 @@ export const useLessonMutations = (courseId: string, onSuccess: () => Promise<vo
 
       console.log("Lesson created successfully:", data);
 
+      // Nota: Não precisamos mais salvar mux_upload_id em lessons
+      // O vídeo é criado na tabela videos primeiro, e depois linkado via lesson_videos
+
       // Iniciar transcrição automaticamente se for uma aula de vídeo
       if (data.type === 'video' && data.content) {
         const videoUrl = data.content;
@@ -48,7 +51,19 @@ export const useLessonMutations = (courseId: string, onSuccess: () => Promise<vo
             })
             .catch((error) => {
               console.error('[useLessonMutations] Erro ao iniciar transcrição:', error);
-              // Não mostrar erro ao usuário, apenas logar
+              // Mostrar erro apenas se for um erro crítico (não erro de rede em dev)
+              const errorMessage = error?.message || 'Erro desconhecido';
+              if (errorMessage.includes('servidor de desenvolvimento') || errorMessage.includes('não está rodando')) {
+                // Em desenvolvimento, apenas logar (servidor pode não estar rodando)
+                console.warn('[useLessonMutations] Servidor de transcrição não disponível em desenvolvimento');
+              } else {
+                // Em produção ou outros erros, mostrar toast
+                toast({
+                  title: 'Aviso sobre transcrição',
+                  description: 'A aula foi criada, mas houve um problema ao iniciar a transcrição. Você pode tentar novamente mais tarde.',
+                  variant: 'default',
+                });
+              }
             });
         }
       }
@@ -138,6 +153,19 @@ export const useLessonMutations = (courseId: string, onSuccess: () => Promise<vo
               })
               .catch((error) => {
                 console.error('[useLessonMutations] Erro ao iniciar transcrição:', error);
+                // Mostrar erro apenas se for um erro crítico (não erro de rede em dev)
+                const errorMessage = error?.message || 'Erro desconhecido';
+                if (errorMessage.includes('servidor de desenvolvimento') || errorMessage.includes('não está rodando')) {
+                  // Em desenvolvimento, apenas logar (servidor pode não estar rodando)
+                  console.warn('[useLessonMutations] Servidor de transcrição não disponível em desenvolvimento');
+                } else {
+                  // Em produção ou outros erros, mostrar toast
+                  toast({
+                    title: 'Aviso sobre transcrição',
+                    description: 'A aula foi atualizada, mas houve um problema ao iniciar a transcrição. Você pode tentar novamente mais tarde.',
+                    variant: 'default',
+                  });
+                }
               });
           }
         }

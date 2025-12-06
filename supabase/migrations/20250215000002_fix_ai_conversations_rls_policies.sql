@@ -60,3 +60,4 @@ CREATE POLICY "Users can delete their own conversations"
       AND user_empresa.empresa_id = ai_conversations.company_id
     )
   );
+

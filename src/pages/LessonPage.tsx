@@ -1,18 +1,18 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { ChevronLeft, BookOpen } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useLessonDataOptimized } from '@/hooks/lesson/useLessonDataOptimized';
 import { useAutoplayNavigation } from '@/hooks/lesson/useAutoplayNavigation';
-import { MainNavigationMenu } from "@/components/navigation/MainNavigationMenu";
-import { LessonHeader } from '@/components/lessons/LessonHeader';
+import { LessonLayout } from '@/components/lessons/LessonLayout';
 import { LessonContent } from '@/components/lessons/LessonContent';
 import { LessonActions } from '@/components/courses/LessonActions';
 import { LessonNotFound } from '@/components/lessons/LessonNotFound';
 import { CourseDescription } from '@/components/courses/CourseDescription';
-import { LessonPlaylist } from '@/components/lessons/LessonPlaylist';
+import { LessonSidebar } from '@/components/lessons/LessonSidebar';
 import { LessonManager } from '@/components/admin/courses/LessonManager';
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, Settings, BookOpen } from "lucide-react";
+import { LessonPageHeader } from '@/components/lessons/LessonPageHeader';
 import { useLessons } from '@/hooks/useLessons';
 import { useCompanies } from '@/hooks/useCompanies';
 import { useIsAdmin } from '@/hooks/company/useIsAdmin';
@@ -114,116 +114,107 @@ const LessonPage = () => {
   // Se não tem lesson e não está carregando, mostrar not found
   if (!lesson && !loading) {
     return (
-      <>
-        <MainNavigationMenu />
+      <LessonLayout>
         <LessonNotFound courseId={courseId} />
-      </>
+      </LessonLayout>
     );
   }
 
   // Se não tem lesson mas está carregando, mostrar uma página básica sem preloader
   if (!lesson) {
     return (
-      <>
-        <MainNavigationMenu />
-        <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919] flex items-center justify-center">
+      <LessonLayout>
+        <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#111111] flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
             <p className="mt-4 text-muted-foreground">Carregando aula...</p>
           </div>
         </div>
-      </>
+      </LessonLayout>
     );
   }
 
   return (
-    <>
-      <MainNavigationMenu />
-      <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919] flex flex-col">
-        <div className="flex flex-col lg:flex-row w-full flex-1">
-          {/* Sidebar */}
-          <div className="lg:w-1/4 lg:min-h-full border-r border-border/60 bg-muted/20">
-            <div className="lg:w-[calc(25%-1px)] lg:fixed top-[80px] h-[calc(100vh-80px)] overflow-y-auto">
-              {/* Back to course button */}
-              <div className="p-6 pb-4 border-b border-border/40">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-accent/70 transition-all duration-200 gap-2 h-10" 
-                  style={{
-                    '--hover-color': companyColor
-                  } as React.CSSProperties}
-                  onClick={() => navigate(`/courses/${courseId}`)}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  <BookOpen className="h-4 w-4" />
-                  <span className="font-medium">Voltar ao Curso</span>
-                </Button>
-              </div>
-
-              {/* Admin button */}
-              {isAdmin && (
-                <div className="px-6 py-4 border-b border-border/40">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full justify-start gap-2 transition-all duration-200 shadow-sm h-10" 
-                    style={{
-                      borderColor: `${companyColor}20`,
-                      color: companyColor,
-                      '--hover-bg': `${companyColor}10`,
-                      '--hover-border': `${companyColor}40`
-                    } as React.CSSProperties}
-                    onClick={() => setShowLessonManager(true)}
-                  >
-                    <Settings className="h-4 w-4" />
-                    <span className="font-medium">Gerenciar Aulas</span>
-                  </Button>
-                </div>
-              )}
-              
-              {/* Playlist */}
-              <div className="p-4">
-                <LessonPlaylist
-                  lessons={lesson?.course_lessons || []}
-                  currentLessonId={lesson?.id || ''}
-                  onLessonSelect={() => {}} // Not used anymore
-                  loading={false} // Never loading here since we have lesson data
-                  companyColor={companyColor}
-                  courseId={courseId}
-                />
-              </div>
+    <LessonLayout>
+      <div className="w-full">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Sidebar esquerda no estilo da página escola */}
+          <div className="w-full lg:w-96 flex-shrink-0 flex flex-col gap-4 lg:sticky lg:top-8 lg:self-start lg:h-[calc(100vh-4rem)]">
+            {/* Botão voltar ao curso */}
+            <div className="flex-shrink-0 bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-200 dark:border-[#262626] p-4">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-accent/70 transition-all duration-200 gap-2 h-10" 
+                onClick={() => courseId && navigate(`/courses/${courseId}`)}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <BookOpen className="h-4 w-4" />
+                <span className="font-medium">Voltar ao Curso</span>
+              </Button>
+            </div>
+            
+            {/* Sidebar com scroll interno */}
+            <div className="flex-1 min-h-0">
+              <LessonSidebar
+                lessons={lesson?.course_lessons || []}
+                currentLessonId={lesson?.id || ''}
+                courseId={courseId}
+                courseTitle={lesson?.course_title}
+                companyColor={companyColor}
+                isAdmin={isAdmin}
+                onManageLessons={() => setShowLessonManager(true)}
+              />
             </div>
           </div>
           
-          {/* Content area */}
-          <div className="flex-1 p-6 lg:px-10 lg:py-8">
-            <LessonHeader lesson={lesson} courseId={courseId} hideBackButton={true} />
-
-            <LessonActions
-              completed={completed}
-              onMarkCompleted={markLessonCompleted}
-              likes={likes}
-              userLiked={userLiked}
-              onToggleLike={toggleLikeLesson}
-              lessonType={lesson?.type}
-              lessonDuration={lesson?.duration}
+          {/* Conteúdo principal - vídeo grande */}
+          <div className="flex-1 min-w-0 space-y-6">
+            {/* Header com breadcrumbs */}
+            <LessonPageHeader
+              courseTitle={lesson?.course_title}
+              lessonTitle={lesson?.title}
+              courseId={courseId}
             />
             
-            <div className="mt-8 space-y-10">
-              <div className="rounded-xl overflow-hidden shadow-sm">
-                <LessonContent 
-                  lesson={lesson}
-                  onVideoEnd={handleVideoEnd}
-                  showAutoplayPrompt={false}
+            {/* Header da aula */}
+            <div className="bg-white dark:bg-[#1f1f1f] rounded-2xl shadow-sm p-4 lg:p-6 border border-gray-200 dark:border-[#2a2a2a]">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-2xl lg:text-4xl font-bold leading-tight break-words">
+                    {lesson?.title}
+                  </h1>
+                </div>
+
+                <LessonActions
+                  completed={completed}
+                  onMarkCompleted={markLessonCompleted}
+                  likes={likes}
+                  userLiked={userLiked}
+                  onToggleLike={toggleLikeLesson}
+                  lessonType={lesson?.type}
+                  lessonDuration={lesson?.duration}
                 />
               </div>
-              
-              <CourseDescription 
-                description={lesson?.description || null} 
-                lessonId={lesson?.id}
+            </div>
+
+            {/* Vídeo - agora maior */}
+            <div className="rounded-xl overflow-hidden shadow-lg bg-black">
+              <LessonContent 
+                lesson={lesson}
+                onVideoEnd={handleVideoEnd}
+                showAutoplayPrompt={false}
               />
             </div>
+            
+            {/* Descrição */}
+            <CourseDescription 
+              description={lesson?.description || null} 
+              lessonId={lesson?.id}
+            />
+            
+            {/* Espaçamento no final */}
+            <div className="pb-8 lg:pb-12"></div>
           </div>
         </div>
       </div>
@@ -237,7 +228,7 @@ const LessonPage = () => {
           onClose={() => setShowLessonManager(false)}
         />
       )}
-    </>
+    </LessonLayout>
   );
 };
 

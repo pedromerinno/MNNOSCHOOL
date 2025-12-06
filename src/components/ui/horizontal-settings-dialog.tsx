@@ -103,8 +103,8 @@ export const HorizontalSettingsDialog: React.FC<HorizontalSettingsDialogProps> =
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={cn(maxWidth, "max-h-[90vh] p-0 overflow-hidden flex flex-col", className)}>
-        <DialogHeader className="px-6 py-4 border-b">
-          <DialogTitle className="text-xl font-semibold">
+        <DialogHeader className="px-6 py-5 border-b border-gray-200">
+          <DialogTitle className="text-base font-semibold text-gray-900">
             {title}
           </DialogTitle>
         </DialogHeader>
@@ -112,8 +112,8 @@ export const HorizontalSettingsDialog: React.FC<HorizontalSettingsDialogProps> =
         <div className="flex flex-1 overflow-hidden">
           {/* Left Sidebar - Navigation */}
           {(sections.length > 1 || alwaysShowSidebar) && (
-            <div className="w-56 border-r bg-gray-50 flex flex-col">
-              <nav className="flex-1 p-3 space-y-0.5">
+            <div className="w-56 border-r border-gray-200 bg-white flex flex-col">
+              <nav className="flex-1 p-2 space-y-0.5">
                 {sections.map((section) => (
                   <button
                     key={section.id}
@@ -121,12 +121,12 @@ export const HorizontalSettingsDialog: React.FC<HorizontalSettingsDialogProps> =
                     onClick={() => !section.disabled && handleSectionChange(section.id)}
                     disabled={section.disabled}
                     className={cn(
-                      "w-full text-left px-3 py-2.5 rounded-md text-sm font-medium transition-colors",
+                      "w-full text-left px-3 py-2 rounded text-sm font-normal transition-colors",
                       section.disabled
                         ? "text-gray-400 cursor-not-allowed opacity-50"
                         : activeSection === section.id
-                        ? "bg-gray-200 text-gray-900"
-                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                        ? "bg-gray-100 text-gray-900"
+                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                     )}
                   >
                     {section.label}
@@ -143,7 +143,7 @@ export const HorizontalSettingsDialog: React.FC<HorizontalSettingsDialogProps> =
             </div>
 
             {/* Footer with buttons */}
-            <div className="border-t px-6 py-4 flex justify-end gap-3 bg-white">
+            <div className="border-t border-gray-200 px-6 py-4 flex justify-end gap-3 bg-white">
               {(() => {
                 // Se getCancelButton for fornecido, usar ele baseado na seção ativa
                 if (getCancelButton) {
@@ -163,7 +163,7 @@ export const HorizontalSettingsDialog: React.FC<HorizontalSettingsDialogProps> =
                       variant="outline"
                       onClick={handleCancel}
                       disabled={isSaving}
-                      className="min-w-[100px]"
+                      className="min-w-[100px] border-gray-300 hover:bg-gray-50 text-gray-700 font-normal"
                     >
                       {cancelLabel}
                     </Button>
@@ -177,7 +177,7 @@ export const HorizontalSettingsDialog: React.FC<HorizontalSettingsDialogProps> =
                   onClick={handleSave}
                   disabled={isSaving || !isFormValid}
                   className={cn(
-                    "min-w-[100px] font-medium",
+                    "min-w-[100px] font-normal",
                     (!isFormValid) && "bg-gray-300 text-gray-500 cursor-not-allowed hover:bg-gray-300"
                   )}
                   style={isFormValid ? saveButtonStyle : {}}

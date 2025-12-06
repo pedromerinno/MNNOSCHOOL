@@ -78,3 +78,4 @@ AND routine_name = 'update_ai_conversation_updated_at';
 - `20250215000000_create_ai_conversations.sql` - Migração inicial
 - `20250215000001_fix_ai_conversation_trigger.sql` - Correção do trigger
 - `20250215000002_fix_ai_conversations_rls_policies.sql` - Correção das políticas RLS
+

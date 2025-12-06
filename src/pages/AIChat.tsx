@@ -258,6 +258,7 @@ const AIChatContent = () => {
   const timeoutRefsRef = useRef<Set<NodeJS.Timeout>>(new Set());
   const previousMessagesLengthRef = useRef(0);
   const previousCompanyIdRef = useRef<string | null>(null);
+  const userMessageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   // Função para rolar até o final da última mensagem
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
@@ -299,6 +300,71 @@ const AIChatContent = () => {
         // Ignorar erros de scroll silenciosamente
         console.debug("Scroll error (ignored):", error);
       }
+    });
+  }, []);
+
+  // Função para rolar até a mensagem do usuário (logo abaixo do blur top)
+  const scrollToUserMessage = useCallback((messageId: string, behavior: ScrollBehavior = "smooth") => {
+    if (!isMountedRef.current) {
+      return;
+    }
+
+    // Usar múltiplos requestAnimationFrame para garantir que o DOM foi totalmente atualizado
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (!isMountedRef.current) {
+          return;
+        }
+
+        const container = messagesContainerRef.current;
+        const messageElement = userMessageRefs.current.get(messageId);
+
+        if (!container || !messageElement) {
+          // Se o elemento ainda não existe, tentar novamente após um delay
+          setTimeout(() => {
+            if (isMountedRef.current) {
+              const retryElement = userMessageRefs.current.get(messageId);
+              if (retryElement && container) {
+                scrollToUserMessage(messageId, behavior);
+              }
+            }
+          }, 100);
+          return;
+        }
+
+        try {
+          if (!container.isConnected || !messageElement.isConnected) {
+            return;
+          }
+
+          // Calcular a posição: blur top (80px) + um pouco de espaço (20px) = 100px do topo
+          const blurTopHeight = 80;
+          const spacing = 20;
+          const targetOffset = blurTopHeight + spacing;
+
+          // Usar getBoundingClientRect para obter posições absolutas
+          const containerRect = container.getBoundingClientRect();
+          const messageRect = messageElement.getBoundingClientRect();
+          
+          // Calcular a posição da mensagem relativa ao topo do container (incluindo padding)
+          // A diferença entre as posições absolutas nos dá a posição relativa
+          const messageTopRelativeToViewport = messageRect.top;
+          const containerTopRelativeToViewport = containerRect.top;
+          
+          // A posição da mensagem dentro do container (considerando scroll atual)
+          const messageTopInContainer = messageTopRelativeToViewport - containerTopRelativeToViewport + container.scrollTop;
+          
+          // Rolar para posicionar a mensagem no targetOffset
+          const targetScroll = messageTopInContainer - targetOffset;
+
+          container.scrollTo({
+            top: Math.max(0, targetScroll),
+            behavior,
+          });
+        } catch (error) {
+          console.debug("Scroll to user message error (ignored):", error);
+        }
+      });
     });
   }, []);
 
@@ -359,9 +425,86 @@ const AIChatContent = () => {
   }, [clearChat, initialMessage, sendMessage, user?.id, selectedCompany?.id]);
 
 
-  // Rolar quando mensagens mudam
+  // Detectar quando uma nova mensagem do usuário é adicionada e fazer scroll
   useEffect(() => {
     if (messages.length === 0 || !isMountedRef.current) return;
+    
+    const lastMessage = messages[messages.length - 1];
+    const previousLength = previousMessagesLengthRef.current;
+    
+    // Se a última mensagem é do usuário e é nova (comparando com o comprimento anterior)
+    if (lastMessage && lastMessage.role === "user" && messages.length > previousLength) {
+      // Atualizar o comprimento anterior imediatamente
+      previousMessagesLengthRef.current = messages.length;
+      
+      // Aguardar múltiplos frames e verificar se a ref existe antes de fazer scroll
+      const rafId1 = requestAnimationFrame(() => {
+        const rafId2 = requestAnimationFrame(() => {
+          const rafId3 = requestAnimationFrame(() => {
+            if (!isMountedRef.current) return;
+            
+            // Verificar se a ref da mensagem já existe
+            const messageElement = userMessageRefs.current.get(lastMessage.id);
+            if (!messageElement) {
+              // Se ainda não existe, tentar novamente após um delay maior
+              const retryTimeout = setTimeout(() => {
+                if (isMountedRef.current) {
+                  const retryElement = userMessageRefs.current.get(lastMessage.id);
+                  if (retryElement) {
+                    scrollToUserMessage(lastMessage.id);
+                  }
+                }
+                timeoutRefsRef.current.delete(retryTimeout);
+              }, 200);
+              timeoutRefsRef.current.add(retryTimeout);
+              return;
+            }
+            
+            const timeout = setTimeout(() => {
+              if (isMountedRef.current) {
+                try {
+                  scrollToUserMessage(lastMessage.id);
+                } catch (error) {
+                  // Ignorar erros
+                }
+              }
+              timeoutRefsRef.current.delete(timeout);
+            }, 50);
+            
+            timeoutRefsRef.current.add(timeout);
+          });
+          
+          return () => {
+            cancelAnimationFrame(rafId3);
+          };
+        });
+        
+        return () => {
+          cancelAnimationFrame(rafId2);
+        };
+      });
+
+      return () => {
+        cancelAnimationFrame(rafId1);
+      };
+    }
+    
+    // Atualizar o comprimento anterior para outras mudanças
+    if (messages.length !== previousLength) {
+      previousMessagesLengthRef.current = messages.length;
+    }
+  }, [messages, scrollToUserMessage]);
+
+  // Rolar quando mensagens mudam (apenas para mensagens da IA)
+  useEffect(() => {
+    if (messages.length === 0 || !isMountedRef.current) return;
+    
+    // Verificar se a última mensagem é do usuário
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage && lastMessage.role === "user") {
+      // Se for mensagem do usuário, não fazer scroll automático aqui
+      return;
+    }
     
     // Usar requestAnimationFrame para garantir que o DOM foi atualizado
     const rafId = requestAnimationFrame(() => {
@@ -519,6 +662,13 @@ const AIChatContent = () => {
                     return (
                       <motion.div
                         key={`user-message-${message.id}`}
+                        ref={(el) => {
+                          if (el) {
+                            userMessageRefs.current.set(message.id, el);
+                          } else {
+                            userMessageRefs.current.delete(message.id);
+                          }
+                        }}
                         initial={{ opacity: 0, y: 40 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ 

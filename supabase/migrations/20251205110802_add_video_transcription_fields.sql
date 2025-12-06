@@ -23,3 +23,4 @@ COMMENT ON COLUMN public.company_videos.transcription_status IS 'Status do proce
 COMMENT ON COLUMN public.company_videos.transcription_error IS 'Mensagem de erro caso a transcrição falhe';
 COMMENT ON COLUMN public.company_videos.transcribed_at IS 'Data e hora em que a transcrição foi concluída';
 COMMENT ON COLUMN public.company_videos.transcription_metadata IS 'Metadados adicionais da transcrição (duração processada, idioma detectado, etc.)';
+

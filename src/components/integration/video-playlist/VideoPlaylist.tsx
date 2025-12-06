@@ -78,19 +78,23 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
     fetchVideos();
   }, [fetchVideos]);
 
-  const handleSelectVideo = (video: CompanyVideo, index: number) => {
+  const handleSelectVideo = useCallback((video: CompanyVideo, index: number) => {
+    // Evitar troca se já for o vídeo atual
+    if (currentVideo === video.video_url && selectedVideoIndex === index) {
+      return;
+    }
     setCurrentVideo(video.video_url);
     setCurrentDescription(video.description || '');
     setSelectedVideoIndex(index);
-  };
+  }, [currentVideo, selectedVideoIndex]);
 
-  const handleSelectMainVideo = () => {
-    if (mainVideo) {
+  const handleSelectMainVideo = useCallback(() => {
+    if (mainVideo && currentVideo !== mainVideo) {
       setCurrentVideo(mainVideo);
       setCurrentDescription(mainVideoDescription || '');
       setSelectedVideoIndex(null);
     }
-  };
+  }, [mainVideo, mainVideoDescription, currentVideo]);
 
   const handleVideoAdded = () => {
     // Recarregar os vídeos quando um novo for adicionado
@@ -122,13 +126,14 @@ export const VideoPlaylist: React.FC<VideoPlaylistProps> = ({
           {/* Video Container */}
           <Card className="overflow-hidden shadow-sm border-border/50 p-0">
             <VideoPlayer 
+              key={currentVideo}
               videoUrl={currentVideo} 
             />
           </Card>
           
           {/* Description Section - Separada */}
           {currentDescription && (
-            <Card className="shadow-sm border-border/50">
+            <Card key={`desc-${currentVideo}`} className="shadow-sm border-border/50">
               <div className="p-6 lg:p-8">
                 <div className="space-y-4">
                   <div className="space-y-3">

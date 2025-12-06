@@ -16,9 +16,10 @@ import { LessonContentField } from "./LessonContentField";
 
 interface LessonFormFieldsProps {
   form: UseFormReturn<LessonFormValues>;
+  lessonId?: string;
 }
 
-export const LessonFormFields: React.FC<LessonFormFieldsProps> = ({ form }) => {
+export const LessonFormFields: React.FC<LessonFormFieldsProps> = ({ form, lessonId }) => {
   const selectedType = form.watch("type") as "video" | "text" | "quiz";
 
   return (
@@ -88,7 +89,7 @@ export const LessonFormFields: React.FC<LessonFormFieldsProps> = ({ form }) => {
         )}
       />
 
-      <LessonContentField form={form} selectedType={selectedType} />
+      <LessonContentField form={form} selectedType={selectedType} lessonId={lessonId} />
     </>
   );
 };

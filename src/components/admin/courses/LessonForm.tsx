@@ -4,7 +4,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
 import { LessonFormFields } from './form/LessonFormFields';
-import { LessonFormActions } from './form/LessonFormActions';
 import { 
   LessonFormProps, 
   LessonFormValues, 
@@ -16,7 +15,7 @@ export const LessonForm: React.FC<LessonFormProps> = ({
   onSubmit,
   isSubmitting,
   onCancel,
-  courseId, // Added parameter here to match updated LessonFormProps
+  courseId,
 }) => {
   const form = useForm<LessonFormValues>({
     resolver: zodResolver(lessonSchema),
@@ -30,19 +29,10 @@ export const LessonForm: React.FC<LessonFormProps> = ({
     },
   });
 
-  const handleSubmit = (values: LessonFormValues) => {
-    onSubmit(values);
-  };
-
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
-        <LessonFormFields form={form} />
-        <LessonFormActions 
-          onCancel={onCancel} 
-          isSubmitting={isSubmitting}
-          isEditing={!!initialData?.id}
-        />
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" id="lesson-form">
+        <LessonFormFields form={form} lessonId={initialData?.id} />
       </form>
     </Form>
   );

@@ -27,7 +27,7 @@ export const CourseDescription: React.FC<CourseDescriptionProps> = ({
   };
 
   return (
-    <Card>
+    <Card className="rounded-2xl border border-gray-200 dark:border-[#2a2a2a] dark:bg-[#1f1f1f]">
       <CardContent className="p-6">
         <h3 className="text-lg font-semibold mb-4">Sobre esta aula</h3>
         <EditableText

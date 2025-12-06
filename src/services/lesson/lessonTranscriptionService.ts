@@ -47,9 +47,19 @@ export class LessonTranscriptionService {
       } catch (fetchError: any) {
         // Erro de rede (fetch failed, DNS, etc)
         console.error('[LessonTranscriptionService] Erro de rede ao chamar API:', fetchError);
-        throw new Error(
-          `Erro de conexão ao iniciar transcrição. Verifique se o servidor de desenvolvimento está rodando e se a API route está configurada corretamente. Erro: ${fetchError.message || 'fetch failed'}`
-        );
+        
+        // Mensagem mais específica baseada no tipo de erro
+        let errorMessage = 'Erro de conexão ao iniciar transcrição';
+        
+        if (fetchError.name === 'TypeError' && fetchError.message?.includes('fetch')) {
+          errorMessage = 'Não foi possível conectar ao servidor de transcrição. Verifique se o servidor de desenvolvimento está rodando (npm run dev) e se a rota /api/transcribe-video está disponível.';
+        } else if (fetchError.message?.includes('Failed to fetch') || fetchError.message?.includes('fetch failed')) {
+          errorMessage = 'Falha na conexão com o servidor. Verifique sua conexão com a internet e se o servidor está rodando.';
+        } else {
+          errorMessage = `Erro de conexão: ${fetchError.message || 'Erro desconhecido'}`;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       console.log('[LessonTranscriptionService] Resposta da API:', { 

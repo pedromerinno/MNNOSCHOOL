@@ -9,7 +9,7 @@ export const useCourseData = (courseId: string | undefined) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [lastRefreshTime, setLastRefreshTime] = useState<number>(0);
-  const { userProfile } = useAuth();
+  const { userProfile, user } = useAuth();
 
   const fetchCourseData = useCallback(async (force = false) => {
     if (!courseId) {
@@ -30,12 +30,46 @@ export const useCourseData = (courseId: string | undefined) => {
       
       console.log(`[useCourseData] Fetching course data for courseId: ${courseId}`);
       
-      // Fetch course details
-      const { data: courseData, error: courseError } = await supabase
-        .from('courses')
-        .select('*')
-        .eq('id', courseId)
-        .single();
+      // Get user first (reuse from context if available)
+      const currentUser = user || (await supabase.auth.getUser()).data.user;
+      
+      // Paralelizar queries críticas para melhor performance
+      const queries = [
+        // 1. Fetch course details
+        supabase
+          .from('courses')
+          .select('*')
+          .eq('id', courseId)
+          .single(),
+        
+        // 2. Fetch lessons (pode ser feito em paralelo)
+        supabase
+          .from('lessons')
+          .select('*')
+          .eq('course_id', courseId)
+          .order('order_index', { ascending: true }),
+      ];
+
+      // Se não for super admin, adicionar verificação de acesso
+      if (!userProfile?.super_admin && currentUser) {
+        queries.push(
+          // 3. Get user's companies
+          supabase
+            .from('user_empresa')
+            .select('empresa_id')
+            .eq('user_id', currentUser.id)
+        );
+      }
+
+      // Executar todas as queries em paralelo
+      const results = await Promise.all(queries);
+      
+      const courseResult = results[0];
+      const lessonsResult = results[1];
+      const userCompaniesResult = userProfile?.super_admin ? null : results[2];
+
+      // Verificar erros do curso
+      const { data: courseData, error: courseError } = courseResult;
       
       if (courseError) {
         console.error('[useCourseData] Error fetching course:', courseError);
@@ -49,51 +83,39 @@ export const useCourseData = (courseId: string | undefined) => {
 
       console.log('[useCourseData] Course found:', courseData.title);
       
-      // Check if user has access to this course (unless they're super admin)
-      if (!userProfile?.super_admin) {
-        const { data: { user } } = await supabase.auth.getUser();
+      // Verificar acesso se necessário
+      if (!userProfile?.super_admin && currentUser && userCompaniesResult) {
+        const { data: userCompanies, error: userCompaniesError } = userCompaniesResult;
         
-        if (user) {
-          // Get user's companies
-          const { data: userCompanies, error: userCompaniesError } = await supabase
-            .from('user_empresa')
-            .select('empresa_id')
-            .eq('user_id', user.id);
+        if (userCompaniesError) {
+          console.error('[useCourseData] Error fetching user companies:', userCompaniesError);
+          throw userCompaniesError;
+        }
+        
+        if (userCompanies && userCompanies.length > 0) {
+          const companyIds = userCompanies.map(uc => uc.empresa_id);
           
-          if (userCompaniesError) {
-            console.error('[useCourseData] Error fetching user companies:', userCompaniesError);
-            throw userCompaniesError;
+          // Check if this course is available to any of user's companies
+          const { data: courseAccess, error: accessError } = await supabase
+            .from('company_courses')
+            .select('course_id')
+            .eq('course_id', courseId)
+            .in('empresa_id', companyIds);
+          
+          if (accessError) {
+            console.error('[useCourseData] Error checking course access:', accessError);
+            throw accessError;
           }
           
-          if (userCompanies && userCompanies.length > 0) {
-            const companyIds = userCompanies.map(uc => uc.empresa_id);
-            
-            // Check if this course is available to any of user's companies
-            const { data: courseAccess, error: accessError } = await supabase
-              .from('company_courses')
-              .select('course_id')
-              .eq('course_id', courseId)
-              .in('empresa_id', companyIds);
-            
-            if (accessError) {
-              console.error('[useCourseData] Error checking course access:', accessError);
-              throw accessError;
-            }
-            
-            if (!courseAccess || courseAccess.length === 0) {
-              console.error('[useCourseData] User does not have access to this course');
-              throw new Error('Você não tem acesso a este curso');
-            }
+          if (!courseAccess || courseAccess.length === 0) {
+            console.error('[useCourseData] User does not have access to this course');
+            throw new Error('Você não tem acesso a este curso');
           }
         }
       }
       
-      // Fetch lessons for the course
-      const { data: lessonsData, error: lessonsError } = await supabase
-        .from('lessons')
-        .select('*')
-        .eq('course_id', courseId)
-        .order('order_index', { ascending: true });
+      // Processar resultados das lessons
+      const { data: lessonsData, error: lessonsError } = lessonsResult;
       
       if (lessonsError) {
         console.error('[useCourseData] Error fetching lessons:', lessonsError);
@@ -102,30 +124,25 @@ export const useCourseData = (courseId: string | undefined) => {
       
       console.log(`[useCourseData] Found ${lessonsData?.length || 0} lessons for course`);
       
-      // Get user's progress
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (user) {
-        const { data: progressData } = await supabase
+      // Buscar progresso do usuário (pode ser feito em paralelo com as outras queries, mas é mais rápido fazer depois)
+      let progressData = null;
+      if (currentUser) {
+        const { data } = await supabase
           .from('user_course_progress')
           .select('*')
           .eq('course_id', courseId)
-          .eq('user_id', user.id)
+          .eq('user_id', currentUser.id)
           .single();
-        
-        setCourse({
-          ...courseData,
-          lessons: lessonsData || [],
-          progress: progressData?.progress || 0,
-          favorite: progressData?.favorite || false,
-        });
-      } else {
-        setCourse({
-          ...courseData,
-          lessons: lessonsData || [],
-          progress: 0,
-        });
+        progressData = data;
       }
+      
+      // Combinar dados do curso
+      setCourse({
+        ...courseData,
+        lessons: lessonsData || [],
+        progress: progressData?.progress || 0,
+        favorite: progressData?.favorite || false,
+      });
       
       setError(null);
     } catch (err: any) {
@@ -140,7 +157,7 @@ export const useCourseData = (courseId: string | undefined) => {
     } finally {
       setLoading(false);
     }
-  }, [courseId, lastRefreshTime, userProfile?.super_admin]);
+  }, [courseId, lastRefreshTime, userProfile?.super_admin, user]);
 
   // Add a function to refresh the course data
   const refreshCourseData = useCallback(() => {

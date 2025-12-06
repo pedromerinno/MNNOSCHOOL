@@ -64,3 +64,4 @@ USING (
     AND (p.is_admin = true OR p.super_admin = true)
   )
 );
+

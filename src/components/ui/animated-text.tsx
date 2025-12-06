@@ -32,3 +32,4 @@ export function useAnimatedText(text: string, delimiter: string = "") {
 
   return text.split(delimiter).slice(0, cursor).join(delimiter);
 }
+

@@ -1,9 +1,10 @@
 
 import React, { useState, useCallback, useRef, useEffect } from "react";
-import { Upload, Loader } from "lucide-react";
+import { Upload, Loader, X, Image as ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 export interface DragDropImageUploadProps {
   value: string | undefined | null;
@@ -200,17 +201,95 @@ export const DragDropImageUpload: React.FC<DragDropImageUploadProps> = ({
     return "SVG, PNG, JPG ou GIF (max. 2MB)";
   };
 
+  const handleRemove = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onChange("");
+    toast.success("Imagem removida");
+  }, [onChange]);
+
+  // Se já tem imagem, mostrar preview grande
+  if (value) {
+    return (
+      <div className={cn("space-y-3 w-full", className)}>
+        <div className="relative group">
+          <div className="relative aspect-video w-full overflow-hidden rounded-lg border-2 border-gray-200 bg-gray-50">
+            <img
+              src={value}
+              alt="Preview"
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "/placeholder.svg";
+                (e.target as HTMLImageElement).onerror = null;
+              }}
+            />
+            {isUploading && (
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-2">
+                  <Loader className="w-8 h-8 text-white animate-spin" />
+                  <span className="text-white text-sm font-medium">Enviando...</span>
+                </div>
+              </div>
+            )}
+            <Button
+              type="button"
+              variant="destructive"
+              size="icon"
+              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={handleRemove}
+              disabled={isUploading}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+        
+        <div
+          className={cn(
+            "border-2 border-dashed rounded-lg p-4 transition-colors cursor-pointer",
+            isDragging
+              ? "border-primary bg-primary/5"
+              : bucketError
+              ? "border-red-300 bg-red-50"
+              : "border-gray-200 hover:border-gray-300 bg-gray-50/50 hover:bg-gray-50"
+          )}
+          onDragEnter={handleDragEnter}
+          onDragLeave={handleDragLeave}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          onClick={handleClick}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileInputChange}
+            disabled={isUploading || !bucketReady || !!bucketError}
+          />
+          
+          <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
+            <ImageIcon className="w-4 h-4" />
+            <span className="font-medium">
+              {isUploading ? "Enviando..." : "Clique ou arraste para substituir"}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Se não tem imagem, mostrar área de upload
   return (
-    <div className="space-y-2 w-full">
+    <div className={cn("space-y-2 w-full", className)}>
       <div
         className={cn(
-          "border-2 border-dashed rounded-lg p-6 transition-colors cursor-pointer relative",
+          "border-2 border-dashed rounded-lg p-8 transition-all cursor-pointer relative group",
           isDragging
-            ? "border-primary bg-primary/5"
+            ? "border-primary bg-primary/5 scale-[1.02]"
             : bucketError
             ? "border-red-300 bg-red-50"
             : bucketReady
-            ? "border-gray-200 hover:border-gray-300 bg-gray-50/50 hover:bg-gray-50"
+            ? "border-gray-300 hover:border-primary hover:bg-primary/5"
             : "border-gray-200 bg-gray-100",
           className
         )}
@@ -229,51 +308,47 @@ export const DragDropImageUpload: React.FC<DragDropImageUploadProps> = ({
           disabled={isUploading || !bucketReady || !!bucketError}
         />
         
-        <div className="flex flex-col items-center justify-center text-center space-y-2">
+        <div className="flex flex-col items-center justify-center text-center space-y-3">
           <div className={cn(
-            "w-12 h-12 rounded-full flex items-center justify-center",
-            bucketError ? "bg-red-100" : "bg-gray-100"
+            "w-16 h-16 rounded-full flex items-center justify-center transition-colors",
+            isDragging
+              ? "bg-primary/10"
+              : bucketError
+              ? "bg-red-100"
+              : "bg-gray-100 group-hover:bg-primary/10"
           )}>
             {isUploading ? (
-              <Loader className="w-6 h-6 text-gray-600 animate-spin" />
+              <Loader className="w-8 h-8 text-primary animate-spin" />
             ) : (
               <Upload className={cn(
-                "w-6 h-6",
-                bucketError ? "text-red-600" : "text-gray-600"
+                "w-8 h-8 transition-colors",
+                isDragging
+                  ? "text-primary"
+                  : bucketError
+                  ? "text-red-600"
+                  : "text-gray-600 group-hover:text-primary"
               )} />
             )}
           </div>
-          <div className="text-sm text-gray-500">
+          <div className="space-y-1">
             <span className={cn(
-              "font-medium",
-              bucketError ? "text-red-600" : "text-primary"
+              "text-base font-medium block",
+              isDragging
+                ? "text-primary"
+                : bucketError
+                ? "text-red-600"
+                : "text-gray-700"
             )}>
               {getDisplayMessage()}
             </span>
             {getSubMessage() && (
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-sm text-gray-500">
                 {getSubMessage()}
               </p>
             )}
           </div>
         </div>
       </div>
-
-      {value && (
-        <div className={cn("border rounded-md p-2 bg-white", previewClassName)}>
-          <div className="flex items-center justify-center">
-            <img
-              src={value}
-              alt="Preview"
-              className="max-h-24 object-contain"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = "/placeholder.svg";
-                (e.target as HTMLImageElement).onerror = null;
-              }}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 };

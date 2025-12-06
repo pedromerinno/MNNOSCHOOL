@@ -1,8 +1,11 @@
-import React, { useRef, useState } from "react";
+"use client";
+
+import React, { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, Volume2, Volume1, VolumeX, AlertCircle } from "lucide-react";
+import { Play, Pause, Volume2, Volume1, VolumeX, Maximize, Minimize } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import Hls from "hls.js";
 
 const formatTime = (seconds: number) => {
   const minutes = Math.floor(seconds / 60);
@@ -43,17 +46,19 @@ const CustomSlider = ({
   );
 };
 
+interface VideoPlayerProps {
+  src: string;
+  fullWidth?: boolean;
+  onLoad?: () => void;
+  onError?: () => void;
+}
+
 const VideoPlayer = ({ 
   src, 
   fullWidth = false,
   onLoad,
   onError
-}: { 
-  src: string; 
-  fullWidth?: boolean;
-  onLoad?: () => void;
-  onError?: () => void;
-}) => {
+}: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(1);
@@ -63,7 +68,77 @@ const VideoPlayer = ({
   const [showControls, setShowControls] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [hasError, setHasError] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Configurar HLS se necessário e resetar estados quando src mudar
+  useEffect(() => {
+    if (!src || !videoRef.current) return;
+
+    const video = videoRef.current;
+    let hls: Hls | null = null;
+
+    // Resetar estados
+    setProgress(0);
+    setCurrentTime(0);
+    setIsPlaying(false);
+    setShowControls(false);
+
+    // Verificar se é HLS (.m3u8)
+    const isHLS = src.includes('.m3u8');
+
+    if (isHLS) {
+      // Usar HLS.js para navegadores que não suportam HLS nativamente
+      if (Hls.isSupported()) {
+        hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: false,
+        });
+
+        hls.loadSource(src);
+        hls.attachMedia(video);
+
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          // Vídeo pronto para reprodução
+        });
+
+        hls.on(Hls.Events.ERROR, (event, data) => {
+          if (data.fatal) {
+            switch (data.type) {
+              case Hls.ErrorTypes.NETWORK_ERROR:
+                console.error('HLS network error, trying to recover...');
+                hls?.startLoad();
+                break;
+              case Hls.ErrorTypes.MEDIA_ERROR:
+                console.error('HLS media error, trying to recover...');
+                hls?.recoverMediaError();
+                break;
+              default:
+                console.error('HLS fatal error, cannot recover');
+                hls?.destroy();
+                onError?.();
+                break;
+            }
+          }
+        });
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        // Safari suporta HLS nativamente
+        video.src = src;
+      } else {
+        console.error('HLS não é suportado neste navegador');
+        onError?.();
+      }
+    } else {
+      // Vídeo normal (mp4, webm, etc)
+      video.src = src;
+    }
+
+    return () => {
+      if (hls) {
+        hls.destroy();
+      }
+    };
+  }, [src, onError]);
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -125,11 +200,70 @@ const VideoPlayer = ({
     }
   };
 
+  const toggleFullscreen = async () => {
+    if (!containerRef.current) return;
+
+    try {
+      if (!isFullscreen) {
+        // Entrar em fullscreen
+        if (containerRef.current.requestFullscreen) {
+          await containerRef.current.requestFullscreen();
+        } else if ((containerRef.current as any).webkitRequestFullscreen) {
+          await (containerRef.current as any).webkitRequestFullscreen();
+        } else if ((containerRef.current as any).mozRequestFullScreen) {
+          await (containerRef.current as any).mozRequestFullScreen();
+        } else if ((containerRef.current as any).msRequestFullscreen) {
+          await (containerRef.current as any).msRequestFullscreen();
+        }
+      } else {
+        // Sair do fullscreen
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if ((document as any).webkitExitFullscreen) {
+          await (document as any).webkitExitFullscreen();
+        } else if ((document as any).mozCancelFullScreen) {
+          await (document as any).mozCancelFullScreen();
+        } else if ((document as any).msExitFullscreen) {
+          await (document as any).msExitFullscreen();
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao alternar fullscreen:', error);
+    }
+  };
+
+  // Monitorar mudanças de fullscreen
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const isCurrentlyFullscreen = !!(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
+      );
+      setIsFullscreen(isCurrentlyFullscreen);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
+  }, []);
+
   return (
     <motion.div
+      ref={containerRef}
       className={cn(
         "relative w-full h-full rounded-xl overflow-hidden bg-[#11111198] shadow-[0_0_20px_rgba(0,0,0,0.2)] backdrop-blur-sm",
-        !fullWidth && "max-w-4xl mx-auto"
+        !fullWidth && "max-w-4xl mx-auto",
+        isFullscreen && "rounded-none"
       )}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -138,6 +272,7 @@ const VideoPlayer = ({
       onMouseLeave={() => setShowControls(false)}
     >
       <video
+        key={src}
         ref={videoRef}
         className="w-full h-full"
         style={{ objectFit: 'contain' }}
@@ -156,25 +291,15 @@ const VideoPlayer = ({
         }}
         onError={(e) => {
           console.error('Video error:', e);
-          setHasError(true);
           onError?.();
         }}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
-        src={src}
         onClick={togglePlay}
         preload="metadata"
+        playsInline
+        {...(!src.includes('.m3u8') && { src })}
       />
-      
-      {hasError && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-[#11111198]">
-          <AlertCircle className="h-12 w-12 text-white mb-4" />
-          <h3 className="text-xl font-medium mb-2 text-white">Erro ao carregar o vídeo</h3>
-          <p className="text-white/80 mb-4">
-            Não foi possível carregar o conteúdo do vídeo.
-          </p>
-        </div>
-      )}
 
       <AnimatePresence>
         {showControls && (
@@ -266,6 +391,23 @@ const VideoPlayer = ({
                     </Button>
                   </motion.div>
                 ))}
+                <motion.div
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <Button
+                    onClick={toggleFullscreen}
+                    variant="ghost"
+                    size="icon"
+                    className="text-white hover:bg-[#111111d1] hover:text-white"
+                  >
+                    {isFullscreen ? (
+                      <Minimize className="h-5 w-5" />
+                    ) : (
+                      <Maximize className="h-5 w-5" />
+                    )}
+                  </Button>
+                </motion.div>
               </div>
             </div>
           </motion.div>

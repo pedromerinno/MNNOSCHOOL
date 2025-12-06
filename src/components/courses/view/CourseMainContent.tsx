@@ -15,7 +15,7 @@ interface CourseMainContentProps {
   companyColor: string;
 }
 
-export const CourseMainContent: React.FC<CourseMainContentProps> = ({
+export const CourseMainContent: React.FC<CourseMainContentProps> = React.memo(({
   totalDuration,
   lessonCount,
   tags,
@@ -43,4 +43,4 @@ export const CourseMainContent: React.FC<CourseMainContentProps> = ({
       />
     </div>
   );
-};
+});

@@ -1,23 +1,21 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { CourseHeader } from './CourseHeader';
 import { CourseHero } from './CourseHero';
 import { CourseNotFound } from './CourseNotFound';
 import { CourseLessonsSection } from './CourseLessonsSection';
-import { PagePreloader } from '@/components/ui/PagePreloader';
+import { CourseViewSkeleton } from './CourseViewSkeleton';
 import { useCompanies } from '@/hooks/useCompanies';
 import { CourseMainContent } from './view/CourseMainContent';
 import { CourseDialogs } from './view/CourseDialogs';
 import { useCourseView } from '@/hooks/course/useCourseView';
 import { calculateTotalDuration } from '@/utils/durationUtils';
 
-export const CourseView: React.FC = () => {
+export const CourseView: React.FC = React.memo(() => {
   const { courseId } = useParams<{ courseId: string }>();
-  const { userCompanies, selectedCompany } = useCompanies();
+  const { userCompanies } = useCompanies();
   const navigate = useNavigate();
-  
-  console.log(`[CourseView] Rendering for courseId: ${courseId}`);
   
   const {
     course,
@@ -39,13 +37,16 @@ export const CourseView: React.FC = () => {
     refreshCourseData
   } = useCourseView(courseId);
 
+  // Memoize handlers to prevent unnecessary re-renders
+  const handleCompanyChange = useMemo(() => {
+    return () => {
+      console.log('Company changed in CourseView, redirecting to my-courses page');
+      navigate('/my-courses');
+    };
+  }, [navigate]);
+
   // Listen for company changes and redirect to courses page
   useEffect(() => {
-    const handleCompanyChange = () => {
-      console.log('Company changed in CourseView, redirecting to courses page');
-      navigate('/courses');
-    };
-
     window.addEventListener('company-selected', handleCompanyChange);
     window.addEventListener('company-selector-changed', handleCompanyChange);
     window.addEventListener('company-changed', handleCompanyChange);
@@ -55,7 +56,7 @@ export const CourseView: React.FC = () => {
       window.removeEventListener('company-selector-changed', handleCompanyChange);
       window.removeEventListener('company-changed', handleCompanyChange);
     };
-  }, [navigate]);
+  }, [handleCompanyChange]);
 
   // Listen for course update events to refresh data
   useEffect(() => {
@@ -73,52 +74,58 @@ export const CourseView: React.FC = () => {
     };
   }, [courseId, refreshCourseData]);
 
-  console.log(`[CourseView] State - loading: ${loading}, course: ${course?.title || 'none'}, error: ${error?.message || 'none'}`);
+  // Memoize formatted duration
+  const formattedDuration = useMemo(() => {
+    return course ? calculateTotalDuration(course.lessons) : '0h';
+  }, [course]);
+
+  // Memoize initial form data
+  const initialFormData = useMemo(() => {
+    if (!course) return null;
+    return {
+      id: course.id,
+      title: course.title,
+      description: course.description || "",
+      image_url: course.image_url || "",
+      instructor: course.instructor || "",
+      tags: course.tags || [],
+      companyIds: courseCompanyIds,
+    };
+  }, [course, courseCompanyIds]);
 
   if (loading) {
-    return <PagePreloader />;
+    return <CourseViewSkeleton />;
   }
 
   if (error || !course) {
-    console.log(`[CourseView] Showing CourseNotFound - error: ${error?.message}, course: ${course}`);
     return <CourseNotFound />;
   }
 
-  const formattedDuration = calculateTotalDuration(course.lessons);
-
-  const initialFormData = {
-    id: course.id,
-    title: course.title,
-    description: course.description || "",
-    image_url: course.image_url || "",
-    instructor: course.instructor || "",
-    tags: course.tags || [],
-    companyIds: courseCompanyIds,
-  };
+  if (!initialFormData) {
+    return <CourseViewSkeleton />;
+  }
 
   return (
-    <div className="container max-w-8xl mx-auto px-4 py-8">
-      <CourseHeader 
-        title={course.title} 
-        instructor={course.instructor} 
-      />
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-        <div className="lg:col-span-2">
-          {/* Course Hero with contained width */}
-          <CourseHero 
-            imageUrl={course.image_url} 
-            title={course.title}
-            instructor={course.instructor || ""}
-            favorite={course.favorite || false}
-            courseId={course.id}
-            firstLessonId={course.lessons?.[0]?.id}
-            showEditButton={isAdmin}
-            onEditCourse={handleEditCourse}
-          />
-          
-          {/* Course content now contained within the hero section's width */}
-          <div className="mt-8">
+    <>
+      <div className="w-full max-w-[1600px] mx-auto">
+        <CourseHeader 
+          title={course.title} 
+          instructor={course.instructor} 
+        />
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+          <div className="lg:col-span-2 space-y-8">
+            <CourseHero 
+              imageUrl={course.image_url} 
+              title={course.title}
+              instructor={course.instructor || ""}
+              favorite={course.favorite || false}
+              courseId={course.id}
+              firstLessonId={course.lessons?.[0]?.id}
+              showEditButton={isAdmin}
+              onEditCourse={handleEditCourse}
+            />
+            
             <CourseMainContent
               totalDuration={formattedDuration}
               lessonCount={course.lessons?.length || 0}
@@ -130,19 +137,21 @@ export const CourseView: React.FC = () => {
               companyColor={companyColor}
             />
           </div>
-        </div>
-        
-        <div className="lg:col-span-1">
-          <CourseLessonsSection
-            isAdmin={isAdmin}
-            showLessonManager={showLessonManager}
-            setShowLessonManager={setShowLessonManager}
-            courseId={course.id}
-            courseTitle={course.title}
-            lessons={course.lessons}
-            startLesson={startLesson}
-            refreshCourseData={refreshCourseData}
-          />
+          
+          <div className="lg:col-span-1">
+            <div className="lg:sticky lg:top-8">
+              <CourseLessonsSection
+                isAdmin={isAdmin}
+                showLessonManager={showLessonManager}
+                setShowLessonManager={setShowLessonManager}
+                courseId={course.id}
+                courseTitle={course.title}
+                lessons={course.lessons}
+                startLesson={startLesson}
+                refreshCourseData={refreshCourseData}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -158,6 +167,6 @@ export const CourseView: React.FC = () => {
         courseId={course.id}
         courseTitle={course.title}
       />
-    </div>
+    </>
   );
-};
+});

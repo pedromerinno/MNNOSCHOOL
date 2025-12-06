@@ -50,3 +50,4 @@ git push -u origin main
 **Não é necessário acesso MCP** para este projeto. O projeto não possui configurações MCP e funciona normalmente sem ele.
 
 
+

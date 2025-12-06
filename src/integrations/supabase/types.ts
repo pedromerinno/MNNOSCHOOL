@@ -672,6 +672,12 @@ export type Database = {
           transcription_error: string | null
           transcribed_at: string | null
           transcription_metadata: Record<string, any> | null
+          mux_asset_id: string | null
+          mux_playback_id: string | null
+          mux_upload_id: string | null
+          mux_status: string | null
+          mux_duration: number | null
+          mux_thumbnail_url: string | null
         }
         Insert: {
           completed?: boolean | null
@@ -690,6 +696,12 @@ export type Database = {
           transcription_error?: string | null
           transcribed_at?: string | null
           transcription_metadata?: Record<string, any> | null
+          mux_asset_id?: string | null
+          mux_playback_id?: string | null
+          mux_upload_id?: string | null
+          mux_status?: string | null
+          mux_duration?: number | null
+          mux_thumbnail_url?: string | null
         }
         Update: {
           completed?: boolean | null
@@ -708,6 +720,12 @@ export type Database = {
           transcription_error?: string | null
           transcribed_at?: string | null
           transcription_metadata?: Record<string, any> | null
+          mux_asset_id?: string | null
+          mux_playback_id?: string | null
+          mux_upload_id?: string | null
+          mux_status?: string | null
+          mux_duration?: number | null
+          mux_thumbnail_url?: string | null
         }
         Relationships: [
           {

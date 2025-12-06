@@ -62,3 +62,4 @@ const data = await response.json();
 - O áudio é retornado em base64 para facilitar a transmissão
 - Para vídeos longos, o download pode demorar
 - Certifique-se de que os serviços configurados suportam o formato de áudio necessário
+

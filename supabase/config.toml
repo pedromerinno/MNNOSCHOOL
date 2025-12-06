@@ -1,3 +1,7 @@
 
 [realtime]
 tables = ["lessons", "user_documents", "empresas", "user_empresa", "profiles", "job_roles", "user_notifications"]
+
+# Desabilitar verificação JWT para webhook do Mux (webhooks externos não enviam JWT)
+[functions.mux-webhook]
+verify_jwt = false

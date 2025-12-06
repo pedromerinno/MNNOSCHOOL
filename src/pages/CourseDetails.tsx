@@ -1,13 +1,13 @@
 
 import React from 'react';
 import { CourseView } from "@/components/courses/CourseView";
-import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { CourseLayout } from "@/components/courses/CourseLayout";
 
 const CourseDetails = () => {
   return (
-    <DashboardLayout>
+    <CourseLayout>
       <CourseView />
-    </DashboardLayout>
+    </CourseLayout>
   );
 };
 

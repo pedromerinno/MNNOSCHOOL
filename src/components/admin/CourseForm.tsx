@@ -45,6 +45,16 @@ export const CourseForm: React.FC<CourseFormProps> = ({
   // Watch for company changes to reset job roles selection
   const watchedCompanyIds = form.watch("companyIds");
   
+  // Ensure preselected company is set when selector is hidden
+  useEffect(() => {
+    if (!showCompanySelector && preselectedCompanyId) {
+      const currentCompanyIds = form.getValues("companyIds") || [];
+      if (!currentCompanyIds.includes(preselectedCompanyId)) {
+        form.setValue("companyIds", [preselectedCompanyId]);
+      }
+    }
+  }, [showCompanySelector, preselectedCompanyId, form]);
+  
   useEffect(() => {
     // Reset job roles when companies change
     form.setValue("jobRoleIds", []);

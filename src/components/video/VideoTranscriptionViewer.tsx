@@ -136,3 +136,4 @@ export const VideoTranscriptionViewer: React.FC<VideoTranscriptionViewerProps> =
     </Dialog>
   );
 };
+

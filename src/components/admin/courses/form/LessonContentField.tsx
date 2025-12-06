@@ -6,99 +6,25 @@ import {
   FormLabel,
   FormControl,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { UseFormReturn } from "react-hook-form";
 import { LessonFormValues } from "./LessonFormTypes";
-import { AlertCircle, Loader2 } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import debounce from 'lodash/debounce';
+import { VideoUploadField } from "./VideoUploadField";
+import { useCompanies } from '@/hooks/useCompanies';
 
 interface LessonContentFieldProps {
   form: UseFormReturn<LessonFormValues>;
   selectedType: "video" | "text" | "quiz";
+  lessonId?: string;
 }
 
 export const LessonContentField: React.FC<LessonContentFieldProps> = ({ 
   form, 
-  selectedType 
+  selectedType,
+  lessonId
 }) => {
-  const [isLoadingMetadata, setIsLoadingMetadata] = React.useState(false);
-  const [lastProcessedUrl, setLastProcessedUrl] = React.useState<string>("");
-
-  const fetchLoomMetadata = useCallback(
-    debounce(async (url: string) => {
-      if (!url || !url.includes("loom.com/share/")) return;
-      
-      // Prevent duplicate fetches for the same URL
-      if (url === lastProcessedUrl) return;
-      
-      setIsLoadingMetadata(true);
-      try {
-        console.log("Fetching metadata for Loom URL:", url);
-        
-        const { data, error } = await supabase.functions.invoke('fetch-loom-metadata', {
-          body: { url }
-        });
-
-        if (error) {
-          console.error('Supabase function error:', error);
-          throw new Error(`Function error: ${error.message}`);
-        }
-
-        if (data?.error) {
-          console.error('Loom API error:', data.error);
-          throw new Error(data.error);
-        }
-
-        if (!data || !data.title) {
-          throw new Error('Received invalid response from Loom API');
-        }
-
-        console.log("Metadata fetched successfully:", data);
-        
-        // Update form fields with the fetched metadata
-        form.setValue('title', data.title, { shouldDirty: true });
-        
-        if (data.description) {
-          form.setValue('description', data.description, { shouldDirty: true });
-        }
-        
-        if (data.duration) {
-          form.setValue('duration', data.duration, { shouldDirty: true });
-        }
-        
-        setLastProcessedUrl(url);
-
-        toast.success("Detalhes do vídeo obtidos", {
-          description: "Título e descrição foram atualizados a partir do Loom."
-        });
-      } catch (error: any) {
-        console.error('Error fetching Loom metadata:', error);
-        
-        toast.error("Erro ao obter detalhes do vídeo", {
-          description: "Verifique se você inseriu um URL válido do Loom e tente novamente."
-        });
-      } finally {
-        setIsLoadingMetadata(false);
-      }
-    }, 1000),
-    [form, lastProcessedUrl]
-  );
-
-  const validateLoomUrl = (url: string): boolean => {
-    if (!url) return false;
-    return url.includes("loom.com/share/") && url.match(/loom\.com\/share\/[a-zA-Z0-9_-]+/) !== null;
-  };
-
-  const handleUrlChange = (value: string) => {
-    if (selectedType === "video" && validateLoomUrl(value)) {
-      fetchLoomMetadata(value);
-    }
-  };
+  const { selectedCompany } = useCompanies();
 
   return (
     <FormField
@@ -114,48 +40,54 @@ export const LessonContentField: React.FC<LessonContentFieldProps> = ({
                 : "Perguntas e Respostas do Quiz"}
           </FormLabel>
           
-          {selectedType === "video" && (
-            <Alert variant="default" className="mb-4 border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950">
-              <AlertCircle className="h-4 w-4 text-blue-500" />
-              <AlertDescription className="text-blue-600 dark:text-blue-300">
-                Use URLs do YouTube (<code>youtube.com/watch?v=XXXX</code> ou <code>youtu.be/XXXX</code>) ou 
-                do Loom (<code>loom.com/share/XXXX</code>). 
-                {isLoadingMetadata && (
-                  <span className="ml-2 inline-flex items-center">
-                    <Loader2 className="h-3 w-3 animate-spin mr-1" /> 
-                    Buscando informações do vídeo...
-                  </span>
-                )}
-              </AlertDescription>
-            </Alert>
-          )}
           
           <FormControl>
-            <Textarea 
-              placeholder={
-                selectedType === "video" 
-                  ? "https://www.youtube.com/watch?v=... ou https://www.loom.com/share/..." 
-                  : selectedType === "text" 
+            {selectedType === "video" ? (
+              <div className="space-y-4">
+                {selectedCompany?.id ? (
+                  <VideoUploadField 
+                    value={field.value?.startsWith('mux-video-') || field.value?.includes('supabase') || field.value?.includes('storage') || field.value?.includes('stream.mux.com') ? field.value : null}
+                    onChange={(url) => {
+                      // Quando faz upload, substitui qualquer valor anterior
+                      field.onChange(url);
+                    }}
+                    companyId={selectedCompany.id}
+                  />
+                ) : (
+                  <div className="text-sm text-gray-500 p-4 border rounded-lg">
+                    Selecione uma empresa para fazer upload de vídeos
+                  </div>
+                )}
+                <div className="text-sm text-gray-500">
+                  <p>Ou cole uma URL de vídeo externa:</p>
+                </div>
+                <Textarea 
+                  placeholder="URL do vídeo (YouTube, Vimeo, etc.)"
+                  className="min-h-[80px]"
+                  value={field.value && !field.value.startsWith('mux-video-') && !field.value.includes('supabase') && !field.value.includes('storage') && !field.value.includes('stream.mux.com') ? field.value : ""}
+                  onChange={(e) => {
+                    const url = e.target.value;
+                    // Se é uma URL válida ou está vazio, usar ela
+                    if (url.startsWith('http') || url === '') {
+                      field.onChange(url);
+                    }
+                  }}
+                />
+              </div>
+            ) : (
+              <Textarea 
+                placeholder={
+                  selectedType === "text" 
                     ? "Conteúdo detalhado da aula em texto..." 
                     : "Formato JSON com perguntas e respostas..."
-              }
-              className="min-h-[150px]"
-              {...field}
-              onChange={(e) => {
-                field.onChange(e);
-                handleUrlChange(e.target.value);
-              }}
-              value={field.value || ""}
-              disabled={isLoadingMetadata}
-            />
+                }
+                className="min-h-[150px]"
+                {...field}
+                value={field.value || ""}
+              />
+            )}
           </FormControl>
           
-          {selectedType === "video" && (
-            <FormDescription>
-              Para melhor compatibilidade, recomendamos usar vídeos do YouTube ou Loom.
-              Cole um link do Loom para preencher automaticamente o título e descrição.
-            </FormDescription>
-          )}
           
           <FormMessage />
         </FormItem>

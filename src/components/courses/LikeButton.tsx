@@ -1,7 +1,7 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { ThumbsUp } from "lucide-react";
+import { Heart } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface LikeButtonProps {
   likes: number;
@@ -19,10 +19,20 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
       variant={userLiked ? "default" : "outline"}
       size="sm"
       onClick={onToggleLike}
-      className="flex items-center gap-2"
+      className={cn(
+        "flex items-center gap-2 rounded-full px-4 py-2 transition-all duration-200",
+        userLiked 
+          ? "bg-red-500 hover:bg-red-600 text-white shadow-sm hover:shadow-md" 
+          : "hover:bg-red-50 dark:hover:bg-red-950/20 border-red-200 dark:border-red-800"
+      )}
     >
-      <ThumbsUp className={`h-4 w-4 ${userLiked ? "fill-current" : ""}`} />
-      <span>{likes || 0} {likes === 1 ? 'curtida' : 'curtidas'}</span>
+      <Heart 
+        className={cn(
+          "h-4 w-4 transition-all duration-200",
+          userLiked ? "fill-white" : "text-red-500"
+        )} 
+      />
+      <span className="font-medium">{likes || 0}</span>
     </Button>
   );
 };

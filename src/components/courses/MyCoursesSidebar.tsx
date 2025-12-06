@@ -53,20 +53,22 @@ export const MyCoursesSidebar = () => {
     }
   };
 
-  // Verificar se está em uma rota da escola
+  // Verificar se está em uma rota da escola (incluindo cursos individuais)
   const isSchoolRoute = location.pathname === '/my-courses' || 
                         location.pathname === '/sugeridos' || 
                         location.pathname === '/favoritos' ||
                         location.pathname === '/performance' ||
                         location.pathname === '/professores' ||
-                        location.pathname.startsWith('/my-courses');
+                        location.pathname.startsWith('/my-courses') ||
+                        location.pathname.startsWith('/courses/');
 
   // Estado para controlar o dropdown de Cursos - aberto por padrão
   const [coursesDropdownOpen, setCoursesDropdownOpen] = React.useState(true);
 
-  // Verificar se está em uma rota de cursos (favoritos ou sugeridos)
+  // Verificar se está em uma rota de cursos (favoritos, sugeridos ou curso individual)
   const isCoursesRoute = location.pathname === '/sugeridos' || 
-                         location.pathname === '/favoritos';
+                         location.pathname === '/favoritos' ||
+                         location.pathname.startsWith('/courses/');
 
   // Abrir dropdown automaticamente se estiver em uma rota de cursos
   React.useEffect(() => {

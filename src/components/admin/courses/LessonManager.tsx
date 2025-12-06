@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useLessons } from '@/hooks/useLessons';
 import { LessonTable } from './LessonTable';
 import { LessonFormSheet } from './LessonFormSheet';
@@ -10,6 +9,8 @@ import { Lesson } from '@/components/courses/CourseLessonList';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsAdmin } from '@/hooks/company/useIsAdmin';
+import { HorizontalSheet, SettingsSection } from "@/components/ui/horizontal-sheet";
+import { useCompanies } from '@/hooks/useCompanies';
 
 interface LessonManagerProps {
   courseId: string;
@@ -25,6 +26,7 @@ export const LessonManager: React.FC<LessonManagerProps> = ({
   open
 }) => {
   const { isAdmin } = useIsAdmin();
+  const { selectedCompany } = useCompanies();
   const { 
     lessons, 
     isLoading, 
@@ -84,28 +86,6 @@ export const LessonManager: React.FC<LessonManagerProps> = ({
 
   const handleClose = () => {
     onClose();
-    
-    // Trigger immediate course and lesson refresh when lesson manager closes
-    setTimeout(() => {
-      // Trigger course refresh for CourseView
-      window.dispatchEvent(new CustomEvent('course-updated', {
-        detail: { courseId }
-      }));
-      
-      // Trigger lesson data refresh for LessonPage
-      window.dispatchEvent(new CustomEvent('lesson-data-refresh', {
-        detail: { courseId }
-      }));
-      
-      // Also trigger lesson field update to refresh current lesson if in lesson page
-      window.dispatchEvent(new CustomEvent('lesson-field-updated', {
-        detail: { 
-          lessonId: 'current',
-          field: 'refresh',
-          value: Date.now()
-        }
-      }));
-    }, 100);
   };
 
   const handleAddLesson = () => {
@@ -154,50 +134,59 @@ export const LessonManager: React.FC<LessonManagerProps> = ({
     setIsDeleteDialogOpen(false);
   };
 
+  const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
+
+  const sections: SettingsSection[] = useMemo(() => {
+    return [
+      {
+        id: 'lessons',
+        label: 'Lista de Aulas',
+        content: (
+          <LessonTable 
+            lessons={lessons}
+            isLoading={isLoading}
+            onEditLesson={handleEditLesson}
+            onDeleteLesson={confirmDeleteLesson}
+            onAddLesson={handleAddLesson}
+            onReorderLessons={handleReorderLessons}
+            isAdmin={isAdmin}
+          />
+        )
+      }
+    ];
+  }, [lessons, isLoading, isAdmin]);
+
   return (
     <>
-      <Sheet open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
-        <SheetContent side="right" className="w-full sm:max-w-4xl p-0 overflow-y-auto">
-          <div className="flex flex-col h-full">
-            <SheetHeader className="px-6 py-4 border-b">
-              <SheetTitle className="text-lg font-semibold">
-                Aulas do curso: {courseTitle}
-              </SheetTitle>
-              <SheetDescription>
-                Adicione, edite, reordene ou remova aulas para este curso. Arraste e solte para reordenar.
-              </SheetDescription>
-            </SheetHeader>
-            
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium">Lista de Aulas</h3>
-                {isAdmin && (
-                  <Button onClick={handleAddLesson}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Nova Aula
-                  </Button>
-                )}
-              </div>
-
-              <LessonTable 
-                lessons={lessons}
-                isLoading={isLoading}
-                onEditLesson={handleEditLesson}
-                onDeleteLesson={confirmDeleteLesson}
-                onAddLesson={handleAddLesson}
-                onReorderLessons={handleReorderLessons}
-                isAdmin={isAdmin}
-              />
-            </div>
-            
-            <div className="border-t p-4 flex justify-end">
-              <Button onClick={handleClose}>
-                Fechar
+      <HorizontalSheet
+        open={open}
+        onOpenChange={(isOpen) => !isOpen && handleClose()}
+        title={courseTitle}
+        sections={sections}
+        defaultSectionId="lessons"
+        onCancel={handleClose}
+        cancelLabel="Fechar"
+        side="right"
+        maxWidth="sm:max-w-3xl"
+        contentPadding="p-6"
+        alwaysShowSidebar={false}
+        getCancelButton={(activeSection) => {
+          if (activeSection === 'lessons' && isAdmin) {
+            return (
+              <Button 
+                onClick={handleAddLesson} 
+                variant="outline"
+                className="gap-2 border-gray-300 hover:bg-gray-50 text-gray-700 font-normal"
+                size="sm"
+              >
+                <Plus className="h-4 w-4" />
+                Nova Aula
               </Button>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
+            );
+          }
+          return null;
+        }}
+      />
 
       {/* Form dialog for adding/editing lessons */}
       <LessonFormSheet 

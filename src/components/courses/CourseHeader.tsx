@@ -1,29 +1,31 @@
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Home, ChevronRight } from 'lucide-react';
+import { Home, ChevronRight } from 'lucide-react';
 
 interface CourseHeaderProps {
   title: string;
   instructor: string | null;
 }
 
-export const CourseHeader: React.FC<CourseHeaderProps> = ({ 
+export const CourseHeader: React.FC<CourseHeaderProps> = React.memo(({ 
   title,
   instructor 
 }) => {
   const navigate = useNavigate();
   
+  const handleHomeClick = useCallback(() => navigate('/'), [navigate]);
+  const handleCoursesClick = useCallback(() => navigate('/courses'), [navigate]);
+  
   return (
     <div className="mb-8">
-      {/* Breadcrumb navigation */}
       <div className="flex items-center text-sm text-muted-foreground mb-4">
         <Button 
           variant="ghost" 
           size="sm" 
           className="p-0 h-auto hover:bg-transparent hover:text-foreground"
-          onClick={() => navigate('/')}
+          onClick={handleHomeClick}
         >
           <Home className="h-3.5 w-3.5 mr-1" />
           <span>Home</span>
@@ -35,9 +37,9 @@ export const CourseHeader: React.FC<CourseHeaderProps> = ({
           variant="ghost" 
           size="sm" 
           className="p-0 h-auto hover:bg-transparent hover:text-foreground"
-          onClick={() => navigate('/courses')}
+          onClick={handleCoursesClick}
         >
-          <span>Courses</span>
+          <span>Cursos</span>
         </Button>
         
         <ChevronRight className="h-3 w-3 mx-2" />
@@ -46,4 +48,4 @@ export const CourseHeader: React.FC<CourseHeaderProps> = ({
       </div>
     </div>
   );
-};
+});
