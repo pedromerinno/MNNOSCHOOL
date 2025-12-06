@@ -328,7 +328,6 @@ export default async function handler(
 
     // Transcrever áudio
     const youtubeId = getYoutubeVideoId(video_url);
-    const loomId = getLoomVideoId(video_url);
     const filename = youtubeId ? `youtube_${youtubeId}.mp3` : `loom_${loomId}.mp3`;
     const transcription = await transcribeAudio(audioBuffer, filename);
 

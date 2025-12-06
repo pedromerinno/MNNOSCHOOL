@@ -60,68 +60,70 @@ export const FeedbackWidget = memo(() => {
   return (
     <Card className="border-0 shadow-none overflow-hidden rounded-[30px] bg-[#FAFFF7] dark:bg-[#222222] h-full">
       <CardContent className="p-0 flex flex-col h-full">
-        <div className="p-8 flex justify-between items-center">
+        <div className="p-6 flex justify-between items-center">
           <h3 className="text-xl font-medium dark:text-white text-left">Feedbacks</h3>
           <div className="flex space-x-2">
             <Button 
               size="icon" 
               variant="ghost"
-              className="h-12 w-12 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+              className="h-10 w-10 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-green-50 dark:hover:bg-green-900/20"
               onClick={prevFeedback}
               disabled={loading || currentIndex === 0}
             >
-              <ChevronLeft className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+              <ChevronLeft className="h-4 w-4 text-gray-500 dark:text-gray-400" />
             </Button>
             <Button 
               size="icon" 
               variant="ghost"
-              className="h-12 w-12 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+              className="h-10 w-10 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-green-50 dark:hover:bg-green-900/20"
               onClick={nextFeedback}
               disabled={loading || currentIndex === feedbacks.length - 1 || feedbacks.length === 0}
             >
-              <ChevronRight className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+              <ChevronRight className="h-4 w-4 text-gray-500 dark:text-gray-400" />
             </Button>
           </div>
         </div>
         
-        <div className="px-8 pb-8 flex-1 overflow-y-auto">
+        <div className="px-6 pb-6 flex-1 overflow-y-auto flex items-center justify-center">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           ) : feedbacks.length > 0 && currentFeedback ? (
-            <div className="bg-green-50 dark:bg-[#2C2C2C] rounded-lg p-6">
-              <p className="text-base mb-6 dark:text-gray-200 text-left">
-                {currentFeedback.content}
-              </p>
-              <div className="flex flex-col">
-                <div className="flex items-center mb-4">
-                  <Avatar className="h-8 w-8 mr-4">
-                    <AvatarImage 
-                      src={currentFeedback.from_profile?.avatar || 'https://i.pravatar.cc/150'} 
-                      alt={`${currentFeedback.from_profile?.display_name || 'Usuário'} avatar`}
-                      className="object-cover"
-                      loading="lazy"
-                    />
-                    <AvatarFallback>
-                      {(currentFeedback.from_profile?.display_name || 'U').charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col text-left">
-                    <span className="text-base font-medium text-black dark:text-white">
-                      {currentFeedback.from_profile?.display_name || 'Usuário'}
-                    </span>
-                  </div>
-                  <span className="text-sm text-gray-500 dark:text-gray-400 ml-auto">
-                    {formatDate(currentFeedback.created_at)}
-                  </span>
-                </div>
+            <div className="w-full max-w-2xl flex flex-col items-center justify-center text-center space-y-4">
+              {/* Avatar acima da mensagem */}
+              <Avatar className="h-12 w-12 border-2 border-white dark:border-gray-700">
+                <AvatarImage 
+                  src={currentFeedback.from_profile?.avatar || 'https://i.pravatar.cc/150'} 
+                  alt={`${currentFeedback.from_profile?.display_name || 'Usuário'} avatar`}
+                  className="object-cover"
+                  loading="lazy"
+                />
+                <AvatarFallback className="text-sm font-semibold">
+                  {(currentFeedback.from_profile?.display_name || 'U').charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              
+              {/* Mensagem centralizada e com fonte maior */}
+              <div className="w-full">
+                <p className="text-lg md:text-xl leading-relaxed text-gray-900 dark:text-gray-100 px-4">
+                  "{currentFeedback.content}"
+                </p>
+              </div>
+              
+              {/* Nome do usuário embaixo */}
+              <div className="flex flex-col items-center gap-4 w-full">
+                <span className="text-base font-semibold text-gray-900 dark:text-white">
+                  {currentFeedback.from_profile?.display_name || 'Usuário'}
+                </span>
+                
+                {/* Botão retribuir centralizado */}
                 {currentFeedback.from_profile && (
                   <ReturnFeedbackDialog
                     toUser={mapToUserProfile(currentFeedback.from_profile)}
                     trigger={
                       <button 
-                        className="self-start px-8 py-3 rounded-full bg-white/80 dark:bg-[#1F1F1F] text-black dark:text-white hover:bg-white dark:hover:bg-[#2C2C2C] transition-colors"
+                        className="px-8 py-3 rounded-full bg-white/90 dark:bg-[#1F1F1F] text-gray-900 dark:text-white hover:bg-white dark:hover:bg-[#2C2C2C] transition-colors font-medium shadow-sm"
                       >
                         retribuir
                       </button>
@@ -141,10 +143,10 @@ export const FeedbackWidget = memo(() => {
           )}
         </div>
         
-        <div className="border-t border-gray-100 dark:border-gray-800 py-6 text-center mb-6">
+        <div className="border-t border-gray-100 dark:border-gray-800 py-3 text-center mb-4">
           <button 
             onClick={() => setFeedbackDialogOpen(true)}
-            className="text-base text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+            className="text-base font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors px-6 py-2 rounded-full bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30"
           >
             ver todos
           </button>
