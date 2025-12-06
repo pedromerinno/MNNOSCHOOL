@@ -7,6 +7,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
+import { FocusProvider } from "@/contexts/FocusContext";
+import { FocusPopup } from "@/components/focus/FocusPopup";
 import { CompanyRequiredWrapper } from "@/components/auth/CompanyRequiredWrapper";
 import { PagePreloader } from "@/components/ui/PagePreloader";
 
@@ -79,8 +81,9 @@ function App() {
         <BrowserRouter>
           <AuthProvider>
             <OnboardingProvider>
-              <Suspense fallback={<PageLoadingFallbackWrapper />}>
-                <Routes>
+              <FocusProvider>
+                <Suspense fallback={<PageLoadingFallbackWrapper />}>
+                  <Routes>
                   {/* Rotas públicas - sem verificação de empresa */}
                   <Route 
                     path="/login" 
@@ -138,8 +141,10 @@ function App() {
                       </Suspense>
                     </CompanyRequiredWrapper>
                   } />
-                </Routes>
-              </Suspense>
+                  </Routes>
+                </Suspense>
+                <FocusPopup />
+              </FocusProvider>
             </OnboardingProvider>
           </AuthProvider>
         </BrowserRouter>

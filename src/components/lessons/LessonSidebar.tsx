@@ -123,3 +123,4 @@ export const LessonSidebar: React.FC<LessonSidebarProps> = ({
     </div>
   );
 };
+

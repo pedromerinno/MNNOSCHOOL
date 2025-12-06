@@ -95,3 +95,4 @@ export const VideoTranscriptionStatus: React.FC<VideoTranscriptionStatusProps> =
   );
 };
 
+

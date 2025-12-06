@@ -28,3 +28,4 @@ COMMENT ON COLUMN public.lessons.mux_status IS 'Status do processamento do víde
 COMMENT ON COLUMN public.lessons.mux_duration IS 'Duração do vídeo em segundos (extraído do Mux)';
 COMMENT ON COLUMN public.lessons.mux_thumbnail_url IS 'URL do thumbnail gerado automaticamente pelo Mux';
 
+

@@ -352,3 +352,4 @@ COMMENT ON COLUMN public.empresas.cor_principal IS 'Cor principal da empresa em 
 
 
 
+

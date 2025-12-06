@@ -50,3 +50,4 @@ export const CourseViewSkeleton: React.FC = () => {
   );
 };
 
+

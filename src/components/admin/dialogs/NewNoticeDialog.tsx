@@ -1,31 +1,13 @@
-
-import React, { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+import React, { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { useToast } from "@/components/ui/use-toast";
+import { Form } from "@/components/ui/form";
+import { toast } from "sonner";
 import { useCompanyNotices, NoticeFormData } from "@/hooks/useCompanyNotices";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCompanies } from "@/hooks/useCompanies";
+import { HorizontalSettingsDialog, SettingsSection } from "@/components/ui/horizontal-settings-dialog";
+import { NoticeFormFields } from "./NoticeFormFields";
 
 interface NewNoticeDialogProps {
   open: boolean;
@@ -40,10 +22,9 @@ const NewNoticeDialog = ({
   initialData, 
   editingNoticeId 
 }: NewNoticeDialogProps) => {
-  const { toast } = useToast();
   const { createNotice, updateNotice, fetchNotices } = useCompanyNotices();
-  const { userCompanies, selectedCompany } = useCompanies();
-  const [submitting, setSubmitting] = useState(false);
+  const { selectedCompany } = useCompanies();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const formSchema = z.object({
     title: z.string().min(2, {
@@ -53,265 +34,135 @@ const NewNoticeDialog = ({
       message: "Conteúdo deve ter pelo menos 10 caracteres.",
     }),
     type: z.enum(['informativo', 'urgente', 'padrão']),
-    companies: z.array(z.string()).min(1, {
-      message: "Selecione pelo menos uma empresa."
-    }),
+    data_inicio: z.string().nullable().optional(),
+    data_fim: z.string().nullable().optional(),
   });
 
-  const form = useForm<NoticeFormData>({
+  const form = useForm<Omit<NoticeFormData, 'companies'>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: initialData?.title || "",
       content: initialData?.content || "",
       type: initialData?.type || "informativo",
-      companies: initialData?.companies || (selectedCompany ? [selectedCompany.id] : []),
     },
     mode: "onChange",
   });
 
-  const { reset, setValue } = form;
-
-  // Simplificamos o useEffect para configurar o formulário quando o diálogo é aberto
+  // Reset form when dialog opens
   useEffect(() => {
     if (open) {
       if (initialData) {
-        // Configuração do formulário para edição
-        Object.keys(initialData).forEach(key => {
-          if (key === 'companies' && Array.isArray(initialData[key])) {
-            setValue(key as keyof NoticeFormData, initialData[key]);
-          } else if (key === 'title' || key === 'content' || key === 'type') {
-            setValue(key as keyof NoticeFormData, initialData[key]);
-          }
+        form.reset({
+          title: initialData.title || "",
+          content: initialData.content || "",
+          type: initialData.type || "informativo",
+          data_inicio: initialData.data_inicio || null,
+          data_fim: initialData.data_fim || null,
         });
-      } else if (selectedCompany) {
-        // Para novo aviso, pré-selecionar empresa atual
-        setValue("companies", [selectedCompany.id]);
-      }
-    } else {
-      // Reset do formulário quando o diálogo é fechado
-      reset({
-        title: "",
-        content: "",
-        type: "informativo",
-        companies: selectedCompany ? [selectedCompany.id] : [],
-      });
-    }
-  }, [open, initialData, selectedCompany, setValue, reset]);
-
-  const onSubmit = async (data: NoticeFormData) => {
-    if (!data.companies || data.companies.length === 0) {
-      toast({
-        title: "Error",
-        description: "Selecione pelo menos uma empresa.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      console.log("Submitting notice form:", data);
-      
-      let success = false;
-      if (editingNoticeId) {
-        console.log(`Editing notice ${editingNoticeId} for companies:`, data.companies);
-        success = await updateNotice(editingNoticeId, data);
-        if (success) {
-          toast({
-            title: "Sucesso",
-            description: "Aviso atualizado com sucesso"
-          });
-          onOpenChange(false);
-        }
       } else {
-        console.log("Creating new notice for companies:", data.companies);
-        success = await createNotice(data);
-        if (success) {
-          toast({
-            title: "Sucesso",
-            description: "Aviso criado com sucesso"
-          });
-          onOpenChange(false);
-        }
+        form.reset({
+          title: "",
+          content: "",
+          type: "informativo",
+          data_inicio: null,
+          data_fim: null,
+        });
       }
-    } catch (error) {
-      console.error("Erro ao salvar aviso:", error);
-      toast({
-        title: "Erro",
-        description: "Erro ao salvar aviso",
-        variant: "destructive"
-      });
-    } finally {
-      setSubmitting(false);
     }
-  };
+  }, [open, initialData, form]);
 
-  // Handle dialog close to refresh notices instantly
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      // Trigger instant refresh when dialog closes
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
       setTimeout(() => {
         if (selectedCompany?.id) {
           fetchNotices(selectedCompany.id, true);
         }
-        // Dispatch custom event for other components to listen
         window.dispatchEvent(new CustomEvent('notices-updated'));
       }, 100);
     }
-    onOpenChange(open);
+    onOpenChange(newOpen);
   };
 
-  return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[525px]">
-        <DialogHeader>
-          <DialogTitle>{editingNoticeId ? "Editar Aviso" : "Novo Aviso"}</DialogTitle>
-          <DialogDescription>
-            {editingNoticeId
-              ? "Edite os campos do aviso."
-              : "Adicione um novo aviso para a empresa."}
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Título</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Título do aviso" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div className="space-y-2">
-              <FormField
-                control={form.control}
-                name="content"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Conteúdo</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Conteúdo do aviso" 
-                        {...field} 
-                        rows={6}
-                        className="resize-none"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div className="space-y-2">
-              <FormField
-                control={form.control}
-                name="type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o tipo" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="informativo">Informativo</SelectItem>
-                        <SelectItem value="urgente">Urgente</SelectItem>
-                        <SelectItem value="padrão">Padrão</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+  const handleFormSubmit = async () => {
+    if (!selectedCompany?.id) {
+      toast.error("Selecione uma empresa no menu superior.");
+      return;
+    }
 
-            <div className="space-y-2">
-              <FormLabel>Empresas</FormLabel>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {userCompanies.map((company) => (
-                  <FormField
-                    key={company.id}
-                    control={form.control}
-                    name="companies"
-                    render={({ field }) => {
-                      const checked = field.value?.includes(company.id);
-                      return (
-                        <FormItem
-                          className={`
-                            flex items-center gap-3 p-2 sm:p-3 rounded-lg
-                            border transition-colors cursor-pointer select-none
-                            ${checked ? "bg-[#ece6ff] dark:bg-indigo-950 border-primary shadow-md" : "bg-gray-50 dark:bg-gray-900 border-border"}
-                            hover:border-primary/60
-                          `}
-                          onClick={() => {
-                            if (checked) {
-                              field.onChange(field.value?.filter((id) => id !== company.id));
-                            } else {
-                              field.onChange([...(field.value || []), company.id]);
-                            }
-                          }}
-                          tabIndex={0}
-                          role="button"
-                          aria-pressed={checked}
-                          onKeyDown={e => {
-                            if (e.key === " " || e.key === "Enter") {
-                              e.preventDefault();
-                              if (checked) {
-                                field.onChange(field.value?.filter((id) => id !== company.id));
-                              } else {
-                                field.onChange([...(field.value || []), company.id]);
-                              }
-                            }
-                          }}
-                        >
-                          <div className="flex items-center space-x-2">
-                            {company.logo ? (
-                              <img
-                                src={company.logo}
-                                alt={company.nome}
-                                className="h-8 w-8 rounded-full bg-gray-200 object-cover border border-gray-200"
-                              />
-                            ) : (
-                              <div className="h-8 w-8 flex items-center justify-center rounded-full bg-gray-200 text-gray-600 font-bold border border-gray-200">
-                                {company.nome?.charAt(0).toUpperCase() || "?"}
-                              </div>
-                            )}
-                            <span className="text-sm font-medium">{company.nome}</span>
-                          </div>
-                          <FormControl>
-                            <span className={
-                              `ml-auto w-5 h-5 flex items-center justify-center rounded-full
-                              border-2 ${checked ? 'border-primary bg-primary text-white' : 'border-gray-300 bg-white text-transparent'}
-                              transition-colors`
-                            }>
-                              <svg width="16" height="16" className={checked ? "" : "invisible"} viewBox="0 0 16 16" fill="none"><path d="M4 8.5L7 11.5L12 5.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                            </span>
-                          </FormControl>
-                        </FormItem>
-                      )
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="submit" disabled={submitting}>
-                {submitting ? "Salvando..." : "Salvar"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+    const isValid = await form.trigger();
+    if (isValid) {
+      setIsSubmitting(true);
+      try {
+        const formData = form.getValues();
+        const noticeData: NoticeFormData = {
+          ...formData,
+          companies: [selectedCompany.id]
+        };
+
+        let success = false;
+        if (editingNoticeId) {
+          success = await updateNotice(editingNoticeId, noticeData);
+          if (success) {
+            toast.success("Aviso atualizado com sucesso");
+            onOpenChange(false);
+          }
+        } else {
+          success = await createNotice(noticeData);
+          if (success) {
+            toast.success("Aviso criado com sucesso");
+            onOpenChange(false);
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao salvar aviso:", error);
+        toast.error("Erro ao salvar aviso");
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+  };
+
+  const isFormValid = () => {
+    return form.formState.isValid && !!selectedCompany?.id;
+  };
+
+  const sections: SettingsSection[] = useMemo(() => {
+    return [
+      {
+        id: 'general',
+        label: 'Geral',
+        content: (
+          <div className="space-y-6">
+            <NoticeFormFields form={form} />
+          </div>
+        )
+      }
+    ];
+  }, [form]);
+
+  const companyColor = selectedCompany?.cor_principal || "#1EAEDB";
+
+  return (
+    <Form {...form}>
+      <HorizontalSettingsDialog
+        open={open}
+        onOpenChange={handleOpenChange}
+        title={editingNoticeId ? "Editar Aviso" : "Novo Aviso"}
+        sections={sections}
+        defaultSectionId="general"
+        onCancel={() => handleOpenChange(false)}
+        onSave={handleFormSubmit}
+        saveLabel={editingNoticeId ? "Salvar Alterações" : "Criar Aviso"}
+        cancelLabel="Cancelar"
+        isSaving={isSubmitting}
+        isFormValid={isFormValid()}
+        saveButtonStyle={isFormValid() ? { 
+          backgroundColor: companyColor,
+          borderColor: companyColor
+        } : undefined}
+        maxWidth="max-w-2xl"
+      />
+    </Form>
   );
 };
 

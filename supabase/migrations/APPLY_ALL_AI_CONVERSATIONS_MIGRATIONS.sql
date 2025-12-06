@@ -193,3 +193,4 @@ CREATE POLICY "Users can delete messages from their conversations"
 -- SELECT * FROM pg_policies WHERE tablename IN ('ai_conversations', 'ai_messages');
 -- =====================================================
 
+

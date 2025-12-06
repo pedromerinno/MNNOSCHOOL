@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,10 +22,17 @@ export const JobRolesSelectorField: React.FC<JobRolesSelectorFieldProps> = ({
   const [jobRoles, setJobRoles] = useState<JobRole[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+  const previousCompanyIdsRef = useRef<string>('');
 
-  const fetchJobRoles = async () => {
+  // Memoize companyIds as string for comparison
+  const companyIdsKey = useMemo(() => {
+    return JSON.stringify(companyIds?.sort() || []);
+  }, [companyIds]);
+
+  const fetchJobRoles = useCallback(async () => {
     if (!companyIds || companyIds.length === 0) {
       setJobRoles([]);
+      setLoading(false);
       return;
     }
 
@@ -41,20 +48,28 @@ export const JobRolesSelectorField: React.FC<JobRolesSelectorFieldProps> = ({
       setJobRoles(data || []);
     } catch (error) {
       console.error('Error fetching job roles:', error);
+      setJobRoles([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchJobRoles();
   }, [companyIds]);
 
-  // Initialize selected roles from form
+  // Only fetch when companyIds actually change
   useEffect(() => {
-    const formRoles = form.getValues('jobRoleIds') || [];
+    if (companyIdsKey !== previousCompanyIdsRef.current) {
+      previousCompanyIdsRef.current = companyIdsKey;
+      fetchJobRoles();
+    }
+  }, [companyIdsKey, fetchJobRoles]);
+
+  // Watch form values for jobRoleIds changes
+  const formJobRoleIds = form.watch('jobRoleIds');
+  
+  // Sync selectedRoles with form values
+  useEffect(() => {
+    const formRoles = formJobRoleIds || [];
     setSelectedRoles(formRoles);
-  }, [form]);
+  }, [formJobRoleIds]);
 
   const handleRoleToggle = (roleId: string, checked: boolean) => {
     let newSelectedRoles: string[];

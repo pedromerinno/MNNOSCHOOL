@@ -1,30 +1,31 @@
 
 import React, { useState } from "react";
-import { Plus, FilePlus, Link, BookPlus, MessageSquarePlus, BellPlus } from "lucide-react";
+import { Plus, FileText, Key, BookOpen, MessageSquare, Bell, FilePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useIsAdmin } from "@/hooks/company/useIsAdmin";
-import { NewCourseDialog, NewNoticeDialog, NewDiscussionDialog, NewAccessDialog, AddDocumentDialog } from "./dialogs";
+import { NewCourseDialog, NewNoticeDialog, NewDiscussionDialog, NewFeedbackDialog, AddDocumentDialog } from "./dialogs";
+import { CreateAccessDialog } from "@/components/access/CreateAccessDialog";
 
 const FAB_OPTIONS = [{
-  label: "Novo Curso",
-  icon: <BookPlus className="h-5 w-5 mr-2" />,
+  label: "Curso",
+  icon: BookOpen,
   action: "openCourse" as const
 }, {
-  label: "Novo Aviso",
-  icon: <BellPlus className="h-5 w-5 mr-2" />,
+  label: "Aviso",
+  icon: Bell,
   action: "openNotice" as const
 }, {
-  label: "Nova Discussão",
-  icon: <MessageSquarePlus className="h-5 w-5 mr-2" />,
-  action: "openDiscussion" as const
+  label: "Feedback",
+  icon: MessageSquare,
+  action: "openFeedback" as const
 }, {
-  label: "Nova Senha de Acesso",
-  icon: <Link className="h-5 w-5 mr-2" />,
+  label: "Senha de Acesso",
+  icon: Key,
   action: "openAccess" as const
 }, {
-  label: "Novo Documento",
-  icon: <FilePlus className="h-5 w-5 mr-2" />,
+  label: "Documento",
+  icon: FileText,
   action: "openDocument" as const
 }];
 
@@ -34,6 +35,7 @@ export const AdminFloatingActionButton = () => {
   const [courseDialogOpen, setCourseDialogOpen] = useState(false);
   const [noticeDialogOpen, setNoticeDialogOpen] = useState(false);
   const [discussionDialogOpen, setDiscussionDialogOpen] = useState(false);
+  const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
   const [accessDialogOpen, setAccessDialogOpen] = useState(false);
   const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
   
@@ -53,6 +55,9 @@ export const AdminFloatingActionButton = () => {
       case "openDiscussion":
         setDiscussionDialogOpen(true);
         break;
+      case "openFeedback":
+        setFeedbackDialogOpen(true);
+        break;
       case "openAccess":
         setAccessDialogOpen(true);
         break;
@@ -69,19 +74,34 @@ export const AdminFloatingActionButton = () => {
             <Plus className="w-8 h-8" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent align="end" side="top" className="w-64 p-2 space-y-1" sideOffset={16}>
-          {FAB_OPTIONS.map(option => <Button key={option.label} variant="ghost" className="w-full !justify-start text-xs font-medium py-1.5 px-2" style={{
-          fontSize: "0.85rem"
-        }} onClick={() => handleOption(option)}>
-              {option.icon}
-              {option.label}
-            </Button>)}
+        <PopoverContent align="end" side="top" className="w-64 p-4 space-y-2 rounded-2xl" sideOffset={16}>
+          {FAB_OPTIONS.map(option => {
+            const IconComponent = option.icon;
+            return (
+              <Button 
+                key={option.label} 
+                variant="ghost" 
+                className="w-full !justify-start text-sm font-medium py-3 px-4 rounded-xl hover:bg-gray-100 transition-colors" 
+                onClick={() => handleOption(option)}
+              >
+                <IconComponent className="h-5 w-5 mr-3" strokeWidth={2} />
+                {option.label}
+              </Button>
+            );
+          })}
         </PopoverContent>
       </Popover>
       <NewCourseDialog open={courseDialogOpen} onOpenChange={setCourseDialogOpen} />
       <NewNoticeDialog open={noticeDialogOpen} onOpenChange={setNoticeDialogOpen} />
       <NewDiscussionDialog open={discussionDialogOpen} onOpenChange={setDiscussionDialogOpen} />
-      <NewAccessDialog open={accessDialogOpen} onOpenChange={setAccessDialogOpen} />
+      <NewFeedbackDialog open={feedbackDialogOpen} onOpenChange={setFeedbackDialogOpen} />
+      <CreateAccessDialog 
+        open={accessDialogOpen} 
+        onOpenChange={setAccessDialogOpen}
+        onAccessUpdated={() => {
+          window.dispatchEvent(new CustomEvent('access-created'));
+        }}
+      />
       <AddDocumentDialog open={documentDialogOpen} onOpenChange={setDocumentDialogOpen} />
     </>;
 };

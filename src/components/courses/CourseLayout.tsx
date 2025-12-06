@@ -38,3 +38,4 @@ export const CourseLayout = ({ children }: CourseLayoutProps) => {
   );
 };
 
+

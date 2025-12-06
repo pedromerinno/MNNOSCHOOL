@@ -201,3 +201,4 @@ export class TranscriptionService {
 // Instância singleton
 export const transcriptionService = new TranscriptionService();
 
+

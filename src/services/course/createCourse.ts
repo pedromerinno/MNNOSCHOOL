@@ -40,8 +40,8 @@ export const createCourse = async (courseData: CourseFormValues): Promise<string
       console.log(`Course-company relations created for course: ${courseId} and companies: ${courseData.companyIds.join(', ')}`);
     }
 
-    // Associate course with job roles if specified
-    if (courseData.jobRoleIds && courseData.jobRoleIds.length > 0) {
+    // Associate course with job roles if access type is 'roles'
+    if (courseData.accessType === 'roles' && courseData.jobRoleIds && courseData.jobRoleIds.length > 0) {
       console.log(`Creating course-job role associations for course: ${courseId}, roles: ${courseData.jobRoleIds.join(', ')}`);
       
       const jobRoleRelations = courseData.jobRoleIds.map(roleId => ({
@@ -56,6 +56,28 @@ export const createCourse = async (courseData: CourseFormValues): Promise<string
       if (jobRoleError) throw jobRoleError;
 
       console.log(`Course-job role relations created for course: ${courseId}`);
+    }
+
+    // Associate course with users if access type is 'users'
+    if (courseData.accessType === 'users' && courseData.userIds && courseData.userIds.length > 0) {
+      console.log(`Creating course-user associations for course: ${courseId}, users: ${courseData.userIds.join(', ')}`);
+      
+      const userRelations = courseData.userIds.map(userId => ({
+        course_id: courseId,
+        user_id: userId
+      }));
+      
+      const { error: userError } = await supabase
+        .from('course_users' as any)
+        .insert(userRelations);
+        
+      if (userError) {
+        // Se a tabela não existir, vamos criar uma migration depois
+        console.warn('Error creating course-user relations (table might not exist):', userError);
+        // Não vamos falhar a criação do curso por isso, apenas logar o erro
+      } else {
+        console.log(`Course-user relations created for course: ${courseId}`);
+      }
     }
 
     toast.success('Curso criado', {

@@ -81,3 +81,4 @@ Para produção, recomendo:
 1. **Curto prazo**: Usar uma API de terceiros (RapidAPI)
 2. **Longo prazo**: Criar seu próprio serviço usando Docker + yt-dlp em um provedor como Railway ou Render
 
+

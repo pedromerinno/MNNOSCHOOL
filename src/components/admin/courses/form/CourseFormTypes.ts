@@ -8,7 +8,9 @@ export const courseSchema = z.object({
   instructor: z.string().optional(),
   tags: z.array(z.string()).optional(),
   companyIds: z.array(z.string()).min(1, "Selecione pelo menos uma empresa"),
+  accessType: z.enum(['public', 'roles', 'users']).optional().default('public'),
   jobRoleIds: z.array(z.string()).optional().default([]), // Array de IDs de cargos
+  userIds: z.array(z.string()).optional().default([]), // Array de IDs de usuários
 });
 
 export type CourseFormValues = z.infer<typeof courseSchema> & {

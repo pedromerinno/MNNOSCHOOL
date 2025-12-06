@@ -105,7 +105,7 @@ export const CalendarWidget = memo(() => {
       style={{ backgroundColor: companyColor }}
     >
       <CardContent className="p-0 h-full flex flex-col">
-        <div className="p-8 flex justify-between items-center">
+        <div className="p-6 flex justify-between items-center">
           <h3 className="text-xl font-medium capitalize">
             {getMonthName(currentDate)} {getYear(currentDate)}
           </h3>
@@ -113,24 +113,24 @@ export const CalendarWidget = memo(() => {
             <Button 
               size="icon" 
               variant="ghost" 
-              className="text-white hover:bg-white/10 h-12 w-12 rounded-full border border-white/30"
+              className="text-white hover:bg-white/10 h-10 w-10 rounded-full border border-white/30"
               onClick={goToPreviousMonth}
             >
-              <ChevronLeft className="h-5 w-5" />
+              <ChevronLeft className="h-4 w-4" />
             </Button>
             <Button 
               size="icon" 
               variant="ghost" 
-              className="text-white hover:bg-white/10 h-12 w-12 rounded-full border border-white/30"
+              className="text-white hover:bg-white/10 h-10 w-10 rounded-full border border-white/30"
               onClick={goToNextMonth}
             >
-              <ChevronRight className="h-5 w-5" />
+              <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
         
-        <div className="px-8 pb-8 pt-2">
-          <div className="grid grid-cols-7 text-center text-[11px] mb-3">
+        <div className="px-6 pb-6 pt-1">
+          <div className="grid grid-cols-7 text-center text-[10px] mb-2">
             <div>Seg</div>
             <div>Ter</div>
             <div>Qua</div>
@@ -144,7 +144,7 @@ export const CalendarWidget = memo(() => {
             {calendarDays.map((day, index) => (
               <div 
                 key={index} 
-                className={`h-10 w-10 flex items-center justify-center text-sm rounded-full mx-auto
+                className={`h-8 w-8 flex items-center justify-center text-xs rounded-full mx-auto
                   ${!day.isCurrentMonth ? 'text-white/50' : ''}
                   ${day.isToday ? 'bg-white font-medium' : ''}
                   ${day.isCurrentMonth && !day.isToday ? 'hover:bg-white/20 cursor-pointer' : ''}

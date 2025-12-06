@@ -247,3 +247,4 @@ COMMENT ON POLICY "Admins can manage company_courses" ON public.company_courses 
 
 
 
+

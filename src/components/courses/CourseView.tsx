@@ -110,27 +110,26 @@ export const CourseView: React.FC = React.memo(() => {
   return (
     <>
       <div className="w-full max-w-[1600px] mx-auto">
-        <CourseHeader 
-          title={course.title} 
-          instructor={course.instructor}
-        />
-        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 items-start">
           <div className="lg:col-span-2">
-            {isAdmin && (
-              <div className="flex justify-end mb-8">
-                <Button
-                  variant="secondary"
-                  className="flex gap-2 bg-white dark:bg-card text-foreground border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg"
-                  onClick={handleEditCourse}
-                  size="sm"
-                  aria-label="Editar curso"
-                >
-                  <Pencil className="h-4 w-4" />
-                  Editar curso
-                </Button>
-              </div>
-            )}
+            <CourseHeader 
+              title={course.title} 
+              instructor={course.instructor}
+              actionButton={
+                isAdmin ? (
+                  <Button
+                    variant="secondary"
+                    className="flex gap-2 bg-white dark:bg-card text-foreground border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg"
+                    onClick={handleEditCourse}
+                    size="sm"
+                    aria-label="Editar curso"
+                  >
+                    <Pencil className="h-4 w-4" />
+                    Editar curso
+                  </Button>
+                ) : undefined
+              }
+            />
             
             <div className="space-y-8">
               <CourseHero 

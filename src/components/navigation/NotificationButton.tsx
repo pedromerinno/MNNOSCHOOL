@@ -65,7 +65,7 @@ export const NotificationButton = () => {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[520px] p-0 max-w-[95vw]">
+      <DropdownMenuContent align="end" className="w-[520px] p-4 max-w-[95vw] rounded-2xl">
         <NotificationsMenu
           notifications={notifications}
           isLoading={isLoading}

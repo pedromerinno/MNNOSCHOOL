@@ -3,7 +3,7 @@ import { Search } from "lucide-react";
 import { useCompanies } from "@/hooks/useCompanies";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { supabase } from "@/integrations/supabase/client";
 import { DialogTitle } from "@/components/ui/dialog";
@@ -26,7 +26,9 @@ export const SearchBar = () => {
   const { selectedCompany } = useCompanies();
   const { userProfile } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const isMobile = useIsMobile();
+  const isSchoolPage = location.pathname === '/my-courses';
   const [searchQuery, setSearchQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -370,7 +372,7 @@ export const SearchBar = () => {
   // Desktop: campo completo
   return (
     <>
-      <div className="relative w-64">
+      <div className={cn("relative", isSchoolPage ? "w-full" : "w-64")}>
         <div 
           className={cn(
             "flex items-center rounded-full bg-gray-50 dark:bg-[#191919] border border-gray-200 dark:border-[#333333] px-3 py-1 hover:border-gray-300 dark:hover:border-[#444444] transition-all cursor-pointer",

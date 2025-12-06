@@ -117,3 +117,4 @@ COMMENT ON FUNCTION public.get_company_access_for_user IS 'Retorna os itens de a
 
 
 
+

@@ -11,6 +11,8 @@ export interface NoticeFormData {
   content: string;
   type: string;
   companies?: string[];
+  data_inicio?: string | null;
+  data_fim?: string | null;
 }
 
 export function useCompanyNotices() {
@@ -241,7 +243,9 @@ export function useCompanyNotices() {
           content: data.content,
           type: data.type,
           created_by: user.id,
-          company_id: data.companies[0]
+          company_id: data.companies[0],
+          data_inicio: data.data_inicio || null,
+          data_fim: data.data_fim || null
         })
         .select('id')
         .single();
@@ -341,7 +345,9 @@ export function useCompanyNotices() {
           title: data.title,
           content: data.content,
           type: data.type,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
+          data_inicio: data.data_inicio || null,
+          data_fim: data.data_fim || null
         })
         .eq('id', noticeId);
 

@@ -247,3 +247,4 @@ export class VideoContextService {
 // Instância singleton
 export const videoContextService = new VideoContextService();
 
+

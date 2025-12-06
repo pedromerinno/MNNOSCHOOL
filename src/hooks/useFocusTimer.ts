@@ -103,8 +103,37 @@ const saveState = (state: FocusTimerState) => {
   }
 };
 
+const clearState = () => {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch (error) {
+    console.error("Erro ao limpar estado do timer:", error);
+  }
+};
+
 export const useFocusTimer = () => {
-  const initialState = getStoredState() || {
+  // Verificar se foi cancelado - se sim, não restaurar estado
+  const wasCancelled = (() => {
+    try {
+      return localStorage.getItem('focus_timer_cancelled') === 'true';
+    } catch {
+      return false;
+    }
+  })();
+  
+  // Se foi cancelado, limpar tudo e começar do zero
+  if (wasCancelled) {
+    try {
+      clearState();
+      localStorage.removeItem('focus_timer_cancelled');
+    } catch (e) {
+      // Ignorar erros
+    }
+  }
+  
+  // Se foi cancelado, não restaurar - sempre começar limpo
+  // Se não foi cancelado, tentar restaurar estado salvo
+  const initialState = wasCancelled ? {
     timeRemaining: DEFAULT_TIME,
     isRunning: false,
     isPaused: false,
@@ -113,7 +142,16 @@ export const useFocusTimer = () => {
     totalPausedTime: 0,
     lastSavedTime: null,
     lastSavedTimeRemaining: DEFAULT_TIME,
-  };
+  } : (getStoredState() || {
+    timeRemaining: DEFAULT_TIME,
+    isRunning: false,
+    isPaused: false,
+    startedAt: null,
+    pausedAt: null,
+    totalPausedTime: 0,
+    lastSavedTime: null,
+    lastSavedTimeRemaining: DEFAULT_TIME,
+  });
 
   const [timeRemaining, setTimeRemaining] = useState(initialState.timeRemaining);
   const [isRunning, setIsRunning] = useState(initialState.isRunning);
@@ -129,6 +167,12 @@ export const useFocusTimer = () => {
   const lastSaveRef = useRef<number>(0);
   
   useEffect(() => {
+    // Só salvar se o timer estiver rodando
+    // Isso permite que o timer continue entre páginas
+    if (!isRunning) {
+      return;
+    }
+    
     const now = Date.now();
     // Salvar no máximo a cada 500ms para evitar muitas escritas no localStorage
     if (now - lastSaveRef.current < 500 && isRunning && !isPaused) {
@@ -147,19 +191,21 @@ export const useFocusTimer = () => {
       lastSavedTimeRemaining: timeRemaining,
     });
     
-    // Cleanup: salvar estado final quando componente for desmontado
+    // Cleanup: salvar estado final quando componente for desmontado (apenas se estiver rodando)
     return () => {
-      const finalNow = Date.now();
-      saveState({
-        timeRemaining,
-        isRunning,
-        isPaused,
-        startedAt: startedAtRef.current,
-        pausedAt: pausedAtRef.current,
-        totalPausedTime: totalPausedTimeRef.current,
-        lastSavedTime: finalNow,
-        lastSavedTimeRemaining: timeRemaining,
-      });
+      if (isRunning) {
+        const finalNow = Date.now();
+        saveState({
+          timeRemaining,
+          isRunning,
+          isPaused,
+          startedAt: startedAtRef.current,
+          pausedAt: pausedAtRef.current,
+          totalPausedTime: totalPausedTimeRef.current,
+          lastSavedTime: finalNow,
+          lastSavedTimeRemaining: timeRemaining,
+        });
+      }
     };
   }, [timeRemaining, isRunning, isPaused]);
 
@@ -174,6 +220,8 @@ export const useFocusTimer = () => {
             startedAtRef.current = null;
             pausedAtRef.current = null;
             totalPausedTimeRef.current = 0;
+            // Limpar estado do localStorage quando timer completar
+            clearState();
             // Disparar evento customizado quando timer completar
             window.dispatchEvent(new CustomEvent('focusTimerComplete'));
             return 0;
@@ -196,6 +244,13 @@ export const useFocusTimer = () => {
   }, [isRunning, isPaused, timeRemaining]);
 
   const handleStart = useCallback(() => {
+    // Limpar flag de cancelamento ao iniciar
+    try {
+      localStorage.removeItem('focus_timer_cancelled');
+    } catch (e) {
+      // Ignorar erros
+    }
+    
     const now = Date.now();
     startedAtRef.current = now;
     pausedAtRef.current = null;
@@ -232,21 +287,57 @@ export const useFocusTimer = () => {
   }, []);
 
   const handleStop = useCallback(() => {
+    // IMPORTANTE: Salvar flag ANTES de limpar estado
+    try {
+      localStorage.setItem('focus_timer_cancelled', 'true');
+    } catch (e) {
+      console.error('Erro ao salvar flag de cancelamento:', e);
+    }
+    
+    // Agora limpar estado
     setIsRunning(false);
     setIsPaused(false);
     setTimeRemaining(DEFAULT_TIME);
     startedAtRef.current = null;
     pausedAtRef.current = null;
     totalPausedTimeRef.current = 0;
+    
+    // Limpar estado do localStorage
+    clearState();
+    
+    // Forçar remoção imediata
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (e) {
+      console.error('Erro ao remover estado:', e);
+    }
   }, []);
 
   const handleReset = useCallback(() => {
+    // IMPORTANTE: Salvar flag ANTES de limpar estado
+    try {
+      localStorage.setItem('focus_timer_cancelled', 'true');
+    } catch (e) {
+      console.error('Erro ao salvar flag de cancelamento:', e);
+    }
+    
+    // Agora limpar estado
     setIsRunning(false);
     setIsPaused(false);
     setTimeRemaining(DEFAULT_TIME);
     startedAtRef.current = null;
     pausedAtRef.current = null;
     totalPausedTimeRef.current = 0;
+    
+    // Limpar estado do localStorage
+    clearState();
+    
+    // Forçar remoção imediata
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (e) {
+      console.error('Erro ao remover estado:', e);
+    }
   }, []);
 
   const handleAddMinute = useCallback(() => {
@@ -276,4 +367,5 @@ export const useFocusTimer = () => {
     setTimeRemaining,
   };
 };
+
 

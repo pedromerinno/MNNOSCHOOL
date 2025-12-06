@@ -33,3 +33,4 @@ $$;
 -- Comentário para documentação
 COMMENT ON FUNCTION public.search_video_embeddings IS 'Busca chunks de vídeos relevantes usando busca vetorial (cosine similarity) baseado em embeddings';
 
+

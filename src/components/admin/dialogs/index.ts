@@ -3,6 +3,6 @@ export { NewCourseDialog } from "./NewCourseDialog";
 import NewNoticeDialog from "./NewNoticeDialog";
 export { NewNoticeDialog };
 export { NewDiscussionDialog } from "./NewDiscussionDialog";
-export { NewAccessDialog } from "./NewAccessDialog";
+export { NewFeedbackDialog } from "./NewFeedbackDialog";
 export { AddDocumentDialog } from "./AddDocumentDialog";
 export { AddCompanyValueDialog } from "./AddCompanyValueDialog";

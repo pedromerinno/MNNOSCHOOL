@@ -62,3 +62,4 @@ COMMENT ON FUNCTION public.get_company_access_decrypted IS 'Retorna os itens de 
 
 
 
+

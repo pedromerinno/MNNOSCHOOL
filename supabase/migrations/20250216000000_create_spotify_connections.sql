@@ -57,3 +57,4 @@ BEFORE UPDATE ON public.spotify_connections
 FOR EACH ROW
 EXECUTE FUNCTION update_spotify_connections_updated_at();
 
+

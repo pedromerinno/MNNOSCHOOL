@@ -108,3 +108,4 @@ export const LessonPageHeader: React.FC<LessonPageHeaderProps> = ({
     </div>
   );
 };
+
