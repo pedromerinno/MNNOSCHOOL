@@ -64,6 +64,8 @@ export function FocusPopup() {
     return { x: 0, y: 0 };
   });
 
+  const [hasInitialPosition, setHasInitialPosition] = useState(false);
+
   const [isDragging, setIsDragging] = useState(false);
   const dragStartPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const popupRef = useRef<HTMLDivElement>(null);
@@ -81,6 +83,72 @@ export function FocusPopup() {
     }
   }, [isRunning]);
 
+  // Resetar estado de posição inicial quando o popup fecha
+  useEffect(() => {
+    if (!isVisible) {
+      setHasInitialPosition(false);
+    }
+  }, [isVisible]);
+
+  // Calcular posição inicial abaixo do ícone do timer na primeira abertura
+  useEffect(() => {
+    if (!isVisible || hasInitialPosition) {
+      return;
+    }
+
+    // Verificar se já existe posição salva
+    const hasSavedPosition = (() => {
+      try {
+        const saved = localStorage.getItem('focus_popup_position');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          return parsed.x !== undefined && parsed.y !== undefined && (parsed.x !== 0 || parsed.y !== 0);
+        }
+      } catch (e) {
+        // Ignorar erros
+      }
+      return false;
+    })();
+
+    // Se já tem posição salva, não precisa calcular
+    if (hasSavedPosition) {
+      setHasInitialPosition(true);
+      return;
+    }
+
+    // Aguardar um frame para garantir que o DOM está renderizado
+    const timer = setTimeout(() => {
+      // Procurar pelo botão do timer usando o data attribute
+      const timerButton = document.querySelector('[data-focus-timer-button]') as HTMLElement;
+      
+      if (timerButton) {
+        const rect = timerButton.getBoundingClientRect();
+        const popupWidth = 320;
+        const popupHeight = isExpanded ? 600 : 80; // altura aproximada do popup
+        const offset = 8; // espaçamento entre o botão e o popup
+        
+        // Calcular posição: abaixo do botão, centralizado horizontalmente
+        let x = rect.left + (rect.width / 2) - (popupWidth / 2);
+        let y = rect.bottom + offset;
+        
+        // Ajustar se sair da viewport
+        const maxX = window.innerWidth - popupWidth - 16;
+        const maxY = window.innerHeight - popupHeight - 16;
+        
+        x = Math.max(16, Math.min(x, maxX));
+        y = Math.max(16, Math.min(y, maxY));
+        
+        setPosition({ x, y });
+        setHasInitialPosition(true);
+      } else {
+        // Se não encontrar o botão, usar posição padrão (canto inferior direito)
+        setHasInitialPosition(true);
+      }
+    }, 50); // Pequeno delay para garantir que o DOM está pronto
+
+    return () => clearTimeout(timer);
+  }, [isVisible, hasInitialPosition, isExpanded]);
+
   // Salvar posição no localStorage
   useEffect(() => {
     if (position.x !== 0 || position.y !== 0) {
@@ -92,7 +160,7 @@ export function FocusPopup() {
     }
   }, [position]);
 
-  // Handlers de drag
+  // Handlers de drag - suporte para mouse e touch
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return; // Apenas botão esquerdo
     setIsDragging(true);
@@ -101,6 +169,19 @@ export function FocusPopup() {
       y: e.clientY - position.y,
     };
     e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    if (!touch) return;
+    setIsDragging(true);
+    dragStartPos.current = {
+      x: touch.clientX - position.x,
+      y: touch.clientY - position.y,
+    };
+    e.preventDefault();
+    e.stopPropagation();
   };
 
   useEffect(() => {
@@ -118,20 +199,49 @@ export function FocusPopup() {
         x: Math.max(0, Math.min(newX, maxX)),
         y: Math.max(0, Math.min(newY, maxY)),
       });
+      e.preventDefault();
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      if (!touch) return;
+      
+      const newX = touch.clientX - dragStartPos.current.x;
+      const newY = touch.clientY - dragStartPos.current.y;
+
+      // Limitar dentro da viewport
+      const maxX = window.innerWidth - (popupRef.current?.offsetWidth || 320);
+      const maxY = window.innerHeight - (popupRef.current?.offsetHeight || 400);
+      
+      setPosition({
+        x: Math.max(0, Math.min(newX, maxX)),
+        y: Math.max(0, Math.min(newY, maxY)),
+      });
+      e.preventDefault();
     };
 
     const handleMouseUp = () => {
       setIsDragging(false);
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
+    const handleTouchEnd = () => {
+      setIsDragging(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove, { passive: false });
     document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
+    document.addEventListener('touchcancel', handleTouchEnd);
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+      document.removeEventListener('touchcancel', handleTouchEnd);
     };
-  }, [isDragging]);
+  }, [isDragging, position]);
 
   if (!isVisible) return null;
 
@@ -159,9 +269,13 @@ export function FocusPopup() {
         style={{
           boxShadow: `0 2px 8px rgba(0, 0, 0, 0.08), 0 0 0 0.5px ${accentColor}20`,
           cursor: isDragging ? 'grabbing' : 'grab',
+          touchAction: 'none',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
           ...compactPosition,
         }}
         onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
       >
         <div className="flex items-center gap-1.5 md:gap-2">
           <div className="flex flex-col items-center min-w-[50px]">
@@ -175,7 +289,11 @@ export function FocusPopup() {
           
           <div className="h-6 md:h-7 w-px bg-border/50" />
 
-          <div className="flex items-center gap-0.5" onMouseDown={(e) => e.stopPropagation()}>
+          <div 
+            className="flex items-center gap-0.5" 
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+          >
             {isPaused ? (
               <Button
                 variant="ghost"
@@ -183,6 +301,7 @@ export function FocusPopup() {
                 className="h-6 w-6 md:h-7 md:w-7 hover:bg-muted/50"
                 onClick={resume}
                 onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
                 title="Continuar"
               >
                 <Play className="h-3 w-3 md:h-3.5 md:w-3.5" />
@@ -194,6 +313,7 @@ export function FocusPopup() {
                 className="h-6 w-6 md:h-7 md:w-7 hover:bg-muted/50"
                 onClick={pause}
                 onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
                 title="Pausar"
               >
                 <Pause className="h-3 w-3 md:h-3.5 md:w-3.5" />
@@ -205,6 +325,7 @@ export function FocusPopup() {
               className="h-6 w-6 md:h-7 md:w-7 hover:bg-muted/50"
               onClick={closeFocus}
               onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
               title="Parar"
             >
               <X className="h-3 w-3 md:h-3.5 md:w-3.5" />
@@ -215,6 +336,7 @@ export function FocusPopup() {
               className="h-6 w-6 md:h-7 md:w-7 hover:bg-muted/50"
               onClick={() => setIsExpanded(true)}
               onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
               title="Abrir configurações"
             >
               <Maximize2 className="h-3 w-3 md:h-3.5 md:w-3.5" />
@@ -239,6 +361,7 @@ export function FocusPopup() {
       )}
       style={{
         boxShadow: `0 10px 40px rgba(0, 0, 0, 0.1), 0 0 0 1px ${accentColor}10`,
+        touchAction: 'none',
         ...fullPosition,
       }}
     >
@@ -246,7 +369,13 @@ export function FocusPopup() {
         {/* Header - área de arrasto */}
         <div 
           className="px-5 pt-5 pb-3.5 flex items-center justify-between border-b border-border/50 cursor-grab active:cursor-grabbing select-none"
+          style={{
+            touchAction: 'none',
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+          }}
           onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
         >
           <h3 className="text-base leading-none font-semibold tracking-[-0.006em]">
             Foco e Produtividade
@@ -261,6 +390,7 @@ export function FocusPopup() {
                     className="h-6 w-6 rounded-full hover:bg-muted/50"
                     onClick={() => setIsExpanded(false)}
                     onMouseDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
                   >
                     <Minimize2 className="h-4 w-4" />
                   </Button>
@@ -276,6 +406,7 @@ export function FocusPopup() {
               className="h-6 w-6 rounded-full hover:bg-muted/50"
               onClick={closeFocus}
               onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
             >
               <X className="h-4 w-4" />
             </Button>

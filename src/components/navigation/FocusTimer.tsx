@@ -39,6 +39,7 @@ export const FocusTimer = () => {
     <Button
       variant="ghost"
       size="icon"
+      data-focus-timer-button
       className={cn(
         "text-gray-500 dark:text-gray-300 hover:text-current dark:hover:text-current transition-colors relative",
         isRunning && !isPaused && "animate-pulse"
