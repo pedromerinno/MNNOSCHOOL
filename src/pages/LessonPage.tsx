@@ -16,6 +16,7 @@ import { LessonPageHeader } from '@/components/lessons/LessonPageHeader';
 import { useLessons } from '@/hooks/useLessons';
 import { useCompanies } from '@/hooks/useCompanies';
 import { useIsAdmin } from '@/hooks/company/useIsAdmin';
+import { Preloader } from '@/components/ui/Preloader';
 
 const LessonPage = () => {
   const { courseId, lessonId } = useParams<{ courseId: string, lessonId: string }>();
@@ -120,18 +121,9 @@ const LessonPage = () => {
     );
   }
 
-  // Se não tem lesson mas está carregando, mostrar uma página básica sem preloader
-  if (!lesson) {
-    return (
-      <LessonLayout>
-        <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#111111] flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-muted-foreground">Carregando aula...</p>
-          </div>
-        </div>
-      </LessonLayout>
-    );
+  // Se não tem lesson mas está carregando, mostrar preloader
+  if (!lesson && loading) {
+    return <Preloader autoHide={false} />;
   }
 
   return (

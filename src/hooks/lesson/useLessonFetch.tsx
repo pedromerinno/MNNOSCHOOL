@@ -40,38 +40,72 @@ export const useLessonFetch = (lessonId: string | undefined) => {
         throw lessonError;
       }
 
-      // Buscar todas as aulas do mesmo curso
-      const { data: courseLessons, error: courseLessonsError } = await supabase
-        .from('lessons')
-        .select('id, title, type, duration, completed, order_index, content')
-        .eq('course_id', lessonData.course_id)
-        .order('order_index', { ascending: true });
+      // Executar queries em paralelo para melhor performance
+      const [courseLessonsResult, progressResult] = await Promise.all([
+        // Buscar todas as aulas do mesmo curso
+        supabase
+          .from('lessons')
+          .select('id, title, type, duration, completed, order_index, content')
+          .eq('course_id', lessonData.course_id)
+          .order('order_index', { ascending: true }),
+        // Buscar o progresso da aula para este usuário
+        userId 
+          ? supabase
+              .from('user_lesson_progress')
+              .select('completed')
+              .eq('lesson_id', lessonId)
+              .eq('user_id', userId)
+              .maybeSingle()
+          : Promise.resolve({ data: null, error: null })
+      ]);
+        
+      const { data: courseLessons, error: courseLessonsError } = courseLessonsResult;
+      const { data: progressData, error: progressError } = progressResult;
         
       if (courseLessonsError) {
         console.error('Erro ao buscar aulas do curso:', courseLessonsError);
       }
       
-      // Buscar o progresso da aula para este usuário
-      const { data: progressData, error: progressError } = await supabase
-        .from('user_lesson_progress')
-        .select('completed')
-        .eq('lesson_id', lessonId)
-        .eq('user_id', userId || '')
-        .maybeSingle();
-      
       if (progressError) {
         console.error('Erro ao buscar progresso da aula:', progressError);
       }
       
-      // Buscar progresso de todas as aulas do curso para marcar como concluídas na playlist
-      const { data: lessonsProgressData, error: lessonsProgressError } = await supabase
-        .from('user_lesson_progress')
-        .select('lesson_id, completed')
-        .eq('user_id', userId || '')
-        .in('lesson_id', courseLessons?.map(lesson => lesson.id) || []);
+      // Buscar progresso de todas as aulas do curso em paralelo com update de último acesso
+      const lessonIds = courseLessons?.map(lesson => lesson.id) || [];
+      
+      const [lessonsProgressResult, updateAccessResult] = await Promise.all([
+        // Buscar progresso de todas as aulas do curso
+        userId && lessonIds.length > 0
+          ? supabase
+              .from('user_lesson_progress')
+              .select('lesson_id, completed')
+              .eq('user_id', userId)
+              .in('lesson_id', lessonIds)
+          : Promise.resolve({ data: [], error: null }),
+        // Update last access (não bloqueia o carregamento)
+        userId
+          ? supabase
+              .from('user_lesson_progress')
+              .upsert({
+                user_id: userId,
+                lesson_id: lessonId,
+                completed: progressData?.completed || false,
+                last_accessed: new Date().toISOString()
+              }, { 
+                onConflict: 'user_id,lesson_id'
+              })
+          : Promise.resolve({ error: null })
+      ]);
+
+      const { data: lessonsProgressData, error: lessonsProgressError } = lessonsProgressResult;
+      const { error: updateError } = updateAccessResult;
 
       if (lessonsProgressError) {
         console.error('Erro ao buscar progresso das aulas:', lessonsProgressError);
+      }
+
+      if (updateError) {
+        console.error('Erro ao atualizar último acesso:', updateError);
       }
 
       // Marcar as aulas como concluídas na lista
@@ -98,24 +132,6 @@ export const useLessonFetch = (lessonId: string | undefined) => {
       } as Lesson;
       
       setLesson(lessonWithCourseDescription);
-      
-      // Update last access
-      if (userId) {
-        const { error: updateError } = await supabase
-          .from('user_lesson_progress')
-          .upsert({
-            user_id: userId,
-            lesson_id: lessonId,
-            completed: progressData?.completed || false,
-            last_accessed: new Date().toISOString()
-          }, { 
-            onConflict: 'user_id,lesson_id'
-          });
-        
-        if (updateError) {
-          console.error('Erro ao atualizar último acesso:', updateError);
-        }
-      }
       
     } catch (error: any) {
       console.error('Erro ao buscar aula:', error);

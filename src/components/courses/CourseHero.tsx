@@ -1,7 +1,6 @@
 
 import React, { useMemo } from 'react';
 import { Button } from "@/components/ui/button";
-import { Pencil } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface CourseHeroProps {
@@ -11,8 +10,6 @@ interface CourseHeroProps {
   favorite: boolean;
   courseId: string;
   firstLessonId?: string;
-  showEditButton?: boolean;
-  onEditCourse?: () => void;
 }
 
 export const CourseHero: React.FC<CourseHeroProps> = React.memo(({ 
@@ -21,9 +18,7 @@ export const CourseHero: React.FC<CourseHeroProps> = React.memo(({
   instructor,
   favorite,
   courseId,
-  firstLessonId,
-  showEditButton = false,
-  onEditCourse
+  firstLessonId
 }) => {
   const navigate = useNavigate();
 
@@ -51,21 +46,6 @@ export const CourseHero: React.FC<CourseHeroProps> = React.memo(({
   return (
     <div className="relative w-full rounded-3xl overflow-hidden mb-8">
       <div className="relative aspect-[16/7] w-full min-h-[300px] md:min-h-[400px] lg:min-h-[450px]">
-        {showEditButton && (
-          <div className="absolute top-4 right-4 z-20">
-            <Button
-              variant="secondary"
-              className="flex gap-2 bg-white/95 dark:bg-card/95 backdrop-blur-sm text-foreground border-none hover:bg-white dark:hover:bg-card shadow-md"
-              onClick={onEditCourse}
-              size="sm"
-              aria-label="Editar curso"
-            >
-              <Pencil className="h-4 w-4" />
-              Editar curso
-            </Button>
-          </div>
-        )}
-        
         <img
           src={imageSrc}
           alt={title}

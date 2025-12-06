@@ -612,21 +612,21 @@ const AIChatContent = () => {
       companyLogo={selectedCompany?.logo}
       companyColor={companyColor}
       chatContent={
-        <div className="flex flex-col h-full min-w-0 relative overflow-hidden bg-white dark:bg-[#1a1a1a]">
+        <div className="flex flex-col h-full min-w-0 relative overflow-hidden bg-[#F8F7F4] dark:bg-[#191919]">
           {/* Container para área de mensagens com blurs */}
           <div className="flex-1 relative min-h-0 overflow-hidden">
           
           {/* Blur Top - Fixo, não rola (z-index alto) */}
           <ProgressiveBlur 
             position="top" 
-            backgroundColor="rgb(255, 255, 255)"
+            backgroundColor="rgb(248, 247, 244)"
             height="80px"
             blurAmount="20px"
             className="dark:hidden"
           />
           <ProgressiveBlur 
             position="top" 
-            backgroundColor="rgb(26, 26, 26)"
+            backgroundColor="rgb(25, 25, 25)"
             height="80px"
             blurAmount="20px"
             className="hidden dark:block"
@@ -779,14 +779,14 @@ const AIChatContent = () => {
           {/* Blur Bottom - Fixo no bottom: 0, não rola (z-index alto) */}
           <ProgressiveBlur 
             position="bottom" 
-            backgroundColor="rgb(255, 255, 255)"
+            backgroundColor="rgb(248, 247, 244)"
             height="200px"
             blurAmount="20px"
             className="dark:hidden"
           />
           <ProgressiveBlur 
             position="bottom" 
-            backgroundColor="rgb(26, 26, 26)"
+            backgroundColor="rgb(25, 25, 25)"
             height="200px"
             blurAmount="20px"
             className="hidden dark:block"
@@ -796,7 +796,7 @@ const AIChatContent = () => {
           {/* Input Bar - Flutuante no bottom */}
           <div className="absolute z-50 flex items-center justify-center px-6 pointer-events-none" style={{ left: '0', right: '0', bottom: '120px' }}>
             <div className="w-full max-w-2xl pointer-events-auto">
-              <div className="flex items-center gap-2 px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-full bg-white dark:bg-[#1a1a1a] shadow-lg hover:shadow-xl transition-shadow backdrop-blur-sm bg-white/95 dark:bg-[#1a1a1a]/95">
+              <div className="flex items-center gap-2 px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-full bg-[#F8F7F4] dark:bg-[#191919] shadow-lg hover:shadow-xl transition-shadow backdrop-blur-sm bg-[#F8F7F4]/95 dark:bg-[#191919]/95">
                 <button
                   className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition"
                   title="Anexar"

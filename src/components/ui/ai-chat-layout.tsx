@@ -147,9 +147,9 @@ export function AIChatLayout({
   );
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950">
+    <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#191919]">
       {/* Header */}
-      <header className="sticky top-0 z-10 border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm">
+      <header className="sticky top-0 z-10 border-b border-gray-200 dark:border-gray-800 bg-[#F8F7F4]/80 dark:bg-[#191919]/80 backdrop-blur-sm">
         <div className="flex items-center justify-between px-6 h-14">
           {/* Breadcrumbs */}
           <Breadcrumb>
@@ -203,14 +203,14 @@ export function AIChatLayout({
 
       <div className="flex h-[calc(100vh-3.5rem)]">
         {/* Sidebar */}
-        <aside className="w-[420px] flex-shrink-0 border-r border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 overflow-y-auto">
+        <aside className="w-[420px] flex-shrink-0 border-r border-gray-200 dark:border-gray-800 bg-[#F5F3F0] dark:bg-[#1a1a1a] overflow-y-auto">
           <div className="p-6">
             {sidebarContent || defaultSidebarContent}
           </div>
         </aside>
 
         {/* Chat Area */}
-        <main className="flex-1 min-w-0 relative overflow-hidden bg-white dark:bg-gray-950">
+        <main className="flex-1 min-w-0 relative overflow-hidden bg-[#F8F7F4] dark:bg-[#191919]">
           {chatContent}
         </main>
       </div>

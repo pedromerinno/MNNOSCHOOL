@@ -11,7 +11,7 @@ interface CourseHeaderProps {
 
 export const CourseHeader: React.FC<CourseHeaderProps> = React.memo(({ 
   title,
-  instructor 
+  instructor
 }) => {
   const navigate = useNavigate();
   
