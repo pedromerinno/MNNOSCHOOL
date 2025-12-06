@@ -9,6 +9,7 @@ import { NewCourseDialog } from './dialogs/NewCourseDialog';
 import { AdminPageTitle } from './AdminPageTitle';
 import { useCompanies } from '@/hooks/useCompanies';
 import { useAuth } from '@/contexts/AuthContext';
+import { useIsAdmin } from '@/hooks/company/useIsAdmin';
 
 export type { Course };
 
@@ -16,6 +17,7 @@ export const CourseManagement: React.FC = () => {
   const [isNewCourseDialogOpen, setIsNewCourseDialogOpen] = useState(false);
   const { selectedCompany } = useCompanies();
   const { userProfile } = useAuth();
+  const { isAdmin } = useIsAdmin();
   
   // Sempre usar empresa selecionada, mesmo para super admin
   const companyId = selectedCompany?.id;
@@ -43,13 +45,15 @@ export const CourseManagement: React.FC = () => {
           : `Gerenciar ${courses.length} ${courses.length === 1 ? 'curso' : 'cursos'}`}
         size="xl"
         actions={
-          <Button
-            onClick={() => setIsNewCourseDialogOpen(true)}
-            className="bg-black hover:bg-gray-800 text-white rounded-xl"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Curso
-          </Button>
+          isAdmin ? (
+            <Button
+              onClick={() => setIsNewCourseDialogOpen(true)}
+              className="bg-black hover:bg-gray-800 text-white rounded-xl"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Curso
+            </Button>
+          ) : null
         }
       />
       

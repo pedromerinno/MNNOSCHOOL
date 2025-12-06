@@ -40,7 +40,14 @@ export const DocumentUploadForm = ({
   // Reset form when dialog closes
   useEffect(() => {
     if (!open) {
-      resetForm();
+      setAttachmentType('file');
+      setFile(null);
+      setLinkUrl("");
+      setLinkName("");
+      setDocumentName("");
+      setDocumentType("confidentiality_agreement");
+      setDescription("");
+      setFileError(null);
     }
   }, [open]);
 

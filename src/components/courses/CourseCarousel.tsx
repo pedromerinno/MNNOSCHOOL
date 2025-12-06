@@ -7,7 +7,7 @@ import { useCompanies } from "@/hooks/useCompanies";
 import { CompanyThemedBadge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { useAuth } from "@/contexts/AuthContext";
+import { useIsAdmin } from "@/hooks/company/useIsAdmin";
 
 interface CourseCarouselProps {
   courses: any[];
@@ -20,7 +20,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
 }) => {
   const navigate = useNavigate();
   const { selectedCompany } = useCompanies();
-  const { user } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const hasSingleCourse = courses.length === 1;
   const [api, setApi] = React.useState<any>();
   const [current, setCurrent] = React.useState(0);
@@ -81,7 +81,7 @@ export const CourseCarousel: React.FC<CourseCarouselProps> = ({
           title="Nenhum curso em destaque disponível"
           description="Esta empresa ainda não possui cursos em destaque ou você não tem acesso a eles."
           icons={[GraduationCap, BookOpen, Star]}
-          action={user?.is_admin ? {
+          action={isAdmin ? {
             label: "Cadastrar Novo Curso",
             onClick: () => navigate('/admin/courses')
           } : undefined}

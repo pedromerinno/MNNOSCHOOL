@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Plus, FileText, Key, BookOpen, MessageSquare, Bell, FilePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -7,7 +7,7 @@ import { useIsAdmin } from "@/hooks/company/useIsAdmin";
 import { NewCourseDialog, NewNoticeDialog, NewDiscussionDialog, NewFeedbackDialog, AddDocumentDialog } from "./dialogs";
 import { CreateAccessDialog } from "@/components/access/CreateAccessDialog";
 
-const FAB_OPTIONS = [{
+const ADMIN_FAB_OPTIONS = [{
   label: "Curso",
   icon: BookOpen,
   action: "openCourse" as const
@@ -29,6 +29,7 @@ const FAB_OPTIONS = [{
   action: "openDocument" as const
 }];
 
+
 export const AdminFloatingActionButton = () => {
   const [open, setOpen] = useState(false);
   const { isAdmin, isLoading } = useIsAdmin();
@@ -39,11 +40,17 @@ export const AdminFloatingActionButton = () => {
   const [accessDialogOpen, setAccessDialogOpen] = useState(false);
   const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
   
-  // Only render for admin or super_admin users
+  // Only show admin options since button only appears for admins
+  const availableOptions = useMemo(() => {
+    return ADMIN_FAB_OPTIONS;
+  }, []);
+  
+  
   // Don't render while loading to avoid flickering
+  // Only render if user is admin of the selected company
   if (isLoading || !isAdmin) return null;
   
-  const handleOption = (option: (typeof FAB_OPTIONS)[number]) => {
+  const handleOption = (option: (typeof ADMIN_FAB_OPTIONS)[number]) => {
     setOpen(false);
     switch (option.action) {
       case "openCourse":
@@ -67,7 +74,8 @@ export const AdminFloatingActionButton = () => {
     }
   };
   
-  return <>
+  return (
+    <>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button size="icon" aria-label="Ações rápidas admin" className="fixed z-50 bottom-6 right-6 bg-black hover:bg-black/90 text-white rounded-full size-11 flex items-center justify-center shadow-xl text-base">
@@ -75,7 +83,7 @@ export const AdminFloatingActionButton = () => {
           </Button>
         </PopoverTrigger>
         <PopoverContent align="end" side="top" className="w-64 p-4 space-y-2 rounded-2xl" sideOffset={16}>
-          {FAB_OPTIONS.map(option => {
+          {availableOptions.map(option => {
             const IconComponent = option.icon;
             return (
               <Button 
@@ -103,5 +111,6 @@ export const AdminFloatingActionButton = () => {
         }}
       />
       <AddDocumentDialog open={documentDialogOpen} onOpenChange={setDocumentDialogOpen} />
-    </>;
+    </>
+  );
 };

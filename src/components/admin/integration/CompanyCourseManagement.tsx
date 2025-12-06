@@ -10,6 +10,7 @@ import { Company } from '@/types/company';
 import { Button } from '@/components/ui/button';
 import { Plus, BookPlus } from 'lucide-react';
 import { LinkCoursesDialog } from './courses/LinkCoursesDialog';
+import { useIsAdmin } from '@/hooks/company/useIsAdmin';
 
 interface CompanyCourseManagementProps {
   company: Company;
@@ -20,6 +21,7 @@ export const CompanyCourseManagement: React.FC<CompanyCourseManagementProps> = (
 }) => {
   const [currentCompanyId, setCurrentCompanyId] = useState<string>(company.id);
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
+  const { isAdmin } = useIsAdmin();
   
   // Update company ID when the company prop changes
   useEffect(() => {
@@ -55,22 +57,24 @@ export const CompanyCourseManagement: React.FC<CompanyCourseManagementProps> = (
           </p>
         </div>
         
-        <div className="flex space-x-3">
-          <Button 
-            onClick={() => setIsLinkDialogOpen(true)} 
-            variant="outline"
-            className="border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600 bg-transparent"
-          >
-            <BookPlus className="mr-2 h-4 w-4" /> Vincular Curso
-          </Button>
-          
-          <Button 
-            onClick={() => setIsFormOpen(true)} 
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus className="mr-2 h-4 w-4" /> Novo Curso
-          </Button>
-        </div>
+        {isAdmin && (
+          <div className="flex space-x-3">
+            <Button 
+              onClick={() => setIsLinkDialogOpen(true)} 
+              variant="outline"
+              className="border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600 bg-transparent"
+            >
+              <BookPlus className="mr-2 h-4 w-4" /> Vincular Curso
+            </Button>
+            
+            <Button 
+              onClick={() => setIsFormOpen(true)} 
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="mr-2 h-4 w-4" /> Novo Curso
+            </Button>
+          </div>
+        )}
       </div>
       
       <Card>

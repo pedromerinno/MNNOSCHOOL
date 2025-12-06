@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useCompanies } from "@/hooks/useCompanies";
-import { useAuth } from "@/contexts/AuthContext";
 import { PlusCircle } from "lucide-react";
 import { NewCourseDialog } from "@/components/admin/dialogs/NewCourseDialog";
+import { useIsAdmin } from "@/hooks/company/useIsAdmin";
 
 type FilterOption = 'all' | 'favorites' | 'completed' | 'in-progress';
 
@@ -27,9 +27,8 @@ export const FilteredCoursesList: React.FC<FilteredCoursesListProps> = ({
 }) => {
   const navigate = useNavigate();
   const { selectedCompany } = useCompanies();
-  const { userProfile } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const [isNewCourseDialogOpen, setIsNewCourseDialogOpen] = React.useState(false);
-  const isAdmin = userProfile?.is_admin || userProfile?.super_admin;
   
   // Filter title mapping
   const filterTitles = {
